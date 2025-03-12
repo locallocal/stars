@@ -107,13 +107,13 @@ class _MainPageState extends State<MainPage> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            activeIcon: Icon(Icons.chat_bubble_rounded),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.contacts_outlined),
-            activeIcon: Icon(Icons.contacts),
+            icon: Icon(Icons.smart_toy_outlined),
+            activeIcon: Icon(Icons.smart_toy_rounded),
             label: '',
           ),
           BottomNavigationBarItem(

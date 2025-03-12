@@ -96,6 +96,8 @@ class _AddBotPageState extends State<AddBotPage> {
 
   bool _isLoadingModels = false; // 添加加载状态变量
 
+
+
   // 添加获取模型列表的方法
   Future<void> _fetchModels() async {
     if (apiKeyController.text.trim().isEmpty) {
@@ -275,33 +277,47 @@ class _AddBotPageState extends State<AddBotPage> {
                 ),
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: DropdownButton<String>(
-                  borderRadius: BorderRadius.circular(24.0),
-                  isExpanded: true,
-                  value: selectedProvider,
-                  underline: const SizedBox(),
-                  items: [
-                    ...providers.map((provider) {
-                      return DropdownMenuItem<String>(
-                        value: provider,
-                        child: Text(provider),
-                      );
-                    }),
-                    const DropdownMenuItem<String>(
-                      value: 'custom',
-                      child: Text('自定义供应商...'),
+                child: Row(
+                  children: [
+                    const Icon(Icons.business),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        borderRadius: BorderRadius.circular(24.0),
+                        isExpanded: true,
+                        value: selectedProvider,
+                        underline: const SizedBox(),
+                        items: [
+                          ...providers.map((provider) {
+                            return DropdownMenuItem<String>(
+                              value: provider,
+                              child: Text(provider, style: TextStyle(
+                                fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize),
+                              ),
+                            );
+                          }),
+                          DropdownMenuItem<String>(
+                            value: 'custom',
+                            child: Text('自定义供应商...', 
+                              style: TextStyle(
+                                fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == 'custom') {
+                            setState(() {
+                              isCustomProvider = true;
+                              customProviderController.text = '';
+                            });
+                          } else if (value != null) {
+                            _onProviderChanged(value);
+                          }
+                        },
+                      ),
                     ),
                   ],
-                  onChanged: (value) {
-                    if (value == 'custom') {
-                      setState(() {
-                        isCustomProvider = true;
-                        customProviderController.text = '';
-                      });
-                    } else if (value != null) {
-                      _onProviderChanged(value);
-                    }
-                  },
                 ),
               )
             else
@@ -315,12 +331,22 @@ class _AddBotPageState extends State<AddBotPage> {
                       ),
                       child: TextField(
                         controller: customProviderController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: '输入供应商名称...',
-                          prefixIcon: Icon(Icons.shop),
+                          prefixIcon: Icon(Icons.business),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(
                             vertical: 12,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.close),
+                            onPressed: () {
+                              setState(() {
+                                isCustomProvider = false;
+                                selectedProvider = providers.first;
+                                _onProviderChanged(selectedProvider);
+                              });
+                            },
                           ),
                         ),
                         onChanged: (value) {
@@ -337,16 +363,6 @@ class _AddBotPageState extends State<AddBotPage> {
                         },
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      setState(() {
-                        isCustomProvider = false;
-                        selectedProvider = providers.first;
-                        _onProviderChanged(selectedProvider);
-                      });
-                    },
                   ),
                 ],
               ),
