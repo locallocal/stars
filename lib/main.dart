@@ -7,6 +7,7 @@ import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/services/database_service.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -52,22 +53,18 @@ class _MyAppState extends State<MyApp> {
       title: 'AI助手',
       themeMode: _themeMode,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-        useMaterial3: true,
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.light(
+          secondary: Colors.grey.shade300,
+        ),
         textTheme: TextTheme(
           bodyLarge: TextStyle(fontSize: _fontSize),
-          bodyMedium: TextStyle(fontSize: _fontSize - 2),
-        ),
+        )
       ),
       darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.black,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(fontSize: _fontSize),
-          bodyMedium: TextStyle(fontSize: _fontSize - 2),
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.dark(
+          secondary: Colors.grey.shade600,
         ),
       ),
       home: const MainPage(),
@@ -96,9 +93,13 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
+        selectedFontSize: Theme.of(context).textTheme.bodyLarge?.fontSize??16,
+        unselectedFontSize: Theme.of(context).textTheme.bodyLarge?.fontSize??16,
+        selectedItemColor: Theme.of(context).colorScheme.onSurface,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurface,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
@@ -108,17 +109,17 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
             activeIcon: Icon(Icons.chat_bubble),
-            label: '对话',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.contacts_outlined),
             activeIcon: Icon(Icons.contacts),
-            label: '智能体',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: '我的',
+            label: '',
           ),
         ],
       ),

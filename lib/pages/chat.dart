@@ -18,9 +18,8 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   List<Message> _messages = [];
-  final String _currentUserId = 'me'; // 当前用户ID
+  final String _currentUserId = 'me';
   bool _isLoading = true;
-  bool _showOptions = false; // 是否显示功能选项
   bool _isTyping = false; // 是否正在输入回复
   String _streamingResponse = ''; // 用于存储流式响应
   bool _isStreaming = false; // 是否正在流式接收
@@ -231,9 +230,12 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: Text(widget.bot.name),
         centerTitle: true,
+        title: Text(widget.bot.name, style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+        )),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -404,13 +406,7 @@ class _ChatPageState extends State<ChatPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        Text(
-                                          "${widget.bot.name}正在输入...",
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 12,
-                                          ),
-                                        ),
+                                        Text("${widget.bot.name}正在输入..."),
                                         const Spacer(),
                                         if (_isCancellable)
                                           IconButton(
@@ -418,7 +414,6 @@ class _ChatPageState extends State<ChatPage> {
                                             icon: const Icon(
                                               Icons.pause_circle_filled,
                                             ),
-                                            color: Colors.grey,
                                             tooltip: '暂停生成',
                                             iconSize: 28,
                                             padding: EdgeInsets.zero,
@@ -443,9 +438,8 @@ class _ChatPageState extends State<ChatPage> {
                       bottom: 24.0,
                     ),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF6F6F6),
                       border: Border(
-                        top: BorderSide(color: Color(0xFFE5E5E5), width: 0.5),
+                        top: BorderSide(width: 0.5),
                       ),
                     ),
                     child: Row(
@@ -457,7 +451,6 @@ class _ChatPageState extends State<ChatPage> {
                               horizontal: 12.0,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
                               borderRadius: BorderRadius.circular(4.0),
                             ),
                             child: TextField(
@@ -471,119 +464,13 @@ class _ChatPageState extends State<ChatPage> {
                                   vertical: 10.0,
                                 ),
                               ),
-                              maxLines: 1,
                             ),
-                          ),
-                        ),
-                        // 语音按钮
-                        Container(
-                          width: 40,
-                          height: 40,
-                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.keyboard_voice,
-                              color: Colors.black,
-                              size: 24,
-                            ),
-                            onPressed: () {
-                              _showSnackBar('语音功能暂未实现');
-                            },
-                          ),
-                        ),
-                        // 附件按钮
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon:
-                                _showOptions
-                                    ? const Icon(Icons.close_outlined)
-                                    : const Icon(
-                                      Icons.add_circle_outline,
-                                      color: Colors.black,
-                                      size: 24,
-                                    ),
-                            onPressed: () {
-                              setState(() {
-                                _showOptions = !_showOptions;
-                              });
-                            },
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8.0),
-
-                  // 功能选项菜单
-                  if (_showOptions)
-                    // 功能选项菜单
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      height: _showOptions ? null : 0,
-                      curve: Curves.easeInOut,
-                      child: AnimatedOpacity(
-                        opacity: _showOptions ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF6F6F6),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _buildOptionButton(
-                                    Icons.camera_alt,
-                                    '相机',
-                                    () {
-                                      _showSnackBar('相机功能暂未实现');
-                                    },
-                                  ),
-                                  _buildOptionButton(
-                                    Icons.photo_library,
-                                    '相册',
-                                    () {
-                                      _showSnackBar('相册功能暂未实现');
-                                    },
-                                  ),
-                                  _buildOptionButton(
-                                    Icons.attach_file,
-                                    '文件',
-                                    () {
-                                      _showSnackBar('文件功能暂未实现');
-                                    },
-                                  ),
-                                  _buildOptionButton(Icons.phone, '打电话', () {
-                                    _showSnackBar('电话功能暂未实现');
-                                  }),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              // 底部指示条
-                              Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
     );
@@ -607,7 +494,6 @@ class _ChatPageState extends State<ChatPage> {
                   Navigator.pop(context);
                   _clearChatMessages();
                 },
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('清空'),
               ),
             ],
@@ -638,32 +524,6 @@ class _ChatPageState extends State<ChatPage> {
         ),
       );
     }
-  }
-
-  // 构建功能按钮
-  Widget _buildOptionButton(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 28, color: Colors.black),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-          ),
-        ],
-      ),
-    );
   }
 
   // 显示提示信息

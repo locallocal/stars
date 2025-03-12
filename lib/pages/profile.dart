@@ -63,9 +63,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: Theme.of(context).primaryColor,
-          centerTitle: true,
-          title: const Text('我的'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -73,9 +71,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
         centerTitle: true,
-        title: const Text('我的'),
+        title: Text('我的', style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+        )),
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: ListView(
         children: [
@@ -91,16 +92,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     CircleAvatar(
                       radius: 64,
-                      backgroundColor: Theme.of(context).primaryColor,
+                      backgroundColor: Theme.of(context).colorScheme.onSurface,
                       backgroundImage:
                           _avatar.isNotEmpty ? FileImage(File(_avatar)) : null,
                       child:
                           _avatar.isEmpty
-                              ? const Icon(
-                                Icons.person,
-                                size: 64,
-                                color: Colors.white,
-                              )
+                              ? const Icon(Icons.person, size: 64)
                               : null,
                     ),
                     const SizedBox(height: 16),
@@ -161,6 +158,8 @@ class _ProfilePageState extends State<ProfilePage> {
               min: 12.0,
               max: 24.0,
               divisions: 6,
+              activeColor: Theme.of(context).colorScheme.onSurface,
+              inactiveColor: Theme.of(context).colorScheme.secondary,
               label: _fontSize.round().toString(),
               onChanged: (value) {
                 setState(() {
@@ -235,11 +234,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 // 在修改 _avatarPath 后添加:
                 if (_avatar.isNotEmpty)
                   ListTile(
-                    leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text(
-                      "删除头像",
-                      style: TextStyle(color: Colors.red),
-                    ),
+                    leading: const Icon(Icons.delete),
+                    title: const Text("删除头像"),
                     onTap: () {
                       Navigator.pop(context);
                       setState(() {

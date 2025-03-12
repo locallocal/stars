@@ -63,9 +63,12 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
-        title: const Text('编辑AI聊天机器人'),
         centerTitle: true,
+        title: Text('编辑智能体', style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+        )),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -87,9 +90,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
                             widget.onBotDeleted();
                             Navigator.pop(context); // 返回联系人列表
                           },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
                           child: const Text('删除'),
                         ),
                       ],
@@ -126,7 +126,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
             const SizedBox(height: 8),
             const Center(
-              child: Text('点击更换头像', style: TextStyle(color: Colors.grey)),
+              child: Text('点击更换头像'),
             ),
             const SizedBox(height: 24),
 
@@ -147,11 +147,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.grey.shade100,
-              ),
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: selectedProvider,
@@ -164,7 +159,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
                       );
                     }).toList(),
                 onChanged: null, // 禁用更改
-                style: TextStyle(color: Colors.grey.shade700),
               ),
             ),
             const SizedBox(height: 16),
@@ -176,16 +170,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
               // 设置初始值
               controller: baseURLController,
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.link, color: Colors.grey),
+                prefixIcon: const Icon(Icons.link),
                 border: const OutlineInputBorder(),
                 filled: true,
-                fillColor: Colors.grey.shade100,
-                disabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
               ),
               enabled: false, // 禁用编辑
-              style: TextStyle(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 16),
 
@@ -195,17 +184,12 @@ class _EditAIBotPageState extends State<EditBotPage> {
             TextField(
               controller: apiKeyController,
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.key, color: Colors.grey),
+                prefixIcon: const Icon(Icons.key),
                 border: const OutlineInputBorder(),
                 filled: true,
-                fillColor: Colors.grey.shade100,
-                disabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
               ),
               obscureText: true,
               enabled: false, // 禁用编辑
-              style: TextStyle(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 16),
 
@@ -215,11 +199,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(4),
-                color: Colors.grey.shade100,
-              ),
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: selectedModel,
@@ -232,7 +211,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
                       );
                     }).toList(),
                 onChanged: null, // 禁用更改
-                style: TextStyle(color: Colors.grey.shade700),
               ),
             ),
             const SizedBox(height: 16),
@@ -255,8 +233,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(50),
           ),
           onPressed: () {
@@ -290,7 +266,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('请填写智能体名称'),
-                  backgroundColor: Colors.red,
                 ),
               );
             }

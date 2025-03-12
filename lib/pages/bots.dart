@@ -60,9 +60,12 @@ class _ContactsPageState extends State<ContactsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
         centerTitle: true,
-        title: const Text('智能体'),
+        title: Text('智能体', style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+        )),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -88,18 +91,29 @@ class _ContactsPageState extends State<ContactsPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // 搜索联系人输入框
+                  // 搜索框
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: TextField(
-                      onChanged: _filterBots,
-                      decoration: InputDecoration(
-                        hintText: '搜索智能体',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(4.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(24.0),
+                      ),
+                      child: TextField(
+                        onChanged: _filterBots,
+                        decoration: InputDecoration(
+                          hintText: '搜索智能体',
+                          fillColor: Theme.of(context).colorScheme.secondary,
+                          focusColor: Theme.of(context).colorScheme.secondary,
+                          hoverColor: Theme.of(context).colorScheme.secondary,
+                          prefixIcon: const Icon(
+                            Icons.search,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
                       ),
                     ),
                   ),
@@ -119,17 +133,13 @@ class _ContactsPageState extends State<ContactsPage> {
                                 final bot = filteredBots[index];
                                 return ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: Colors.blue,
                                     backgroundImage:
                                         bot.avatar.isNotEmpty
                                             ? FileImage(File(bot.avatar))
                                             : null,
                                     child:
                                         bot.avatar.isEmpty
-                                            ? const Icon(
-                                              Icons.smart_toy,
-                                              color: Colors.white,
-                                            )
+                                            ? const Icon(Icons.smart_toy)
                                             : null,
                                   ),
                                   title: Text(bot.name),

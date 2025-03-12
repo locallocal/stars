@@ -44,9 +44,12 @@ class _ChatListPageState extends State<ChatListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
         centerTitle: true,
-        title: const Text('对话'),
+        title: Text('对话', style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+        )),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -57,11 +60,11 @@ class _ChatListPageState extends State<ChatListPage> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Center(
+                  title: Center(
                     child: Text(
                       '选择智能体',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -75,7 +78,6 @@ class _ChatListPageState extends State<ChatListPage> {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
                         }
-                        
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Center(child: Text('没有的智能体'));
                         }
@@ -88,18 +90,18 @@ class _ChatListPageState extends State<ChatListPage> {
                             final bot = bots[index];
                             return ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: Colors.blue,
                                 backgroundImage: bot.avatar.isNotEmpty 
                                     ? FileImage(File(bot.avatar)) 
                                     : null,
                                 child: bot.avatar.isEmpty
                                     ? Text(
                                         bot.name.isNotEmpty ? bot.name.substring(0, 1) : '?',
-                                        style: const TextStyle(color: Colors.white),
                                       )
                                     : null,
                               ),
-                              title: Text(bot.name),
+                              title: Text(bot.name, style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),),
                               subtitle: Text('智能体 (${bot.provider}-${bot.model})'),
                               onTap: () async {
                                 Navigator.pop(context); // 关闭对话框
@@ -117,6 +119,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                 
                                 // 导航到聊天页面
                                 if (!mounted) return;
+
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -143,26 +146,26 @@ class _ChatListPageState extends State<ChatListPage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // 搜索框
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: '搜索聊天记录',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    ),
-                  ),
-                ),
                 // 聊天列表
                 Expanded(
                   child: chatList.isEmpty
-                      ? const Center(
-                          child: Text('还没有聊天记录\n点击右上角 + 开始聊天',
-                              textAlign: TextAlign.center),
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('还没有聊天记录',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface),
+                                ),
+                              SizedBox(height: 8),
+                              Text('点击右上角 + 开始聊天',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface),
+                                ),
+                            ],
+                          ),
                         )
                       : ListView.builder(
                           itemCount: chatList.length,
@@ -185,7 +188,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                 padding: const EdgeInsets.only(right: 20.0),
                                 child: const Icon(
                                   Icons.delete,
-                                  color: Colors.white,
                                 ),
                               ),
                               direction: DismissDirection.endToStart,
@@ -203,7 +205,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                       ),
                                       TextButton(
                                         onPressed: () => Navigator.pop(context, true),
-                                        style: TextButton.styleFrom(foregroundColor: Colors.red),
                                         child: const Text('删除'),
                                       ),
                                     ],
@@ -240,8 +241,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                     : chat.lastMessage,
                                 // 使用chat.lastMessageTimestamp替代chat.timestamp
                                 timestamp: _formatTimestamp(chat.lastMessageTimestamp),
-                                // 确保Chat类中有unreadCount属性，如果没有则使用0
-                                unreadCount:  0,
                                 isStarred: false,
                                 onTap: () {
                                   Navigator.push(
@@ -276,7 +275,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                             await ChatService.deleteChat(chat.botId);
                                             _loadChatList();
                                           },
-                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
                                           child: const Text('删除'),
                                         ),
                                       ],
