@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/model/model.dart';
+import 'package:bubble/pages/user_agreement.dart';
+import 'package:bubble/pages/privacy_policy.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,6 +18,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Profile? _profile;
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
+
   // 获取用户名
   String get _name => _profile?.name ?? "用户名";
   // 获取头像路径
@@ -42,6 +46,28 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        // 修复可空属性赋值问题
+        if (_profile != null) {
+          _profile = Profile(
+            name: _name,
+            avatar: pickedFile.path,
+            fontSize: _fontSize,
+            themeMode: themeModeToInt(_themeMode),
+            createTimestamp: _profile!.createTimestamp,
+            modifyTimestamp: DateTime.now(),
+          );
+          _saveProfile(); // 保存头像设置
+        }
+      });
+    }
+  }
+
   // 保存设置
   Future<void> _saveProfile() async {
     if (_profile == null) return;
@@ -62,9 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-        ),
+        appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.surface),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -72,11 +96,17 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('我的', style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-        )),
+        title: Text(
+          '我的',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0, // 防止滚动时背景色变化
+        elevation: 0, // 移除阴影
+        surfaceTintColor: Colors.transparent,
       ),
       body: ListView(
         children: [
@@ -85,19 +115,21 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.only(top: 30.0, bottom: 20.0),
             child: Center(
               child: GestureDetector(
-                onTap: () {
-                  _showAvatarOptions();
-                },
+                onTap: _pickImage,
                 child: Column(
                   children: [
                     CircleAvatar(
                       radius: 64,
-                      backgroundColor: Theme.of(context).colorScheme.onSurface,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       backgroundImage:
                           _avatar.isNotEmpty ? FileImage(File(_avatar)) : null,
                       child:
                           _avatar.isEmpty
-                              ? const Icon(Icons.person, size: 64)
+                              ? Icon(
+                                Icons.person,
+                                size: 64,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              )
                               : null,
                     ),
                     const SizedBox(height: 16),
@@ -117,7 +149,6 @@ class _ProfilePageState extends State<ProfilePage> {
               _showEditNameDialog();
             },
           ),
-
           const Divider(),
 
           // 主题切换
@@ -176,7 +207,6 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
           ),
-
           const Divider(),
 
           // 关于
@@ -189,72 +219,12 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // 显示关于信息
-              showAboutDialog(
-                context: context,
-                applicationName: "AI聊天助手",
-                applicationVersion: "1.0.0",
-                applicationIcon: const FlutterLogo(size: 40),
-                children: [const Text("一个简单的AI聊天应用")],
-              );
+              // 显示自定义关于信息对话框
+              _showCustomAboutDialog();
             },
           ),
         ],
       ),
-    );
-  }
-
-  // 显示头像选项
-  void _showAvatarOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder:
-          (context) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_camera),
-                  title: const Text("拍照"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // 这里添加拍照逻辑
-                    _showSnackBar("拍照功能暂未实现");
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text("从相册选择"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // 这里添加从相册选择逻辑
-                    _showSnackBar("相册选择功能暂未实现");
-                  },
-                ),
-                // 在修改 _avatarPath 后添加:
-                if (_avatar.isNotEmpty)
-                  ListTile(
-                    leading: const Icon(Icons.delete),
-                    title: const Text("删除头像"),
-                    onTap: () {
-                      Navigator.pop(context);
-                      setState(() {
-                        _profile = Profile(
-                          name: _name,
-                          avatar: '',
-                          fontSize: _fontSize,
-                          themeMode: themeModeToInt(_themeMode),
-                          createTimestamp: _profile!.createTimestamp,
-                          modifyTimestamp: DateTime.now(),
-                        );
-                      });
-                      _saveProfile(); // 保存设置
-                      _showSnackBar("头像已删除");
-                    },
-                  ),
-              ],
-            ),
-          ),
     );
   }
 
@@ -266,20 +236,41 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text("修改名称"),
+            title: Center(
+              child: Text(
+                "修改名称",
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             content: TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: "名称",
+              style: TextStyle(fontSize: _fontSize),
+              decoration: InputDecoration(
                 hintText: "请输入新名称",
+                labelStyle: TextStyle(fontSize: _fontSize - 2),
+                hintStyle: TextStyle(fontSize: _fontSize - 2),
               ),
             ),
             actions: [
               TextButton(
+                style: TextButton.styleFrom(
+                  overlayColor: Theme.of(context).colorScheme.secondary,
+                ),
                 onPressed: () => Navigator.pop(context),
-                child: const Text("取消"),
+                child: Text(
+                  "取消",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
               TextButton(
+                style: TextButton.styleFrom(
+                  overlayColor: Theme.of(context).colorScheme.secondary,
+                ),
                 onPressed: () {
                   setState(() {
                     _profile = Profile(
@@ -298,7 +289,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   Navigator.pop(context);
                   _showSnackBar("名称已更新");
                 },
-                child: const Text("保存"),
+                child: Text(
+                  "保存",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
             ],
           ),
@@ -311,10 +307,19 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder:
           (context) => SimpleDialog(
-            title: const Text("选择主题"),
+            title: Center(
+              child: Text(
+                "选择主题",
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             children: [
               RadioListTile<ThemeMode>(
                 title: const Text("跟随系统"),
+                activeColor: Theme.of(context).colorScheme.onSurface,
                 value: ThemeMode.system,
                 groupValue: _themeMode,
                 onChanged: (value) {
@@ -331,6 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               RadioListTile<ThemeMode>(
                 title: const Text("浅色模式"),
+                activeColor: Theme.of(context).colorScheme.onSurface,
                 value: ThemeMode.light,
                 groupValue: _themeMode,
                 onChanged: (value) {
@@ -346,6 +352,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               RadioListTile<ThemeMode>(
                 title: const Text("深色模式"),
+                activeColor: Theme.of(context).colorScheme.onSurface,
                 value: ThemeMode.dark,
                 groupValue: _themeMode,
                 onChanged: (value) {
@@ -374,7 +381,15 @@ class _ProfilePageState extends State<ProfilePage> {
           (context) => StatefulBuilder(
             builder:
                 (context, setState) => AlertDialog(
-                  title: const Text("调整文字大小"),
+                  title: Center(
+                    child: Text(
+                      "调整文字大小",
+                      style: TextStyle(
+                        fontSize: _fontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -385,6 +400,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         min: 12.0,
                         max: 24.0,
                         divisions: 6,
+                        activeColor: Theme.of(context).colorScheme.onSurface,
+                        inactiveColor: Theme.of(context).colorScheme.secondary,
                         label: tempFontSize.round().toString(),
                         onChanged: (value) {
                           setState(() {
@@ -397,7 +414,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("取消"),
+                      child: Text(
+                        "取消",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -415,7 +437,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         Navigator.pop(context);
                         _showSnackBar("文字大小已更新");
                       },
-                      child: const Text("保存"),
+                      child: Text(
+                        "保存",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -428,5 +455,118 @@ class _ProfilePageState extends State<ProfilePage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  // 显示自定义关于对话框
+  void _showCustomAboutDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Center(
+              child: Text(
+                "关于泡泡",
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const FlutterLogo(size: 60),
+                const SizedBox(height: 24),
+                Text(
+                  "泡泡 - AI聊天助手",
+                  style: TextStyle(
+                    fontSize: _fontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "版本 1.0.0",
+                  style: TextStyle(fontSize: _fontSize - 2),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "一个简单而强大的AI聊天应用，让您随时随地与AI进行对话。",
+                  style: TextStyle(fontSize: _fontSize - 2),
+                  textAlign: TextAlign.start,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "© 2023 泡泡团队",
+                  style: TextStyle(
+                    fontSize: _fontSize - 2,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UserAgreementPage(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "用户协议",
+                        style: TextStyle(
+                          fontSize: _fontSize - 2,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrivacyPolicyPage(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "隐私政策",
+                        style: TextStyle(
+                          fontSize: _fontSize - 2,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  overlayColor: Theme.of(context).colorScheme.secondary,
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "确定",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: _fontSize,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
   }
 }

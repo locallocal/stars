@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'pages/chat_list.dart';
-import 'pages/bots.dart';
-import 'pages/profile.dart';
-import 'model/model.dart';
+import 'package:dot_curved_bottom_nav/dot_curved_bottom_nav.dart';
+import 'package:bubble/pages/chat_list.dart';
+import 'package:bubble/pages/bots.dart';
+import 'package:bubble/pages/profile.dart';
+import 'package:bubble/model/model.dart';
 import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/services/database_service.dart';
@@ -59,13 +60,21 @@ class _MyAppState extends State<MyApp> {
         ),
         textTheme: TextTheme(
           bodyLarge: TextStyle(fontSize: _fontSize),
-        )
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: ButtonStyle(
+            overlayColor: WidgetStateProperty.all(Colors.grey.shade600),
+          ),
+        ),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: ColorScheme.dark(
           secondary: Colors.grey.shade600,
         ),
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(fontSize: _fontSize),
+        )
       ),
       home: const MainPage(),
     );
@@ -81,6 +90,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
+  final ScrollController _scrollController = ScrollController();
 
   final List<Widget> _pages = [
     const ChatListPage(),
@@ -92,37 +102,35 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: Theme.of(context).textTheme.bodyLarge?.fontSize??16,
-        unselectedFontSize: Theme.of(context).textTheme.bodyLarge?.fontSize??16,
-        selectedItemColor: Theme.of(context).colorScheme.onSurface,
-        unselectedItemColor: Theme.of(context).colorScheme.onSurface,
+      bottomNavigationBar: DotCurvedBottomNav(
+        scrollController: _scrollController,
+        hideOnScroll: true,
+        indicatorColor: Theme.of(context).colorScheme.onSurface,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        animationDuration: const Duration(milliseconds: 300),
+        animationCurve: Curves.ease,
+        selectedIndex: _currentIndex,
+        indicatorSize: 5,
+        borderRadius: 24,
+        height: 70,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          setState(() => _currentIndex = index);
         },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            activeIcon: Icon(Icons.chat_bubble_rounded),
-            label: '',
+        items: [
+          Icon(
+              Icons.chat_bubble_rounded,
+              color: _currentIndex == 0 ? Theme.of(context).colorScheme.onSurface: Theme.of(context).colorScheme.onSurface,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.smart_toy_outlined),
-            activeIcon: Icon(Icons.smart_toy_rounded),
-            label: '',
+          Icon(
+              Icons.smart_toy_rounded,
+              color: _currentIndex == 1 ? Theme.of(context).colorScheme.onSurface: Theme.of(context).colorScheme.onSurface,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: '',
+          Icon(
+              Icons.person,
+              color: _currentIndex == 2 ? Theme.of(context).colorScheme.onSurface: Theme.of(context).colorScheme.onSurface,
           ),
         ],
-      ),
+    ),
     );
   }
 }

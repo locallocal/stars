@@ -231,11 +231,17 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(widget.bot.name, style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-        )),
+        title: Text(
+          widget.bot.name,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0, // 防止滚动时背景色变化
+        elevation: 0, // 移除阴影
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -255,7 +261,85 @@ class _ChatPageState extends State<ChatPage> {
                   Expanded(
                     child:
                         _messages.isEmpty
-                            ? const Center(child: Text('暂无消息，开始聊天吧'))
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // AI智能体图标
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.secondary.withOpacity(0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.smart_toy_rounded,
+                                      size: 60,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  // 智能体名称
+                                  Text(
+                                    widget.bot.name,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // 问候语
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32.0,
+                                    ),
+                                    child: Text(
+                                      "你好！我是${widget.bot.name}，一个AI助手。请随时向我提问，我会尽力帮助你。",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 32),
+                                  // 提示开始聊天
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.secondary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      "在下方输入框发送消息开始聊天",
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
                             : Column(
                               children: [
                                 Expanded(
@@ -429,48 +513,49 @@ class _ChatPageState extends State<ChatPage> {
                             ),
                   ),
 
-                  // 输入框
+                  // 输入框区域
                   Container(
-                    padding: const EdgeInsets.only(
-                      left: 8.0,
-                      right: 8.0,
-                      top: 8.0,
-                      bottom: 24.0,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
                     ),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        top: BorderSide(width: 0.5),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        // 输入框
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            child: TextField(
-                              controller: _messageController,
-                              textInputAction: TextInputAction.send,
-                              onSubmitted: (value) => _sendMessage(),
-                              decoration: const InputDecoration(
-                                hintText: '发消息...',
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 10.0,
-                                ),
-                              ),
-                            ),
-                          ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.secondary.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(30.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          offset: const Offset(0, 2),
+                          blurRadius: 8,
+                          spreadRadius: 0,
                         ),
                       ],
                     ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 20.0,
+                        right: 8.0,
+                        top: 8.0,
+                        bottom: 8.0,
+                      ),
+                      child: TextField(
+                        controller: _messageController,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (value) => _sendMessage(),
+                        decoration: const InputDecoration(
+                          hintText: '发送消息...',
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10.0),
+                        ),
+                        maxLines: null,
+                        minLines: 1,
+                        textAlignVertical: TextAlignVertical.center,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8.0),
+                  const SizedBox(height: 8.0),
                 ],
               ),
     );

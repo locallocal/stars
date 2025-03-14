@@ -36,13 +36,10 @@ class ChatListItem extends StatelessWidget {
                 Tooltip(
                   message: '点击查看资料',
                   child: CircleAvatar(
-                    radius: 25,
+                    radius: 24,
                     backgroundImage:
                         avatar.isNotEmpty ? FileImage(File(avatar)) : null,
-                    child:
-                        avatar.isEmpty
-                            ? const Icon(Icons.smart_toy)
-                            : null,
+                    child: avatar.isEmpty ? const Icon(Icons.smart_toy) : null,
                   ),
                 ),
                 if (isStarred)
@@ -51,13 +48,8 @@ class ChatListItem extends StatelessWidget {
                     bottom: 0,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.star,
-                        size: 12,
-                      ),
+                      decoration: const BoxDecoration(shape: BoxShape.circle),
+                      child: const Icon(Icons.star, size: 12),
                     ),
                   ),
               ],
@@ -73,13 +65,9 @@ class ChatListItem extends StatelessWidget {
                     children: [
                       Text(
                         nickname,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      Text(
-                        timestamp,
-                      ),
+                      Text(timestamp),
                     ],
                   ),
                   const SizedBox(height: 4),

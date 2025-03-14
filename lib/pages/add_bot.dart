@@ -96,14 +96,12 @@ class _AddBotPageState extends State<AddBotPage> {
 
   bool _isLoadingModels = false; // 添加加载状态变量
 
-
-
   // 添加获取模型列表的方法
   Future<void> _fetchModels() async {
     if (apiKeyController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先输入API密钥')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请先输入API密钥')));
       return;
     }
 
@@ -141,24 +139,18 @@ class _AddBotPageState extends State<AddBotPage> {
           selectedModel = models.first;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('成功获取${models.length}个模型'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('成功获取${models.length}个模型')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('未获取到模型列表'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('未获取到模型列表')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('获取模型列表失败: ${e.toString()}'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('获取模型列表失败: ${e.toString()}')));
     } finally {
       setState(() {
         _isLoadingModels = false;
@@ -205,11 +197,17 @@ class _AddBotPageState extends State<AddBotPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('添加智能体', style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-        )),
+        title: Text(
+          '添加智能体',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0, // 防止滚动时背景色变化
+        elevation: 0, // 移除阴影
+        surfaceTintColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -221,23 +219,20 @@ class _AddBotPageState extends State<AddBotPage> {
               child: GestureDetector(
                 onTap: _pickImage,
                 child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Theme.of(context).colorScheme.onSurface,
+                  radius: 64,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
                   backgroundImage:
                       avatarImage != null ? FileImage(avatarImage!) : null,
                   child:
                       avatarImage == null
-                          ? const Icon(
-                            Icons.add_a_photo,
-                            size: 40,
+                          ? Icon(
+                            Icons.smart_toy_rounded,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.onSurface,
                           )
                           : null,
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text('点击添加头像'),
             ),
             const SizedBox(height: 24),
 
@@ -256,13 +251,11 @@ class _AddBotPageState extends State<AddBotPage> {
                   hoverColor: Theme.of(context).colorScheme.secondary,
                   prefixIcon: const Icon(Icons.smart_toy),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // 选择提供商
             const Text('选择提供商:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -289,16 +282,26 @@ class _AddBotPageState extends State<AddBotPage> {
                           ...providers.map((provider) {
                             return DropdownMenuItem<String>(
                               value: provider,
-                              child: Text(provider, style: TextStyle(
-                                fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize),
+                              child: Text(
+                                provider,
+                                style: TextStyle(
+                                  fontSize:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.fontSize,
+                                ),
                               ),
                             );
                           }),
                           DropdownMenuItem<String>(
                             value: 'custom',
-                            child: Text('自定义供应商...', 
+                            child: Text(
+                              '自定义供应商...',
                               style: TextStyle(
-                                fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize
+                                fontSize:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.fontSize,
                               ),
                             ),
                           ),
@@ -333,9 +336,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           hintText: '输入供应商名称...',
                           prefixIcon: Icon(Icons.business),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 12,
-                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
                           suffixIcon: IconButton(
                             icon: Icon(Icons.close),
                             onPressed: () {
@@ -380,9 +381,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   hintText: '输入API地址...',
                   prefixIcon: Icon(Icons.link),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 onChanged: (value) {
                   // 当用户修改地址时，更新modelsByProvider中的base_url
@@ -406,9 +405,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   hintText: '输入API密钥...',
                   prefixIcon: const Icon(Icons.key),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   suffixIcon:
                       _isLoadingModels
                           ? const SizedBox(
@@ -447,11 +444,15 @@ class _AddBotPageState extends State<AddBotPage> {
                       value:
                           currentModels.contains(selectedModel)
                               ? selectedModel
-                              : (currentModels.isNotEmpty ? currentModels.first : ''),
-                      hint: Text('请先获取模型列表',
+                              : (currentModels.isNotEmpty
+                                  ? currentModels.first
+                                  : ''),
+                      hint: Text(
+                        '请先获取模型列表',
                         style: TextStyle(
-                          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-                        )
+                          fontSize:
+                              Theme.of(context).textTheme.bodyLarge?.fontSize,
+                        ),
                       ),
                       underline: const SizedBox(),
                       items:
@@ -462,7 +463,10 @@ class _AddBotPageState extends State<AddBotPage> {
                                   child: Text(
                                     '请先获取模型列表',
                                     style: TextStyle(
-                                      fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                                      fontSize:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.fontSize,
                                     ),
                                   ),
                                 ),
@@ -473,7 +477,10 @@ class _AddBotPageState extends State<AddBotPage> {
                                   child: Text(
                                     model,
                                     style: TextStyle(
-                                      fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                                      fontSize:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.fontSize,
                                     ),
                                   ),
                                 );
@@ -507,7 +514,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
-                    horizontal: 12
+                    horizontal: 12,
                   ),
                 ),
                 maxLines: 5,
@@ -566,11 +573,14 @@ class _AddBotPageState extends State<AddBotPage> {
               );
             }
           },
-          child: Text('添加智能体', style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-            color: Theme.of(context).colorScheme.surface,
-          ),),
+          child: Text(
+            '添加智能体',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+              color: Theme.of(context).colorScheme.surface,
+            ),
+          ),
         ),
       ),
     );

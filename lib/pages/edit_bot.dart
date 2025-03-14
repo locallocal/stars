@@ -64,11 +64,17 @@ class _EditAIBotPageState extends State<EditBotPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('编辑智能体', style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-        )),
+        title: Text(
+          '编辑智能体',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0, // 防止滚动时背景色变化
+        elevation: 0, // 移除阴影
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.delete),
@@ -125,9 +131,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
               ),
             ),
             const SizedBox(height: 8),
-            const Center(
-              child: Text('点击更换头像'),
-            ),
+            const Center(child: Text('点击更换头像')),
             const SizedBox(height: 24),
 
             // 智能体名称
@@ -263,11 +267,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
               );
             } else {
               // 显示错误提示
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('请填写智能体名称'),
-                ),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('请填写智能体名称')));
             }
           },
           child: const Text('保存修改'),

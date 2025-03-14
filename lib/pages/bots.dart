@@ -61,11 +61,17 @@ class _ContactsPageState extends State<ContactsPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('智能体', style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-        )),
+        title: Text(
+          '智能体',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+          ),
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0, // 防止滚动时背景色变化
+        elevation: 0, // 移除阴影
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -106,9 +112,7 @@ class _ContactsPageState extends State<ContactsPage> {
                           fillColor: Theme.of(context).colorScheme.secondary,
                           focusColor: Theme.of(context).colorScheme.secondary,
                           hoverColor: Theme.of(context).colorScheme.secondary,
-                          prefixIcon: const Icon(
-                            Icons.search,
-                          ),
+                          prefixIcon: const Icon(Icons.search),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 12,
@@ -133,6 +137,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                 final bot = filteredBots[index];
                                 return ListTile(
                                   leading: CircleAvatar(
+                                    radius: 24,
                                     backgroundImage:
                                         bot.avatar.isNotEmpty
                                             ? FileImage(File(bot.avatar))
