@@ -262,9 +262,7 @@ class _AddBotPageState extends State<AddBotPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // 选择提供商
             const Text('选择提供商:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -439,40 +437,57 @@ class _AddBotPageState extends State<AddBotPage> {
                 color: Theme.of(context).colorScheme.secondary,
                 borderRadius: BorderRadius.circular(24.0),
               ),
-              child: DropdownButton<String>(
-                isExpanded: true,
-                value:
-                    currentModels.contains(selectedModel)
-                        ? selectedModel
-                        : (currentModels.isNotEmpty ? currentModels.first : ''),
-                hint: const Text('请先获取模型列表'),
-                underline: const SizedBox(),
-                items:
-                    currentModels.isEmpty
-                        ? [
-                          DropdownMenuItem<String>(
-                            value: '',
-                            child: Text(
-                              '请先获取模型列表',
-                              style: TextStyle(
-                                fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-                              ),
-                            ),
-                          ),
-                        ]
-                        : currentModels.map((model) {
-                          return DropdownMenuItem<String>(
-                            value: model,
-                            child: Text(model),
-                          );
-                        }).toList(),
-                onChanged: (value) {
-                  if (value != null && value.isNotEmpty) {
-                    setState(() {
-                      selectedModel = value;
-                    });
-                  }
-                },
+              child: Row(
+                children: [
+                  const Icon(Icons.model_training), // 添加模型图标
+                  const SizedBox(width: 16), // 添加间距
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value:
+                          currentModels.contains(selectedModel)
+                              ? selectedModel
+                              : (currentModels.isNotEmpty ? currentModels.first : ''),
+                      hint: Text('请先获取模型列表',
+                        style: TextStyle(
+                          fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                        )
+                      ),
+                      underline: const SizedBox(),
+                      items:
+                          currentModels.isEmpty
+                              ? [
+                                DropdownMenuItem<String>(
+                                  value: '',
+                                  child: Text(
+                                    '请先获取模型列表',
+                                    style: TextStyle(
+                                      fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                                    ),
+                                  ),
+                                ),
+                              ]
+                              : currentModels.map((model) {
+                                return DropdownMenuItem<String>(
+                                  value: model,
+                                  child: Text(
+                                    model,
+                                    style: TextStyle(
+                                      fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                      onChanged: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          setState(() {
+                            selectedModel = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
