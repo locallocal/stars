@@ -55,6 +55,7 @@ class ChatListItem extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 12),
+
             // 聊天信息区域
             Expanded(
               child: Column(
@@ -65,7 +66,11 @@ class ChatListItem extends StatelessWidget {
                     children: [
                       Text(
                         nickname,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize:
+                              Theme.of(context).textTheme.bodyLarge?.fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(timestamp),
                     ],

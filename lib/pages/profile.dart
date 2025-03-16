@@ -475,7 +475,7 @@ class _ProfilePageState extends State<ProfilePage> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const FlutterLogo(size: 60),
+                const BubbleLogo(size: 60),
                 const SizedBox(height: 24),
                 Text(
                   "泡泡 - AI聊天助手",
@@ -494,16 +494,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 16),
                 Text(
                   "一个简单而强大的AI聊天应用，让您随时随地与AI进行对话。",
-                  style: TextStyle(fontSize: _fontSize - 2),
+                  style: TextStyle(fontSize: _fontSize),
                   textAlign: TextAlign.start,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "© 2023 泡泡团队",
-                  style: TextStyle(
-                    fontSize: _fontSize - 2,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  "© 2025 泡泡团队",
+                  style: TextStyle(fontSize: _fontSize),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -523,7 +520,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         "用户协议",
                         style: TextStyle(
-                          fontSize: _fontSize - 2,
+                          fontSize: _fontSize,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
@@ -542,7 +539,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         "隐私政策",
                         style: TextStyle(
-                          fontSize: _fontSize - 2,
+                          fontSize: _fontSize,
                           color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
@@ -567,6 +564,39 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
+    );
+  }
+}
+
+// 自定义Logo组件
+class BubbleLogo extends StatelessWidget {
+  final double size;
+
+  const BubbleLogo({super.key, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Image.asset(
+          'assets/icon/app_icon.png',
+          width: size * 0.7,
+          height: size * 0.7,
+        ),
+      ),
     );
   }
 }

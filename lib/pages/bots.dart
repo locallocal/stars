@@ -74,7 +74,7 @@ class _ContactsPageState extends State<ContactsPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_circle),
             onPressed: () {
               Navigator.push(
                 context,
@@ -149,7 +149,12 @@ class _ContactsPageState extends State<ContactsPage> {
                                             ? const Icon(Icons.smart_toy)
                                             : null,
                                   ),
-                                  title: Text(bot.name),
+                                  title: Text(
+                                    bot.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   subtitle: Text(
                                     '${bot.provider} - ${bot.model}',
                                   ),

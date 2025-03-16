@@ -217,6 +217,40 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
             const SizedBox(height: 16),
 
+            // API类型（禁用编辑）
+            const Text('API类型:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary,
+                borderRadius: BorderRadius.circular(24.0),
+              ),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.category_outlined),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: widget.bot.apiType,
+                      underline: const SizedBox(),
+                      items:
+                          [widget.bot.apiType].map((type) {
+                            return DropdownMenuItem<String>(
+                              value: type,
+                              child: Text(type),
+                            );
+                          }).toList(),
+                      onChanged: null, // 禁用更改
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // API地址（禁用编辑）
             const Text('API地址:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

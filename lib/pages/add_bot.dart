@@ -245,7 +245,10 @@ class _AddBotPageState extends State<AddBotPage> {
               child: TextField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  hintText: '名称...',
+                  hintText: '请输入名称...',
+                  hintStyle: TextStyle(
+                    fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                  ),
                   fillColor: Theme.of(context).colorScheme.secondary,
                   focusColor: Theme.of(context).colorScheme.secondary,
                   hoverColor: Theme.of(context).colorScheme.secondary,
@@ -367,6 +370,133 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
             const SizedBox(height: 16),
 
+            // api类型
+            const Text('API类型:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary,
+                borderRadius: BorderRadius.circular(24.0),
+              ),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.category_outlined),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      borderRadius: BorderRadius.circular(24.0),
+                      isExpanded: true,
+                      value:
+                          modelsByProvider[selectedProvider]?['api_type']
+                              as String? ??
+                          Bot.apiTypeOpenAI,
+                      underline: const SizedBox(),
+                      items: [
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeOpenAI,
+                          child: Text(
+                            'OpenAI兼容',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeAnthropic,
+                          child: Text(
+                            'Anthropic',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeGemini,
+                          child: Text(
+                            'Gemini',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeDeepseek,
+                          child: Text(
+                            'DeepSeek',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeOllama,
+                          child: Text(
+                            'Ollama',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeHuggingface,
+                          child: Text(
+                            'HuggingFace',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeGrok,
+                          child: Text(
+                            'Grok',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged:
+                          isCustomProvider
+                              ? (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    modelsByProvider[selectedProvider]?['api_type'] =
+                                        value;
+                                  });
+                                }
+                              }
+                              : null, // 非自定义供应商时禁用更改
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // 添加供应商地址输入
             const Text('API地址:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -436,8 +566,8 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.model_training), // 添加模型图标
-                  const SizedBox(width: 16), // 添加间距
+                  const Icon(Icons.auto_awesome),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<String>(
                       isExpanded: true,
