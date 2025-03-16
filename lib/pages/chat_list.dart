@@ -31,12 +31,25 @@ class _ChatListPageState extends State<ChatListPage> {
       isLoading = true;
     });
 
+    // 获取最新的聊天列表和机器人信息
     final loadedChats = await ChatService.getChatList();
     final loadedBots = await BotService.getBots();
-    setState(() {
-      chatList = loadedChats;
-      bots = loadedBots;
-      isLoading = false;
+    if (mounted) {
+      setState(() {
+        chatList = loadedChats;
+        bots = loadedBots;
+        isLoading = false;
+      });
+    }
+  }
+
+  // 在页面重新获得焦点时刷新数据
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 当页面重新获得焦点时刷新聊天列表
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadChatList();
     });
   }
 
@@ -101,17 +114,16 @@ class _ChatListPageState extends State<ChatListPage> {
                                 final bot = bots[index];
                                 return ListTile(
                                   leading: CircleAvatar(
+                                    radius: 24,
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
                                     backgroundImage:
                                         bot.avatar.isNotEmpty
                                             ? FileImage(File(bot.avatar))
                                             : null,
                                     child:
                                         bot.avatar.isEmpty
-                                            ? Text(
-                                              bot.name.isNotEmpty
-                                                  ? bot.name.substring(0, 1)
-                                                  : '?',
-                                            )
+                                            ? const Icon(Icons.smart_toy)
                                             : null,
                                   ),
                                   title: Text(
@@ -121,7 +133,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    '智能体 (${bot.provider}-${bot.model})',
+                                    '${bot.provider}-${bot.model}',
                                   ),
                                   onTap: () async {
                                     Navigator.pop(context); // 关闭对话框
@@ -147,7 +159,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                             (context) => ChatPage(bot: bot),
                                       ),
                                     ).then((_) {
-                                      // 刷新聊天列表
+                                      // 聊天页面返回后立即刷新聊天列表
                                       _loadChatList();
                                     });
                                   },
@@ -217,7 +229,8 @@ class _ChatListPageState extends State<ChatListPage> {
                                   // 使用chat.botId作为key，而不是bot.botId
                                   key: Key(chat.botId),
                                   background: Container(
-                                    color: Theme.of(context).colorScheme.error,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                     alignment: Alignment.centerRight,
                                     padding: const EdgeInsets.only(right: 20.0),
                                     child: const Icon(Icons.delete),
@@ -228,10 +241,22 @@ class _ChatListPageState extends State<ChatListPage> {
                                       context: context,
                                       builder:
                                           (context) => AlertDialog(
-                                            title: const Text('删除聊天'),
+                                            title: Center(
+                                              child: Text(
+                                                '删除聊天',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize:
+                                                      Theme.of(context)
+                                                          .textTheme
+                                                          .bodyLarge
+                                                          ?.fontSize,
+                                                ),
+                                              ),
+                                            ),
                                             // 使用bot.name替代chat.botId显示更友好的名称
                                             content: Text(
-                                              '确定要删除与 "${bot.name}" 的聊天吗？',
+                                              '删除聊天会清空所有的聊天记录，确定要删除与 ${bot.name} 的聊天吗？',
                                             ),
                                             actions: [
                                               TextButton(
@@ -240,7 +265,15 @@ class _ChatListPageState extends State<ChatListPage> {
                                                       context,
                                                       false,
                                                     ),
-                                                child: const Text('取消'),
+                                                child: Text(
+                                                  '取消',
+                                                  style: TextStyle(
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.onSurface,
+                                                  ),
+                                                ),
                                               ),
                                               TextButton(
                                                 onPressed:
@@ -248,7 +281,15 @@ class _ChatListPageState extends State<ChatListPage> {
                                                       context,
                                                       true,
                                                     ),
-                                                child: const Text('删除'),
+                                                child: Text(
+                                                  '删除',
+                                                  style: TextStyle(
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).colorScheme.onSurface,
+                                                  ),
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -286,9 +327,9 @@ class _ChatListPageState extends State<ChatListPage> {
                                     lastMessage:
                                         chat.lastMessage.isEmpty
                                             ? '开始聊天吧'
-                                            : chat.lastMessage.length > 30
-                                                ? '${chat.lastMessage.substring(0, 30)}...'
-                                                : chat.lastMessage,
+                                            : chat.lastMessage.length > 25
+                                            ? '${chat.lastMessage.substring(0, 25)}...'
+                                            : chat.lastMessage,
                                     // 使用chat.lastMessageTimestamp替代chat.timestamp
                                     timestamp: _formatTimestamp(
                                       chat.lastMessageTimestamp,

@@ -220,7 +220,7 @@ class _AddBotPageState extends State<AddBotPage> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 64,
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   backgroundImage:
                       avatarImage != null ? FileImage(avatarImage!) : null,
                   child:

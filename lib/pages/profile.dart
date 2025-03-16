@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     CircleAvatar(
                       radius: 64,
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       backgroundImage:
                           _avatar.isNotEmpty ? FileImage(File(_avatar)) : null,
                       child:

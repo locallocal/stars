@@ -137,6 +137,8 @@ class _ContactsPageState extends State<ContactsPage> {
                                 final bot = filteredBots[index];
                                 return ListTile(
                                   leading: CircleAvatar(
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
                                     radius: 24,
                                     backgroundImage:
                                         bot.avatar.isNotEmpty

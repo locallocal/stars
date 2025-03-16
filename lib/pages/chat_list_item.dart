@@ -71,6 +71,17 @@ class ChatListItem extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
+                  Text(
+                    lastMessage,
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),

@@ -56,6 +56,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         brightness: Brightness.light,
         colorScheme: ColorScheme.light(
+          primary: Colors.blue.shade300,
           secondary: Colors.grey.shade300,
         ),
         textTheme: TextTheme(
@@ -70,6 +71,7 @@ class _MyAppState extends State<MyApp> {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: ColorScheme.dark(
+          primary: Colors.blue.shade600,
           secondary: Colors.grey.shade600,
         ),
         textTheme: TextTheme(

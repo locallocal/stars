@@ -244,7 +244,7 @@ class _ChatPageState extends State<ChatPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_sweep),
             tooltip: '清空聊天记录',
             onPressed: () {
               _showClearChatDialog();
@@ -287,7 +287,10 @@ class _ChatPageState extends State<ChatPage> {
                                   Text(
                                     widget.bot.name,
                                     style: TextStyle(
-                                      fontSize: 22,
+                                      fontSize:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.fontSize,
                                       fontWeight: FontWeight.bold,
                                       color:
                                           Theme.of(
@@ -344,13 +347,32 @@ class _ChatPageState extends State<ChatPage> {
                               children: [
                                 Expanded(
                                   child: ListView.builder(
-                                    controller:
-                                        _scrollController, // 添加ScrollController
+                                    controller: _scrollController,
                                     itemCount:
                                         _messages.length +
                                         (_isStreaming ? 1 : 0),
                                     padding: const EdgeInsets.all(8.0),
+                                    // 添加列表构建完成后的回调
                                     itemBuilder: (context, index) {
+                                      // 在列表构建完成后滚动到底部
+                                      if (index == _messages.length - 1) {
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                              if (_scrollController
+                                                  .hasClients) {
+                                                _scrollController.animateTo(
+                                                  _scrollController
+                                                      .position
+                                                      .maxScrollExtent,
+                                                  duration: const Duration(
+                                                    milliseconds: 300,
+                                                  ),
+                                                  curve: Curves.easeOut,
+                                                );
+                                              }
+                                            });
+                                      }
+
                                       if (_isStreaming &&
                                           index == _messages.length) {
                                         // 显示流式响应
@@ -382,9 +404,13 @@ class _ChatPageState extends State<ChatPage> {
                                                 data: _streamingResponse,
                                                 selectable: true,
                                                 styleSheet: MarkdownStyleSheet(
-                                                  p: const TextStyle(
+                                                  p: TextStyle(
                                                     color: Colors.black,
-                                                    fontSize: 16,
+                                                    fontSize:
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyLarge
+                                                            ?.fontSize,
                                                   ),
                                                   code: TextStyle(
                                                     color: Colors.black,
@@ -394,7 +420,6 @@ class _ChatPageState extends State<ChatPage> {
                                                   ),
                                                   blockquote: TextStyle(
                                                     color: Colors.black,
-                                                    fontStyle: FontStyle.italic,
                                                   ),
                                                 ),
                                               ),
@@ -482,6 +507,7 @@ class _ChatPageState extends State<ChatPage> {
                                     alignment: Alignment.centerLeft,
                                     child: Row(
                                       children: [
+                                        const SizedBox(width: 8),
                                         const SizedBox(
                                           width: 16,
                                           height: 16,
@@ -517,45 +543,31 @@ class _ChatPageState extends State<ChatPage> {
                   Container(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 16.0,
-                      vertical: 12.0,
+                      vertical: 16.0,
                     ),
                     decoration: BoxDecoration(
                       color: Theme.of(
                         context,
                       ).colorScheme.secondary.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(30.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          offset: const Offset(0, 2),
-                          blurRadius: 8,
-                          spreadRadius: 0,
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(24.0),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 20.0,
-                        right: 8.0,
-                        top: 8.0,
-                        bottom: 8.0,
-                      ),
-                      child: TextField(
-                        controller: _messageController,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (value) => _sendMessage(),
-                        decoration: const InputDecoration(
-                          hintText: '发送消息...',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10.0),
+                    child: TextField(
+                      controller: _messageController,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (value) => _sendMessage(),
+                      decoration: const InputDecoration(
+                        hintText: '发送消息...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 12.0,
+                          horizontal: 12.0,
                         ),
-                        maxLines: null,
-                        minLines: 1,
-                        textAlignVertical: TextAlignVertical.center,
                       ),
+                      maxLines: null,
+                      textAlignVertical: TextAlignVertical.center,
                     ),
                   ),
-                  const SizedBox(height: 8.0),
+                  const SizedBox(height: 16.0),
                 ],
               ),
     );
@@ -567,19 +579,37 @@ class _ChatPageState extends State<ChatPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('清空聊天记录'),
+            title: Center(
+              child: Text(
+                '清空聊天记录',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                ),
+              ),
+            ),
             content: Text('确定要清空与 "${widget.bot.name}" 的所有聊天记录吗？此操作不可恢复。'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('取消'),
+                child: Text(
+                  '取消',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   _clearChatMessages();
                 },
-                child: const Text('清空'),
+                child: Text(
+                  '清空',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
             ],
           ),
@@ -626,7 +656,6 @@ class _ChatPageState extends State<ChatPage> {
       _isTyping = false;
       _isStreaming = false;
       _isCancellable = false;
-
       _chatModel.cancelRequest();
 
       // 如果已经有部分响应，将其作为最终响应保存
