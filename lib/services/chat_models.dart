@@ -99,7 +99,6 @@ class OpenAIChatModel extends ChatModel {
         final models =
             (data['data'] as List)
                 .map((model) => model['id'] as String)
-                .where((id) => id.contains('gpt'))
                 .toList();
         return models;
       } else {
