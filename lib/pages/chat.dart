@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bubble/services/message_service.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/chat_service.dart';
-import 'package:bubble/services/chat_models.dart';
+import 'package:bubble/services/models/chat_models.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 // 聊天页面

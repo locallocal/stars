@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/chat_models.dart';
+import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/model/providers.dart';
 
 class AddBotPage extends StatefulWidget {
   final Function(Bot) onBotAdded;
@@ -26,54 +27,6 @@ class _AddBotPageState extends State<AddBotPage> {
   bool isCustomProvider = false; // 添加标志位
   String selectedModel = 'gpt-3.5-turbo';
   File? avatarImage;
-
-  final providers = [
-    'OpenAI',
-    'Anthropic',
-    'Gemini',
-    'DeepSeek',
-    'Ollama',
-    'HuggingFace',
-    'ChatGLM',
-    'Grok',
-    '百度文心',
-  ];
-  final modelsByProvider = {
-    'OpenAI': {
-      'api_type': Bot.apiTypeOpenAI,
-      'base_url': 'https://api.openai.com',
-      'models': [],
-    },
-    'Anthropic': {
-      'api_type': Bot.apiTypeAnthropic,
-      'base_url': 'https://api.anthropic.com',
-    },
-    'Gemini': {
-      'api_type': Bot.apiTypeGemini,
-      'base_url': 'https://generativelanguage.googleapis.com',
-    },
-    'DeepSeek': {
-      'api_type': Bot.apiTypeDeepseek,
-      'base_url': 'https://api.deepseek.com',
-    },
-    'Ollama': {
-      'api_type': Bot.apiTypeOllama,
-      'base_url': 'http://localhost:11434',
-    },
-    'HuggingFace': {
-      'api_type': Bot.apiTypeHuggingface,
-      'base_url': 'https://api-inference.huggingface.co',
-    },
-    'ChatGLM': {
-      'api_type': Bot.apiTypeOpenAI,
-      'base_url': 'http://localhost:8000',
-    },
-    'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
-    '百度文心': {
-      'api_type': Bot.apiTypeOpenAI,
-      'base_url': 'https://aip.baidubce.com',
-    },
-  };
 
   List<String> get currentModels {
     final providerInfo = modelsByProvider[selectedProvider];
@@ -265,12 +218,12 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 8),
             if (!isCustomProvider)
               Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.secondary,
                   borderRadius: BorderRadius.circular(24.0),
                 ),
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
                     const Icon(Icons.business),
@@ -397,7 +350,7 @@ class _AddBotPageState extends State<AddBotPage> {
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeOpenAI,
                           child: Text(
-                            'OpenAI兼容',
+                            'OpenAI',
                             style: TextStyle(
                               fontSize:
                                   Theme.of(
@@ -478,14 +431,37 @@ class _AddBotPageState extends State<AddBotPage> {
                             ),
                           ),
                         ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeVolcanoEngine,
+                          child: Text(
+                            'VolcanoEngine',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeTencent,
+                          child: Text(
+                            'Tencent',
+                            style: TextStyle(
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
                       ],
                       onChanged:
                           isCustomProvider
                               ? (value) {
                                 if (value != null) {
                                   setState(() {
-                                    modelsByProvider[selectedProvider]?['api_type'] =
-                                        value;
+                                    modelsByProvider[selectedProvider]?['api_type'] = value;
                                   });
                                 }
                               }
@@ -570,6 +546,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<String>(
+                      borderRadius: BorderRadius.circular(24.0),
                       isExpanded: true,
                       value:
                           currentModels.contains(selectedModel)

@@ -10,6 +10,8 @@ class Bot {
   static const apiTypeGrok = "grok";
   static const apiTypeHuggingface = "huggingface";
   static const apiTypeAnthropic = "anthropic";
+  static const apiTypeVolcanoEngine = "volcanoengine";
+  static const apiTypeTencent = "tencent";
 
   final String id;
   final String name;

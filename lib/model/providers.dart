@@ -1,0 +1,74 @@
+import 'package:bubble/model/model.dart';
+
+
+final providers = [
+  'OpenAI',
+  'Anthropic',
+  'Gemini',
+  'DeepSeek',
+  'Ollama',
+  'HuggingFace',
+  'Grok',
+  'ChatGLM',
+  'Aliyun',
+  'VolcanoEngine',
+  'Tencent',
+  'SilliconFlow',
+  'Baidu',
+];
+
+final modelsByProvider = {
+  'OpenAI': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.openai.com',
+    'models': [],
+  },
+  'Anthropic': {
+    'api_type': Bot.apiTypeAnthropic,
+    'base_url': 'https://api.anthropic.com',
+  },
+  'Gemini': {
+    'api_type': Bot.apiTypeGemini,
+    'base_url': 'https://generativelanguage.googleapis.com',
+  },
+  'DeepSeek': {
+    'api_type': Bot.apiTypeDeepseek,
+    'base_url': 'https://api.deepseek.com',
+  },
+  'Ollama': {
+    'api_type': Bot.apiTypeOllama,
+    'base_url': 'http://localhost:11434',
+  },
+  'HuggingFace': {
+    'api_type': Bot.apiTypeHuggingface,
+    'base_url': 'https://api-inference.huggingface.co',
+  },
+  'Grok': {
+    'api_type': Bot.apiTypeGrok,
+    'base_url': 'https://api.grok.ai'
+  },
+  'ChatGLM': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'http://localhost:8000',
+  },
+  'Aliyun': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://dashscope.aliyuncs.com/compatible-mode',
+  },
+  'VolcanoEngine': {
+    'api_type': Bot.apiTypeVolcanoEngine,
+    'base_url': 'https://ark.cn-beijing.volces.com/api',
+  },
+  'Tencent': {
+    'api_type': Bot.apiTypeTencent,
+    'base_url': 'https://api.hunyuan.cloud.tencent.com',
+  },
+  'SilliconFlow': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.siliconflow.cn',
+  },
+  'Baidu': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://aistudio.baidu.com/llm/lmapi/v3',
+  },
+};
