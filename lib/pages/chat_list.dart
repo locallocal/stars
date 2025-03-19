@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:bubble/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:bubble/pages/chat.dart';
 import 'package:bubble/pages/chat_list_item.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/bot_service.dart';
 import 'package:bubble/services/chat_service.dart';
+import 'package:bubble/generated/l10n.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
@@ -60,7 +60,7 @@ class _ChatListPageState extends State<ChatListPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          AppLocalizations.of(context).chats,
+          S.of(context).chats,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -83,7 +83,7 @@ class _ChatListPageState extends State<ChatListPage> {
                     (context) => AlertDialog(
                       title: Center(
                         child: Text(
-                          '选择智能体',
+                          S.of(context).newChat,
                           style: TextStyle(
                             fontSize:
                                 Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -269,7 +269,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                                       false,
                                                     ),
                                                 child: Text(
-                                                  '取消',
+                                                  S.of(context).cancel,
                                                   style: TextStyle(
                                                     color:
                                                         Theme.of(

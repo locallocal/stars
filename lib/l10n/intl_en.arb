@@ -1,0 +1,229 @@
+{
+    "@@locale": "en",
+    "appName": "Bubble",
+    "@appName": {
+        "description": "Application name"
+    },
+    "profile": "Profile",
+    "@profile": {
+        "description": "User profile"
+    },
+    "settings": "Settings",
+    "@settings": {
+        "description": "Settings"
+    },
+    "about": "About",
+    "@about": {
+        "description": "About"
+    },
+    "cancel": "Cancel",
+    "@cancel": {
+        "description": "Cancel button"
+    },
+    "save": "Save",
+    "@save": {
+        "description": "Save button"
+    },
+    "confirm": "Confirm",
+    "@confirm": {
+        "description": "Confirm button"
+    },
+    "home": "Home",
+    "@home": {
+        "description": "Home page"
+    },
+    "chats": "Chats",
+    "@chats": {
+        "description": "Chat list"
+    },
+    "newChat": "New Chat",
+    "@newChat": {
+        "description": "New chat"
+    },
+    "themeSettings": "Theme Settings",
+    "@themeSettings": {
+        "description": "Theme settings"
+    },
+    "followSystem": "Follow System",
+    "@followSystem": {
+        "description": "Follow system theme"
+    },
+    "lightMode": "Light Mode",
+    "@lightMode": {
+        "description": "Light mode"
+    },
+    "darkMode": "Dark Mode",
+    "@darkMode": {
+        "description": "Dark mode"
+    },
+    "languageSettings": "Language Settings",
+    "@languageSettings": {
+        "description": "Language settings"
+    },
+    "fontSizeSettings": "Font Size",
+    "@fontSizeSettings": {
+        "description": "Font size settings"
+    },
+    "adjustAppFontSize": "Adjust app font size",
+    "@adjustAppFontSize": {
+        "description": "Adjust application font size"
+    },
+    "name": "Name",
+    "@name": {
+        "description": "Name"
+    },
+    "editName": "Edit Name",
+    "@editName": {
+        "description": "Edit name"
+    },
+    "enterNewName": "Please enter new name",
+    "@enterNewName": {
+        "description": "Please enter new name"
+    },
+    "nameUpdated": "Name updated",
+    "@nameUpdated": {
+        "description": "Name has been updated"
+    },
+    "send": "Send",
+    "@send": {
+        "description": "Send button"
+    },
+    "typing": "Typing...",
+    "@typing": {
+        "description": "Typing indicator"
+    },
+    "clearChat": "Clear Chat",
+    "@clearChat": {
+        "description": "Clear chat"
+    },
+    "addBot": "Add Bot",
+    "@addBot": {
+        "description": "Add bot"
+    },
+    "editBot": "Edit Bot",
+    "@editBot": {
+        "description": "Edit bot"
+    },
+    "botName": "Bot Name",
+    "@botName": {
+        "description": "Bot name"
+    },
+    "botAvatar": "Bot Avatar",
+    "@botAvatar": {
+        "description": "Bot avatar"
+    },
+    "provider": "Provider",
+    "@provider": {
+        "description": "Provider"
+    },
+    "apiKey": "API Key",
+    "@apiKey": {
+        "description": "API key"
+    },
+    "model": "Model",
+    "@model": {
+        "description": "Model"
+    },
+    "systemPrompt": "System Prompt",
+    "@systemPrompt": {
+        "description": "System prompt"
+    },
+    "languageChanged": "Language set to {language}",
+    "@languageChanged": {
+        "description": "Language changed notification",
+        "placeholders": {
+            "language": {
+                "type": "Object",
+                "example": "English"
+            }
+        }
+    },
+    "selectLanguage": "Select Language",
+    "@selectLanguage": {
+        "description": "Select language"
+    },
+    "selectTheme": "Select Theme",
+    "@selectTheme": {
+        "description": "Select theme"
+    },
+    "adjustFontSize": "Adjust Font Size",
+    "@adjustFontSize": {
+        "description": "Adjust font size"
+    },
+    "previewText": "Preview text effect",
+    "@previewText": {
+        "description": "Preview text effect"
+    },
+    "fontSizeUpdated": "Font size updated",
+    "@fontSizeUpdated": {
+        "description": "Font size has been updated"
+    },
+    "themeSetToSystem": "Theme set to follow system",
+    "@themeSetToSystem": {
+        "description": "Theme set to follow system"
+    },
+    "themeSetToLight": "Theme set to light mode",
+    "@themeSetToLight": {
+        "description": "Theme set to light mode"
+    },
+    "themeSetToDark": "Theme set to dark mode",
+    "@themeSetToDark": {
+        "description": "Theme set to dark mode"
+    },
+    "aboutApp": "About Bubble",
+    "@aboutApp": {
+        "description": "About the app"
+    },
+    "appDescription": "A simple yet powerful AI chat application that lets you chat with AI anytime, anywhere.",
+    "@appDescription": {
+        "description": "App description"
+    },
+    "copyright": "© 2025 Bubble Team",
+    "@copyright": {
+        "description": "Copyright information"
+    },
+    "userAgreement": "User Agreement",
+    "@userAgreement": {
+        "description": "User agreement"
+    },
+    "privacyPolicy": "Privacy Policy",
+    "@privacyPolicy": {
+        "description": "Privacy policy"
+    },
+    "version": "Version 1.0.0",
+    "@version": {
+        "description": "Version information"
+    },
+    "appTitle": "Bubble - AI Chat Assistant",
+    "@appTitle": {
+        "description": "App title"
+    },
+    "selectBot": "Select Bot",
+    "@selectBot": {
+        "description": "Select bot"
+    },
+    "noBotsAvailable": "No bots available",
+    "@noBotsAvailable": {
+        "description": "No bots available"
+    },
+    "noChats": "No chats yet",
+    "@noChats": {
+        "description": "No chats yet"
+    },
+    "clickToStartChat": "Click + in the top right to start a chat",
+    "@clickToStartChat": {
+        "description": "Click to start chat prompt"
+    },
+    "deleteChat": "Delete Chat",
+    "@deleteChat": {
+        "description": "Delete chat"
+    },
+    "confirmDeleteChat": "Are you sure you want to delete this chat?",
+    "@confirmDeleteChat": {
+        "description": "Confirm delete chat"
+    },
+    "messageHint": "Type a message...",
+    "@messageHint": {
+        "description": "Message input hint"
+    }
+}

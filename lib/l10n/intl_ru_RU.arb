@@ -1,0 +1,229 @@
+{
+    "@@locale": "ru_RU",
+    "appName": "Баббл",
+    "@appName": {
+        "description": "Название приложения"
+    },
+    "profile": "Профиль",
+    "@profile": {
+        "description": "Профиль пользователя"
+    },
+    "settings": "Настройки",
+    "@settings": {
+        "description": "Настройки"
+    },
+    "about": "О приложении",
+    "@about": {
+        "description": "О приложении"
+    },
+    "cancel": "Отмена",
+    "@cancel": {
+        "description": "Кнопка отмены"
+    },
+    "save": "Сохранить",
+    "@save": {
+        "description": "Кнопка сохранения"
+    },
+    "confirm": "Подтвердить",
+    "@confirm": {
+        "description": "Кнопка подтверждения"
+    },
+    "home": "Главная",
+    "@home": {
+        "description": "Главная страница"
+    },
+    "chats": "Чаты",
+    "@chats": {
+        "description": "Список чатов"
+    },
+    "newChat": "Новый чат",
+    "@newChat": {
+        "description": "Новый чат"
+    },
+    "themeSettings": "Настройки темы",
+    "@themeSettings": {
+        "description": "Настройки темы"
+    },
+    "followSystem": "Системная",
+    "@followSystem": {
+        "description": "Следовать системной теме"
+    },
+    "lightMode": "Светлая тема",
+    "@lightMode": {
+        "description": "Светлая тема"
+    },
+    "darkMode": "Тёмная тема",
+    "@darkMode": {
+        "description": "Тёмная тема"
+    },
+    "languageSettings": "Настройки языка",
+    "@languageSettings": {
+        "description": "Настройки языка"
+    },
+    "fontSizeSettings": "Размер шрифта",
+    "@fontSizeSettings": {
+        "description": "Настройки размера шрифта"
+    },
+    "adjustAppFontSize": "Настроить размер шрифта приложения",
+    "@adjustAppFontSize": {
+        "description": "Настроить размер шрифта приложения"
+    },
+    "name": "Имя",
+    "@name": {
+        "description": "Имя"
+    },
+    "editName": "Изменить имя",
+    "@editName": {
+        "description": "Изменить имя"
+    },
+    "enterNewName": "Пожалуйста, введите новое имя",
+    "@enterNewName": {
+        "description": "Пожалуйста, введите новое имя"
+    },
+    "nameUpdated": "Имя обновлено",
+    "@nameUpdated": {
+        "description": "Имя было обновлено"
+    },
+    "send": "Отправить",
+    "@send": {
+        "description": "Кнопка отправки"
+    },
+    "typing": "Печатает...",
+    "@typing": {
+        "description": "Индикатор печати"
+    },
+    "clearChat": "Очистить чат",
+    "@clearChat": {
+        "description": "Очистить чат"
+    },
+    "addBot": "Добавить бота",
+    "@addBot": {
+        "description": "Добавить бота"
+    },
+    "editBot": "Редактировать бота",
+    "@editBot": {
+        "description": "Редактировать бота"
+    },
+    "botName": "Имя бота",
+    "@botName": {
+        "description": "Имя бота"
+    },
+    "botAvatar": "Аватар бота",
+    "@botAvatar": {
+        "description": "Аватар бота"
+    },
+    "provider": "Провайдер",
+    "@provider": {
+        "description": "Провайдер"
+    },
+    "apiKey": "API ключ",
+    "@apiKey": {
+        "description": "API ключ"
+    },
+    "model": "Модель",
+    "@model": {
+        "description": "Модель"
+    },
+    "systemPrompt": "Системный промпт",
+    "@systemPrompt": {
+        "description": "Системный промпт"
+    },
+    "languageChanged": "Язык изменен на {language}",
+    "@languageChanged": {
+        "description": "Уведомление об изменении языка",
+        "placeholders": {
+            "language": {
+                "type": "Object",
+                "example": "Русский"
+            }
+        }
+    },
+    "selectLanguage": "Выбрать язык",
+    "@selectLanguage": {
+        "description": "Выбрать язык"
+    },
+    "selectTheme": "Выбрать тему",
+    "@selectTheme": {
+        "description": "Выбрать тему"
+    },
+    "adjustFontSize": "Настроить размер шрифта",
+    "@adjustFontSize": {
+        "description": "Настроить размер шрифта"
+    },
+    "previewText": "Предварительный просмотр текста",
+    "@previewText": {
+        "description": "Предварительный просмотр текста"
+    },
+    "fontSizeUpdated": "Размер шрифта обновлен",
+    "@fontSizeUpdated": {
+        "description": "Размер шрифта был обновлен"
+    },
+    "themeSetToSystem": "Установлена системная тема",
+    "@themeSetToSystem": {
+        "description": "Установлена системная тема"
+    },
+    "themeSetToLight": "Установлена светлая тема",
+    "@themeSetToLight": {
+        "description": "Установлена светлая тема"
+    },
+    "themeSetToDark": "Установлена тёмная тема",
+    "@themeSetToDark": {
+        "description": "Установлена тёмная тема"
+    },
+    "aboutApp": "О приложении Баббл",
+    "@aboutApp": {
+        "description": "О приложении"
+    },
+    "appDescription": "Простое, но мощное приложение для чата с ИИ, которое позволяет общаться с искусственным интеллектом в любое время и в любом месте.",
+    "@appDescription": {
+        "description": "Описание приложения"
+    },
+    "copyright": "© 2025 Команда Баббл",
+    "@copyright": {
+        "description": "Информация об авторских правах"
+    },
+    "userAgreement": "Пользовательское соглашение",
+    "@userAgreement": {
+        "description": "Пользовательское соглашение"
+    },
+    "privacyPolicy": "Политика конфиденциальности",
+    "@privacyPolicy": {
+        "description": "Политика конфиденциальности"
+    },
+    "version": "Версия 1.0.0",
+    "@version": {
+        "description": "Информация о версии"
+    },
+    "appTitle": "Баббл - ИИ чат-ассистент",
+    "@appTitle": {
+        "description": "Заголовок приложения"
+    },
+    "selectBot": "Выбрать бота",
+    "@selectBot": {
+        "description": "Выбрать бота"
+    },
+    "noBotsAvailable": "Нет доступных ботов",
+    "@noBotsAvailable": {
+        "description": "Нет доступных ботов"
+    },
+    "noChats": "Пока нет чатов",
+    "@noChats": {
+        "description": "Пока нет чатов"
+    },
+    "clickToStartChat": "Нажмите + в правом верхнем углу, чтобы начать чат",
+    "@clickToStartChat": {
+        "description": "Подсказка для начала чата"
+    },
+    "deleteChat": "Удалить чат",
+    "@deleteChat": {
+        "description": "Удалить чат"
+    },
+    "confirmDeleteChat": "Вы уверены, что хотите удалить этот чат?",
+    "@confirmDeleteChat": {
+        "description": "Подтверждение удаления чата"
+    },
+    "messageHint": "Введите сообщение...",
+    "@messageHint": {
+        "description": "Подсказка для ввода сообщения"
+    }
+}

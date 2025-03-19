@@ -7,6 +7,8 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/user_agreement.dart';
 import 'package:bubble/pages/privacy_policy.dart';
 import 'package:bubble/l10n/app_localizations.dart';
+import 'package:bubble/generated/l10n.dart';
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -103,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          '我的',
+          S.of(context).profile,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,

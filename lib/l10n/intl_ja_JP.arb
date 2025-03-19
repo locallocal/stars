@@ -1,0 +1,229 @@
+{
+    "@@locale": "ja_JP",
+    "appName": "バブル",
+    "@appName": {
+        "description": "アプリケーション名"
+    },
+    "profile": "プロフィール",
+    "@profile": {
+        "description": "ユーザープロフィール"
+    },
+    "settings": "設定",
+    "@settings": {
+        "description": "設定"
+    },
+    "about": "アプリについて",
+    "@about": {
+        "description": "アプリについて"
+    },
+    "cancel": "キャンセル",
+    "@cancel": {
+        "description": "キャンセルボタン"
+    },
+    "save": "保存",
+    "@save": {
+        "description": "保存ボタン"
+    },
+    "confirm": "確認",
+    "@confirm": {
+        "description": "確認ボタン"
+    },
+    "home": "ホーム",
+    "@home": {
+        "description": "ホームページ"
+    },
+    "chats": "チャット",
+    "@chats": {
+        "description": "チャットリスト"
+    },
+    "newChat": "新しいチャット",
+    "@newChat": {
+        "description": "新しいチャット"
+    },
+    "themeSettings": "テーマ設定",
+    "@themeSettings": {
+        "description": "テーマ設定"
+    },
+    "followSystem": "システムに従う",
+    "@followSystem": {
+        "description": "システムテーマに従う"
+    },
+    "lightMode": "ライトモード",
+    "@lightMode": {
+        "description": "ライトモード"
+    },
+    "darkMode": "ダークモード",
+    "@darkMode": {
+        "description": "ダークモード"
+    },
+    "languageSettings": "言語設定",
+    "@languageSettings": {
+        "description": "言語設定"
+    },
+    "fontSizeSettings": "フォントサイズ",
+    "@fontSizeSettings": {
+        "description": "フォントサイズ設定"
+    },
+    "adjustAppFontSize": "アプリのフォントサイズを調整する",
+    "@adjustAppFontSize": {
+        "description": "アプリケーションのフォントサイズを調整する"
+    },
+    "name": "名前",
+    "@name": {
+        "description": "名前"
+    },
+    "editName": "名前を編集",
+    "@editName": {
+        "description": "名前を編集"
+    },
+    "enterNewName": "新しい名前を入力してください",
+    "@enterNewName": {
+        "description": "新しい名前を入力してください"
+    },
+    "nameUpdated": "名前が更新されました",
+    "@nameUpdated": {
+        "description": "名前が更新されました"
+    },
+    "send": "送信",
+    "@send": {
+        "description": "送信ボタン"
+    },
+    "typing": "入力中...",
+    "@typing": {
+        "description": "入力インジケーター"
+    },
+    "clearChat": "チャットをクリア",
+    "@clearChat": {
+        "description": "チャットをクリア"
+    },
+    "addBot": "ボットを追加",
+    "@addBot": {
+        "description": "ボットを追加"
+    },
+    "editBot": "ボットを編集",
+    "@editBot": {
+        "description": "ボットを編集"
+    },
+    "botName": "ボット名",
+    "@botName": {
+        "description": "ボット名"
+    },
+    "botAvatar": "ボットのアバター",
+    "@botAvatar": {
+        "description": "ボットのアバター"
+    },
+    "provider": "プロバイダー",
+    "@provider": {
+        "description": "プロバイダー"
+    },
+    "apiKey": "APIキー",
+    "@apiKey": {
+        "description": "APIキー"
+    },
+    "model": "モデル",
+    "@model": {
+        "description": "モデル"
+    },
+    "systemPrompt": "システムプロンプト",
+    "@systemPrompt": {
+        "description": "システムプロンプト"
+    },
+    "languageChanged": "言語が{language}に設定されました",
+    "@languageChanged": {
+        "description": "言語変更通知",
+        "placeholders": {
+            "language": {
+                "type": "String",
+                "example": "日本語"
+            }
+        }
+    },
+    "selectLanguage": "言語を選択",
+    "@selectLanguage": {
+        "description": "言語を選択"
+    },
+    "selectTheme": "テーマを選択",
+    "@selectTheme": {
+        "description": "テーマを選択"
+    },
+    "adjustFontSize": "フォントサイズを調整",
+    "@adjustFontSize": {
+        "description": "フォントサイズを調整"
+    },
+    "previewText": "テキスト効果のプレビュー",
+    "@previewText": {
+        "description": "テキスト効果のプレビュー"
+    },
+    "fontSizeUpdated": "フォントサイズが更新されました",
+    "@fontSizeUpdated": {
+        "description": "フォントサイズが更新されました"
+    },
+    "themeSetToSystem": "テーマがシステムに従うように設定されました",
+    "@themeSetToSystem": {
+        "description": "テーマがシステムに従うように設定されました"
+    },
+    "themeSetToLight": "テーマがライトモードに設定されました",
+    "@themeSetToLight": {
+        "description": "テーマがライトモードに設定されました"
+    },
+    "themeSetToDark": "テーマがダークモードに設定されました",
+    "@themeSetToDark": {
+        "description": "テーマがダークモードに設定されました"
+    },
+    "aboutApp": "バブルについて",
+    "@aboutApp": {
+        "description": "アプリについて"
+    },
+    "appDescription": "いつでもどこでもAIとチャットできるシンプルで強力なAIチャットアプリケーション。",
+    "@appDescription": {
+        "description": "アプリの説明"
+    },
+    "copyright": "© 2025 バブルチーム",
+    "@copyright": {
+        "description": "著作権情報"
+    },
+    "userAgreement": "ユーザー同意",
+    "@userAgreement": {
+        "description": "ユーザー同意"
+    },
+    "privacyPolicy": "プライバシーポリシー",
+    "@privacyPolicy": {
+        "description": "プライバシーポリシー"
+    },
+    "version": "バージョン 1.0.0",
+    "@version": {
+        "description": "バージョン情報"
+    },
+    "appTitle": "バブル - AIチャットアシスタント",
+    "@appTitle": {
+        "description": "アプリのタイトル"
+    },
+    "selectBot": "ボットを選択",
+    "@selectBot": {
+        "description": "ボットを選択"
+    },
+    "noBotsAvailable": "利用可能なボットがありません",
+    "@noBotsAvailable": {
+        "description": "利用可能なボットがありません"
+    },
+    "noChats": "まだチャットがありません",
+    "@noChats": {
+        "description": "まだチャットがありません"
+    },
+    "clickToStartChat": "右上の+をクリックしてチャットを開始",
+    "@clickToStartChat": {
+        "description": "チャットを開始するためのクリックプロンプト"
+    },
+    "deleteChat": "チャットを削除",
+    "@deleteChat": {
+        "description": "チャットを削除"
+    },
+    "confirmDeleteChat": "このチャットを削除してもよろしいですか？",
+    "@confirmDeleteChat": {
+        "description": "チャット削除の確認"
+    },
+    "messageHint": "メッセージを入力...",
+    "@messageHint": {
+        "description": "メッセージ入力のヒント"
+    }
+}

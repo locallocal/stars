@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:dot_curved_bottom_nav/dot_curved_bottom_nav.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:bubble/l10n/app_localizations.dart';
 import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/model/model.dart';
@@ -7,9 +10,7 @@ import 'package:bubble/pages/bots.dart';
 import 'package:bubble/pages/profile.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/services/database_service.dart';
-import 'package:dot_curved_bottom_nav/dot_curved_bottom_nav.dart';
-import 'package:intl/intl.dart';
-
+import 'package:bubble/generated/l10n.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,20 +41,21 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadSettings();
-    
+
     // 监听主题变化
     ProfileService.themeStream.listen((ThemeMode themeMode) {
       setState(() {
         _themeMode = themeMode;
       });
     });
-    
+
     // 监听语言变化
     ProfileService.languageStream.listen((String language) {
       setState(() {
         final parts = language.split('_');
         if (parts.length == 2) {
           _locale = Locale(parts[0], parts[1]);
+          S.load(_locale);
         }
       });
     });
@@ -64,10 +66,11 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _themeMode = intToThemeMode(profile.themeMode);
       _fontSize = profile.fontSize;
-      
+
       if (profile.language.isNotEmpty) {
         final parts = profile.language.split('_');
         if (parts.length == 2) {
+          S.load(_locale);
           _locale = Locale(parts[0], parts[1]);
         }
       }
@@ -104,13 +107,18 @@ class _MyAppState extends State<MyApp> {
         textTheme: TextTheme(
           bodyLarge: TextStyle(fontSize: _fontSize),
           bodyMedium: TextStyle(fontSize: _fontSize - 2),
-        )
+        ),
       ),
       themeMode: _themeMode,
-      
+
       // 国际化配置
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        S.delegate,
+      ],
+      supportedLocales: supportedLocales,
       locale: _locale,
       localeResolutionCallback: (locale, supportedLocales) {
         // 如果设备语言在支持的语言列表中，则使用设备语言
@@ -122,7 +130,7 @@ class _MyAppState extends State<MyApp> {
         // 否则使用第一个支持的语言（简体中文）
         return supportedLocales.first;
       },
-      
+
       home: const MainPage(),
     );
   }
@@ -165,19 +173,28 @@ class _MainPageState extends State<MainPage> {
         },
         items: [
           Icon(
-              Icons.chat_bubble_rounded,
-              color: _currentIndex == 0 ? Theme.of(context).colorScheme.onSurface: Theme.of(context).colorScheme.onSurface,
+            Icons.chat_bubble_rounded,
+            color:
+                _currentIndex == 0
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
-              Icons.smart_toy_rounded,
-              color: _currentIndex == 1 ? Theme.of(context).colorScheme.onSurface: Theme.of(context).colorScheme.onSurface,
+            Icons.smart_toy_rounded,
+            color:
+                _currentIndex == 1
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
-              Icons.person,
-              color: _currentIndex == 2 ? Theme.of(context).colorScheme.onSurface: Theme.of(context).colorScheme.onSurface,
+            Icons.person,
+            color:
+                _currentIndex == 2
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurface,
           ),
         ],
-    ),
+      ),
     );
   }
 }

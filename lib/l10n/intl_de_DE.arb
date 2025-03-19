@@ -1,0 +1,229 @@
+{
+    "@@locale": "de_DE",
+    "appName": "Bubble",
+    "@appName": {
+        "description": "Anwendungsname"
+    },
+    "profile": "Profil",
+    "@profile": {
+        "description": "Benutzerprofil"
+    },
+    "settings": "Einstellungen",
+    "@settings": {
+        "description": "Einstellungen"
+    },
+    "about": "Über",
+    "@about": {
+        "description": "Über"
+    },
+    "cancel": "Abbrechen",
+    "@cancel": {
+        "description": "Abbrechen-Schaltfläche"
+    },
+    "save": "Speichern",
+    "@save": {
+        "description": "Speichern-Schaltfläche"
+    },
+    "confirm": "Bestätigen",
+    "@confirm": {
+        "description": "Bestätigen-Schaltfläche"
+    },
+    "home": "Startseite",
+    "@home": {
+        "description": "Startseite"
+    },
+    "chats": "Chats",
+    "@chats": {
+        "description": "Chat-Liste"
+    },
+    "newChat": "Neuer Chat",
+    "@newChat": {
+        "description": "Neuer Chat"
+    },
+    "themeSettings": "Thema-Einstellungen",
+    "@themeSettings": {
+        "description": "Thema-Einstellungen"
+    },
+    "followSystem": "Systemeinstellung",
+    "@followSystem": {
+        "description": "Systemthema folgen"
+    },
+    "lightMode": "Helles Design",
+    "@lightMode": {
+        "description": "Helles Design"
+    },
+    "darkMode": "Dunkles Design",
+    "@darkMode": {
+        "description": "Dunkles Design"
+    },
+    "languageSettings": "Spracheinstellungen",
+    "@languageSettings": {
+        "description": "Spracheinstellungen"
+    },
+    "fontSizeSettings": "Schriftgröße",
+    "@fontSizeSettings": {
+        "description": "Schriftgrößeneinstellungen"
+    },
+    "adjustAppFontSize": "App-Schriftgröße anpassen",
+    "@adjustAppFontSize": {
+        "description": "Anwendungsschriftgröße anpassen"
+    },
+    "name": "Name",
+    "@name": {
+        "description": "Name"
+    },
+    "editName": "Name bearbeiten",
+    "@editName": {
+        "description": "Name bearbeiten"
+    },
+    "enterNewName": "Bitte neuen Namen eingeben",
+    "@enterNewName": {
+        "description": "Bitte neuen Namen eingeben"
+    },
+    "nameUpdated": "Name aktualisiert",
+    "@nameUpdated": {
+        "description": "Name wurde aktualisiert"
+    },
+    "send": "Senden",
+    "@send": {
+        "description": "Senden-Schaltfläche"
+    },
+    "typing": "Schreibt...",
+    "@typing": {
+        "description": "Tippanzeige"
+    },
+    "clearChat": "Chat löschen",
+    "@clearChat": {
+        "description": "Chat löschen"
+    },
+    "addBot": "Bot hinzufügen",
+    "@addBot": {
+        "description": "Bot hinzufügen"
+    },
+    "editBot": "Bot bearbeiten",
+    "@editBot": {
+        "description": "Bot bearbeiten"
+    },
+    "botName": "Bot-Name",
+    "@botName": {
+        "description": "Bot-Name"
+    },
+    "botAvatar": "Bot-Avatar",
+    "@botAvatar": {
+        "description": "Bot-Avatar"
+    },
+    "provider": "Anbieter",
+    "@provider": {
+        "description": "Anbieter"
+    },
+    "apiKey": "API-Schlüssel",
+    "@apiKey": {
+        "description": "API-Schlüssel"
+    },
+    "model": "Modell",
+    "@model": {
+        "description": "Modell"
+    },
+    "systemPrompt": "System-Prompt",
+    "@systemPrompt": {
+        "description": "System-Prompt"
+    },
+    "languageChanged": "Sprache auf {language} eingestellt",
+    "@languageChanged": {
+        "description": "Benachrichtigung über Sprachänderung",
+        "placeholders": {
+            "language": {
+                "type": "String",
+                "example": "Deutsch"
+            }
+        }
+    },
+    "selectLanguage": "Sprache auswählen",
+    "@selectLanguage": {
+        "description": "Sprache auswählen"
+    },
+    "selectTheme": "Thema auswählen",
+    "@selectTheme": {
+        "description": "Thema auswählen"
+    },
+    "adjustFontSize": "Schriftgröße anpassen",
+    "@adjustFontSize": {
+        "description": "Schriftgröße anpassen"
+    },
+    "previewText": "Texteffekt-Vorschau",
+    "@previewText": {
+        "description": "Texteffekt-Vorschau"
+    },
+    "fontSizeUpdated": "Schriftgröße aktualisiert",
+    "@fontSizeUpdated": {
+        "description": "Schriftgröße wurde aktualisiert"
+    },
+    "themeSetToSystem": "Thema auf Systemeinstellung gesetzt",
+    "@themeSetToSystem": {
+        "description": "Thema auf Systemeinstellung gesetzt"
+    },
+    "themeSetToLight": "Thema auf helles Design gesetzt",
+    "@themeSetToLight": {
+        "description": "Thema auf helles Design gesetzt"
+    },
+    "themeSetToDark": "Thema auf dunkles Design gesetzt",
+    "@themeSetToDark": {
+        "description": "Thema auf dunkles Design gesetzt"
+    },
+    "aboutApp": "Über Bubble",
+    "@aboutApp": {
+        "description": "Über die App"
+    },
+    "appDescription": "Eine einfache, aber leistungsstarke KI-Chat-Anwendung, mit der Sie jederzeit und überall mit KI chatten können.",
+    "@appDescription": {
+        "description": "App-Beschreibung"
+    },
+    "copyright": "© 2025 Bubble-Team",
+    "@copyright": {
+        "description": "Copyright-Informationen"
+    },
+    "userAgreement": "Benutzervereinbarung",
+    "@userAgreement": {
+        "description": "Benutzervereinbarung"
+    },
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "@privacyPolicy": {
+        "description": "Datenschutzrichtlinie"
+    },
+    "version": "Version 1.0.0",
+    "@version": {
+        "description": "Versionsinformationen"
+    },
+    "appTitle": "Bubble - KI-Chat-Assistent",
+    "@appTitle": {
+        "description": "App-Titel"
+    },
+    "selectBot": "Bot auswählen",
+    "@selectBot": {
+        "description": "Bot auswählen"
+    },
+    "noBotsAvailable": "Keine Bots verfügbar",
+    "@noBotsAvailable": {
+        "description": "Keine Bots verfügbar"
+    },
+    "noChats": "Noch keine Chats",
+    "@noChats": {
+        "description": "Noch keine Chats"
+    },
+    "clickToStartChat": "Klicken Sie auf + in der oberen rechten Ecke, um einen Chat zu starten",
+    "@clickToStartChat": {
+        "description": "Klicken Sie, um Chat-Aufforderung zu starten"
+    },
+    "deleteChat": "Chat löschen",
+    "@deleteChat": {
+        "description": "Chat löschen"
+    },
+    "confirmDeleteChat": "Sind Sie sicher, dass Sie diesen Chat löschen möchten?",
+    "@confirmDeleteChat": {
+        "description": "Chat-Löschung bestätigen"
+    },
+    "messageHint": "Nachricht eingeben...",
+    "@messageHint": {
+        "description": "Nachrichteneingabehinweis"
+    }
+}

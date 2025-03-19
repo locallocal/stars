@@ -1,0 +1,229 @@
+{
+    "@@locale": "zh_TW",
+    "appName": "泡泡",
+    "@appName": {
+        "description": "應用名稱"
+    },
+    "profile": "我的",
+    "@profile": {
+        "description": "個人資料"
+    },
+    "settings": "設定",
+    "@settings": {
+        "description": "設定"
+    },
+    "about": "關於",
+    "@about": {
+        "description": "關於"
+    },
+    "cancel": "取消",
+    "@cancel": {
+        "description": "取消按鈕"
+    },
+    "save": "儲存",
+    "@save": {
+        "description": "儲存按鈕"
+    },
+    "confirm": "確定",
+    "@confirm": {
+        "description": "確認按鈕"
+    },
+    "home": "首頁",
+    "@home": {
+        "description": "首頁"
+    },
+    "chats": "聊天",
+    "@chats": {
+        "description": "聊天列表"
+    },
+    "newChat": "新建聊天",
+    "@newChat": {
+        "description": "新建聊天"
+    },
+    "themeSettings": "主題設定",
+    "@themeSettings": {
+        "description": "主題設定"
+    },
+    "followSystem": "跟隨系統",
+    "@followSystem": {
+        "description": "跟隨系統主題"
+    },
+    "lightMode": "淺色模式",
+    "@lightMode": {
+        "description": "淺色模式"
+    },
+    "darkMode": "深色模式",
+    "@darkMode": {
+        "description": "深色模式"
+    },
+    "languageSettings": "語言設定",
+    "@languageSettings": {
+        "description": "語言設定"
+    },
+    "fontSizeSettings": "文字大小",
+    "@fontSizeSettings": {
+        "description": "文字大小設定"
+    },
+    "adjustAppFontSize": "調整應用內文字大小",
+    "@adjustAppFontSize": {
+        "description": "調整應用內文字大小"
+    },
+    "name": "名稱",
+    "@name": {
+        "description": "名稱"
+    },
+    "editName": "修改名稱",
+    "@editName": {
+        "description": "修改名稱"
+    },
+    "enterNewName": "請輸入新名稱",
+    "@enterNewName": {
+        "description": "請輸入新名稱"
+    },
+    "nameUpdated": "名稱已更新",
+    "@nameUpdated": {
+        "description": "名稱已更新"
+    },
+    "send": "發送",
+    "@send": {
+        "description": "發送按鈕"
+    },
+    "typing": "正在輸入...",
+    "@typing": {
+        "description": "正在輸入提示"
+    },
+    "clearChat": "清空聊天",
+    "@clearChat": {
+        "description": "清空聊天"
+    },
+    "addBot": "添加機器人",
+    "@addBot": {
+        "description": "添加機器人"
+    },
+    "editBot": "編輯機器人",
+    "@editBot": {
+        "description": "編輯機器人"
+    },
+    "botName": "機器人名稱",
+    "@botName": {
+        "description": "機器人名稱"
+    },
+    "botAvatar": "機器人頭像",
+    "@botAvatar": {
+        "description": "機器人頭像"
+    },
+    "provider": "供應商",
+    "@provider": {
+        "description": "供應商"
+    },
+    "apiKey": "API密鑰",
+    "@apiKey": {
+        "description": "API密鑰"
+    },
+    "model": "模型",
+    "@model": {
+        "description": "模型"
+    },
+    "systemPrompt": "系統提示詞",
+    "@systemPrompt": {
+        "description": "系統提示詞"
+    },
+    "languageChanged": "語言已設置為{language}",
+    "@languageChanged": {
+        "description": "語言已更改提示",
+        "placeholders": {
+            "language": {
+                "type": "Object",
+                "example": "繁體中文"
+            }
+        }
+    },
+    "selectLanguage": "選擇語言",
+    "@selectLanguage": {
+        "description": "選擇語言"
+    },
+    "selectTheme": "選擇主題",
+    "@selectTheme": {
+        "description": "選擇主題"
+    },
+    "adjustFontSize": "調整文字大小",
+    "@adjustFontSize": {
+        "description": "調整文字大小"
+    },
+    "previewText": "預覽文字效果",
+    "@previewText": {
+        "description": "預覽文字效果"
+    },
+    "fontSizeUpdated": "文字大小已更新",
+    "@fontSizeUpdated": {
+        "description": "文字大小已更新"
+    },
+    "themeSetToSystem": "已設置為跟隨系統主題",
+    "@themeSetToSystem": {
+        "description": "已設置為跟隨系統主題"
+    },
+    "themeSetToLight": "已設置為淺色模式",
+    "@themeSetToLight": {
+        "description": "已設置為淺色模式"
+    },
+    "themeSetToDark": "已設置為深色模式",
+    "@themeSetToDark": {
+        "description": "已設置為深色模式"
+    },
+    "aboutApp": "關於泡泡",
+    "@aboutApp": {
+        "description": "關於應用"
+    },
+    "appDescription": "一個簡單而強大的AI聊天應用，讓您隨時隨地與AI進行對話。",
+    "@appDescription": {
+        "description": "應用描述"
+    },
+    "copyright": "© 2025 泡泡團隊",
+    "@copyright": {
+        "description": "版權信息"
+    },
+    "userAgreement": "用戶協議",
+    "@userAgreement": {
+        "description": "用戶協議"
+    },
+    "privacyPolicy": "隱私政策",
+    "@privacyPolicy": {
+        "description": "隱私政策"
+    },
+    "version": "版本 1.0.0",
+    "@version": {
+        "description": "版本信息"
+    },
+    "appTitle": "泡泡 - AI聊天助手",
+    "@appTitle": {
+        "description": "應用標題"
+    },
+    "selectBot": "選擇智能體",
+    "@selectBot": {
+        "description": "選擇智能體"
+    },
+    "noBotsAvailable": "沒有可用的智能體",
+    "@noBotsAvailable": {
+        "description": "沒有可用的智能體"
+    },
+    "noChats": "還沒有聊天記錄",
+    "@noChats": {
+        "description": "還沒有聊天記錄"
+    },
+    "clickToStartChat": "點擊右上角 + 開始聊天",
+    "@clickToStartChat": {
+        "description": "點擊開始聊天提示"
+    },
+    "deleteChat": "刪除聊天",
+    "@deleteChat": {
+        "description": "刪除聊天"
+    },
+    "confirmDeleteChat": "確定要刪除此聊天嗎？",
+    "@confirmDeleteChat": {
+        "description": "確認刪除聊天"
+    },
+    "messageHint": "輸入消息...",
+    "@messageHint": {
+        "description": "消息輸入提示"
+    }
+}

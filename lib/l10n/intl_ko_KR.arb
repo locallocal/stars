@@ -1,0 +1,229 @@
+{
+    "@@locale": "ko_KR",
+    "appName": "버블",
+    "@appName": {
+        "description": "애플리케이션 이름"
+    },
+    "profile": "프로필",
+    "@profile": {
+        "description": "사용자 프로필"
+    },
+    "settings": "설정",
+    "@settings": {
+        "description": "설정"
+    },
+    "about": "정보",
+    "@about": {
+        "description": "정보"
+    },
+    "cancel": "취소",
+    "@cancel": {
+        "description": "취소 버튼"
+    },
+    "save": "저장",
+    "@save": {
+        "description": "저장 버튼"
+    },
+    "confirm": "확인",
+    "@confirm": {
+        "description": "확인 버튼"
+    },
+    "home": "홈",
+    "@home": {
+        "description": "홈 페이지"
+    },
+    "chats": "채팅",
+    "@chats": {
+        "description": "채팅 목록"
+    },
+    "newChat": "새 채팅",
+    "@newChat": {
+        "description": "새 채팅"
+    },
+    "themeSettings": "테마 설정",
+    "@themeSettings": {
+        "description": "테마 설정"
+    },
+    "followSystem": "시스템 설정 따르기",
+    "@followSystem": {
+        "description": "시스템 테마 따르기"
+    },
+    "lightMode": "라이트 모드",
+    "@lightMode": {
+        "description": "라이트 모드"
+    },
+    "darkMode": "다크 모드",
+    "@darkMode": {
+        "description": "다크 모드"
+    },
+    "languageSettings": "언어 설정",
+    "@languageSettings": {
+        "description": "언어 설정"
+    },
+    "fontSizeSettings": "글꼴 크기",
+    "@fontSizeSettings": {
+        "description": "글꼴 크기 설정"
+    },
+    "adjustAppFontSize": "앱 글꼴 크기 조정",
+    "@adjustAppFontSize": {
+        "description": "애플리케이션 글꼴 크기 조정"
+    },
+    "name": "이름",
+    "@name": {
+        "description": "이름"
+    },
+    "editName": "이름 수정",
+    "@editName": {
+        "description": "이름 수정"
+    },
+    "enterNewName": "새 이름을 입력하세요",
+    "@enterNewName": {
+        "description": "새 이름을 입력하세요"
+    },
+    "nameUpdated": "이름이 업데이트되었습니다",
+    "@nameUpdated": {
+        "description": "이름이 업데이트되었습니다"
+    },
+    "send": "보내기",
+    "@send": {
+        "description": "보내기 버튼"
+    },
+    "typing": "입력 중...",
+    "@typing": {
+        "description": "입력 표시기"
+    },
+    "clearChat": "채팅 지우기",
+    "@clearChat": {
+        "description": "채팅 지우기"
+    },
+    "addBot": "봇 추가",
+    "@addBot": {
+        "description": "봇 추가"
+    },
+    "editBot": "봇 편집",
+    "@editBot": {
+        "description": "봇 편집"
+    },
+    "botName": "봇 이름",
+    "@botName": {
+        "description": "봇 이름"
+    },
+    "botAvatar": "봇 아바타",
+    "@botAvatar": {
+        "description": "봇 아바타"
+    },
+    "provider": "제공자",
+    "@provider": {
+        "description": "제공자"
+    },
+    "apiKey": "API 키",
+    "@apiKey": {
+        "description": "API 키"
+    },
+    "model": "모델",
+    "@model": {
+        "description": "모델"
+    },
+    "systemPrompt": "시스템 프롬프트",
+    "@systemPrompt": {
+        "description": "시스템 프롬프트"
+    },
+    "languageChanged": "언어가 {language}(으)로 설정되었습니다",
+    "@languageChanged": {
+        "description": "언어 변경 알림",
+        "placeholders": {
+            "language": {
+                "type": "Object",
+                "example": "한국어"
+            }
+        }
+    },
+    "selectLanguage": "언어 선택",
+    "@selectLanguage": {
+        "description": "언어 선택"
+    },
+    "selectTheme": "테마 선택",
+    "@selectTheme": {
+        "description": "테마 선택"
+    },
+    "adjustFontSize": "글꼴 크기 조정",
+    "@adjustFontSize": {
+        "description": "글꼴 크기 조정"
+    },
+    "previewText": "텍스트 효과 미리보기",
+    "@previewText": {
+        "description": "텍스트 효과 미리보기"
+    },
+    "fontSizeUpdated": "글꼴 크기가 업데이트되었습니다",
+    "@fontSizeUpdated": {
+        "description": "글꼴 크기가 업데이트되었습니다"
+    },
+    "themeSetToSystem": "테마가 시스템 설정을 따르도록 설정되었습니다",
+    "@themeSetToSystem": {
+        "description": "테마가 시스템 설정을 따르도록 설정되었습니다"
+    },
+    "themeSetToLight": "테마가 라이트 모드로 설정되었습니다",
+    "@themeSetToLight": {
+        "description": "테마가 라이트 모드로 설정되었습니다"
+    },
+    "themeSetToDark": "테마가 다크 모드로 설정되었습니다",
+    "@themeSetToDark": {
+        "description": "테마가 다크 모드로 설정되었습니다"
+    },
+    "aboutApp": "버블 정보",
+    "@aboutApp": {
+        "description": "앱 정보"
+    },
+    "appDescription": "언제 어디서나 AI와 채팅할 수 있는 간단하면서도 강력한 AI 채팅 애플리케이션입니다.",
+    "@appDescription": {
+        "description": "앱 설명"
+    },
+    "copyright": "© 2025 버블 팀",
+    "@copyright": {
+        "description": "저작권 정보"
+    },
+    "userAgreement": "사용자 동의",
+    "@userAgreement": {
+        "description": "사용자 동의"
+    },
+    "privacyPolicy": "개인정보 처리방침",
+    "@privacyPolicy": {
+        "description": "개인정보 처리방침"
+    },
+    "version": "버전 1.0.0",
+    "@version": {
+        "description": "버전 정보"
+    },
+    "appTitle": "버블 - AI 채팅 어시스턴트",
+    "@appTitle": {
+        "description": "앱 제목"
+    },
+    "selectBot": "봇 선택",
+    "@selectBot": {
+        "description": "봇 선택"
+    },
+    "noBotsAvailable": "사용 가능한 봇이 없습니다",
+    "@noBotsAvailable": {
+        "description": "사용 가능한 봇이 없습니다"
+    },
+    "noChats": "아직 채팅이 없습니다",
+    "@noChats": {
+        "description": "아직 채팅이 없습니다"
+    },
+    "clickToStartChat": "오른쪽 상단의 +를 클릭하여 채팅 시작",
+    "@clickToStartChat": {
+        "description": "채팅 시작 안내"
+    },
+    "deleteChat": "채팅 삭제",
+    "@deleteChat": {
+        "description": "채팅 삭제"
+    },
+    "confirmDeleteChat": "이 채팅을 삭제하시겠습니까?",
+    "@confirmDeleteChat": {
+        "description": "채팅 삭제 확인"
+    },
+    "messageHint": "메시지 입력...",
+    "@messageHint": {
+        "description": "메시지 입력 힌트"
+    }
+}

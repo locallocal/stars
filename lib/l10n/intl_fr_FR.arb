@@ -1,0 +1,229 @@
+{
+    "@@locale": "fr_FR",
+    "appName": "Bubble",
+    "@appName": {
+        "description": "Nom de l'application"
+    },
+    "profile": "Profil",
+    "@profile": {
+        "description": "Profil utilisateur"
+    },
+    "settings": "Paramètres",
+    "@settings": {
+        "description": "Paramètres"
+    },
+    "about": "À propos",
+    "@about": {
+        "description": "À propos"
+    },
+    "cancel": "Annuler",
+    "@cancel": {
+        "description": "Bouton d'annulation"
+    },
+    "save": "Enregistrer",
+    "@save": {
+        "description": "Bouton d'enregistrement"
+    },
+    "confirm": "Confirmer",
+    "@confirm": {
+        "description": "Bouton de confirmation"
+    },
+    "home": "Accueil",
+    "@home": {
+        "description": "Page d'accueil"
+    },
+    "chats": "Discussions",
+    "@chats": {
+        "description": "Liste des discussions"
+    },
+    "newChat": "Nouvelle Discussion",
+    "@newChat": {
+        "description": "Nouvelle discussion"
+    },
+    "themeSettings": "Paramètres du Thème",
+    "@themeSettings": {
+        "description": "Paramètres du thème"
+    },
+    "followSystem": "Suivre le Système",
+    "@followSystem": {
+        "description": "Suivre le thème du système"
+    },
+    "lightMode": "Mode Clair",
+    "@lightMode": {
+        "description": "Mode clair"
+    },
+    "darkMode": "Mode Sombre",
+    "@darkMode": {
+        "description": "Mode sombre"
+    },
+    "languageSettings": "Paramètres de Langue",
+    "@languageSettings": {
+        "description": "Paramètres de langue"
+    },
+    "fontSizeSettings": "Taille de Police",
+    "@fontSizeSettings": {
+        "description": "Paramètres de taille de police"
+    },
+    "adjustAppFontSize": "Ajuster la taille de police de l'application",
+    "@adjustAppFontSize": {
+        "description": "Ajuster la taille de police de l'application"
+    },
+    "name": "Nom",
+    "@name": {
+        "description": "Nom"
+    },
+    "editName": "Modifier le Nom",
+    "@editName": {
+        "description": "Modifier le nom"
+    },
+    "enterNewName": "Veuillez entrer un nouveau nom",
+    "@enterNewName": {
+        "description": "Veuillez entrer un nouveau nom"
+    },
+    "nameUpdated": "Nom mis à jour",
+    "@nameUpdated": {
+        "description": "Le nom a été mis à jour"
+    },
+    "send": "Envoyer",
+    "@send": {
+        "description": "Bouton d'envoi"
+    },
+    "typing": "En train d'écrire...",
+    "@typing": {
+        "description": "Indicateur de frappe"
+    },
+    "clearChat": "Effacer la Discussion",
+    "@clearChat": {
+        "description": "Effacer la discussion"
+    },
+    "addBot": "Ajouter un Bot",
+    "@addBot": {
+        "description": "Ajouter un bot"
+    },
+    "editBot": "Modifier le Bot",
+    "@editBot": {
+        "description": "Modifier le bot"
+    },
+    "botName": "Nom du Bot",
+    "@botName": {
+        "description": "Nom du bot"
+    },
+    "botAvatar": "Avatar du Bot",
+    "@botAvatar": {
+        "description": "Avatar du bot"
+    },
+    "provider": "Fournisseur",
+    "@provider": {
+        "description": "Fournisseur"
+    },
+    "apiKey": "Clé API",
+    "@apiKey": {
+        "description": "Clé API"
+    },
+    "model": "Modèle",
+    "@model": {
+        "description": "Modèle"
+    },
+    "systemPrompt": "Invite Système",
+    "@systemPrompt": {
+        "description": "Invite système"
+    },
+    "languageChanged": "Langue définie sur {language}",
+    "@languageChanged": {
+        "description": "Notification de changement de langue",
+        "placeholders": {
+            "language": {
+                "type": "Object",
+                "example": "Français"
+            }
+        }
+    },
+    "selectLanguage": "Sélectionner la Langue",
+    "@selectLanguage": {
+        "description": "Sélectionner la langue"
+    },
+    "selectTheme": "Sélectionner le Thème",
+    "@selectTheme": {
+        "description": "Sélectionner le thème"
+    },
+    "adjustFontSize": "Ajuster la Taille de Police",
+    "@adjustFontSize": {
+        "description": "Ajuster la taille de police"
+    },
+    "previewText": "Aperçu de l'effet du texte",
+    "@previewText": {
+        "description": "Aperçu de l'effet du texte"
+    },
+    "fontSizeUpdated": "Taille de police mise à jour",
+    "@fontSizeUpdated": {
+        "description": "La taille de police a été mise à jour"
+    },
+    "themeSetToSystem": "Thème défini pour suivre le système",
+    "@themeSetToSystem": {
+        "description": "Thème défini pour suivre le système"
+    },
+    "themeSetToLight": "Thème défini sur mode clair",
+    "@themeSetToLight": {
+        "description": "Thème défini sur mode clair"
+    },
+    "themeSetToDark": "Thème défini sur mode sombre",
+    "@themeSetToDark": {
+        "description": "Thème défini sur mode sombre"
+    },
+    "aboutApp": "À propos de Bubble",
+    "@aboutApp": {
+        "description": "À propos de l'application"
+    },
+    "appDescription": "Une application de chat IA simple mais puissante qui vous permet de discuter avec l'IA n'importe quand, n'importe où.",
+    "@appDescription": {
+        "description": "Description de l'application"
+    },
+    "copyright": "© 2025 Équipe Bubble",
+    "@copyright": {
+        "description": "Informations sur le droit d'auteur"
+    },
+    "userAgreement": "Accord Utilisateur",
+    "@userAgreement": {
+        "description": "Accord utilisateur"
+    },
+    "privacyPolicy": "Politique de Confidentialité",
+    "@privacyPolicy": {
+        "description": "Politique de confidentialité"
+    },
+    "version": "Version 1.0.0",
+    "@version": {
+        "description": "Informations sur la version"
+    },
+    "appTitle": "Bubble - Assistant de Chat IA",
+    "@appTitle": {
+        "description": "Titre de l'application"
+    },
+    "selectBot": "Sélectionner un Bot",
+    "@selectBot": {
+        "description": "Sélectionner un bot"
+    },
+    "noBotsAvailable": "Aucun bot disponible",
+    "@noBotsAvailable": {
+        "description": "Aucun bot disponible"
+    },
+    "noChats": "Pas encore de discussions",
+    "@noChats": {
+        "description": "Pas encore de discussions"
+    },
+    "clickToStartChat": "Cliquez sur + en haut à droite pour commencer une discussion",
+    "@clickToStartChat": {
+        "description": "Cliquez pour commencer une discussion"
+    },
+    "deleteChat": "Supprimer la Discussion",
+    "@deleteChat": {
+        "description": "Supprimer la discussion"
+    },
+    "confirmDeleteChat": "Êtes-vous sûr de vouloir supprimer cette discussion?",
+    "@confirmDeleteChat": {
+        "description": "Confirmer la suppression de la discussion"
+    },
+    "messageHint": "Tapez un message...",
+    "@messageHint": {
+        "description": "Indice de saisie de message"
+    }
+}
