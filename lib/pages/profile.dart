@@ -6,6 +6,7 @@ import 'package:bubble/utils/utils.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/user_agreement.dart';
 import 'package:bubble/pages/privacy_policy.dart';
+import 'package:bubble/l10n/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,6 +19,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Profile? _profile;
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
+  String _language = 'zh_CN'; // 语言设置
 
   // 获取用户名
   String get _name => _profile?.name ?? "用户名";
@@ -25,6 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String get _avatar => _profile?.avatar ?? "";
   // 获取字体大小
   double get _fontSize => _profile?.fontSize ?? 16.0;
+  // 获取语言设置
 
   @override
   void initState() {
@@ -42,6 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _profile = loadedProfile;
       _themeMode = intToThemeMode(loadedProfile.themeMode);
+      _language = loadedProfile.language; // 加载语言设置
       _isLoading = false;
     });
   }
@@ -58,6 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
             name: _name,
             avatar: pickedFile.path,
             fontSize: _fontSize,
+            language: _language,
             themeMode: themeModeToInt(_themeMode),
             createTimestamp: _profile!.createTimestamp,
             modifyTimestamp: DateTime.now(),
@@ -77,6 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
       avatar: _avatar,
       fontSize: _fontSize,
       themeMode: themeModeToInt(_themeMode),
+      language: _language, // 添加语言设置
       createTimestamp: _profile!.createTimestamp,
       modifyTimestamp: DateTime.now(),
     );
@@ -168,6 +174,20 @@ class _ProfilePageState extends State<ProfilePage> {
               _showThemeOptions();
             },
           ),
+          
+          // 语言切换
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text("语言设置", style: TextStyle(fontSize: _fontSize)),
+            subtitle: Text(
+              getLanguageName(_language),
+              style: TextStyle(fontSize: _fontSize - 2),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              _showLanguageOptions();
+            },
+          ),
 
           // 字号调节
           ListTile(
@@ -199,6 +219,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     avatar: _avatar,
                     fontSize: value,
                     themeMode: themeModeToInt(_themeMode),
+                    language: _language,
                     createTimestamp: _profile!.createTimestamp,
                     modifyTimestamp: DateTime.now(),
                   );
@@ -281,6 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       avatar: _avatar,
                       fontSize: _fontSize,
                       themeMode: themeModeToInt(_themeMode),
+                      language: _language,
                       createTimestamp: _profile!.createTimestamp,
                       modifyTimestamp: DateTime.now(),
                     );
@@ -428,6 +450,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             name: _name,
                             avatar: _avatar,
                             fontSize: tempFontSize,
+                            language: _language,
                             themeMode: themeModeToInt(_themeMode),
                             createTimestamp: _profile!.createTimestamp,
                             modifyTimestamp: DateTime.now(),
@@ -559,11 +582,60 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: _fontSize,
-                  ),
+          ),
                 ),
               ),
             ],
           ),
+    );
+  }
+
+  // 显示语言选项
+  void _showLanguageOptions() {
+    showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Center(
+          child: Text(
+            "选择语言",
+            style: TextStyle(
+              fontSize: _fontSize,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        children: [
+          _buildLanguageOption('zh_CN', '简体中文'),
+          _buildLanguageOption('en_US', 'English'),
+          _buildLanguageOption('zh_TW', '繁體中文'),
+          _buildLanguageOption('ja_JP', '日本語'),
+          _buildLanguageOption('fr_FR', 'Français'),
+          _buildLanguageOption('de_DE', 'Deutsch'),
+          _buildLanguageOption('ko_KR', '한국어'),
+          _buildLanguageOption('ru_RU', 'Русский'),
+        ],
+      ),
+    );
+  }
+
+  // 构建语言选项
+  Widget _buildLanguageOption(String code, String name) {
+    return RadioListTile<String>(
+      title: Text(name),
+      activeColor: Theme.of(context).colorScheme.onSurface,
+      value: code,
+      groupValue: _language,
+      onChanged: (value) {
+        setState(() {
+          _language = value!;
+        });
+        _saveProfile(); // 保存设置
+
+        // 通知应用程序更新语言
+        ProfileService.notifyLanguageChanged(_language);
+        Navigator.pop(context);
+        _showSnackBar("语言已设置为$name");
+      },
     );
   }
 }

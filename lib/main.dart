@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:dot_curved_bottom_nav/dot_curved_bottom_nav.dart';
+import 'package:bubble/l10n/app_localizations.dart';
+import 'package:bubble/services/profile_service.dart';
+import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/chat_list.dart';
 import 'package:bubble/pages/bots.dart';
 import 'package:bubble/pages/profile.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/services/database_service.dart';
+import 'package:dot_curved_bottom_nav/dot_curved_bottom_nav.dart';
+import 'package:intl/intl.dart';
 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   // 初始化数据库
   await DatabaseService.initDatabase();
+  Intl.defaultLocale = 'zh';
 
   // 加载初始设置
   final profile = await ProfileService.getProfile();
-
   runApp(MyApp(initialProfile: profile));
 }
 
@@ -31,28 +32,52 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late ThemeMode _themeMode;
-  late double _fontSize;
+  ThemeMode _themeMode = ThemeMode.system;
+  Locale _locale = const Locale('zh', 'CN');
+  double _fontSize = 16.0;
 
   @override
   void initState() {
     super.initState();
-    _themeMode = intToThemeMode(widget.initialProfile.themeMode);
-    _fontSize = widget.initialProfile.fontSize;
-
-    // 注册主题变化监听
-    ProfileService.onThemeChanged = (ThemeMode newThemeMode) {
+    _loadSettings();
+    
+    // 监听主题变化
+    ProfileService.themeStream.listen((ThemeMode themeMode) {
       setState(() {
-        _themeMode = newThemeMode;
+        _themeMode = themeMode;
       });
-    };
+    });
+    
+    // 监听语言变化
+    ProfileService.languageStream.listen((String language) {
+      setState(() {
+        final parts = language.split('_');
+        if (parts.length == 2) {
+          _locale = Locale(parts[0], parts[1]);
+        }
+      });
+    });
+  }
+
+  Future<void> _loadSettings() async {
+    final profile = await ProfileService.getProfile();
+    setState(() {
+      _themeMode = intToThemeMode(profile.themeMode);
+      _fontSize = profile.fontSize;
+      
+      if (profile.language.isNotEmpty) {
+        final parts = profile.language.split('_');
+        if (parts.length == 2) {
+          _locale = Locale(parts[0], parts[1]);
+        }
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AI助手',
-      themeMode: _themeMode,
+      title: 'Bubble',
       theme: ThemeData(
         brightness: Brightness.light,
         colorScheme: ColorScheme.light(
@@ -60,7 +85,9 @@ class _MyAppState extends State<MyApp> {
           secondary: Colors.grey.shade300,
         ),
         textTheme: TextTheme(
+          // 根据用户设置调整字体大小
           bodyLarge: TextStyle(fontSize: _fontSize),
+          bodyMedium: TextStyle(fontSize: _fontSize - 2),
         ),
         textButtonTheme: TextButtonThemeData(
           style: ButtonStyle(
@@ -76,8 +103,26 @@ class _MyAppState extends State<MyApp> {
         ),
         textTheme: TextTheme(
           bodyLarge: TextStyle(fontSize: _fontSize),
+          bodyMedium: TextStyle(fontSize: _fontSize - 2),
         )
       ),
+      themeMode: _themeMode,
+      
+      // 国际化配置
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: _locale,
+      localeResolutionCallback: (locale, supportedLocales) {
+        // 如果设备语言在支持的语言列表中，则使用设备语言
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode) {
+            return supportedLocale;
+          }
+        }
+        // 否则使用第一个支持的语言（简体中文）
+        return supportedLocales.first;
+      },
+      
       home: const MainPage(),
     );
   }

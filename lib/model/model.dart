@@ -191,6 +191,7 @@ class Profile {
   final String avatar;
   final double fontSize;
   final int themeMode;
+  final String language;
   final DateTime createTimestamp;
   final DateTime modifyTimestamp;
 
@@ -199,6 +200,7 @@ class Profile {
     required this.avatar,
     required this.fontSize,
     required this.themeMode,
+    required this.language,
     required this.createTimestamp,
     required this.modifyTimestamp,
   });
@@ -209,6 +211,7 @@ class Profile {
       avatar: map['avatar'] as String,
       fontSize: map['font_size'] as double,
       themeMode: map['theme_mode'] as int,
+      language: map['language'] as String,
       createTimestamp: DateTime.fromMillisecondsSinceEpoch(
         map['create_timestamp'] as int,
       ),
@@ -224,6 +227,7 @@ class Profile {
       'avatar': avatar,
       'font_size': fontSize,
       'theme_mode': themeMode,
+      'language': language,
       'create_timestamp': createTimestamp.millisecondsSinceEpoch,
       'modify_timestamp': modifyTimestamp.millisecondsSinceEpoch,
     };

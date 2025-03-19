@@ -68,6 +68,7 @@ class DatabaseService {
             avatar TEXT,
             font_size DOUBLE,
             theme_mode INTEGER,
+            language TEXT,
             create_timestamp INTEGER,
             modify_timestamp INTEGER
           );

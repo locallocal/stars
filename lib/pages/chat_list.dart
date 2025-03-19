@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bubble/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:bubble/pages/chat.dart';
 import 'package:bubble/pages/chat_list_item.dart';
@@ -59,7 +60,7 @@ class _ChatListPageState extends State<ChatListPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          '对话',
+          AppLocalizations.of(context).chats,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -128,7 +129,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                   ),
                                   title: Text(
                                     bot.name,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -198,7 +199,9 @@ class _ChatListPageState extends State<ChatListPage> {
                                           ).colorScheme.onSurface,
                                     ),
                                   ),
-                                  SizedBox(height: 8),
+
+                                  const SizedBox(height: 8),
+
                                   Text(
                                     '点击右上角 + 开始聊天',
                                     textAlign: TextAlign.center,
