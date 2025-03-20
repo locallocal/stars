@@ -667,7 +667,8 @@ class _AddBotPageState extends State<AddBotPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('智能体 "${nameController.text.trim()}" 已添加'),
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  duration: const Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             } else {
@@ -676,6 +677,8 @@ class _AddBotPageState extends State<AddBotPage> {
                 SnackBar(
                   content: Text('请填写智能体名称、API地址和API密钥'),
                   backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                  duration: const Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
             }

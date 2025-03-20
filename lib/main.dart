@@ -162,8 +162,8 @@ class _MainPageState extends State<MainPage> {
         hideOnScroll: true,
         indicatorColor: Theme.of(context).colorScheme.onSurface,
         backgroundColor: Theme.of(context).colorScheme.secondary,
-        animationDuration: const Duration(milliseconds: 300),
-        animationCurve: Curves.ease,
+        animationDuration: const Duration(milliseconds: 200), // 缩短动画时间
+        animationCurve: Curves.easeInOut, // 使用更平滑的动画曲线
         selectedIndex: _currentIndex,
         indicatorSize: 5,
         borderRadius: 24,
@@ -173,25 +173,16 @@ class _MainPageState extends State<MainPage> {
         },
         items: [
           Icon(
-            Icons.chat_bubble_rounded,
-            color:
-                _currentIndex == 0
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context).colorScheme.onSurface,
+            Icons.chat_rounded,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
             Icons.smart_toy_rounded,
-            color:
-                _currentIndex == 1
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context).colorScheme.onSurface,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
             Icons.person,
-            color:
-                _currentIndex == 2
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context).colorScheme.onSurface,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ],
       ),
