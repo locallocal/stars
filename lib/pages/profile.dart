@@ -619,6 +619,9 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildLanguageOption('de_DE', 'Deutsch'),
           _buildLanguageOption('ko_KR', '한국어'),
           _buildLanguageOption('ru_RU', 'Русский'),
+          _buildLanguageOption('es_ES', 'Español'),
+          _buildLanguageOption('hi_IN', 'हिन्दी'),
+          _buildLanguageOption('pt_BR', 'Português'), 
         ],
       ),
     );

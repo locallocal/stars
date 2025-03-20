@@ -133,7 +133,7 @@
         "description": "Language changed notification",
         "placeholders": {
             "language": {
-                "type": "Object",
+                "type": "String",
                 "example": "English"
             }
         }

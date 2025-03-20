@@ -133,7 +133,7 @@
         "description": "语言已更改提示",
         "placeholders": {
             "language": {
-                "type": "Object",
+                "type": "String",
                 "example": "简体中文"
             }
         }

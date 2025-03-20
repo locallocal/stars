@@ -331,7 +331,7 @@ class S {
   }
 
   /// `Language set to {language}`
-  String languageChanged(Object language) {
+  String languageChanged(String language) {
     return Intl.message(
       'Language set to $language',
       name: 'languageChanged',
@@ -568,9 +568,12 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
     return const <Locale>[
       Locale.fromSubtags(languageCode: 'en'),
       Locale.fromSubtags(languageCode: 'de', countryCode: 'DE'),
+      Locale.fromSubtags(languageCode: 'es', countryCode: 'ES'),
       Locale.fromSubtags(languageCode: 'fr', countryCode: 'FR'),
+      Locale.fromSubtags(languageCode: 'hi', countryCode: 'IN'),
       Locale.fromSubtags(languageCode: 'ja', countryCode: 'JP'),
       Locale.fromSubtags(languageCode: 'ko', countryCode: 'KR'),
+      Locale.fromSubtags(languageCode: 'pt', countryCode: 'BR'),
       Locale.fromSubtags(languageCode: 'ru', countryCode: 'RU'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'CN'),
       Locale.fromSubtags(languageCode: 'zh', countryCode: 'TW'),

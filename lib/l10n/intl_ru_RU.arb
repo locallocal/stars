@@ -133,7 +133,7 @@
         "description": "Уведомление об изменении языка",
         "placeholders": {
             "language": {
-                "type": "Object",
+                "type": "String",
                 "example": "Русский"
             }
         }

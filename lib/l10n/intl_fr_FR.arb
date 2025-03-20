@@ -133,7 +133,7 @@
         "description": "Notification de changement de langue",
         "placeholders": {
             "language": {
-                "type": "Object",
+                "type": "String",
                 "example": "Français"
             }
         }

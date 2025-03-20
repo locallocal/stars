@@ -10,10 +10,14 @@ const List<Locale> supportedLocales = <Locale>[
   Locale('de', 'DE'), // 德语
   Locale('ko', 'KR'), // 韩语
   Locale('ru', 'RU'), // 俄语
+  Locale('es', 'ES'), // 西班牙语
+  Locale('hi', 'IN'), // 印地语
+  Locale('pt', 'BR'), // 葡萄牙语(巴西)
 ];
 
-String getLanguageName(String languageCode) {
-  switch (languageCode) {
+// 获取语言名称
+String getLanguageName(String code) {
+  switch (code) {
     case 'zh_CN':
       return '简体中文';
     case 'en_US':
@@ -30,6 +34,12 @@ String getLanguageName(String languageCode) {
       return '한국어';
     case 'ru_RU':
       return 'Русский';
+    case 'es_ES':
+      return 'Español';
+    case 'hi_IN':
+      return 'हिन्दी';
+    case 'pt_BR':
+      return 'Português';
     default:
       return '简体中文';
   }

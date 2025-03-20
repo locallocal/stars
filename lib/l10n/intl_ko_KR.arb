@@ -133,7 +133,7 @@
         "description": "언어 변경 알림",
         "placeholders": {
             "language": {
-                "type": "Object",
+                "type": "String",
                 "example": "한국어"
             }
         }

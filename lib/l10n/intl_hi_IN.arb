@@ -1,0 +1,229 @@
+{
+    "@@locale": "hi_IN",
+    "appName": "बबल",
+    "@appName": {
+        "description": "एप्लिकेशन का नाम"
+    },
+    "profile": "प्रोफाइल",
+    "@profile": {
+        "description": "उपयोगकर्ता प्रोफाइल"
+    },
+    "settings": "सेटिंग्स",
+    "@settings": {
+        "description": "सेटिंग्स"
+    },
+    "about": "के बारे में",
+    "@about": {
+        "description": "के बारे में"
+    },
+    "cancel": "रद्द करें",
+    "@cancel": {
+        "description": "रद्द बटन"
+    },
+    "save": "सहेजें",
+    "@save": {
+        "description": "सहेजें बटन"
+    },
+    "confirm": "पुष्टि करें",
+    "@confirm": {
+        "description": "पुष्टि बटन"
+    },
+    "home": "होम",
+    "@home": {
+        "description": "होम पेज"
+    },
+    "chats": "चैट्स",
+    "@chats": {
+        "description": "चैट सूची"
+    },
+    "newChat": "नई चैट",
+    "@newChat": {
+        "description": "नई चैट"
+    },
+    "themeSettings": "थीम सेटिंग्स",
+    "@themeSettings": {
+        "description": "थीम सेटिंग्स"
+    },
+    "followSystem": "सिस्टम का अनुसरण करें",
+    "@followSystem": {
+        "description": "सिस्टम थीम का अनुसरण करें"
+    },
+    "lightMode": "लाइट मोड",
+    "@lightMode": {
+        "description": "लाइट मोड"
+    },
+    "darkMode": "डार्क मोड",
+    "@darkMode": {
+        "description": "डार्क मोड"
+    },
+    "languageSettings": "भाषा सेटिंग्स",
+    "@languageSettings": {
+        "description": "भाषा सेटिंग्स"
+    },
+    "fontSizeSettings": "फॉन्ट साइज़",
+    "@fontSizeSettings": {
+        "description": "फॉन्ट साइज़ सेटिंग्स"
+    },
+    "adjustAppFontSize": "एप्लिकेशन फॉन्ट साइज़ समायोजित करें",
+    "@adjustAppFontSize": {
+        "description": "एप्लिकेशन फॉन्ट साइज़ समायोजित करें"
+    },
+    "name": "नाम",
+    "@name": {
+        "description": "नाम"
+    },
+    "editName": "नाम संपादित करें",
+    "@editName": {
+        "description": "नाम संपादित करें"
+    },
+    "enterNewName": "कृपया नया नाम दर्ज करें",
+    "@enterNewName": {
+        "description": "कृपया नया नाम दर्ज करें"
+    },
+    "nameUpdated": "नाम अपडेट किया गया",
+    "@nameUpdated": {
+        "description": "नाम अपडेट किया गया"
+    },
+    "send": "भेजें",
+    "@send": {
+        "description": "भेजें बटन"
+    },
+    "typing": "टाइप कर रहा है...",
+    "@typing": {
+        "description": "टाइपिंग संकेतक"
+    },
+    "clearChat": "चैट साफ़ करें",
+    "@clearChat": {
+        "description": "चैट साफ़ करें"
+    },
+    "addBot": "बॉट जोड़ें",
+    "@addBot": {
+        "description": "बॉट जोड़ें"
+    },
+    "editBot": "बॉट संपादित करें",
+    "@editBot": {
+        "description": "बॉट संपादित करें"
+    },
+    "botName": "बॉट का नाम",
+    "@botName": {
+        "description": "बॉट का नाम"
+    },
+    "botAvatar": "बॉट अवतार",
+    "@botAvatar": {
+        "description": "बॉट अवतार"
+    },
+    "provider": "प्रदाता",
+    "@provider": {
+        "description": "प्रदाता"
+    },
+    "apiKey": "API कुंजी",
+    "@apiKey": {
+        "description": "API कुंजी"
+    },
+    "model": "मॉडल",
+    "@model": {
+        "description": "मॉडल"
+    },
+    "systemPrompt": "सिस्टम प्रॉम्प्ट",
+    "@systemPrompt": {
+        "description": "सिस्टम प्रॉम्प्ट"
+    },
+    "languageChanged": "भाषा {language} में बदली गई",
+    "@languageChanged": {
+        "description": "भाषा परिवर्तन सूचना",
+        "placeholders": {
+            "language": {
+                "type": "String",
+                "example": "हिन्दी"
+            }
+        }
+    },
+    "selectLanguage": "भाषा चुनें",
+    "@selectLanguage": {
+        "description": "भाषा चुनें"
+    },
+    "selectTheme": "थीम चुनें",
+    "@selectTheme": {
+        "description": "थीम चुनें"
+    },
+    "adjustFontSize": "फॉन्ट साइज़ समायोजित करें",
+    "@adjustFontSize": {
+        "description": "फॉन्ट साइज़ समायोजित करें"
+    },
+    "previewText": "टेक्स्ट प्रीव्यू",
+    "@previewText": {
+        "description": "टेक्स्ट प्रीव्यू"
+    },
+    "fontSizeUpdated": "फॉन्ट साइज़ अपडेट किया गया",
+    "@fontSizeUpdated": {
+        "description": "फॉन्ट साइज़ अपडेट किया गया"
+    },
+    "themeSetToSystem": "थीम सिस्टम के अनुसार सेट की गई",
+    "@themeSetToSystem": {
+        "description": "थीम सिस्टम के अनुसार सेट की गई"
+    },
+    "themeSetToLight": "थीम लाइट मोड पर सेट की गई",
+    "@themeSetToLight": {
+        "description": "थीम लाइट मोड पर सेट की गई"
+    },
+    "themeSetToDark": "थीम डार्क मोड पर सेट की गई",
+    "@themeSetToDark": {
+        "description": "थीम डार्क मोड पर सेट की गई"
+    },
+    "aboutApp": "बबल के बारे में",
+    "@aboutApp": {
+        "description": "एप्लिकेशन के बारे में"
+    },
+    "appDescription": "एक सरल लेकिन शक्तिशाली AI चैट एप्लिकेशन जो आपको कहीं भी, कभी भी AI के साथ चैट करने की अनुमति देता है।",
+    "@appDescription": {
+        "description": "एप्लिकेशन विवरण"
+    },
+    "copyright": "© 2025 बबल टीम",
+    "@copyright": {
+        "description": "कॉपीराइट जानकारी"
+    },
+    "userAgreement": "उपयोगकर्ता समझौता",
+    "@userAgreement": {
+        "description": "उपयोगकर्ता समझौता"
+    },
+    "privacyPolicy": "गोपनीयता नीति",
+    "@privacyPolicy": {
+        "description": "गोपनीयता नीति"
+    },
+    "version": "संस्करण 1.0.0",
+    "@version": {
+        "description": "संस्करण जानकारी"
+    },
+    "appTitle": "बबल - AI चैट सहायक",
+    "@appTitle": {
+        "description": "एप्लिकेशन शीर्षक"
+    },
+    "selectBot": "बॉट चुनें",
+    "@selectBot": {
+        "description": "बॉट चुनें"
+    },
+    "noBotsAvailable": "कोई बॉट उपलब्ध नहीं है",
+    "@noBotsAvailable": {
+        "description": "कोई बॉट उपलब्ध नहीं है"
+    },
+    "noChats": "अभी तक कोई चैट नहीं",
+    "@noChats": {
+        "description": "अभी तक कोई चैट नहीं"
+    },
+    "clickToStartChat": "चैट शुरू करने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
+    "@clickToStartChat": {
+        "description": "चैट शुरू करने के लिए संकेत"
+    },
+    "deleteChat": "चैट हटाएं",
+    "@deleteChat": {
+        "description": "चैट हटाएं"
+    },
+    "confirmDeleteChat": "क्या आप वाकई इस चैट को हटाना चाहते हैं?",
+    "@confirmDeleteChat": {
+        "description": "चैट हटाने की पुष्टि करें"
+    },
+    "messageHint": "संदेश लिखें...",
+    "@messageHint": {
+        "description": "संदेश इनपुट संकेत"
+    }
+}

@@ -1,0 +1,229 @@
+{
+    "@@locale": "pt_BR",
+    "appName": "Bubble",
+    "@appName": {
+        "description": "Nome do aplicativo"
+    },
+    "profile": "Perfil",
+    "@profile": {
+        "description": "Perfil do usuário"
+    },
+    "settings": "Configurações",
+    "@settings": {
+        "description": "Configurações"
+    },
+    "about": "Sobre",
+    "@about": {
+        "description": "Sobre"
+    },
+    "cancel": "Cancelar",
+    "@cancel": {
+        "description": "Botão de cancelar"
+    },
+    "save": "Salvar",
+    "@save": {
+        "description": "Botão de salvar"
+    },
+    "confirm": "Confirmar",
+    "@confirm": {
+        "description": "Botão de confirmar"
+    },
+    "home": "Início",
+    "@home": {
+        "description": "Página inicial"
+    },
+    "chats": "Conversas",
+    "@chats": {
+        "description": "Lista de conversas"
+    },
+    "newChat": "Nova conversa",
+    "@newChat": {
+        "description": "Nova conversa"
+    },
+    "themeSettings": "Configurações de tema",
+    "@themeSettings": {
+        "description": "Configurações de tema"
+    },
+    "followSystem": "Sistema",
+    "@followSystem": {
+        "description": "Seguir tema do sistema"
+    },
+    "lightMode": "Modo claro",
+    "@lightMode": {
+        "description": "Modo claro"
+    },
+    "darkMode": "Modo escuro",
+    "@darkMode": {
+        "description": "Modo escuro"
+    },
+    "languageSettings": "Configurações de idioma",
+    "@languageSettings": {
+        "description": "Configurações de idioma"
+    },
+    "fontSizeSettings": "Tamanho da fonte",
+    "@fontSizeSettings": {
+        "description": "Configurações de tamanho da fonte"
+    },
+    "adjustAppFontSize": "Ajustar tamanho da fonte do aplicativo",
+    "@adjustAppFontSize": {
+        "description": "Ajustar tamanho da fonte do aplicativo"
+    },
+    "name": "Nome",
+    "@name": {
+        "description": "Nome"
+    },
+    "editName": "Editar nome",
+    "@editName": {
+        "description": "Editar nome"
+    },
+    "enterNewName": "Por favor, digite um novo nome",
+    "@enterNewName": {
+        "description": "Por favor, digite um novo nome"
+    },
+    "nameUpdated": "Nome atualizado",
+    "@nameUpdated": {
+        "description": "Nome atualizado"
+    },
+    "send": "Enviar",
+    "@send": {
+        "description": "Botão de enviar"
+    },
+    "typing": "Digitando...",
+    "@typing": {
+        "description": "Indicador de digitação"
+    },
+    "clearChat": "Limpar conversa",
+    "@clearChat": {
+        "description": "Limpar conversa"
+    },
+    "addBot": "Adicionar bot",
+    "@addBot": {
+        "description": "Adicionar bot"
+    },
+    "editBot": "Editar bot",
+    "@editBot": {
+        "description": "Editar bot"
+    },
+    "botName": "Nome do bot",
+    "@botName": {
+        "description": "Nome do bot"
+    },
+    "botAvatar": "Avatar do bot",
+    "@botAvatar": {
+        "description": "Avatar do bot"
+    },
+    "provider": "Provedor",
+    "@provider": {
+        "description": "Provedor"
+    },
+    "apiKey": "Chave API",
+    "@apiKey": {
+        "description": "Chave API"
+    },
+    "model": "Modelo",
+    "@model": {
+        "description": "Modelo"
+    },
+    "systemPrompt": "Prompt do sistema",
+    "@systemPrompt": {
+        "description": "Prompt do sistema"
+    },
+    "languageChanged": "Idioma alterado para {language}",
+    "@languageChanged": {
+        "description": "Notificação de alteração de idioma",
+        "placeholders": {
+            "language": {
+                "type": "String",
+                "example": "Português"
+            }
+        }
+    },
+    "selectLanguage": "Selecionar idioma",
+    "@selectLanguage": {
+        "description": "Selecionar idioma"
+    },
+    "selectTheme": "Selecionar tema",
+    "@selectTheme": {
+        "description": "Selecionar tema"
+    },
+    "adjustFontSize": "Ajustar tamanho da fonte",
+    "@adjustFontSize": {
+        "description": "Ajustar tamanho da fonte"
+    },
+    "previewText": "Visualização do texto",
+    "@previewText": {
+        "description": "Visualização do texto"
+    },
+    "fontSizeUpdated": "Tamanho da fonte atualizado",
+    "@fontSizeUpdated": {
+        "description": "Tamanho da fonte atualizado"
+    },
+    "themeSetToSystem": "Tema configurado para seguir o sistema",
+    "@themeSetToSystem": {
+        "description": "Tema configurado para seguir o sistema"
+    },
+    "themeSetToLight": "Tema configurado para modo claro",
+    "@themeSetToLight": {
+        "description": "Tema configurado para modo claro"
+    },
+    "themeSetToDark": "Tema configurado para modo escuro",
+    "@themeSetToDark": {
+        "description": "Tema configurado para modo escuro"
+    },
+    "aboutApp": "Sobre o Bubble",
+    "@aboutApp": {
+        "description": "Sobre o aplicativo"
+    },
+    "appDescription": "Um aplicativo de chat com IA simples, mas poderoso, que permite conversar com inteligência artificial a qualquer hora e em qualquer lugar.",
+    "@appDescription": {
+        "description": "Descrição do aplicativo"
+    },
+    "copyright": "© 2025 Equipe Bubble",
+    "@copyright": {
+        "description": "Informações de direitos autorais"
+    },
+    "userAgreement": "Acordo do usuário",
+    "@userAgreement": {
+        "description": "Acordo do usuário"
+    },
+    "privacyPolicy": "Política de privacidade",
+    "@privacyPolicy": {
+        "description": "Política de privacidade"
+    },
+    "version": "Versão 1.0.0",
+    "@version": {
+        "description": "Informações de versão"
+    },
+    "appTitle": "Bubble - Assistente de chat com IA",
+    "@appTitle": {
+        "description": "Título do aplicativo"
+    },
+    "selectBot": "Selecionar bot",
+    "@selectBot": {
+        "description": "Selecionar bot"
+    },
+    "noBotsAvailable": "Nenhum bot disponível",
+    "@noBotsAvailable": {
+        "description": "Nenhum bot disponível"
+    },
+    "noChats": "Ainda não há conversas",
+    "@noChats": {
+        "description": "Ainda não há conversas"
+    },
+    "clickToStartChat": "Clique em + no canto superior direito para iniciar uma conversa",
+    "@clickToStartChat": {
+        "description": "Indicação para iniciar conversa"
+    },
+    "deleteChat": "Excluir conversa",
+    "@deleteChat": {
+        "description": "Excluir conversa"
+    },
+    "confirmDeleteChat": "Tem certeza de que deseja excluir esta conversa?",
+    "@confirmDeleteChat": {
+        "description": "Confirmar exclusão de conversa"
+    },
+    "messageHint": "Digite uma mensagem...",
+    "@messageHint": {
+        "description": "Dica de entrada de mensagem"
+    }
+}
