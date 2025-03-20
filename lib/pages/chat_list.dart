@@ -104,7 +104,7 @@ class _ChatListPageState extends State<ChatListPage> {
                               );
                             }
                             if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Center(child: Text('没有的智能体'));
+                              return Center(child: Text(S.of(context).noBotsAvailable));
                             }
 
                             final bots = snapshot.data!;
@@ -190,7 +190,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    '还没有聊天记录',
+                                    S.of(context).noChats,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color:
@@ -203,7 +203,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                   const SizedBox(height: 8),
 
                                   Text(
-                                    '点击右上角 + 开始聊天',
+                                    S.of(context).clickToStartChat,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color:
@@ -246,7 +246,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                           (context) => AlertDialog(
                                             title: Center(
                                               child: Text(
-                                                '删除聊天',
+                                                S.of(context).deleteChat,
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize:
@@ -358,7 +358,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                         context: context,
                                         builder:
                                             (context) => AlertDialog(
-                                              title: const Text('删除聊天'),
+                                              title: Text(S.of(context).deleteChat),
                                               // 使用bot.name
                                               content: Text(
                                                 '确定要删除与 "${bot.name}" 的聊天吗？',

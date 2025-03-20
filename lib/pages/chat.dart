@@ -644,7 +644,11 @@ class _ChatPageState extends State<ChatPage> {
   // 显示提示信息
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 1)),
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 

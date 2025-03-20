@@ -150,7 +150,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // 名称区域
           ListTile(
             leading: const Icon(Icons.person),
-            title: Text("名称", style: TextStyle(fontSize: _fontSize)),
+            title: Text(S.of(context).name, style: TextStyle(fontSize: _fontSize)),
             subtitle: Text(_name, style: TextStyle(fontSize: _fontSize - 2)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -162,13 +162,13 @@ class _ProfilePageState extends State<ProfilePage> {
           // 主题切换
           ListTile(
             leading: const Icon(Icons.brightness_6),
-            title: Text("主题设置", style: TextStyle(fontSize: _fontSize)),
+            title: Text(S.of(context).themeSettings, style: TextStyle(fontSize: _fontSize)),
             subtitle: Text(
               _themeMode == ThemeMode.system
-                  ? "跟随系统"
+                  ? S.of(context).followSystem
                   : _themeMode == ThemeMode.light
-                  ? "浅色模式"
-                  : "深色模式",
+                  ? S.of(context).lightMode
+                  : S.of(context).darkMode,
               style: TextStyle(fontSize: _fontSize - 2),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -180,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // 语言切换
           ListTile(
             leading: const Icon(Icons.language),
-            title: Text("语言设置", style: TextStyle(fontSize: _fontSize)),
+            title: Text(S.of(context).languageSettings, style: TextStyle(fontSize: _fontSize)),
             subtitle: Text(
               getLanguageName(_language),
               style: TextStyle(fontSize: _fontSize - 2),
@@ -194,9 +194,9 @@ class _ProfilePageState extends State<ProfilePage> {
           // 字号调节
           ListTile(
             leading: const Icon(Icons.text_fields),
-            title: Text("文字大小", style: TextStyle(fontSize: _fontSize)),
+            title: Text(S.of(context).fontSizeSettings, style: TextStyle(fontSize: _fontSize)),
             subtitle: Text(
-              "调整应用内文字大小",
+              S.of(context).adjustAppFontSize,
               style: TextStyle(fontSize: _fontSize - 2),
             ),
             onTap: () {
@@ -235,9 +235,9 @@ class _ProfilePageState extends State<ProfilePage> {
           // 关于
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: Text("关于", style: TextStyle(fontSize: _fontSize)),
+            title: Text(S.of(context).about, style: TextStyle(fontSize: _fontSize)),
             subtitle: Text(
-              "版本 1.0.0",
+              S.of(context).version,
               style: TextStyle(fontSize: _fontSize - 2),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -261,7 +261,7 @@ class _ProfilePageState extends State<ProfilePage> {
           (context) => AlertDialog(
             title: Center(
               child: Text(
-                "修改名称",
+                S.of(context).editName,
                 style: TextStyle(
                   fontSize: _fontSize,
                   fontWeight: FontWeight.bold,
@@ -272,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
               controller: controller,
               style: TextStyle(fontSize: _fontSize),
               decoration: InputDecoration(
-                hintText: "请输入新名称",
+                hintText: S.of(context).enterNewName,
                 labelStyle: TextStyle(fontSize: _fontSize - 2),
                 hintStyle: TextStyle(fontSize: _fontSize - 2),
               ),
@@ -284,7 +284,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  "取消",
+                  S.of(context).cancel,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -311,10 +311,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   });
                   _saveProfile(); // 保存设置
                   Navigator.pop(context);
-                  _showSnackBar("名称已更新");
+                  _showSnackBar(S.of(context).nameUpdated);
                 },
                 child: Text(
-                  "保存",
+                  S.of(context).save,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -333,7 +333,7 @@ class _ProfilePageState extends State<ProfilePage> {
           (context) => SimpleDialog(
             title: Center(
               child: Text(
-                "选择主题",
+                S.of(context).selectTheme,
                 style: TextStyle(
                   fontSize: _fontSize,
                   fontWeight: FontWeight.bold,
@@ -342,7 +342,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             children: [
               RadioListTile<ThemeMode>(
-                title: const Text("跟随系统"),
+                title: Text(S.of(context).followSystem),
                 activeColor: Theme.of(context).colorScheme.onSurface,
                 value: ThemeMode.system,
                 groupValue: _themeMode,
@@ -355,11 +355,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   // 通知应用程序更新主题
                   ProfileService.notifyThemeChanged(_themeMode);
                   Navigator.pop(context);
-                  _showSnackBar("已设置为跟随系统主题");
+                  _showSnackBar(S.of(context).themeSetToSystem);
                 },
               ),
               RadioListTile<ThemeMode>(
-                title: const Text("浅色模式"),
+                title: Text(S.of(context).lightMode),
                 activeColor: Theme.of(context).colorScheme.onSurface,
                 value: ThemeMode.light,
                 groupValue: _themeMode,
@@ -371,11 +371,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   ProfileService.notifyThemeChanged(_themeMode);
                   Navigator.pop(context);
-                  _showSnackBar("已设置为浅色模式");
+                  _showSnackBar(S.of(context).themeSetToLight);
                 },
               ),
               RadioListTile<ThemeMode>(
-                title: const Text("深色模式"),
+                title: Text(S.of(context).darkMode),
                 activeColor: Theme.of(context).colorScheme.onSurface,
                 value: ThemeMode.dark,
                 groupValue: _themeMode,
@@ -387,7 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   ProfileService.notifyThemeChanged(_themeMode);
                   Navigator.pop(context);
-                  _showSnackBar("已设置为深色模式");
+                  _showSnackBar(S.of(context).themeSetToDark);
                 },
               ),
             ],
@@ -407,7 +407,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 (context, setState) => AlertDialog(
                   title: Center(
                     child: Text(
-                      "调整文字大小",
+                      S.of(context).adjustFontSize,
                       style: TextStyle(
                         fontSize: _fontSize,
                         fontWeight: FontWeight.bold,
@@ -417,7 +417,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text("预览文字效果", style: TextStyle(fontSize: tempFontSize)),
+                      Text(S.of(context).previewText, style: TextStyle(fontSize: tempFontSize)),
                       const SizedBox(height: 20),
                       Slider(
                         value: tempFontSize,
@@ -439,7 +439,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text(
-                        "取消",
+                        S.of(context).cancel,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -460,10 +460,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         });
                         _saveProfile(); // 保存设置
                         Navigator.pop(context);
-                        _showSnackBar("文字大小已更新");
+                        _showSnackBar(S.of(context).fontSizeUpdated);
                       },
                       child: Text(
-                        "保存",
+                        S.of(context).save,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
@@ -477,9 +477,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // 显示提示信息
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   // 显示自定义关于对话框
@@ -490,7 +494,7 @@ class _ProfilePageState extends State<ProfilePage> {
           (context) => AlertDialog(
             title: Center(
               child: Text(
-                "关于泡泡",
+                S.of(context).aboutApp,
                 style: TextStyle(
                   fontSize: _fontSize,
                   fontWeight: FontWeight.bold,
@@ -503,7 +507,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const BubbleLogo(size: 60),
                 const SizedBox(height: 24),
                 Text(
-                  "泡泡 - AI聊天助手",
+                  S.of(context).appTitle,
                   style: TextStyle(
                     fontSize: _fontSize,
                     fontWeight: FontWeight.bold,
@@ -512,19 +516,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "版本 1.0.0",
+                  S.of(context).version,
                   style: TextStyle(fontSize: _fontSize - 2),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "一个简单而强大的AI聊天应用，让您随时随地与AI进行对话。",
+                  S.of(context).appDescription,
                   style: TextStyle(fontSize: _fontSize),
                   textAlign: TextAlign.start,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "© 2025 泡泡团队",
+                  S.of(context).copyright,
                   style: TextStyle(fontSize: _fontSize),
                   textAlign: TextAlign.center,
                 ),
@@ -543,7 +547,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                       child: Text(
-                        "用户协议",
+                        S.of(context).userAgreement,
                         style: TextStyle(
                           fontSize: _fontSize,
                           color: Theme.of(context).colorScheme.primary,
@@ -562,7 +566,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         );
                       },
                       child: Text(
-                        "隐私政策",
+                        S.of(context).privacyPolicy,
                         style: TextStyle(
                           fontSize: _fontSize,
                           color: Theme.of(context).colorScheme.primary,
@@ -580,7 +584,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  "确定",
+                  S.of(context).confirm,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: _fontSize,
@@ -599,7 +603,7 @@ class _ProfilePageState extends State<ProfilePage> {
       builder: (context) => SimpleDialog(
         title: Center(
           child: Text(
-            "选择语言",
+            S.of(context).selectLanguage,
             style: TextStyle(
               fontSize: _fontSize,
               fontWeight: FontWeight.bold,
@@ -636,7 +640,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // 通知应用程序更新语言
         ProfileService.notifyLanguageChanged(_language);
         Navigator.pop(context);
-        _showSnackBar("语言已设置为$name");
+        _showSnackBar(S.of(context).languageChanged(name));
       },
     );
   }

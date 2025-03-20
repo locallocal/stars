@@ -262,11 +262,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
               child: TextField(
                 // 设置初始值
                 controller: baseURLController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.link),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.link),
                   border: InputBorder.none,
                   filled: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
                 enabled: false, // 禁用编辑
               ),
@@ -283,11 +283,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
               ),
               child: TextField(
                 controller: apiKeyController,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.key),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.key),
                   border: InputBorder.none,
                   filled: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
                 obscureText: true,
                 enabled: false, // 禁用编辑
