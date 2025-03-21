@@ -4,11 +4,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/user_agreement.dart';
-import 'package:bubble/pages/privacy_policy.dart';
 import 'package:bubble/l10n/app_localizations.dart';
 import 'package:bubble/generated/l10n.dart';
-
+import 'package:bubble/pages/user_agreement.dart';
+import 'package:bubble/pages/privacy_policy.dart';
+import 'package:bubble/pages/feedback_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -150,7 +150,10 @@ class _ProfilePageState extends State<ProfilePage> {
           // 名称区域
           ListTile(
             leading: const Icon(Icons.person),
-            title: Text(S.of(context).name, style: TextStyle(fontSize: _fontSize)),
+            title: Text(
+              S.of(context).name,
+              style: TextStyle(fontSize: _fontSize),
+            ),
             subtitle: Text(_name, style: TextStyle(fontSize: _fontSize - 2)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -162,7 +165,10 @@ class _ProfilePageState extends State<ProfilePage> {
           // 主题切换
           ListTile(
             leading: const Icon(Icons.brightness_6),
-            title: Text(S.of(context).themeSettings, style: TextStyle(fontSize: _fontSize)),
+            title: Text(
+              S.of(context).themeSettings,
+              style: TextStyle(fontSize: _fontSize),
+            ),
             subtitle: Text(
               _themeMode == ThemeMode.system
                   ? S.of(context).followSystem
@@ -176,11 +182,14 @@ class _ProfilePageState extends State<ProfilePage> {
               _showThemeOptions();
             },
           ),
-          
+
           // 语言切换
           ListTile(
             leading: const Icon(Icons.language),
-            title: Text(S.of(context).languageSettings, style: TextStyle(fontSize: _fontSize)),
+            title: Text(
+              S.of(context).languageSettings,
+              style: TextStyle(fontSize: _fontSize),
+            ),
             subtitle: Text(
               getLanguageName(_language),
               style: TextStyle(fontSize: _fontSize - 2),
@@ -194,7 +203,10 @@ class _ProfilePageState extends State<ProfilePage> {
           // 字号调节
           ListTile(
             leading: const Icon(Icons.text_fields),
-            title: Text(S.of(context).fontSizeSettings, style: TextStyle(fontSize: _fontSize)),
+            title: Text(
+              S.of(context).fontSizeSettings,
+              style: TextStyle(fontSize: _fontSize),
+            ),
             subtitle: Text(
               S.of(context).adjustAppFontSize,
               style: TextStyle(fontSize: _fontSize - 2),
@@ -232,10 +244,33 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const Divider(),
 
+          // 帮助与反馈
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: Text(
+              S.of(context).helpAndFeedback,
+              style: TextStyle(fontSize: _fontSize),
+            ),
+            subtitle: Text(
+              S.of(context).provideFeedback,
+              style: TextStyle(fontSize: _fontSize - 2),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FeedbackPage()),
+              );
+            },
+          ),
+
           // 关于
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: Text(S.of(context).about, style: TextStyle(fontSize: _fontSize)),
+            title: Text(
+              S.of(context).about,
+              style: TextStyle(fontSize: _fontSize),
+            ),
             subtitle: Text(
               S.of(context).version,
               style: TextStyle(fontSize: _fontSize - 2),
@@ -417,7 +452,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(S.of(context).previewText, style: TextStyle(fontSize: tempFontSize)),
+                      Text(
+                        S.of(context).previewText,
+                        style: TextStyle(fontSize: tempFontSize),
+                      ),
                       const SizedBox(height: 20),
                       Slider(
                         value: tempFontSize,
@@ -588,7 +626,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: _fontSize,
-          ),
+                  ),
                 ),
               ),
             ],
@@ -600,30 +638,31 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showLanguageOptions() {
     showDialog(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Center(
-          child: Text(
-            S.of(context).selectLanguage,
-            style: TextStyle(
-              fontSize: _fontSize,
-              fontWeight: FontWeight.bold,
+      builder:
+          (context) => SimpleDialog(
+            title: Center(
+              child: Text(
+                S.of(context).selectLanguage,
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
+            children: [
+              _buildLanguageOption('zh_CN', '简体中文'),
+              _buildLanguageOption('en_US', 'English'),
+              _buildLanguageOption('zh_TW', '繁體中文'),
+              _buildLanguageOption('ja_JP', '日本語'),
+              _buildLanguageOption('fr_FR', 'Français'),
+              _buildLanguageOption('de_DE', 'Deutsch'),
+              _buildLanguageOption('ko_KR', '한국어'),
+              _buildLanguageOption('ru_RU', 'Русский'),
+              _buildLanguageOption('es_ES', 'Español'),
+              _buildLanguageOption('hi_IN', 'हिन्दी'),
+              _buildLanguageOption('pt_BR', 'Português'),
+            ],
           ),
-        ),
-        children: [
-          _buildLanguageOption('zh_CN', '简体中文'),
-          _buildLanguageOption('en_US', 'English'),
-          _buildLanguageOption('zh_TW', '繁體中文'),
-          _buildLanguageOption('ja_JP', '日本語'),
-          _buildLanguageOption('fr_FR', 'Français'),
-          _buildLanguageOption('de_DE', 'Deutsch'),
-          _buildLanguageOption('ko_KR', '한국어'),
-          _buildLanguageOption('ru_RU', 'Русский'),
-          _buildLanguageOption('es_ES', 'Español'),
-          _buildLanguageOption('hi_IN', 'हिन्दी'),
-          _buildLanguageOption('pt_BR', 'Português'), 
-        ],
-      ),
     );
   }
 

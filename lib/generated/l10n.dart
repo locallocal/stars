@@ -559,6 +559,256 @@ class S {
       args: [],
     );
   }
+
+  /// `Error loading content, please try again later.`
+  String get errorLoadingContent {
+    return Intl.message(
+      'Error loading content, please try again later.',
+      name: 'errorLoadingContent',
+      desc: 'Error message when content fails to load',
+      args: [],
+    );
+  }
+
+  /// `Please enter API key first`
+  String get pleaseEnterApiKey {
+    return Intl.message(
+      'Please enter API key first',
+      name: 'pleaseEnterApiKey',
+      desc: 'Prompt user to enter API key',
+      args: [],
+    );
+  }
+
+  /// `Enter bot name...`
+  String get enterBotName {
+    return Intl.message(
+      'Enter bot name...',
+      name: 'enterBotName',
+      desc: 'Prompt user to enter bot name',
+      args: [],
+    );
+  }
+
+  /// `Enter provider name...`
+  String get enterProviderName {
+    return Intl.message(
+      'Enter provider name...',
+      name: 'enterProviderName',
+      desc: 'Prompt user to enter custom provider name',
+      args: [],
+    );
+  }
+
+  /// `Select Provider:`
+  String get selectProvider {
+    return Intl.message(
+      'Select Provider:',
+      name: 'selectProvider',
+      desc: 'Label for selecting AI service provider',
+      args: [],
+    );
+  }
+
+  /// `Custom Provider...`
+  String get customProvider {
+    return Intl.message(
+      'Custom Provider...',
+      name: 'customProvider',
+      desc: 'Option for custom AI service provider',
+      args: [],
+    );
+  }
+
+  /// `API Type:`
+  String get apiType {
+    return Intl.message(
+      'API Type:',
+      name: 'apiType',
+      desc: 'Label for API type selection',
+      args: [],
+    );
+  }
+
+  /// `API Address:`
+  String get apiAddress {
+    return Intl.message(
+      'API Address:',
+      name: 'apiAddress',
+      desc: 'Label for API address input',
+      args: [],
+    );
+  }
+
+  /// `Enter API address...`
+  String get enterApiAddress {
+    return Intl.message(
+      'Enter API address...',
+      name: 'enterApiAddress',
+      desc: 'Prompt user to enter API address',
+      args: [],
+    );
+  }
+
+  /// `Enter API key...`
+  String get enterApiKey {
+    return Intl.message(
+      'Enter API key...',
+      name: 'enterApiKey',
+      desc: 'Prompt user to enter API key',
+      args: [],
+    );
+  }
+
+  /// `Please fetch model list first`
+  String get fetchModelListFirst {
+    return Intl.message(
+      'Please fetch model list first',
+      name: 'fetchModelListFirst',
+      desc: 'Prompt user to fetch model list first',
+      args: [],
+    );
+  }
+
+  /// `Fetch Model List`
+  String get fetchModelList {
+    return Intl.message(
+      'Fetch Model List',
+      name: 'fetchModelList',
+      desc: 'Tooltip for fetch model list button',
+      args: [],
+    );
+  }
+
+  /// `Select Model:`
+  String get selectModel {
+    return Intl.message(
+      'Select Model:',
+      name: 'selectModel',
+      desc: 'Label for model selection',
+      args: [],
+    );
+  }
+
+  /// `Enter system prompt...`
+  String get enterSystemPrompt {
+    return Intl.message(
+      'Enter system prompt...',
+      name: 'enterSystemPrompt',
+      desc: 'Hint text for system prompt input field',
+      args: [],
+    );
+  }
+
+  /// `Bot "{name}" has been added`
+  String botAddedSuccess(String name) {
+    return Intl.message(
+      'Bot "$name" has been added',
+      name: 'botAddedSuccess',
+      desc: 'Success message when a bot is added',
+      args: [name],
+    );
+  }
+
+  /// `Please fill in bot name, API address and API key`
+  String get fillRequiredFields {
+    return Intl.message(
+      'Please fill in bot name, API address and API key',
+      name: 'fillRequiredFields',
+      desc: 'Prompt user to fill in required fields',
+      args: [],
+    );
+  }
+
+  /// `Help & Feedback`
+  String get helpAndFeedback {
+    return Intl.message(
+      'Help & Feedback',
+      name: 'helpAndFeedback',
+      desc: 'Help and feedback option',
+      args: [],
+    );
+  }
+
+  /// `Provide your suggestions and feedback`
+  String get provideFeedback {
+    return Intl.message(
+      'Provide your suggestions and feedback',
+      name: 'provideFeedback',
+      desc: 'Description for providing feedback',
+      args: [],
+    );
+  }
+
+  /// `Please tell us your thoughts, issues, or suggestions to help us improve the app`
+  String get feedbackDescription {
+    return Intl.message(
+      'Please tell us your thoughts, issues, or suggestions to help us improve the app',
+      name: 'feedbackDescription',
+      desc: 'Feedback page description',
+      args: [],
+    );
+  }
+
+  /// `Enter your feedback here...`
+  String get feedbackHint {
+    return Intl.message(
+      'Enter your feedback here...',
+      name: 'feedbackHint',
+      desc: 'Feedback input hint',
+      args: [],
+    );
+  }
+
+  /// `Contact information (optional)`
+  String get contactInfoHint {
+    return Intl.message(
+      'Contact information (optional)',
+      name: 'contactInfoHint',
+      desc: 'Contact information input hint',
+      args: [],
+    );
+  }
+
+  /// `Submit Feedback`
+  String get submitFeedback {
+    return Intl.message(
+      'Submit Feedback',
+      name: 'submitFeedback',
+      desc: 'Submit feedback button',
+      args: [],
+    );
+  }
+
+  /// `Thank you for your feedback!`
+  String get feedbackSubmitted {
+    return Intl.message(
+      'Thank you for your feedback!',
+      name: 'feedbackSubmitted',
+      desc: 'Feedback submission success message',
+      args: [],
+    );
+  }
+
+  /// `Submission failed, please try again later`
+  String get feedbackSubmitError {
+    return Intl.message(
+      'Submission failed, please try again later',
+      name: 'feedbackSubmitError',
+      desc: 'Feedback submission error message',
+      args: [],
+    );
+  }
+
+  /// `Please enter feedback content`
+  String get feedbackContentRequired {
+    return Intl.message(
+      'Please enter feedback content',
+      name: 'feedbackContentRequired',
+      desc: 'Feedback content required message',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

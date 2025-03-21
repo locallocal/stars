@@ -110,7 +110,7 @@
     },
     "botAvatar": "봇 아바타",
     "@botAvatar": {
-        "description": "봇 아바타"
+        "description": "봇 아��자타"
     },
     "provider": "제공자",
     "@provider": {
@@ -225,5 +225,111 @@
     "messageHint": "메시지 입력...",
     "@messageHint": {
         "description": "메시지 입력 힌트"
+    },
+    "errorLoadingContent": "콘텐츠를 로드하는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+    "@errorLoadingContent": {
+        "description": "콘텐츠 로드 오류 메시지"
+    },
+    "pleaseEnterApiKey": "API 키를 먼저 입력하세요",
+    "@pleaseEnterApiKey": {
+        "description": "사용자에게 API 키 입력을 요청하는 메시지"
+    },
+    "enterBotName": "봇 이름 입력...",
+    "@enterBotName": {
+        "description": "사용자에게 봇 이름 입력을 요청하는 메시지"
+    },
+    "enterProviderName": "제공업체 이름 입력...",
+    "@enterProviderName": {
+        "description": "사용자에게 사용자 정의 제공업체 이름 입력을 요청하는 메시지"
+    },
+    "selectProvider": "제공업체 선택:",
+    "@selectProvider": {
+        "description": "AI 서비스 제공업체 선택을 위한 레이블"
+    },
+    "customProvider": "사용자 정의 제공업체...",
+    "@customProvider": {
+        "description": "사용자 정의 AI 서비스 제공업체 옵션"
+    },
+    "apiType": "API 유형:",
+    "@apiType": {
+        "description": "API 유형 선택을 위한 레이블"
+    },
+    "apiAddress": "API 주소:",
+    "@apiAddress": {
+        "description": "API 주소 입력을 위한 레이블"
+    },
+    "enterApiAddress": "API 주소 입력...",
+    "@enterApiAddress": {
+        "description": "API 주소 입력을 위한 프롬프트"
+    },
+    "enterApiKey": "API 키 입력...",
+    "@enterApiKey": {
+        "description": "API 키 입력을 위한 프롬프트"
+    },
+    "fetchModelList": "모델 목록 가져오기",
+    "@fetchModelList": {
+        "description": "모델 목록을 가져오기 위한 버튼"
+    },
+    "fetchModelListFirst": "먼저 모델 목록을 가져오세요",
+    "@fetchModelListFirst": {
+        "description": "먼저 모델 목록을 가져오라는 프롬프트"
+    },
+    "selectModel": "모델 선택:",
+    "@selectModel": {
+        "description": "모델 선택을 위한 레이블"
+    },
+    "enterSystemPrompt": "시스템 프롬프트 입력...",
+    "@enterSystemPrompt": {
+        "description": "시스템 프롬프트 입력을 위한 프롬프트"
+    },
+    "botAddedSuccess": "봇 \"{name}\"이(가) 추가되었습니다",
+    "@botAddedSuccess": {
+        "description": "봇 추가 성공 메시지",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "봇 이름, API 주소 및 API 키를 입력하세요",
+    "@fillRequiredFields": {
+        "description": "필수 필드를 채우라는 프롬프트"
+    },
+    "helpAndFeedback": "도움말 및 피드백",
+    "@helpAndFeedback": {
+        "description": "도움말 및 피드백 옵션"
+    },
+    "provideFeedback": "의견과 제안을 제공해 주세요",
+    "@provideFeedback": {
+        "description": "피드백 제공에 대한 설명"
+    },
+    "feedbackDescription": "앱 개선에 도움이 될 수 있도록 생각, 문제 또는 제안을 알려주세요",
+    "@feedbackDescription": {
+        "description": "피드백 페이지 설명"
+    },
+    "feedbackHint": "여기에 피드백을 입력하세요...",
+    "@feedbackHint": {
+        "description": "피드백 입력 힌트"
+    },
+    "contactInfoHint": "연락처 정보(선택 사항)",
+    "@contactInfoHint": {
+        "description": "연락처 정보 입력 힌트"
+    },
+    "submitFeedback": "피드백 제출",
+    "@submitFeedback": {
+        "description": "피드백 제출 버튼"
+    },
+    "feedbackSubmitted": "피드백을 보내주셔서 감사합니다!",
+    "@feedbackSubmitted": {
+        "description": "피드백 제출 성공 메시지"
+    },
+    "feedbackSubmitError": "제출 실패, 나중에 다시 시도해 주세요",
+    "@feedbackSubmitError": {
+        "description": "피드백 제출 오류 메시지"
+    },
+    "feedbackContentRequired": "피드백 내용을 입력해 주세요",
+    "@feedbackContentRequired": {
+        "description": "피드백 내용 필수 메시지"
     }
 }

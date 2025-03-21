@@ -225,5 +225,111 @@
     "messageHint": "Type a message...",
     "@messageHint": {
         "description": "Message input hint"
+    },
+    "errorLoadingContent": "Error loading content, please try again later.",
+    "@errorLoadingContent": {
+        "description": "Error message when content fails to load"
+    },
+    "pleaseEnterApiKey": "Please enter API key first",
+    "@pleaseEnterApiKey": {
+        "description": "Prompt user to enter API key"
+    },
+    "enterBotName": "Enter bot name...",
+    "@enterBotName": {
+        "description": "Prompt user to enter bot name"
+    },
+    "enterProviderName": "Enter provider name...",
+    "@enterProviderName": {
+        "description": "Prompt user to enter custom provider name"
+    },
+    "selectProvider": "Select Provider:",
+    "@selectProvider": {
+        "description": "Label for selecting AI service provider"
+    },
+    "customProvider": "Custom Provider...",
+    "@customProvider": {
+        "description": "Option for custom AI service provider"
+    },
+    "apiType": "API Type:",
+    "@apiType": {
+        "description": "Label for API type selection"
+    },
+    "apiAddress": "API Address:",
+    "@apiAddress": {
+        "description": "Label for API address input"
+    },
+    "enterApiAddress": "Enter API address...",
+    "@enterApiAddress": {
+        "description": "Prompt user to enter API address"
+    },
+    "enterApiKey": "Enter API key...",
+    "@enterApiKey": {
+        "description": "Prompt user to enter API key"
+    },
+    "fetchModelListFirst": "Please fetch model list first",
+    "@fetchModelListFirst": {
+        "description": "Prompt user to fetch model list first"
+    },
+    "fetchModelList": "Fetch Model List",
+    "@fetchModelList": {
+        "description": "Tooltip for fetch model list button"
+    },
+    "selectModel": "Select Model:",
+    "@selectModel": {
+        "description": "Label for model selection"
+    },
+    "enterSystemPrompt": "Enter system prompt...",
+    "@enterSystemPrompt": {
+        "description": "Hint text for system prompt input field"
+    },
+    "botAddedSuccess": "Bot \"{name}\" has been added",
+    "@botAddedSuccess": {
+        "description": "Success message when a bot is added",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "Please fill in bot name, API address and API key",
+    "@fillRequiredFields": {
+        "description": "Prompt user to fill in required fields"
+    },
+    "helpAndFeedback": "Help & Feedback",
+    "@helpAndFeedback": {
+        "description": "Help and feedback option"
+    },
+    "provideFeedback": "Provide your suggestions and feedback",
+    "@provideFeedback": {
+        "description": "Description for providing feedback"
+    },
+    "feedbackDescription": "Please tell us your thoughts, issues, or suggestions to help us improve the app",
+    "@feedbackDescription": {
+        "description": "Feedback page description"
+    },
+    "feedbackHint": "Enter your feedback here...",
+    "@feedbackHint": {
+        "description": "Feedback input hint"
+    },
+    "contactInfoHint": "Contact information (optional)",
+    "@contactInfoHint": {
+        "description": "Contact information input hint"
+    },
+    "submitFeedback": "Submit Feedback",
+    "@submitFeedback": {
+        "description": "Submit feedback button"
+    },
+    "feedbackSubmitted": "Thank you for your feedback!",
+    "@feedbackSubmitted": {
+        "description": "Feedback submission success message"
+    },
+    "feedbackSubmitError": "Submission failed, please try again later",
+    "@feedbackSubmitError": {
+        "description": "Feedback submission error message"
+    },
+    "feedbackContentRequired": "Please enter feedback content",
+    "@feedbackContentRequired": {
+        "description": "Feedback content required message"
     }
 }

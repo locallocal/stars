@@ -1,6 +1,5 @@
 import 'package:bubble/model/model.dart';
 
-
 final providers = [
   'OpenAI',
   'Anthropic',
@@ -43,10 +42,7 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeHuggingface,
     'base_url': 'https://api-inference.huggingface.co',
   },
-  'Grok': {
-    'api_type': Bot.apiTypeGrok,
-    'base_url': 'https://api.grok.ai'
-  },
+  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
   'ChatGLM': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'http://localhost:8000',

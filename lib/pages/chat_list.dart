@@ -104,7 +104,9 @@ class _ChatListPageState extends State<ChatListPage> {
                               );
                             }
                             if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return Center(child: Text(S.of(context).noBotsAvailable));
+                              return Center(
+                                child: Text(S.of(context).noBotsAvailable),
+                              );
                             }
 
                             final bots = snapshot.data!;
@@ -358,7 +360,9 @@ class _ChatListPageState extends State<ChatListPage> {
                                         context: context,
                                         builder:
                                             (context) => AlertDialog(
-                                              title: Text(S.of(context).deleteChat),
+                                              title: Text(
+                                                S.of(context).deleteChat,
+                                              ),
                                               // 使用bot.name
                                               content: Text(
                                                 '确定要删除与 "${bot.name}" 的聊天吗？',

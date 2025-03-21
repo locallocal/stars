@@ -6,27 +6,30 @@ import 'package:bubble/utils/utils.dart';
 
 class ProfileService {
   // 主题变更流
-  static final StreamController<ThemeMode> _themeController = StreamController<ThemeMode>.broadcast();
+  static final StreamController<ThemeMode> _themeController =
+      StreamController<ThemeMode>.broadcast();
   static Stream<ThemeMode> get themeStream => _themeController.stream;
-  
+
   // 字体大小变更流
-  static final StreamController<double> _fontSizeController = StreamController<double>.broadcast();
+  static final StreamController<double> _fontSizeController =
+      StreamController<double>.broadcast();
   static Stream<double> get fontSizeStream => _fontSizeController.stream;
-  
+
   // 语言变更流
-  static final StreamController<String> _languageController = StreamController<String>.broadcast();
+  static final StreamController<String> _languageController =
+      StreamController<String>.broadcast();
   static Stream<String> get languageStream => _languageController.stream;
 
   // 通知主题变更
   static void notifyThemeChanged(ThemeMode themeMode) {
     _themeController.add(themeMode);
   }
-  
+
   // 通知字体大小变更
   static void notifyFontSizeChanged(double fontSize) {
     _fontSizeController.add(fontSize);
   }
-  
+
   // 通知语言变更
   static void notifyLanguageChanged(String language) {
     _languageController.add(language);
@@ -72,7 +75,7 @@ class ProfileService {
         whereArgs: [maps.first['id']],
       );
     }
-    
+
     // 通知更新
     notifyThemeChanged(intToThemeMode(profile.themeMode));
     notifyFontSizeChanged(profile.fontSize);

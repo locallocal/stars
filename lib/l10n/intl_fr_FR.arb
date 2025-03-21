@@ -225,5 +225,111 @@
     "messageHint": "Tapez un message...",
     "@messageHint": {
         "description": "Indice de saisie de message"
+    },
+    "errorLoadingContent": "Erreur lors du chargement du contenu, veuillez réessayer plus tard.",
+    "@errorLoadingContent": {
+        "description": "Message d'erreur lors du chargement du contenu"
+    },
+    "pleaseEnterApiKey": "Veuillez d'abord saisir la clé API",
+    "@pleaseEnterApiKey": {
+        "description": "Invite l'utilisateur à saisir la clé API"
+    },
+    "enterBotName": "Entrez le nom du bot...",
+    "@enterBotName": {
+        "description": "Invite l'utilisateur à saisir le nom du bot"
+    },
+    "enterProviderName": "Entrez le nom du fournisseur...",
+    "@enterProviderName": {
+        "description": "Invite l'utilisateur à saisir le nom du fournisseur personnalisé"
+    },
+    "selectProvider": "Sélectionner le fournisseur:",
+    "@selectProvider": {
+        "description": "Étiquette pour sélectionner le fournisseur de service AI"
+    },
+    "customProvider": "Fournisseur personnalisé...",
+    "@customProvider": {
+        "description": "Option pour un fournisseur de service AI personnalisé"
+    },
+    "apiType": "Type d'API:",
+    "@apiType": {
+        "description": "Étiquette pour la sélection du type d'API"
+    },
+    "apiAddress": "Adresse API:",
+    "@apiAddress": {
+        "description": "Étiquette pour la saisie d'adresse API"
+    },
+    "enterApiAddress": "Entrez l'adresse API...",
+    "@enterApiAddress": {
+        "description": "Invite à entrer l'adresse API"
+    },
+    "enterApiKey": "Entrez la clé API...",
+    "@enterApiKey": {
+        "description": "Invite à entrer la clé API"
+    },
+    "fetchModelList": "Récupérer la liste des modèles",
+    "@fetchModelList": {
+        "description": "Bouton pour récupérer la liste des modèles"
+    },
+    "fetchModelListFirst": "Veuillez d'abord récupérer la liste des modèles",
+    "@fetchModelListFirst": {
+        "description": "Invite à récupérer d'abord la liste des modèles"
+    },
+    "selectModel": "Sélectionner le modèle:",
+    "@selectModel": {
+        "description": "Étiquette pour sélectionner le modèle"
+    },
+    "enterSystemPrompt": "Entrez l'invite système...",
+    "@enterSystemPrompt": {
+        "description": "Invite à entrer l'invite système"
+    },
+    "botAddedSuccess": "Bot \"{name}\" a été ajouté",
+    "@botAddedSuccess": {
+        "description": "Message de succès lors de l'ajout d'un bot",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "Veuillez remplir le nom du bot, l'adresse API et la clé API",
+    "@fillRequiredFields": {
+        "description": "Invite à remplir les champs obligatoires"
+    },
+    "helpAndFeedback": "Aide et Commentaires",
+    "@helpAndFeedback": {
+        "description": "Option d'aide et de commentaires"
+    },
+    "provideFeedback": "Fournissez vos suggestions et commentaires",
+    "@provideFeedback": {
+        "description": "Description pour fournir des commentaires"
+    },
+    "feedbackDescription": "Veuillez nous faire part de vos réflexions, problèmes ou suggestions pour nous aider à améliorer l'application",
+    "@feedbackDescription": {
+        "description": "Description de la page de commentaires"
+    },
+    "feedbackHint": "Entrez vos commentaires ici...",
+    "@feedbackHint": {
+        "description": "Indication pour saisir des commentaires"
+    },
+    "contactInfoHint": "Informations de contact (facultatif)",
+    "@contactInfoHint": {
+        "description": "Indication pour saisir les informations de contact"
+    },
+    "submitFeedback": "Soumettre les Commentaires",
+    "@submitFeedback": {
+        "description": "Bouton pour soumettre les commentaires"
+    },
+    "feedbackSubmitted": "Merci pour vos commentaires !",
+    "@feedbackSubmitted": {
+        "description": "Message de succès lors de l'envoi de commentaires"
+    },
+    "feedbackSubmitError": "Échec de l'envoi, veuillez réessayer plus tard",
+    "@feedbackSubmitError": {
+        "description": "Message d'erreur lors de l'envoi de commentaires"
+    },
+    "feedbackContentRequired": "Veuillez saisir le contenu des commentaires",
+    "@feedbackContentRequired": {
+        "description": "Message de contenu de commentaires requis"
     }
 }

@@ -96,21 +96,21 @@
     "@clearChat": {
         "description": "清空聊天"
     },
-    "addBot": "添加机器人",
+    "addBot": "添加智能体",
     "@addBot": {
-        "description": "添加机器人"
+        "description": "添加智能体"
     },
-    "editBot": "编辑机器人",
+    "editBot": "编辑智能体",
     "@editBot": {
-        "description": "编辑机器人"
+        "description": "编辑智能体"
     },
-    "botName": "机器人名称",
+    "botName": "智能体名称",
     "@botName": {
-        "description": "机器人名称"
+        "description": "智能体名称"
     },
-    "botAvatar": "机器人头像",
+    "botAvatar": "智能体头像",
     "@botAvatar": {
-        "description": "机器人头像"
+        "description": "智能体头像"
     },
     "provider": "供应商",
     "@provider": {
@@ -124,9 +124,9 @@
     "@model": {
         "description": "模型"
     },
-    "systemPrompt": "系统提示词",
+    "systemPrompt": "系统提示词:",
     "@systemPrompt": {
-        "description": "系统提示词"
+        "description": "系统提示词标签"
     },
     "languageChanged": "语言已设置为{language}",
     "@languageChanged": {
@@ -225,5 +225,111 @@
     "messageHint": "输入消息...",
     "@messageHint": {
         "description": "消息输入提示"
+    },
+    "errorLoadingContent": "加载内容时出错，请稍后再试。",
+    "@errorLoadingContent": {
+        "description": "加载内容错误提示"
+    },
+    "pleaseEnterApiKey": "请先输入API密钥",
+    "@pleaseEnterApiKey": {
+        "description": "提示用户输入API密钥"
+    },
+    "enterBotName": "请输入名称...",
+    "@enterBotName": {
+        "description": "提示用户输入机器人名称"
+    },
+    "enterProviderName": "输入供应商名称...",
+    "@enterProviderName": {
+        "description": "提示用户输入自定义供应商名称"
+    },
+    "selectProvider": "选择提供商:",
+    "@selectProvider": {
+        "description": "选择AI服务提供商的标签"
+    },
+    "customProvider": "自定义供应商...",
+    "@customProvider": {
+        "description": "自定义AI服务提供商的选项"
+    },
+    "apiType": "API类型:",
+    "@apiType": {
+        "description": "API类型选择标签"
+    },
+    "apiAddress": "API地址:",
+    "@apiAddress": {
+        "description": "API地址输入标签"
+    },
+    "enterApiAddress": "输入API地址...",
+    "@enterApiAddress": {
+        "description": "提示用户输入API地址"
+    },
+    "enterApiKey": "输入API密钥...",
+    "@enterApiKey": {
+        "description": "提示用户输入API密钥"
+    },
+    "fetchModelListFirst": "请先获取模型列表",
+    "@fetchModelListFirst": {
+        "description": "提示用户先获取模型列表"
+    },
+    "fetchModelList": "获取模型列表",
+    "@fetchModelList": {
+        "description": "获取模型列表按钮的提示文本"
+    },
+    "selectModel": "选择模型:",
+    "@selectModel": {
+        "description": "选择模型标签"
+    },
+    "enterSystemPrompt": "输入系统提示词...",
+    "@enterSystemPrompt": {
+        "description": "系统提示词输入框的提示文本"
+    },
+    "botAddedSuccess": "智能体 \"{name}\" 已添加",
+    "@botAddedSuccess": {
+        "description": "添加智能体成功的提示",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "请填写智能体名称、API地址和API密钥",
+    "@fillRequiredFields": {
+        "description": "提示用户填写必填字段"
+    },
+    "helpAndFeedback": "帮助与反馈",
+    "@helpAndFeedback": {
+        "description": "帮助与反馈选项"
+    },
+    "provideFeedback": "提供您的意见和建议",
+    "@provideFeedback": {
+        "description": "提供反馈的描述"
+    },
+    "feedbackDescription": "请告诉我们您的想法、问题或建议，帮助我们改进应用",
+    "@feedbackDescription": {
+        "description": "反馈页面描述"
+    },
+    "feedbackHint": "请在此输入您的反馈内容...",
+    "@feedbackHint": {
+        "description": "反馈输入框提示"
+    },
+    "contactInfoHint": "联系方式（可选）",
+    "@contactInfoHint": {
+        "description": "联系方式输入框提示"
+    },
+    "submitFeedback": "提交反馈",
+    "@submitFeedback": {
+        "description": "提交反馈按钮"
+    },
+    "feedbackSubmitted": "感谢您的反馈！",
+    "@feedbackSubmitted": {
+        "description": "反馈提交成功提示"
+    },
+    "feedbackSubmitError": "提交失败，请稍后重试",
+    "@feedbackSubmitError": {
+        "description": "反馈提交失败提示"
+    },
+    "feedbackContentRequired": "请输入反馈内容",
+    "@feedbackContentRequired": {
+        "description": "反馈内容必填提示"
     }
 }

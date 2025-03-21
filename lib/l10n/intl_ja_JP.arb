@@ -225,5 +225,111 @@
     "messageHint": "メッセージを入力...",
     "@messageHint": {
         "description": "メッセージ入力のヒント"
+    },
+    "errorLoadingContent": "コンテンツの読み込み中にエラーが発生しました。後でもう一度お試しください。",
+    "@errorLoadingContent": {
+        "description": "コンテンツ読み込みエラーメッセージ"
+    },
+    "pleaseEnterApiKey": "APIキーを先に入力してください",
+    "@pleaseEnterApiKey": {
+        "description": "APIキーの入力を促すプロンプト"
+    },
+    "enterBotName": "ボット名を入力...",
+    "@enterBotName": {
+        "description": "ボット名の入力を促すプロンプト"
+    },
+    "enterProviderName": "プロバイダー名を入力...",
+    "@enterProviderName": {
+        "description": "カスタムプロバイダー名の入力を促すプロンプト"
+    },
+    "selectProvider": "プロバイダーを選択:",
+        "@selectProvider": {
+            "description": "AIサービスプロバイダーを選択するためのラベル"
+        },
+    "customProvider": "カスタムプロバイダー...",
+    "@customProvider": {
+        "description": "カスタムAIサービスプロバイダーのオプション"
+    },
+    "apiType": "APIタイプ:",
+    "@apiType": {
+        "description": "APIタイプ選択のラベル"
+    },
+    "apiAddress": "APIアドレス:",
+    "@apiAddress": {
+        "description": "API アドレス入力のラベル"
+    },
+    "enterApiAddress": "APIアドレスを入力...",
+    "@enterApiAddress": {
+        "description": "APIアドレスの入力を促すプロンプト"
+    },
+    "enterApiKey": "APIキーを入力...",
+    "@enterApiKey": {
+        "description": "APIキーの入力を促すプロンプト"
+    },
+    "fetchModelListFirst": "まずモデルリストを取得してください",
+    "@fetchModelListFirst": {
+        "description": "ユーザーにモデルリストを最初に取得するよう促す"
+    },
+    "fetchModelList": "モデルリストを取得",
+    "@fetchModelList": {
+        "description": "モデルリスト取得ボタンのツールチップ"
+    },
+    "selectModel": "モデルを選択:",
+    "@selectModel": {
+        "description": "モデル選択のラベル"
+    },
+    "enterSystemPrompt": "システムプロンプトを入力...",
+    "@enterSystemPrompt": {
+        "description": "システムプロンプト入力フィールドのヒントテキスト"
+    },
+    "botAddedSuccess": "ボット \"{name}\" が追加されました",
+    "@botAddedSuccess": {
+        "description": "ボットが追加された時の成功メッセージ",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "ボット名、APIアドレス、APIキーを入力してください",
+    "@fillRequiredFields": {
+        "description": "必須フィールドの入力を促すメッセージ"
+    },
+    "helpAndFeedback": "ヘルプとフィードバック",
+    "@helpAndFeedback": {
+        "description": "ヘルプとフィードバックのオプション"
+    },
+    "provideFeedback": "ご意見やご提案をお寄せください",
+    "@provideFeedback": {
+        "description": "フィードバック提供の説明"
+    },
+    "feedbackDescription": "アプリの改善に役立てるため、あなたの考え、問題点、または提案を教えてください",
+    "@feedbackDescription": {
+        "description": "フィードバックページの説明"
+    },
+    "feedbackHint": "ここにフィードバックを入力してください...",
+    "@feedbackHint": {
+        "description": "フィードバック入力のヒント"
+    },
+    "contactInfoHint": "連絡先情報（任意）",
+    "@contactInfoHint": {
+        "description": "連絡先情報入力のヒント"
+    },
+    "submitFeedback": "フィードバックを送信",
+    "@submitFeedback": {
+        "description": "フィードバック送信ボタン"
+    },
+    "feedbackSubmitted": "フィードバックをありがとうございます！",
+    "@feedbackSubmitted": {
+        "description": "フィードバック送信成功メッセージ"
+    },
+    "feedbackSubmitError": "送信に失敗しました。後でもう一度お試しください",
+    "@feedbackSubmitError": {
+        "description": "フィードバック送信エラーメッセージ"
+    },
+    "feedbackContentRequired": "フィードバック内容を入力してください",
+    "@feedbackContentRequired": {
+        "description": "フィードバック内容必須メッセージ"
     }
 }

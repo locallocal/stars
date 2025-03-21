@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/providers.dart';
+import 'package:bubble/generated/l10n.dart'; // 添加国际化支持导入
 
 class AddBotPage extends StatefulWidget {
   final Function(Bot) onBotAdded;
@@ -52,9 +53,9 @@ class _AddBotPageState extends State<AddBotPage> {
   // 添加获取模型列表的方法
   Future<void> _fetchModels() async {
     if (apiKeyController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('请先输入API密钥')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).pleaseEnterApiKey)),
+      ); // 使用国际化字符串
       return;
     }
 
@@ -151,7 +152,7 @@ class _AddBotPageState extends State<AddBotPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          '添加智能体',
+          S.of(context).addBot, // 使用国际化字符串
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -198,7 +199,7 @@ class _AddBotPageState extends State<AddBotPage> {
               child: TextField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  hintText: '请输入名称...',
+                  hintText: S.of(context).enterBotName,
                   hintStyle: TextStyle(
                     fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
                   ),
@@ -214,7 +215,10 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 32),
 
             // 选择提供商
-            const Text('选择提供商:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).selectProvider,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             if (!isCustomProvider)
               Container(
@@ -252,7 +256,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           DropdownMenuItem<String>(
                             value: 'custom',
                             child: Text(
-                              '自定义供应商...',
+                              S.of(context).customProvider,
                               style: TextStyle(
                                 fontSize:
                                     Theme.of(
@@ -289,12 +293,12 @@ class _AddBotPageState extends State<AddBotPage> {
                       child: TextField(
                         controller: customProviderController,
                         decoration: InputDecoration(
-                          hintText: '输入供应商名称...',
-                          prefixIcon: Icon(Icons.business),
+                          hintText: S.of(context).enterProviderName,
+                          prefixIcon: const Icon(Icons.business),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12),
                           suffixIcon: IconButton(
-                            icon: Icon(Icons.close),
+                            icon: const Icon(Icons.close),
                             onPressed: () {
                               setState(() {
                                 isCustomProvider = false;
@@ -324,7 +328,10 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 16),
 
             // api类型
-            const Text('API类型:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).apiType,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -461,7 +468,8 @@ class _AddBotPageState extends State<AddBotPage> {
                               ? (value) {
                                 if (value != null) {
                                   setState(() {
-                                    modelsByProvider[selectedProvider]?['api_type'] = value;
+                                    modelsByProvider[selectedProvider]?['api_type'] =
+                                        value;
                                   });
                                 }
                               }
@@ -474,7 +482,10 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 16),
 
             // 添加供应商地址输入
-            const Text('API地址:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).apiAddress,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -483,9 +494,9 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
               child: TextField(
                 controller: baseURLController,
-                decoration: const InputDecoration(
-                  hintText: '输入API地址...',
-                  prefixIcon: Icon(Icons.link),
+                decoration: InputDecoration(
+                  hintText: S.of(context).enterApiAddress,
+                  prefixIcon: const Icon(Icons.link),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -498,7 +509,10 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 16),
 
             // API密钥
-            const Text('API密钥:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).apiKey,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -508,7 +522,7 @@ class _AddBotPageState extends State<AddBotPage> {
               child: TextField(
                 controller: apiKeyController,
                 decoration: InputDecoration(
-                  hintText: '输入API密钥...',
+                  hintText: S.of(context).enterApiKey,
                   prefixIcon: const Icon(Icons.key),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -521,7 +535,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           )
                           : IconButton(
                             icon: const Icon(Icons.refresh),
-                            tooltip: '获取模型列表',
+                            tooltip: S.of(context).fetchModelList,
                             onPressed: _fetchModels,
                           ),
                 ),
@@ -529,9 +543,11 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
             ),
             const SizedBox(height: 16),
-
             // 选择模型
-            const Text('选择模型:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).selectModel,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -555,7 +571,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                   ? currentModels.first
                                   : ''),
                       hint: Text(
-                        '请先获取模型列表',
+                        S.of(context).fetchModelListFirst,
                         style: TextStyle(
                           fontSize:
                               Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -568,7 +584,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                 DropdownMenuItem<String>(
                                   value: '',
                                   child: Text(
-                                    '请先获取模型列表',
+                                    S.of(context).fetchModelListFirst,
                                     style: TextStyle(
                                       fontSize:
                                           Theme.of(
@@ -607,7 +623,10 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 16),
 
             // 系统提示词
-            const Text('系统提示词:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).systemPrompt,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -616,8 +635,8 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
               child: TextField(
                 controller: systemPromptController,
-                decoration: const InputDecoration(
-                  hintText: '输入系统提示词...',
+                decoration: InputDecoration(
+                  hintText: S.of(context).enterSystemPrompt,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -666,7 +685,9 @@ class _AddBotPageState extends State<AddBotPage> {
               // 显示成功提示
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('智能体 "${nameController.text.trim()}" 已添加'),
+                  content: Text(
+                    S.of(context).botAddedSuccess(nameController.text.trim()),
+                  ),
                   duration: const Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -675,7 +696,7 @@ class _AddBotPageState extends State<AddBotPage> {
               // 显示错误提示
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('请填写智能体名称、API地址和API密钥'),
+                  content: Text(S.of(context).fillRequiredFields),
                   backgroundColor: Theme.of(context).colorScheme.errorContainer,
                   duration: const Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
@@ -684,7 +705,7 @@ class _AddBotPageState extends State<AddBotPage> {
             }
           },
           child: Text(
-            '添加智能体',
+            S.of(context).addBot,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,

@@ -225,5 +225,111 @@
     "messageHint": "Digite uma mensagem...",
     "@messageHint": {
         "description": "Dica de entrada de mensagem"
+    },
+    "errorLoadingContent": "Erro ao carregar conteúdo, por favor tente novamente mais tarde.",
+    "@errorLoadingContent": {
+        "description": "Mensagem de erro ao carregar conteúdo"
+    },
+    "pleaseEnterApiKey": "Por favor, insira a chave API primeiro",
+    "@pleaseEnterApiKey": {
+        "description": "Solicitar ao usuário que insira a chave API"
+    },
+    "enterBotName": "Digite o nome do bot...",
+    "@enterBotName": {
+        "description": "Solicitar ao usuário que digite o nome do bot"
+    },
+    "enterProviderName": "Digite o nome do provedor...",
+    "@enterProviderName": {
+        "description": "Solicitar ao usuário que digite o nome do provedor personalizado"
+    },
+    "selectProvider": "Selecionar provedor:",
+    "@selectProvider": {
+        "description": "Etiqueta para selecionar o provedor de serviço de IA"
+    },
+    "customProvider": "Provedor personalizado...",
+    "@customProvider": {
+        "description": "Opção para provedor de serviço de IA personalizado"
+    },
+    "apiType": "Tipo de API:",
+    "@apiType": {
+        "description": "Etiqueta para seleção do tipo de API"
+    },
+    "apiAddress": "Endereço da API:",
+    "@apiAddress": {
+        "description": "Etiqueta para entrada do endereço da API"
+    },
+    "enterApiAddress": "Digite o endereço da API...",
+    "@enterApiAddress": {
+        "description": "Solicitar ao usuário que digite o endereço da API"
+    },
+    "enterApiKey": "Digite a chave API...",
+    "@enterApiKey": {
+        "description": "Solicitar ao usuário que digite a chave API"
+    },
+    "fetchModelList": "Obter lista de modelos",
+    "@fetchModelList": {
+        "description": "Botão para obter a lista de modelos"
+    },
+    "fetchModelListFirst": "Por favor, obtenha a lista de modelos primeiro",
+    "@fetchModelListFirst": {
+        "description": "Solicitar ao usuário que obtenha a lista de modelos primeiro"
+    },
+    "selectModel": "Selecionar modelo:",
+    "@selectModel": {
+        "description": "Etiqueta para selecionar o modelo"
+    },
+    "enterSystemPrompt": "Digite o prompt do sistema...",
+    "@enterSystemPrompt": {
+        "description": "Solicitar ao usuário que digite o prompt do sistema"
+    },
+    "botAddedSuccess": "Bot \"{name}\" foi adicionado",
+    "@botAddedSuccess": {
+        "description": "Mensagem de sucesso ao adicionar um bot",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "Por favor, preencha o nome do bot, endereço da API e chave API",
+    "@fillRequiredFields": {
+        "description": "Solicitar ao usuário que preencha os campos obrigatórios"
+    },
+    "helpAndFeedback": "Ajuda e Feedback",
+    "@helpAndFeedback": {
+        "description": "Opção de ajuda e feedback"
+    },
+    "provideFeedback": "Forneça suas sugestões e feedback",
+    "@provideFeedback": {
+        "description": "Descrição para fornecer feedback"
+    },
+    "feedbackDescription": "Por favor, conte-nos seus pensamentos, problemas ou sugestões para nos ajudar a melhorar o aplicativo",
+    "@feedbackDescription": {
+        "description": "Descrição da página de feedback"
+    },
+    "feedbackHint": "Digite seu feedback aqui...",
+    "@feedbackHint": {
+        "description": "Dica para entrada de feedback"
+    },
+    "contactInfoHint": "Informações de contato (opcional)",
+    "@contactInfoHint": {
+        "description": "Dica para entrada de informações de contato"
+    },
+    "submitFeedback": "Enviar Feedback",
+    "@submitFeedback": {
+        "description": "Botão para enviar feedback"
+    },
+    "feedbackSubmitted": "Obrigado pelo seu feedback!",
+    "@feedbackSubmitted": {
+        "description": "Mensagem de sucesso ao enviar feedback"
+    },
+    "feedbackSubmitError": "Falha no envio, por favor tente novamente mais tarde",
+    "@feedbackSubmitError": {
+        "description": "Mensagem de erro ao enviar feedback"
+    },
+    "feedbackContentRequired": "Por favor, digite o conteúdo do feedback",
+    "@feedbackContentRequired": {
+        "description": "Mensagem de conteúdo de feedback obrigatório"
     }
 }

@@ -225,5 +225,111 @@
     "messageHint": "輸入消息...",
     "@messageHint": {
         "description": "消息輸入提示"
+    },
+    "errorLoadingContent": "載入內容時出錯，請稍後再試。",
+    "@errorLoadingContent": {
+        "description": "載入內容錯誤提示"
+    },
+    "pleaseEnterApiKey": "請先輸入API密鑰",
+    "@pleaseEnterApiKey": {
+        "description": "提示用戶輸入API密鑰"
+    },
+    "enterBotName": "請輸入名稱...",
+    "@enterBotName": {
+        "description": "提示用戶輸入機器人名稱"
+    },
+    "enterProviderName": "輸入供應商名稱...",
+    "@enterProviderName": {
+        "description": "提示用戶輸入自定義供應商名稱"
+    },
+    "selectProvider": "選擇提供商:",
+    "@selectProvider": {
+        "description": "選擇AI服務提供商的標籤"
+    },
+    "customProvider": "自定義供應商...",
+    "@customProvider": {
+        "description": "自定義AI服務提供商的選項"
+    },
+    "apiType": "API類型:",
+    "@apiType": {
+        "description": "API類型選擇標籤"
+    },
+    "apiAddress": "API地址:",
+    "@apiAddress": {
+        "description": "API地址輸入標籤"
+    },
+    "enterApiAddress": "輸入API地址...",
+    "@enterApiAddress": {
+        "description": "提示用戶輸入API地址"
+    },
+    "enterApiKey": "輸入API密鑰...",
+    "@enterApiKey": {
+        "description": "提示用戶輸入API密鑰"
+    },
+    "fetchModelListFirst": "請先獲取模型列表",
+    "@fetchModelListFirst": {
+        "description": "提示用戶先獲取模型列表"
+    },
+    "fetchModelList": "獲取模型列表",
+    "@fetchModelList": {
+        "description": "獲取模型列表按鈕的提示文本"
+    },
+    "selectModel": "選擇模型:",
+    "@selectModel": {
+        "description": "選擇模型標籤"
+    },
+    "enterSystemPrompt": "輸入系統提示詞...",
+    "@enterSystemPrompt": {
+        "description": "系統提示詞輸入框的提示文本"
+    },
+    "botAddedSuccess": "智能體 \"{name}\" 已添加",
+    "@botAddedSuccess": {
+        "description": "添加智能體成功的提示",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "請填寫智能體名稱、API地址和API密鑰",
+    "@fillRequiredFields": {
+        "description": "提示用戶填寫必填字段"
+    },
+    "helpAndFeedback": "幫助與反饋",
+    "@helpAndFeedback": {
+        "description": "幫助與反饋選項"
+    },
+    "provideFeedback": "提供您的意見和建議",
+    "@provideFeedback": {
+        "description": "提供反饋的描述"
+    },
+    "feedbackDescription": "請告訴我們您的想法、問題或建議，幫助我們改進應用",
+    "@feedbackDescription": {
+        "description": "反饋頁面描述"
+    },
+    "feedbackHint": "請在此輸入您的反饋內容...",
+    "@feedbackHint": {
+        "description": "反饋輸入框提示"
+    },
+    "contactInfoHint": "聯絡方式（可選）",
+    "@contactInfoHint": {
+        "description": "聯絡方式輸入框提示"
+    },
+    "submitFeedback": "提交反饋",
+    "@submitFeedback": {
+        "description": "提交反饋按鈕"
+    },
+    "feedbackSubmitted": "感謝您的反饋！",
+    "@feedbackSubmitted": {
+        "description": "反饋提交成功提示"
+    },
+    "feedbackSubmitError": "提交失敗，請稍後重試",
+    "@feedbackSubmitError": {
+        "description": "反饋提交失敗提示"
+    },
+    "feedbackContentRequired": "請輸入反饋內容",
+    "@feedbackContentRequired": {
+        "description": "反饋內容必填提示"
     }
 }

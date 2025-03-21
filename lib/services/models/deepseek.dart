@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
-
 class DeepSeekChatModel extends ChatModel {
   DeepSeekChatModel(Bot bot) : super(bot);
 

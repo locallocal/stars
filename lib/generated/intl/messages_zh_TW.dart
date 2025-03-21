@@ -20,7 +20,9 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'zh_TW';
 
-  static String m0(language) => "語言已設置為${language}";
+  static String m0(name) => "智能體 \"${name}\" 已添加";
+
+  static String m1(language) => "語言已設置為${language}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -29,12 +31,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "addBot": MessageLookupByLibrary.simpleMessage("添加機器人"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage("調整應用內文字大小"),
     "adjustFontSize": MessageLookupByLibrary.simpleMessage("調整文字大小"),
+    "apiAddress": MessageLookupByLibrary.simpleMessage("API地址:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API密鑰"),
+    "apiType": MessageLookupByLibrary.simpleMessage("API類型:"),
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "一個簡單而強大的AI聊天應用，讓您隨時隨地與AI進行對話。",
     ),
     "appName": MessageLookupByLibrary.simpleMessage("泡泡"),
     "appTitle": MessageLookupByLibrary.simpleMessage("泡泡 - AI聊天助手"),
+    "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("機器人頭像"),
     "botName": MessageLookupByLibrary.simpleMessage("機器人名稱"),
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
@@ -43,17 +48,40 @@ class MessageLookup extends MessageLookupByLibrary {
     "clickToStartChat": MessageLookupByLibrary.simpleMessage("點擊右上角 + 開始聊天"),
     "confirm": MessageLookupByLibrary.simpleMessage("確定"),
     "confirmDeleteChat": MessageLookupByLibrary.simpleMessage("確定要刪除此聊天嗎？"),
+    "contactInfoHint": MessageLookupByLibrary.simpleMessage("聯絡方式（可選）"),
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 泡泡團隊"),
+    "customProvider": MessageLookupByLibrary.simpleMessage("自定義供應商..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("深色模式"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("刪除聊天"),
     "editBot": MessageLookupByLibrary.simpleMessage("編輯機器人"),
     "editName": MessageLookupByLibrary.simpleMessage("修改名稱"),
+    "enterApiAddress": MessageLookupByLibrary.simpleMessage("輸入API地址..."),
+    "enterApiKey": MessageLookupByLibrary.simpleMessage("輸入API密鑰..."),
+    "enterBotName": MessageLookupByLibrary.simpleMessage("請輸入名稱..."),
     "enterNewName": MessageLookupByLibrary.simpleMessage("請輸入新名稱"),
+    "enterProviderName": MessageLookupByLibrary.simpleMessage("輸入供應商名稱..."),
+    "enterSystemPrompt": MessageLookupByLibrary.simpleMessage("輸入系統提示詞..."),
+    "errorLoadingContent": MessageLookupByLibrary.simpleMessage(
+      "載入內容時出錯，請稍後再試。",
+    ),
+    "feedbackContentRequired": MessageLookupByLibrary.simpleMessage("請輸入反饋內容"),
+    "feedbackDescription": MessageLookupByLibrary.simpleMessage(
+      "請告訴我們您的想法、問題或建議，幫助我們改進應用",
+    ),
+    "feedbackHint": MessageLookupByLibrary.simpleMessage("請在此輸入您的反饋內容..."),
+    "feedbackSubmitError": MessageLookupByLibrary.simpleMessage("提交失敗，請稍後重試"),
+    "feedbackSubmitted": MessageLookupByLibrary.simpleMessage("感謝您的反饋！"),
+    "fetchModelList": MessageLookupByLibrary.simpleMessage("獲取模型列表"),
+    "fetchModelListFirst": MessageLookupByLibrary.simpleMessage("請先獲取模型列表"),
+    "fillRequiredFields": MessageLookupByLibrary.simpleMessage(
+      "請填寫智能體名稱、API地址和API密鑰",
+    ),
     "followSystem": MessageLookupByLibrary.simpleMessage("跟隨系統"),
     "fontSizeSettings": MessageLookupByLibrary.simpleMessage("文字大小"),
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage("文字大小已更新"),
+    "helpAndFeedback": MessageLookupByLibrary.simpleMessage("幫助與反饋"),
     "home": MessageLookupByLibrary.simpleMessage("首頁"),
-    "languageChanged": m0,
+    "languageChanged": m1,
     "languageSettings": MessageLookupByLibrary.simpleMessage("語言設定"),
     "lightMode": MessageLookupByLibrary.simpleMessage("淺色模式"),
     "messageHint": MessageLookupByLibrary.simpleMessage("輸入消息..."),
@@ -63,16 +91,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "newChat": MessageLookupByLibrary.simpleMessage("新建聊天"),
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("沒有可用的智能體"),
     "noChats": MessageLookupByLibrary.simpleMessage("還沒有聊天記錄"),
+    "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage("請先輸入API密鑰"),
     "previewText": MessageLookupByLibrary.simpleMessage("預覽文字效果"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("隱私政策"),
     "profile": MessageLookupByLibrary.simpleMessage("我的"),
+    "provideFeedback": MessageLookupByLibrary.simpleMessage("提供您的意見和建議"),
     "provider": MessageLookupByLibrary.simpleMessage("供應商"),
     "save": MessageLookupByLibrary.simpleMessage("儲存"),
     "selectBot": MessageLookupByLibrary.simpleMessage("選擇智能體"),
     "selectLanguage": MessageLookupByLibrary.simpleMessage("選擇語言"),
+    "selectModel": MessageLookupByLibrary.simpleMessage("選擇模型:"),
+    "selectProvider": MessageLookupByLibrary.simpleMessage("選擇提供商:"),
     "selectTheme": MessageLookupByLibrary.simpleMessage("選擇主題"),
     "send": MessageLookupByLibrary.simpleMessage("發送"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
+    "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反饋"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("系統提示詞"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage("已設置為深色模式"),
     "themeSetToLight": MessageLookupByLibrary.simpleMessage("已設置為淺色模式"),

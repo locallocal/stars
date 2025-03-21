@@ -225,5 +225,111 @@
     "messageHint": "Введите сообщение...",
     "@messageHint": {
         "description": "Подсказка для ввода сообщения"
+    },
+    "errorLoadingContent": "Ошибка при загрузке содержимого, пожалуйста, повторите попытку позже.",
+    "@errorLoadingContent": {
+        "description": "Сообщение об ошибке при загрузке содержимого"
+    },
+    "pleaseEnterApiKey": "Сначала введите ключ API",
+    "@pleaseEnterApiKey": {
+        "description": "Подсказка пользователю ввести ключ API"
+    },
+    "enterBotName": "Введите имя бота...",
+    "@enterBotName": {
+        "description": "Подсказка пользователю ввести имя бота"
+    },
+    "enterProviderName": "Введите имя провайдера...",
+    "@enterProviderName": {
+        "description": "Подсказка пользователю ввести имя пользовательского провайдера"
+    },
+    "selectProvider": "Выберите провайдера:",
+    "@selectProvider": {
+        "description": "Метка для выбора поставщика услуг ИИ"
+    },
+    "customProvider": "Пользовательский провайдер...",
+    "@customProvider": {
+        "description": "Опция для пользовательского поставщика услуг ИИ"
+    },
+    "apiType": "Тип API:",
+    "@apiType": {
+        "description": "Метка для выбора типа API"
+    },
+    "apiAddress": "Адрес API:",
+    "@apiAddress": {
+        "description": "Метка для ввода адреса API"
+    },
+    "enterApiAddress": "Введите адрес API...",
+    "@enterApiAddress": {
+        "description": "Подсказка пользователю ввести адрес API"
+    },
+    "enterApiKey": "Введите ключ API...",
+    "@enterApiKey": {
+        "description": "Подсказка пользователю ввести ключ API"
+    },
+    "fetchModelList": "Получить список моделей",
+    "@fetchModelList": {
+        "description": "Кнопка для получения списка моделей"
+    },
+    "fetchModelListFirst": "Сначала получите список моделей",
+    "@fetchModelListFirst": {
+        "description": "Подсказка пользователю сначала получить список моделей"
+    },
+    "selectModel": "Выберите модель:",
+    "@selectModel": {
+        "description": "Метка для выбора модели"
+    },
+    "enterSystemPrompt": "Введите системный промпт...",
+    "@enterSystemPrompt": {
+        "description": "Подсказка пользователю ввести системный промпт"
+    },
+    "botAddedSuccess": "Бот \"{name}\" был добавлен",
+    "@botAddedSuccess": {
+        "description": "Сообщение об успешном добавлении бота",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "Пожалуйста, заполните имя бота, адрес API и ключ API",
+    "@fillRequiredFields": {
+        "description": "Подсказка пользователю заполнить обязательные поля"
+    },
+    "helpAndFeedback": "Помощь и обратная связь",
+    "@helpAndFeedback": {
+        "description": "Опция помощи и обратной связи"
+    },
+    "provideFeedback": "Поделитесь своими предложениями и отзывами",
+    "@provideFeedback": {
+        "description": "Описание для предоставления обратной связи"
+    },
+    "feedbackDescription": "Пожалуйста, расскажите нам о ваших мыслях, проблемах или предложениях, чтобы помочь нам улучшить приложение",
+    "@feedbackDescription": {
+        "description": "Описание страницы обратной связи"
+    },
+    "feedbackHint": "Введите ваш отзыв здесь...",
+    "@feedbackHint": {
+        "description": "Подсказка для ввода обратной связи"
+    },
+    "contactInfoHint": "Контактная информация (необязательно)",
+    "@contactInfoHint": {
+        "description": "Подсказка для ввода контактной информации"
+    },
+    "submitFeedback": "Отправить отзыв",
+    "@submitFeedback": {
+        "description": "Кнопка отправки отзыва"
+    },
+    "feedbackSubmitted": "Спасибо за ваш отзыв!",
+    "@feedbackSubmitted": {
+        "description": "Сообщение об успешной отправке отзыва"
+    },
+    "feedbackSubmitError": "Ошибка отправки, пожалуйста, попробуйте позже",
+    "@feedbackSubmitError": {
+        "description": "Сообщение об ошибке при отправке отзыва"
+    },
+    "feedbackContentRequired": "Пожалуйста, введите содержание отзыва",
+    "@feedbackContentRequired": {
+        "description": "Сообщение о необходимости ввода содержания отзыва"
     }
 }

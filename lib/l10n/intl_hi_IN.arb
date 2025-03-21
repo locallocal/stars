@@ -225,5 +225,111 @@
     "messageHint": "संदेश लिखें...",
     "@messageHint": {
         "description": "संदेश इनपुट संकेत"
+    },
+    "errorLoadingContent": "सामग्री लोड करने में त्रुटि, कृपया बाद में पुनः प्रयास करें।",
+    "@errorLoadingContent": {
+        "description": "सामग्री लोड करने में त्रुटि संदेश"
+    },
+    "pleaseEnterApiKey": "कृपया पहले API कुंजी दर्ज करें",
+    "@pleaseEnterApiKey": {
+        "description": "उपयोगकर्ता को API कुंजी दर्ज करने के लिए प्रॉम्प्ट"
+    },
+    "enterBotName": "बॉट का नाम दर्ज करें...",
+    "@enterBotName": {
+        "description": "उपयोगकर्ता को बॉट का नाम दर्ज करने के लिए प्रॉम्प्ट"
+    },
+    "enterProviderName": "प्रदाता का नाम दर्ज करें...",
+    "@enterProviderName": {
+        "description": "उपयोगकर्ता को कस्टम प्रदाता का नाम दर्ज करने के लिए प्रॉम्प्ट"
+    },
+    "selectProvider": "प्रदाता चुनें:",
+    "@selectProvider": {
+        "description": "AI सेवा प्रदाता चुनने के लिए लेबल"
+    },
+    "customProvider": "कस्टम प्रदाता...",
+    "@customProvider": {
+        "description": "कस्टम AI सेवा प्रदाता के लिए विकल्प"
+    },
+    "apiType": "API प्रकार:",
+    "@apiType": {
+        "description": "API प्रकार चुनने के लिए लेबल"
+    },
+    "apiAddress": "API पता:",
+    "@apiAddress": {
+        "description": "API पता इनपुट के लिए लेबल"
+    },
+    "enterApiAddress": "API पता दर्ज करें...",
+    "@enterApiAddress": {
+        "description": "API पता दर्ज करने के लिए प्रॉम्प्ट"
+    },
+    "enterApiKey": "API कुंजी दर्ज करें...",
+    "@enterApiKey": {
+        "description": "API कुंजी दर्ज करने के लिए प्रॉम्प्ट"
+    },
+    "fetchModelList": "मॉडल सूची प्राप्त करें",
+    "@fetchModelList": {
+        "description": "मॉडल सूची प्राप्त करने के लिए बटन"
+    },
+    "fetchModelListFirst": "कृपया पहले मॉडल सूची प्राप्त करें",
+    "@fetchModelListFirst": {
+        "description": "पहले मॉडल सूची प्राप्त करने के लिए प्रॉम्प्ट"
+    },
+    "selectModel": "मॉडल चुनें:",
+    "@selectModel": {
+        "description": "मॉडल चुनने के लिए लेबल"
+    },
+    "enterSystemPrompt": "सिस्टम प्रॉम्प्ट दर्ज करें...",
+    "@enterSystemPrompt": {
+        "description": "सिस्टम प्रॉम्प्ट दर्ज करने के लिए प्रॉम्प्ट"
+    },
+    "botAddedSuccess": "बॉट \"{name}\" जोड़ा गया है",
+    "@botAddedSuccess": {
+        "description": "बॉट जोड़ने पर सफलता संदेश",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "कृपया बॉट का नाम, API पता और API कुंजी भरें",
+    "@fillRequiredFields": {
+        "description": "आवश्यक फ़ील्ड भरने के लिए प्रॉम्प्ट"
+    },
+    "helpAndFeedback": "सहायता और प्रतिक्रिया",
+    "@helpAndFeedback": {
+        "description": "सहायता और प्रतिक्रिया विकल्प"
+    },
+    "provideFeedback": "अपने सुझाव और प्रतिक्रिया प्रदान करें",
+    "@provideFeedback": {
+        "description": "प्रतिक्रिया प्रदान करने का विवरण"
+    },
+    "feedbackDescription": "कृपया हमें अपने विचार, समस्याएं या सुझाव बताएं ताकि हम ऐप को बेहतर बना सकें",
+    "@feedbackDescription": {
+        "description": "प्रतिक्रिया पृष्ठ विवरण"
+    },
+    "feedbackHint": "यहां अपनी प्रतिक्रिया दर्ज करें...",
+    "@feedbackHint": {
+        "description": "प्रतिक्रिया इनपुट संकेत"
+    },
+    "contactInfoHint": "संपर्क जानकारी (वैकल्पिक)",
+    "@contactInfoHint": {
+        "description": "संपर्क जानकारी इनपुट संकेत"
+    },
+    "submitFeedback": "प्रतिक्रिया भेजें",
+    "@submitFeedback": {
+        "description": "प्रतिक्रिया भेजें बटन"
+    },
+    "feedbackSubmitted": "आपकी प्रतिक्रिया के लिए धन्यवाद!",
+    "@feedbackSubmitted": {
+        "description": "प्रतिक्रिया सफलतापूर्वक भेजने का संदेश"
+    },
+    "feedbackSubmitError": "भेजने में विफल, कृपया बाद में पुनः प्रयास करें",
+    "@feedbackSubmitError": {
+        "description": "प्रतिक्रिया भेजने में त्रुटि संदेश"
+    },
+    "feedbackContentRequired": "कृपया प्रतिक्रिया सामग्री दर्ज करें",
+    "@feedbackContentRequired": {
+        "description": "प्रतिक्रिया सामग्री आवश्यक संदेश"
     }
 }

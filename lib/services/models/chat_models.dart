@@ -10,10 +10,6 @@ import 'package:bubble/services/models/anthropic.dart';
 import 'package:bubble/services/models/tencent.dart';
 import 'package:bubble/services/models/volcano_engine.dart';
 
-
-
-
-
 // 定义消息类型
 class ChatMessage {
   final String role;

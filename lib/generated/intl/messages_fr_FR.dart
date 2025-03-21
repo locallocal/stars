@@ -20,7 +20,9 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'fr_FR';
 
-  static String m0(language) => "Langue définie sur ${language}";
+  static String m0(name) => "Bot \"${name}\" a été ajouté";
+
+  static String m1(language) => "Langue définie sur ${language}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -33,7 +35,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "adjustFontSize": MessageLookupByLibrary.simpleMessage(
       "Ajuster la Taille de Police",
     ),
+    "apiAddress": MessageLookupByLibrary.simpleMessage("Adresse API:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("Clé API"),
+    "apiType": MessageLookupByLibrary.simpleMessage("Type d\'API:"),
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "Une application de chat IA simple mais puissante qui vous permet de discuter avec l\'IA n\'importe quand, n\'importe où.",
     ),
@@ -41,6 +45,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appTitle": MessageLookupByLibrary.simpleMessage(
       "Bubble - Assistant de Chat IA",
     ),
+    "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Avatar du Bot"),
     "botName": MessageLookupByLibrary.simpleMessage("Nom du Bot"),
     "cancel": MessageLookupByLibrary.simpleMessage("Annuler"),
@@ -53,15 +58,61 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmDeleteChat": MessageLookupByLibrary.simpleMessage(
       "Êtes-vous sûr de vouloir supprimer cette discussion?",
     ),
+    "contactInfoHint": MessageLookupByLibrary.simpleMessage(
+      "Informations de contact (facultatif)",
+    ),
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Équipe Bubble"),
+    "customProvider": MessageLookupByLibrary.simpleMessage(
+      "Fournisseur personnalisé...",
+    ),
     "darkMode": MessageLookupByLibrary.simpleMessage("Mode Sombre"),
     "deleteChat": MessageLookupByLibrary.simpleMessage(
       "Supprimer la Discussion",
     ),
     "editBot": MessageLookupByLibrary.simpleMessage("Modifier le Bot"),
     "editName": MessageLookupByLibrary.simpleMessage("Modifier le Nom"),
+    "enterApiAddress": MessageLookupByLibrary.simpleMessage(
+      "Entrez l\'adresse API...",
+    ),
+    "enterApiKey": MessageLookupByLibrary.simpleMessage("Entrez la clé API..."),
+    "enterBotName": MessageLookupByLibrary.simpleMessage(
+      "Entrez le nom du bot...",
+    ),
     "enterNewName": MessageLookupByLibrary.simpleMessage(
       "Veuillez entrer un nouveau nom",
+    ),
+    "enterProviderName": MessageLookupByLibrary.simpleMessage(
+      "Entrez le nom du fournisseur...",
+    ),
+    "enterSystemPrompt": MessageLookupByLibrary.simpleMessage(
+      "Entrez l\'invite système...",
+    ),
+    "errorLoadingContent": MessageLookupByLibrary.simpleMessage(
+      "Erreur lors du chargement du contenu, veuillez réessayer plus tard.",
+    ),
+    "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
+      "Veuillez saisir le contenu des commentaires",
+    ),
+    "feedbackDescription": MessageLookupByLibrary.simpleMessage(
+      "Veuillez nous faire part de vos réflexions, problèmes ou suggestions pour nous aider à améliorer l\'application",
+    ),
+    "feedbackHint": MessageLookupByLibrary.simpleMessage(
+      "Entrez vos commentaires ici...",
+    ),
+    "feedbackSubmitError": MessageLookupByLibrary.simpleMessage(
+      "Échec de l\'envoi, veuillez réessayer plus tard",
+    ),
+    "feedbackSubmitted": MessageLookupByLibrary.simpleMessage(
+      "Merci pour vos commentaires !",
+    ),
+    "fetchModelList": MessageLookupByLibrary.simpleMessage(
+      "Récupérer la liste des modèles",
+    ),
+    "fetchModelListFirst": MessageLookupByLibrary.simpleMessage(
+      "Veuillez d\'abord récupérer la liste des modèles",
+    ),
+    "fillRequiredFields": MessageLookupByLibrary.simpleMessage(
+      "Veuillez remplir le nom du bot, l\'adresse API et la clé API",
     ),
     "followSystem": MessageLookupByLibrary.simpleMessage("Suivre le Système"),
     "fontSizeSettings": MessageLookupByLibrary.simpleMessage(
@@ -70,8 +121,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage(
       "Taille de police mise à jour",
     ),
+    "helpAndFeedback": MessageLookupByLibrary.simpleMessage(
+      "Aide et Commentaires",
+    ),
     "home": MessageLookupByLibrary.simpleMessage("Accueil"),
-    "languageChanged": m0,
+    "languageChanged": m1,
     "languageSettings": MessageLookupByLibrary.simpleMessage(
       "Paramètres de Langue",
     ),
@@ -87,6 +141,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noChats": MessageLookupByLibrary.simpleMessage(
       "Pas encore de discussions",
     ),
+    "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
+      "Veuillez d\'abord saisir la clé API",
+    ),
     "previewText": MessageLookupByLibrary.simpleMessage(
       "Aperçu de l\'effet du texte",
     ),
@@ -94,17 +151,29 @@ class MessageLookup extends MessageLookupByLibrary {
       "Politique de Confidentialité",
     ),
     "profile": MessageLookupByLibrary.simpleMessage("Profil"),
+    "provideFeedback": MessageLookupByLibrary.simpleMessage(
+      "Fournissez vos suggestions et commentaires",
+    ),
     "provider": MessageLookupByLibrary.simpleMessage("Fournisseur"),
     "save": MessageLookupByLibrary.simpleMessage("Enregistrer"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Sélectionner un Bot"),
     "selectLanguage": MessageLookupByLibrary.simpleMessage(
       "Sélectionner la Langue",
     ),
+    "selectModel": MessageLookupByLibrary.simpleMessage(
+      "Sélectionner le modèle:",
+    ),
+    "selectProvider": MessageLookupByLibrary.simpleMessage(
+      "Sélectionner le fournisseur:",
+    ),
     "selectTheme": MessageLookupByLibrary.simpleMessage(
       "Sélectionner le Thème",
     ),
     "send": MessageLookupByLibrary.simpleMessage("Envoyer"),
     "settings": MessageLookupByLibrary.simpleMessage("Paramètres"),
+    "submitFeedback": MessageLookupByLibrary.simpleMessage(
+      "Soumettre les Commentaires",
+    ),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("Invite Système"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage(
       "Thème défini sur mode sombre",

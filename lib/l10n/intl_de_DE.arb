@@ -225,5 +225,111 @@
     "messageHint": "Nachricht eingeben...",
     "@messageHint": {
         "description": "Nachrichteneingabehinweis"
+    },
+    "errorLoadingContent": "Fehler beim Laden des Inhalts, bitte versuchen Sie es später erneut.",
+    "@errorLoadingContent": {
+        "description": "Fehlermeldung beim Laden von Inhalten"
+    },
+    "pleaseEnterApiKey": "Bitte geben Sie zuerst den API-Schlüssel ein",
+    "@pleaseEnterApiKey": {
+        "description": "Aufforderung an den Benutzer, den API-Schlüssel einzugeben"
+    },
+    "enterBotName": "Bot-Namen eingeben...",
+    "@enterBotName": {
+        "description": "Aufforderung an den Benutzer, den Bot-Namen einzugeben"
+    },
+    "enterProviderName": "Anbieternamen eingeben...",
+    "@enterProviderName": {
+        "description": "Aufforderung an den Benutzer, einen benutzerdefinierten Anbieternamen einzugeben"
+    },
+    "selectProvider": "Anbieter auswählen:",
+    "@selectProvider": {
+        "description": "Beschriftung für die Auswahl des KI-Dienstanbieters"
+    },
+    "customProvider": "Benutzerdefinierter Anbieter...",
+    "@customProvider": {
+        "description": "Option für benutzerdefinierten KI-Dienstanbieter"
+    },
+    "apiType": "API-Typ:",
+    "@apiType": {
+        "description": "Beschriftung für die Auswahl des API-Typs"
+    },
+    "apiAddress": "API-Adresse:",
+    "@apiAddress": {
+        "description": "Beschriftung für API-Adresseingabe"
+    },
+    "enterApiAddress": "API-Adresse eingeben...",
+    "@enterApiAddress": {
+        "description": "Aufforderung zur Eingabe der API-Adresse"
+    },
+    "enterApiKey": "API-Schlüssel eingeben...",
+    "@enterApiKey": {
+        "description": "Aufforderung zur Eingabe des API-Schlüssels"
+    },
+    "fetchModelList": "Modellliste abrufen",
+    "@fetchModelList": {
+        "description": "Schaltfläche zum Abrufen der Modellliste"
+    },
+    "fetchModelListFirst": "Bitte zuerst Modellliste abrufen",
+    "@fetchModelListFirst": {
+        "description": "Aufforderung, zuerst die Modellliste abzurufen"
+    },
+    "selectModel": "Modell auswählen:",
+    "@selectModel": {
+        "description": "Beschriftung für die Modellauswahl"
+    },
+    "enterSystemPrompt": "System-Prompt eingeben...",
+    "@enterSystemPrompt": {
+        "description": "Aufforderung zur Eingabe des System-Prompts"
+    },
+    "botAddedSuccess": "Bot \"{name}\" wurde hinzugefügt",
+    "@botAddedSuccess": {
+        "description": "Erfolgsmeldung beim Hinzufügen eines Bots",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "Bitte Bot-Namen, API-Adresse und API-Schlüssel eingeben",
+    "@fillRequiredFields": {
+        "description": "Aufforderung zum Ausfüllen der erforderlichen Felder"
+    },
+    "helpAndFeedback": "Hilfe & Feedback",
+    "@helpAndFeedback": {
+        "description": "Hilfe und Feedback-Option"
+    },
+    "provideFeedback": "Teilen Sie uns Ihre Vorschläge und Feedback mit",
+    "@provideFeedback": {
+        "description": "Beschreibung für das Bereitstellen von Feedback"
+    },
+    "feedbackDescription": "Bitte teilen Sie uns Ihre Gedanken, Probleme oder Vorschläge mit, um uns bei der Verbesserung der App zu helfen",
+    "@feedbackDescription": {
+        "description": "Feedback-Seitenbeschreibung"
+    },
+    "feedbackHint": "Geben Sie hier Ihr Feedback ein...",
+    "@feedbackHint": {
+        "description": "Feedback-Eingabehinweis"
+    },
+    "contactInfoHint": "Kontaktinformationen (optional)",
+    "@contactInfoHint": {
+        "description": "Kontaktinformationen-Eingabehinweis"
+    },
+    "submitFeedback": "Feedback senden",
+    "@submitFeedback": {
+        "description": "Feedback-Senden-Schaltfläche"
+    },
+    "feedbackSubmitted": "Vielen Dank für Ihr Feedback!",
+    "@feedbackSubmitted": {
+        "description": "Erfolgsmeldung bei Feedback-Übermittlung"
+    },
+    "feedbackSubmitError": "Übermittlung fehlgeschlagen, bitte versuchen Sie es später erneut",
+    "@feedbackSubmitError": {
+        "description": "Fehlermeldung bei Feedback-Übermittlung"
+    },
+    "feedbackContentRequired": "Bitte geben Sie Feedback-Inhalt ein",
+    "@feedbackContentRequired": {
+        "description": "Meldung für erforderlichen Feedback-Inhalt"
     }
 }

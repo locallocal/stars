@@ -5,7 +5,7 @@ import 'package:bubble/model/model.dart';
 
 class TencentChatModel extends ChatModel {
   TencentChatModel(Bot bot) : super(bot);
-  
+
   @override
   Future<List<String>> listModels() async {
     try {
@@ -28,7 +28,7 @@ class TencentChatModel extends ChatModel {
     try {
       // 腾讯混元API的端点
       final url = Uri.parse('${bot.baseURL}/v1/chat/completions');
-      
+
       // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
         'model': bot.model,
@@ -36,7 +36,7 @@ class TencentChatModel extends ChatModel {
         'temperature': 0.7,
         'stream': false,
       };
-      
+
       // 发送请求
       final response = await http.post(
         url,
@@ -48,12 +48,12 @@ class TencentChatModel extends ChatModel {
         body: jsonEncode(requestBody),
         encoding: Encoding.getByName('utf-8'), // 确保请求体使用UTF-8编码
       );
-      
+
       if (response.statusCode == 200) {
         // 确保使用UTF-8解码响应内容
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = jsonDecode(decodedBody);
-        
+
         // 腾讯混元API的响应格式
         if (data['choices'] != null && data['choices'].length > 0) {
           final String content = data['choices'][0]['message']['content'];
@@ -78,7 +78,7 @@ class TencentChatModel extends ChatModel {
       return '请求异常: $e';
     }
   }
-  
+
   @override
   Future<void> sendMessageStream(
     List<ChatMessage> messages,
