@@ -13,28 +13,23 @@ class DeepSeekChatModel extends ChatModel {
             ? '${bot.baseURL}/models'
             : 'https://api.deepseek.com/models';
 
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ${bot.apiKey}',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final models =
-            (data['data'] as List)
-                .map((model) => model['id'] as String)
-                .toList();
-        return models;
-      } else {
-        throw Exception('获取模型列表失败: ${response.statusCode}');
-      }
-    } catch (e) {
-      // 如果API调用失败，返回一些默认模型
-      return ['deepseek-chat', 'deepseek-reasoner'];
+    
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${bot.apiKey}',
+      },
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      final models =
+          (data['data'] as List)
+              .map((model) => model['id'] as String)
+              .toList();
+      return models;
+    } else {
+      throw Exception('获取模型列表失败: ${response.statusCode}');
     }
   }
 
@@ -93,7 +88,7 @@ class DeepSeekChatModel extends ChatModel {
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
               'temperature': 0.7,
-              'max_tokens': 2000,
+              'max_tokens': 4096,
               'stream': true,
             });
 
@@ -118,7 +113,6 @@ class DeepSeekChatModel extends ChatModel {
       await for (final line in stream) {
         // 检查是否已取消
         if (isCancelled) break;
-
         if (line.isEmpty) continue;
 
         if (line.startsWith('data: ')) {

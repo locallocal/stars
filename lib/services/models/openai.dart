@@ -13,25 +13,19 @@ class OpenAIChatModel extends ChatModel {
             ? '${bot.baseURL}/v1/models'
             : 'https://api.openai.com/v1/models';
 
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer ${bot.apiKey}'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final models =
-            (data['data'] as List)
-                .map((model) => model['id'] as String)
-                .toList();
-        return models;
-      } else {
-        throw Exception('获取模型列表失败: ${response.statusCode}');
-      }
-    } catch (e) {
-      // 如果API调用失败，返回一些默认模型
-      return ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo', 'gpt-4o'];
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      final models =
+          (data['data'] as List)
+              .map((model) => model['id'] as String)
+              .toList();
+      return models;
+    } else {
+      throw Exception('获取模型列表失败: ${response.statusCode}');
     }
   }
 
