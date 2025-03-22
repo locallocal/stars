@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "チャットを削除"
     },
-    "confirmDeleteChat": "このチャットを削除してもよろしいですか？",
-    "@confirmDeleteChat": {
-        "description": "チャット削除の確認"
-    },
     "messageHint": "メッセージを入力...",
     "@messageHint": {
         "description": "メッセージ入力のヒント"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "フィードバック内容を入力してください",
     "@feedbackContentRequired": {
         "description": "フィードバック内容必須メッセージ"
+    },
+    "emptyResponseError": "応答の取得に失敗しました：サーバーが空の応答を返しました",
+    "@emptyResponseError": {
+        "description": "サーバーが空の応答を返した場合のエラーメッセージ"
+    },
+    "responseError": "応答の取得に失敗しました：${error}",
+    "@responseError": {
+        "description": "応答の取得に失敗した場合のエラーメッセージ",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "チャット履歴をクリア",
+    "@clearChatHistory": {
+        "description": "チャット履歴をクリア"
+    },
+    "minutesAgo": "{minutes}分前",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "たった今",
+    "@justNow": {
+        "description": "たった今"
+    },
+    "chatDeleted": "{botName}とのチャットが削除されました",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "チャットを始めましょう",
+    "@startChatting": {
+        "description": "チャットを始めるための促し"
+    },
+    "delete": "削除",
+    "@delete": {
+        "description": "削除ボタン"
+    },
+    "confirmDeleteChat": "チャットを削除するとすべてのチャット履歴が消去されます。{botName}とのチャットを本当に削除しますか？",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "ボットを削除",
+    "@deleteBot": {
+        "description": "ボットを削除"
+    },
+    "confirmDeleteBot": "ボットを削除すると、関連するすべてのチャットも削除されます。{botName}を本当に削除しますか？",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "変更を保存",
+    "@saveChanges": {
+        "description": "変更を保存"
+    },
+    "botUpdated": "ボット{botName}が更新されました",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "ボット",
+    "@Bots": {
+        "description": "ボット"
+    },
+    "clickToCreateBot": "右上の+をクリックしてボットを追加",
+    "@clickToCreateBot": {
+        "description": "ボットを追加するための促し"
+    },
+    "defaultSystemPrompt": "あなたは役立つAIアシスタントです。日本語で回答してください。",
+    "@defaultSystemPrompt": {
+        "description": "デフォルトのシステムプロンプト"
     }
 }

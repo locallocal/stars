@@ -4,6 +4,7 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/add_bot.dart';
 import 'package:bubble/pages/edit_bot.dart';
 import 'package:bubble/services/bot_service.dart';
+import 'package:bubble/generated/l10n.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
@@ -62,7 +63,7 @@ class _ContactsPageState extends State<ContactsPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          '智能体',
+          S.of(context).Bots,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -108,7 +109,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       child: TextField(
                         onChanged: _filterBots,
                         decoration: InputDecoration(
-                          hintText: '搜索智能体',
+                          hintText: S.of(context).selectBot,
                           fillColor: Theme.of(context).colorScheme.secondary,
                           focusColor: Theme.of(context).colorScheme.secondary,
                           hoverColor: Theme.of(context).colorScheme.secondary,
@@ -125,10 +126,32 @@ class _ContactsPageState extends State<ContactsPage> {
                   Expanded(
                     child:
                         filteredBots.isEmpty
-                            ? const Center(
-                              child: Text(
-                                '还没有智能体\n点击右上角 + 添加',
-                                textAlign: TextAlign.center,
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    S.of(context).noBotsAvailable,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    S.of(context).clickToCreateBot,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
                               ),
                             )
                             : ListView.builder(

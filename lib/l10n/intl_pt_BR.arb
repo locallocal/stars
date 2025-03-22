@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "Excluir conversa"
     },
-    "confirmDeleteChat": "Tem certeza de que deseja excluir esta conversa?",
-    "@confirmDeleteChat": {
-        "description": "Confirmar exclusão de conversa"
-    },
     "messageHint": "Digite uma mensagem...",
     "@messageHint": {
         "description": "Dica de entrada de mensagem"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "Por favor, digite o conteúdo do feedback",
     "@feedbackContentRequired": {
         "description": "Mensagem de conteúdo de feedback obrigatório"
+    },
+    "emptyResponseError": "Falha ao obter resposta: o servidor retornou uma resposta vazia",
+    "@emptyResponseError": {
+        "description": "Mensagem de erro quando o servidor retorna uma resposta vazia"
+    },
+    "responseError": "Falha ao obter resposta: ${error}",
+    "@responseError": {
+        "description": "Falha ao obter resposta",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "Limpar histórico de conversa",
+    "@clearChatHistory": {
+        "description": "Limpar histórico de conversa"
+    },
+    "minutesAgo": "há {minutes} minutos",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "Agora mesmo",
+    "@justNow": {
+        "description": "Agora mesmo"
+    },
+    "chatDeleted": "Conversa com {botName} excluída",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "Comece a conversar",
+    "@startChatting": {
+        "description": "Indicação para começar a conversar"
+    },
+    "delete": "Excluir",
+    "@delete": {
+        "description": "Botão de excluir"
+    },
+    "confirmDeleteChat": "Excluir a conversa apagará todo o histórico de conversas. Tem certeza de que deseja excluir a conversa com {botName}?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "Excluir bot",
+    "@deleteBot": {
+        "description": "Excluir bot"
+    },
+    "confirmDeleteBot": "Excluir o bot também removerá todas as conversas associadas. Tem certeza de que deseja excluir {botName}?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "Salvar alterações",
+    "@saveChanges": {
+        "description": "Salvar alterações"
+    },
+    "botUpdated": "Bot {botName} foi atualizado",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "Bots",
+    "@Bots": {
+        "description": "Bots"
+    },
+    "clickToCreateBot": "Clique em + no canto superior direito para adicionar um bot",
+    "@clickToCreateBot": {
+        "description": "Indicação para adicionar um bot"
+    },
+    "defaultSystemPrompt": "Você é um assistente de IA útil. Por favor, responda em português.",
+    "@defaultSystemPrompt": {
+        "description": "Prompt do sistema padrão"
     }
 }

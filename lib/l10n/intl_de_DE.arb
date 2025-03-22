@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "Chat löschen"
     },
-    "confirmDeleteChat": "Sind Sie sicher, dass Sie diesen Chat löschen möchten?",
-    "@confirmDeleteChat": {
-        "description": "Chat-Löschung bestätigen"
-    },
     "messageHint": "Nachricht eingeben...",
     "@messageHint": {
         "description": "Nachrichteneingabehinweis"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "Bitte geben Sie Feedback-Inhalt ein",
     "@feedbackContentRequired": {
         "description": "Meldung für erforderlichen Feedback-Inhalt"
+    },
+    "emptyResponseError": "Antwort konnte nicht abgerufen werden: Server hat eine leere Antwort zurückgegeben",
+    "@emptyResponseError": {
+        "description": "Fehlermeldung bei leerer Serverantwort"
+    },
+    "responseError": "Antwort konnte nicht abgerufen werden: ${error}",
+    "@responseError": {
+        "description": "Fehlermeldung beim Abrufen einer Antwort",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "Chat-Verlauf löschen",
+    "@clearChatHistory": {
+        "description": "Chat-Verlauf löschen"
+    },
+    "minutesAgo": "vor {minutes} Minuten",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "Gerade eben",
+    "@justNow": {
+        "description": "Gerade eben"
+    },
+    "chatDeleted": "Chat mit {botName} wurde gelöscht",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "Beginnen Sie zu chatten",
+    "@startChatting": {
+        "description": "Aufforderung zum Chatten"
+    },
+    "delete": "Löschen",
+    "@delete": {
+        "description": "Löschen-Schaltfläche"
+    },
+    "confirmDeleteChat": "Durch das Löschen des Chats wird der gesamte Chat-Verlauf gelöscht. Möchten Sie den Chat mit {botName} wirklich löschen?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "Bot löschen",
+    "@deleteBot": {
+        "description": "Bot löschen"
+    },
+    "confirmDeleteBot": "Durch das Löschen des Bots werden alle zugehörigen Chats gelöscht. Möchten Sie {botName} wirklich löschen?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "Änderungen speichern",
+    "@saveChanges": {
+        "description": "Änderungen speichern"
+    },
+    "botUpdated": "Bot {botName} wurde aktualisiert",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "Bots",
+    "@Bots": {
+        "description": "Bots"
+    },
+    "clickToCreateBot": "Klicken Sie auf + in der oberen rechten Ecke, um einen Bot hinzuzufügen",
+    "@clickToCreateBot": {
+        "description": "Aufforderung zum Hinzufügen eines Bots"
+    },
+    "defaultSystemPrompt": "Du bist ein hilfreicher KI-Assistent. Bitte antworte auf Deutsch.",
+    "@defaultSystemPrompt": {
+        "description": "Standard-Systemprompt für den KI-Assistenten"
     }
 }

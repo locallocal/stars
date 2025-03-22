@@ -139,7 +139,8 @@ class _ChatListPageState extends State<ChatListPage> {
                                     '${bot.provider}-${bot.model}',
                                   ),
                                   onTap: () async {
-                                    Navigator.pop(context); // 关闭对话框
+                                    // 关闭对话框
+                                    Navigator.pop(context); 
 
                                     // 添加到聊天列表
                                     final newChat = Chat(
@@ -261,7 +262,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                             ),
                                             // 使用bot.name替代chat.botId显示更友好的名称
                                             content: Text(
-                                              '删除聊天会清空所有的聊天记录，确定要删除与 ${bot.name} 的聊天吗？',
+                                              S.of(context).confirmDeleteChat(bot.name),
                                             ),
                                             actions: [
                                               TextButton(
@@ -287,7 +288,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                                       true,
                                                     ),
                                                 child: Text(
-                                                  '删除',
+                                                  S.of(context).delete,
                                                   style: TextStyle(
                                                     color:
                                                         Theme.of(
@@ -305,15 +306,16 @@ class _ChatListPageState extends State<ChatListPage> {
                                     setState(() {
                                       chatList.removeAt(index);
                                     });
+                                    
                                     if (mounted) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         SnackBar(
                                           // 使用bot.name替代chat.botId
-                                          content: Text('已删除与 ${bot.name} 的聊天'),
+                                          content: Text(S.of(context).chatDeleted(bot.name)),
                                           action: SnackBarAction(
-                                            label: '撤销',
+                                            label: 'Delete chat',
                                             onPressed: () async {
                                               await ChatService.addOrUpdateChat(
                                                 chat,
@@ -331,7 +333,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                     avatar: bot.avatar,
                                     lastMessage:
                                         chat.lastMessage.isEmpty
-                                            ? '开始聊天吧'
+                                            ? S.of(context).startChatting
                                             : chat.lastMessage.length > 25
                                             ? '${chat.lastMessage.substring(0, 25)}...'
                                             : chat.lastMessage,
@@ -339,7 +341,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                     timestamp: _formatTimestamp(
                                       chat.lastMessageTimestamp,
                                     ),
-                                    isStarred: false,
                                     onTap: () {
                                       Navigator.push(
                                         context,
@@ -353,42 +354,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                         // 聊天页面返回后刷新聊天列表
                                         _loadChatList();
                                       });
-                                    },
-                                    onLongPress: () {
-                                      // 长按删除聊天
-                                      showDialog(
-                                        context: context,
-                                        builder:
-                                            (context) => AlertDialog(
-                                              title: Text(
-                                                S.of(context).deleteChat,
-                                              ),
-                                              // 使用bot.name
-                                              content: Text(
-                                                '确定要删除与 "${bot.name}" 的聊天吗？',
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed:
-                                                      () => Navigator.pop(
-                                                        context,
-                                                      ),
-                                                  child: const Text('取消'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () async {
-                                                    Navigator.pop(context);
-                                                    // 使用chat.botId
-                                                    await ChatService.deleteChat(
-                                                      chat.botId,
-                                                    );
-                                                    _loadChatList();
-                                                  },
-                                                  child: const Text('删除'),
-                                                ),
-                                              ],
-                                            ),
-                                      );
                                     },
                                   ),
                                 );
@@ -410,9 +375,9 @@ class _ChatListPageState extends State<ChatListPage> {
     } else if (difference.inHours > 0) {
       return '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}分钟前';
+      return S.of(context).minutesAgo(difference.inMinutes);
     } else {
-      return '刚刚';
+      return S.of(context).justNow;
     }
   }
 }

@@ -22,10 +22,25 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "봇 \"${name}\"이(가) 추가되었습니다";
 
-  static String m1(language) => "언어가 ${language}(으)로 설정되었습니다";
+  static String m1(botName) => "봇 ${botName}이(가) 업데이트되었습니다";
+
+  static String m2(botName) => "${botName}와(과)의 채팅이 삭제되었습니다";
+
+  static String m3(botName) =>
+      "봇을 삭제하면 관련된 모든 채팅도 삭제됩니다. ${botName}을(를) 정말로 삭제하시겠습니까?";
+
+  static String m4(botName) =>
+      "채팅을 삭제하면 모든 채팅 기록이 삭제됩니다. ${botName}와(과)의 채팅을 정말로 삭제하시겠습니까?";
+
+  static String m5(language) => "언어가 ${language}(으)로 설정되었습니다";
+
+  static String m6(minutes) => "${minutes}분 전";
+
+  static String m7(error) => "응답을 가져오지 못했습니다: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "Bots": MessageLookupByLibrary.simpleMessage("봇"),
     "about": MessageLookupByLibrary.simpleMessage("정보"),
     "aboutApp": MessageLookupByLibrary.simpleMessage("버블 정보"),
     "addBot": MessageLookupByLibrary.simpleMessage("봇 추가"),
@@ -42,23 +57,36 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("봇 아바타"),
     "botName": MessageLookupByLibrary.simpleMessage("봇 이름"),
+    "botUpdated": m1,
     "cancel": MessageLookupByLibrary.simpleMessage("취소"),
+    "chatDeleted": m2,
     "chats": MessageLookupByLibrary.simpleMessage("채팅"),
     "clearChat": MessageLookupByLibrary.simpleMessage("채팅 지우기"),
+    "clearChatHistory": MessageLookupByLibrary.simpleMessage("채팅 기록 지우기"),
+    "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
+      "오른쪽 상단의 +를 클릭하여 봇 추가",
+    ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
       "오른쪽 상단의 +를 클릭하여 채팅 시작",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("확인"),
-    "confirmDeleteChat": MessageLookupByLibrary.simpleMessage(
-      "이 채팅을 삭제하시겠습니까?",
-    ),
+    "confirmDeleteBot": m3,
+    "confirmDeleteChat": m4,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("연락처 정보(선택 사항)"),
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 버블 팀"),
     "customProvider": MessageLookupByLibrary.simpleMessage("사용자 정의 제공업체..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("다크 모드"),
+    "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
+      "당신은 도움이 되는 AI 어시스턴트입니다. 한국어로 대답해 주세요.",
+    ),
+    "delete": MessageLookupByLibrary.simpleMessage("삭제"),
+    "deleteBot": MessageLookupByLibrary.simpleMessage("봇 삭제"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("채팅 삭제"),
     "editBot": MessageLookupByLibrary.simpleMessage("봇 편집"),
     "editName": MessageLookupByLibrary.simpleMessage("이름 수정"),
+    "emptyResponseError": MessageLookupByLibrary.simpleMessage(
+      "응답을 가져오지 못했습니다: 서버가 빈 응답을 반환했습니다",
+    ),
     "enterApiAddress": MessageLookupByLibrary.simpleMessage("API 주소 입력..."),
     "enterApiKey": MessageLookupByLibrary.simpleMessage("API 키 입력..."),
     "enterBotName": MessageLookupByLibrary.simpleMessage("봇 이름 입력..."),
@@ -93,10 +121,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage("글꼴 크기가 업데이트되었습니다"),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("도움말 및 피드백"),
     "home": MessageLookupByLibrary.simpleMessage("홈"),
-    "languageChanged": m1,
+    "justNow": MessageLookupByLibrary.simpleMessage("방금"),
+    "languageChanged": m5,
     "languageSettings": MessageLookupByLibrary.simpleMessage("언어 설정"),
     "lightMode": MessageLookupByLibrary.simpleMessage("라이트 모드"),
     "messageHint": MessageLookupByLibrary.simpleMessage("메시지 입력..."),
+    "minutesAgo": m6,
     "model": MessageLookupByLibrary.simpleMessage("모델"),
     "name": MessageLookupByLibrary.simpleMessage("이름"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("이름이 업데이트되었습니다"),
@@ -111,7 +141,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "profile": MessageLookupByLibrary.simpleMessage("프로필"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage("의견과 제안을 제공해 주세요"),
     "provider": MessageLookupByLibrary.simpleMessage("제공자"),
+    "responseError": m7,
     "save": MessageLookupByLibrary.simpleMessage("저장"),
+    "saveChanges": MessageLookupByLibrary.simpleMessage("변경사항 저장"),
     "selectBot": MessageLookupByLibrary.simpleMessage("봇 선택"),
     "selectLanguage": MessageLookupByLibrary.simpleMessage("언어 선택"),
     "selectModel": MessageLookupByLibrary.simpleMessage("모델 선택:"),
@@ -119,6 +151,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("테마 선택"),
     "send": MessageLookupByLibrary.simpleMessage("보내기"),
     "settings": MessageLookupByLibrary.simpleMessage("설정"),
+    "startChatting": MessageLookupByLibrary.simpleMessage("채팅 시작하기"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("피드백 제출"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("시스템 프롬프트"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage(

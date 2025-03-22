@@ -22,10 +22,25 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "Бот \"${name}\" был добавлен";
 
-  static String m1(language) => "Язык изменен на ${language}";
+  static String m1(botName) => "Бот ${botName} был обновлен";
+
+  static String m2(botName) => "Чат с ${botName} удален";
+
+  static String m3(botName) =>
+      "Удаление бота также удалит все связанные чаты. Вы уверены, что хотите удалить ${botName}?";
+
+  static String m4(botName) =>
+      "Удаление чата приведет к стиранию всей истории переписки. Вы уверены, что хотите удалить чат с ${botName}?";
+
+  static String m5(language) => "Язык изменен на ${language}";
+
+  static String m6(minutes) => "${minutes} минут назад";
+
+  static String m7(error) => "Ошибка получения ответа: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "Bots": MessageLookupByLibrary.simpleMessage("Боты"),
     "about": MessageLookupByLibrary.simpleMessage("О приложении"),
     "aboutApp": MessageLookupByLibrary.simpleMessage("О приложении Баббл"),
     "addBot": MessageLookupByLibrary.simpleMessage("Добавить бота"),
@@ -48,16 +63,23 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Аватар бота"),
     "botName": MessageLookupByLibrary.simpleMessage("Имя бота"),
+    "botUpdated": m1,
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
+    "chatDeleted": m2,
     "chats": MessageLookupByLibrary.simpleMessage("Чаты"),
     "clearChat": MessageLookupByLibrary.simpleMessage("Очистить чат"),
+    "clearChatHistory": MessageLookupByLibrary.simpleMessage(
+      "Очистить историю чата",
+    ),
+    "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
+      "Нажмите + в правом верхнем углу, чтобы добавить бота",
+    ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
       "Нажмите + в правом верхнем углу, чтобы начать чат",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
-    "confirmDeleteChat": MessageLookupByLibrary.simpleMessage(
-      "Вы уверены, что хотите удалить этот чат?",
-    ),
+    "confirmDeleteBot": m3,
+    "confirmDeleteChat": m4,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "Контактная информация (необязательно)",
     ),
@@ -66,9 +88,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "Пользовательский провайдер...",
     ),
     "darkMode": MessageLookupByLibrary.simpleMessage("Тёмная тема"),
+    "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
+      "Вы полезный ИИ-ассистент. Пожалуйста, отвечайте на русском языке.",
+    ),
+    "delete": MessageLookupByLibrary.simpleMessage("Удалить"),
+    "deleteBot": MessageLookupByLibrary.simpleMessage("Удалить бота"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("Удалить чат"),
     "editBot": MessageLookupByLibrary.simpleMessage("Редактировать бота"),
     "editName": MessageLookupByLibrary.simpleMessage("Изменить имя"),
+    "emptyResponseError": MessageLookupByLibrary.simpleMessage(
+      "Ошибка получения ответа: сервер вернул пустой ответ",
+    ),
     "enterApiAddress": MessageLookupByLibrary.simpleMessage(
       "Введите адрес API...",
     ),
@@ -119,10 +149,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Помощь и обратная связь",
     ),
     "home": MessageLookupByLibrary.simpleMessage("Главная"),
-    "languageChanged": m1,
+    "justNow": MessageLookupByLibrary.simpleMessage("Только что"),
+    "languageChanged": m5,
     "languageSettings": MessageLookupByLibrary.simpleMessage("Настройки языка"),
     "lightMode": MessageLookupByLibrary.simpleMessage("Светлая тема"),
     "messageHint": MessageLookupByLibrary.simpleMessage("Введите сообщение..."),
+    "minutesAgo": m6,
     "model": MessageLookupByLibrary.simpleMessage("Модель"),
     "name": MessageLookupByLibrary.simpleMessage("Имя"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("Имя обновлено"),
@@ -145,7 +177,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Поделитесь своими предложениями и отзывами",
     ),
     "provider": MessageLookupByLibrary.simpleMessage("Провайдер"),
+    "responseError": m7,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
+    "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Выбрать бота"),
     "selectLanguage": MessageLookupByLibrary.simpleMessage("Выбрать язык"),
     "selectModel": MessageLookupByLibrary.simpleMessage("Выберите модель:"),
@@ -155,6 +189,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("Выбрать тему"),
     "send": MessageLookupByLibrary.simpleMessage("Отправить"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
+    "startChatting": MessageLookupByLibrary.simpleMessage("Начать общение"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("Отправить отзыв"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("Системный промпт"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage(

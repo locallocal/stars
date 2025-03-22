@@ -198,6 +198,10 @@
     "@appTitle": {
         "description": "应用标题"
     },
+    "Bots": "智能体",
+    "@Bots": {
+        "description": "智能体"
+    },
     "selectBot": "选择智能体",
     "@selectBot": {
         "description": "选择智能体"
@@ -205,6 +209,10 @@
     "noBotsAvailable": "没有可用的智能体",
     "@noBotsAvailable": {
         "description": "没有可用的智能体"
+    },
+    "clickToCreateBot": "点击右上角 + 添加智能体",
+    "@clickToCreateBot": {
+        "description": "点击右上角 + 添加智能体"
     },
     "noChats": "还没有聊天记录",
     "@noChats": {
@@ -217,10 +225,6 @@
     "deleteChat": "删除聊天",
     "@deleteChat": {
         "description": "删除聊天"
-    },
-    "confirmDeleteChat": "确定要删除此聊天吗？",
-    "@confirmDeleteChat": {
-        "description": "确认删除聊天"
     },
     "messageHint": "输入消息...",
     "@messageHint": {
@@ -282,6 +286,10 @@
     "@enterSystemPrompt": {
         "description": "系统提示词输入框的提示文本"
     },
+    "defaultSystemPrompt": "你是一个有用的AI助手，请用中文回答问题。",
+    "@defaultSystemPrompt": {
+        "description": "你是一个有用的AI助手，请用中文回答问题。"
+    },
     "botAddedSuccess": "智能体 \"{name}\" 已添加",
     "@botAddedSuccess": {
         "description": "添加智能体成功的提示",
@@ -331,5 +339,83 @@
     "feedbackContentRequired": "请输入反馈内容",
     "@feedbackContentRequired": {
         "description": "反馈内容必填提示"
+    },
+    "emptyResponseError": "获取回复失败: 服务器返回空响应",
+    "@emptyResponseError": {
+        "description": "服务器返回空响应的错误提示"
+    },
+    "responseError": "获取回复失败: ${error}",
+    "@responseError": {
+        "description": "获取回复失败",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "清空聊天记录",
+    "@clearChatHistory": {
+        "description": "清空聊天记录"
+    },
+    "minutesAgo": "{minutes}分钟前",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "刚刚",
+    "@justNow": {
+        "description": "刚刚"
+    },
+    "chatDeleted": "已删除与 {botName} 的聊天",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "开始聊天吧",
+    "@startChatting": {
+        "description": "开始聊天的提示"
+    },
+    "delete": "删除",
+    "@delete": {
+        "description": "删除按钮"
+    },
+    "confirmDeleteChat": "删除聊天会清空所有的聊天记录，确定要删除与 {botName} 的聊天吗？",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "删除智能体",
+    "@deleteBot": {
+        "description": "删除智能体"
+    },
+    "confirmDeleteBot": "删除机器人会删除对应的聊天记录，确定要删除 {botName} 吗？",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "保存修改",
+    "@saveChanges": {
+        "description": "保存修改"
+    },
+    "botUpdated": "智能体 {botName} 已更新",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
     }
 }

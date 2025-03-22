@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "Удалить чат"
     },
-    "confirmDeleteChat": "Вы уверены, что хотите удалить этот чат?",
-    "@confirmDeleteChat": {
-        "description": "Подтверждение удаления чата"
-    },
     "messageHint": "Введите сообщение...",
     "@messageHint": {
         "description": "Подсказка для ввода сообщения"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "Пожалуйста, введите содержание отзыва",
     "@feedbackContentRequired": {
         "description": "Сообщение о необходимости ввода содержания отзыва"
+    },
+    "emptyResponseError": "Ошибка получения ответа: сервер вернул пустой ответ",
+    "@emptyResponseError": {
+        "description": "Сообщение об ошибке, когда сервер возвращает пустой ответ"
+    },
+    "responseError": "Ошибка получения ответа: ${error}",
+    "@responseError": {
+        "description": "Ошибка получения ответа",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "Очистить историю чата",
+    "@clearChatHistory": {
+        "description": "Очистить историю чата"
+    },
+    "minutesAgo": "{minutes} минут назад",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "Только что",
+    "@justNow": {
+        "description": "Только что"
+    },
+    "chatDeleted": "Чат с {botName} удален",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "Начать общение",
+    "@startChatting": {
+        "description": "Приглашение начать общение"
+    },
+    "delete": "Удалить",
+    "@delete": {
+        "description": "Кнопка удаления"
+    },
+    "confirmDeleteChat": "Удаление чата приведет к стиранию всей истории переписки. Вы уверены, что хотите удалить чат с {botName}?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "Удалить бота",
+    "@deleteBot": {
+        "description": "Удалить бота"
+    },
+    "confirmDeleteBot": "Удаление бота также удалит все связанные чаты. Вы уверены, что хотите удалить {botName}?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "Сохранить изменения",
+    "@saveChanges": {
+        "description": "Сохранить изменения"
+    },
+    "botUpdated": "Бот {botName} был обновлен",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "Боты",
+    "@Bots": {
+        "description": "Боты"
+    },
+    "clickToCreateBot": "Нажмите + в правом верхнем углу, чтобы добавить бота",
+    "@clickToCreateBot": {
+        "description": "Приглашение добавить бота"
+    },
+    "defaultSystemPrompt": "Вы полезный ИИ-ассистент. Пожалуйста, отвечайте на русском языке.",
+    "@defaultSystemPrompt": {
+        "description": "Системный промпт по умолчанию"
     }
 }

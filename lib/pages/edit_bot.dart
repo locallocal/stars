@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
+import 'package:bubble/generated/l10n.dart';
 
 class EditBotPage extends StatefulWidget {
   final Bot bot;
@@ -39,7 +40,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
       text:
           widget.bot.systemPrompt.isNotEmpty
               ? widget.bot.systemPrompt
-              : '你是一个有用的AI助手，请用中文回答问题。',
+              : '',
     );
     selectedProvider = widget.bot.provider;
     selectedModel = widget.bot.model;
@@ -65,7 +66,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          '编辑智能体',
+          S.of(context).editBot,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
@@ -85,7 +86,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                     (context) => AlertDialog(
                       title: Center(
                         child: Text(
-                          '删除机器人',
+                          S.of(context).deleteBot,
                           style: TextStyle(
                             fontSize:
                                 Theme.of(
@@ -95,13 +96,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
                         ),
                       ),
                       content: Text(
-                        '删除机器人会删除对应的聊天记录，确定要删除 ${widget.bot.name} 吗？',
+                        S.of(context).confirmDeleteBot(widget.bot.name),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
                           child: Text(
-                            '取消',
+                            S.of(context).cancel,
                             style: TextStyle(
                               fontSize:
                                   Theme.of(
@@ -118,7 +119,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                             Navigator.pop(context); // 返回联系人列表
                           },
                           child: Text(
-                            '删除',
+                            S.of(context).delete,
                             style: TextStyle(
                               fontSize:
                                   Theme.of(
@@ -171,7 +172,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
               child: TextField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  hintText: '名称...',
                   fillColor: Theme.of(context).colorScheme.secondary,
                   focusColor: Theme.of(context).colorScheme.secondary,
                   hoverColor: Theme.of(context).colorScheme.secondary,
@@ -184,7 +184,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 32),
 
             // 选择提供商（禁用编辑）
-            const Text('提供商:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.of(context).provider, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -218,7 +218,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // API类型（禁用编辑）
-            const Text('API类型:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.of(context).apiType, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -252,7 +252,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // API地址（禁用编辑）
-            const Text('API地址:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.of(context).apiAddress, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -274,7 +274,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // API密钥（禁用编辑）
-            const Text('API秘钥:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.of(context).apiKey, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -296,7 +296,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // 选择模型（禁用编辑）
-            const Text('模型:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.of(context).model, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -330,7 +330,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // 系统提示词（允许编辑）
-            const Text('系统提示词:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(S.of(context).systemPrompt, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -340,7 +340,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
               child: TextField(
                 controller: systemPromptController,
                 decoration: const InputDecoration(
-                  hintText: '输入系统提示词...',
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 12,
@@ -382,7 +381,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
               // 显示成功提示
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('智能体 ${nameController.text.trim()} 已更新'),
+                  content: Text(S.of(context).botUpdated(nameController.text.trim())),
                   backgroundColor: Theme.of(context).colorScheme.secondary,
                 ),
               );
@@ -390,11 +389,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
               // 显示错误提示
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('请填写智能体名称')));
+              ).showSnackBar(SnackBar(content: Text(S.of(context).fillRequiredFields)));
             }
           },
           child: Text(
-            '保存修改',
+            S.of(context).saveChanges,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,

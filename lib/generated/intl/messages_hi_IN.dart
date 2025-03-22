@@ -22,10 +22,25 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "बॉट \"${name}\" जोड़ा गया है";
 
-  static String m1(language) => "भाषा ${language} में बदली गई";
+  static String m1(botName) => "बॉट ${botName} अपडेट किया गया है";
+
+  static String m2(botName) => "${botName} के साथ चैट हटा दी गई";
+
+  static String m3(botName) =>
+      "बॉट हटाने से संबंधित सभी चैट भी हट जाएंगी। क्या आप वाकई ${botName} को हटाना चाहते हैं?";
+
+  static String m4(botName) =>
+      "चैट हटाने से सभी चैट इतिहास मिट जाएगा। क्या आप वाकई ${botName} के साथ चैट हटाना चाहते हैं?";
+
+  static String m5(language) => "भाषा ${language} में बदली गई";
+
+  static String m6(minutes) => "${minutes} मिनट पहले";
+
+  static String m7(error) => "उत्तर प्राप्त करने में विफल: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "Bots": MessageLookupByLibrary.simpleMessage("बॉट्स"),
     "about": MessageLookupByLibrary.simpleMessage("के बारे में"),
     "aboutApp": MessageLookupByLibrary.simpleMessage("बबल के बारे में"),
     "addBot": MessageLookupByLibrary.simpleMessage("बॉट जोड़ें"),
@@ -46,25 +61,40 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("बॉट अवतार"),
     "botName": MessageLookupByLibrary.simpleMessage("बॉट का नाम"),
+    "botUpdated": m1,
     "cancel": MessageLookupByLibrary.simpleMessage("रद्द करें"),
+    "chatDeleted": m2,
     "chats": MessageLookupByLibrary.simpleMessage("चैट्स"),
     "clearChat": MessageLookupByLibrary.simpleMessage("चैट साफ़ करें"),
+    "clearChatHistory": MessageLookupByLibrary.simpleMessage(
+      "चैट इतिहास साफ़ करें",
+    ),
+    "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
+      "बॉट जोड़ने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
+    ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
       "चैट शुरू करने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("पुष्टि करें"),
-    "confirmDeleteChat": MessageLookupByLibrary.simpleMessage(
-      "क्या आप वाकई इस चैट को हटाना चाहते हैं?",
-    ),
+    "confirmDeleteBot": m3,
+    "confirmDeleteChat": m4,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "संपर्क जानकारी (वैकल्पिक)",
     ),
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 बबल टीम"),
     "customProvider": MessageLookupByLibrary.simpleMessage("कस्टम प्रदाता..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("डार्क मोड"),
+    "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
+      "आप एक सहायक AI हैं। कृपया हिंदी में उत्तर दें।",
+    ),
+    "delete": MessageLookupByLibrary.simpleMessage("हटाएं"),
+    "deleteBot": MessageLookupByLibrary.simpleMessage("बॉट हटाएं"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("चैट हटाएं"),
     "editBot": MessageLookupByLibrary.simpleMessage("बॉट संपादित करें"),
     "editName": MessageLookupByLibrary.simpleMessage("नाम संपादित करें"),
+    "emptyResponseError": MessageLookupByLibrary.simpleMessage(
+      "उत्तर प्राप्त करने में विफल: सर्वर ने खाली प्रतिक्रिया लौटाई",
+    ),
     "enterApiAddress": MessageLookupByLibrary.simpleMessage(
       "API पता दर्ज करें...",
     ),
@@ -121,10 +151,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "सहायता और प्रतिक्रिया",
     ),
     "home": MessageLookupByLibrary.simpleMessage("होम"),
-    "languageChanged": m1,
+    "justNow": MessageLookupByLibrary.simpleMessage("अभी-अभी"),
+    "languageChanged": m5,
     "languageSettings": MessageLookupByLibrary.simpleMessage("भाषा सेटिंग्स"),
     "lightMode": MessageLookupByLibrary.simpleMessage("लाइट मोड"),
     "messageHint": MessageLookupByLibrary.simpleMessage("संदेश लिखें..."),
+    "minutesAgo": m6,
     "model": MessageLookupByLibrary.simpleMessage("मॉडल"),
     "name": MessageLookupByLibrary.simpleMessage("नाम"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("नाम अपडेट किया गया"),
@@ -143,7 +175,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "अपने सुझाव और प्रतिक्रिया प्रदान करें",
     ),
     "provider": MessageLookupByLibrary.simpleMessage("प्रदाता"),
+    "responseError": m7,
     "save": MessageLookupByLibrary.simpleMessage("सहेजें"),
+    "saveChanges": MessageLookupByLibrary.simpleMessage("परिवर्तन सहेजें"),
     "selectBot": MessageLookupByLibrary.simpleMessage("बॉट चुनें"),
     "selectLanguage": MessageLookupByLibrary.simpleMessage("भाषा चुनें"),
     "selectModel": MessageLookupByLibrary.simpleMessage("मॉडल चुनें:"),
@@ -151,6 +185,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("थीम चुनें"),
     "send": MessageLookupByLibrary.simpleMessage("भेजें"),
     "settings": MessageLookupByLibrary.simpleMessage("सेटिंग्स"),
+    "startChatting": MessageLookupByLibrary.simpleMessage("चैटिंग शुरू करें"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("प्रतिक्रिया भेजें"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("सिस्टम प्रॉम्प्ट"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage(

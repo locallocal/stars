@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/providers.dart';
-import 'package:bubble/generated/l10n.dart'; // 添加国际化支持导入
+import 'package:bubble/generated/l10n.dart';
 
 class AddBotPage extends StatefulWidget {
   final Function(Bot) onBotAdded;
@@ -19,14 +19,12 @@ class _AddBotPageState extends State<AddBotPage> {
   final nameController = TextEditingController();
   final apiKeyController = TextEditingController();
   final baseURLController = TextEditingController();
-  final systemPromptController = TextEditingController(
-    text: '你是一个有用的AI助手，请用中文回答问题。',
-  );
+  final systemPromptController = TextEditingController();
   final customProviderController = TextEditingController(); // 添加自定义供应商控制器
 
   String selectedProvider = 'OpenAI';
   bool isCustomProvider = false; // 添加标志位
-  String selectedModel = 'gpt-3.5-turbo';
+  String selectedModel = '';
   File? avatarImage;
 
   List<String> get currentModels {
@@ -118,6 +116,10 @@ class _AddBotPageState extends State<AddBotPage> {
     // 初始化baseURLController
     baseURLController.text =
         modelsByProvider[selectedProvider]?['base_url'] as String? ?? '';
+    // 使用国际化字符串初始化系统提示词
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      systemPromptController.text = S.of(context).defaultSystemPrompt;
+    });
   }
 
   @override

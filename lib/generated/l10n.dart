@@ -490,6 +490,11 @@ class S {
     );
   }
 
+  /// `Bots`
+  String get Bots {
+    return Intl.message('Bots', name: 'Bots', desc: 'Bots', args: []);
+  }
+
   /// `Select Bot`
   String get selectBot {
     return Intl.message(
@@ -506,6 +511,16 @@ class S {
       'No bots available',
       name: 'noBotsAvailable',
       desc: 'No bots available',
+      args: [],
+    );
+  }
+
+  /// `Click + in the top right to create a new bot`
+  String get clickToCreateBot {
+    return Intl.message(
+      'Click + in the top right to create a new bot',
+      name: 'clickToCreateBot',
+      desc: 'Click to create bot prompt',
       args: [],
     );
   }
@@ -536,16 +551,6 @@ class S {
       'Delete Chat',
       name: 'deleteChat',
       desc: 'Delete chat',
-      args: [],
-    );
-  }
-
-  /// `Are you sure you want to delete this chat?`
-  String get confirmDeleteChat {
-    return Intl.message(
-      'Are you sure you want to delete this chat?',
-      name: 'confirmDeleteChat',
-      desc: 'Confirm delete chat',
       args: [],
     );
   }
@@ -700,6 +705,16 @@ class S {
     );
   }
 
+  /// `You are a helpful AI assistant.`
+  String get defaultSystemPrompt {
+    return Intl.message(
+      'You are a helpful AI assistant.',
+      name: 'defaultSystemPrompt',
+      desc: 'Default system prompt',
+      args: [],
+    );
+  }
+
   /// `Bot "{name}" has been added`
   String botAddedSuccess(String name) {
     return Intl.message(
@@ -807,6 +822,131 @@ class S {
       name: 'feedbackContentRequired',
       desc: 'Feedback content required message',
       args: [],
+    );
+  }
+
+  /// `Failed to get response: Server returned empty response`
+  String get emptyResponseError {
+    return Intl.message(
+      'Failed to get response: Server returned empty response',
+      name: 'emptyResponseError',
+      desc: 'Failed to get response: Server returned empty response',
+      args: [],
+    );
+  }
+
+  /// `Failed to get response: ${error}`
+  String responseError(String error) {
+    return Intl.message(
+      'Failed to get response: \$$error',
+      name: 'responseError',
+      desc: 'Failed to get response',
+      args: [error],
+    );
+  }
+
+  /// `Clear chat history`
+  String get clearChatHistory {
+    return Intl.message(
+      'Clear chat history',
+      name: 'clearChatHistory',
+      desc: 'Clear chat history',
+      args: [],
+    );
+  }
+
+  /// `{minutes} minutes ago`
+  String minutesAgo(int minutes) {
+    return Intl.message(
+      '$minutes minutes ago',
+      name: 'minutesAgo',
+      desc: '',
+      args: [minutes],
+    );
+  }
+
+  /// `Just now`
+  String get justNow {
+    return Intl.message(
+      'Just now',
+      name: 'justNow',
+      desc: 'Just now',
+      args: [],
+    );
+  }
+
+  /// `Chat with {botName} deleted`
+  String chatDeleted(String botName) {
+    return Intl.message(
+      'Chat with $botName deleted',
+      name: 'chatDeleted',
+      desc: '',
+      args: [botName],
+    );
+  }
+
+  /// `Start chatting`
+  String get startChatting {
+    return Intl.message(
+      'Start chatting',
+      name: 'startChatting',
+      desc: 'Start chatting',
+      args: [],
+    );
+  }
+
+  /// `Delete`
+  String get delete {
+    return Intl.message('Delete', name: 'delete', desc: 'Delete', args: []);
+  }
+
+  /// `Deleting this chat will clear all chat history. Are you sure you want to delete the chat with {botName}?`
+  String confirmDeleteChat(String botName) {
+    return Intl.message(
+      'Deleting this chat will clear all chat history. Are you sure you want to delete the chat with $botName?',
+      name: 'confirmDeleteChat',
+      desc: '',
+      args: [botName],
+    );
+  }
+
+  /// `Delete Bot`
+  String get deleteBot {
+    return Intl.message(
+      'Delete Bot',
+      name: 'deleteBot',
+      desc: 'Delete bot',
+      args: [],
+    );
+  }
+
+  /// `Deleting this bot will also delete all associated chat history. Are you sure you want to delete {botName}?`
+  String confirmDeleteBot(String botName) {
+    return Intl.message(
+      'Deleting this bot will also delete all associated chat history. Are you sure you want to delete $botName?',
+      name: 'confirmDeleteBot',
+      desc: '',
+      args: [botName],
+    );
+  }
+
+  /// `Save Changes`
+  String get saveChanges {
+    return Intl.message(
+      'Save Changes',
+      name: 'saveChanges',
+      desc: 'Save changes button',
+      args: [],
+    );
+  }
+
+  /// `Bot {botName} has been updated`
+  String botUpdated(String botName) {
+    return Intl.message(
+      'Bot $botName has been updated',
+      name: 'botUpdated',
+      desc: '',
+      args: [botName],
     );
   }
 }

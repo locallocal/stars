@@ -4,6 +4,7 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:bubble/generated/l10n.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -115,7 +116,6 @@ class _ChatPageState extends State<ChatPage> {
         );
       }
 
-      // 添加历史消息（最多5条）
       final historyMessages = _messages.where((m) => m.type == "text").toList();
       if (historyMessages.length > 1) {
         final int startIdx =
@@ -158,7 +158,7 @@ class _ChatPageState extends State<ChatPage> {
                 _isStreaming = false;
                 _isCancellable = false; // 重置可取消状态
               });
-              _showSnackBar('获取回复失败: 服务器返回空响应');
+              _showSnackBar(S.of(context).emptyResponseError);
             }
             return;
           }
@@ -210,7 +210,7 @@ class _ChatPageState extends State<ChatPage> {
               _isStreaming = false;
               _isCancellable = false; // 重置可取消状态
             });
-            _showSnackBar('获取回复失败: $error');
+            _showSnackBar(S.of(context).responseError(error));
           }
         },
       );
@@ -221,7 +221,7 @@ class _ChatPageState extends State<ChatPage> {
           _isTyping = false;
           _isStreaming = false;
         });
-        _showSnackBar('获取回复失败: ${e.toString()}');
+        _showSnackBar(S.of(context).responseError(e.toString()));
       }
     }
   }
@@ -245,7 +245,7 @@ class _ChatPageState extends State<ChatPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep),
-            tooltip: '清空聊天记录',
+            tooltip: S.of(context).clearChatHistory,
             onPressed: () {
               _showClearChatDialog();
             },
@@ -418,7 +418,7 @@ class _ChatPageState extends State<ChatPage> {
                                                         .black
                                                         .withOpacity(0.1),
                                                   ),
-                                                  blockquote: TextStyle(
+                                                  blockquote: const TextStyle(
                                                     color: Colors.black,
                                                   ),
                                                 ),

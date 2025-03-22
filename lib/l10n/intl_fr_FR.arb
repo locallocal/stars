@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "Supprimer la discussion"
     },
-    "confirmDeleteChat": "Êtes-vous sûr de vouloir supprimer cette discussion?",
-    "@confirmDeleteChat": {
-        "description": "Confirmer la suppression de la discussion"
-    },
     "messageHint": "Tapez un message...",
     "@messageHint": {
         "description": "Indice de saisie de message"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "Veuillez saisir le contenu des commentaires",
     "@feedbackContentRequired": {
         "description": "Message de contenu de commentaires requis"
+    },
+    "emptyResponseError": "Échec de récupération de la réponse: le serveur a renvoyé une réponse vide",
+    "@emptyResponseError": {
+        "description": "Message d'erreur lorsque le serveur renvoie une réponse vide"
+    },
+    "responseError": "Échec de récupération de la réponse: ${error}",
+    "@responseError": {
+        "description": "Échec de récupération de la réponse",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "Effacer l'historique de discussion",
+    "@clearChatHistory": {
+        "description": "Effacer l'historique de discussion"
+    },
+    "minutesAgo": "il y a {minutes} minutes",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "À l'instant",
+    "@justNow": {
+        "description": "À l'instant"
+    },
+    "chatDeleted": "Discussion avec {botName} supprimée",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "Commencez à discuter",
+    "@startChatting": {
+        "description": "Invitation à commencer à discuter"
+    },
+    "delete": "Supprimer",
+    "@delete": {
+        "description": "Bouton de suppression"
+    },
+    "confirmDeleteChat": "La suppression de la discussion effacera tout l'historique des conversations. Êtes-vous sûr de vouloir supprimer la discussion avec {botName}?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "Supprimer le bot",
+    "@deleteBot": {
+        "description": "Supprimer le bot"
+    },
+    "confirmDeleteBot": "La suppression du bot supprimera également toutes les discussions associées. Êtes-vous sûr de vouloir supprimer {botName}?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "Enregistrer les modifications",
+    "@saveChanges": {
+        "description": "Enregistrer les modifications"
+    },
+    "botUpdated": "Bot {botName} a été mis à jour",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "Bots",
+    "@Bots": {
+        "description": "Bots"
+    },
+    "clickToCreateBot": "Cliquez sur + en haut à droite pour ajouter un bot",
+    "@clickToCreateBot": {
+        "description": "Invitation à ajouter un bot"
+    },
+    "defaultSystemPrompt": "Vous êtes un assistant IA utile. Veuillez répondre en français.",
+    "@defaultSystemPrompt": {
+        "description": "Invite système par défaut"
     }
 }

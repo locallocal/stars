@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "刪除聊天"
     },
-    "confirmDeleteChat": "確定要刪除此聊天嗎？",
-    "@confirmDeleteChat": {
-        "description": "確認刪除聊天"
-    },
     "messageHint": "輸入消息...",
     "@messageHint": {
         "description": "消息輸入提示"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "請輸入反饋內容",
     "@feedbackContentRequired": {
         "description": "反饋內容必填提示"
+    },
+    "emptyResponseError": "獲取回覆失敗: 伺服器返回空響應",
+    "@emptyResponseError": {
+        "description": "伺服器返回空響應的錯誤提示"
+    },
+    "responseError": "獲取回覆失敗: ${error}",
+    "@responseError": {
+        "description": "獲取回覆失敗",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "清空聊天記錄",
+    "@clearChatHistory": {
+        "description": "清空聊天記錄"
+    },
+    "minutesAgo": "{minutes}分鐘前",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "剛剛",
+    "@justNow": {
+        "description": "剛剛"
+    },
+    "chatDeleted": "已刪除與 {botName} 的聊天",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "開始聊天吧",
+    "@startChatting": {
+        "description": "開始聊天的提示"
+    },
+    "delete": "刪除",
+    "@delete": {
+        "description": "刪除按鈕"
+    },
+    "confirmDeleteChat": "刪除聊天會清空所有的聊天記錄，確定要刪除與 {botName} 的聊天嗎？",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "刪除智能體",
+    "@deleteBot": {
+        "description": "刪除智能體"
+    },
+    "confirmDeleteBot": "刪除機器人會刪除對應的聊天記錄，確定要刪除 {botName} 嗎？",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "儲存修改",
+    "@saveChanges": {
+        "description": "儲存修改"
+    },
+    "botUpdated": "智能體 {botName} 已更新",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "智能體",
+    "@Bots": {
+        "description": "智能體"
+    },
+    "clickToCreateBot": "點擊右上角 + 添加智能體",
+    "@clickToCreateBot": {
+        "description": "點擊右上角 + 添加智能體"
+    },
+    "defaultSystemPrompt": "你是一個有用的AI助手，請用繁體中文回答問題。",
+    "@defaultSystemPrompt": {
+        "description": "你是一個有用的AI助手，請用繁體中文回答問題。"
     }
 }

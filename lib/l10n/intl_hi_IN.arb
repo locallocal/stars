@@ -218,10 +218,6 @@
     "@deleteChat": {
         "description": "चैट हटाएं"
     },
-    "confirmDeleteChat": "क्या आप वाकई इस चैट को हटाना चाहते हैं?",
-    "@confirmDeleteChat": {
-        "description": "चैट हटाने की पुष्टि करें"
-    },
     "messageHint": "संदेश लिखें...",
     "@messageHint": {
         "description": "संदेश इनपुट संकेत"
@@ -331,5 +327,95 @@
     "feedbackContentRequired": "कृपया प्रतिक्रिया सामग्री दर्ज करें",
     "@feedbackContentRequired": {
         "description": "प्रतिक्रिया सामग्री आवश्यक संदेश"
+    },
+    "emptyResponseError": "उत्तर प्राप्त करने में विफल: सर्वर ने खाली प्रतिक्रिया लौटाई",
+    "@emptyResponseError": {
+        "description": "सर्वर से खाली प्रतिक्रिया मिलने पर त्रुटि संदेश"
+    },
+    "responseError": "उत्तर प्राप्त करने में विफल: ${error}",
+    "@responseError": {
+        "description": "उत्तर प्राप्त करने में विफल",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "चैट इतिहास साफ़ करें",
+    "@clearChatHistory": {
+        "description": "चैट इतिहास साफ़ करें"
+    },
+    "minutesAgo": "{minutes} मिनट पहले",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "अभी-अभी",
+    "@justNow": {
+        "description": "अभी-अभी"
+    },
+    "chatDeleted": "{botName} के साथ चैट हटा दी गई",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "चैटिंग शुरू करें",
+    "@startChatting": {
+        "description": "चैटिंग शुरू करने का संकेत"
+    },
+    "delete": "हटाएं",
+    "@delete": {
+        "description": "हटाएं बटन"
+    },
+    "confirmDeleteChat": "चैट हटाने से सभी चैट इतिहास मिट जाएगा। क्या आप वाकई {botName} के साथ चैट हटाना चाहते हैं?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "बॉट हटाएं",
+    "@deleteBot": {
+        "description": "बॉट हटाएं"
+    },
+    "confirmDeleteBot": "बॉट हटाने से संबंधित सभी चैट भी हट जाएंगी। क्या आप वाकई {botName} को हटाना चाहते हैं?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "परिवर्तन सहेजें",
+    "@saveChanges": {
+        "description": "परिवर्तन सहेजें"
+    },
+    "botUpdated": "बॉट {botName} अपडेट किया गया है",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "Bots": "बॉट्स",
+    "@Bots": {
+        "description": "बॉट्स"
+    },
+    "clickToCreateBot": "बॉट जोड़ने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
+    "@clickToCreateBot": {
+        "description": "बॉट जोड़ने के लिए संकेत"
+    },
+    "defaultSystemPrompt": "आप एक सहायक AI हैं। कृपया हिंदी में उत्तर दें।",
+    "@defaultSystemPrompt": {
+        "description": "डिफ़ॉल्ट सिस्टम प्रॉम्प्ट"
     }
 }

@@ -22,10 +22,25 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "Bot \"${name}\" foi adicionado";
 
-  static String m1(language) => "Idioma alterado para ${language}";
+  static String m1(botName) => "Bot ${botName} foi atualizado";
+
+  static String m2(botName) => "Conversa com ${botName} excluída";
+
+  static String m3(botName) =>
+      "Excluir o bot também removerá todas as conversas associadas. Tem certeza de que deseja excluir ${botName}?";
+
+  static String m4(botName) =>
+      "Excluir a conversa apagará todo o histórico de conversas. Tem certeza de que deseja excluir a conversa com ${botName}?";
+
+  static String m5(language) => "Idioma alterado para ${language}";
+
+  static String m6(minutes) => "há ${minutes} minutos";
+
+  static String m7(error) => "Falha ao obter resposta: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
+    "Bots": MessageLookupByLibrary.simpleMessage("Bots"),
     "about": MessageLookupByLibrary.simpleMessage("Sobre"),
     "aboutApp": MessageLookupByLibrary.simpleMessage("Sobre o Bubble"),
     "addBot": MessageLookupByLibrary.simpleMessage("Adicionar bot"),
@@ -48,16 +63,23 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Avatar do bot"),
     "botName": MessageLookupByLibrary.simpleMessage("Nome do bot"),
+    "botUpdated": m1,
     "cancel": MessageLookupByLibrary.simpleMessage("Cancelar"),
+    "chatDeleted": m2,
     "chats": MessageLookupByLibrary.simpleMessage("Conversas"),
     "clearChat": MessageLookupByLibrary.simpleMessage("Limpar conversa"),
+    "clearChatHistory": MessageLookupByLibrary.simpleMessage(
+      "Limpar histórico de conversa",
+    ),
+    "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
+      "Clique em + no canto superior direito para adicionar um bot",
+    ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
       "Clique em + no canto superior direito para iniciar uma conversa",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirmar"),
-    "confirmDeleteChat": MessageLookupByLibrary.simpleMessage(
-      "Tem certeza de que deseja excluir esta conversa?",
-    ),
+    "confirmDeleteBot": m3,
+    "confirmDeleteChat": m4,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "Informações de contato (opcional)",
     ),
@@ -66,9 +88,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "Provedor personalizado...",
     ),
     "darkMode": MessageLookupByLibrary.simpleMessage("Modo escuro"),
+    "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
+      "Você é um assistente de IA útil. Por favor, responda em português.",
+    ),
+    "delete": MessageLookupByLibrary.simpleMessage("Excluir"),
+    "deleteBot": MessageLookupByLibrary.simpleMessage("Excluir bot"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("Excluir conversa"),
     "editBot": MessageLookupByLibrary.simpleMessage("Editar bot"),
     "editName": MessageLookupByLibrary.simpleMessage("Editar nome"),
+    "emptyResponseError": MessageLookupByLibrary.simpleMessage(
+      "Falha ao obter resposta: o servidor retornou uma resposta vazia",
+    ),
     "enterApiAddress": MessageLookupByLibrary.simpleMessage(
       "Digite o endereço da API...",
     ),
@@ -123,7 +153,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("Ajuda e Feedback"),
     "home": MessageLookupByLibrary.simpleMessage("Início"),
-    "languageChanged": m1,
+    "justNow": MessageLookupByLibrary.simpleMessage("Agora mesmo"),
+    "languageChanged": m5,
     "languageSettings": MessageLookupByLibrary.simpleMessage(
       "Configurações de idioma",
     ),
@@ -131,6 +162,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage(
       "Digite uma mensagem...",
     ),
+    "minutesAgo": m6,
     "model": MessageLookupByLibrary.simpleMessage("Modelo"),
     "name": MessageLookupByLibrary.simpleMessage("Nome"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("Nome atualizado"),
@@ -153,7 +185,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Forneça suas sugestões e feedback",
     ),
     "provider": MessageLookupByLibrary.simpleMessage("Provedor"),
+    "responseError": m7,
     "save": MessageLookupByLibrary.simpleMessage("Salvar"),
+    "saveChanges": MessageLookupByLibrary.simpleMessage("Salvar alterações"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Selecionar bot"),
     "selectLanguage": MessageLookupByLibrary.simpleMessage("Selecionar idioma"),
     "selectModel": MessageLookupByLibrary.simpleMessage("Selecionar modelo:"),
@@ -163,6 +197,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("Selecionar tema"),
     "send": MessageLookupByLibrary.simpleMessage("Enviar"),
     "settings": MessageLookupByLibrary.simpleMessage("Configurações"),
+    "startChatting": MessageLookupByLibrary.simpleMessage("Comece a conversar"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("Enviar Feedback"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("Prompt do sistema"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage(

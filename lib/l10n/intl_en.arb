@@ -198,6 +198,10 @@
     "@appTitle": {
         "description": "App title"
     },
+    "Bots": "Bots",
+    "@Bots": {
+        "description": "Bots"
+    },
     "selectBot": "Select Bot",
     "@selectBot": {
         "description": "Select bot"
@@ -205,6 +209,10 @@
     "noBotsAvailable": "No bots available",
     "@noBotsAvailable": {
         "description": "No bots available"
+    },
+    "clickToCreateBot": "Click + in the top right to create a new bot",
+    "@clickToCreateBot": {
+        "description": "Click to create bot prompt"
     },
     "noChats": "No chats yet",
     "@noChats": {
@@ -217,10 +225,6 @@
     "deleteChat": "Delete Chat",
     "@deleteChat": {
         "description": "Delete chat"
-    },
-    "confirmDeleteChat": "Are you sure you want to delete this chat?",
-    "@confirmDeleteChat": {
-        "description": "Confirm delete chat"
     },
     "messageHint": "Type a message...",
     "@messageHint": {
@@ -282,6 +286,10 @@
     "@enterSystemPrompt": {
         "description": "Hint text for system prompt input field"
     },
+    "defaultSystemPrompt": "You are a helpful AI assistant.",
+    "@defaultSystemPrompt": {
+        "description": "Default system prompt"
+    },
     "botAddedSuccess": "Bot \"{name}\" has been added",
     "@botAddedSuccess": {
         "description": "Success message when a bot is added",
@@ -331,5 +339,83 @@
     "feedbackContentRequired": "Please enter feedback content",
     "@feedbackContentRequired": {
         "description": "Feedback content required message"
+    },
+    "emptyResponseError": "Failed to get response: Server returned empty response",
+    "@emptyResponseError": {
+        "description": "Failed to get response: Server returned empty response"
+    },
+    "responseError": "Failed to get response: ${error}",
+    "@responseError": {
+        "description": "Failed to get response",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "Clear chat history",
+    "@clearChatHistory": {
+        "description": "Clear chat history"
+    },
+    "minutesAgo": "{minutes} minutes ago",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "Just now",
+    "@justNow": {
+        "description": "Just now"
+    },
+    "chatDeleted": "Chat with {botName} deleted",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "Start chatting",
+    "@startChatting": {
+        "description": "Start chatting"
+    },
+    "delete": "Delete",
+    "@delete": {
+        "description": "Delete"
+    },
+    "confirmDeleteChat": "Deleting this chat will clear all chat history. Are you sure you want to delete the chat with {botName}?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "Delete Bot",
+    "@deleteBot": {
+        "description": "Delete bot"
+    },
+    "confirmDeleteBot": "Deleting this bot will also delete all associated chat history. Are you sure you want to delete {botName}?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "Save Changes",
+    "@saveChanges": {
+        "description": "Save changes button"
+    },
+    "botUpdated": "Bot {botName} has been updated",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
     }
 }
