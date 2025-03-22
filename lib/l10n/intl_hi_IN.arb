@@ -172,11 +172,11 @@
     },
     "aboutApp": "बबल के बारे में",
     "@aboutApp": {
-        "description": "एप्लिकेशन के बारे में"
+        "description": "एप्लयन के बारे में"
     },
-    "appDescription": "एक सरल लेकिन शक्तिशाली AI चैट एप्लिकेशन जो आपको कहीं भी, कभी भी AI के साथ चैट करने की अनुमति देता है।",
+    "appDescription": "एक सरल लेकिन शक्तिशाली AI चैट एप्लयन जो आपको कहीं भी, कभी भी AI के साथ चैट करने की अनुमति देता है।",
     "@appDescription": {
-        "description": "एप्लिकेशन विवरण"
+        "description": "एप्लयन विवरण"
     },
     "copyright": "© 2025 बबल टीम",
     "@copyright": {
@@ -196,7 +196,7 @@
     },
     "appTitle": "बबल - AI चैट सहायक",
     "@appTitle": {
-        "description": "एप्लिकेशन शीर्षक"
+        "description": "एप्लयन शीर्षक"
     },
     "selectBot": "बॉट चुनें",
     "@selectBot": {
@@ -417,5 +417,69 @@
     "defaultSystemPrompt": "आप एक सहायक AI हैं। कृपया हिंदी में उत्तर दें।",
     "@defaultSystemPrompt": {
         "description": "डिफ़ॉल्ट सिस्टम प्रॉम्प्ट"
+    },
+    "botIsTyping": "{botName} टाइप कर रहा है...",
+    "@botIsTyping": {
+        "description": "AI सहायक संदेश टाइप कर रहा है का संकेत",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "उत्पादन रोकें",
+    "@pauseGeneration": {
+        "description": "AI उत्तर उत्पादन रोकने के लिए बटन"
+    },
+    "confirmClearChat": "क्या आप वाकई \"{botName}\" के साथ सभी चैट इतिहास मिटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती है।",
+    "@confirmClearChat": {
+        "description": "चैट इतिहास मिटाने के लिए पुष्टिकरण टेक्स्व्सटँ",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "चैट इतिहास मिटा दिया गया",
+    "@chatHistoryCleared": {
+        "description": "चैट इतिहास मिटाने के बाद सूचना"
+    },
+    "replyCancelled": "उत्तर रद्द किया गया",
+    "@replyCancelled": {
+        "description": "AI उत्तर उत्पादन रद्द करने के बाद सूचना"
+    },
+    "clear": "मिटाएं",
+    "@clear": {
+        "description": "चैट इतिहास मिटाने के लिए बटन"
+    },
+    "confirmDelete": "हटाने की पुष्टि करें",
+    "@confirmDelete": {
+        "description": "हटाने के पुष्टिकरण संवाद का शीर्षक"
+    },
+    "botDeleted": "\"{botName}\" हटा दिया गया है",
+    "@botDeleted": {
+        "description": "बॉट हटाने के बाद सूचना",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "botGreeting": "नमस्ते! मैं {botName} हूँ, एक AI सहायक। आप मुझसे कोई भी प्रश्न पूछ सकते हैं, मैं आपकी मदद करने की पूरी कोशिश करूंगा।",
+    "@botGreeting": {
+        "description": "AI सहायक का स्वागत संदेश",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "चैट शुरू करने के लिए नीचे इनपुट फील्ड में संदेश भेजें",
+    "@startChatPrompt": {
+        "description": "उपयोगकर्ता को इनपुट फील्ड में चैट शुरू करने के लिए संकेत"
     }
 }

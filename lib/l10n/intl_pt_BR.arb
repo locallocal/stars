@@ -417,5 +417,69 @@
     "defaultSystemPrompt": "Você é um assistente de IA útil. Por favor, responda em português.",
     "@defaultSystemPrompt": {
         "description": "Prompt do sistema padrão"
+    },
+    "botIsTyping": "{botName} está digitando...",
+    "@botIsTyping": {
+        "description": "Indicação de que o assistente de IA está digitando uma mensagem",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "Pausar geração",
+    "@pauseGeneration": {
+        "description": "Botão para pausar a geração de resposta da IA"
+    },
+    "confirmClearChat": "Tem certeza de que deseja limpar todo o histórico de conversa com \"{botName}\"? Esta ação não pode ser desfeita.",
+    "@confirmClearChat": {
+        "description": "Texto de confirmação para limpar o histórico de conversa",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "Histórico de conversa limpo",
+    "@chatHistoryCleared": {
+        "description": "Notificação após limpar o histórico de conversa"
+    },
+    "replyCancelled": "Resposta cancelada",
+    "@replyCancelled": {
+        "description": "Notificação após cancelar a geração de resposta da IA"
+    },
+    "clear": "Limpar",
+    "@clear": {
+        "description": "Botão para limpar o histórico de conversa"
+    },
+    "confirmDelete": "Confirmar exclusão",
+    "@confirmDelete": {
+        "description": "Título do diálogo de confirmação para excluir"
+    },
+    "botDeleted": "\"{botName}\" foi excluído",
+    "@botDeleted": {
+        "description": "Notificação após excluir um bot",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "botGreeting": "Olá! Eu sou {botName}, um assistente de IA. Você pode me fazer qualquer pergunta e farei o meu melhor para ajudar.",
+    "@botGreeting": {
+        "description": "Mensagem de saudação do assistente de IA",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "Envie uma mensagem no campo de texto abaixo para começar a conversar",
+    "@startChatPrompt": {
+        "description": "Indicação para o usuário começar a conversar no campo de entrada"
     }
 }

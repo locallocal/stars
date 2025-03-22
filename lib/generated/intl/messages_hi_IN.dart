@@ -22,21 +22,31 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "बॉट \"${name}\" जोड़ा गया है";
 
-  static String m1(botName) => "बॉट ${botName} अपडेट किया गया है";
+  static String m1(botName) => "\"${botName}\" हटा दिया गया है";
 
-  static String m2(botName) => "${botName} के साथ चैट हटा दी गई";
+  static String m2(botName) =>
+      "नमस्ते! मैं ${botName} हूँ, एक AI सहायक। आप मुझसे कोई भी प्रश्न पूछ सकते हैं, मैं आपकी मदद करने की पूरी कोशिश करूंगा।";
 
-  static String m3(botName) =>
+  static String m3(botName) => "${botName} टाइप कर रहा है...";
+
+  static String m4(botName) => "बॉट ${botName} अपडेट किया गया है";
+
+  static String m5(botName) => "${botName} के साथ चैट हटा दी गई";
+
+  static String m6(botName) =>
+      "क्या आप वाकई \"${botName}\" के साथ सभी चैट इतिहास मिटाना चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती है।";
+
+  static String m7(botName) =>
       "बॉट हटाने से संबंधित सभी चैट भी हट जाएंगी। क्या आप वाकई ${botName} को हटाना चाहते हैं?";
 
-  static String m4(botName) =>
+  static String m8(botName) =>
       "चैट हटाने से सभी चैट इतिहास मिट जाएगा। क्या आप वाकई ${botName} के साथ चैट हटाना चाहते हैं?";
 
-  static String m5(language) => "भाषा ${language} में बदली गई";
+  static String m9(language) => "भाषा ${language} में बदली गई";
 
-  static String m6(minutes) => "${minutes} मिनट पहले";
+  static String m10(minutes) => "${minutes} मिनट पहले";
 
-  static String m7(error) => "उत्तर प्राप्त करने में विफल: \$${error}";
+  static String m11(error) => "उत्तर प्राप्त करने में विफल: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -54,17 +64,24 @@ class MessageLookup extends MessageLookupByLibrary {
     "apiKey": MessageLookupByLibrary.simpleMessage("API कुंजी"),
     "apiType": MessageLookupByLibrary.simpleMessage("API प्रकार:"),
     "appDescription": MessageLookupByLibrary.simpleMessage(
-      "एक सरल लेकिन शक्तिशाली AI चैट एप्लिकेशन जो आपको कहीं भी, कभी भी AI के साथ चैट करने की अनुमति देता है।",
+      "एक सरल लेकिन शक्तिशाली AI चैट एप्लयन जो आपको कहीं भी, कभी भी AI के साथ चैट करने की अनुमति देता है।",
     ),
     "appName": MessageLookupByLibrary.simpleMessage("बबल"),
     "appTitle": MessageLookupByLibrary.simpleMessage("बबल - AI चैट सहायक"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("बॉट अवतार"),
+    "botDeleted": m1,
+    "botGreeting": m2,
+    "botIsTyping": m3,
     "botName": MessageLookupByLibrary.simpleMessage("बॉट का नाम"),
-    "botUpdated": m1,
+    "botUpdated": m4,
     "cancel": MessageLookupByLibrary.simpleMessage("रद्द करें"),
-    "chatDeleted": m2,
+    "chatDeleted": m5,
+    "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
+      "चैट इतिहास मिटा दिया गया",
+    ),
     "chats": MessageLookupByLibrary.simpleMessage("चैट्स"),
+    "clear": MessageLookupByLibrary.simpleMessage("मिटाएं"),
     "clearChat": MessageLookupByLibrary.simpleMessage("चैट साफ़ करें"),
     "clearChatHistory": MessageLookupByLibrary.simpleMessage(
       "चैट इतिहास साफ़ करें",
@@ -76,8 +93,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "चैट शुरू करने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("पुष्टि करें"),
-    "confirmDeleteBot": m3,
-    "confirmDeleteChat": m4,
+    "confirmClearChat": m6,
+    "confirmDelete": MessageLookupByLibrary.simpleMessage(
+      "हटाने की पुष्टि करें",
+    ),
+    "confirmDeleteBot": m7,
+    "confirmDeleteChat": m8,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "संपर्क जानकारी (वैकल्पिक)",
     ),
@@ -152,11 +173,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "home": MessageLookupByLibrary.simpleMessage("होम"),
     "justNow": MessageLookupByLibrary.simpleMessage("अभी-अभी"),
-    "languageChanged": m5,
+    "languageChanged": m9,
     "languageSettings": MessageLookupByLibrary.simpleMessage("भाषा सेटिंग्स"),
     "lightMode": MessageLookupByLibrary.simpleMessage("लाइट मोड"),
     "messageHint": MessageLookupByLibrary.simpleMessage("संदेश लिखें..."),
-    "minutesAgo": m6,
+    "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("मॉडल"),
     "name": MessageLookupByLibrary.simpleMessage("नाम"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("नाम अपडेट किया गया"),
@@ -165,6 +186,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "कोई बॉट उपलब्ध नहीं है",
     ),
     "noChats": MessageLookupByLibrary.simpleMessage("अभी तक कोई चैट नहीं"),
+    "pauseGeneration": MessageLookupByLibrary.simpleMessage("उत्पादन रोकें"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "कृपया पहले API कुंजी दर्ज करें",
     ),
@@ -175,7 +197,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "अपने सुझाव और प्रतिक्रिया प्रदान करें",
     ),
     "provider": MessageLookupByLibrary.simpleMessage("प्रदाता"),
-    "responseError": m7,
+    "replyCancelled": MessageLookupByLibrary.simpleMessage(
+      "उत्तर रद्द किया गया",
+    ),
+    "responseError": m11,
     "save": MessageLookupByLibrary.simpleMessage("सहेजें"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("परिवर्तन सहेजें"),
     "selectBot": MessageLookupByLibrary.simpleMessage("बॉट चुनें"),
@@ -185,6 +210,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("थीम चुनें"),
     "send": MessageLookupByLibrary.simpleMessage("भेजें"),
     "settings": MessageLookupByLibrary.simpleMessage("सेटिंग्स"),
+    "startChatPrompt": MessageLookupByLibrary.simpleMessage(
+      "चैट शुरू करने के लिए नीचे इनपुट फील्ड में संदेश भेजें",
+    ),
     "startChatting": MessageLookupByLibrary.simpleMessage("चैटिंग शुरू करें"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("प्रतिक्रिया भेजें"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("सिस्टम प्रॉम्प्ट"),

@@ -122,7 +122,8 @@ class _ContactsPageState extends State<ContactsPage> {
                       ),
                     ),
                   ),
-                  // 联系人列表
+                  
+                  // 智能体列表
                   Expanded(
                     child:
                         filteredBots.isEmpty
@@ -158,8 +159,78 @@ class _ContactsPageState extends State<ContactsPage> {
                               itemCount: filteredBots.length,
                               itemBuilder: (context, index) {
                                 final bot = filteredBots[index];
-                                return ListTile(
-                                  leading: CircleAvatar(
+                                return Dismissible(
+                                  key: Key(bot.id),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20.0),
+                                    color: Theme.of(context).colorScheme.primary,
+                                    child: const Icon(Icons.delete),
+                                  ),
+                                  confirmDismiss: (direction) async {
+                                    return await showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Center(
+                                            child: Text(S.of(context).confirmDelete,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize:
+                                                    Theme.of(context)
+                                                        .textTheme
+                                                        .bodyLarge
+                                                        ?.fontSize,
+                                              ),
+                                            )
+                                          ),
+                                          content: Text(S.of(context).confirmDeleteBot(bot.name)),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(false),
+                                              child: Text(S.of(context).cancel,
+                                                style: TextStyle(
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.onSurface,
+                                                ),
+                                              ),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(true),
+                                              child: Text(S.of(context).delete,
+                                                style: TextStyle(
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.onSurface,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  onDismissed: (direction) async {
+                                    await BotService.deleteBot(bot.id);
+                                    setState(() {
+                                      filteredBots.removeAt(index);
+                                      contacts.removeWhere((contact) => contact.id == bot.id);
+                                    });
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(S.of(context).botDeleted(bot.name)),
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: ListTile(
+                                    leading: CircleAvatar(
                                     backgroundColor:
                                         Theme.of(context).colorScheme.primary,
                                     radius: 24,
@@ -208,9 +279,10 @@ class _ContactsPageState extends State<ContactsPage> {
                                       ),
                                     );
                                   },
-                                );
-                              },
-                            ),
+                                )
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),

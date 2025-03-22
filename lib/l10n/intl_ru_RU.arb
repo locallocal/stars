@@ -417,5 +417,69 @@
     "defaultSystemPrompt": "Вы полезный ИИ-ассистент. Пожалуйста, отвечайте на русском языке.",
     "@defaultSystemPrompt": {
         "description": "Системный промпт по умолчанию"
+    },
+    "botIsTyping": "{botName} печатает...",
+    "@botIsTyping": {
+        "description": "Индикатор того, что ИИ-ассистент печатает сообщение",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "Приостановить генерацию",
+    "@pauseGeneration": {
+        "description": "Кнопка для приостановки генерации ответа ИИ"
+    },
+    "confirmClearChat": "Вы уверены, что хотите очистить всю историю чата с \"{botName}\"? Это действие нельзя отменить.",
+    "@confirmClearChat": {
+        "description": "Текст подтверждения для очистки истории чата",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "История чата очищена",
+    "@chatHistoryCleared": {
+        "description": "Уведомление после очистки истории чата"
+    },
+    "replyCancelled": "Ответ отменен",
+    "@replyCancelled": {
+        "description": "Уведомление после отмены генерации ответа ИИ"
+    },
+    "clear": "Очистить",
+    "@clear": {
+        "description": "Кнопка для очистки истории чата"
+    },
+    "confirmDelete": "Подтвердить удаление",
+    "@confirmDelete": {
+        "description": "Заголовок диалога подтверждения удаления"
+    },
+    "botDeleted": "\"{botName}\" был удален",
+    "@botDeleted": {
+        "description": "Уведомление после удаления бота",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "botGreeting": "Здравствуйте! Я {botName}, ИИ-ассистент. Вы можете задать мне любой вопрос, и я постараюсь помочь вам наилучшим образом.",
+    "@botGreeting": {
+        "description": "Приветственное сообщение ИИ-ассистента",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "Отправьте сообщение в поле ввода ниже, чтобы начать чат",
+    "@startChatPrompt": {
+        "description": "Подсказка пользователю начать чат в поле ввода"
     }
 }

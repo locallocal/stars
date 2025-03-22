@@ -62,6 +62,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
   @override
   Widget build(BuildContext context) {
+    final fontSzie = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -69,7 +70,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
           S.of(context).editBot,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+            fontSize: fontSzie,
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -88,10 +89,8 @@ class _EditAIBotPageState extends State<EditBotPage> {
                         child: Text(
                           S.of(context).deleteBot,
                           style: TextStyle(
-                            fontSize:
-                                Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.fontSize,
+                            fontWeight: FontWeight.bold,
+                            fontSize: fontSzie,
                           ),
                         ),
                       ),
@@ -104,10 +103,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                           child: Text(
                             S.of(context).cancel,
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium?.fontSize,
+                              fontSize: fontSzie,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
@@ -121,10 +117,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                           child: Text(
                             S.of(context).delete,
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium?.fontSize,
+                              fontSize: fontSzie,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
@@ -377,19 +370,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
               widget.onBotUpdated(updatedBot);
               Navigator.pop(context);
-
               // 显示成功提示
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(S.of(context).botUpdated(nameController.text.trim())),
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-              );
+              _showSnackBar(S.of(context).botUpdated(nameController.text.trim()));
             } else {
-              // 显示错误提示
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(S.of(context).fillRequiredFields)));
+              _showSnackBar(S.of(context).fillRequiredFields);
             }
           },
           child: Text(
@@ -401,6 +385,17 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // 显示提示信息
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

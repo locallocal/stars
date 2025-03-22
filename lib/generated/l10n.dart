@@ -949,6 +949,106 @@ class S {
       args: [botName],
     );
   }
+
+  /// `Hello! I'm {botName}, an AI assistant. Feel free to ask me anything, and I'll do my best to help you.`
+  String botGreeting(String botName) {
+    return Intl.message(
+      'Hello! I\'m $botName, an AI assistant. Feel free to ask me anything, and I\'ll do my best to help you.',
+      name: 'botGreeting',
+      desc: 'Greeting message from the AI assistant',
+      args: [botName],
+    );
+  }
+
+  /// `Type a message in the input box below to start chatting`
+  String get startChatPrompt {
+    return Intl.message(
+      'Type a message in the input box below to start chatting',
+      name: 'startChatPrompt',
+      desc: 'Text prompting user to start chatting in the input box',
+      args: [],
+    );
+  }
+
+  /// `{botName} is typing...`
+  String botIsTyping(String botName) {
+    return Intl.message(
+      '$botName is typing...',
+      name: 'botIsTyping',
+      desc: 'Indicates that the AI assistant is typing a message',
+      args: [botName],
+    );
+  }
+
+  /// `Pause generation`
+  String get pauseGeneration {
+    return Intl.message(
+      'Pause generation',
+      name: 'pauseGeneration',
+      desc: 'Tooltip for the button to pause AI response generation',
+      args: [],
+    );
+  }
+
+  /// `Are you sure you want to clear all chat history with "{botName}"? This action cannot be undone.`
+  String confirmClearChat(String botName) {
+    return Intl.message(
+      'Are you sure you want to clear all chat history with "$botName"? This action cannot be undone.',
+      name: 'confirmClearChat',
+      desc: 'Confirmation text for clearing chat history',
+      args: [botName],
+    );
+  }
+
+  /// `Chat history cleared`
+  String get chatHistoryCleared {
+    return Intl.message(
+      'Chat history cleared',
+      name: 'chatHistoryCleared',
+      desc: 'Notification shown after chat history is cleared',
+      args: [],
+    );
+  }
+
+  /// `Reply cancelled`
+  String get replyCancelled {
+    return Intl.message(
+      'Reply cancelled',
+      name: 'replyCancelled',
+      desc: 'Notification shown after cancelling AI reply generation',
+      args: [],
+    );
+  }
+
+  /// `Clear`
+  String get clear {
+    return Intl.message(
+      'Clear',
+      name: 'clear',
+      desc: 'Text for the button to clear chat history',
+      args: [],
+    );
+  }
+
+  /// `Confirm Delete`
+  String get confirmDelete {
+    return Intl.message(
+      'Confirm Delete',
+      name: 'confirmDelete',
+      desc: 'Text for the confirmation dialog when deleting a chat or bot',
+      args: [],
+    );
+  }
+
+  /// `"{botName}" has been deleted`
+  String botDeleted(String botName) {
+    return Intl.message(
+      '"$botName" has been deleted',
+      name: 'botDeleted',
+      desc: 'Notification shown after a bot is deleted',
+      args: [botName],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

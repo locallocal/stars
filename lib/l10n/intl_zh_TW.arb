@@ -417,5 +417,69 @@
     "defaultSystemPrompt": "你是一個有用的AI助手，請用繁體中文回答問題。",
     "@defaultSystemPrompt": {
         "description": "你是一個有用的AI助手，請用繁體中文回答問題。"
+    },
+    "botIsTyping": "{botName} 正在輸入...",
+    "@botIsTyping": {
+        "description": "AI助手正在輸入訊息的提示",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "暫停生成",
+    "@pauseGeneration": {
+        "description": "暫停AI回覆生成的按鈕"
+    },
+    "confirmClearChat": "確定要清空與 \"{botName}\" 的所有聊天記錄嗎？此操作無法撤銷。",
+    "@confirmClearChat": {
+        "description": "清空聊天記錄的確認文字",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "聊天記錄已清空",
+    "@chatHistoryCleared": {
+        "description": "清空聊天記錄後的通知"
+    },
+    "replyCancelled": "回覆已取消",
+    "@replyCancelled": {
+        "description": "取消AI回覆生成後的通知"
+    },
+    "clear": "清空",
+    "@clear": {
+        "description": "清空聊天記錄的按鈕"
+    },
+    "confirmDelete": "確認刪除",
+    "@confirmDelete": {
+        "description": "刪除確認對話框的標題"
+    },
+    "botDeleted": "\"{botName}\" 已被刪除",
+    "@botDeleted": {
+        "description": "刪除機器人後的通知",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "botGreeting": "你好！我是 {botName}，一個AI助手。你可以問我任何問題，我會盡力幫助你。",
+    "@botGreeting": {
+        "description": "AI助手的問候訊息",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "在下方輸入框中發送訊息開始聊天",
+    "@startChatPrompt": {
+        "description": "提示用戶在輸入框中開始聊天"
     }
 }

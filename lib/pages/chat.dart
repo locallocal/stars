@@ -21,12 +21,12 @@ class _ChatPageState extends State<ChatPage> {
   List<Message> _messages = [];
   final String _currentUserId = 'me';
   bool _isLoading = true;
-  bool _isTyping = false; // 是否正在输入回复
-  String _streamingResponse = ''; // 用于存储流式响应
-  bool _isStreaming = false; // 是否正在流式接收
+  bool _isTyping = false;
+  String _streamingResponse = '';
+  bool _isStreaming = false;
   final ScrollController _scrollController = ScrollController();
-  late ChatModel _chatModel; // 聊天模型
-  bool _isCancellable = false; // 是否可以取消请求
+  late ChatModel _chatModel;
+  bool _isCancellable = false;
 
   @override
   void initState() {
@@ -182,7 +182,7 @@ class _ChatPageState extends State<ChatPage> {
               _isTyping = false;
               _isStreaming = false;
               _streamingResponse = '';
-              _isCancellable = false; // 重置可取消状态
+              _isCancellable = false;
             });
           }
 
@@ -208,7 +208,7 @@ class _ChatPageState extends State<ChatPage> {
             setState(() {
               _isTyping = false;
               _isStreaming = false;
-              _isCancellable = false; // 重置可取消状态
+              _isCancellable = false;
             });
             _showSnackBar(S.of(context).responseError(error));
           }
@@ -239,8 +239,8 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        scrolledUnderElevation: 0, // 防止滚动时背景色变化
-        elevation: 0, // 移除阴影
+        scrolledUnderElevation: 0,
+        elevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
@@ -267,8 +267,8 @@ class _ChatPageState extends State<ChatPage> {
                                 children: [
                                   // AI智能体图标
                                   Container(
-                                    width: 100,
-                                    height: 100,
+                                    width: 128,
+                                    height: 128,
                                     decoration: BoxDecoration(
                                       color: Theme.of(
                                         context,
@@ -277,7 +277,7 @@ class _ChatPageState extends State<ChatPage> {
                                     ),
                                     child: Icon(
                                       Icons.smart_toy_rounded,
-                                      size: 60,
+                                      size: 96,
                                       color:
                                           Theme.of(context).colorScheme.primary,
                                     ),
@@ -305,7 +305,7 @@ class _ChatPageState extends State<ChatPage> {
                                       horizontal: 32.0,
                                     ),
                                     child: Text(
-                                      "你好！我是${widget.bot.name}，一个AI助手。请随时向我提问，我会尽力帮助你。",
+                                      S.of(context).botGreeting(widget.bot.name),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 16,
@@ -323,14 +323,8 @@ class _ChatPageState extends State<ChatPage> {
                                       horizontal: 16,
                                       vertical: 8,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.secondary.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
                                     child: Text(
-                                      "在下方输入框发送消息开始聊天",
+                                      S.of(context).startChatPrompt,
                                       style: TextStyle(
                                         color:
                                             Theme.of(
@@ -516,7 +510,7 @@ class _ChatPageState extends State<ChatPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        Text("${widget.bot.name}正在输入..."),
+                                        Text(S.of(context).botIsTyping(widget.bot.name)),
                                         const Spacer(),
                                         if (_isCancellable)
                                           IconButton(
@@ -524,7 +518,7 @@ class _ChatPageState extends State<ChatPage> {
                                             icon: const Icon(
                                               Icons.pause_circle_filled,
                                             ),
-                                            tooltip: '暂停生成',
+                                            tooltip: S.of(context).pauseGeneration,
                                             iconSize: 28,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(
@@ -555,10 +549,10 @@ class _ChatPageState extends State<ChatPage> {
                       controller: _messageController,
                       textInputAction: TextInputAction.send,
                       onSubmitted: (value) => _sendMessage(),
-                      decoration: const InputDecoration(
-                        hintText: '发送消息...',
+                      decoration: InputDecoration(
+                        hintText: S.of(context).messageHint,
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           vertical: 12.0,
                           horizontal: 12.0,
                         ),
@@ -581,19 +575,19 @@ class _ChatPageState extends State<ChatPage> {
           (context) => AlertDialog(
             title: Center(
               child: Text(
-                '清空聊天记录',
+                S.of(context).clearChatHistory,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
                 ),
               ),
             ),
-            content: Text('确定要清空与 "${widget.bot.name}" 的所有聊天记录吗？此操作不可恢复。'),
+            content: Text(S.of(context).confirmClearChat(widget.bot.name)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(
-                  '取消',
+                  S.of(context).cancel,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -605,7 +599,7 @@ class _ChatPageState extends State<ChatPage> {
                   _clearChatMessages();
                 },
                 child: Text(
-                  '清空',
+                  S.of(context).clear,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -630,26 +624,9 @@ class _ChatPageState extends State<ChatPage> {
 
     // 重新加载消息列表，确保UI与数据库同步
     await _loadMessages();
-
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('聊天记录已清空'),
-          duration: Duration(milliseconds: 1000),
-        ),
-      );
+      _showSnackBar(S.of(context).chatHistoryCleared);
     }
-  }
-
-  // 显示提示信息
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   // 添加取消请求的方法
@@ -668,10 +645,9 @@ class _ChatPageState extends State<ChatPage> {
           type: "text",
           botId: widget.bot.id,
           senderId: widget.bot.id,
-          content: "$_streamingResponse\n\n_(回复已被用户中断)_",
+          content: _streamingResponse,
           timestamp: DateTime.now(),
         );
-
         _messages.add(botMessage);
         _streamingResponse = '';
 
@@ -681,7 +657,17 @@ class _ChatPageState extends State<ChatPage> {
         });
       }
     });
+    _showSnackBar(S.of(context).replyCancelled);
+  }
 
-    _showSnackBar('已取消回复');
+  // 显示提示信息
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }

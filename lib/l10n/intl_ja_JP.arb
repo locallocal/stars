@@ -300,7 +300,7 @@
     "@provideFeedback": {
         "description": "フィードバック提供の説明"
     },
-    "feedbackDescription": "アプリの改善に役立てるため、あなたの考え、問題点、または提案を教えてください",
+    "feedbackDescription": "アプリの改善に役立てるたければ、あなたの考え、問題点、または提案を教えてください",
     "@feedbackDescription": {
         "description": "フィードバックページの説明"
     },
@@ -417,5 +417,69 @@
     "defaultSystemPrompt": "あなたは役立つAIアシスタントです。日本語で回答してください。",
     "@defaultSystemPrompt": {
         "description": "デフォルトのシステムプロンプト"
+    },
+    "botIsTyping": "{botName}が入力中...",
+    "@botIsTyping": {
+        "description": "AIアシスタントがメッセージを入力中であることを示す表示",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "生成を一時停止",
+    "@pauseGeneration": {
+        "description": "AI応答生成を一時停止するボタン"
+    },
+    "confirmClearChat": "\"{botName}\"とのすべてのチャット履歴を消去してもよろしいですか？この操作は元に戻せません。",
+    "@confirmClearChat": {
+        "description": "チャット履歴を消去する確認テキスト",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "チャット履歴が消去されました",
+    "@chatHistoryCleared": {
+        "description": "チャット履歴を消去した後の通知"
+    },
+    "replyCancelled": "応答がキャンセルされました",
+    "@replyCancelled": {
+        "description": "AI応答生成をキャンセルした後の通知"
+    },
+    "clear": "クリア",
+    "@clear": {
+        "description": "チャット履歴をクリアするボタン"
+    },
+    "confirmDelete": "削除の確認",
+    "@confirmDelete": {
+        "description": "削除確認ダイアログのタイトル"
+    },
+    "botDeleted": "\"{botName}\"が削除されました",
+    "@botDeleted": {
+        "description": "ボットを削除した後の通知",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "botGreeting": "こんにちは！私は{botName}というAIアシスタントです。どんな質問でもお気軽にどうぞ、できる限りお手伝いします。",
+    "@botGreeting": {
+        "description": "AIアシスタントの挨拡メッセージ",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "下の入力欄にメッセージを送信してチャットを開始してください",
+    "@startChatPrompt": {
+        "description": "ユーザーに入力欄でチャットを開始するよう促すメッセージ"
     }
 }

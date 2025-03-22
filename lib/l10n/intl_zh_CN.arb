@@ -417,5 +417,69 @@
             "type": "String"
         }
         }
+    },
+    "botGreeting": "你好！我是{botName}，一个AI助手。请随时向我提问，我会尽力帮助你。",
+    "@botGreeting": {
+        "description": "AI助手的问候语",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "在下方输入框发送消息开始聊天",
+    "@startChatPrompt": {
+    "description": "提示用户在输入框中开始聊天的文本"
+    },
+    "botIsTyping": "{botName}正在输入...",
+    "@botIsTyping": {
+    "description": "提示AI助手正在输入消息",
+        "placeholders": {
+            "botName": {
+            "type": "String",
+            "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "暂停生成",
+    "@pauseGeneration": {
+    "description": "暂停AI生成回复的按钮提示"
+    },
+    "confirmClearChat": "确定要清空与 \"{botName}\" 的所有聊天记录吗？此操作不可恢复。",
+    "@confirmClearChat": {
+    "description": "确认清空聊天记录的提示文本",
+        "placeholders": {
+            "botName": {
+            "type": "String",
+            "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "聊天记录已清空",
+    "@chatHistoryCleared": {
+    "description": "清空聊天记录后的提示信息"
+    },
+    "replyCancelled": "已取消回复",
+    "@replyCancelled": {
+    "description": "取消AI回复生成后的提示信息"
+    },
+    "clear": "清理",
+    "@clear": {
+    "description": "清空聊天记录按钮文本"
+    },
+    "confirmDelete": "确认删除",
+    "@confirmDelete": {
+        "description": "确认删除按钮文本"
+    },
+    "botDeleted": "\"{botName}\" 已被删除",
+    "@botDeleted": {
+        "description": "删除智能体后的提示信息",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
     }
 }

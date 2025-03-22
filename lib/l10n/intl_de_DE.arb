@@ -406,6 +406,20 @@
         }
         }
     },
+    "botGreeting": "Hallo! Ich bin {botName}, ein KI-Assistent. Stellen Sie mir jederzeit Fragen, ich werde mein Bestes tun, um Ihnen zu helfen.",
+    "@botGreeting": {
+        "description": "Begrüßungsnachricht des KI-Assistenten",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "Senden Sie eine Nachricht im Eingabefeld unten, um den Chat zu beginnen",
+    "@startChatPrompt": {
+        "description": "Aufforderung an den Benutzer, im Eingabefeld mit dem Chatten zu beginnen"
+    },
     "Bots": "Bots",
     "@Bots": {
         "description": "Bots"
@@ -417,5 +431,55 @@
     "defaultSystemPrompt": "Du bist ein hilfreicher KI-Assistent. Bitte antworte auf Deutsch.",
     "@defaultSystemPrompt": {
         "description": "Standard-Systemprompt für den KI-Assistenten"
+    },
+    "botIsTyping": "{botName} schreibt...",
+    "@botIsTyping": {
+        "description": "Hinweis, dass der KI-Assistent eine Nachricht schreibt",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "Generierung pausieren",
+    "@pauseGeneration": {
+        "description": "Schaltfläche zum Pausieren der KI-Antwortgenerierung"
+    },
+    "confirmClearChat": "Möchten Sie wirklich alle Chat-Verläufe mit \"{botName}\" löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "@confirmClearChat": {
+        "description": "Bestätigungstext zum Löschen des Chat-Verlaufs",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "Chat-Verlauf wurde gelöscht",
+    "@chatHistoryCleared": {
+        "description": "Hinweis nach dem Löschen des Chat-Verlaufs"
+    },
+    "replyCancelled": "Antwort abgebrochen",
+    "@replyCancelled": {
+        "description": "Hinweis nach dem Abbrechen der KI-Antwortgenerierung"
+    },
+    "clear": "Löschen",
+    "@clear": {
+        "description": "Schaltfläche zum Löschen des Chat-Verlaufs"
+    },
+    "confirmDelete": "Löschen bestätigen",
+    "@confirmDelete": {
+        "description": "Überschrift des Bestätigungsdialogs zum Löschen"
+    },
+    "botDeleted": "\"{botName}\" wurde gelöscht",
+    "@botDeleted": {
+        "description": "Hinweis nach dem Löschen eines Bots",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
     }
 }

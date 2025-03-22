@@ -22,21 +22,31 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "ボット \"${name}\" が追加されました";
 
-  static String m1(botName) => "ボット${botName}が更新されました";
+  static String m1(botName) => "\"${botName}\"が削除されました";
 
-  static String m2(botName) => "${botName}とのチャットが削除されました";
+  static String m2(botName) =>
+      "こんにちは！私は${botName}というAIアシスタントです。どんな質問でもお気軽にどうぞ、できる限りお手伝いします。";
 
-  static String m3(botName) =>
+  static String m3(botName) => "${botName}が入力中...";
+
+  static String m4(botName) => "ボット${botName}が更新されました";
+
+  static String m5(botName) => "${botName}とのチャットが削除されました";
+
+  static String m6(botName) =>
+      "\"${botName}\"とのすべてのチャット履歴を消去してもよろしいですか？この操作は元に戻せません。";
+
+  static String m7(botName) =>
       "ボットを削除すると、関連するすべてのチャットも削除されます。${botName}を本当に削除しますか？";
 
-  static String m4(botName) =>
+  static String m8(botName) =>
       "チャットを削除するとすべてのチャット履歴が消去されます。${botName}とのチャットを本当に削除しますか？";
 
-  static String m5(language) => "言語が${language}に設定されました";
+  static String m9(language) => "言語が${language}に設定されました";
 
-  static String m6(minutes) => "${minutes}分前";
+  static String m10(minutes) => "${minutes}分前";
 
-  static String m7(error) => "応答の取得に失敗しました：\$${error}";
+  static String m11(error) => "応答の取得に失敗しました：\$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -58,11 +68,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "appTitle": MessageLookupByLibrary.simpleMessage("バブル - AIチャットアシスタント"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("ボットのアバター"),
+    "botDeleted": m1,
+    "botGreeting": m2,
+    "botIsTyping": m3,
     "botName": MessageLookupByLibrary.simpleMessage("ボット名"),
-    "botUpdated": m1,
+    "botUpdated": m4,
     "cancel": MessageLookupByLibrary.simpleMessage("キャンセル"),
-    "chatDeleted": m2,
+    "chatDeleted": m5,
+    "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
+      "チャット履歴が消去されました",
+    ),
     "chats": MessageLookupByLibrary.simpleMessage("チャット"),
+    "clear": MessageLookupByLibrary.simpleMessage("クリア"),
     "clearChat": MessageLookupByLibrary.simpleMessage("チャットをクリア"),
     "clearChatHistory": MessageLookupByLibrary.simpleMessage("チャット履歴をクリア"),
     "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
@@ -72,8 +89,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "右上の+をクリックしてチャットを開始",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("確認"),
-    "confirmDeleteBot": m3,
-    "confirmDeleteChat": m4,
+    "confirmClearChat": m6,
+    "confirmDelete": MessageLookupByLibrary.simpleMessage("削除の確認"),
+    "confirmDeleteBot": m7,
+    "confirmDeleteChat": m8,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("連絡先情報（任意）"),
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 バブルチーム"),
     "customProvider": MessageLookupByLibrary.simpleMessage("カスタムプロバイダー..."),
@@ -104,7 +123,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "フィードバック内容を入力してください",
     ),
     "feedbackDescription": MessageLookupByLibrary.simpleMessage(
-      "アプリの改善に役立てるため、あなたの考え、問題点、または提案を教えてください",
+      "アプリの改善に役立てるたければ、あなたの考え、問題点、または提案を教えてください",
     ),
     "feedbackHint": MessageLookupByLibrary.simpleMessage(
       "ここにフィードバックを入力してください...",
@@ -128,17 +147,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("ヘルプとフィードバック"),
     "home": MessageLookupByLibrary.simpleMessage("ホーム"),
     "justNow": MessageLookupByLibrary.simpleMessage("たった今"),
-    "languageChanged": m5,
+    "languageChanged": m9,
     "languageSettings": MessageLookupByLibrary.simpleMessage("言語設定"),
     "lightMode": MessageLookupByLibrary.simpleMessage("ライトモード"),
     "messageHint": MessageLookupByLibrary.simpleMessage("メッセージを入力..."),
-    "minutesAgo": m6,
+    "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("モデル"),
     "name": MessageLookupByLibrary.simpleMessage("名前"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("名前が更新されました"),
     "newChat": MessageLookupByLibrary.simpleMessage("新しいチャット"),
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("利用可能なボットがありません"),
     "noChats": MessageLookupByLibrary.simpleMessage("まだチャットがありません"),
+    "pauseGeneration": MessageLookupByLibrary.simpleMessage("生成を一時停止"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "APIキーを先に入力してください",
     ),
@@ -147,7 +167,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "profile": MessageLookupByLibrary.simpleMessage("プロフィール"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage("ご意見やご提案をお寄せください"),
     "provider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
-    "responseError": m7,
+    "replyCancelled": MessageLookupByLibrary.simpleMessage("応答がキャンセルされました"),
+    "responseError": m11,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存"),
     "selectBot": MessageLookupByLibrary.simpleMessage("ボットを選択"),
@@ -157,6 +178,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("テーマを選択"),
     "send": MessageLookupByLibrary.simpleMessage("送信"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
+    "startChatPrompt": MessageLookupByLibrary.simpleMessage(
+      "下の入力欄にメッセージを送信してチャットを開始してください",
+    ),
     "startChatting": MessageLookupByLibrary.simpleMessage("チャットを始めましょう"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("フィードバックを送信"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("システムプロンプト"),

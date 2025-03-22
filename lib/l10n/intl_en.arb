@@ -417,5 +417,69 @@
             "type": "String"
         }
         }
+    },
+    "botGreeting": "Hello! I'm {botName}, an AI assistant. Feel free to ask me anything, and I'll do my best to help you.",
+    "@botGreeting": {
+        "description": "Greeting message from the AI assistant",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "Type a message in the input box below to start chatting",
+    "@startChatPrompt": {
+    "description": "Text prompting user to start chatting in the input box"
+    },
+    "botIsTyping": "{botName} is typing...",
+    "@botIsTyping": {
+    "description": "Indicates that the AI assistant is typing a message",
+        "placeholders": {
+            "botName": {
+            "type": "String",
+            "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "Pause generation",
+    "@pauseGeneration": {
+    "description": "Tooltip for the button to pause AI response generation"
+    },
+    "confirmClearChat": "Are you sure you want to clear all chat history with \"{botName}\"? This action cannot be undone.",
+    "@confirmClearChat": {
+    "description": "Confirmation text for clearing chat history",
+        "placeholders": {
+            "botName": {
+            "type": "String",
+            "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "Chat history cleared",
+    "@chatHistoryCleared": {
+    "description": "Notification shown after chat history is cleared"
+    },
+    "replyCancelled": "Reply cancelled",
+    "@replyCancelled": {
+    "description": "Notification shown after cancelling AI reply generation"
+    },
+    "clear": "Clear",
+    "@clear": {
+    "description": "Text for the button to clear chat history"
+    },
+    "confirmDelete": "Confirm Delete",
+    "@confirmDelete": {
+        "description": "Text for the confirmation dialog when deleting a chat or bot"
+    },
+    "botDeleted": "\"{botName}\" has been deleted",
+    "@botDeleted": {
+        "description": "Notification shown after a bot is deleted",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
     }
 }

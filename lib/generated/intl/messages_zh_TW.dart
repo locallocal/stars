@@ -22,19 +22,27 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m0(name) => "智能體 \"${name}\" 已添加";
 
-  static String m1(botName) => "智能體 ${botName} 已更新";
+  static String m1(botName) => "\"${botName}\" 已被刪除";
 
-  static String m2(botName) => "已刪除與 ${botName} 的聊天";
+  static String m2(botName) => "你好！我是 ${botName}，一個AI助手。你可以問我任何問題，我會盡力幫助你。";
 
-  static String m3(botName) => "刪除機器人會刪除對應的聊天記錄，確定要刪除 ${botName} 嗎？";
+  static String m3(botName) => "${botName} 正在輸入...";
 
-  static String m4(botName) => "刪除聊天會清空所有的聊天記錄，確定要刪除與 ${botName} 的聊天嗎？";
+  static String m4(botName) => "智能體 ${botName} 已更新";
 
-  static String m5(language) => "語言已設置為${language}";
+  static String m5(botName) => "已刪除與 ${botName} 的聊天";
 
-  static String m6(minutes) => "${minutes}分鐘前";
+  static String m6(botName) => "確定要清空與 \"${botName}\" 的所有聊天記錄嗎？此操作無法撤銷。";
 
-  static String m7(error) => "獲取回覆失敗: \$${error}";
+  static String m7(botName) => "刪除機器人會刪除對應的聊天記錄，確定要刪除 ${botName} 嗎？";
+
+  static String m8(botName) => "刪除聊天會清空所有的聊天記錄，確定要刪除與 ${botName} 的聊天嗎？";
+
+  static String m9(language) => "語言已設置為${language}";
+
+  static String m10(minutes) => "${minutes}分鐘前";
+
+  static String m11(error) => "獲取回覆失敗: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -54,18 +62,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "appTitle": MessageLookupByLibrary.simpleMessage("泡泡 - AI聊天助手"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("機器人頭像"),
+    "botDeleted": m1,
+    "botGreeting": m2,
+    "botIsTyping": m3,
     "botName": MessageLookupByLibrary.simpleMessage("機器人名稱"),
-    "botUpdated": m1,
+    "botUpdated": m4,
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
-    "chatDeleted": m2,
+    "chatDeleted": m5,
+    "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("聊天記錄已清空"),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
+    "clear": MessageLookupByLibrary.simpleMessage("清空"),
     "clearChat": MessageLookupByLibrary.simpleMessage("清空聊天"),
     "clearChatHistory": MessageLookupByLibrary.simpleMessage("清空聊天記錄"),
     "clickToCreateBot": MessageLookupByLibrary.simpleMessage("點擊右上角 + 添加智能體"),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage("點擊右上角 + 開始聊天"),
     "confirm": MessageLookupByLibrary.simpleMessage("確定"),
-    "confirmDeleteBot": m3,
-    "confirmDeleteChat": m4,
+    "confirmClearChat": m6,
+    "confirmDelete": MessageLookupByLibrary.simpleMessage("確認刪除"),
+    "confirmDeleteBot": m7,
+    "confirmDeleteChat": m8,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("聯絡方式（可選）"),
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 泡泡團隊"),
     "customProvider": MessageLookupByLibrary.simpleMessage("自定義供應商..."),
@@ -108,24 +123,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("幫助與反饋"),
     "home": MessageLookupByLibrary.simpleMessage("首頁"),
     "justNow": MessageLookupByLibrary.simpleMessage("剛剛"),
-    "languageChanged": m5,
+    "languageChanged": m9,
     "languageSettings": MessageLookupByLibrary.simpleMessage("語言設定"),
     "lightMode": MessageLookupByLibrary.simpleMessage("淺色模式"),
     "messageHint": MessageLookupByLibrary.simpleMessage("輸入消息..."),
-    "minutesAgo": m6,
+    "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("模型"),
     "name": MessageLookupByLibrary.simpleMessage("名稱"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("名稱已更新"),
     "newChat": MessageLookupByLibrary.simpleMessage("新建聊天"),
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("沒有可用的智能體"),
     "noChats": MessageLookupByLibrary.simpleMessage("還沒有聊天記錄"),
+    "pauseGeneration": MessageLookupByLibrary.simpleMessage("暫停生成"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage("請先輸入API密鑰"),
     "previewText": MessageLookupByLibrary.simpleMessage("預覽文字效果"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("隱私政策"),
     "profile": MessageLookupByLibrary.simpleMessage("我的"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage("提供您的意見和建議"),
     "provider": MessageLookupByLibrary.simpleMessage("供應商"),
-    "responseError": m7,
+    "replyCancelled": MessageLookupByLibrary.simpleMessage("回覆已取消"),
+    "responseError": m11,
     "save": MessageLookupByLibrary.simpleMessage("儲存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("儲存修改"),
     "selectBot": MessageLookupByLibrary.simpleMessage("選擇智能體"),
@@ -135,6 +152,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("選擇主題"),
     "send": MessageLookupByLibrary.simpleMessage("發送"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
+    "startChatPrompt": MessageLookupByLibrary.simpleMessage("在下方輸入框中發送訊息開始聊天"),
     "startChatting": MessageLookupByLibrary.simpleMessage("開始聊天吧"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反饋"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("系統提示詞"),

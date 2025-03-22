@@ -417,5 +417,69 @@
     "defaultSystemPrompt": "당신은 도움이 되는 AI 어시스턴트입니다. 한국어로 대답해 주세요.",
     "@defaultSystemPrompt": {
         "description": "기본 시스템 프롬프트"
+    },
+    "botIsTyping": "{botName}이(가) 입력 중...",
+    "@botIsTyping": {
+        "description": "AI 어시스턴트가 메시지를 입력 중임을 나타내는 표시",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "생성 일시 중지",
+    "@pauseGeneration": {
+        "description": "AI 응답 생성을 일시 중지하는 버튼"
+    },
+    "confirmClearChat": "\"{botName}\"와(과)의 모든 채팅 기록을 지우시겠습니까? 이 작업은 취소할 수 없습니다.",
+    "@confirmClearChat": {
+        "description": "채팅 기록을 지우기 위한 확인 텍스트",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "채팅 기록이 지워졌습니다",
+    "@chatHistoryCleared": {
+        "description": "채팅 기록을 지운 후 알림"
+    },
+    "replyCancelled": "응답이 취소되었습니다",
+    "@replyCancelled": {
+        "description": "AI 응답 생성을 취소한 후 알림"
+    },
+    "clear": "지우기",
+    "@clear": {
+        "description": "채팅 기록을 지우는 버튼"
+    },
+    "confirmDelete": "삭제 확인",
+    "@confirmDelete": {
+        "description": "삭제 확인 대화 상자의 제목"
+    },
+    "botDeleted": "\"{botName}\"이(가) 삭제되었습니다",
+    "@botDeleted": {
+        "description": "봇을 삭제한 후 알림",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "botGreeting": "안녕하세요! 저는 {botName}이라는 AI 어시스턴트입니다. 어떤 질문이든 편하게 물어보세요, 최선을 다해 도와드리겠습니다.",
+    "@botGreeting": {
+        "description": "AI 어시스턴트의 인사 메시지",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "채팅을 시작하려면 아래 입력 필드에 메시지를 보내세요",
+    "@startChatPrompt": {
+        "description": "사용자에게 입력 필드에서 채팅을 시작하도록 안내하는 메시지"
     }
 }
