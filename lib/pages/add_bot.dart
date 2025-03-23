@@ -20,10 +20,11 @@ class _AddBotPageState extends State<AddBotPage> {
   final apiKeyController = TextEditingController();
   final baseURLController = TextEditingController();
   final systemPromptController = TextEditingController();
-  final customProviderController = TextEditingController(); // 添加自定义供应商控制器
+  final customProviderController = TextEditingController();
 
+  bool _isLoadingModels = false; 
   String selectedProvider = 'OpenAI';
-  bool isCustomProvider = false; // 添加标志位
+  bool isCustomProvider = false;
   String selectedModel = '';
   File? avatarImage;
 
@@ -44,17 +45,12 @@ class _AddBotPageState extends State<AddBotPage> {
         avatarImage = File(pickedFile.path);
       });
     }
-  }
-
-  bool _isLoadingModels = false; // 添加加载状态变量
+  }// 添加加载状态变量
 
   // 添加获取模型列表的方法
   Future<void> _fetchModels() async {
     if (apiKeyController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).pleaseEnterApiKey)),
-      ); // 使用国际化字符串
-      return;
+      _showSnackBar(S.of(context).pleaseEnterApiKey);
     }
 
     setState(() {
@@ -85,24 +81,17 @@ class _AddBotPageState extends State<AddBotPage> {
       final chatModel = ChatModel.create(tempBot);
       final models = await chatModel.listModels();
 
-      if (models.isNotEmpty) {
+      if (models.isNotEmpty && mounted) { 
         setState(() {
           modelsByProvider[selectedProvider]?['models'] = models;
           selectedModel = models.first;
         });
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('成功获取${models.length}个模型')));
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('未获取到模型列表')));
+        _showSnackBar(S.of(context).modelsRetrievedSuccess(models.length.toString()));
+      } else if (mounted){
+        _showSnackBar(S.of(context).noModelsRetrieved);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('获取模型列表失败: ${e.toString()}')));
+      _showSnackBar(e.toString());
     } finally {
       setState(() {
         _isLoadingModels = false;
@@ -150,19 +139,21 @@ class _AddBotPageState extends State<AddBotPage> {
 
   @override
   Widget build(BuildContext context) {
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          S.of(context).addBot, // 使用国际化字符串
+          S.of(context).addBot,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+            fontSize: fontSize,
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        scrolledUnderElevation: 0, // 防止滚动时背景色变化
-        elevation: 0, // 移除阴影
+        scrolledUnderElevation: 0,
+        elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
@@ -170,7 +161,6 @@ class _AddBotPageState extends State<AddBotPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 头像选择
             Center(
               child: GestureDetector(
                 onTap: _pickImage,
@@ -192,7 +182,6 @@ class _AddBotPageState extends State<AddBotPage> {
             ),
             const SizedBox(height: 24),
 
-            // 机器人名称
             Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.secondary,
@@ -203,7 +192,7 @@ class _AddBotPageState extends State<AddBotPage> {
                 decoration: InputDecoration(
                   hintText: S.of(context).enterBotName,
                   hintStyle: TextStyle(
-                    fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                    fontSize: fontSize,
                   ),
                   fillColor: Theme.of(context).colorScheme.secondary,
                   focusColor: Theme.of(context).colorScheme.secondary,
@@ -216,7 +205,6 @@ class _AddBotPageState extends State<AddBotPage> {
             ),
             const SizedBox(height: 32),
 
-            // 选择提供商
             Text(
               S.of(context).selectProvider,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -247,10 +235,7 @@ class _AddBotPageState extends State<AddBotPage> {
                               child: Text(
                                 provider,
                                 style: TextStyle(
-                                  fontSize:
-                                      Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge?.fontSize,
+                                  fontSize: fontSize,
                                 ),
                               ),
                             );
@@ -260,10 +245,7 @@ class _AddBotPageState extends State<AddBotPage> {
                             child: Text(
                               S.of(context).customProvider,
                               style: TextStyle(
-                                fontSize:
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge?.fontSize,
+                                fontSize: fontSize,
                               ),
                             ),
                           ),
@@ -329,7 +311,6 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
             const SizedBox(height: 16),
 
-            // api类型
             Text(
               S.of(context).apiType,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -361,10 +342,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'OpenAI',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -373,10 +351,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'Anthropic',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -385,10 +360,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'Gemini',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -397,10 +369,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'DeepSeek',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -409,10 +378,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'Ollama',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -421,10 +387,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'HuggingFace',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -433,10 +396,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'Grok',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -445,10 +405,7 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'VolcanoEngine',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -457,10 +414,16 @@ class _AddBotPageState extends State<AddBotPage> {
                           child: Text(
                             'Tencent',
                             style: TextStyle(
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              fontSize: fontSize,
+                            ),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeBaidu,
+                          child: Text(
+                            'Baidu',
+                            style: TextStyle(
+                              fontSize: fontSize,
                             ),
                           ),
                         ),
@@ -502,10 +465,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                onChanged: (value) {
-                  // 当用户修改地址时，更新modelsByProvider中的base_url
-                  // 不做任何验证
-                },
+                onChanged: (value) {},
               ),
             ),
             const SizedBox(height: 16),
@@ -531,9 +491,12 @@ class _AddBotPageState extends State<AddBotPage> {
                   suffixIcon:
                       _isLoadingModels
                           ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            width: 24,
+                            height: 24,
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                           )
                           : IconButton(
                             icon: const Icon(Icons.refresh),
@@ -545,6 +508,7 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
             ),
             const SizedBox(height: 16),
+
             // 选择模型
             Text(
               S.of(context).selectModel,
@@ -575,8 +539,7 @@ class _AddBotPageState extends State<AddBotPage> {
                       hint: Text(
                         S.of(context).fetchModelListFirst,
                         style: TextStyle(
-                          fontSize:
-                              Theme.of(context).textTheme.bodyLarge?.fontSize,
+                          fontSize: fontSize,
                         ),
                       ),
                       underline: const SizedBox(),
@@ -588,10 +551,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                   child: Text(
                                     S.of(context).fetchModelListFirst,
                                     style: TextStyle(
-                                      fontSize:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.fontSize,
+                                      fontSize: fontSize,
                                     ),
                                   ),
                                 ),
@@ -602,10 +562,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                   child: Text(
                                     model,
                                     style: TextStyle(
-                                      fontSize:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.fontSize,
+                                      fontSize: fontSize,
                                     ),
                                   ),
                                 );
@@ -683,38 +640,31 @@ class _AddBotPageState extends State<AddBotPage> {
 
               widget.onBotAdded(newBot);
               Navigator.pop(context);
-
-              // 显示成功提示
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    S.of(context).botAddedSuccess(nameController.text.trim()),
-                  ),
-                  duration: const Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              _showSnackBar(S.of(context).botAddedSuccess(nameController.text.trim()));
             } else {
-              // 显示错误提示
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(S.of(context).fillRequiredFields),
-                  backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                  duration: const Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              _showSnackBar(S.of(context).fillRequiredFields);
             }
           },
           child: Text(
             S.of(context).addBot,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+              fontSize: fontSize,
               color: Theme.of(context).colorScheme.surface,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // 显示提示信息
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

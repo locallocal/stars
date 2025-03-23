@@ -481,5 +481,19 @@
     "startChatPrompt": "在下方輸入框中發送訊息開始聊天",
     "@startChatPrompt": {
         "description": "提示用戶在輸入框中開始聊天"
+    },
+    "modelsRetrievedSuccess": "成功獲取 {count} 個模型",
+    "@modelsRetrievedSuccess": {
+        "description": "成功獲取模型的提示訊息",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "未獲取到任何模型",
+    "@noModelsRetrieved": {
+        "description": "未獲取到模型的提示訊息"
     }
 }

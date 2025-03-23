@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "${minutes} минут назад";
 
-  static String m11(error) => "Ошибка получения ответа: \$${error}";
+  static String m11(count) => "Успешно получено ${count} моделей";
+
+  static String m12(error) => "Ошибка получения ответа: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -177,6 +179,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("Введите сообщение..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("Модель"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("Имя"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("Имя обновлено"),
     "newChat": MessageLookupByLibrary.simpleMessage("Новый чат"),
@@ -184,6 +187,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Нет доступных ботов",
     ),
     "noChats": MessageLookupByLibrary.simpleMessage("Пока нет чатов"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage(
+      "Модели не получены",
+    ),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage(
       "Приостановить генерацию",
     ),
@@ -202,7 +208,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "provider": MessageLookupByLibrary.simpleMessage("Провайдер"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Ответ отменен"),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("Сохранить"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Выбрать бота"),

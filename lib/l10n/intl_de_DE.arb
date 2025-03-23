@@ -481,5 +481,19 @@
                 "example": "GPT-4"
             }
         }
+    },
+    "modelsRetrievedSuccess": "Erfolgreich {count} Modelle abgerufen",
+    "@modelsRetrievedSuccess": {
+        "description": "Erfolgsmeldung beim Abrufen von Modellen",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "Keine Modelle abgerufen",
+    "@noModelsRetrieved": {
+        "description": "Meldung, wenn keine Modelle abgerufen wurden"
     }
 }

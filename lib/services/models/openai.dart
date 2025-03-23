@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class OpenAIChatModel extends ChatModel {
+  static const String defaultApiModelsUrl = 'https://api.openai.com/v1/models';
+  static const String defaultApiChatUrl = 'https://api.openai.com/v1/chat/completions';
   OpenAIChatModel(Bot bot) : super(bot);
 
   @override
@@ -11,22 +14,29 @@ class OpenAIChatModel extends ChatModel {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}/v1/models'
-            : 'https://api.openai.com/v1/models';
+            : defaultApiModelsUrl;
 
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer ${bot.apiKey}'},
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      final models =
-          (data['data'] as List)
-              .map((model) => model['id'] as String)
-              .toList();
-      return models;
-    } else {
-      throw Exception('获取模型列表失败: ${response.statusCode}');
-    }
+    final client = http.Client();
+    try {
+      final response = await client.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final models =
+            (data['data'] as List)
+                .map((model) => model['id'] as String)
+                .toList();
+        return models;
+      } else {
+        throw Exception('List Models Failed: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('List Models Timeout, Retry later.'); 
+    } finally {
+      client.close();
+    } 
   }
 
   @override
@@ -34,7 +44,7 @@ class OpenAIChatModel extends ChatModel {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}/v1/chat/completions'
-            : 'https://api.openai.com/v1/chat/completions';
+            : defaultApiChatUrl;
 
     final response = await http.post(
       Uri.parse(url),
@@ -45,7 +55,6 @@ class OpenAIChatModel extends ChatModel {
       body: jsonEncode({
         'model': bot.model,
         'messages': messages.map((m) => m.toJson()).toList(),
-        'temperature': 0.7,
       }),
     );
 
@@ -53,7 +62,7 @@ class OpenAIChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['choices'][0]['message']['content'];
     } else {
-      throw Exception('请求失败: ${response.statusCode}');
+      throw Exception('Send Message Failed: ${response.statusCode}');
     }
   }
 
@@ -71,7 +80,7 @@ class OpenAIChatModel extends ChatModel {
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}/v1/chat/completions'
-              : 'https://api.openai.com/v1/chat/completions';
+              : defaultApiChatUrl;
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -82,20 +91,15 @@ class OpenAIChatModel extends ChatModel {
             ..body = jsonEncode({
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
-              'temperature': 0.7,
               'stream': true,
             });
 
       final streamedResponse = await request.send();
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
-          .transform(LineSplitter());
+          .transform(const LineSplitter());
 
-      // 监听取消事件
       cancelController?.stream.listen((_) {
-        // request.abort(); // 使用abort()方法来取消请求 - 这是错误的
-        // 在Dart的http包中，没有直接的方法来取消请求
-        // 我们可以通过关闭控制器来间接实现取消
         cancelController?.close();
       });
 
@@ -123,11 +127,10 @@ class OpenAIChatModel extends ChatModel {
         }
       }
 
-      // 确保在流处理完成后调用onComplete
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError('Request cancelled');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {

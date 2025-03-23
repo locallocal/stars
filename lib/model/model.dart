@@ -9,10 +9,12 @@ class Bot {
   static const apiTypeDeepseek = "deepseek";
   static const apiTypeGrok = "grok";
   static const apiTypeHuggingface = "huggingface";
+  static const apiTypeOpenRouter = 'openrouter';
   static const apiTypeAnthropic = "anthropic";
   static const apiTypeVolcanoEngine = "volcanoengine";
   static const apiTypeTencent = "tencent";
-
+  static const apiTypeBaidu = "baidu";
+  
   final String id;
   final String name;
   final String avatar;

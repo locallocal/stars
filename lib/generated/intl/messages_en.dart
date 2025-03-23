@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "${minutes} minutes ago";
 
-  static String m11(error) => "Failed to get response: \$${error}";
+  static String m11(count) => "Successfully retrieved ${count} models";
+
+  static String m12(error) => "Failed to get response: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -171,6 +173,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("Type a message..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("Model"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("Name updated"),
     "newChat": MessageLookupByLibrary.simpleMessage("New Chat"),
@@ -178,6 +181,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "No bots available",
     ),
     "noChats": MessageLookupByLibrary.simpleMessage("No chats yet"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage(
+      "No models retrieved",
+    ),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("Pause generation"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "Please enter API key first",
@@ -190,7 +196,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "provider": MessageLookupByLibrary.simpleMessage("Provider"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Reply cancelled"),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Save Changes"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Select Bot"),

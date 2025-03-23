@@ -481,5 +481,19 @@
     "startChatPrompt": "채팅을 시작하려면 아래 입력 필드에 메시지를 보내세요",
     "@startChatPrompt": {
         "description": "사용자에게 입력 필드에서 채팅을 시작하도록 안내하는 메시지"
+    },
+    "modelsRetrievedSuccess": "{count}개의 모델을 성공적으로 검색했습니다",
+    "@modelsRetrievedSuccess": {
+        "description": "모델 검색 성공 메시지",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "검색된 모델이 없습니다",
+    "@noModelsRetrieved": {
+        "description": "모델이 검색되지 않았을 때 메시지"
     }
 }

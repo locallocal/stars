@@ -1,0 +1,499 @@
+{
+    "@@locale": "it_IT",
+    "appName": "Bubble",
+    "@appName": {
+        "description": "Nome dell'applicazione"
+    },
+    "profile": "Profilo",
+    "@profile": {
+        "description": "Profilo utente"
+    },
+    "settings": "Impostazioni",
+    "@settings": {
+        "description": "Impostazioni"
+    },
+    "about": "Informazioni",
+    "@about": {
+        "description": "Informazioni"
+    },
+    "cancel": "Annulla",
+    "@cancel": {
+        "description": "Pulsante annulla"
+    },
+    "save": "Salva",
+    "@save": {
+        "description": "Pulsante salva"
+    },
+    "confirm": "Conferma",
+    "@confirm": {
+        "description": "Pulsante conferma"
+    },
+    "home": "Home",
+    "@home": {
+        "description": "Pagina principale"
+    },
+    "chats": "Chat",
+    "@chats": {
+        "description": "Lista chat"
+    },
+    "newChat": "Nuova chat",
+    "@newChat": {
+        "description": "Nuova chat"
+    },
+    "themeSettings": "Impostazioni tema",
+    "@themeSettings": {
+        "description": "Impostazioni tema"
+    },
+    "followSystem": "Segui sistema",
+    "@followSystem": {
+        "description": "Segui tema di sistema"
+    },
+    "lightMode": "Modalità chiara",
+    "@lightMode": {
+        "description": "Modalità chiara"
+    },
+    "darkMode": "Modalità scura",
+    "@darkMode": {
+        "description": "Modalità scura"
+    },
+    "languageSettings": "Impostazioni lingua",
+    "@languageSettings": {
+        "description": "Impostazioni lingua"
+    },
+    "fontSizeSettings": "Dimensione testo",
+    "@fontSizeSettings": {
+        "description": "Impostazioni dimensione testo"
+    },
+    "adjustAppFontSize": "Regola dimensione testo nell'app",
+    "@adjustAppFontSize": {
+        "description": "Regola dimensione testo nell'app"
+    },
+    "name": "Nome",
+    "@name": {
+        "description": "Nome"
+    },
+    "editName": "Modifica nome",
+    "@editName": {
+        "description": "Modifica nome"
+    },
+    "enterNewName": "Inserisci nuovo nome",
+    "@enterNewName": {
+        "description": "Inserisci nuovo nome"
+    },
+    "nameUpdated": "Nome aggiornato",
+    "@nameUpdated": {
+        "description": "Nome aggiornato"
+    },
+    "send": "Invia",
+    "@send": {
+        "description": "Pulsante invia"
+    },
+    "typing": "Digitando...",
+    "@typing": {
+        "description": "Indicatore digitazione"
+    },
+    "clearChat": "Cancella chat",
+    "@clearChat": {
+        "description": "Cancella chat"
+    },
+    "addBot": "Aggiungi bot",
+    "@addBot": {
+        "description": "Aggiungi bot"
+    },
+    "editBot": "Modifica bot",
+    "@editBot": {
+        "description": "Modifica bot"
+    },
+    "botName": "Nome bot",
+    "@botName": {
+        "description": "Nome bot"
+    },
+    "botAvatar": "Avatar bot",
+    "@botAvatar": {
+        "description": "Avatar bot"
+    },
+    "provider": "Fornitore",
+    "@provider": {
+        "description": "Fornitore"
+    },
+    "apiKey": "Chiave API",
+    "@apiKey": {
+        "description": "Chiave API"
+    },
+    "model": "Modello",
+    "@model": {
+        "description": "Modello"
+    },
+    "systemPrompt": "Prompt di sistema:",
+    "@systemPrompt": {
+        "description": "Etichetta prompt di sistema"
+    },
+    "languageChanged": "Lingua impostata a {language}",
+    "@languageChanged": {
+        "description": "Notifica cambio lingua",
+        "placeholders": {
+            "language": {
+                "type": "String",
+                "example": "Italiano"
+            }
+        }
+    },
+    "selectLanguage": "Seleziona lingua",
+    "@selectLanguage": {
+        "description": "Seleziona lingua"
+    },
+    "selectTheme": "Seleziona tema",
+    "@selectTheme": {
+        "description": "Seleziona tema"
+    },
+    "adjustFontSize": "Regola dimensione testo",
+    "@adjustFontSize": {
+        "description": "Regola dimensione testo"
+    },
+    "previewText": "Anteprima testo",
+    "@previewText": {
+        "description": "Anteprima testo"
+    },
+    "fontSizeUpdated": "Dimensione testo aggiornata",
+    "@fontSizeUpdated": {
+        "description": "Dimensione testo aggiornata"
+    },
+    "themeSetToSystem": "Tema impostato su sistema",
+    "@themeSetToSystem": {
+        "description": "Tema impostato su sistema"
+    },
+    "themeSetToLight": "Tema impostato su chiaro",
+    "@themeSetToLight": {
+        "description": "Tema impostato su chiaro"
+    },
+    "themeSetToDark": "Tema impostato su scuro",
+    "@themeSetToDark": {
+        "description": "Tema impostato su scuro"
+    },
+    "aboutApp": "Informazioni su Bubble",
+    "@aboutApp": {
+        "description": "Informazioni sull'app"
+    },
+    "appDescription": "Un'app di chat AI semplice ma potente che ti permette di conversare con l'AI ovunque tu sia.",
+    "@appDescription": {
+        "description": "Descrizione app"
+    },
+    "copyright": "© 2025 Team Bubble",
+    "@copyright": {
+        "description": "Informazioni copyright"
+    },
+    "userAgreement": "Accordo utente",
+    "@userAgreement": {
+        "description": "Accordo utente"
+    },
+    "privacyPolicy": "Politica sulla privacy",
+    "@privacyPolicy": {
+        "description": "Politica sulla privacy"
+    },
+    "version": "Versione 1.0.0",
+    "@version": {
+        "description": "Informazioni versione"
+    },
+    "appTitle": "Bubble - Assistente chat AI",
+    "@appTitle": {
+        "description": "Titolo app"
+    },
+    "Bots": "Bot",
+    "@Bots": {
+        "description": "Bot"
+    },
+    "selectBot": "Seleziona bot",
+    "@selectBot": {
+        "description": "Seleziona bot"
+    },
+    "noBotsAvailable": "Nessun bot disponibile",
+    "@noBotsAvailable": {
+        "description": "Nessun bot disponibile"
+    },
+    "clickToCreateBot": "Clicca + nell'angolo in alto a destra per aggiungere un bot",
+    "@clickToCreateBot": {
+        "description": "Clicca + nell'angolo in alto a destra per aggiungere un bot"
+    },
+    "noChats": "Nessuna chat ancora",
+    "@noChats": {
+        "description": "Nessuna chat ancora"
+    },
+    "clickToStartChat": "Clicca + nell'angolo in alto a destra per iniziare una chat",
+    "@clickToStartChat": {
+        "description": "Suggerimento per iniziare una chat"
+    },
+    "deleteChat": "Elimina chat",
+    "@deleteChat": {
+        "description": "Elimina chat"
+    },
+    "messageHint": "Inserisci messaggio...",
+    "@messageHint": {
+        "description": "Suggerimento inserimento messaggio"
+    },
+    "errorLoadingContent": "Errore durante il caricamento del contenuto, riprova più tardi.",
+    "@errorLoadingContent": {
+        "description": "Errore durante il caricamento del contenuto"
+    },
+    "pleaseEnterApiKey": "Inserisci prima la chiave API",
+    "@pleaseEnterApiKey": {
+        "description": "Richiesta di inserire la chiave API"
+    },
+    "enterBotName": "Inserisci nome bot...",
+    "@enterBotName": {
+        "description": "Richiesta di inserire il nome del bot"
+    },
+    "enterProviderName": "Inserisci nome fornitore...",
+    "@enterProviderName": {
+        "description": "Richiesta di inserire il nome del fornitore personalizzato"
+    },
+    "selectProvider": "Seleziona fornitore:",
+    "@selectProvider": {
+        "description": "Etichetta per selezionare il fornitore di servizi AI"
+    },
+    "customProvider": "Fornitore personalizzato...",
+    "@customProvider": {
+        "description": "Opzione per fornitore di servizi AI personalizzato"
+    },
+    "apiType": "Tipo API:",
+    "@apiType": {
+        "description": "Etichetta per selezione tipo API"
+    },
+    "apiAddress": "Indirizzo API:",
+    "@apiAddress": {
+        "description": "Etichetta per inserimento indirizzo API"
+    },
+    "enterApiAddress": "Inserisci indirizzo API...",
+    "@enterApiAddress": {
+        "description": "Richiesta di inserire l'indirizzo API"
+    },
+    "enterApiKey": "Inserisci chiave API...",
+    "@enterApiKey": {
+        "description": "Richiesta di inserire la chiave API"
+    },
+    "fetchModelListFirst": "Ottieni prima la lista dei modelli",
+    "@fetchModelListFirst": {
+        "description": "Richiesta di ottenere prima la lista dei modelli"
+    },
+    "fetchModelList": "Ottieni lista modelli",
+    "@fetchModelList": {
+        "description": "Pulsante per ottenere la lista dei modelli"
+    },
+    "selectModel": "Seleziona modello:",
+    "@selectModel": {
+        "description": "Etichetta per selezionare il modello"
+    },
+    "enterSystemPrompt": "Inserisci prompt di sistema...",
+    "@enterSystemPrompt": {
+        "description": "Richiesta di inserire il prompt di sistema"
+    },
+    "defaultSystemPrompt": "Sei un assistente AI utile. Per favore, rispondi in italiano.",
+    "@defaultSystemPrompt": {
+        "description": "Sei un assistente AI utile. Per favore, rispondi in italiano."
+    },
+    "botAddedSuccess": "Bot \"{name}\" aggiunto",
+    "@botAddedSuccess": {
+        "description": "Messaggio di successo per l'aggiunta di un bot",
+        "placeholders": {
+            "name": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "fillRequiredFields": "Compila nome bot, indirizzo API e chiave API",
+    "@fillRequiredFields": {
+        "description": "Richiesta di compilare i campi obbligatori"
+    },
+    "helpAndFeedback": "Aiuto e feedback",
+    "@helpAndFeedback": {
+        "description": "Opzione aiuto e feedback"
+    },
+    "provideFeedback": "Fornisci i tuoi suggerimenti e feedback",
+    "@provideFeedback": {
+        "description": "Descrizione per fornire feedback"
+    },
+    "feedbackDescription": "Raccontaci i tuoi pensieri, problemi o suggerimenti per aiutarci a migliorare l'app",
+    "@feedbackDescription": {
+        "description": "Descrizione pagina feedback"
+    },
+    "feedbackHint": "Inserisci il tuo feedback qui...",
+    "@feedbackHint": {
+        "description": "Suggerimento per inserimento feedback"
+    },
+    "contactInfoHint": "Informazioni di contatto (opzionale)",
+    "@contactInfoHint": {
+        "description": "Suggerimento per inserimento informazioni di contatto"
+    },
+    "submitFeedback": "Invia feedback",
+    "@submitFeedback": {
+        "description": "Pulsante per inviare feedback"
+    },
+    "feedbackSubmitted": "Grazie per il tuo feedback!",
+    "@feedbackSubmitted": {
+        "description": "Messaggio di successo per l'invio del feedback"
+    },
+    "feedbackSubmitError": "Invio fallito, riprova più tardi",
+    "@feedbackSubmitError": {
+        "description": "Messaggio di errore per l'invio del feedback"
+    },
+    "feedbackContentRequired": "Inserisci il contenuto del feedback",
+    "@feedbackContentRequired": {
+        "description": "Messaggio per contenuto feedback obbligatorio"
+    },
+    "emptyResponseError": "Impossibile ottenere risposta: il server ha restituito una risposta vuota",
+    "@emptyResponseError": {
+        "description": "Messaggio di errore quando il server restituisce una risposta vuota"
+    },
+    "responseError": "Impossibile ottenere risposta: ${error}",
+    "@responseError": {
+        "description": "Impossibile ottenere risposta",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "clearChatHistory": "Cancella cronologia chat",
+    "@clearChatHistory": {
+        "description": "Cancella cronologia chat"
+    },
+    "minutesAgo": "{minutes} minuti fa",
+    "@minutesAgo": {
+        "placeholders": {
+        "minutes": {
+            "type": "int"
+        }
+        }
+    },
+    "justNow": "Proprio ora",
+    "@justNow": {
+        "description": "Proprio ora"
+    },
+    "chatDeleted": "Chat con {botName} eliminata",
+    "@chatDeleted": {
+        "placeholders": {
+            "botName": {
+            "type": "String"
+            }
+        }
+    },
+    "startChatting": "Inizia a chattare",
+    "@startChatting": {
+        "description": "Indicazione per iniziare a chattare"
+    },
+    "delete": "Elimina",
+    "@delete": {
+        "description": "Pulsante elimina"
+    },
+    "confirmDeleteChat": "Eliminare la chat cancellerà tutta la cronologia delle conversazioni. Sei sicuro di voler eliminare la chat con {botName}?",
+    "@confirmDeleteChat": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "deleteBot": "Elimina bot",
+    "@deleteBot": {
+        "description": "Elimina bot"
+    },
+    "confirmDeleteBot": "Eliminare il bot rimuoverà anche tutte le chat associate. Sei sicuro di voler eliminare {botName}?",
+    "@confirmDeleteBot": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "saveChanges": "Salva modifiche",
+    "@saveChanges": {
+        "description": "Salva modifiche"
+    },
+    "botUpdated": "Bot {botName} aggiornato",
+    "@botUpdated": {
+        "placeholders": {
+        "botName": {
+            "type": "String"
+        }
+        }
+    },
+    "botGreeting": "Ciao! Sono {botName}, un assistente AI. Puoi farmi qualsiasi domanda e farò del mio meglio per aiutarti.",
+    "@botGreeting": {
+        "description": "Messaggio di saluto dell'assistente AI",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "startChatPrompt": "Invia un messaggio nel campo di testo sotto per iniziare a chattare",
+    "@startChatPrompt": {
+    "description": "Testo che invita l'utente a iniziare a chattare nel campo di input"
+    },
+    "botIsTyping": "{botName} sta scrivendo...",
+    "@botIsTyping": {
+    "description": "Indica che l'assistente AI sta scrivendo un messaggio",
+        "placeholders": {
+            "botName": {
+            "type": "String",
+            "example": "GPT-4"
+            }
+        }
+    },
+    "pauseGeneration": "Pausa generazione",
+    "@pauseGeneration": {
+    "description": "Pulsante per mettere in pausa la generazione della risposta AI"
+    },
+    "confirmClearChat": "Sei sicuro di voler cancellare tutta la cronologia chat con \"{botName}\"? Questa azione non può essere annullata.",
+    "@confirmClearChat": {
+    "description": "Testo di conferma per cancellare la cronologia chat",
+        "placeholders": {
+            "botName": {
+            "type": "String",
+            "example": "GPT-4"
+            }
+        }
+    },
+    "chatHistoryCleared": "Cronologia chat cancellata",
+    "@chatHistoryCleared": {
+    "description": "Notifica dopo aver cancellato la cronologia chat"
+    },
+    "replyCancelled": "Risposta annullata",
+    "@replyCancelled": {
+    "description": "Notifica dopo aver annullato la generazione della risposta AI"
+    },
+    "clear": "Cancella",
+    "@clear": {
+    "description": "Pulsante per cancellare la cronologia chat"
+    },
+    "confirmDelete": "Conferma eliminazione",
+    "@confirmDelete": {
+        "description": "Testo del pulsante di conferma eliminazione"
+    },
+    "botDeleted": "\"{botName}\" è stato eliminato",
+    "@botDeleted": {
+        "description": "Notifica dopo l'eliminazione di un bot",
+        "placeholders": {
+            "botName": {
+                "type": "String",
+                "example": "GPT-4"
+            }
+        }
+    },
+    "modelsRetrievedSuccess": "{count} modelli recuperati con successo",
+    "@modelsRetrievedSuccess": {
+    "description": "Messaggio di successo quando i modelli vengono recuperati",
+    "placeholders": {
+        "count": {
+        "type": "String",
+        "example": "10"
+        }
+    }
+    },
+    "noModelsRetrieved": "Nessun modello recuperato",
+    "@noModelsRetrieved": {
+    "description": "Messaggio quando nessun modello viene recuperato"
+    }
+}

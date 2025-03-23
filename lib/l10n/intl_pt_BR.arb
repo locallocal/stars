@@ -481,5 +481,19 @@
     "startChatPrompt": "Envie uma mensagem no campo de texto abaixo para começar a conversar",
     "@startChatPrompt": {
         "description": "Indicação para o usuário começar a conversar no campo de entrada"
+    },
+    "modelsRetrievedSuccess": "{count} modelos recuperados com sucesso",
+    "@modelsRetrievedSuccess": {
+        "description": "Mensagem de sucesso ao recuperar modelos",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "Nenhum modelo recuperado",
+    "@noModelsRetrieved": {
+        "description": "Mensagem quando nenhum modelo foi recuperado"
     }
 }

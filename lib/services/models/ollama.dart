@@ -13,22 +13,17 @@ class OllamaChatModel extends ChatModel {
             ? '${bot.baseURL}/api/tags'
             : 'http://localhost:11434/api/tags';
 
-    try {
-      final response = await http.get(Uri.parse(url));
+    final response = await http.get(Uri.parse(url));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final models =
-            (data['models'] as List)
-                .map((model) => model['name'] as String)
-                .toList();
-        return models;
-      } else {
-        throw Exception('获取模型列表失败: ${response.statusCode}');
-      }
-    } catch (e) {
-      // 如果API调用失败，返回一些默认模型
-      return ['llama3', 'mistral', 'mixtral', 'phi3', 'qwen'];
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      final models =
+          (data['models'] as List)
+              .map((model) => model['name'] as String)
+              .toList();
+      return models;
+    } else {
+      throw Exception('List Models Failed: ${response.statusCode}');
     }
   }
 
@@ -53,7 +48,7 @@ class OllamaChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['message']['content'];
     } else {
-      throw Exception('请求失败: ${response.statusCode}');
+      throw Exception('Send Message Failed: ${response.statusCode}');
     }
   }
 
@@ -113,7 +108,7 @@ class OllamaChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError('Request Cancelled');
       }
     } catch (e) {
       if (onError != null) {

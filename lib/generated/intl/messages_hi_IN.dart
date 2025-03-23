@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "${minutes} मिनट पहले";
 
-  static String m11(error) => "उत्तर प्राप्त करने में विफल: \$${error}";
+  static String m11(count) => "सफलतापूर्वक ${count} मॉडल प्राप्त किए गए";
+
+  static String m12(error) => "उत्तर प्राप्त करने में विफल: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -179,6 +181,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("संदेश लिखें..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("मॉडल"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("नाम"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("नाम अपडेट किया गया"),
     "newChat": MessageLookupByLibrary.simpleMessage("नई चैट"),
@@ -186,6 +189,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "कोई बॉट उपलब्ध नहीं है",
     ),
     "noChats": MessageLookupByLibrary.simpleMessage("अभी तक कोई चैट नहीं"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage(
+      "कोई मॉडल प्राप्त नहीं हुआ",
+    ),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("उत्पादन रोकें"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "कृपया पहले API कुंजी दर्ज करें",
@@ -200,7 +206,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "replyCancelled": MessageLookupByLibrary.simpleMessage(
       "उत्तर रद्द किया गया",
     ),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("सहेजें"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("परिवर्तन सहेजें"),
     "selectBot": MessageLookupByLibrary.simpleMessage("बॉट चुनें"),

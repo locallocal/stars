@@ -42,7 +42,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "${minutes}分鐘前";
 
-  static String m11(error) => "獲取回覆失敗: \$${error}";
+  static String m11(count) => "成功獲取 ${count} 個模型";
+
+  static String m12(error) => "獲取回覆失敗: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -129,11 +131,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("輸入消息..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("模型"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("名稱"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("名稱已更新"),
     "newChat": MessageLookupByLibrary.simpleMessage("新建聊天"),
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("沒有可用的智能體"),
     "noChats": MessageLookupByLibrary.simpleMessage("還沒有聊天記錄"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage("未獲取到任何模型"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("暫停生成"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage("請先輸入API密鑰"),
     "previewText": MessageLookupByLibrary.simpleMessage("預覽文字效果"),
@@ -142,7 +146,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "provideFeedback": MessageLookupByLibrary.simpleMessage("提供您的意見和建議"),
     "provider": MessageLookupByLibrary.simpleMessage("供應商"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("回覆已取消"),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("儲存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("儲存修改"),
     "selectBot": MessageLookupByLibrary.simpleMessage("選擇智能體"),

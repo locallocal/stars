@@ -481,5 +481,19 @@
     "startChatPrompt": "Envoyez un message dans le champ de texte ci-dessous pour commencer à discuter",
     "@startChatPrompt": {
         "description": "Invitation à l'utilisateur à commencer à discuter dans le champ de saisie"
+    },
+    "modelsRetrievedSuccess": "{count} modèles récupérés avec succès",
+    "@modelsRetrievedSuccess": {
+        "description": "Message de succès lors de la récupération des modèles",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "Aucun modèle récupéré",
+    "@noModelsRetrieved": {
+        "description": "Message lorsqu'aucun modèle n'a été récupéré"
     }
 }

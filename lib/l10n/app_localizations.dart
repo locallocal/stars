@@ -13,6 +13,7 @@ const List<Locale> supportedLocales = <Locale>[
   Locale('es', 'ES'), // 西班牙语
   Locale('hi', 'IN'), // 印地语
   Locale('pt', 'BR'), // 葡萄牙语(巴西)
+  Locale('it', 'IT'), // 意大利语
 ];
 
 // 获取语言名称
@@ -40,6 +41,8 @@ String getLanguageName(String code) {
       return 'हिन्दी';
     case 'pt_BR':
       return 'Português';
+    case 'it_IT':
+      return 'Italiano';
     default:
       return '简体中文';
   }

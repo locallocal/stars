@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "vor ${minutes} Minuten";
 
-  static String m11(error) =>
+  static String m11(count) => "Erfolgreich ${count} Modelle abgerufen";
+
+  static String m12(error) =>
       "Antwort konnte nicht abgerufen werden: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
@@ -182,6 +184,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("Modell"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("Name aktualisiert"),
     "newChat": MessageLookupByLibrary.simpleMessage("Neuer Chat"),
@@ -189,6 +192,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Keine Bots verfügbar",
     ),
     "noChats": MessageLookupByLibrary.simpleMessage("Noch keine Chats"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage(
+      "Keine Modelle abgerufen",
+    ),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage(
       "Generierung pausieren",
     ),
@@ -207,7 +213,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "replyCancelled": MessageLookupByLibrary.simpleMessage(
       "Antwort abgebrochen",
     ),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("Speichern"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Änderungen speichern"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Bot auswählen"),

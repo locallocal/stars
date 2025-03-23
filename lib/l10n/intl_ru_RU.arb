@@ -481,5 +481,19 @@
     "startChatPrompt": "Отправьте сообщение в поле ввода ниже, чтобы начать чат",
     "@startChatPrompt": {
         "description": "Подсказка пользователю начать чат в поле ввода"
+    },
+    "modelsRetrievedSuccess": "Успешно получено {count} моделей",
+    "@modelsRetrievedSuccess": {
+        "description": "Сообщение об успешном получении моделей",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "Модели не получены",
+    "@noModelsRetrieved": {
+        "description": "Сообщение о том, что модели не были получены"
     }
 }

@@ -481,5 +481,19 @@
     "startChatPrompt": "下の入力欄にメッセージを送信してチャットを開始してください",
     "@startChatPrompt": {
         "description": "ユーザーに入力欄でチャットを開始するよう促すメッセージ"
+    },
+    "modelsRetrievedSuccess": "{count}個のモデルが正常に取得されました",
+    "@modelsRetrievedSuccess": {
+        "description": "モデル取得成功時のメッセージ",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "モデルが取得されませんでした",
+    "@noModelsRetrieved": {
+        "description": "モデルが取得されなかった場合のメッセージ"
     }
 }

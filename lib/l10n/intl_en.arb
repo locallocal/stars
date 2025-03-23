@@ -481,5 +481,19 @@
                 "example": "GPT-4"
             }
         }
+    },
+    "modelsRetrievedSuccess": "Successfully retrieved {count} models",
+    "@modelsRetrievedSuccess": {
+    "description": "Success message when models are retrieved",
+    "placeholders": {
+        "count": {
+        "type": "String",
+        "example": "10"
+        }
+    }
+    },
+    "noModelsRetrieved": "No models retrieved",
+    "@noModelsRetrieved": {
+    "description": "Message when no models are retrieved"
     }
 }

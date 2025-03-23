@@ -1049,6 +1049,26 @@ class S {
       args: [botName],
     );
   }
+
+  /// `Successfully retrieved {count} models`
+  String modelsRetrievedSuccess(String count) {
+    return Intl.message(
+      'Successfully retrieved $count models',
+      name: 'modelsRetrievedSuccess',
+      desc: 'Success message when models are retrieved',
+      args: [count],
+    );
+  }
+
+  /// `No models retrieved`
+  String get noModelsRetrieved {
+    return Intl.message(
+      'No models retrieved',
+      name: 'noModelsRetrieved',
+      desc: 'Message when no models are retrieved',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
@@ -1061,6 +1081,7 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
       Locale.fromSubtags(languageCode: 'es', countryCode: 'ES'),
       Locale.fromSubtags(languageCode: 'fr', countryCode: 'FR'),
       Locale.fromSubtags(languageCode: 'hi', countryCode: 'IN'),
+      Locale.fromSubtags(languageCode: 'it'),
       Locale.fromSubtags(languageCode: 'ja', countryCode: 'JP'),
       Locale.fromSubtags(languageCode: 'ko', countryCode: 'KR'),
       Locale.fromSubtags(languageCode: 'pt', countryCode: 'BR'),

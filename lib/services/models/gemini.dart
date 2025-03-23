@@ -7,13 +7,32 @@ class GeminiChatModel extends ChatModel {
   GeminiChatModel(Bot bot) : super(bot);
 
   @override
+  Future<List<String>> listModels() async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/v1beta/openai/models'
+            : '';
+
+    final response = await http.get(
+      Uri.parse('$url?key=${bot.apiKey}'),
+      headers: {'Content-Type': 'application/json'},   
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      final models = data['models'] as List<dynamic>;
+      return models.map((m) => m['name'] as String).toList();  
+    }
+    throw Exception('List Models Failed: ${response.statusCode}');
+  }
+
+  @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}/v1beta/models/${bot.model}:generateContent'
             : 'https://generativelanguage.googleapis.com/v1beta/models/${bot.model}:generateContent';
 
-    // 转换消息格式为Gemini格式
     final geminiMessages =
         messages
             .map(
@@ -39,7 +58,7 @@ class GeminiChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['candidates'][0]['content']['parts'][0]['text'];
     } else {
-      throw Exception('请求失败: ${response.statusCode}');
+      throw Exception('Request Failed: ${response.statusCode}');
     }
   }
 
@@ -51,13 +70,9 @@ class GeminiChatModel extends ChatModel {
     Function(String)? onError,
   }) async {
     try {
-      // 重置取消状态
       resetCancelState();
 
-      // Gemini目前不支持原生流式输出，这里模拟流式输出
       final response = await sendMessage(messages);
-
-      // 将完整响应分成小块模拟流式输出
       const chunkSize = 10;
       for (var i = 0; i < response.length; i += chunkSize) {
         // 检查是否已取消
@@ -73,7 +88,7 @@ class GeminiChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError('Request Cancelled');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {

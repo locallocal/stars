@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "hace ${minutes} minutos";
 
-  static String m11(error) => "Error al obtener respuesta: \$${error}";
+  static String m11(count) => "Se han recuperado ${count} modelos con éxito";
+
+  static String m12(error) => "Error al obtener respuesta: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -187,6 +189,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("Modelo"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("Nombre"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("Nombre actualizado"),
     "newChat": MessageLookupByLibrary.simpleMessage("Nuevo chat"),
@@ -194,6 +197,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "No hay bots disponibles",
     ),
     "noChats": MessageLookupByLibrary.simpleMessage("Aún no hay chats"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage(
+      "No se han recuperado modelos",
+    ),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage(
       "Pausar generación",
     ),
@@ -214,7 +220,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "replyCancelled": MessageLookupByLibrary.simpleMessage(
       "Respuesta cancelada",
     ),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("Guardar"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Guardar cambios"),
     "selectBot": MessageLookupByLibrary.simpleMessage("Seleccionar bot"),

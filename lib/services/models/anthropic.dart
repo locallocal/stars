@@ -25,18 +25,15 @@ class AnthropicChatModel extends ChatModel {
         'anthropic-version': '2023-06-01',
       });
     if (response.statusCode != 200) {
-      throw Exception('请求失败: ${response.statusCode} - ${response.body}');
+      throw Exception('List Models Failed: ${response.statusCode} - ${response.body}');
     }
     final data = jsonDecode(utf8.decode(response.bodyBytes));
-    return data['models'].map<String>((model) => model['id']).toList();
+    return data['data'].map<String>((model) => model['id']).toList();
   }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/messages'
-            : 'https://api.anthropic.com/v1/messages';
+    final url = getMessageUrl();
 
     // 转换消息格式为Anthropic格式
     final systemPrompt =
@@ -68,7 +65,7 @@ class AnthropicChatModel extends ChatModel {
         'model': bot.model,
         'messages': anthropicMessages,
         'system': systemPrompt,
-        'max_tokens': 4096,
+        'max_tokens': getMaxTokens(),
         'temperature': 0.7,
       }),
     );
@@ -77,7 +74,7 @@ class AnthropicChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['content'][0]['text'];
     } else {
-      throw Exception('请求失败: ${response.statusCode} - ${response.body}');
+      throw Exception('Request Failed: ${response.statusCode} - ${response.body}');
     }
   }
 
@@ -92,10 +89,7 @@ class AnthropicChatModel extends ChatModel {
       // 重置取消状态
       resetCancelState();
 
-      final url =
-          bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/messages'
-              : 'https://api.anthropic.com/v1/messages';
+      final url = getMessageUrl();
 
       // 提取系统提示
       final systemPrompt =
@@ -128,7 +122,7 @@ class AnthropicChatModel extends ChatModel {
               'model': bot.model,
               'messages': anthropicMessages,
               'system': systemPrompt,
-              'max_tokens': 4096,
+              'max_tokens': getMaxTokens(),
               'temperature': 0.7,
               'stream': true,
             });
@@ -136,19 +130,17 @@ class AnthropicChatModel extends ChatModel {
       final streamedResponse = await request.send();
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
-          .transform(LineSplitter());
+          .transform(const LineSplitter());
 
       // 监听取消事件
       cancelController?.stream.listen((_) {
-        // request.abort(); // 使用abort()方法来取消请求 - 这是错误的
-        // 在Dart的http包中，没有直接的方法来取消请求
-        // 我们可以通过关闭控制器来间接实现取消
         cancelController?.close();
       });
 
       await for (final line in stream) {
         // 检查是否已取消
         if (isCancelled) break;
+
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6);
           if (jsonStr == '[DONE]') return;
@@ -169,7 +161,7 @@ class AnthropicChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError('Request Cancelled by User');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
@@ -180,5 +172,20 @@ class AnthropicChatModel extends ChatModel {
       cancelController?.close();
       cancelController = null;
     }
+  }
+
+  String getMessageUrl() {
+    return bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/v1/messages'
+            : 'https://api.anthropic.com/v1/messages';
+  }
+
+  int getMaxTokens() {
+    if (bot.model.contains("3-7-sonnet") ||
+      bot.model.contains("3-5-sonnet") ||
+      bot.model.contains("3-5-haiku")) {
+      return 8192; 
+    }
+    return 4096;
   }
 }

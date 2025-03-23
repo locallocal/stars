@@ -4,6 +4,8 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class DeepSeekChatModel extends ChatModel {
+  static const String defaultApiModelKey = 'https://api.deepseek.com/models';
+  static const String defaultApiChatUrl = 'https://api.deepseek.com/v1/chat/completions';
   DeepSeekChatModel(Bot bot) : super(bot);
 
   @override
@@ -11,7 +13,7 @@ class DeepSeekChatModel extends ChatModel {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}/models'
-            : 'https://api.deepseek.com/models';
+            : defaultApiModelKey;
 
     
     final response = await http.get(
@@ -38,7 +40,7 @@ class DeepSeekChatModel extends ChatModel {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}/v1/chat/completions'
-            : 'https://api.deepseek.com/v1/chat/completions';
+            : defaultApiChatUrl;
 
     final response = await http.post(
       Uri.parse(url),
@@ -76,7 +78,7 @@ class DeepSeekChatModel extends ChatModel {
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}/v1/chat/completions'
-              : 'https://api.deepseek.com/v1/chat/completions';
+              : defaultApiChatUrl;
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -92,26 +94,21 @@ class DeepSeekChatModel extends ChatModel {
               'stream': true,
             });
 
-      // 监听取消事件
       cancelController?.stream.listen((_) {
-        // request.abort(); // 使用abort()方法来取消请求 - 这是错误的
-        // 在Dart的http包中，没有直接的方法来取消请求
-        // 我们可以通过关闭控制器来间接实现取消
         cancelController?.close();
       });
 
       final streamedResponse = await request.send();
       if (streamedResponse.statusCode != 200) {
         final errorBody = await streamedResponse.stream.bytesToString();
-        throw Exception('请求失败: ${streamedResponse.statusCode}, $errorBody');
+        throw Exception('${streamedResponse.statusCode}, $errorBody');
       }
 
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
-          .transform(LineSplitter());
+          .transform(const LineSplitter());
 
       await for (final line in stream) {
-        // 检查是否已取消
         if (isCancelled) break;
         if (line.isEmpty) continue;
 
@@ -136,7 +133,7 @@ class DeepSeekChatModel extends ChatModel {
               }
             }
           } catch (e) {
-            print('解析DeepSeek响应出错: $e, 原始数据: $jsonStr');
+            // ignore
           }
         }
       }
@@ -144,14 +141,13 @@ class DeepSeekChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError('Request Cancelled');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
         onError(e.toString());
       }
     } finally {
-      // 清理资源
       cancelController?.close();
       cancelController = null;
     }

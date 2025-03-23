@@ -4,17 +4,28 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class HuggingFaceChatModel extends ChatModel {
+  static const defaultApiModelUrl = '';
+  
   HuggingFaceChatModel(Bot bot) : super(bot);
+
+  @override
+  Future<List<String>> listModels() async {
+    return [
+      'google/gemma-2-2b-it',
+      'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+      'meta-llama/Meta-Llama-3.1-8B-Instruct',
+      'microsoft/phi-4',
+      'Qwen/Qwen2.5-Coder-32B-Instruct',
+      'deepseek-ai/DeepSeek-R1'
+    ];
+  }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
-            ? bot.baseURL
-            : 'https://api-inference.huggingface.co/models/${bot.model}';
-
-    // 将消息格式化为单个文本
-    final prompt = _formatMessagesToPrompt(messages);
+            ? '${bot.baseURL}/chat/completions'
+            : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
 
     final response = await http.post(
       Uri.parse(url),
@@ -23,26 +34,19 @@ class HuggingFaceChatModel extends ChatModel {
         'Authorization': 'Bearer ${bot.apiKey}',
       },
       body: jsonEncode({
-        'inputs': prompt,
-        'parameters': {
-          'temperature': 0.7,
-          'max_new_tokens': 1024,
-          'return_full_text': false,
-        },
+        'model': bot.model,
+        'messages': messages.map((m) => m.toJson()).toList(),
+        'temperature': 0.7,
+        'max_new_tokens': 1000,
+        'return_full_text': false,
       }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
-      // HuggingFace API可能返回不同格式的响应，需要根据实际情况处理
-      if (data is List && data.isNotEmpty) {
-        return data[0]['generated_text'] ?? '';
-      } else if (data is Map) {
-        return data['generated_text'] ?? '';
-      }
-      return data.toString();
+      return data['choices'][0]['message']['content'];
     } else {
-      throw Exception('请求失败: ${response.statusCode}');
+      throw Exception('Send Message Failed: ${response.statusCode}');
     }
   }
 
@@ -54,50 +58,73 @@ class HuggingFaceChatModel extends ChatModel {
     Function(String)? onError,
   }) async {
     try {
-      // HuggingFace Inference API目前不支持原生流式输出，这里模拟流式输出
-      final response = await sendMessage(messages);
+      resetCancelState();
 
-      // 将完整响应分成小块模拟流式输出
-      const chunkSize = 8;
-      for (var i = 0; i < response.length; i += chunkSize) {
-        final end =
-            (i + chunkSize < response.length) ? i + chunkSize : response.length;
-        final chunk = response.substring(i, end);
-        onResponse(chunk);
-        await Future.delayed(const Duration(milliseconds: 30));
+      final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/chat/completions'
+            : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
+
+      final request =
+          http.Request('POST', Uri.parse(url))
+            ..headers.addAll({
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${bot.apiKey}',
+            })
+            ..body = jsonEncode({
+              'model': bot.model,
+              'messages': messages.map((m) => m.toJson()).toList(),
+              'temperature': 0.7,
+              'return_full_text': false,
+              'stream': true,
+            });
+
+      final streamedResponse = await request.send();
+      final stream = streamedResponse.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
+
+      cancelController?.stream.listen((_) {
+        cancelController?.close();
+      });
+
+      await for (final line in stream) {
+        // 检查是否已取消
+        if (isCancelled) break;
+
+        if (line.startsWith('data: ')) {
+          final jsonStr = line.substring(6);
+          if (jsonStr == '[DONE]') {
+            // 当收到[DONE]标记时，确保调用onComplete
+            if (!isCancelled && onComplete != null) {
+              onComplete();
+            }
+            return;
+          }
+
+          try {
+            final data = jsonDecode(jsonStr);
+            final delta = data['choices'][0]['delta']['content'] ?? '';
+            onResponse(delta);
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
       }
 
-      if (onComplete != null) {
+      // 确保在流处理完成后调用onComplete
+      if (!isCancelled && onComplete != null) {
         onComplete();
+      } else if (isCancelled && onError != null) {
+        onError('请求已取消');
       }
     } catch (e) {
-      if (onError != null) {
+      if (!isCancelled && onError != null) {
         onError(e.toString());
       }
+    } finally {
+      cancelController?.close();
+      cancelController = null;
     }
-  }
-
-  // 将消息列表格式化为适合HuggingFace模型的提示文本
-  String _formatMessagesToPrompt(List<ChatMessage> messages) {
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < messages.length; i++) {
-      final message = messages[i];
-
-      if (message.role == 'system') {
-        buffer.write('System: ${message.content}\n\n');
-      } else if (message.role == 'user') {
-        buffer.write('Human: ${message.content}\n');
-      } else if (message.role == 'assistant') {
-        buffer.write('AI: ${message.content}\n');
-      }
-
-      // 如果是最后一条用户消息，添加AI前缀以提示模型生成回复
-      if (i == messages.length - 1 && message.role == 'user') {
-        buffer.write('AI: ');
-      }
-    }
-
-    return buffer.toString();
   }
 }

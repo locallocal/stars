@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "${minutes}분 전";
 
-  static String m11(error) => "응답을 가져오지 못했습니다: \$${error}";
+  static String m11(count) => "${count}개의 모델을 성공적으로 검색했습니다";
+
+  static String m12(error) => "응답을 가져오지 못했습니다: \$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -145,11 +147,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("메시지 입력..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("모델"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("이름"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("이름이 업데이트되었습니다"),
     "newChat": MessageLookupByLibrary.simpleMessage("새 채팅"),
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("사용 가능한 봇이 없습니다"),
     "noChats": MessageLookupByLibrary.simpleMessage("아직 채팅이 없습니다"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage("검색된 모델이 없습니다"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("생성 일시 중지"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "API 키를 먼저 입력하세요",
@@ -160,7 +164,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "provideFeedback": MessageLookupByLibrary.simpleMessage("의견과 제안을 제공해 주세요"),
     "provider": MessageLookupByLibrary.simpleMessage("제공자"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("응답이 취소되었습니다"),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("저장"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("변경사항 저장"),
     "selectBot": MessageLookupByLibrary.simpleMessage("봇 선택"),

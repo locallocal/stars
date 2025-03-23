@@ -481,5 +481,19 @@
     "startChatPrompt": "चैट शुरू करने के लिए नीचे इनपुट फील्ड में संदेश भेजें",
     "@startChatPrompt": {
         "description": "उपयोगकर्ता को इनपुट फील्ड में चैट शुरू करने के लिए संकेत"
+    },
+    "modelsRetrievedSuccess": "सफलतापूर्वक {count} मॉडल प्राप्त किए गए",
+    "@modelsRetrievedSuccess": {
+        "description": "मॉडल प्राप्त करने पर सफलता संदेश",
+        "placeholders": {
+            "count": {
+                "type": "String",
+                "example": "10"
+            }
+        }
+    },
+    "noModelsRetrieved": "कोई मॉडल प्राप्त नहीं हुआ",
+    "@noModelsRetrieved": {
+        "description": "कोई मॉडल प्राप्त नहीं होने पर संदेश"
     }
 }

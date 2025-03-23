@@ -4,30 +4,40 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class TencentChatModel extends ChatModel {
+  static const String defaultApiChatUrl = 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
+
   TencentChatModel(Bot bot) : super(bot);
 
   @override
   Future<List<String>> listModels() async {
-    try {
-      // 腾讯混元目前支持的模型列表
-      return [
-        'hunyuan',
-        'hunyuan-lite',
-        'hunyuan-pro',
-        'hunyuan-standard',
-        'hunyuan-turbo',
-      ];
-    } catch (e) {
-      print('获取腾讯混元模型列表失败: $e');
-      return [];
-    }
+    // 腾讯混元目前支持的模型列表
+    return [
+      'hunyuan-t1-latest',
+      'hunyuan-t1-20250321',
+      'hunyuan-turbos-latest',
+      'hunyuan-turbos-20250313',
+      'hunyuan-turbos-20250226',
+      'hunyuan-turbo-latest',
+      'hunyuan-turbo',
+      'hunyuan-turbo-20241223',
+      'hunyuan-large',
+      'hunyuan-large-longcontext',
+      'hunyuan-standard-256K',
+      'hunyuan-standard',
+      'hunyuan-lite',
+      'hunyuan-standard-vision',
+      'hunyuan-lite-vision',
+      'hunyuan-turbo-vision',
+      'hunyuan-vision',
+    ];
   }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     try {
-      // 腾讯混元API的端点
-      final url = Uri.parse('${bot.baseURL}/v1/chat/completions');
+      final url = bot.baseURL.isNotEmpty ?
+        '${bot.baseURL}/v1/chat/completions'
+        : defaultApiChatUrl;
 
       // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
@@ -39,7 +49,7 @@ class TencentChatModel extends ChatModel {
 
       // 发送请求
       final response = await http.post(
-        url,
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Authorization': 'Bearer ${bot.apiKey}',
@@ -60,7 +70,7 @@ class TencentChatModel extends ChatModel {
           // 再次确保内容是有效的UTF-8字符串
           return content;
         } else {
-          return '请求错误: ${data['msg'] ?? '未知错误'}';
+          return 'Invalid Response Body: ${data['msg'] ?? 'Unknown Error'}';
         }
       } else {
         // 处理HTTP错误
@@ -68,14 +78,14 @@ class TencentChatModel extends ChatModel {
           // 使用UTF-8解码错误响应
           final String decodedError = utf8.decode(response.bodyBytes);
           Map<String, dynamic> errorData = jsonDecode(decodedError);
-          String errorMessage = errorData['msg'] ?? '未知错误';
-          return '腾讯混元API错误: $errorMessage (${response.statusCode})';
+          String errorMessage = errorData['msg'] ?? 'Unkown Error';
+          return '$errorMessage (${response.statusCode})';
         } catch (e) {
-          return '请求失败: HTTP ${response.statusCode}';
+          return 'HTTP: ${response.statusCode}';
         }
       }
     } catch (e) {
-      return '请求异常: $e';
+      return 'Send Message Failed: $e';
     }
   }
 
@@ -87,17 +97,74 @@ class TencentChatModel extends ChatModel {
     Function(String)? onError,
   }) async {
     try {
-      // 重置取消状态
       resetCancelState();
 
-      // Gemini目前不支持原生流式输出，这里模拟流式输出
-      final response = await sendMessage(messages);
-      onResponse(response);
-      onComplete?.call();
+      final url = bot.baseURL.isNotEmpty ?
+        '${bot.baseURL}/v1/chat/completions'
+        : defaultApiChatUrl;
+
+      final request =
+          http.Request('POST', Uri.parse(url))
+            ..headers.addAll({
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${bot.apiKey}',
+            })
+            ..body = jsonEncode({
+              'model': bot.model,
+              'messages': messages.map((m) => m.toJson()).toList(),
+              'stream': true,
+            });
+
+      final streamedResponse = await request.send();
+      final stream = streamedResponse.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
+
+      cancelController?.stream.listen((_) {
+        cancelController?.close();
+      });
+
+      await for (final line in stream) {
+        if (isCancelled) break;
+
+        if (line.startsWith('data: ')) {
+          final jsonStr = line.substring(6);
+          if (jsonStr == '[DONE]') {
+            // 当收到[DONE]标记时，确保调用onComplete
+            if (!isCancelled && onComplete != null) {
+              onComplete();
+            }
+            return;
+          }
+          try {
+            final data = jsonDecode(jsonStr);
+            final delta = data['choices'][0]['delta']['content'] ?? '';
+            onResponse(delta);
+          } catch (e) {
+            // 忽略解析错误
+          }
+        } else if (line.isNotEmpty) {
+          try {
+            final data = jsonDecode(line);
+            if (data['error']!= null && onError!= null) {
+              onError('Code: ${data['error']['code']}, Message: ${data['error']['message']}');
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+
+      if (!isCancelled && onComplete != null) {
+        onComplete();
+      } else if (isCancelled && onError != null) {
+        onError('Request cancelled');
+      }
     } catch (e) {
-      onError?.call(e.toString());
+      if (!isCancelled && onError != null) {
+        onError(e.toString());
+      }
     } finally {
-      // 清理资源
       cancelController?.close();
       cancelController = null;
     }

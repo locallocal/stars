@@ -3,78 +3,77 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
-class VolcanoEngineChatModel extends ChatModel {
-  static const String defaultApiChatUrl = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+class BaiduChatModel extends ChatModel {
+  static const String defaultApiChatUrl = 'https://aistudio.baidu.com/llm/lmapi/v3/chat/completions';
 
-  VolcanoEngineChatModel(Bot bot) : super(bot);
+  BaiduChatModel(Bot bot) : super(bot);
 
   @override
   Future<List<String>> listModels() async {
     return [
-      'doubao-1-5-vision-pro-32k-250115',
-      'doubao-vision-lite-32k-241015',
-      'doubao-vision-pro-32k-241028',
-      'doubao-1-5-pro-32k-250115',
-      'doubao-1-5-lite-32k-250115',
-      'doubao-1-5-pro-256k-250115',
-      'doubao-pro-256k-241115',
-      'doubao-pro-32k-241215',
-      'doubao-pro-32k-240828',
-      'doubao-pro-32k-240615',
-      'doubao-lite-32k-240828',
-      'doubao-lite-128k-240828',
-      'deepseek-r1-250120',
-      'deepseek-v3-241226',
-      'deepseek-r1-distill-qwen-7b-250120',
-      'deepseek-r1-distill-qwen-32b-250120',
-      'mistral-7b-instruct-v0.2',
-      'chatglm3-130b-fc-v1.0',
-      'moonshot-v1-128k',
-      'moonshot-v1-32k',
-      'moonshot-v1-8k',
+      'ernie-4.5-8k-preview',
+      'ernie-3.5-8k',
+      'ernie-4.0-8k',
+      'ernie-4.0-turbo-8k',
+      'ernie-char-8k',
+      'ernie-speed-8k',
+      'ernie-speed-128k',
+      'ernie-tiny-8k',
+      'ernie-lite-8k',
+      'deepseek-r1'
     ];
   }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     try {
-      final url = bot.baseURL.isNotEmpty
-          ? '${bot.baseURL}/v3/chat/completions'
-          : defaultApiChatUrl;
+      final url = bot.baseURL.isNotEmpty ?
+        '${bot.baseURL}/chat/completions'
+        : defaultApiChatUrl;
 
+      // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
         'model': bot.model,
         'messages': messages.map((m) => m.toJson()).toList(),
+        'temperature': 0.7,
         'stream': false,
       };
+
+      // 发送请求
       final response = await http.post(
         Uri.parse(url),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
           'Authorization': 'Bearer ${bot.apiKey}',
-          'X-VolcEngine-Service': 'volc-llm',
+          'Accept': 'application/json; charset=utf-8',
         },
         body: jsonEncode(requestBody),
+        encoding: Encoding.getByName('utf-8'), // 确保请求体使用UTF-8编码
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
+        // 确保使用UTF-8解码响应内容
+        final String decodedBody = utf8.decode(response.bodyBytes);
+        final Map<String, dynamic> data = jsonDecode(decodedBody);
 
-        // 检查火山引擎API的响应格式
+        // 腾讯混元API的响应格式
         if (data['choices'] != null && data['choices'].length > 0) {
           final String content = data['choices'][0]['message']['content'];
+          // 再次确保内容是有效的UTF-8字符串
           return content;
         } else {
           return 'Invalid Response Body: ${data['msg'] ?? 'Unknown Error'}';
         }
       } else {
+        // 处理HTTP错误
         try {
-          Map<String, dynamic> errorData = jsonDecode(response.body);
-          String errorMessage =
-              errorData['base_resp']?['status_message'] ?? 'Unkown Error';
+          // 使用UTF-8解码错误响应
+          final String decodedError = utf8.decode(response.bodyBytes);
+          Map<String, dynamic> errorData = jsonDecode(decodedError);
+          String errorMessage = errorData['msg'] ?? 'Unkown Error';
           return '$errorMessage (${response.statusCode})';
         } catch (e) {
-          return 'HTTP ${response.statusCode}';
+          return 'HTTP: ${response.statusCode}';
         }
       }
     } catch (e) {
@@ -92,9 +91,10 @@ class VolcanoEngineChatModel extends ChatModel {
     try {
       resetCancelState();
 
-      final url = bot.baseURL.isNotEmpty
-          ? '${bot.baseURL}/v3/chat/completions'
-          : defaultApiChatUrl;
+      final url = bot.baseURL.isNotEmpty ?
+        '${bot.baseURL}/chat/completions'
+        : defaultApiChatUrl;
+
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
@@ -119,8 +119,8 @@ class VolcanoEngineChatModel extends ChatModel {
       await for (final line in stream) {
         if (isCancelled) break;
 
-        if (line.startsWith('data: ')) {
-          final jsonStr = line.substring(6);
+        if (line.startsWith('data:')) {
+          final jsonStr = line.substring(5);
           if (jsonStr == '[DONE]') {
             // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {

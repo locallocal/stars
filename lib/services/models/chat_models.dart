@@ -7,8 +7,10 @@ import 'package:bubble/services/models/gemini.dart';
 import 'package:bubble/services/models/grok.dart';
 import 'package:bubble/services/models/huggingface.dart';
 import 'package:bubble/services/models/anthropic.dart';
+import 'package:bubble/services/models/openrouter.dart';
 import 'package:bubble/services/models/tencent.dart';
 import 'package:bubble/services/models/volcano_engine.dart';
+import 'package:bubble/services/models/baidu.dart';
 
 // 定义消息类型
 class ChatMessage {
@@ -61,7 +63,6 @@ abstract class ChatModel {
     cancelController = StreamController<bool>();
   }
 
-  // 工厂方法，根据Bot类型创建对应的ChatModel实例
   static ChatModel create(Bot bot) {
     switch (bot.apiType) {
       case Bot.apiTypeOpenAI:
@@ -82,8 +83,12 @@ abstract class ChatModel {
         return VolcanoEngineChatModel(bot);
       case Bot.apiTypeTencent:
         return TencentChatModel(bot);
+      case Bot.apiTypeOpenRouter:
+        return OpenRouterChatModel(bot);
+      case Bot.apiTypeBaidu:
+        return BaiduChatModel(bot);
       default:
-        throw UnsupportedError('不支持的API类型: ${bot.apiType}');
+        throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
   }
 }

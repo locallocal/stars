@@ -14,6 +14,7 @@ final providers = [
   'Tencent',
   'SilliconFlow',
   'Baidu',
+  'Moonshot',
 ];
 
 final modelsByProvider = {
@@ -42,7 +43,10 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeHuggingface,
     'base_url': 'https://api-inference.huggingface.co',
   },
-  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
+  'Grok': {
+    'api_type': Bot.apiTypeGrok,
+    'base_url': 'https://api.grok.ai'
+  },
   'ChatGLM': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'http://localhost:8000',
@@ -64,7 +68,11 @@ final modelsByProvider = {
     'base_url': 'https://api.siliconflow.cn',
   },
   'Baidu': {
-    'api_type': Bot.apiTypeOpenAI,
+    'api_type': Bot.apiTypeBaidu,
     'base_url': 'https://aistudio.baidu.com/llm/lmapi/v3',
+  },
+  'Moonshot': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.moonshot.cn',
   },
 };

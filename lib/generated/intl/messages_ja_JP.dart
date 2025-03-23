@@ -46,7 +46,9 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m10(minutes) => "${minutes}分前";
 
-  static String m11(error) => "応答の取得に失敗しました：\$${error}";
+  static String m11(count) => "${count}個のモデルが正常に取得されました";
+
+  static String m12(error) => "応答の取得に失敗しました：\$${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -153,11 +155,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("メッセージを入力..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("モデル"),
+    "modelsRetrievedSuccess": m11,
     "name": MessageLookupByLibrary.simpleMessage("名前"),
     "nameUpdated": MessageLookupByLibrary.simpleMessage("名前が更新されました"),
     "newChat": MessageLookupByLibrary.simpleMessage("新しいチャット"),
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("利用可能なボットがありません"),
     "noChats": MessageLookupByLibrary.simpleMessage("まだチャットがありません"),
+    "noModelsRetrieved": MessageLookupByLibrary.simpleMessage("モデルが取得されませんでした"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("生成を一時停止"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "APIキーを先に入力してください",
@@ -168,7 +172,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "provideFeedback": MessageLookupByLibrary.simpleMessage("ご意見やご提案をお寄せください"),
     "provider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("応答がキャンセルされました"),
-    "responseError": m11,
+    "responseError": m12,
     "save": MessageLookupByLibrary.simpleMessage("保存"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存"),
     "selectBot": MessageLookupByLibrary.simpleMessage("ボットを選択"),

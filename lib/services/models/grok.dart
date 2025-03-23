@@ -4,14 +4,36 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class GrokChatModel extends ChatModel {
+  static const String defaultApiModelUrl = 'https://api.grok.ai/v1/models';
+  static const String defaultApiChatUrl = 'https://api.grok.ai/v1/chat/completions';
   GrokChatModel(Bot bot) : super(bot);
+
+  @override
+  Future<List<String>> listModels() async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/v1/models'
+            : defaultApiModelUrl;
+
+    final response = await http.get(
+      Uri.parse('$url?key=${bot.apiKey}'),
+      headers: {'Content-Type': 'application/json'},   
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      final models = data['data'] as List<dynamic>;
+      return models.map((m) => m['id'] as String).toList();  
+    }
+    throw Exception('List Models Failed: ${response.statusCode}');
+  }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}/v1/chat/completions'
-            : 'https://api.grok.ai/v1/chat/completions';
+            : defaultApiChatUrl;
 
     final response = await http.post(
       Uri.parse(url),
@@ -30,7 +52,7 @@ class GrokChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['choices'][0]['message']['content'];
     } else {
-      throw Exception('请求失败: ${response.statusCode}');
+      throw Exception('Send Message Failed: ${response.statusCode}');
     }
   }
 
@@ -48,7 +70,7 @@ class GrokChatModel extends ChatModel {
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}/v1/chat/completions'
-              : 'https://api.grok.ai/v1/chat/completions';
+              : defaultApiChatUrl;
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -68,11 +90,7 @@ class GrokChatModel extends ChatModel {
           .transform(utf8.decoder)
           .transform(LineSplitter());
 
-      // 监听取消事件
       cancelController?.stream.listen((_) {
-        // request.abort(); // 使用abort()方法来取消请求 - 这是错误的
-        // 在Dart的http包中，没有直接的方法来取消请求
-        // 我们可以通过关闭控制器来间接实现取消
         cancelController?.close();
       });
 
@@ -103,12 +121,16 @@ class GrokChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError('Request Cancelled');
       }
     } catch (e) {
       if (onError != null) {
         onError(e.toString());
       }
+    } finally {
+      // 确保取消控制器关闭
+      cancelController?.close();
+      cancelController = null;
     }
   }
 }
