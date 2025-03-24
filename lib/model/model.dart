@@ -14,7 +14,7 @@ class Bot {
   static const apiTypeVolcanoEngine = "volcanoengine";
   static const apiTypeTencent = "tencent";
   static const apiTypeBaidu = "baidu";
-  
+
   final String id;
   final String name;
   final String avatar;
@@ -111,6 +111,7 @@ class Bot {
 // 消息
 class Message {
   final String type;
+  final String chatId;
   final String botId;
   final String senderId;
   final String content;
@@ -118,6 +119,7 @@ class Message {
 
   const Message({
     required this.type,
+    required this.chatId,
     required this.botId,
     required this.senderId,
     required this.content,
@@ -127,6 +129,7 @@ class Message {
   factory Message.fromMap(Map<String, dynamic> map) {
     return Message(
       type: map['type'] as String,
+      chatId: map['chat_id'] as String,
       botId: map['bot_id'] as String,
       senderId: map['sender_id'] as String,
       content: map['content'] as String,
@@ -137,6 +140,7 @@ class Message {
   Map<String, Object> toMap() {
     return {
       'type': type,
+      'chat_id': chatId,
       'bot_id': botId,
       'sender_id': senderId,
       'content': content,
@@ -147,6 +151,7 @@ class Message {
 
 // 聊天信息
 class Chat {
+  final String id;
   final String botId;
   final String lastMessage;
   final DateTime lastMessageTimestamp;
@@ -154,6 +159,7 @@ class Chat {
   final DateTime modifyTimestamp;
 
   const Chat({
+    required this.id,
     required this.botId,
     this.lastMessage = '',
     required this.lastMessageTimestamp,
@@ -163,6 +169,7 @@ class Chat {
 
   factory Chat.fromMap(Map<String, dynamic> map) {
     return Chat(
+      id: map['id'] as String,
       botId: map['bot_id'] as String,
       lastMessage: map['last_message'] as String,
       lastMessageTimestamp: DateTime.fromMillisecondsSinceEpoch(
@@ -179,6 +186,7 @@ class Chat {
 
   Map<String, Object> toMap() {
     return {
+      'id': id,
       'bot_id': botId,
       'last_message': lastMessage,
       'last_message_timestamp': lastMessageTimestamp.millisecondsSinceEpoch,

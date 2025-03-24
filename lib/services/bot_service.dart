@@ -55,7 +55,7 @@ class BotService {
 
   // 删除智能体
   static Future<void> deleteBot(String id) async {
-    await ChatService.deleteChat(id);
+    await ChatService.deleteBotChats(id);
 
     final db = await DatabaseService.database;
     await db.delete('bots', where: 'id = ?', whereArgs: [id]);

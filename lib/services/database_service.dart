@@ -23,7 +23,8 @@ class DatabaseService {
         // 创建聊天列表表
         await db.execute('''
           CREATE TABLE chats (
-            bot_id TEXT PRIMARY KEY,
+            id TEXT PRIMARY KEY,
+            bot_id TEXT,
             last_message TEXT,
             last_message_timestamp INTEGER,
             create_timestamp INTERGER,
@@ -35,6 +36,7 @@ class DatabaseService {
         await db.execute('''
           CREATE TABLE messages (
             type TEXT,
+            chat_id TEXT,
             bot_id TEXT,
             sender_id TEXT,
             content TEXT,

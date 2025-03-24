@@ -6,6 +6,19 @@ import 'package:bubble/model/model.dart';
 class ChatService {
   static List<Chat> _chats = [];
 
+  // 获取聊天
+  static Future<Chat?> getChat(String id) async {
+    if (_chats.isEmpty) {
+      await getChatList();
+    }
+
+    final index = _chats.indexWhere((chat) => chat.id == id);
+    if (index != -1) {
+      return _chats[index];
+    }
+    return null;
+  }
+
   // 获取聊天列表
   static Future<List<Chat>> getChatList() async {
     if (_chats.isNotEmpty) {
@@ -20,7 +33,6 @@ class ChatService {
     if (chats.isEmpty) {
       return [];
     }
-
     _chats =
         chats.map((chat) {
           return Chat.fromMap(chat);
@@ -28,16 +40,9 @@ class ChatService {
     return _chats;
   }
 
-  // 添加或更新聊天
   static Future<void> addOrUpdateChat(Chat chat) async {
     final db = await DatabaseService.database;
-    final index = _chats.indexWhere((c) => c.botId == chat.botId);
-
-    if (index != -1) {
-      _chats[index] = chat;
-    } else {
-      _chats.add(chat);
-    }
+    _chats.add(chat);
 
     await db.insert(
       'chats',
@@ -46,28 +51,31 @@ class ChatService {
     );
   }
 
-  // 删除聊天
-  static Future<void> deleteChat(String botId) async {
-    await MessageService.deleteBotMessage(botId);
-
-    final db = await DatabaseService.database;
-    await db.delete('chats', where: 'bot_id = ?', whereArgs: [botId]);
-    _chats.removeWhere((chat) => chat.botId == botId);
+  static Future<void> deleteBotChats(String botId) async {
+    final chatsToDelete = _chats.where((chat) => chat.botId == botId).toList();
+    for (var chat in chatsToDelete) {
+      await deleteChat(chat.id);
+    }
   }
 
-  // 更新最后一条消息
-  static Future<void> updateLastMessage(
-    String botId,
-    String lastMessage,
-  ) async {
+  static Future<void> deleteChat(String id) async {
+    await MessageService.deleteChatMessage(id);
+
+    final db = await DatabaseService.database;
+    await db.delete('chats', where: 'id = ?', whereArgs: [id]);
+    _chats.removeWhere((chat) => chat.id == id);
+  }
+
+  static Future<void> updateLastMessage(String id, String lastMessage) async {
     final db = await DatabaseService.database;
     final chatList = await getChatList();
-    final index = chatList.indexWhere((chat) => chat.botId == botId);
+    final index = chatList.indexWhere((chat) => chat.id == id);
     final timestamp = DateTime.now();
 
     if (index != -1) {
       final chat = chatList[index];
       chatList[index] = Chat(
+        id: chat.id,
         botId: chat.botId,
         lastMessage: lastMessage,
         lastMessageTimestamp: timestamp,
@@ -83,8 +91,8 @@ class ChatService {
           'last_message_timestamp': timestamp.millisecondsSinceEpoch,
           'modify_timestamp': timestamp.millisecondsSinceEpoch,
         },
-        where: 'bot_id = ?',
-        whereArgs: [botId],
+        where: 'id = ?',
+        whereArgs: [id],
       );
     }
   }

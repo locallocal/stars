@@ -495,5 +495,9 @@
     "noModelsRetrieved": "No models retrieved",
     "@noModelsRetrieved": {
     "description": "Message when no models are retrieved"
+    },
+    "messageCopied": "Message copied to clipboard",
+    "@messageCopied": {
+        "description": "Notification when message is copied"
     }
 }

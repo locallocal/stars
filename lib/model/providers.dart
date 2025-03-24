@@ -8,6 +8,7 @@ final providers = [
   'Ollama',
   'HuggingFace',
   'Grok',
+  'OpenRouter',
   'ChatGLM',
   'Aliyun',
   'VolcanoEngine',
@@ -43,9 +44,10 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeHuggingface,
     'base_url': 'https://api-inference.huggingface.co',
   },
-  'Grok': {
-    'api_type': Bot.apiTypeGrok,
-    'base_url': 'https://api.grok.ai'
+  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
+  'OpenRouter': {
+    'api_type': Bot.apiTypeOpenRouter,
+    'base_url': 'https://openrouter.ai/api',
   },
   'ChatGLM': {
     'api_type': Bot.apiTypeOpenAI,

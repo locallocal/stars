@@ -22,7 +22,7 @@ class _AddBotPageState extends State<AddBotPage> {
   final systemPromptController = TextEditingController();
   final customProviderController = TextEditingController();
 
-  bool _isLoadingModels = false; 
+  bool _isLoadingModels = false;
   String selectedProvider = 'OpenAI';
   bool isCustomProvider = false;
   String selectedModel = '';
@@ -45,7 +45,7 @@ class _AddBotPageState extends State<AddBotPage> {
         avatarImage = File(pickedFile.path);
       });
     }
-  }// 添加加载状态变量
+  } // 添加加载状态变量
 
   // 添加获取模型列表的方法
   Future<void> _fetchModels() async {
@@ -81,13 +81,15 @@ class _AddBotPageState extends State<AddBotPage> {
       final chatModel = ChatModel.create(tempBot);
       final models = await chatModel.listModels();
 
-      if (models.isNotEmpty && mounted) { 
+      if (models.isNotEmpty && mounted) {
         setState(() {
           modelsByProvider[selectedProvider]?['models'] = models;
           selectedModel = models.first;
         });
-        _showSnackBar(S.of(context).modelsRetrievedSuccess(models.length.toString()));
-      } else if (mounted){
+        _showSnackBar(
+          S.of(context).modelsRetrievedSuccess(models.length.toString()),
+        );
+      } else if (mounted) {
         _showSnackBar(S.of(context).noModelsRetrieved);
       }
     } catch (e) {
@@ -146,10 +148,7 @@ class _AddBotPageState extends State<AddBotPage> {
         centerTitle: true,
         title: Text(
           S.of(context).addBot,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: fontSize,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0,
@@ -191,9 +190,7 @@ class _AddBotPageState extends State<AddBotPage> {
                 controller: nameController,
                 decoration: InputDecoration(
                   hintText: S.of(context).enterBotName,
-                  hintStyle: TextStyle(
-                    fontSize: fontSize,
-                  ),
+                  hintStyle: TextStyle(fontSize: fontSize),
                   fillColor: Theme.of(context).colorScheme.secondary,
                   focusColor: Theme.of(context).colorScheme.secondary,
                   hoverColor: Theme.of(context).colorScheme.secondary,
@@ -234,9 +231,7 @@ class _AddBotPageState extends State<AddBotPage> {
                               value: provider,
                               child: Text(
                                 provider,
-                                style: TextStyle(
-                                  fontSize: fontSize,
-                                ),
+                                style: TextStyle(fontSize: fontSize),
                               ),
                             );
                           }),
@@ -244,9 +239,7 @@ class _AddBotPageState extends State<AddBotPage> {
                             value: 'custom',
                             child: Text(
                               S.of(context).customProvider,
-                              style: TextStyle(
-                                fontSize: fontSize,
-                              ),
+                              style: TextStyle(fontSize: fontSize),
                             ),
                           ),
                         ],
@@ -341,90 +334,77 @@ class _AddBotPageState extends State<AddBotPage> {
                           value: Bot.apiTypeOpenAI,
                           child: Text(
                             'OpenAI',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeAnthropic,
                           child: Text(
                             'Anthropic',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeGemini,
                           child: Text(
                             'Gemini',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeDeepseek,
                           child: Text(
                             'DeepSeek',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeOllama,
                           child: Text(
                             'Ollama',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeHuggingface,
                           child: Text(
                             'HuggingFace',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeGrok,
                           child: Text(
                             'Grok',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeVolcanoEngine,
                           child: Text(
                             'VolcanoEngine',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeTencent,
                           child: Text(
                             'Tencent',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                         DropdownMenuItem<String>(
                           value: Bot.apiTypeBaidu,
                           child: Text(
                             'Baidu',
-                            style: TextStyle(
-                              fontSize: fontSize,
-                            ),
+                            style: TextStyle(fontSize: fontSize),
+                          ),
+                        ),
+                        DropdownMenuItem<String>(
+                          value: Bot.apiTypeOpenRouter,
+                          child: Text(
+                            'OpenRouter',
+                            style: TextStyle(fontSize: fontSize),
                           ),
                         ),
                       ],
@@ -538,9 +518,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                   : ''),
                       hint: Text(
                         S.of(context).fetchModelListFirst,
-                        style: TextStyle(
-                          fontSize: fontSize,
-                        ),
+                        style: TextStyle(fontSize: fontSize),
                       ),
                       underline: const SizedBox(),
                       items:
@@ -550,9 +528,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                   value: '',
                                   child: Text(
                                     S.of(context).fetchModelListFirst,
-                                    style: TextStyle(
-                                      fontSize: fontSize,
-                                    ),
+                                    style: TextStyle(fontSize: fontSize),
                                   ),
                                 ),
                               ]
@@ -561,9 +537,7 @@ class _AddBotPageState extends State<AddBotPage> {
                                   value: model,
                                   child: Text(
                                     model,
-                                    style: TextStyle(
-                                      fontSize: fontSize,
-                                    ),
+                                    style: TextStyle(fontSize: fontSize),
                                   ),
                                 );
                               }).toList(),
@@ -640,7 +614,9 @@ class _AddBotPageState extends State<AddBotPage> {
 
               widget.onBotAdded(newBot);
               Navigator.pop(context);
-              _showSnackBar(S.of(context).botAddedSuccess(nameController.text.trim()));
+              _showSnackBar(
+                S.of(context).botAddedSuccess(nameController.text.trim()),
+              );
             } else {
               _showSnackBar(S.of(context).fillRequiredFields);
             }

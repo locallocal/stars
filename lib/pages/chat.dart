@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:bubble/services/message_service.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/chat_service.dart';
@@ -9,8 +10,9 @@ import 'package:bubble/generated/l10n.dart';
 // 聊天页面
 class ChatPage extends StatefulWidget {
   final Bot bot;
+  final String id;
 
-  const ChatPage({super.key, required this.bot});
+  const ChatPage({super.key, required this.id, required this.bot});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -42,7 +44,7 @@ class _ChatPageState extends State<ChatPage> {
       _isLoading = true;
     });
 
-    final messages = await MessageService.getMessages(widget.bot.id);
+    final messages = await MessageService.getMessages(widget.id);
     setState(() {
       _messages = messages;
       _isLoading = false;
@@ -70,9 +72,9 @@ class _ChatPageState extends State<ChatPage> {
     if (_messageController.text.trim().isEmpty) return;
     final messageText = _messageController.text;
 
-    // 创建用户消息
     final userMessage = Message(
       type: "text",
+      chatId: widget.id,
       botId: widget.bot.id,
       senderId: _currentUserId,
       content: messageText,
@@ -82,19 +84,16 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _messages.add(userMessage);
       _messageController.clear();
-      _isTyping = true; // 显示机器人正在输入
-      _isStreaming = true; // 开始流式接收
-      _streamingResponse = ''; // 清空流式响应
-      _isCancellable = true; // 设置为可取消
+      _isTyping = true;
+      _isStreaming = true;
+      _streamingResponse = '';
+      _isCancellable = true;
     });
 
-    // 保存用户消息到本地存储
     await MessageService.addMessage(userMessage);
 
-    // 更新聊天列表中的最后一条消息
-    await ChatService.updateLastMessage(widget.bot.id, messageText);
+    await ChatService.updateLastMessage(widget.id, messageText);
 
-    // 滚动到底部
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -106,10 +105,8 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     try {
-      // 准备聊天消息
       final List<ChatMessage> chatMessages = [];
 
-      // 如果有系统提示，添加到消息列表
       if (widget.bot.systemPrompt.isNotEmpty) {
         chatMessages.add(
           ChatMessage(role: "system", content: widget.bot.systemPrompt),
@@ -166,6 +163,7 @@ class _ChatPageState extends State<ChatPage> {
           // 创建最终AI回复消息
           final botMessage = Message(
             type: "text",
+            chatId: widget.id,
             botId: widget.bot.id,
             senderId: widget.bot.id,
             content: _streamingResponse,
@@ -187,10 +185,7 @@ class _ChatPageState extends State<ChatPage> {
           }
 
           // 更新聊天列表中的最后一条消息
-          await ChatService.updateLastMessage(
-            widget.bot.id,
-            botMessage.content,
-          );
+          await ChatService.updateLastMessage(widget.id, botMessage.content);
 
           // 滚动到底部
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -305,7 +300,9 @@ class _ChatPageState extends State<ChatPage> {
                                       horizontal: 32.0,
                                     ),
                                     child: Text(
-                                      S.of(context).botGreeting(widget.bot.name),
+                                      S
+                                          .of(context)
+                                          .botGreeting(widget.bot.name),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: 16,
@@ -432,59 +429,79 @@ class _ChatPageState extends State<ChatPage> {
                                             isMe
                                                 ? Alignment.centerRight
                                                 : Alignment.centerLeft,
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            maxWidth:
-                                                MediaQuery.of(
-                                                  context,
-                                                ).size.width *
-                                                0.8,
-                                          ),
-                                          child: Container(
-                                            margin: const EdgeInsets.symmetric(
-                                              vertical: 4.0,
-                                              horizontal: 8.0,
+                                        child: GestureDetector(
+                                          onLongPress: () {
+                                            // 复制消息内容到剪贴板
+                                            Clipboard.setData(
+                                              ClipboardData(
+                                                text: message.content,
+                                              ),
+                                            );
+                                            _showSnackBar(
+                                              S.of(context).messageCopied,
+                                            );
+                                          },
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              maxWidth:
+                                                  MediaQuery.of(
+                                                    context,
+                                                  ).size.width *
+                                                  0.8,
                                             ),
-                                            padding: const EdgeInsets.all(12.0),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  isMe
-                                                      ? Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary
-                                                      : Colors.grey[300],
-                                              borderRadius:
-                                                  BorderRadius.circular(16.0),
-                                            ),
-                                            child: MarkdownBody(
-                                              data: message.content,
-                                              selectable: true,
-                                              styleSheet: MarkdownStyleSheet(
-                                                p: TextStyle(
-                                                  color:
-                                                      isMe
-                                                          ? Colors.white
-                                                          : Colors.black,
-                                                  fontSize: 16,
-                                                ),
-                                                code: TextStyle(
-                                                  color:
-                                                      isMe
-                                                          ? Colors.white
-                                                          : Colors.black,
-                                                  backgroundColor:
-                                                      isMe
-                                                          ? Colors.white
-                                                              .withOpacity(0.1)
-                                                          : Colors.black
-                                                              .withOpacity(0.1),
-                                                ),
-                                                blockquote: TextStyle(
-                                                  color:
-                                                      isMe
-                                                          ? Colors.white
-                                                          : Colors.black,
-                                                  fontStyle: FontStyle.italic,
+                                            child: Container(
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 4.0,
+                                                    horizontal: 8.0,
+                                                  ),
+                                              padding: const EdgeInsets.all(
+                                                12.0,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    isMe
+                                                        ? Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary
+                                                        : Colors.grey[300],
+                                                borderRadius:
+                                                    BorderRadius.circular(16.0),
+                                              ),
+                                              child: MarkdownBody(
+                                                data: message.content,
+                                                selectable: true,
+                                                styleSheet: MarkdownStyleSheet(
+                                                  p: TextStyle(
+                                                    color:
+                                                        isMe
+                                                            ? Colors.white
+                                                            : Colors.black,
+                                                    fontSize: 16,
+                                                  ),
+                                                  code: TextStyle(
+                                                    color:
+                                                        isMe
+                                                            ? Colors.white
+                                                            : Colors.black,
+                                                    backgroundColor:
+                                                        isMe
+                                                            ? Colors.white
+                                                                .withOpacity(
+                                                                  0.1,
+                                                                )
+                                                            : Colors.black
+                                                                .withOpacity(
+                                                                  0.1,
+                                                                ),
+                                                  ),
+                                                  blockquote: TextStyle(
+                                                    color:
+                                                        isMe
+                                                            ? Colors.white
+                                                            : Colors.black,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -494,6 +511,7 @@ class _ChatPageState extends State<ChatPage> {
                                     },
                                   ),
                                 ),
+
                                 // 显示"正在输入"提示
                                 if (_isTyping)
                                   Container(
@@ -510,7 +528,11 @@ class _ChatPageState extends State<ChatPage> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        Text(S.of(context).botIsTyping(widget.bot.name)),
+                                        Text(
+                                          S
+                                              .of(context)
+                                              .botIsTyping(widget.bot.name),
+                                        ),
                                         const Spacer(),
                                         if (_isCancellable)
                                           IconButton(
@@ -518,7 +540,8 @@ class _ChatPageState extends State<ChatPage> {
                                             icon: const Icon(
                                               Icons.pause_circle_filled,
                                             ),
-                                            tooltip: S.of(context).pauseGeneration,
+                                            tooltip:
+                                                S.of(context).pauseGeneration,
                                             iconSize: 28,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(
@@ -618,9 +641,9 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     // 清空本地消息
-    await MessageService.deleteBotMessage(widget.bot.id);
+    await MessageService.deleteChatMessage(widget.id);
     // 更新聊天列表中的最后一条消息
-    await ChatService.updateLastMessage(widget.bot.id, '');
+    await ChatService.updateLastMessage(widget.id, '');
 
     // 重新加载消息列表，确保UI与数据库同步
     await _loadMessages();
@@ -643,6 +666,7 @@ class _ChatPageState extends State<ChatPage> {
       if (_streamingResponse.isNotEmpty) {
         final botMessage = Message(
           type: "text",
+          chatId: widget.id,
           botId: widget.bot.id,
           senderId: widget.bot.id,
           content: _streamingResponse,
@@ -653,7 +677,7 @@ class _ChatPageState extends State<ChatPage> {
 
         // 异步保存消息和更新聊天列表
         MessageService.addMessage(botMessage).then((_) {
-          ChatService.updateLastMessage(widget.bot.id, botMessage.content);
+          ChatService.updateLastMessage(widget.id, botMessage.content);
         });
       }
     });

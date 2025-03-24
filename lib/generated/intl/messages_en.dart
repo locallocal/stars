@@ -170,6 +170,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Language Settings",
     ),
     "lightMode": MessageLookupByLibrary.simpleMessage("Light Mode"),
+    "messageCopied": MessageLookupByLibrary.simpleMessage(
+      "Message copied to clipboard",
+    ),
     "messageHint": MessageLookupByLibrary.simpleMessage("Type a message..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("Model"),

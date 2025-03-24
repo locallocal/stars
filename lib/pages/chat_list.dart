@@ -15,7 +15,6 @@ class ChatListPage extends StatefulWidget {
 }
 
 class _ChatListPageState extends State<ChatListPage> {
-  // 聊天列表数据
   List<Chat> chatList = [];
   List<Bot> bots = [];
   bool isLoading = true;
@@ -26,13 +25,11 @@ class _ChatListPageState extends State<ChatListPage> {
     _loadChatList();
   }
 
-  // 加载聊天列表
   Future<void> _loadChatList() async {
     setState(() {
       isLoading = true;
     });
 
-    // 获取最新的聊天列表和机器人信息
     final loadedChats = await ChatService.getChatList();
     final loadedBots = await BotService.getBots();
     if (mounted) {
@@ -44,11 +41,10 @@ class _ChatListPageState extends State<ChatListPage> {
     }
   }
 
-  // 在页面重新获得焦点时刷新数据
+  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 当页面重新获得焦点时刷新聊天列表
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadChatList();
     });
@@ -139,31 +135,29 @@ class _ChatListPageState extends State<ChatListPage> {
                                     '${bot.provider}-${bot.model}',
                                   ),
                                   onTap: () async {
-                                    // 关闭对话框
-                                    Navigator.pop(context); 
+                                    Navigator.pop(context);
 
-                                    // 添加到聊天列表
+                                    final id =
+                                        'chat_${DateTime.now().millisecondsSinceEpoch}';
                                     final newChat = Chat(
+                                      id: id,
                                       botId: bot.id,
                                       lastMessage: '',
                                       lastMessageTimestamp: DateTime.now(),
                                       createTimestamp: DateTime.now(),
                                       modifyTimestamp: DateTime.now(),
                                     );
-
                                     await ChatService.addOrUpdateChat(newChat);
-
-                                    // 导航到聊天页面
                                     if (!mounted) return;
 
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder:
-                                            (context) => ChatPage(bot: bot),
+                                            (context) =>
+                                                ChatPage(id: id, bot: bot),
                                       ),
                                     ).then((_) {
-                                      // 聊天页面返回后立即刷新聊天列表
                                       _loadChatList();
                                     });
                                   },
@@ -222,7 +216,6 @@ class _ChatListPageState extends State<ChatListPage> {
                               itemCount: chatList.length,
                               itemBuilder: (context, index) {
                                 final chat = chatList[index];
-                                // 获取bot信息，确保方法返回非空值
                                 final bot =
                                     bots.where((bot) {
                                       if (bot.id == chat.botId) {
@@ -232,8 +225,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                     }).first;
 
                                 return Dismissible(
-                                  // 使用chat.botId作为key，而不是bot.botId
-                                  key: Key(chat.botId),
+                                  key: Key(chat.id),
                                   background: Container(
                                     color:
                                         Theme.of(context).colorScheme.primary,
@@ -260,9 +252,10 @@ class _ChatListPageState extends State<ChatListPage> {
                                                 ),
                                               ),
                                             ),
-                                            // 使用bot.name替代chat.botId显示更友好的名称
                                             content: Text(
-                                              S.of(context).confirmDeleteChat(bot.name),
+                                              S
+                                                  .of(context)
+                                                  .confirmDeleteChat(bot.name),
                                             ),
                                             actions: [
                                               TextButton(
@@ -302,33 +295,24 @@ class _ChatListPageState extends State<ChatListPage> {
                                     );
                                   },
                                   onDismissed: (direction) async {
-                                    await ChatService.deleteChat(chat.botId);
                                     setState(() {
                                       chatList.removeAt(index);
                                     });
-                                    
+                                    await ChatService.deleteChat(chat.id);
+
                                     if (mounted) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
                                         SnackBar(
-                                          // 使用bot.name替代chat.botId
-                                          content: Text(S.of(context).chatDeleted(bot.name)),
-                                          action: SnackBarAction(
-                                            label: 'Delete chat',
-                                            onPressed: () async {
-                                              await ChatService.addOrUpdateChat(
-                                                chat,
-                                              );
-                                              _loadChatList();
-                                            },
+                                          content: Text(
+                                            S.of(context).chatDeleted(bot.name),
                                           ),
                                         ),
                                       );
                                     }
                                   },
                                   child: ChatListItem(
-                                    // 使用bot.name替代chat.name
                                     nickname: bot.name,
                                     avatar: bot.avatar,
                                     lastMessage:
@@ -337,7 +321,6 @@ class _ChatListPageState extends State<ChatListPage> {
                                             : chat.lastMessage.length > 25
                                             ? '${chat.lastMessage.substring(0, 25)}...'
                                             : chat.lastMessage,
-                                    // 使用chat.lastMessageTimestamp替代chat.timestamp
                                     timestamp: _formatTimestamp(
                                       chat.lastMessageTimestamp,
                                     ),
@@ -346,12 +329,12 @@ class _ChatListPageState extends State<ChatListPage> {
                                         context,
                                         MaterialPageRoute(
                                           builder:
-                                              (context) =>
-                                              // 传递bot而不是contact
-                                              ChatPage(bot: bot),
+                                              (context) => ChatPage(
+                                                id: chat.id,
+                                                bot: bot,
+                                              ),
                                         ),
                                       ).then((_) {
-                                        // 聊天页面返回后刷新聊天列表
                                         _loadChatList();
                                       });
                                     },

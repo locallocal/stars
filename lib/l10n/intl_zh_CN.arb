@@ -495,5 +495,9 @@
     "noModelsRetrieved": "未获取到模型列表",
     "@noModelsRetrieved": {
     "description": "未获取到模型列表时的提示信息"
+    },
+    "messageCopied": "消息已复制到剪贴板",
+    "@messageCopied": {
+        "description": "消息复制成功的提示"
     }
 }

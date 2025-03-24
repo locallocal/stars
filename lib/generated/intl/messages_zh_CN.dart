@@ -128,6 +128,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "languageChanged": m9,
     "languageSettings": MessageLookupByLibrary.simpleMessage("语言设置"),
     "lightMode": MessageLookupByLibrary.simpleMessage("浅色模式"),
+    "messageCopied": MessageLookupByLibrary.simpleMessage("消息已复制到剪贴板"),
     "messageHint": MessageLookupByLibrary.simpleMessage("输入消息..."),
     "minutesAgo": m10,
     "model": MessageLookupByLibrary.simpleMessage("模型"),

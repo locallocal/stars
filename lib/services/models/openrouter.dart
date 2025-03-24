@@ -5,31 +5,33 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/services/models/chat_models.dart';
 
 class OpenRouterChatModel extends ChatModel {
-  static const String defaultApiModelsUrl = 'https://openrouter.ai/api/v1/models';
-  static const String defaultApiChatUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  static const String defaultApiModelsUrl =
+      'https://openrouter.ai/api/v1/models';
+  static const String defaultApiChatUrl =
+      'https://openrouter.ai/api/v1/chat/completions';
   OpenRouterChatModel(Bot bot) : super(bot);
 
   @override
   Future<List<String>> listModels() async {
-    final url = bot.baseURL.isNotEmpty? 
-      '${bot.baseURL}/api/v1/models' : defaultApiModelsUrl;
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/v1/models'
+            : defaultApiModelsUrl;
 
     try {
       final response = await http.get(
         Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer ${bot.apiKey}',
-        },
+        headers: {'Authorization': 'Bearer ${bot.apiKey}'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final models = data['data'] as List<dynamic>;
-        return models
-            .map((model) => model['id'] as String)
-            .toList();
+        return models.map((model) => model['id'] as String).toList();
       } else {
-        throw Exception('List models failed: ${response.statusCode} ${response.body}');
+        throw Exception(
+          'List models failed: ${response.statusCode} ${response.body}',
+        );
       }
     } catch (e) {
       throw Exception('List models faield: $e');
@@ -70,13 +72,10 @@ class OpenRouterChatModel extends ChatModel {
     Function(String)? onError,
   }) async {
     resetCancelState();
-    
+
     try {
-      final request = http.Request(
-        'POST',
-        Uri.parse(getMessageUrl()),
-      );
-      
+      final request = http.Request('POST', Uri.parse(getMessageUrl()));
+
       request.headers.addAll({
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${bot.apiKey}',
@@ -100,7 +99,7 @@ class OpenRouterChatModel extends ChatModel {
       cancelController?.stream.listen((_) {
         cancelController?.close();
       });
-      
+
       await for (var line in stream) {
         if (isCancelled) break;
         if (line.isEmpty || line == 'data: [DONE]') continue;
@@ -118,7 +117,7 @@ class OpenRouterChatModel extends ChatModel {
           }
         }
       }
-      
+
       // 确保在流处理完成后调用onComplete
       if (!isCancelled && onComplete != null) {
         onComplete();
@@ -136,8 +135,10 @@ class OpenRouterChatModel extends ChatModel {
   }
 
   String getMessageUrl() {
-    final url = bot.baseURL.isNotEmpty? 
-      '${bot.baseURL}/api/v1/chat/completions' : defaultApiChatUrl;
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/v1/chat/completions'
+            : defaultApiChatUrl;
     return url;
   }
 }
