@@ -47,3 +47,51 @@ Widget buildProviderLogo(BuildContext context, String avatar, String provider, d
       );
     }
   }
+
+  // 获取提供商对应的主题色
+// 获取提供商对应的主题色
+Color getProviderColor(String provider, Color defaultColor) {
+  switch (provider.toLowerCase()) {
+    case 'openai':
+      return const Color(0xFFB8E6D9); // OpenAI 浅绿色
+    case 'anthropic':
+      return const Color(0xFFF0D9C9); // Anthropic 浅棕色
+    case 'gemini':
+      return const Color(0xFFBBDEFF); // Gemini 浅蓝色
+    case 'deepseek':
+      return const Color(0xFFD9CFFF); // DeepSeek 浅紫色
+    case 'ollama':
+      return const Color(0xFFFFD6D6); // Ollama 浅红色
+    case 'huggingface':
+      return const Color(0xFFFFF6D6); // HuggingFace 浅黄色
+    case 'grok':
+      return const Color(0xFFBBE6FF); // Grok 浅蓝色
+    case 'openrouter':
+      return const Color(0xFFDCD9FF); // OpenRouter 浅紫色
+    case 'chatglm':
+      return const Color(0xFFCCEFCE); // ChatGLM 浅绿色
+    case 'aliyun':
+      return const Color(0xFFFFDCC0); // 阿里云 浅橙色
+    case 'volcanoengine':
+      return const Color(0xFFFFCCCC); // 火山引擎 浅红色
+    case 'tencent':
+      return const Color(0xFFC9DFFF); // 腾讯 浅蓝色
+    case 'siliconflow':
+      return const Color(0xFFB3EBEF); // SiliconFlow 浅青色
+    case 'baidu':
+      return const Color(0xFFC9CBFF); // 百度 浅蓝色
+    case 'moonshot':
+      return const Color(0xFFE1C4E9); // Moonshot 浅紫色
+    default:
+      return defaultColor; // 默认颜色
+  }
+}
+
+// 添加磨砂效果的函数
+Color getFrostedProviderColor(String provider, Color defaultColor, {double opacity = 0.7}) {
+  // 获取基础颜色
+  Color baseColor = getProviderColor(provider, defaultColor);
+  
+  // 创建磨砂效果（通过调整透明度）
+  return baseColor.withOpacity(opacity);
+}
