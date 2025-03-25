@@ -87,6 +87,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "copyright": MessageLookupByLibrary.simpleMessage("© 2025 泡泡团队"),
     "customProvider": MessageLookupByLibrary.simpleMessage("自定义供应商..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("深色模式"),
+    "deepThinking": MessageLookupByLibrary.simpleMessage("深度思考"),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "你是一个有用的AI助手，请用中文回答问题。",
     ),
@@ -168,5 +169,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "typing": MessageLookupByLibrary.simpleMessage("正在输入..."),
     "userAgreement": MessageLookupByLibrary.simpleMessage("用户协议"),
     "version": MessageLookupByLibrary.simpleMessage("版本 1.0.0"),
+    "webSearch": MessageLookupByLibrary.simpleMessage("网络搜索"),
   };
 }

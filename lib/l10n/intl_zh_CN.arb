@@ -499,5 +499,13 @@
     "messageCopied": "消息已复制到剪贴板",
     "@messageCopied": {
         "description": "消息复制成功的提示"
+    },
+    "webSearch": "网络搜索",
+    "@webSearch": {
+        "description": "网络搜索按钮文本"
+    },
+    "deepThinking": "深度思考",
+    "@deepThinking": {
+        "description": "深度思考按钮文本"
     }
 }

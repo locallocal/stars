@@ -107,6 +107,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Custom Provider...",
     ),
     "darkMode": MessageLookupByLibrary.simpleMessage("Dark Mode"),
+    "deepThinking": MessageLookupByLibrary.simpleMessage("Deep Thinking"),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "You are a helpful AI assistant.",
     ),
@@ -228,5 +229,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "typing": MessageLookupByLibrary.simpleMessage("Typing..."),
     "userAgreement": MessageLookupByLibrary.simpleMessage("User Agreement"),
     "version": MessageLookupByLibrary.simpleMessage("Version 1.0.0"),
+    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
   };
 }

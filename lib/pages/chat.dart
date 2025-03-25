@@ -34,11 +34,9 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     _loadMessages();
-    // 初始化聊天模型
     _chatModel = ChatModel.create(widget.bot);
   }
 
-  // 在加载消息后滚动到底部
   Future<void> _loadMessages() async {
     setState(() {
       _isLoading = true;
@@ -58,7 +56,6 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  // 在dispose中释放ScrollController
   @override
   void dispose() {
     _scrollController.dispose();
@@ -66,8 +63,6 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  // 在发送消息后滚动到底部
-  // 修改发送消息方法，使用抽象聊天模型
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     final messageText = _messageController.text;
@@ -124,10 +119,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       }
 
-      // 添加当前用户消息
       chatMessages.add(ChatMessage(role: "user", content: messageText));
-
-      // 使用流式响应
       await _chatModel.sendMessageStream(
         chatMessages,
         (text) {
@@ -153,7 +145,7 @@ class _ChatPageState extends State<ChatPage> {
               setState(() {
                 _isTyping = false;
                 _isStreaming = false;
-                _isCancellable = false; // 重置可取消状态
+                _isCancellable = false;
               });
               _showSnackBar(S.of(context).emptyResponseError);
             }
@@ -223,6 +215,8 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -230,7 +224,7 @@ class _ChatPageState extends State<ChatPage> {
           widget.bot.name,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+            fontSize: fontSize,
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -463,7 +457,7 @@ class _ChatPageState extends State<ChatPage> {
                                                     isMe
                                                         ? Theme.of(
                                                           context,
-                                                        ).colorScheme.primary
+                                                        ).colorScheme.primary.withOpacity(0.5)
                                                         : Colors.grey[300],
                                                 borderRadius:
                                                     BorderRadius.circular(16.0),
@@ -473,17 +467,11 @@ class _ChatPageState extends State<ChatPage> {
                                                 selectable: true,
                                                 styleSheet: MarkdownStyleSheet(
                                                   p: TextStyle(
-                                                    color:
-                                                        isMe
-                                                            ? Colors.white
-                                                            : Colors.black,
-                                                    fontSize: 16,
+                                                    color: Colors.black,
+                                                    fontSize: fontSize,
                                                   ),
                                                   code: TextStyle(
-                                                    color:
-                                                        isMe
-                                                            ? Colors.white
-                                                            : Colors.black,
+                                                    color: Colors.black,
                                                     backgroundColor:
                                                         isMe
                                                             ? Colors.white
@@ -495,11 +483,8 @@ class _ChatPageState extends State<ChatPage> {
                                                                   0.1,
                                                                 ),
                                                   ),
-                                                  blockquote: TextStyle(
-                                                    color:
-                                                        isMe
-                                                            ? Colors.white
-                                                            : Colors.black,
+                                                  blockquote: const TextStyle(
+                                                    color: Colors.black,
                                                     fontStyle: FontStyle.italic,
                                                   ),
                                                 ),
@@ -512,10 +497,12 @@ class _ChatPageState extends State<ChatPage> {
                                   ),
                                 ),
 
-                                // 显示"正在输入"提示
                                 if (_isTyping)
                                   Container(
-                                    padding: const EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.only(
+                                      left: 8.0,
+                                      right: 8.0,
+                                    ),
                                     alignment: Alignment.centerLeft,
                                     child: Row(
                                       children: [
@@ -558,9 +545,11 @@ class _ChatPageState extends State<ChatPage> {
 
                   // 输入框区域
                   Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 16.0,
+                    margin: const EdgeInsets.only(
+                      left: 16.0,
+                      right: 16.0,
+                      top: 16.0,
+                      bottom: 4.0,
                     ),
                     decoration: BoxDecoration(
                       color: Theme.of(
@@ -584,7 +573,78 @@ class _ChatPageState extends State<ChatPage> {
                       textAlignVertical: TextAlignVertical.center,
                     ),
                   ),
-                  const SizedBox(height: 16.0),
+                  
+                  if (_chatModel.supportsWebSearch() || _chatModel.supportsDeepThinking())
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 16.0, 
+                        right: 16.0, 
+                        bottom: 8.0
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          if (_chatModel.supportsWebSearch())
+                            Padding(
+                              padding: const EdgeInsets.only(right: 16.0),
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  // 在消息中添加联网搜索指令
+                                  _messageController.text =
+                                      '联网搜索: ${_messageController.text}';
+                                },
+                                icon: const Icon(Icons.public, size: 16),
+                                label: Text(S.of(context).webSearch),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  shape:  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      16.0,
+                                    ),
+                                  ),
+                                  side: const BorderSide(
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (_chatModel.supportsDeepThinking())
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                // 在消息中添加深度思考指令
+                                _messageController.text =
+                                    '深度思考 (R1): ${_messageController.text}';
+                              },
+                              icon: const Icon(
+                                Icons.psychology,
+                                size: 16,
+                              ),
+                              label: Text(S.of(context).deepThinking),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    16.0,
+                                  ),
+                                ),
+                                side: const BorderSide(
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16)
                 ],
               ),
     );

@@ -91,4 +91,12 @@ abstract class ChatModel {
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
   }
+
+  bool supportsWebSearch() {
+    return true;
+  }
+
+  bool supportsDeepThinking() {
+    return true;
+  }
 }

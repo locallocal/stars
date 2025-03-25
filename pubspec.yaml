@@ -46,6 +46,7 @@ dependencies:
   flex_color_scheme: ^8.1.1
   dot_curved_bottom_nav: ^0.0.1
   flutter_svg: ^2.0.5
+  path_provider: ^2.0.0
 
 dev_dependencies:
   flutter_test:

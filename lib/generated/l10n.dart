@@ -1079,6 +1079,26 @@ class S {
       args: [],
     );
   }
+
+  /// `Web Search`
+  String get webSearch {
+    return Intl.message(
+      'Web Search',
+      name: 'webSearch',
+      desc: 'Button text for web search feature',
+      args: [],
+    );
+  }
+
+  /// `Deep Thinking`
+  String get deepThinking {
+    return Intl.message(
+      'Deep Thinking',
+      name: 'deepThinking',
+      desc: 'Button text for deep thinking feature',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DatabaseService {
   static Database? _database;
@@ -13,8 +15,9 @@ class DatabaseService {
 
   // 初始化数据库
   static Future<Database> initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'app.db');
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final String appDocPath = appDocDir.path;
+    final path = join(appDocPath, 'app.db');
 
     return await openDatabase(
       path,

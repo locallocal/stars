@@ -499,5 +499,13 @@
     "messageCopied": "Message copied to clipboard",
     "@messageCopied": {
         "description": "Notification when message is copied"
+    },
+    "webSearch": "Web Search",
+    "@webSearch": {
+        "description": "Button text for web search feature"
+    },
+    "deepThinking": "Deep Thinking",
+    "@deepThinking": {
+        "description": "Button text for deep thinking feature"
     }
 }
