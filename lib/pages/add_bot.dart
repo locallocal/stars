@@ -5,6 +5,8 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/providers.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/common/logo.dart';
+
 
 class AddBotPage extends StatefulWidget {
   final Function(Bot) onBotAdded;
@@ -132,7 +134,9 @@ class _AddBotPageState extends State<AddBotPage> {
         // 更新baseURLController的值
         baseURLController.text =
             modelsByProvider[selectedProvider]?['base_url'] as String? ?? '';
-
+        if (value == 'custom') {
+         avatarImage = null; 
+        } 
         final models = currentModels;
         selectedModel = models.isNotEmpty ? models[0] : '';
       });
@@ -170,11 +174,7 @@ class _AddBotPageState extends State<AddBotPage> {
                       avatarImage != null ? FileImage(avatarImage!) : null,
                   child:
                       avatarImage == null
-                          ? Icon(
-                            Icons.smart_toy_rounded,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          )
+                          ? buildProviderLogo(context, '', selectedProvider, 64)
                           : null,
                 ),
               ),

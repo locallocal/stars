@@ -13,7 +13,7 @@ final providers = [
   'Aliyun',
   'VolcanoEngine',
   'Tencent',
-  'SilliconFlow',
+  'SiliconFlow',
   'Baidu',
   'Moonshot',
 ];
@@ -65,7 +65,7 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeTencent,
     'base_url': 'https://api.hunyuan.cloud.tencent.com',
   },
-  'SilliconFlow': {
+  'SiliconFlow': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'https://api.siliconflow.cn',
   },
