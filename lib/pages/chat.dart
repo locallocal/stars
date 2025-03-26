@@ -5,6 +5,7 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:bubble/pages/common/logo.dart';
 import 'package:bubble/generated/l10n.dart';
 
 // 聊天页面
@@ -222,10 +223,7 @@ class _ChatPageState extends State<ChatPage> {
         centerTitle: true,
         title: Text(
           widget.bot.name,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: fontSize,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0,
@@ -258,18 +256,18 @@ class _ChatPageState extends State<ChatPage> {
                                   Container(
                                     width: 128,
                                     height: 128,
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.secondary.withOpacity(0.2),
+                                    decoration: const BoxDecoration(
                                       shape: BoxShape.circle,
                                     ),
-                                    child: Icon(
-                                      Icons.smart_toy_rounded,
-                                      size: 96,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
+                                    child:
+                                        widget.bot.avatar.isEmpty
+                                            ? buildProviderLogo(
+                                              context,
+                                              '',
+                                              widget.bot.provider,
+                                              96,
+                                            )
+                                            : null,
                                   ),
                                   const SizedBox(height: 24),
                                   // 智能体名称
@@ -455,10 +453,14 @@ class _ChatPageState extends State<ChatPage> {
                                               decoration: BoxDecoration(
                                                 color:
                                                     isMe
-                                                        ? Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary.withOpacity(0.5)
-                                                        : Colors.grey[300],
+                                                        ? Theme.of(context)
+                                                            .colorScheme
+                                                            .primary
+                                                            .withOpacity(0.5)
+                                                        : Theme.of(context)
+                                                            .colorScheme
+                                                            .secondary
+                                                            .withOpacity(0.5),
                                                 borderRadius:
                                                     BorderRadius.circular(16.0),
                                               ),
@@ -573,13 +575,14 @@ class _ChatPageState extends State<ChatPage> {
                       textAlignVertical: TextAlignVertical.center,
                     ),
                   ),
-                  
-                  if (_chatModel.supportsWebSearch() || _chatModel.supportsDeepThinking())
+
+                  if (_chatModel.supportsWebSearch() ||
+                      _chatModel.supportsDeepThinking())
                     Padding(
                       padding: const EdgeInsets.only(
-                        left: 16.0, 
-                        right: 16.0, 
-                        bottom: 8.0
+                        left: 16.0,
+                        right: 16.0,
+                        bottom: 8.0,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -596,15 +599,15 @@ class _ChatPageState extends State<ChatPage> {
                                 icon: const Icon(Icons.public, size: 16),
                                 label: Text(S.of(context).webSearch),
                                 style: OutlinedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.secondary.withOpacity(0.5),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 4,
                                   ),
-                                  shape:  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      16.0,
-                                    ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16.0),
                                   ),
                                   side: const BorderSide(
                                     color: Colors.transparent,
@@ -619,21 +622,18 @@ class _ChatPageState extends State<ChatPage> {
                                 _messageController.text =
                                     '深度思考 (R1): ${_messageController.text}';
                               },
-                              icon: const Icon(
-                                Icons.psychology,
-                                size: 16,
-                              ),
+                              icon: const Icon(Icons.psychology, size: 16),
                               label: Text(S.of(context).deepThinking),
                               style: OutlinedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withOpacity(0.5),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 4,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    16.0,
-                                  ),
+                                  borderRadius: BorderRadius.circular(16.0),
                                 ),
                                 side: const BorderSide(
                                   color: Colors.transparent,
@@ -644,7 +644,7 @@ class _ChatPageState extends State<ChatPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 16)
+                  const SizedBox(height: 16),
                 ],
               ),
     );

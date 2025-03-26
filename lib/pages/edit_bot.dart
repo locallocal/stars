@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/common/logo.dart';
 
 class EditBotPage extends StatefulWidget {
   final Bot bot;
@@ -37,10 +38,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
     apiKeyController = TextEditingController(text: widget.bot.apiKey);
     baseURLController = TextEditingController(text: widget.bot.baseURL);
     systemPromptController = TextEditingController(
-      text:
-          widget.bot.systemPrompt.isNotEmpty
-              ? widget.bot.systemPrompt
-              : '',
+      text: widget.bot.systemPrompt.isNotEmpty ? widget.bot.systemPrompt : '',
     );
     selectedProvider = widget.bot.provider;
     selectedModel = widget.bot.model;
@@ -68,10 +66,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
         centerTitle: true,
         title: Text(
           S.of(context).editBot,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: fontSzie,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSzie),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0, // 防止滚动时背景色变化
@@ -140,16 +135,18 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 64,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor:
+                      avatarImage == null
+                          ? getFrostedProviderColor(
+                            selectedProvider,
+                            Theme.of(context).colorScheme.primary,
+                          )
+                          : Theme.of(context).colorScheme.primary,
                   backgroundImage:
                       avatarImage != null ? FileImage(avatarImage!) : null,
                   child:
                       avatarImage == null
-                          ? Icon(
-                            Icons.smart_toy_rounded,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          )
+                          ? buildProviderLogo(context, '', selectedProvider, 64)
                           : null,
                 ),
               ),
@@ -177,7 +174,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 32),
 
             // 选择提供商（禁用编辑）
-            Text(S.of(context).provider, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).provider,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -211,7 +211,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // API类型（禁用编辑）
-            Text(S.of(context).apiType, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).apiType,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -245,7 +248,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // API地址（禁用编辑）
-            Text(S.of(context).apiAddress, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).apiAddress,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -267,7 +273,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // API密钥（禁用编辑）
-            Text(S.of(context).apiKey, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).apiKey,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -289,7 +298,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // 选择模型（禁用编辑）
-            Text(S.of(context).model, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).model,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -323,7 +335,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
             const SizedBox(height: 16),
 
             // 系统提示词（允许编辑）
-            Text(S.of(context).systemPrompt, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              S.of(context).systemPrompt,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -371,7 +386,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
               widget.onBotUpdated(updatedBot);
               Navigator.pop(context);
               // 显示成功提示
-              _showSnackBar(S.of(context).botUpdated(nameController.text.trim()));
+              _showSnackBar(
+                S.of(context).botUpdated(nameController.text.trim()),
+              );
             } else {
               _showSnackBar(S.of(context).fillRequiredFields);
             }

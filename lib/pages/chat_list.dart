@@ -6,6 +6,7 @@ import 'package:bubble/model/model.dart';
 import 'package:bubble/services/bot_service.dart';
 import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/common/logo.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
@@ -41,7 +42,6 @@ class _ChatListPageState extends State<ChatListPage> {
     }
   }
 
-  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -115,14 +115,28 @@ class _ChatListPageState extends State<ChatListPage> {
                                   leading: CircleAvatar(
                                     radius: 24,
                                     backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
+                                        bot.avatar.isEmpty
+                                            ? getFrostedProviderColor(
+                                              bot.provider,
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                            )
+                                            : Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
                                     backgroundImage:
                                         bot.avatar.isNotEmpty
                                             ? FileImage(File(bot.avatar))
                                             : null,
                                     child:
                                         bot.avatar.isEmpty
-                                            ? const Icon(Icons.smart_toy)
+                                            ? buildProviderLogo(
+                                              context,
+                                              '',
+                                              bot.provider,
+                                              24,
+                                            )
                                             : null,
                                   ),
                                   title: Text(
@@ -178,7 +192,6 @@ class _ChatListPageState extends State<ChatListPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // 聊天列表
                   Expanded(
                     child:
                         chatList.isEmpty
@@ -313,8 +326,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                     }
                                   },
                                   child: ChatListItem(
-                                    nickname: bot.name,
-                                    avatar: bot.avatar,
+                                    bot: bot,
                                     lastMessage:
                                         chat.lastMessage.isEmpty
                                             ? S.of(context).startChatting

@@ -5,6 +5,7 @@ import 'package:bubble/pages/add_bot.dart';
 import 'package:bubble/pages/edit_bot.dart';
 import 'package:bubble/services/bot_service.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/common/logo.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
@@ -122,7 +123,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       ),
                     ),
                   ),
-                  
+
                   // 智能体列表
                   Expanded(
                     child:
@@ -165,7 +166,8 @@ class _ContactsPageState extends State<ContactsPage> {
                                   background: Container(
                                     alignment: Alignment.centerRight,
                                     padding: const EdgeInsets.only(right: 20.0),
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                     child: const Icon(Icons.delete),
                                   ),
                                   confirmDismiss: (direction) async {
@@ -174,7 +176,8 @@ class _ContactsPageState extends State<ContactsPage> {
                                       builder: (BuildContext context) {
                                         return AlertDialog(
                                           title: Center(
-                                            child: Text(S.of(context).confirmDelete,
+                                            child: Text(
+                                              S.of(context).confirmDelete,
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize:
@@ -183,13 +186,21 @@ class _ContactsPageState extends State<ContactsPage> {
                                                         .bodyLarge
                                                         ?.fontSize,
                                               ),
-                                            )
+                                            ),
                                           ),
-                                          content: Text(S.of(context).confirmDeleteBot(bot.name)),
+                                          content: Text(
+                                            S
+                                                .of(context)
+                                                .confirmDeleteBot(bot.name),
+                                          ),
                                           actions: <Widget>[
                                             TextButton(
-                                              onPressed: () => Navigator.of(context).pop(false),
-                                              child: Text(S.of(context).cancel,
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(false),
+                                              child: Text(
+                                                S.of(context).cancel,
                                                 style: TextStyle(
                                                   color:
                                                       Theme.of(
@@ -199,8 +210,12 @@ class _ContactsPageState extends State<ContactsPage> {
                                               ),
                                             ),
                                             TextButton(
-                                              onPressed: () => Navigator.of(context).pop(true),
-                                              child: Text(S.of(context).delete,
+                                              onPressed:
+                                                  () => Navigator.of(
+                                                    context,
+                                                  ).pop(true),
+                                              child: Text(
+                                                S.of(context).delete,
                                                 style: TextStyle(
                                                   color:
                                                       Theme.of(
@@ -218,12 +233,18 @@ class _ContactsPageState extends State<ContactsPage> {
                                     await BotService.deleteBot(bot.id);
                                     setState(() {
                                       filteredBots.removeAt(index);
-                                      contacts.removeWhere((contact) => contact.id == bot.id);
+                                      contacts.removeWhere(
+                                        (contact) => contact.id == bot.id,
+                                      );
                                     });
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
-                                          content: Text(S.of(context).botDeleted(bot.name)),
+                                          content: Text(
+                                            S.of(context).botDeleted(bot.name),
+                                          ),
                                           duration: const Duration(seconds: 2),
                                         ),
                                       );
@@ -231,58 +252,74 @@ class _ContactsPageState extends State<ContactsPage> {
                                   },
                                   child: ListTile(
                                     leading: CircleAvatar(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    radius: 24,
-                                    backgroundImage:
-                                        bot.avatar.isNotEmpty
-                                            ? FileImage(File(bot.avatar))
-                                            : null,
-                                    child:
-                                        bot.avatar.isEmpty
-                                            ? const Icon(Icons.smart_toy)
-                                            : null,
-                                  ),
-                                  title: Text(
-                                    bot.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                      backgroundColor:
+                                          bot.avatar.isEmpty
+                                              ? getFrostedProviderColor(
+                                                bot.provider,
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                              )
+                                              : Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                      radius: 24,
+                                      backgroundImage:
+                                          bot.avatar.isNotEmpty
+                                              ? FileImage(File(bot.avatar))
+                                              : null,
+                                      child:
+                                          bot.avatar.isEmpty
+                                              ? buildProviderLogo(
+                                                context,
+                                                '',
+                                                bot.provider,
+                                                24,
+                                              )
+                                              : null,
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    '${bot.provider} - ${bot.model}',
-                                  ),
-                                  trailing: const Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 16,
-                                  ),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => EditBotPage(
-                                              bot: bot,
-                                              onBotUpdated: (updatedBot) async {
-                                                await BotService.updateBot(
-                                                  updatedBot,
-                                                );
-                                                _loadBots(); // 重新加载联系人列表
-                                              },
-                                              onBotDeleted: () async {
-                                                await BotService.deleteBot(
-                                                  bot.id,
-                                                );
-                                                _loadBots(); // 重新加载联系人列表
-                                              },
-                                            ),
+                                    title: Text(
+                                      bot.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                    );
-                                  },
-                                )
-                              );
-                            },
-                          ),
+                                    ),
+                                    subtitle: Text(
+                                      '${bot.provider} - ${bot.model}',
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                    ),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => EditBotPage(
+                                                bot: bot,
+                                                onBotUpdated: (
+                                                  updatedBot,
+                                                ) async {
+                                                  await BotService.updateBot(
+                                                    updatedBot,
+                                                  );
+                                                  _loadBots(); // 重新加载联系人列表
+                                                },
+                                                onBotDeleted: () async {
+                                                  await BotService.deleteBot(
+                                                    bot.id,
+                                                  );
+                                                  _loadBots(); // 重新加载联系人列表
+                                                },
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                   ),
                 ],
               ),

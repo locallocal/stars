@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:bubble/pages/common/logo.dart';
+import 'package:bubble/model/model.dart';
 
 class ChatListItem extends StatelessWidget {
-  final String avatar;
-  final String nickname;
+  final Bot bot;
   final String lastMessage;
   final String timestamp;
   final VoidCallback onTap;
 
   const ChatListItem({
     super.key,
-    required this.avatar,
-    required this.nickname,
+    required this.bot,
     required this.lastMessage,
     required this.timestamp,
     required this.onTap,
@@ -29,9 +29,19 @@ class ChatListItem extends StatelessWidget {
             // 头像
             CircleAvatar(
               radius: 24,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              backgroundImage: avatar.isNotEmpty ? FileImage(File(avatar)) : null,
-              child: avatar.isEmpty ? const Icon(Icons.smart_toy) : null,
+              backgroundColor:
+                  bot.avatar.isEmpty
+                      ? getFrostedProviderColor(
+                        bot.provider,
+                        Theme.of(context).colorScheme.primary,
+                      )
+                      : Theme.of(context).colorScheme.primary,
+              backgroundImage:
+                  bot.avatar.isNotEmpty ? FileImage(File(bot.avatar)) : null,
+              child:
+                  bot.avatar.isEmpty
+                      ? buildProviderLogo(context, '', bot.provider, 24)
+                      : null,
             ),
             const SizedBox(width: 16),
             // 聊天信息
@@ -43,7 +53,7 @@ class ChatListItem extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        nickname,
+                        bot.name,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: fontSize,
@@ -55,7 +65,9 @@ class ChatListItem extends StatelessWidget {
                         child: Text(
                           timestamp,
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.6),
                             fontSize: fontSize - 2,
                           ),
                         ),
@@ -68,7 +80,9 @@ class ChatListItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.8),
                     ),
                   ),
                 ],
