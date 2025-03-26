@@ -55,6 +55,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "Bots": MessageLookupByLibrary.simpleMessage("Bots"),
     "about": MessageLookupByLibrary.simpleMessage("About"),
     "aboutApp": MessageLookupByLibrary.simpleMessage("About Bubble"),
+    "addAttachment": MessageLookupByLibrary.simpleMessage("Attachment"),
     "addBot": MessageLookupByLibrary.simpleMessage("Add Bot"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage(
       "Adjust app font size",
@@ -83,6 +84,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Chat history cleared",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Chats"),
+    "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Clear"),
     "clearChat": MessageLookupByLibrary.simpleMessage("Clear Chat"),
     "clearChatHistory": MessageLookupByLibrary.simpleMessage(
@@ -216,6 +218,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "startChatting": MessageLookupByLibrary.simpleMessage("Start chatting"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("Submit Feedback"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("System Prompt"),
+    "takePhoto": MessageLookupByLibrary.simpleMessage("Camera"),
     "themeSetToDark": MessageLookupByLibrary.simpleMessage(
       "Theme set to dark mode",
     ),
@@ -227,6 +230,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "themeSettings": MessageLookupByLibrary.simpleMessage("Theme Settings"),
     "typing": MessageLookupByLibrary.simpleMessage("Typing..."),
+    "uploadFile": MessageLookupByLibrary.simpleMessage("File"),
+    "uploadImage": MessageLookupByLibrary.simpleMessage("Image"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("User Agreement"),
     "version": MessageLookupByLibrary.simpleMessage("Version 1.0.0"),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),

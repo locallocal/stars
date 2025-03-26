@@ -1,5 +1,26 @@
 import 'dart:convert';
 
+enum InputModality {
+  text('text'),
+  image('image'),
+  file('file'),
+  audio('audio'),
+  video('video');
+
+  final String value;
+  const InputModality(this.value);
+}
+
+enum OutputModality {
+  text('text'),
+  image('image'),
+  audio('audio'),
+  video('video');
+
+  final String value;
+  const OutputModality(this.value);
+}
+
 // 机器人信息
 class Bot {
   static const apiTypeOpenAI = "openai";

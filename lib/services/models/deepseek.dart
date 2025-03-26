@@ -5,17 +5,17 @@ import 'package:bubble/model/model.dart';
 
 class DeepSeekChatModel extends ChatModel {
   static const String defaultApiModelKey = 'https://api.deepseek.com/models';
-  static const String defaultApiChatUrl = 'https://api.deepseek.com/v1/chat/completions';
+  static const String defaultApiChatUrl =
+      'https://api.deepseek.com/v1/chat/completions';
   DeepSeekChatModel(Bot bot) : super(bot);
 
   @override
   Future<List<String>> listModels() async {
+    // deepseek-chat
+    // deepseek-reasoner
     final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/models'
-            : defaultApiModelKey;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelKey;
 
-    
     final response = await http.get(
       Uri.parse(url),
       headers: {
@@ -26,12 +26,10 @@ class DeepSeekChatModel extends ChatModel {
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       final models =
-          (data['data'] as List)
-              .map((model) => model['id'] as String)
-              .toList();
+          (data['data'] as List).map((model) => model['id'] as String).toList();
       return models;
     } else {
-      throw Exception('获取模型列表失败: ${response.statusCode}');
+      throw Exception('List models Failed: ${response.statusCode}');
     }
   }
 
@@ -51,8 +49,6 @@ class DeepSeekChatModel extends ChatModel {
       body: jsonEncode({
         'model': bot.model,
         'messages': messages.map((m) => m.toJson()).toList(),
-        'temperature': 0.7,
-        'max_tokens': 2000,
       }),
     );
 
@@ -60,7 +56,7 @@ class DeepSeekChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['choices'][0]['message']['content'];
     } else {
-      throw Exception('请求失败: ${response.statusCode}');
+      throw Exception('Send message failed: ${response.statusCode}');
     }
   }
 
@@ -72,7 +68,6 @@ class DeepSeekChatModel extends ChatModel {
     Function(String)? onError,
   }) async {
     try {
-      // 重置取消状态
       resetCancelState();
 
       final url =
@@ -89,8 +84,6 @@ class DeepSeekChatModel extends ChatModel {
             ..body = jsonEncode({
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
-              'temperature': 0.7,
-              'max_tokens': 4096,
               'stream': true,
             });
 
@@ -141,7 +134,7 @@ class DeepSeekChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete();
       } else if (isCancelled && onError != null) {
-        onError('Request Cancelled');
+        onError('Request cancelled by user');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
@@ -151,5 +144,29 @@ class DeepSeekChatModel extends ChatModel {
       cancelController?.close();
       cancelController = null;
     }
+  }
+
+  @override
+  bool supportsWebSearch() {
+    return true;
+  }
+
+  @override
+  bool supportsDeepThinking() {
+    switch (bot.model) {
+      case 'deepseek-reasoner':
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    return [InputModality.text, InputModality.file, InputModality.image];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.text];
   }
 }

@@ -16,6 +16,8 @@ import 'package:bubble/services/models/baidu.dart';
 class ChatMessage {
   final String role;
   final String content;
+  bool? deepThinking;
+  bool? webSearch;
 
   ChatMessage({required this.role, required this.content});
 
@@ -93,10 +95,18 @@ abstract class ChatModel {
   }
 
   bool supportsWebSearch() {
-    return true;
+    return false;
   }
 
   bool supportsDeepThinking() {
-    return true;
+    return false;
+  }
+
+  List<InputModality> getInputModalites() {
+    return [InputModality.text];
+  }
+
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.text];
   }
 }

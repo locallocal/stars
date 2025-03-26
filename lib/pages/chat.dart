@@ -30,6 +30,7 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   late ChatModel _chatModel;
   bool _isCancellable = false;
+  bool _showAttachmentBar = false;
 
   @override
   void initState() {
@@ -570,6 +571,31 @@ class _ChatPageState extends State<ChatPage> {
                           vertical: 12.0,
                           horizontal: 12.0,
                         ),
+                        // 添加后缀图标按钮
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_chatModel.getInputModalites().contains(
+                                  InputModality.image,
+                                ) ||
+                                _chatModel.getInputModalites().contains(
+                                  InputModality.file,
+                                ))
+                              IconButton(
+                                icon:
+                                    !_showAttachmentBar
+                                        ? const Icon(Icons.add_circle_outline)
+                                        : const Icon(Icons.close),
+                                tooltip: S.of(context).addAttachment,
+                                onPressed: () {
+                                  // 切换显示附件选择栏
+                                  setState(() {
+                                    _showAttachmentBar = !_showAttachmentBar;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
                       ),
                       maxLines: null,
                       textAlignVertical: TextAlignVertical.center,
@@ -578,71 +604,10 @@ class _ChatPageState extends State<ChatPage> {
 
                   if (_chatModel.supportsWebSearch() ||
                       _chatModel.supportsDeepThinking())
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: 16.0,
-                        right: 16.0,
-                        bottom: 8.0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          if (_chatModel.supportsWebSearch())
-                            Padding(
-                              padding: const EdgeInsets.only(right: 16.0),
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  // 在消息中添加联网搜索指令
-                                  _messageController.text =
-                                      '联网搜索: ${_messageController.text}';
-                                },
-                                icon: const Icon(Icons.public, size: 16),
-                                label: Text(S.of(context).webSearch),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary.withOpacity(0.5),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16.0),
-                                  ),
-                                  side: const BorderSide(
-                                    color: Colors.transparent,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          if (_chatModel.supportsDeepThinking())
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                // 在消息中添加深度思考指令
-                                _messageController.text =
-                                    '深度思考 (R1): ${_messageController.text}';
-                              },
-                              icon: const Icon(Icons.psychology, size: 16),
-                              label: Text(S.of(context).deepThinking),
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.secondary.withOpacity(0.5),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16.0),
-                                ),
-                                side: const BorderSide(
-                                  color: Colors.transparent,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                    _showChatModelFeatures(),
+
+                  // 附件选择栏
+                  if (_showAttachmentBar) _showAttachmentBars(context),
 
                   const SizedBox(height: 16),
                 ],
@@ -744,6 +709,166 @@ class _ChatPageState extends State<ChatPage> {
     _showSnackBar(S.of(context).replyCancelled);
   }
 
+  Widget _showChatModelFeatures() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          if (_chatModel.supportsWebSearch())
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // 在消息中添加联网搜索指令
+                  _messageController.text = '联网搜索: ${_messageController.text}';
+                },
+                icon: const Icon(Icons.public, size: 16),
+                label: Text(S.of(context).webSearch),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.secondary.withOpacity(0.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  side: const BorderSide(color: Colors.transparent),
+                ),
+              ),
+            ),
+          if (_chatModel.supportsDeepThinking())
+            OutlinedButton.icon(
+              onPressed: () {
+                // 在消息中添加深度思考指令
+                _messageController.text =
+                    '深度思考 (R1): ${_messageController.text}';
+              },
+              icon: const Icon(Icons.psychology, size: 16),
+              label: Text(S.of(context).deepThinking),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.secondary.withOpacity(0.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
+                side: const BorderSide(color: Colors.transparent),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _showAttachmentBars(BuildContext context) {
+    final fontSize = Theme.of(context).textTheme.bodyMedium?.fontSize ?? 16.0;
+    return Container(
+      padding: const EdgeInsets.only(
+        bottom: 4.0,
+        left: 16.0,
+        right: 16.0,
+        top: 4.0
+      ),
+      color: Theme.of(context).colorScheme.surface,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (_chatModel.getInputModalites().contains(InputModality.image))
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.photo_camera, size: 32),
+                        onPressed: _getImageFromCamera,
+                      ),
+                      Text(
+                        S.of(context).takePhoto,
+                        style: TextStyle(fontSize: fontSize - 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          if (_chatModel.getInputModalites().contains(InputModality.image))
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.insert_photo, size: 32),
+                        onPressed: _getImageFromGallery,
+                      ),
+                      Text(
+                        S.of(context).chooseFromGallery,
+                        style: TextStyle(fontSize: fontSize - 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          if (_chatModel.getInputModalites().contains(InputModality.file))
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.upload_file_rounded, size: 32),
+                        onPressed: _pickFile,
+                      ),
+                      Text(
+                        S.of(context).uploadFile,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   // 显示提示信息
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -754,5 +879,26 @@ class _ChatPageState extends State<ChatPage> {
         margin: const EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
       ),
     );
+  }
+
+  // 从相机获取图片
+  Future<void> _getImageFromCamera() async {
+    // 这里需要添加相机拍照功能
+    // 使用image_picker包实现
+    // 实现后将图片发送到聊天
+  }
+
+  // 从相册获取图片
+  Future<void> _getImageFromGallery() async {
+    // 这里需要添加从相册选择图片功能
+    // 使用image_picker包实现
+    // 实现后将图片发送到聊天
+  }
+
+  // 选择文件
+  Future<void> _pickFile() async {
+    // 这里需要添加文件选择功能
+    // 使用file_picker包实现
+    // 实现后将文件发送到聊天
   }
 }

@@ -500,12 +500,32 @@
     "@messageCopied": {
         "description": "消息复制成功的提示"
     },
-    "webSearch": "网络搜索",
+    "webSearch": "联网搜索",
     "@webSearch": {
         "description": "网络搜索按钮文本"
     },
     "deepThinking": "深度思考",
     "@deepThinking": {
         "description": "深度思考按钮文本"
+    },
+    "uploadImage": "图片",
+    "@uploadImage": {
+        "description": "上传图片按钮文本"
+    },
+    "uploadFile": "文件",
+    "@uploadFile": {
+        "description": "上传文件按钮文本"
+    },
+    "takePhoto": "拍照",
+    "@takePhoto": {
+        "description": "拍照选项文本"
+    },
+    "chooseFromGallery": "相册",
+    "@chooseFromGallery": {
+        "description": "从相册选择图片选项文本"
+    },
+    "addAttachment": "上传附件",
+    "@addAttachment": {
+        "description": "添加附件按钮文本"
     }
 }

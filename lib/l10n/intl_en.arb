@@ -507,5 +507,25 @@
     "deepThinking": "Deep Thinking",
     "@deepThinking": {
         "description": "Button text for deep thinking feature"
+    },
+    "uploadImage": "Image",
+    "@uploadImage": {
+        "description": "Upload image button text"
+    },
+    "uploadFile": "File",
+    "@uploadFile": {
+        "description": "Upload file button text"
+    },
+    "takePhoto": "Camera",
+    "@takePhoto": {
+        "description": "Take photo option text"
+    },
+    "chooseFromGallery": "Gallery",
+    "@chooseFromGallery": {
+        "description": "Choose from gallery option text"
+    },
+    "addAttachment": "Attachment",
+    "@addAttachment": {
+        "description": "Add attachment button text"
     }
 }

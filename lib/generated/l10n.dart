@@ -1099,6 +1099,56 @@ class S {
       args: [],
     );
   }
+
+  /// `Image`
+  String get uploadImage {
+    return Intl.message(
+      'Image',
+      name: 'uploadImage',
+      desc: 'Upload image button text',
+      args: [],
+    );
+  }
+
+  /// `File`
+  String get uploadFile {
+    return Intl.message(
+      'File',
+      name: 'uploadFile',
+      desc: 'Upload file button text',
+      args: [],
+    );
+  }
+
+  /// `Camera`
+  String get takePhoto {
+    return Intl.message(
+      'Camera',
+      name: 'takePhoto',
+      desc: 'Take photo option text',
+      args: [],
+    );
+  }
+
+  /// `Gallery`
+  String get chooseFromGallery {
+    return Intl.message(
+      'Gallery',
+      name: 'chooseFromGallery',
+      desc: 'Choose from gallery option text',
+      args: [],
+    );
+  }
+
+  /// `Attachment`
+  String get addAttachment {
+    return Intl.message(
+      'Attachment',
+      name: 'addAttachment',
+      desc: 'Add attachment button text',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {
