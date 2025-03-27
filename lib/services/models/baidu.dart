@@ -4,7 +4,8 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class BaiduChatModel extends ChatModel {
-  static const String defaultApiChatUrl = 'https://aistudio.baidu.com/llm/lmapi/v3/chat/completions';
+  static const String defaultApiChatUrl =
+      'https://aistudio.baidu.com/llm/lmapi/v3/chat/completions';
 
   BaiduChatModel(Bot bot) : super(bot);
 
@@ -20,16 +21,17 @@ class BaiduChatModel extends ChatModel {
       'ernie-speed-128k',
       'ernie-tiny-8k',
       'ernie-lite-8k',
-      'deepseek-r1'
+      'deepseek-r1',
     ];
   }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     try {
-      final url = bot.baseURL.isNotEmpty ?
-        '${bot.baseURL}/chat/completions'
-        : defaultApiChatUrl;
+      final url =
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/chat/completions'
+              : defaultApiChatUrl;
 
       // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
@@ -91,9 +93,10 @@ class BaiduChatModel extends ChatModel {
     try {
       resetCancelState();
 
-      final url = bot.baseURL.isNotEmpty ?
-        '${bot.baseURL}/chat/completions'
-        : defaultApiChatUrl;
+      final url =
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/chat/completions'
+              : defaultApiChatUrl;
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -138,8 +141,10 @@ class BaiduChatModel extends ChatModel {
         } else if (line.isNotEmpty) {
           try {
             final data = jsonDecode(line);
-            if (data['error']!= null && onError!= null) {
-              onError('Code: ${data['error']['code']}, Message: ${data['error']['message']}');
+            if (data['error'] != null && onError != null) {
+              onError(
+                'Code: ${data['error']['code']}, Message: ${data['error']['message']}',
+              );
             }
           } catch (e) {
             // 忽略解析错误

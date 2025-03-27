@@ -23,15 +23,31 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
   String _language = 'zh_CN'; // 语言设置
-  
+
   // 随机英文名称列表
   final List<String> _randomNames = [
-    'Alex', 'Blake', 'Casey', 'Dana', 'Eden', 
-    'Finley', 'Gray', 'Harper', 'Jordan', 'Kelly',
-    'Logan', 'Morgan', 'Noah', 'Parker', 'Quinn',
-    'Riley', 'Skyler', 'Taylor', 'Avery', 'Bailey'
+    'Alex',
+    'Blake',
+    'Casey',
+    'Dana',
+    'Eden',
+    'Finley',
+    'Gray',
+    'Harper',
+    'Jordan',
+    'Kelly',
+    'Logan',
+    'Morgan',
+    'Noah',
+    'Parker',
+    'Quinn',
+    'Riley',
+    'Skyler',
+    'Taylor',
+    'Avery',
+    'Bailey',
   ];
-  
+
   // 获取随机英文名称
   String get _randomName => _randomNames[Random().nextInt(_randomNames.length)];
   // 获取用户名

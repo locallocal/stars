@@ -6,7 +6,8 @@ import 'package:bubble/model/model.dart';
 
 class OpenAIChatModel extends ChatModel {
   static const String defaultApiModelsUrl = 'https://api.openai.com/v1/models';
-  static const String defaultApiChatUrl = 'https://api.openai.com/v1/chat/completions';
+  static const String defaultApiChatUrl =
+      'https://api.openai.com/v1/chat/completions';
   OpenAIChatModel(Bot bot) : super(bot);
 
   @override
@@ -18,10 +19,12 @@ class OpenAIChatModel extends ChatModel {
 
     final client = http.Client();
     try {
-      final response = await client.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Bearer ${bot.apiKey}'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await client
+          .get(
+            Uri.parse(url),
+            headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         final models =
@@ -33,10 +36,10 @@ class OpenAIChatModel extends ChatModel {
         throw Exception('List Models Failed: ${response.statusCode}');
       }
     } on TimeoutException {
-      throw Exception('List Models Timeout, Retry later.'); 
+      throw Exception('List Models Timeout, Retry later.');
     } finally {
       client.close();
-    } 
+    }
   }
 
   @override

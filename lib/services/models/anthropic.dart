@@ -13,9 +13,7 @@ class AnthropicChatModel extends ChatModel {
             ? '${bot.baseURL}/v1/models'
             : 'https://api.anthropic.com/v1/models';
     // 添加limit参数，设置为1000
-    final uri = Uri.parse(url).replace(
-      queryParameters: {'limit': '1000'},
-    );
+    final uri = Uri.parse(url).replace(queryParameters: {'limit': '1000'});
 
     final response = await http.get(
       uri,
@@ -23,9 +21,12 @@ class AnthropicChatModel extends ChatModel {
         'Content-Type': 'application/json',
         'x-api-key': bot.apiKey,
         'anthropic-version': '2023-06-01',
-      });
+      },
+    );
     if (response.statusCode != 200) {
-      throw Exception('List Models Failed: ${response.statusCode} - ${response.body}');
+      throw Exception(
+        'List Models Failed: ${response.statusCode} - ${response.body}',
+      );
     }
     final data = jsonDecode(utf8.decode(response.bodyBytes));
     return data['data'].map<String>((model) => model['id']).toList();
@@ -74,7 +75,9 @@ class AnthropicChatModel extends ChatModel {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       return data['content'][0]['text'];
     } else {
-      throw Exception('Request Failed: ${response.statusCode} - ${response.body}');
+      throw Exception(
+        'Request Failed: ${response.statusCode} - ${response.body}',
+      );
     }
   }
 
@@ -176,15 +179,15 @@ class AnthropicChatModel extends ChatModel {
 
   String getMessageUrl() {
     return bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/messages'
-            : 'https://api.anthropic.com/v1/messages';
+        ? '${bot.baseURL}/v1/messages'
+        : 'https://api.anthropic.com/v1/messages';
   }
 
   int getMaxTokens() {
     if (bot.model.contains("3-7-sonnet") ||
-      bot.model.contains("3-5-sonnet") ||
-      bot.model.contains("3-5-haiku")) {
-      return 8192; 
+        bot.model.contains("3-5-sonnet") ||
+        bot.model.contains("3-5-haiku")) {
+      return 8192;
     }
     return 4096;
   }

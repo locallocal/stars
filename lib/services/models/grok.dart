@@ -5,7 +5,8 @@ import 'package:bubble/model/model.dart';
 
 class GrokChatModel extends ChatModel {
   static const String defaultApiModelUrl = 'https://api.grok.ai/v1/models';
-  static const String defaultApiChatUrl = 'https://api.grok.ai/v1/chat/completions';
+  static const String defaultApiChatUrl =
+      'https://api.grok.ai/v1/chat/completions';
   GrokChatModel(Bot bot) : super(bot);
 
   @override
@@ -17,13 +18,13 @@ class GrokChatModel extends ChatModel {
 
     final response = await http.get(
       Uri.parse('$url?key=${bot.apiKey}'),
-      headers: {'Content-Type': 'application/json'},   
+      headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       final models = data['data'] as List<dynamic>;
-      return models.map((m) => m['id'] as String).toList();  
+      return models.map((m) => m['id'] as String).toList();
     }
     throw Exception('List Models Failed: ${response.statusCode}');
   }

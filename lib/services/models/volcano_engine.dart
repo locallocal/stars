@@ -4,7 +4,8 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class VolcanoEngineChatModel extends ChatModel {
-  static const String defaultApiChatUrl = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+  static const String defaultApiChatUrl =
+      'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
 
   VolcanoEngineChatModel(Bot bot) : super(bot);
 
@@ -38,9 +39,10 @@ class VolcanoEngineChatModel extends ChatModel {
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     try {
-      final url = bot.baseURL.isNotEmpty
-          ? '${bot.baseURL}/v3/chat/completions'
-          : defaultApiChatUrl;
+      final url =
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/v3/chat/completions'
+              : defaultApiChatUrl;
 
       final Map<String, dynamic> requestBody = {
         'model': bot.model,
@@ -92,9 +94,10 @@ class VolcanoEngineChatModel extends ChatModel {
     try {
       resetCancelState();
 
-      final url = bot.baseURL.isNotEmpty
-          ? '${bot.baseURL}/v3/chat/completions'
-          : defaultApiChatUrl;
+      final url =
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/v3/chat/completions'
+              : defaultApiChatUrl;
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
@@ -138,8 +141,10 @@ class VolcanoEngineChatModel extends ChatModel {
         } else if (line.isNotEmpty) {
           try {
             final data = jsonDecode(line);
-            if (data['error']!= null && onError!= null) {
-              onError('Code: ${data['error']['code']}, Message: ${data['error']['message']}');
+            if (data['error'] != null && onError != null) {
+              onError(
+                'Code: ${data['error']['code']}, Message: ${data['error']['message']}',
+              );
             }
           } catch (e) {
             // 忽略解析错误

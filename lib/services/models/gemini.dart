@@ -9,19 +9,17 @@ class GeminiChatModel extends ChatModel {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1beta/openai/models'
-            : '';
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}/v1beta/openai/models' : '';
 
     final response = await http.get(
       Uri.parse('$url?key=${bot.apiKey}'),
-      headers: {'Content-Type': 'application/json'},   
+      headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       final models = data['models'] as List<dynamic>;
-      return models.map((m) => m['name'] as String).toList();  
+      return models.map((m) => m['name'] as String).toList();
     }
     throw Exception('List Models Failed: ${response.statusCode}');
   }

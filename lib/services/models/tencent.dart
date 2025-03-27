@@ -4,7 +4,8 @@ import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class TencentChatModel extends ChatModel {
-  static const String defaultApiChatUrl = 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
+  static const String defaultApiChatUrl =
+      'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
 
   TencentChatModel(Bot bot) : super(bot);
 
@@ -35,9 +36,10 @@ class TencentChatModel extends ChatModel {
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     try {
-      final url = bot.baseURL.isNotEmpty ?
-        '${bot.baseURL}/v1/chat/completions'
-        : defaultApiChatUrl;
+      final url =
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/v1/chat/completions'
+              : defaultApiChatUrl;
 
       // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
@@ -99,9 +101,10 @@ class TencentChatModel extends ChatModel {
     try {
       resetCancelState();
 
-      final url = bot.baseURL.isNotEmpty ?
-        '${bot.baseURL}/v1/chat/completions'
-        : defaultApiChatUrl;
+      final url =
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/v1/chat/completions'
+              : defaultApiChatUrl;
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -146,8 +149,10 @@ class TencentChatModel extends ChatModel {
         } else if (line.isNotEmpty) {
           try {
             final data = jsonDecode(line);
-            if (data['error']!= null && onError!= null) {
-              onError('Code: ${data['error']['code']}, Message: ${data['error']['message']}');
+            if (data['error'] != null && onError != null) {
+              onError(
+                'Code: ${data['error']['code']}, Message: ${data['error']['message']}',
+              );
             }
           } catch (e) {
             // 忽略解析错误

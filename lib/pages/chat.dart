@@ -775,7 +775,7 @@ class _ChatPageState extends State<ChatPage> {
         bottom: 4.0,
         left: 16.0,
         right: 16.0,
-        top: 4.0
+        top: 4.0,
       ),
       color: Theme.of(context).colorScheme.surface,
       child: Row(
@@ -789,7 +789,9 @@ class _ChatPageState extends State<ChatPage> {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Column(
@@ -817,7 +819,9 @@ class _ChatPageState extends State<ChatPage> {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Column(
@@ -845,7 +849,9 @@ class _ChatPageState extends State<ChatPage> {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Column(

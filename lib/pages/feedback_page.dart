@@ -69,10 +69,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
         centerTitle: true,
         title: Text(
           S.of(context).helpAndFeedback,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: fontSize,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0,
@@ -112,7 +109,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
 
             Container(
@@ -124,9 +121,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 controller: _contactController,
                 decoration: InputDecoration(
                   hintText: S.of(context).contactInfoHint,
-                  hintStyle: TextStyle(
-                    fontSize: fontSize
-                  ),
+                  hintStyle: TextStyle(fontSize: fontSize),
                   fillColor: Theme.of(context).colorScheme.secondary,
                   focusColor: Theme.of(context).colorScheme.secondary,
                   hoverColor: Theme.of(context).colorScheme.secondary,
@@ -169,9 +164,12 @@ class _FeedbackPageState extends State<FeedbackPage> {
                             color: Theme.of(context).colorScheme.surface,
                           ),
                         )
-                        : Text(S.of(context).submitFeedback, style: TextStyle(
+                        : Text(
+                          S.of(context).submitFeedback,
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                            fontSize:
+                                Theme.of(context).textTheme.bodyLarge?.fontSize,
                             color: Theme.of(context).colorScheme.surface,
                           ),
                         ),

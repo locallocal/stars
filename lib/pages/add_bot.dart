@@ -7,7 +7,6 @@ import 'package:bubble/model/providers.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/logo.dart';
 
-
 class AddBotPage extends StatefulWidget {
   final Function(Bot) onBotAdded;
 
@@ -135,8 +134,8 @@ class _AddBotPageState extends State<AddBotPage> {
         baseURLController.text =
             modelsByProvider[selectedProvider]?['base_url'] as String? ?? '';
         if (value == 'custom') {
-         avatarImage = null; 
-        } 
+          avatarImage = null;
+        }
         final models = currentModels;
         selectedModel = models.isNotEmpty ? models[0] : '';
       });
@@ -169,9 +168,13 @@ class _AddBotPageState extends State<AddBotPage> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 64,
-                  backgroundColor: avatarImage == null 
-                      ? getFrostedProviderColor(selectedProvider, Theme.of(context).colorScheme.primary)
-                      : Theme.of(context).colorScheme.primary,
+                  backgroundColor:
+                      avatarImage == null
+                          ? getFrostedProviderColor(
+                            selectedProvider,
+                            Theme.of(context).colorScheme.primary,
+                          )
+                          : Theme.of(context).colorScheme.primary,
                   backgroundImage:
                       avatarImage != null ? FileImage(avatarImage!) : null,
                   child:

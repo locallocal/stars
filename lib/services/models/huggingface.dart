@@ -5,7 +5,7 @@ import 'package:bubble/model/model.dart';
 
 class HuggingFaceChatModel extends ChatModel {
   static const defaultApiModelUrl = '';
-  
+
   HuggingFaceChatModel(Bot bot) : super(bot);
 
   @override
@@ -16,7 +16,7 @@ class HuggingFaceChatModel extends ChatModel {
       'meta-llama/Meta-Llama-3.1-8B-Instruct',
       'microsoft/phi-4',
       'Qwen/Qwen2.5-Coder-32B-Instruct',
-      'deepseek-ai/DeepSeek-R1'
+      'deepseek-ai/DeepSeek-R1',
     ];
   }
 
@@ -61,9 +61,9 @@ class HuggingFaceChatModel extends ChatModel {
       resetCancelState();
 
       final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/chat/completions'
-            : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
+          bot.baseURL.isNotEmpty
+              ? '${bot.baseURL}/chat/completions'
+              : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
 
       final request =
           http.Request('POST', Uri.parse(url))
