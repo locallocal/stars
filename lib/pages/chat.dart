@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:bubble/services/message_service.dart';
@@ -34,6 +35,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _isWebSearchEnabled = false;
   bool _isDeepThinkingEnabled = false;
 
+  List<File> _selectedImages = [];
   List<Message> _messages = [];
   String _streamingResponse = '';
 
@@ -70,6 +72,28 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
+  // 从相机获取图片
+  Future<void> getAttachImageFromCamera() async {
+    final image = await getImageFromCamera();
+    if (image != null) {
+      setState(() {
+        _selectedImages.add(image);
+        _showAttachmentBar = false;
+      });
+    }
+  }
+
+  // 从相册获取图片
+  Future<void> getAttachImageFromGallery() async {
+    final image = await getImageFromGallery();
+    if (image != null) {
+      setState(() {
+        _selectedImages.add(image);
+        _showAttachmentBar = false;
+      });
+    }
+  }
+
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     final messageText = _messageController.text;
@@ -90,6 +114,7 @@ class _ChatPageState extends State<ChatPage> {
       _isStreaming = true;
       _streamingResponse = '';
       _isCancellable = true;
+      _selectedImages.clear();
     });
 
     await MessageService.addMessage(userMessage);
@@ -542,6 +567,9 @@ class _ChatPageState extends State<ChatPage> {
                             ),
                   ),
 
+                  // 图片区域
+                  if (_selectedImages.isNotEmpty) _showAttachments(),
+
                   // 输入框区域
                   Container(
                     margin: const EdgeInsets.only(
@@ -696,6 +724,94 @@ class _ChatPageState extends State<ChatPage> {
     _showSnackBar(S.of(context).replyCancelled);
   }
 
+  Widget _showAttachments() {
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                S.of(context).attachedImage,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _selectedImages.clear();
+                  });
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                iconSize: 20,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12.0),
+                        child: Image.file(
+                          _selectedImages[index],
+                          height: 150,
+                          width: 150,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedImages.removeAt(index);
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _showChatModelFeatures() {
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, right: 16.0),
@@ -813,7 +929,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.photo_camera, size: 32),
-                        onPressed: getImageFromCamera,
+                        onPressed: getAttachImageFromCamera,
                       ),
                       Text(
                         S.of(context).takePhoto,
@@ -843,7 +959,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.insert_photo, size: 32),
-                        onPressed: getImageFromGallery,
+                        onPressed: getAttachImageFromGallery,
                       ),
                       Text(
                         S.of(context).chooseFromGallery,

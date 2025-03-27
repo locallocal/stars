@@ -527,5 +527,9 @@
     "addAttachment": "上传附件",
     "@addAttachment": {
         "description": "添加附件按钮文本"
+    },
+    "attachedImage": "已附加图片",
+    "@attachedImage": {
+        "description": "已附加图片提示"
     }
 }

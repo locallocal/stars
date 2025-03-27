@@ -1149,6 +1149,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Attached Image`
+  String get attachedImage {
+    return Intl.message(
+      'Attached Image',
+      name: 'attachedImage',
+      desc: 'Text for attached image',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

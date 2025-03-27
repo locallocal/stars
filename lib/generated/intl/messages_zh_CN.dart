@@ -63,6 +63,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "appName": MessageLookupByLibrary.simpleMessage("泡泡"),
     "appTitle": MessageLookupByLibrary.simpleMessage("泡泡 - AI聊天助手"),
+    "attachedImage": MessageLookupByLibrary.simpleMessage("已附加图片"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("智能体头像"),
     "botDeleted": m1,

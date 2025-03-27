@@ -527,5 +527,9 @@
     "addAttachment": "Attachment",
     "@addAttachment": {
         "description": "Add attachment button text"
+    },
+    "attachedImage": "Attached Image",
+    "@attachedImage": {
+        "description": "Text for attached image"
     }
 }

@@ -71,6 +71,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "appTitle": MessageLookupByLibrary.simpleMessage(
       "Bubble - AI Chat Assistant",
     ),
+    "attachedImage": MessageLookupByLibrary.simpleMessage("Attached Image"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Bot Avatar"),
     "botDeleted": m1,
