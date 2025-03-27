@@ -19,7 +19,7 @@ class ChatMessage {
   bool? deepThinking;
   bool? webSearch;
 
-  ChatMessage({required this.role, required this.content});
+  ChatMessage({required this.role, required this.content, this.deepThinking, this.webSearch});
 
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
 }

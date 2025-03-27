@@ -20,17 +20,21 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  final TextEditingController _messageController = TextEditingController();
-  List<Message> _messages = [];
+  late ChatModel _chatModel;
   final String _currentUserId = 'me';
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   bool _isLoading = true;
   bool _isTyping = false;
-  String _streamingResponse = '';
   bool _isStreaming = false;
-  final ScrollController _scrollController = ScrollController();
-  late ChatModel _chatModel;
   bool _isCancellable = false;
   bool _showAttachmentBar = false;
+  bool _isWebSearchEnabled = false;
+  bool _isDeepThinkingEnabled = false;
+
+  List<Message> _messages = [];
+  String _streamingResponse = '';
 
   @override
   void initState() {
@@ -88,9 +92,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     await MessageService.addMessage(userMessage);
-
     await ChatService.updateLastMessage(widget.id, messageText);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -103,7 +105,6 @@ class _ChatPageState extends State<ChatPage> {
 
     try {
       final List<ChatMessage> chatMessages = [];
-
       if (widget.bot.systemPrompt.isNotEmpty) {
         chatMessages.add(
           ChatMessage(role: "system", content: widget.bot.systemPrompt),
@@ -121,7 +122,14 @@ class _ChatPageState extends State<ChatPage> {
         }
       }
 
-      chatMessages.add(ChatMessage(role: "user", content: messageText));
+      chatMessages.add(
+        ChatMessage(
+          role: "user",
+          content: messageText,
+          deepThinking: _isDeepThinkingEnabled,
+          webSearch: _isWebSearchEnabled,
+        ),
+      );
       await _chatModel.sendMessageStream(
         chatMessages,
         (text) {
@@ -245,7 +253,6 @@ class _ChatPageState extends State<ChatPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // 消息列表
                   Expanded(
                     child:
                         _messages.isEmpty
@@ -253,7 +260,6 @@ class _ChatPageState extends State<ChatPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  // AI智能体图标
                                   Container(
                                     width: 128,
                                     height: 128,
@@ -271,14 +277,10 @@ class _ChatPageState extends State<ChatPage> {
                                             : null,
                                   ),
                                   const SizedBox(height: 24),
-                                  // 智能体名称
                                   Text(
                                     widget.bot.name,
                                     style: TextStyle(
-                                      fontSize:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodyLarge?.fontSize,
+                                      fontSize: fontSize! + 2,
                                       fontWeight: FontWeight.bold,
                                       color:
                                           Theme.of(
@@ -287,7 +289,6 @@ class _ChatPageState extends State<ChatPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  // 问候语
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 32.0,
@@ -298,7 +299,7 @@ class _ChatPageState extends State<ChatPage> {
                                           .botGreeting(widget.bot.name),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: fontSize,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
@@ -307,7 +308,6 @@ class _ChatPageState extends State<ChatPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 32),
-                                  // 提示开始聊天
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -316,11 +316,11 @@ class _ChatPageState extends State<ChatPage> {
                                     child: Text(
                                       S.of(context).startChatPrompt,
                                       style: TextStyle(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary.withOpacity(0.7),
                                         fontWeight: FontWeight.w500,
+                                        fontSize: fontSize - 2,
                                       ),
                                     ),
                                   ),
@@ -336,9 +336,7 @@ class _ChatPageState extends State<ChatPage> {
                                         _messages.length +
                                         (_isStreaming ? 1 : 0),
                                     padding: const EdgeInsets.all(8.0),
-                                    // 添加列表构建完成后的回调
                                     itemBuilder: (context, index) {
-                                      // 在列表构建完成后滚动到底部
                                       if (index == _messages.length - 1) {
                                         WidgetsBinding.instance
                                             .addPostFrameCallback((_) {
@@ -359,7 +357,6 @@ class _ChatPageState extends State<ChatPage> {
 
                                       if (_isStreaming &&
                                           index == _messages.length) {
-                                        // 显示流式响应
                                         return Align(
                                           alignment: Alignment.centerLeft,
                                           child: ConstrainedBox(
@@ -412,7 +409,6 @@ class _ChatPageState extends State<ChatPage> {
                                         );
                                       }
 
-                                      // 显示普通消息
                                       final message = _messages[index];
                                       final isMe =
                                           message.senderId == _currentUserId;
@@ -424,7 +420,6 @@ class _ChatPageState extends State<ChatPage> {
                                                 : Alignment.centerLeft,
                                         child: GestureDetector(
                                           onLongPress: () {
-                                            // 复制消息内容到剪贴板
                                             Clipboard.setData(
                                               ClipboardData(
                                                 text: message.content,
@@ -457,7 +452,7 @@ class _ChatPageState extends State<ChatPage> {
                                                         ? Theme.of(context)
                                                             .colorScheme
                                                             .primary
-                                                            .withOpacity(0.5)
+                                                            .withOpacity(0.3)
                                                         : Theme.of(context)
                                                             .colorScheme
                                                             .secondary
@@ -607,7 +602,7 @@ class _ChatPageState extends State<ChatPage> {
                     _showChatModelFeatures(),
 
                   // 附件选择栏
-                  if (_showAttachmentBar) _showAttachmentBars(context),
+                  if (_showAttachmentBar) _showAttachmentBars(),
 
                   const SizedBox(height: 16),
                 ],
@@ -615,7 +610,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // 显示清空聊天记录确认对话框
   void _showClearChatDialog() {
     showDialog(
       context: context,
@@ -658,26 +652,20 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // 清空聊天记录
   Future<void> _clearChatMessages() async {
-    // 先更新UI，立即反馈给用户
     setState(() {
       _messages = [];
     });
 
-    // 清空本地消息
     await MessageService.deleteChatMessage(widget.id);
-    // 更新聊天列表中的最后一条消息
     await ChatService.updateLastMessage(widget.id, '');
 
-    // 重新加载消息列表，确保UI与数据库同步
     await _loadMessages();
     if (mounted) {
       _showSnackBar(S.of(context).chatHistoryCleared);
     }
   }
 
-  // 添加取消请求的方法
   void _cancelRequest() {
     if (!_isCancellable) return;
 
@@ -687,7 +675,6 @@ class _ChatPageState extends State<ChatPage> {
       _isCancellable = false;
       _chatModel.cancelRequest();
 
-      // 如果已经有部分响应，将其作为最终响应保存
       if (_streamingResponse.isNotEmpty) {
         final botMessage = Message(
           type: "text",
@@ -700,7 +687,6 @@ class _ChatPageState extends State<ChatPage> {
         _messages.add(botMessage);
         _streamingResponse = '';
 
-        // 异步保存消息和更新聊天列表
         MessageService.addMessage(botMessage).then((_) {
           ChatService.updateLastMessage(widget.id, botMessage.content);
         });
@@ -720,15 +706,30 @@ class _ChatPageState extends State<ChatPage> {
               padding: const EdgeInsets.only(right: 16.0),
               child: OutlinedButton.icon(
                 onPressed: () {
-                  // 在消息中添加联网搜索指令
-                  _messageController.text = '联网搜索: ${_messageController.text}';
+                  setState(() {
+                    _isWebSearchEnabled = !_isWebSearchEnabled;
+                  });
                 },
                 icon: const Icon(Icons.public, size: 16),
-                label: Text(S.of(context).webSearch),
+                label: Text(
+                  S.of(context).webSearch,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.secondary.withOpacity(0.5),
+                  iconColor:
+                      _isWebSearchEnabled
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
+                  backgroundColor:
+                      _isWebSearchEnabled
+                          ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.3)
+                          : Theme.of(
+                            context,
+                          ).colorScheme.secondary.withOpacity(0.5),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 4,
@@ -743,16 +744,28 @@ class _ChatPageState extends State<ChatPage> {
           if (_chatModel.supportsDeepThinking())
             OutlinedButton.icon(
               onPressed: () {
-                // 在消息中添加深度思考指令
-                _messageController.text =
-                    '深度思考 (R1): ${_messageController.text}';
+                setState(() {
+                  _isDeepThinkingEnabled = !_isDeepThinkingEnabled;
+                });
               },
               icon: const Icon(Icons.psychology, size: 16),
-              label: Text(S.of(context).deepThinking),
+              label: Text(
+                S.of(context).deepThinking,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               style: OutlinedButton.styleFrom(
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.secondary.withOpacity(0.5),
+                iconColor:
+                    _isDeepThinkingEnabled
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                backgroundColor:
+                    _isDeepThinkingEnabled
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                        : Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.5),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 4,
@@ -768,7 +781,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _showAttachmentBars(BuildContext context) {
+  Widget _showAttachmentBars() {
     final fontSize = Theme.of(context).textTheme.bodyMedium?.fontSize ?? 16.0;
     return Container(
       padding: const EdgeInsets.only(

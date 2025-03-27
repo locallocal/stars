@@ -47,13 +47,13 @@ dependencies:
   dot_curved_bottom_nav: ^0.0.1
   flutter_svg: ^2.0.5
   path_provider: ^2.0.0
-  file_picker: ^6.1.1
+  file_picker: ^9.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
-  flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
   flutter_intl: ^0.0.1
 
 # 添加单独的flutter_launcher_icons配置部分
