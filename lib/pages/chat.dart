@@ -6,6 +6,7 @@ import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:bubble/pages/common/logo.dart';
+import 'package:bubble/pages/common/attachment.dart';
 import 'package:bubble/generated/l10n.dart';
 
 // 聊天页面
@@ -812,7 +813,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.photo_camera, size: 32),
-                        onPressed: _getImageFromCamera,
+                        onPressed: getImageFromCamera,
                       ),
                       Text(
                         S.of(context).takePhoto,
@@ -842,7 +843,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.insert_photo, size: 32),
-                        onPressed: _getImageFromGallery,
+                        onPressed: getImageFromGallery,
                       ),
                       Text(
                         S.of(context).chooseFromGallery,
@@ -872,7 +873,7 @@ class _ChatPageState extends State<ChatPage> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.upload_file_rounded, size: 32),
-                        onPressed: _pickFile,
+                        onPressed: pickFile,
                       ),
                       Text(
                         S.of(context).uploadFile,
@@ -898,26 +899,5 @@ class _ChatPageState extends State<ChatPage> {
         margin: const EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
       ),
     );
-  }
-
-  // 从相机获取图片
-  Future<void> _getImageFromCamera() async {
-    // 这里需要添加相机拍照功能
-    // 使用image_picker包实现
-    // 实现后将图片发送到聊天
-  }
-
-  // 从相册获取图片
-  Future<void> _getImageFromGallery() async {
-    // 这里需要添加从相册选择图片功能
-    // 使用image_picker包实现
-    // 实现后将图片发送到聊天
-  }
-
-  // 选择文件
-  Future<void> _pickFile() async {
-    // 这里需要添加文件选择功能
-    // 使用file_picker包实现
-    // 实现后将文件发送到聊天
   }
 }
