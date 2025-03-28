@@ -139,11 +139,45 @@ class _ChatPageState extends State<ChatPage> {
 
       final historyMessages = _messages.where((m) => m.type == "text").toList();
       if (historyMessages.length > 1) {
-        final int startIdx =
-            historyMessages.length > 10 ? historyMessages.length - 10 : 0;
+        int startIdx =
+            historyMessages.length > 100 ? historyMessages.length - 100 : 0;
+        // find the first user message
         for (int i = startIdx; i < historyMessages.length - 1; i++) {
           final msg = historyMessages[i];
-          final role = msg.senderId == _currentUserId ? "user" : "assistant";
+          if (msg.senderId == _currentUserId) {
+            startIdx = i;
+            break;
+          }
+        }
+
+        // merge consecutive user messages
+        String pendingUserMessage = "";
+        for (int i = startIdx; i < historyMessages.length - 1; i++) {
+          final msg = historyMessages[i];
+          final role = msg.senderId == _currentUserId ? 'user' : 'assistant';
+
+          // user message
+          if (role == "user") {
+            if (pendingUserMessage.isNotEmpty) {
+              pendingUserMessage += '\n${msg.content}';
+            } else {
+              pendingUserMessage = msg.content;
+            }
+            if (i == historyMessages.length - 1) {
+              chatMessages.add(
+                ChatMessage(role: role, content: pendingUserMessage),
+              );
+              pendingUserMessage = "";
+            }
+            continue;
+          }
+          if (pendingUserMessage.isNotEmpty) {
+            chatMessages.add(
+              ChatMessage(role: 'user', content: pendingUserMessage),
+            );
+            pendingUserMessage = "";
+          }
+          // assistant message
           chatMessages.add(ChatMessage(role: role, content: msg.content));
         }
       }
@@ -162,7 +196,6 @@ class _ChatPageState extends State<ChatPage> {
           if (mounted) {
             setState(() {
               _streamingResponse += text;
-              // 每次收到新内容时滚动到底部
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (_scrollController.hasClients) {
                   _scrollController.animateTo(
