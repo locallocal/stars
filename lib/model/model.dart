@@ -131,40 +131,74 @@ class Bot {
 
 // 消息
 class Message {
-  final String type;
   final String chatId;
   final String botId;
   final String senderId;
   final String content;
+  final List<String> images; // 图片路径列表
+  final List<String> files; // 文件路径列表
   final DateTime timestamp;
 
   const Message({
-    required this.type,
     required this.chatId,
     required this.botId,
     required this.senderId,
     required this.content,
+    this.images = const [],
+    this.files = const [],
     required this.timestamp,
   });
 
   factory Message.fromMap(Map<String, dynamic> map) {
+    // 处理图片列表
+    List<String> imagesList = [];
+    if (map['images'] != null) {
+      if (map['images'] is String) {
+        try {
+          final List<dynamic> decoded = jsonDecode(map['images'] as String);
+          imagesList = decoded.map((e) => e.toString()).toList();
+        } catch (e) {
+          print('Parse images failed: $e');
+        }
+      } else if (map['images'] is List) {
+        imagesList = (map['images'] as List).map((e) => e.toString()).toList();
+      }
+    }
+
+    // 处理文件列表
+    List<String> filesList = [];
+    if (map['files'] != null) {
+      if (map['files'] is String) {
+        try {
+          final List<dynamic> decoded = jsonDecode(map['files'] as String);
+          filesList = decoded.map((e) => e.toString()).toList();
+        } catch (e) {
+          print('Parse files failed: $e');
+        }
+      } else if (map['files'] is List) {
+        filesList = (map['files'] as List).map((e) => e.toString()).toList();
+      }
+    }
+
     return Message(
-      type: map['type'] as String,
       chatId: map['chat_id'] as String,
       botId: map['bot_id'] as String,
       senderId: map['sender_id'] as String,
       content: map['content'] as String,
+      images: imagesList,
+      files: filesList,
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
     );
   }
 
   Map<String, Object> toMap() {
     return {
-      'type': type,
       'chat_id': chatId,
       'bot_id': botId,
       'sender_id': senderId,
       'content': content,
+      'images': jsonEncode(images),
+      'files': jsonEncode(files),
       'timestamp': timestamp.millisecondsSinceEpoch,
     };
   }

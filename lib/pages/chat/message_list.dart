@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -110,27 +111,90 @@ class MessageList extends StatelessWidget {
                             ).colorScheme.secondary.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(16.0),
                   ),
-                  child: MarkdownBody(
-                    data: message.content,
-                    selectable: true,
-                    styleSheet: MarkdownStyleSheet(
-                      p: TextStyle(
-                        color: Colors.black,
-                        fontSize:
-                            Theme.of(context).textTheme.bodyLarge?.fontSize,
-                      ),
-                      code: TextStyle(
-                        color: Colors.black,
-                        backgroundColor:
-                            isMe
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.1),
-                      ),
-                      blockquote: const TextStyle(
-                        color: Colors.black,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 显示文本内容
+                      if (message.content.isNotEmpty)
+                        MarkdownBody(
+                          data: message.content,
+                          selectable: true,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(
+                              color: Colors.black,
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                            code: TextStyle(
+                              color: Colors.black,
+                              backgroundColor:
+                                  isMe
+                                      ? Colors.white.withOpacity(0.1)
+                                      : Colors.black.withOpacity(0.1),
+                            ),
+                            blockquote: const TextStyle(
+                              color: Colors.black,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+
+                      // 显示图片列表
+                      if (message.images.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children:
+                                message.images.map((imagePath) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // 点击图片时显示大图
+                                      showDialog(
+                                        context: context,
+                                        builder:
+                                            (context) => Dialog(
+                                              child: Image.file(
+                                                File(imagePath),
+                                                fit: BoxFit.contain,
+                                              ),
+                                            ),
+                                      );
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.file(
+                                        File(imagePath),
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Container(
+                                            width: 150,
+                                            height: 150,
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

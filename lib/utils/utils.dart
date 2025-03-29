@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 // 自定义函数将 int 转换为 ThemeMode
 ThemeMode intToThemeMode(int value) {
@@ -25,4 +28,39 @@ int themeModeToInt(ThemeMode value) {
     case ThemeMode.dark:
       return 2;
   }
+}
+
+// 创建聊天文件夹
+Future<void> createChatDirectory(String chatId) async {
+  final appDir = await getApplicationDocumentsDirectory();
+  final chatDir = Directory(path.join(appDir.path, 'chats', chatId));
+  try {
+    if (!await chatDir.exists()) {
+      await chatDir.create(recursive: true);
+    }
+  } catch (e) {
+    debugPrint('Create chat directory $chatDir failed: $e');
+  }
+}
+
+// 删除聊天文件夹
+Future<bool> deleteChatDirectory(String chatId) async {
+  try {
+    final appDir = await getApplicationDocumentsDirectory();
+    final chatDir = Directory(path.join(appDir.path, 'chats', chatId));
+
+    if (await chatDir.exists()) {
+      await chatDir.delete(recursive: true);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    debugPrint('Delete chat directory for $chatId failed: $e');
+    return false;
+  }
+}
+
+Future<String> getChatDirectoryPath(String chatId) async {
+  final appDir = await getApplicationDocumentsDirectory();
+  return path.join(appDir.path, 'chats', chatId);
 }

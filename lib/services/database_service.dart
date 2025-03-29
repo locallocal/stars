@@ -38,11 +38,12 @@ class DatabaseService {
         // 创建聊天消息表
         await db.execute('''
           CREATE TABLE messages (
-            type TEXT,
             chat_id TEXT,
             bot_id TEXT,
             sender_id TEXT,
             content TEXT,
+            images TEXT,
+            files TEXT,
             timestamp INTEGER
           );
         ''');

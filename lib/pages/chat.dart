@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:bubble/services/message_service.dart';
 import 'package:bubble/model/model.dart';
@@ -15,6 +16,7 @@ import 'package:bubble/pages/chat/message_input.dart';
 import 'package:bubble/pages/chat/welcome_view.dart';
 import 'package:bubble/pages/chat/message_list.dart';
 import 'package:bubble/pages/chat/typing_indicator.dart';
+import 'package:bubble/utils/utils.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -101,16 +103,36 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
+    final bool hasText = _messageController.text.trim().isNotEmpty;
+    final bool hasImages = _selectedImages.isNotEmpty;
+    if (!hasText && !hasImages) return;
+
     final messageText = _messageController.text;
+    List<String> imagePaths = [];
+    if (_selectedImages.isNotEmpty) {
+      final chatDir = await getChatDirectoryPath(widget.id);
+
+      for (var image in _selectedImages) {
+        final fileName = path.basename(image.path);
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final targetPath = path.join(chatDir, '${timestamp}_$fileName');
+
+        try {
+          await image.copy(targetPath);
+          imagePaths.add(targetPath);
+        } catch (e) {
+          debugPrint('Copy image ${image.path} failed: $e');
+        }
+      }
+    }
 
     final userMessage = Message(
-      type: "text",
       chatId: widget.id,
       botId: widget.bot.id,
       senderId: _currentUserId,
       content: messageText,
       timestamp: DateTime.now(),
+      images: imagePaths,
     );
 
     setState(() {
@@ -143,13 +165,11 @@ class _ChatPageState extends State<ChatPage> {
         );
       }
 
-      final historyMessages = _messages.where((m) => m.type == "text").toList();
-      if (historyMessages.length > 1) {
-        int startIdx =
-            historyMessages.length > 100 ? historyMessages.length - 100 : 0;
+      if (_messages.length > 1) {
+        int startIdx = _messages.length > 100 ? _messages.length - 100 : 0;
         // find the first user message
-        for (int i = startIdx; i < historyMessages.length - 1; i++) {
-          final msg = historyMessages[i];
+        for (int i = startIdx; i < _messages.length - 1; i++) {
+          final msg = _messages[i];
           if (msg.senderId == _currentUserId) {
             startIdx = i;
             break;
@@ -158,8 +178,8 @@ class _ChatPageState extends State<ChatPage> {
 
         // merge consecutive user messages
         String pendingUserMessage = "";
-        for (int i = startIdx; i < historyMessages.length - 1; i++) {
-          final msg = historyMessages[i];
+        for (int i = startIdx; i < _messages.length - 1; i++) {
+          final msg = _messages[i];
           final role = msg.senderId == _currentUserId ? 'user' : 'assistant';
 
           // user message
@@ -169,9 +189,14 @@ class _ChatPageState extends State<ChatPage> {
             } else {
               pendingUserMessage = msg.content;
             }
-            if (i == historyMessages.length - 1) {
+            if (i == _messages.length - 1) {
               chatMessages.add(
-                ChatMessage(role: role, content: pendingUserMessage),
+                ChatMessage(
+                  role: role,
+                  content: pendingUserMessage,
+                  images: msg.images,
+                  files: msg.files,
+                ),
               );
               pendingUserMessage = "";
             }
@@ -194,6 +219,7 @@ class _ChatPageState extends State<ChatPage> {
           content: messageText,
           deepThinking: _isDeepThinkingEnabled,
           webSearch: _isWebSearchEnabled,
+          images: userMessage.images,
         ),
       );
       await _chatModel.sendMessageStream(
@@ -226,21 +252,15 @@ class _ChatPageState extends State<ChatPage> {
             }
             return;
           }
-
-          // 创建最终AI回复消息
           final botMessage = Message(
-            type: "text",
             chatId: widget.id,
             botId: widget.bot.id,
             senderId: widget.bot.id,
             content: _streamingResponse,
             timestamp: DateTime.now(),
           );
-
-          // 保存AI回复到本地存储
           await MessageService.addMessage(botMessage);
 
-          // 更新UI
           if (mounted) {
             setState(() {
               _messages.add(botMessage);
@@ -251,10 +271,8 @@ class _ChatPageState extends State<ChatPage> {
             });
           }
 
-          // 更新聊天列表中的最后一条消息
           await ChatService.updateLastMessage(widget.id, botMessage.content);
 
-          // 滚动到底部
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (_scrollController.hasClients) {
               _scrollController.animateTo(
@@ -357,6 +375,7 @@ class _ChatPageState extends State<ChatPage> {
                     },
                     showAttachmentBar: _showAttachmentBar,
                     inputModalities: _chatModel.getInputModalites(),
+                    hasAttachments: _selectedImages.isNotEmpty,
                   ),
 
                   // 聊天模型功能
@@ -404,7 +423,6 @@ class _ChatPageState extends State<ChatPage> {
 
       if (_streamingResponse.isNotEmpty) {
         final botMessage = Message(
-          type: "text",
           chatId: widget.id,
           botId: widget.bot.id,
           senderId: widget.bot.id,

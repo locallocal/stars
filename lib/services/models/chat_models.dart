@@ -18,8 +18,17 @@ class ChatMessage {
   final String content;
   bool? deepThinking;
   bool? webSearch;
+  List<String> images;
+  List<String> files;
 
-  ChatMessage({required this.role, required this.content, this.deepThinking, this.webSearch});
+  ChatMessage({
+    required this.role,
+    required this.content,
+    this.deepThinking,
+    this.webSearch,
+    this.images = const [],
+    this.files = const [],
+  });
 
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
 }

@@ -2,6 +2,7 @@ import 'package:bubble/services/message_service.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:bubble/services/database_service.dart';
 import 'package:bubble/model/model.dart';
+import 'package:bubble/utils/utils.dart';
 
 class ChatService {
   static List<Chat> _chats = [];
@@ -40,9 +41,11 @@ class ChatService {
     return _chats;
   }
 
-  static Future<void> addOrUpdateChat(Chat chat) async {
+  static Future<void> addChat(Chat chat) async {
     final db = await DatabaseService.database;
     _chats.add(chat);
+
+    await createChatDirectory(chat.id);
 
     await db.insert(
       'chats',
@@ -63,6 +66,7 @@ class ChatService {
 
     final db = await DatabaseService.database;
     await db.delete('chats', where: 'id = ?', whereArgs: [id]);
+    await deleteChatDirectory(id);
     _chats.removeWhere((chat) => chat.id == id);
   }
 
