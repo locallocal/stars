@@ -5,7 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:bubble/l10n/app_localizations.dart';
 import 'package:bubble/services/profile_service.dart';
 import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/chat_list.dart';
+import 'package:bubble/pages/chats.dart';
 import 'package:bubble/pages/bots.dart';
 import 'package:bubble/pages/profile.dart';
 import 'package:bubble/utils/utils.dart';
@@ -180,10 +180,7 @@ class _MainPageState extends State<MainPage> {
             Icons.smart_toy_rounded,
             color: Theme.of(context).colorScheme.onSurface,
           ),
-          Icon(
-            Icons.person,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+          Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface),
         ],
       ),
     );

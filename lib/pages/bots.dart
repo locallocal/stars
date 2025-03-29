@@ -304,13 +304,13 @@ class _ContactsPageState extends State<ContactsPage> {
                                                   await BotService.updateBot(
                                                     updatedBot,
                                                   );
-                                                  _loadBots(); // 重新加载联系人列表
+                                                  _loadBots();
                                                 },
                                                 onBotDeleted: () async {
                                                   await BotService.deleteBot(
                                                     bot.id,
                                                   );
-                                                  _loadBots(); // 重新加载联系人列表
+                                                  _loadBots();
                                                 },
                                               ),
                                         ),

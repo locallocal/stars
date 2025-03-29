@@ -1,14 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:bubble/services/message_service.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/services/models/chat_models.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:bubble/pages/common/logo.dart';
 import 'package:bubble/pages/common/attachment.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/chat/image_attachments.dart';
+import 'package:bubble/pages/chat/model_features.dart';
+import 'package:bubble/pages/chat/attachment_bars.dart';
+import 'package:bubble/pages/common/common.dart';
+import 'package:bubble/pages/chat/clear_chat_dialog.dart';
+import 'package:bubble/pages/chat/message_input.dart';
+import 'package:bubble/pages/chat/welcome_view.dart';
+import 'package:bubble/pages/chat/message_list.dart';
+import 'package:bubble/pages/chat/typing_indicator.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -35,7 +41,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _isWebSearchEnabled = false;
   bool _isDeepThinkingEnabled = false;
 
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   List<Message> _messages = [];
   String _streamingResponse = '';
 
@@ -216,7 +222,7 @@ class _ChatPageState extends State<ChatPage> {
                 _isStreaming = false;
                 _isCancellable = false;
               });
-              _showSnackBar(S.of(context).emptyResponseError);
+              showSnackBar(context, S.of(context).emptyResponseError);
             }
             return;
           }
@@ -266,7 +272,7 @@ class _ChatPageState extends State<ChatPage> {
               _isStreaming = false;
               _isCancellable = false;
             });
-            _showSnackBar(S.of(context).responseError(error));
+            showSnackBar(context, S.of(context).responseError(error));
           }
         },
       );
@@ -277,7 +283,7 @@ class _ChatPageState extends State<ChatPage> {
           _isTyping = false;
           _isStreaming = false;
         });
-        _showSnackBar(S.of(context).responseError(e.toString()));
+        showSnackBar(context, S.of(context).responseError(e.toString()));
       }
     }
   }
@@ -312,289 +318,26 @@ class _ChatPageState extends State<ChatPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
+                  // 消息列表区域
                   Expanded(
                     child:
                         _messages.isEmpty
-                            ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 128,
-                                    height: 128,
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child:
-                                        widget.bot.avatar.isEmpty
-                                            ? buildProviderLogo(
-                                              context,
-                                              '',
-                                              widget.bot.provider,
-                                              96,
-                                            )
-                                            : null,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Text(
-                                    widget.bot.name,
-                                    style: TextStyle(
-                                      fontSize: fontSize! + 2,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 32.0,
-                                    ),
-                                    child: Text(
-                                      S
-                                          .of(context)
-                                          .botGreeting(widget.bot.name),
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: fontSize,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.7),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 32),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    child: Text(
-                                      S.of(context).startChatPrompt,
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary.withOpacity(0.7),
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: fontSize - 2,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
+                            ? WelcomeView(bot: widget.bot, fontSize: fontSize)
                             : Column(
                               children: [
-                                Expanded(
-                                  child: ListView.builder(
-                                    controller: _scrollController,
-                                    itemCount:
-                                        _messages.length +
-                                        (_isStreaming ? 1 : 0),
-                                    padding: const EdgeInsets.all(8.0),
-                                    itemBuilder: (context, index) {
-                                      if (index == _messages.length - 1) {
-                                        WidgetsBinding.instance
-                                            .addPostFrameCallback((_) {
-                                              if (_scrollController
-                                                  .hasClients) {
-                                                _scrollController.animateTo(
-                                                  _scrollController
-                                                      .position
-                                                      .maxScrollExtent,
-                                                  duration: const Duration(
-                                                    milliseconds: 300,
-                                                  ),
-                                                  curve: Curves.easeOut,
-                                                );
-                                              }
-                                            });
-                                      }
-
-                                      if (_isStreaming &&
-                                          index == _messages.length) {
-                                        return Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxWidth:
-                                                  MediaQuery.of(
-                                                    context,
-                                                  ).size.width *
-                                                  0.8,
-                                            ),
-                                            child: Container(
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 4.0,
-                                                    horizontal: 8.0,
-                                                  ),
-                                              padding: const EdgeInsets.all(
-                                                12.0,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey[300],
-                                                borderRadius:
-                                                    BorderRadius.circular(16.0),
-                                              ),
-                                              child: MarkdownBody(
-                                                data: _streamingResponse,
-                                                selectable: true,
-                                                styleSheet: MarkdownStyleSheet(
-                                                  p: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize:
-                                                        Theme.of(context)
-                                                            .textTheme
-                                                            .bodyLarge
-                                                            ?.fontSize,
-                                                  ),
-                                                  code: TextStyle(
-                                                    color: Colors.black,
-                                                    backgroundColor: Colors
-                                                        .black
-                                                        .withOpacity(0.1),
-                                                  ),
-                                                  blockquote: const TextStyle(
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }
-
-                                      final message = _messages[index];
-                                      final isMe =
-                                          message.senderId == _currentUserId;
-
-                                      return Align(
-                                        alignment:
-                                            isMe
-                                                ? Alignment.centerRight
-                                                : Alignment.centerLeft,
-                                        child: GestureDetector(
-                                          onLongPress: () {
-                                            Clipboard.setData(
-                                              ClipboardData(
-                                                text: message.content,
-                                              ),
-                                            );
-                                            _showSnackBar(
-                                              S.of(context).messageCopied,
-                                            );
-                                          },
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              maxWidth:
-                                                  MediaQuery.of(
-                                                    context,
-                                                  ).size.width *
-                                                  0.8,
-                                            ),
-                                            child: Container(
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 4.0,
-                                                    horizontal: 8.0,
-                                                  ),
-                                              padding: const EdgeInsets.all(
-                                                12.0,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    isMe
-                                                        ? Theme.of(context)
-                                                            .colorScheme
-                                                            .primary
-                                                            .withOpacity(0.3)
-                                                        : Theme.of(context)
-                                                            .colorScheme
-                                                            .secondary
-                                                            .withOpacity(0.5),
-                                                borderRadius:
-                                                    BorderRadius.circular(16.0),
-                                              ),
-                                              child: MarkdownBody(
-                                                data: message.content,
-                                                selectable: true,
-                                                styleSheet: MarkdownStyleSheet(
-                                                  p: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: fontSize,
-                                                  ),
-                                                  code: TextStyle(
-                                                    color: Colors.black,
-                                                    backgroundColor:
-                                                        isMe
-                                                            ? Colors.white
-                                                                .withOpacity(
-                                                                  0.1,
-                                                                )
-                                                            : Colors.black
-                                                                .withOpacity(
-                                                                  0.1,
-                                                                ),
-                                                  ),
-                                                  blockquote: const TextStyle(
-                                                    color: Colors.black,
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                MessageList(
+                                  messages: _messages,
+                                  scrollController: _scrollController,
+                                  isStreaming: _isStreaming,
+                                  streamingResponse: _streamingResponse,
+                                  currentUserId: _currentUserId,
                                 ),
 
                                 if (_isTyping)
-                                  Container(
-                                    padding: const EdgeInsets.only(
-                                      left: 8.0,
-                                      right: 8.0,
-                                    ),
-                                    alignment: Alignment.centerLeft,
-                                    child: Row(
-                                      children: [
-                                        const SizedBox(width: 8),
-                                        const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          S
-                                              .of(context)
-                                              .botIsTyping(widget.bot.name),
-                                        ),
-                                        const Spacer(),
-                                        if (_isCancellable)
-                                          IconButton(
-                                            onPressed: _cancelRequest,
-                                            icon: const Icon(
-                                              Icons.pause_circle_filled,
-                                            ),
-                                            tooltip:
-                                                S.of(context).pauseGeneration,
-                                            iconSize: 28,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 36,
-                                              minHeight: 36,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
+                                  TypingIndicator(
+                                    botName: widget.bot.name,
+                                    isCancellable: _isCancellable,
+                                    onCancelRequest: _cancelRequest,
                                   ),
                               ],
                             ),
@@ -604,61 +347,19 @@ class _ChatPageState extends State<ChatPage> {
                   if (_selectedImages.isNotEmpty) _showAttachments(),
 
                   // 输入框区域
-                  Container(
-                    margin: const EdgeInsets.only(
-                      left: 16.0,
-                      right: 16.0,
-                      top: 16.0,
-                      bottom: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.secondary.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(24.0),
-                    ),
-                    child: TextField(
-                      controller: _messageController,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (value) => _sendMessage(),
-                      decoration: InputDecoration(
-                        hintText: S.of(context).messageHint,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12.0,
-                          horizontal: 12.0,
-                        ),
-                        // 添加后缀图标按钮
-                        suffixIcon: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_chatModel.getInputModalites().contains(
-                                  InputModality.image,
-                                ) ||
-                                _chatModel.getInputModalites().contains(
-                                  InputModality.file,
-                                ))
-                              IconButton(
-                                icon:
-                                    !_showAttachmentBar
-                                        ? const Icon(Icons.add_circle_outline)
-                                        : const Icon(Icons.close),
-                                tooltip: S.of(context).addAttachment,
-                                onPressed: () {
-                                  // 切换显示附件选择栏
-                                  setState(() {
-                                    _showAttachmentBar = !_showAttachmentBar;
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
-                      ),
-                      maxLines: null,
-                      textAlignVertical: TextAlignVertical.center,
-                    ),
+                  MessageInput(
+                    controller: _messageController,
+                    onSend: _sendMessage,
+                    onToggleAttachmentBar: () {
+                      setState(() {
+                        _showAttachmentBar = !_showAttachmentBar;
+                      });
+                    },
+                    showAttachmentBar: _showAttachmentBar,
+                    inputModalities: _chatModel.getInputModalites(),
                   ),
 
+                  // 聊天模型功能
                   if (_chatModel.supportsWebSearch() ||
                       _chatModel.supportsDeepThinking())
                     _showChatModelFeatures(),
@@ -672,46 +373,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _showClearChatDialog() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Center(
-              child: Text(
-                S.of(context).clearChatHistory,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-                ),
-              ),
-            ),
-            content: Text(S.of(context).confirmClearChat(widget.bot.name)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  S.of(context).cancel,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _clearChatMessages();
-                },
-                child: Text(
-                  S.of(context).clear,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ],
-          ),
-    );
+  void _showClearChatDialog() async {
+    final shouldClear = await showClearChatDialog(context, widget.bot.name);
+    if (shouldClear) {
+      _clearChatMessages();
+    }
   }
 
   Future<void> _clearChatMessages() async {
@@ -721,10 +387,9 @@ class _ChatPageState extends State<ChatPage> {
 
     await MessageService.deleteChatMessage(widget.id);
     await ChatService.updateLastMessage(widget.id, '');
-
     await _loadMessages();
     if (mounted) {
-      _showSnackBar(S.of(context).chatHistoryCleared);
+      showSnackBar(context, S.of(context).chatHistoryCleared);
     }
   }
 
@@ -754,299 +419,52 @@ class _ChatPageState extends State<ChatPage> {
         });
       }
     });
-    _showSnackBar(S.of(context).replyCancelled);
+    showSnackBar(context, S.of(context).replyCancelled);
   }
 
+  // 删除原来的 _showAttachments 方法，替换为以下代码
   Widget _showAttachments() {
-    return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                S.of(context).attachedImage,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  setState(() {
-                    _selectedImages.clear();
-                  });
-                },
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                iconSize: 20,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 150,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length,
-              itemBuilder: (context, index) {
-                return Stack(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(right: 8.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12.0),
-                        child: Image.file(
-                          _selectedImages[index],
-                          height: 150,
-                          width: 150,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedImages.removeAt(index);
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+    return ImageAttachments(
+      images: _selectedImages,
+      onClearAll: () {
+        setState(() {
+          _selectedImages.clear();
+        });
+      },
+      onRemoveImage: (index) {
+        setState(() {
+          _selectedImages.removeAt(index);
+        });
+      },
     );
   }
 
   Widget _showChatModelFeatures() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          if (_chatModel.supportsWebSearch())
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _isWebSearchEnabled = !_isWebSearchEnabled;
-                  });
-                },
-                icon: const Icon(Icons.public, size: 16),
-                label: Text(
-                  S.of(context).webSearch,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  iconColor:
-                      _isWebSearchEnabled
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurface,
-                  backgroundColor:
-                      _isWebSearchEnabled
-                          ? Theme.of(
-                            context,
-                          ).colorScheme.primary.withOpacity(0.3)
-                          : Theme.of(
-                            context,
-                          ).colorScheme.secondary.withOpacity(0.5),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  side: const BorderSide(color: Colors.transparent),
-                ),
-              ),
-            ),
-          if (_chatModel.supportsDeepThinking())
-            OutlinedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _isDeepThinkingEnabled = !_isDeepThinkingEnabled;
-                });
-              },
-              icon: const Icon(Icons.psychology, size: 16),
-              label: Text(
-                S.of(context).deepThinking,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                iconColor:
-                    _isDeepThinkingEnabled
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface,
-                backgroundColor:
-                    _isDeepThinkingEnabled
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
-                        : Theme.of(
-                          context,
-                        ).colorScheme.secondary.withOpacity(0.5),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
-                side: const BorderSide(color: Colors.transparent),
-              ),
-            ),
-        ],
-      ),
+    return ChatModelFeatures(
+      isWebSearchEnabled: _isWebSearchEnabled,
+      isDeepThinkingEnabled: _isDeepThinkingEnabled,
+      supportsWebSearch: _chatModel.supportsWebSearch(),
+      supportsDeepThinking: _chatModel.supportsDeepThinking(),
+      onWebSearchToggle: (value) {
+        setState(() {
+          _isWebSearchEnabled = value;
+        });
+      },
+      onDeepThinkingToggle: (value) {
+        setState(() {
+          _isDeepThinkingEnabled = value;
+        });
+      },
     );
   }
 
+  // 修改原文件中的引用
   Widget _showAttachmentBars() {
-    final fontSize = Theme.of(context).textTheme.bodyMedium?.fontSize ?? 16.0;
-    return Container(
-      padding: const EdgeInsets.only(
-        bottom: 4.0,
-        left: 16.0,
-        right: 16.0,
-        top: 4.0,
-      ),
-      color: Theme.of(context).colorScheme.surface,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          if (_chatModel.getInputModalites().contains(InputModality.image))
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.photo_camera, size: 32),
-                        onPressed: getAttachImageFromCamera,
-                      ),
-                      Text(
-                        S.of(context).takePhoto,
-                        style: TextStyle(fontSize: fontSize - 2),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-          if (_chatModel.getInputModalites().contains(InputModality.image))
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.insert_photo, size: 32),
-                        onPressed: getAttachImageFromGallery,
-                      ),
-                      Text(
-                        S.of(context).chooseFromGallery,
-                        style: TextStyle(fontSize: fontSize - 2),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-          if (_chatModel.getInputModalites().contains(InputModality.file))
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.upload_file_rounded, size: 32),
-                        onPressed: pickFile,
-                      ),
-                      Text(
-                        S.of(context).uploadFile,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
-  // 显示提示信息
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 5),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
-      ),
+    return AttachmentBars(
+      onCameraPressed: getAttachImageFromCamera,
+      onGalleryPressed: getAttachImageFromGallery,
+      onFilePressed: pickFile,
+      inputModalities: _chatModel.getInputModalites(),
     );
   }
 }

@@ -67,12 +67,6 @@ class DeepSeekChatModel extends ChatModel {
     Function? onComplete,
     Function(String)? onError,
   }) async {
-    print('hhhhhhhhhhhh');
-    for (var i = 0; i < messages.length; i++) {
-      print('${messages[i].role}: ${messages[i].content}\n');
-    }
-    print('hhhhhhhhhhh');
-
     try {
       resetCancelState();
 
