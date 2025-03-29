@@ -1150,12 +1150,22 @@ class S {
     );
   }
 
-  /// `Attached Image`
-  String get attachedImage {
+  /// `Attached Images`
+  String get attachedImages {
     return Intl.message(
-      'Attached Image',
-      name: 'attachedImage',
-      desc: 'Text for attached image',
+      'Attached Images',
+      name: 'attachedImages',
+      desc: 'Text for attached images',
+      args: [],
+    );
+  }
+
+  /// `Attached Files`
+  String get attachedFiles {
+    return Intl.message(
+      'Attached Files',
+      name: 'attachedFiles',
+      desc: 'Label for attached files',
       args: [],
     );
   }

@@ -11,6 +11,7 @@ import 'package:bubble/services/models/openrouter.dart';
 import 'package:bubble/services/models/tencent.dart';
 import 'package:bubble/services/models/volcano_engine.dart';
 import 'package:bubble/services/models/baidu.dart';
+import 'package:bubble/services/models/zhipu.dart';
 
 // 定义消息类型
 class ChatMessage {
@@ -42,8 +43,34 @@ abstract class ChatModel {
   // 用于取消请求的控制器
   StreamController<bool>? cancelController;
   bool isCancelled = false;
+  bool webSearch = false;
+  bool deepThinking = false;
 
   ChatModel(this.bot);
+
+  bool supportsWebSearch() {
+    return false;
+  }
+
+  bool supportsDeepThinking() {
+    return false;
+  }
+
+  void setWebSearch(bool enabled) {
+    webSearch = enabled;
+  }
+
+  void setDeepThinking(bool enabled) {
+    deepThinking = enabled;
+  }
+
+  List<InputModality> getInputModalites() {
+    return [InputModality.text];
+  }
+
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.text];
+  }
 
   // 发送消息并获取完整响应
   Future<String> sendMessage(List<ChatMessage> messages);
@@ -98,24 +125,10 @@ abstract class ChatModel {
         return OpenRouterChatModel(bot);
       case Bot.apiTypeBaidu:
         return BaiduChatModel(bot);
+      case Bot.apiTypeZhipu:
+        return ZhipuChatModel(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
-  }
-
-  bool supportsWebSearch() {
-    return false;
-  }
-
-  bool supportsDeepThinking() {
-    return false;
-  }
-
-  List<InputModality> getInputModalites() {
-    return [InputModality.text];
-  }
-
-  List<OutputModality> getOutputModalites() {
-    return [OutputModality.text];
   }
 }

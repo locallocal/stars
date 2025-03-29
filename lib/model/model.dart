@@ -35,6 +35,7 @@ class Bot {
   static const apiTypeVolcanoEngine = "volcanoengine";
   static const apiTypeTencent = "tencent";
   static const apiTypeBaidu = "baidu";
+  static const String apiTypeZhipu = 'zhipu';
 
   final String id;
   final String name;
@@ -126,6 +127,24 @@ class Bot {
       'create_timestamp': createTimestamp.millisecondsSinceEpoch,
       'modify_timestamp': modifyTimestamp.millisecondsSinceEpoch,
     };
+  }
+
+  // 获取所有API类型
+  static List<String> getAllApiTypes() {
+    return [
+      apiTypeOpenAI,
+      apiTypeAnthropic,
+      apiTypeGemini,
+      apiTypeDeepseek,
+      apiTypeOllama,
+      apiTypeHuggingface,
+      apiTypeGrok,
+      apiTypeVolcanoEngine,
+      apiTypeTencent,
+      apiTypeBaidu,
+      apiTypeOpenRouter,
+      apiTypeZhipu,
+    ];
   }
 }
 

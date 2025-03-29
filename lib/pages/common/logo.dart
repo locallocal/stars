@@ -2,53 +2,59 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-Widget buildProviderLogo(BuildContext context, String avatar, String provider, double size) {
-    if (avatar.isNotEmpty) {
-      return Image.file(
-        File(avatar),
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-      );
-    }
-    
-    final String providerLower = provider.toLowerCase();
-    if (providerLower == 'custom' || providerLower == '') {
-      return Icon(
-        Icons.smart_toy_rounded,
-        size: size,
-        color: Theme.of(context).colorScheme.onSurface,
-      );
-    }
+Widget buildProviderLogo(
+  BuildContext context,
+  String avatar,
+  String provider,
+  double size,
+) {
+  if (avatar.isNotEmpty) {
+    return Image.file(
+      File(avatar),
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+    );
+  }
 
-    try {
-      return SvgPicture.asset(
-        'assets/images/providers/$providerLower.svg',
-        width: size,
-        height: size,
-        placeholderBuilder: (context) => Icon(
-          Icons.smart_toy_rounded,
-          size: size,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      );
-    } catch (e) {
-      return Image.asset(
-        'assets/images/providers/$providerLower.png',
-        width: size,
-        height: size,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(
+  final String providerLower = provider.toLowerCase();
+  if (providerLower == 'custom' || providerLower == '') {
+    return Icon(
+      Icons.smart_toy_rounded,
+      size: size,
+      color: Theme.of(context).colorScheme.onSurface,
+    );
+  }
+
+  try {
+    return SvgPicture.asset(
+      'assets/images/providers/$providerLower.svg',
+      width: size,
+      height: size,
+      placeholderBuilder:
+          (context) => Icon(
             Icons.smart_toy_rounded,
             size: size,
             color: Theme.of(context).colorScheme.onSurface,
-          );
-        },
-      );
-    }
+          ),
+    );
+  } catch (e) {
+    return Image.asset(
+      'assets/images/providers/$providerLower.png',
+      width: size,
+      height: size,
+      errorBuilder: (context, error, stackTrace) {
+        return Icon(
+          Icons.smart_toy_rounded,
+          size: size,
+          color: Theme.of(context).colorScheme.onSurface,
+        );
+      },
+    );
   }
+}
 
-  // 获取提供商对应的主题色
+// 获取提供商对应的主题色
 // 获取提供商对应的主题色
 Color getProviderColor(String provider, Color defaultColor) {
   switch (provider.toLowerCase()) {
@@ -82,16 +88,22 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFC9CBFF); // 百度 浅蓝色
     case 'moonshot':
       return const Color(0xFFE1C4E9); // Moonshot 浅紫色
+    case 'zhipu':
+      return const Color(0xFFD4F0E2); // 智普 浅绿色
     default:
       return defaultColor; // 默认颜色
   }
 }
 
 // 添加磨砂效果的函数
-Color getFrostedProviderColor(String provider, Color defaultColor, {double opacity = 0.7}) {
+Color getFrostedProviderColor(
+  String provider,
+  Color defaultColor, {
+  double opacity = 0.7,
+}) {
   // 获取基础颜色
   Color baseColor = getProviderColor(provider, defaultColor);
-  
+
   // 创建磨砂效果（通过调整透明度）
   return baseColor.withOpacity(opacity);
 }

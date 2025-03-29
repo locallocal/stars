@@ -7,7 +7,7 @@ import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/pages/common/attachment.dart';
 import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/chat/image_attachments.dart';
+import 'package:bubble/pages/chat/attachments.dart';
 import 'package:bubble/pages/chat/model_features.dart';
 import 'package:bubble/pages/chat/attachment_bars.dart';
 import 'package:bubble/pages/common/common.dart';
@@ -44,6 +44,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _isDeepThinkingEnabled = false;
 
   final List<File> _selectedImages = [];
+  final List<File> _selectedFiles = [];
   List<Message> _messages = [];
   String _streamingResponse = '';
 
@@ -102,37 +103,33 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // 获取文件
+  Future<void> getAttacheFile() async {
+    final file = await pickFile();
+    if (file != null) {
+      setState(() {
+        _selectedFiles.add(file);
+        _showAttachmentBar = false;
+      });
+    }
+  }
+
   Future<void> _sendMessage() async {
     final bool hasText = _messageController.text.trim().isNotEmpty;
     final bool hasImages = _selectedImages.isNotEmpty;
     if (!hasText && !hasImages) return;
 
     final messageText = _messageController.text;
-    List<String> imagePaths = [];
-    if (_selectedImages.isNotEmpty) {
-      final chatDir = await getChatDirectoryPath(widget.id);
-
-      for (var image in _selectedImages) {
-        final fileName = path.basename(image.path);
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final targetPath = path.join(chatDir, '${timestamp}_$fileName');
-
-        try {
-          await image.copy(targetPath);
-          imagePaths.add(targetPath);
-        } catch (e) {
-          debugPrint('Copy image ${image.path} failed: $e');
-        }
-      }
-    }
-
+    final imagePaths = await _getSelectedImagePaths();
+    final filePahts = await _getSelectedFilePaths();
     final userMessage = Message(
       chatId: widget.id,
       botId: widget.bot.id,
       senderId: _currentUserId,
       content: messageText,
-      timestamp: DateTime.now(),
       images: imagePaths,
+      files: filePahts,
+      timestamp: DateTime.now(),
     );
 
     setState(() {
@@ -143,6 +140,7 @@ class _ChatPageState extends State<ChatPage> {
       _streamingResponse = '';
       _isCancellable = true;
       _selectedImages.clear();
+      _selectedFiles.clear();
     });
 
     await MessageService.addMessage(userMessage);
@@ -165,6 +163,8 @@ class _ChatPageState extends State<ChatPage> {
         );
       }
 
+      // merge consecutive user messages
+      String pendingUserMessage = "";
       if (_messages.length > 1) {
         int startIdx = _messages.length > 100 ? _messages.length - 100 : 0;
         // find the first user message
@@ -176,8 +176,6 @@ class _ChatPageState extends State<ChatPage> {
           }
         }
 
-        // merge consecutive user messages
-        String pendingUserMessage = "";
         for (int i = startIdx; i < _messages.length - 1; i++) {
           final msg = _messages[i];
           final role = msg.senderId == _currentUserId ? 'user' : 'assistant';
@@ -189,37 +187,29 @@ class _ChatPageState extends State<ChatPage> {
             } else {
               pendingUserMessage = msg.content;
             }
-            if (i == _messages.length - 1) {
-              chatMessages.add(
-                ChatMessage(
-                  role: role,
-                  content: pendingUserMessage,
-                  images: msg.images,
-                  files: msg.files,
-                ),
-              );
-              pendingUserMessage = "";
-            }
             continue;
           }
-          if (pendingUserMessage.isNotEmpty) {
-            chatMessages.add(
-              ChatMessage(role: 'user', content: pendingUserMessage),
-            );
-            pendingUserMessage = "";
-          }
+          chatMessages.add(
+            ChatMessage(role: 'user', content: pendingUserMessage),
+          );
+          pendingUserMessage = "";
           // assistant message
           chatMessages.add(ChatMessage(role: role, content: msg.content));
         }
       }
 
+      String lastUserMessage = messageText;
+      if (pendingUserMessage.isNotEmpty) {
+        lastUserMessage = messageText + '\n' + pendingUserMessage;
+      }
       chatMessages.add(
         ChatMessage(
           role: "user",
-          content: messageText,
+          content: lastUserMessage,
           deepThinking: _isDeepThinkingEnabled,
           webSearch: _isWebSearchEnabled,
           images: userMessage.images,
+          files: userMessage.files,
         ),
       );
       await _chatModel.sendMessageStream(
@@ -272,7 +262,6 @@ class _ChatPageState extends State<ChatPage> {
           }
 
           await ChatService.updateLastMessage(widget.id, botMessage.content);
-
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (_scrollController.hasClients) {
               _scrollController.animateTo(
@@ -336,7 +325,6 @@ class _ChatPageState extends State<ChatPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // 消息列表区域
                   Expanded(
                     child:
                         _messages.isEmpty
@@ -362,7 +350,8 @@ class _ChatPageState extends State<ChatPage> {
                   ),
 
                   // 图片区域
-                  if (_selectedImages.isNotEmpty) _showAttachments(),
+                  if (_selectedImages.isNotEmpty || _selectedFiles.isNotEmpty)
+                    _showAttachments(),
 
                   // 输入框区域
                   MessageInput(
@@ -375,7 +364,9 @@ class _ChatPageState extends State<ChatPage> {
                     },
                     showAttachmentBar: _showAttachmentBar,
                     inputModalities: _chatModel.getInputModalites(),
-                    hasAttachments: _selectedImages.isNotEmpty,
+                    hasAttachments:
+                        (_selectedImages.isNotEmpty ||
+                            _selectedFiles.isNotEmpty),
                   ),
 
                   // 聊天模型功能
@@ -440,18 +431,67 @@ class _ChatPageState extends State<ChatPage> {
     showSnackBar(context, S.of(context).replyCancelled);
   }
 
+  Future<List<String>> _getSelectedImagePaths() async {
+    List<String> imagePaths = [];
+    if (_selectedImages.isNotEmpty) {
+      final chatDir = await getChatDirectoryPath(widget.id);
+
+      for (var image in _selectedImages) {
+        final fileName = path.basename(image.path);
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final targetPath = path.join(chatDir, '${fileName}_$timestamp');
+
+        try {
+          await image.copy(targetPath);
+          imagePaths.add(targetPath);
+        } catch (e) {
+          debugPrint('Copy image ${image.path} failed: $e');
+        }
+      }
+    }
+    return imagePaths;
+  }
+
+  Future<List<String>> _getSelectedFilePaths() async {
+    List<String> filePaths = [];
+    if (_selectedFiles.isNotEmpty) {
+      final chatDir = await getChatDirectoryPath(widget.id);
+
+      for (var file in _selectedFiles) {
+        final fileName = path.basename(file.path);
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final targetPath = path.join(chatDir, '${fileName}_$timestamp');
+
+        try {
+          await file.copy(targetPath);
+          filePaths.add(targetPath);
+        } catch (e) {
+          debugPrint('Copy image ${file.path} failed: $e');
+        }
+      }
+    }
+    return filePaths;
+  }
+
   // 删除原来的 _showAttachments 方法，替换为以下代码
   Widget _showAttachments() {
     return ImageAttachments(
       images: _selectedImages,
+      files: _selectedFiles,
       onClearAll: () {
         setState(() {
           _selectedImages.clear();
+          _selectedFiles.clear();
         });
       },
       onRemoveImage: (index) {
         setState(() {
           _selectedImages.removeAt(index);
+        });
+      },
+      onRemoveFile: (index) {
+        setState(() {
+          _selectedFiles.removeAt(index);
         });
       },
     );
@@ -481,7 +521,7 @@ class _ChatPageState extends State<ChatPage> {
     return AttachmentBars(
       onCameraPressed: getAttachImageFromCamera,
       onGalleryPressed: getAttachImageFromGallery,
-      onFilePressed: pickFile,
+      onFilePressed: getAttacheFile,
       inputModalities: _chatModel.getInputModalites(),
     );
   }

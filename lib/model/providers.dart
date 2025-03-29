@@ -16,6 +16,7 @@ final providers = [
   'SiliconFlow',
   'Baidu',
   'Moonshot',
+  'ZhiPu',
 ];
 
 final modelsByProvider = {
@@ -76,5 +77,9 @@ final modelsByProvider = {
   'Moonshot': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'https://api.moonshot.cn',
+  },
+  'ZhiPu': {
+    'api_type': Bot.apiTypeZhipu,
+    'base_url': 'https://open.bigmodel.cn',
   },
 };

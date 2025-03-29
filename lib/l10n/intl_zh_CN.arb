@@ -528,8 +528,12 @@
     "@addAttachment": {
         "description": "添加附件按钮文本"
     },
-    "attachedImage": "已附加图片",
-    "@attachedImage": {
+    "attachedImages": "附加图片",
+    "@attachedImages": {
         "description": "已附加图片提示"
+    },
+    "attachedFiles": "附件文件",
+    "@attachedFiles": {
+        "description": "已附加的文件提示"
     }
 }

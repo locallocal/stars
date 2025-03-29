@@ -175,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           // 名称区域
           ListTile(
-            leading: const Icon(Icons.person),
+            leading: const Icon(Icons.person_rounded),
             title: Text(
               S.of(context).name,
               style: TextStyle(fontSize: _fontSize),
@@ -190,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           // 主题切换
           ListTile(
-            leading: const Icon(Icons.brightness_6),
+            leading: const Icon(Icons.brightness_6_rounded),
             title: Text(
               S.of(context).themeSettings,
               style: TextStyle(fontSize: _fontSize),
@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           // 语言切换
           ListTile(
-            leading: const Icon(Icons.language),
+            leading: const Icon(Icons.language_rounded),
             title: Text(
               S.of(context).languageSettings,
               style: TextStyle(fontSize: _fontSize),
@@ -226,9 +226,8 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
 
-          // 字号调节
           ListTile(
-            leading: const Icon(Icons.text_fields),
+            leading: const Icon(Icons.text_fields_rounded),
             title: Text(
               S.of(context).fontSizeSettings,
               style: TextStyle(fontSize: _fontSize),
@@ -272,7 +271,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           // 帮助与反馈
           ListTile(
-            leading: const Icon(Icons.help_outline),
+            leading: const Icon(Icons.help_rounded),
             title: Text(
               S.of(context).helpAndFeedback,
               style: TextStyle(fontSize: _fontSize),
@@ -292,7 +291,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
           // 关于
           ListTile(
-            leading: const Icon(Icons.info_outline),
+            leading: const Icon(Icons.info_rounded),
             title: Text(
               S.of(context).about,
               style: TextStyle(fontSize: _fontSize),

@@ -335,83 +335,19 @@ class _AddBotPageState extends State<AddBotPage> {
                           Bot.apiTypeOpenAI,
                       underline: const SizedBox(),
                       items: [
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeOpenAI,
-                          child: Text(
-                            'OpenAI',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeAnthropic,
-                          child: Text(
-                            'Anthropic',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeGemini,
-                          child: Text(
-                            'Gemini',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeDeepseek,
-                          child: Text(
-                            'DeepSeek',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeOllama,
-                          child: Text(
-                            'Ollama',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeHuggingface,
-                          child: Text(
-                            'HuggingFace',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeGrok,
-                          child: Text(
-                            'Grok',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeVolcanoEngine,
-                          child: Text(
-                            'VolcanoEngine',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeTencent,
-                          child: Text(
-                            'Tencent',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeBaidu,
-                          child: Text(
-                            'Baidu',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: Bot.apiTypeOpenRouter,
-                          child: Text(
-                            'OpenRouter',
-                            style: TextStyle(fontSize: fontSize),
-                          ),
-                        ),
+                        ...Bot.getAllApiTypes().map((apiType) {
+                          String displayName =
+                              apiType.substring(0, 1).toUpperCase() +
+                              apiType.substring(1);
+
+                          return DropdownMenuItem<String>(
+                            value: apiType,
+                            child: Text(
+                              displayName,
+                              style: TextStyle(fontSize: fontSize),
+                            ),
+                          );
+                        }),
                       ],
                       onChanged:
                           isCustomProvider

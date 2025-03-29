@@ -10,6 +10,30 @@ class DeepSeekChatModel extends ChatModel {
   DeepSeekChatModel(Bot bot) : super(bot);
 
   @override
+  bool supportsWebSearch() {
+    return true;
+  }
+
+  @override
+  bool supportsDeepThinking() {
+    switch (bot.model) {
+      case 'deepseek-reasoner':
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    return [InputModality.text];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.text];
+  }
+
+  @override
   Future<List<String>> listModels() async {
     // deepseek-chat
     // deepseek-reasoner
@@ -96,7 +120,6 @@ class DeepSeekChatModel extends ChatModel {
         final errorBody = await streamedResponse.stream.bytesToString();
         throw Exception('${streamedResponse.statusCode}, $errorBody');
       }
-
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -144,29 +167,5 @@ class DeepSeekChatModel extends ChatModel {
       cancelController?.close();
       cancelController = null;
     }
-  }
-
-  @override
-  bool supportsWebSearch() {
-    return true;
-  }
-
-  @override
-  bool supportsDeepThinking() {
-    switch (bot.model) {
-      case 'deepseek-reasoner':
-        return true;
-    }
-    return false;
-  }
-
-  @override
-  List<InputModality> getInputModalites() {
-    return [InputModality.text, InputModality.file, InputModality.image];
-  }
-
-  @override
-  List<OutputModality> getOutputModalites() {
-    return [OutputModality.text];
   }
 }

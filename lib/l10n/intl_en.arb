@@ -528,8 +528,12 @@
     "@addAttachment": {
         "description": "Add attachment button text"
     },
-    "attachedImage": "Attached Image",
-    "@attachedImage": {
-        "description": "Text for attached image"
+    "attachedImages": "Attached Images",
+    "@attachedImages": {
+        "description": "Text for attached images"
+    },
+    "attachedFiles": "Attached Files",
+    "@attachedFiles": {
+        "description": "Label for attached files"
     }
 }

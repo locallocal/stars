@@ -8,7 +8,7 @@ class MessageInput extends StatelessWidget {
   final Function() onToggleAttachmentBar;
   final bool showAttachmentBar;
   final List<InputModality> inputModalities;
-  final bool hasAttachments = false;
+  final bool hasAttachments;
 
   const MessageInput({
     super.key,
@@ -17,7 +17,7 @@ class MessageInput extends StatelessWidget {
     required this.onToggleAttachmentBar,
     required this.showAttachmentBar,
     required this.inputModalities,
-    final bool? hasAttachments,
+    required this.hasAttachments,
   });
 
   @override
@@ -44,7 +44,6 @@ class MessageInput extends StatelessWidget {
             vertical: 12.0,
             horizontal: 12.0,
           ),
-          // 添加后缀图标按钮
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
