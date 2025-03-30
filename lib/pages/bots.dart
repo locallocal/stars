@@ -76,7 +76,7 @@ class _ContactsPageState extends State<ContactsPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle),
+            icon: const Icon(Icons.add_circle_rounded),
             onPressed: () {
               Navigator.push(
                 context,

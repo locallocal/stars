@@ -173,7 +173,7 @@ class _MainPageState extends State<MainPage> {
         },
         items: [
           Icon(
-            Icons.chat_rounded,
+            Icons.wechat_rounded,
             color: Theme.of(context).colorScheme.onSurface,
           ),
           Icon(

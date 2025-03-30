@@ -74,7 +74,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete_rounded),
             onPressed: () {
               showDialog(
                 context: context,

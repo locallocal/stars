@@ -66,7 +66,7 @@ class _ChatListPageState extends State<ChatListPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle),
+            icon: const Icon(Icons.add_circle_rounded),
             onPressed: () async {
               // 获取智能体列表
               if (!mounted) return;
