@@ -156,15 +156,12 @@ class _ProfilePageState extends State<ProfilePage> {
                       radius: 64,
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       backgroundImage:
-                          _avatar.isNotEmpty ? FileImage(File(_avatar)) : null,
-                      child:
-                          _avatar.isEmpty
-                              ? Icon(
-                                Icons.person,
-                                size: 64,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              )
-                              : null,
+                          _avatar.isNotEmpty
+                              ? FileImage(File(_avatar))
+                              : const AssetImage(
+                                    'assets/images/profile/default_avatar.png',
+                                  )
+                                  as ImageProvider,
                     ),
                     const SizedBox(height: 16),
                   ],

@@ -180,7 +180,10 @@ class _MainPageState extends State<MainPage> {
             Icons.smart_toy_rounded,
             color: Theme.of(context).colorScheme.onSurface,
           ),
-          Icon(Icons.person, color: Theme.of(context).colorScheme.onSurface),
+          Icon(
+            Icons.person_rounded,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ],
       ),
     );
