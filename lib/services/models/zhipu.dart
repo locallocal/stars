@@ -258,7 +258,7 @@ class ZhipuChatModel extends ChatModel {
   }
 
   @override
-  Future<String> generateImage(
+  Future<List<String>> generateImage(
     String prompt,
     String size,
     String imageDirPath,
@@ -297,22 +297,16 @@ class ZhipuChatModel extends ChatModel {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        // 从响应中获取图片URL
         final imageUrl = data['data'][0]['url'];
-        // 下载图片并保存到本地
         final imageResponse = await http.get(Uri.parse(imageUrl));
 
         if (imageResponse.statusCode == 200) {
-          // 生成文件名
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final fileName = 'cogview_$timestamp.png';
           final filePath = '$imageDirPath/$fileName';
-
-          // 保存图片
           final file = File(filePath);
           await file.writeAsBytes(imageResponse.bodyBytes);
-
-          return filePath;
+          return [filePath];
         } else {
           throw Exception(
             'Download image $imageUrl failed: ${imageResponse.statusCode}',

@@ -105,7 +105,7 @@ abstract class ChatModel {
   Future<void> sendMessageStream(List<ChatMessage> messages);
 
   // 生成图片
-  Future<String> generateImage(
+  Future<List<String>> generateImage(
     String prompt,
     String size,
     String imageDirPath,
