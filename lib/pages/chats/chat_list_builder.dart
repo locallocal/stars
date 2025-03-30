@@ -89,8 +89,7 @@ class ChatListBuilder extends StatelessWidget {
             await deleteChatDirectory(chat.id);
 
             // 通知父组件更新
-            onChatDeleted(index);
-
+            onChatDeleted(chat.id);
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(S.of(context).chatDeleted(bot.name))),
@@ -114,7 +113,7 @@ class ChatListBuilder extends StatelessWidget {
                 ),
               ).then((_) {
                 // 刷新聊天列表
-                onChatDeleted(-1); // 使用-1表示不删除任何项，只刷新
+                onChatDeleted(''); // 使用-1表示不删除任何项，只刷新
               });
             },
           ),

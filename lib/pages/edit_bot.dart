@@ -188,7 +188,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.business),
+                  Icon(
+                    Icons.business_rounded,
+                    color: Theme.of(context).disabledColor,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<String>(
@@ -225,7 +228,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.category_outlined),
+                  Icon(
+                    Icons.category_rounded,
+                    color: Theme.of(context).disabledColor,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<String>(
@@ -262,9 +268,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 // 设置初始值
                 controller: baseURLController,
                 decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.link),
+                  prefixIcon: Icon(Icons.link_rounded),
                   border: InputBorder.none,
-                  filled: true,
+                  filled: false,
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
                 enabled: false, // 禁用编辑
@@ -286,13 +292,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
               child: TextField(
                 controller: apiKeyController,
                 decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.key),
+                  prefixIcon: Icon(Icons.key_rounded),
                   border: InputBorder.none,
-                  filled: true,
+                  filled: false,
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
-                obscureText: true,
                 enabled: false, // 禁用编辑
+                obscureText: true,
               ),
             ),
             const SizedBox(height: 16),
@@ -312,7 +318,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.model_training), // 添加模型图标
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Theme.of(context).disabledColor,
+                  ), // 添加模型图标
                   const SizedBox(width: 16), // 添
                   Expanded(
                     child: DropdownButton<String>(

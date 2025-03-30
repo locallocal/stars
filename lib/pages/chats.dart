@@ -121,10 +121,12 @@ class _ChatListPageState extends State<ChatListPage> {
                             : ChatListBuilder(
                               chatList: chatList,
                               bots: bots,
-                              onChatDeleted: (int index) {
-                                if (index >= 0) {
+                              onChatDeleted: (String id) {
+                                if (id.isNotEmpty) {
                                   setState(() {
-                                    chatList.removeAt(index);
+                                    chatList.removeWhere(
+                                      (chat) => chat.id == id,
+                                    );
                                   });
                                 } else {
                                   _loadChatList();

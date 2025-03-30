@@ -199,7 +199,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   fillColor: Theme.of(context).colorScheme.secondary,
                   focusColor: Theme.of(context).colorScheme.secondary,
                   hoverColor: Theme.of(context).colorScheme.secondary,
-                  prefixIcon: const Icon(Icons.smart_toy),
+                  prefixIcon: const Icon(Icons.smart_toy_rounded),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -222,7 +222,7 @@ class _AddBotPageState extends State<AddBotPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.business),
+                    const Icon(Icons.business_rounded),
                     const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButton<String>(
@@ -236,7 +236,10 @@ class _AddBotPageState extends State<AddBotPage> {
                               value: provider,
                               child: Text(
                                 provider,
-                                style: TextStyle(fontSize: fontSize),
+                                style: TextStyle(
+                                  fontSize: fontSize,
+                                  fontWeight: FontWeight.normal,
+                                ),
                               ),
                             );
                           }),
@@ -244,7 +247,10 @@ class _AddBotPageState extends State<AddBotPage> {
                             value: 'custom',
                             child: Text(
                               S.of(context).customProvider,
-                              style: TextStyle(fontSize: fontSize),
+                              style: TextStyle(
+                                fontSize: fontSize,
+                                fontWeight: FontWeight.normal,
+                              ),
                             ),
                           ),
                         ],
@@ -276,11 +282,11 @@ class _AddBotPageState extends State<AddBotPage> {
                         controller: customProviderController,
                         decoration: InputDecoration(
                           hintText: S.of(context).enterProviderName,
-                          prefixIcon: const Icon(Icons.business),
+                          prefixIcon: const Icon(Icons.business_rounded),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12),
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.close),
+                            icon: const Icon(Icons.close_rounded),
                             onPressed: () {
                               setState(() {
                                 isCustomProvider = false;
@@ -323,7 +329,7 @@ class _AddBotPageState extends State<AddBotPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.category_outlined),
+                  const Icon(Icons.category_rounded),
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<String>(
@@ -378,11 +384,12 @@ class _AddBotPageState extends State<AddBotPage> {
                 color: Theme.of(context).colorScheme.secondary,
                 borderRadius: BorderRadius.circular(24.0),
               ),
+              width: double.infinity,
               child: TextField(
                 controller: baseURLController,
                 decoration: InputDecoration(
                   hintText: S.of(context).enterApiAddress,
-                  prefixIcon: const Icon(Icons.link),
+                  prefixIcon: const Icon(Icons.link_rounded),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -406,7 +413,7 @@ class _AddBotPageState extends State<AddBotPage> {
                 controller: apiKeyController,
                 decoration: InputDecoration(
                   hintText: S.of(context).enterApiKey,
-                  prefixIcon: const Icon(Icons.key),
+                  prefixIcon: const Icon(Icons.key_rounded),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   suffixIcon:
@@ -420,7 +427,7 @@ class _AddBotPageState extends State<AddBotPage> {
                             ),
                           )
                           : IconButton(
-                            icon: const Icon(Icons.refresh),
+                            icon: const Icon(Icons.refresh_rounded),
                             tooltip: S.of(context).fetchModelList,
                             onPressed: _fetchModels,
                           ),
@@ -438,14 +445,14 @@ class _AddBotPageState extends State<AddBotPage> {
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.secondary,
                 borderRadius: BorderRadius.circular(24.0),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome),
+                  const Icon(Icons.auto_awesome_rounded),
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButton<String>(
@@ -469,7 +476,10 @@ class _AddBotPageState extends State<AddBotPage> {
                                   value: '',
                                   child: Text(
                                     S.of(context).fetchModelListFirst,
-                                    style: TextStyle(fontSize: fontSize),
+                                    style: TextStyle(
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                   ),
                                 ),
                               ]
@@ -478,7 +488,10 @@ class _AddBotPageState extends State<AddBotPage> {
                                   value: model,
                                   child: Text(
                                     model,
-                                    style: TextStyle(fontSize: fontSize),
+                                    style: TextStyle(
+                                      fontSize: fontSize,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                   ),
                                 );
                               }).toList(),
