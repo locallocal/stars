@@ -15,6 +15,7 @@ final providers = [
   'Tencent',
   'SiliconFlow',
   'Baidu',
+  'XingHe',
   'Moonshot',
   'ZhiPu',
   'ZeroOneAI',
@@ -73,7 +74,11 @@ final modelsByProvider = {
   },
   'Baidu': {
     'api_type': Bot.apiTypeBaidu,
-    'base_url': 'https://aistudio.baidu.com/llm/lmapi/v3',
+    'base_url': 'https://qianfan.baidubce.com/v2/',
+  },
+  'XingHe': {
+    'api_type': Bot.apiTypeXingHe,
+    'base_url': 'https://aistudio.baidu.com/llm/lmapi/v3/',
   },
   'Moonshot': {
     'api_type': Bot.apiTypeOpenAI,

@@ -86,6 +86,8 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFB3EBEF); // SiliconFlow 浅青色
     case 'baidu':
       return const Color(0xFFC9CBFF); // 百度 浅蓝色
+    case 'xinghe':
+      return const Color(0xFF7A6AFF);
     case 'moonshot':
       return const Color(0xFFE1C4E9); // Moonshot 浅紫色
     case 'zhipu':

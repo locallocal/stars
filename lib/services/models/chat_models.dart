@@ -13,6 +13,7 @@ import 'package:bubble/services/models/openrouter.dart';
 import 'package:bubble/services/models/tencent.dart';
 import 'package:bubble/services/models/volcano_engine.dart';
 import 'package:bubble/services/models/baidu.dart';
+import 'package:bubble/services/models/xing_he.dart';
 import 'package:bubble/services/models/zhipu.dart';
 import 'package:bubble/services/models/zero_one_ai.dart';
 
@@ -154,6 +155,8 @@ abstract class ChatModel {
         return OpenRouterChatModel(bot);
       case Bot.apiTypeBaidu:
         return BaiduChatModel(bot);
+      case Bot.apiTypeXingHe:
+        return XingheChatModel(bot);
       case Bot.apiTypeZhipu:
         return ZhipuChatModel(bot);
       case Bot.apiTypeZeroOneAI:

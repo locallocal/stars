@@ -4,26 +4,19 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
-class BaiduChatModel extends ChatModel {
+class XingheChatModel extends ChatModel {
   static const String defaultApiChatUrl =
-      'https://qianfan.baidubce.com/v2/chat/completions';
+      'https://aistudio.baidu.com/llm/lmapi/v3/chat/completions';
 
-  BaiduChatModel(super.bot);
+  XingheChatModel(super.bot);
 
   @override
   bool supportsWebSearch() {
     switch (bot.model.toLowerCase()) {
       case 'ernie-4.5-8k-preview':
-      case 'ernie-4.0-8k-latest':
-      case 'ernie-4.0-8k-preview':
-      case 'ernie-4.0-8k':
-      case 'ernie-4.0-turbo-8k-latest':
-      case 'ernie-4.0-turbo-8k-preview':
-      case 'ernie-4.0-turbo-8k':
-      case 'ernie-4.0-turbo-128k':
-      case 'ernie-3.5-8k-preview':
       case 'ernie-3.5-8k':
-      case 'ernie-3.5-128k':
+      case 'ernie-4.0-8k':
+      case 'ernie-4.0-turbo-8k':
         return true;
     }
     return false;
@@ -38,10 +31,6 @@ class BaiduChatModel extends ChatModel {
   List<InputModality> getInputModalites() {
     switch (bot.model.toLowerCase()) {
       case 'ernie-4.5-8k-preview':
-      case 'deepseek-vl2':
-      case 'deepseek-vl2-small':
-      case 'qwen2.5-vl-7b-instruct':
-      case 'internvl2.5-38b-mpo':
         return [InputModality.text, InputModality.image];
     }
     return [InputModality.text];
@@ -50,8 +39,7 @@ class BaiduChatModel extends ChatModel {
   @override
   List<OutputModality> getOutputModalites() {
     switch (bot.model) {
-      case 'irag-1.0':
-      case 'flux.1-schnell':
+      case 'Stable-Diffusion-XL':
         return [OutputModality.image];
     }
     return [OutputModality.text];
@@ -61,39 +49,16 @@ class BaiduChatModel extends ChatModel {
   Future<List<String>> listModels() async {
     return const [
       'ernie-4.5-8k-preview',
-      'ernie-4.0-8k-latest',
-      'ernie-4.0-8k-preview',
-      'ernie-4.0-8k',
-      'ernie-4.0-turbo-8k-latest',
-      'ernie-4.0-turbo-8k-preview',
-      'ernie-4.0-turbo-8k',
-      'ernie-4.0-turbo-128k',
-      'ernie-3.5-8k-preview',
       'ernie-3.5-8k',
-      'ernie-3.5-128k',
+      'ernie-4.0-8k',
+      'ernie-4.0-turbo-8k',
+      'ernie-char-8k',
       'ernie-speed-8k',
       'ernie-speed-128k',
-      'ernie-speed-pro-128k',
-      'ernie-lite-8k',
-      'ernie-lite-pro-128k',
       'ernie-tiny-8k',
-      'ernie-char-8k',
-      'ernie-char-fiction-8k',
-      'ernie-novel-8k',
-      'deepseek-v3',
-      'deepseek-v3-241226',
+      'ernie-lite-8k',
       'deepseek-r1',
-      'deepseek-r1-distill-qwen-32b',
-      'deepseek-r1-distill-qwen-14b',
-      'deepseek-r1-distill-qwen-7b',
-      'deepseek-r1-distill-qwen-1.5b',
-      'deepseek-r1-distill-llama-70b',
-      'deepseek-r1-distill-llama-8b',
-      'deepseek-r1-distill-qianfan-llama-70b',
-      'deepseek-r1-distill-qianfan-llama-8b',
-      'qwq-32b',
-      'irag-1.0',
-      'flux.1-schnell',
+      'Stable-Diffusion-XL',
     ];
   }
 
@@ -158,10 +123,12 @@ class BaiduChatModel extends ChatModel {
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();
+
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}chat/completions'
+              ? '${bot.baseURL}/chat/completions'
               : defaultApiChatUrl;
+
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
@@ -187,6 +154,7 @@ class BaiduChatModel extends ChatModel {
 
       await for (final line in stream) {
         if (isCancelled) break;
+
         if (line.startsWith('data:')) {
           final jsonStr = line.substring(5);
           if (jsonStr == '[DONE]') {
@@ -233,33 +201,13 @@ class BaiduChatModel extends ChatModel {
   }
 
   @override
-  List<String> getSupportedImageSizes() {
-    return [
-      '512x512',
-      '768x768',
-      '1024x1024',
-      '1536x1536',
-      '2048x2048',
-      '1024x768',
-      '2048x1536',
-      '768x1024',
-      '1536x2048',
-      '1024x576',
-      '2048x1152',
-      '576x1024',
-      '1152x2048',
-    ];
-  }
-
-  @override
   Future<List<String>> generateImage(
     String prompt,
     String size,
     String imageDirPath,
   ) async {
     // 检查模型是否支持图像生成
-    if (bot.model.toLowerCase() != 'irag-1.0' &&
-        bot.model.toLowerCase() != 'flux.1-schnell') {
+    if (bot.model != 'Stable-Diffusion-XL') {
       throw UnsupportedError(
         'Model ${bot.model} dont support generate image，please use Stable-Diffusion-XL model',
       );
