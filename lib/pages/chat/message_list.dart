@@ -162,112 +162,100 @@ class MessageList extends StatelessWidget {
 
                       // 显示图片列表
                       if (message.images.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Wrap(
-                            spacing: 8.0,
-                            runSpacing: 8.0,
-                            children:
-                                message.images.map((imagePath) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      // 点击图片时显示大图
-                                      showDialog(
-                                        context: context,
-                                        builder:
-                                            (context) => Dialog(
-                                              child: Image.file(
-                                                File(imagePath),
-                                                fit: BoxFit.contain,
-                                              ),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children:
+                              message.images.map((imagePath) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    // 点击图片时显示大图
+                                    showDialog(
+                                      context: context,
+                                      builder:
+                                          (context) => Dialog(
+                                            child: Image.file(
+                                              File(imagePath),
+                                              fit: BoxFit.contain,
                                             ),
-                                      );
-                                    },
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: Image.file(
-                                        File(imagePath),
-                                        width: 150,
-                                        height: 150,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Container(
-                                            width: 150,
-                                            height: 150,
-                                            color: Colors.grey[300],
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.broken_image,
-                                                color: Colors.grey,
-                                              ),
+                                          ),
+                                    );
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: Image.file(
+                                      File(imagePath),
+                                      width: 150,
+                                      height: 150,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return Container(
+                                          width: 150,
+                                          height: 150,
+                                          color: Colors.grey[300],
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.broken_image,
+                                              color: Colors.grey,
                                             ),
-                                          );
-                                        },
-                                      ),
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  );
-                                }).toList(),
-                          ),
+                                  ),
+                                );
+                              }).toList(),
                         ),
 
                       // 显示文件列表
                       if (message.files.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Wrap(
-                            spacing: 8.0,
-                            runSpacing: 8.0,
-                            children:
-                                message.files.map((filePath) {
-                                  final fileName = filePath.split('/').last;
-                                  return GestureDetector(
-                                    onTap: () {
-                                      // 点击文件时打开文件
-                                      // 这里可以添加打开文件的逻辑
-                                    },
-                                    child: Container(
-                                      width: 150,
-                                      height: 80,
-                                      margin: const EdgeInsets.only(
-                                        bottom: 8.0,
-                                      ),
-                                      padding: const EdgeInsets.all(8.0),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            isMe
-                                                ? Colors.white.withOpacity(0.2)
-                                                : Colors.black.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.insert_drive_file,
-                                            size: 24,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            fileName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children:
+                              message.files.map((filePath) {
+                                final fileName = filePath.split('/').last;
+                                return GestureDetector(
+                                  onTap: () {
+                                    // 点击文件时打开文件
+                                    // 这里可以添加打开文件的逻辑
+                                  },
+                                  child: Container(
+                                    width: 150,
+                                    height: 80,
+                                    margin: const EdgeInsets.only(bottom: 8.0),
+                                    padding: const EdgeInsets.all(8.0),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          isMe
+                                              ? Colors.white.withOpacity(0.2)
+                                              : Colors.black.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8.0),
                                     ),
-                                  );
-                                }).toList(),
-                          ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.insert_drive_file,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          fileName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                         ),
                     ],
                   ),

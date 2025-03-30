@@ -140,6 +140,83 @@ class OpenAIChatModel extends ChatModel {
       cancelController = null;
     }
   }
+
+  @override
+  List<String> getSupportedImageSizes() {
+    if (bot.model == 'dall-e-3') {
+      return ['1024x1024', '1792x1024', '1024x1792'];
+    } else if (bot.model == 'dall-e-2') {
+      return ['256x256', '512x512', '1024x1024'];
+    }
+    return [''];
+  }
+
+  @override
+  Future<String> generateImage(
+    String prompt,
+    String size,
+    String imageDirPath,
+  ) async {
+    // 检查是否使用DALL-E模型
+    if (!bot.model.toLowerCase().contains('dall-e')) {
+      throw UnsupportedError(
+        'Model ${bot.model} dont support generate image, please use  dall-e-2 or dall-e-3',
+      );
+    }
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/v1/images/generations'
+            : 'https://api.openai.com/v1/images/generations';
+
+    // 准备请求参数
+    final Map<String, dynamic> requestBody = {
+      'model': bot.model,
+      'prompt': prompt,
+      'n': 1, // 生成图片数量
+      'size': size,
+      'response_format': 'url', // 返回URL而不是base64
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${bot.apiKey}',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+
+        // 从响应中获取图片URL
+        final imageUrl = data['data'][0]['url'];
+
+        // 下载图片并保存到本地
+        final imageResponse = await http.get(Uri.parse(imageUrl));
+
+        if (imageResponse.statusCode == 200) {
+          // 生成文件名
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = 'dalle_${timestamp}.png';
+          final filePath = '$imageDirPath/$fileName';
+
+          // 保存图片
+          final file = File(filePath);
+          await file.writeAsBytes(imageResponse.bodyBytes);
+
+          return filePath;
+        } else {
+          throw Exception('下载图片失败: ${imageResponse.statusCode}');
+        }
+      } else {
+        throw Exception('生成图片失败: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('生成图片过程中出错: $e');
+    }
+  }
 }
 
 // 处理带有图片的消息

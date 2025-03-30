@@ -42,6 +42,8 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m8(botName) =>
       "Deleting this chat will clear all chat history. Are you sure you want to delete the chat with ${botName}?";
 
+  static String m13(error) => "Generate image failed: ${error}";
+
   static String m9(language) => "Language set to ${language}";
 
   static String m10(minutes) => "${minutes} minutes ago";
@@ -167,6 +169,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage(
       "Font size updated",
     ),
+    "generateImageFailed": m13,
+    "generatedImage": MessageLookupByLibrary.simpleMessage("Image generated"),
+    "generatingImage": MessageLookupByLibrary.simpleMessage(
+      "Generating image, please wait...",
+    ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("Help & Feedback"),
     "home": MessageLookupByLibrary.simpleMessage("Home"),
     "justNow": MessageLookupByLibrary.simpleMessage("Just now"),
@@ -195,6 +202,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("Pause generation"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage(
       "Please enter API key first",
+    ),
+    "pleaseEnterImageDescription": MessageLookupByLibrary.simpleMessage(
+      "Please enter a description for image generation",
     ),
     "previewText": MessageLookupByLibrary.simpleMessage("Preview text effect"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("Privacy Policy"),

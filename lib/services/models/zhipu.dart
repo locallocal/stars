@@ -61,6 +61,12 @@ class ZhipuChatModel extends ChatModel {
       'cogview-4-250304',
       'cogview-4',
       'cogview-3-flash',
+      // 视频模型
+      'cogvideox-2',
+      'cogvideox-flash',
+      // 实时语言
+      // 'glm-4-realtime',
+      // 'glm-4-voice',
     ];
   }
 
@@ -105,6 +111,8 @@ class ZhipuChatModel extends ChatModel {
       return [OutputModality.text];
     } else if (bot.model.toLowerCase().contains('cogview')) {
       return [OutputModality.image];
+    } else if (bot.model.toLowerCase().contains('cogvideo')) {
+      return [OutputModality.video];
     }
     return [OutputModality.text];
   }
@@ -169,7 +177,6 @@ class ZhipuChatModel extends ChatModel {
                   },
                 ],
             });
-
       final streamedResponse = await request.send();
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
@@ -179,6 +186,7 @@ class ZhipuChatModel extends ChatModel {
         cancelController?.close();
       });
 
+      var stage = "";
       await for (final line in stream) {
         if (isCancelled) break;
 
@@ -192,10 +200,30 @@ class ZhipuChatModel extends ChatModel {
           }
           try {
             final data = jsonDecode(jsonStr);
+            if (deepThinking) {
+              if (data['choices'][0]['delta']['content'] != null &&
+                  data['choices'][0]['delta']['content'].contain('Thinking')) {
+                stage = "thinking";
+                continue;
+              } else if (data['choices'][0]['delta']['content'] != null &&
+                  data['choices'][0]['delta']['content'].contain('Response')) {
+                stage = "response";
+                continue;
+              }
+              if (stage == "thinking") {
+                final thinking = data['choices'][0]['delta']['content'] ?? '';
+                if (onReasoningResponse != null && thinking.isNotEmpty) {
+                  onReasoningResponse!(thinking);
+                }
+                continue; // 思考过程单独处理，不作为正常内容输出
+              }
+            }
+            // 处理正常内容
             final delta = data['choices'][0]['delta']['content'] ?? '';
             onResponse(delta);
           } catch (e) {
             // 忽略解析错误
+            print('Parse response failed: $e');
           }
         }
       }
@@ -216,6 +244,90 @@ class ZhipuChatModel extends ChatModel {
     }
   }
 
+  @override
+  List<String> getSupportedImageSizes() {
+    return [
+      '1024x1024',
+      '768x1344',
+      '864x1152',
+      '1344x768',
+      '1152x864',
+      '1440x768',
+      '768x1440',
+    ];
+  }
+
+  @override
+  Future<String> generateImage(
+    String prompt,
+    String size,
+    String imageDirPath,
+  ) async {
+    // 检查模型是否支持图像生成
+    if (!bot.model.toLowerCase().contains('cogview')) {
+      throw UnsupportedError(
+        'Model ${bot.model} dont support generate image，please use cogview model',
+      );
+    }
+
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}/api/paas/v4/images/generations'
+            : 'https://open.bigmodel.cn/api/paas/v4/images/generations';
+
+    final token = _generateToken();
+    // 准备请求参数
+    final Map<String, dynamic> requestBody = {
+      'model': bot.model,
+      'prompt': prompt,
+      'n': 1, // 生成图片数量
+      'size': size, // 图片尺寸
+      'response_format': 'url', // 返回URL而不是base64
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        // 从响应中获取图片URL
+        final imageUrl = data['data'][0]['url'];
+        // 下载图片并保存到本地
+        final imageResponse = await http.get(Uri.parse(imageUrl));
+
+        if (imageResponse.statusCode == 200) {
+          // 生成文件名
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = 'cogview_$timestamp.png';
+          final filePath = '$imageDirPath/$fileName';
+
+          // 保存图片
+          final file = File(filePath);
+          await file.writeAsBytes(imageResponse.bodyBytes);
+
+          return filePath;
+        } else {
+          throw Exception(
+            'Download image $imageUrl failed: ${imageResponse.statusCode}',
+          );
+        }
+      } else {
+        throw Exception(
+          'Generate image failed: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Generate image failed: $e');
+    }
+  }
+
   // 处理带有图片的消息
   List<Map<String, dynamic>> _processMessagesWithImages(
     List<ChatMessage> messages,
@@ -225,10 +337,8 @@ class ZhipuChatModel extends ChatModel {
       if (message.images.isEmpty) {
         return message.toJson();
       }
-
       // 处理带有图片的消息
       final List<Map<String, dynamic>> content = [];
-
       // 添加文本内容（如果有）
       if (message.content.isNotEmpty) {
         content.add({'type': 'text', 'text': message.content});
@@ -248,10 +358,9 @@ class ZhipuChatModel extends ChatModel {
             });
           }
         } catch (e) {
-          print('处理图片失败: $e');
+          print('Process image ${imagePath} failed: $e');
         }
       }
-
       return {'role': message.role, 'content': content};
     }).toList();
   }

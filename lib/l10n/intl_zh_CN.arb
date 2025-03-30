@@ -485,12 +485,12 @@
     "modelsRetrievedSuccess": "成功获取{count}个模型",
     "@modelsRetrievedSuccess": {
     "description": "成功获取模型列表时的提示信息",
-    "placeholders": {
-        "count": {
-        "type": "String",
-        "example": "10"
+        "placeholders": {
+            "count": {
+            "type": "String",
+            "example": "10"
+            }
         }
-    }
     },
     "noModelsRetrieved": "未获取到模型列表",
     "@noModelsRetrieved": {
@@ -535,5 +535,27 @@
     "attachedFiles": "附件文件",
     "@attachedFiles": {
         "description": "已附加的文件提示"
+    },
+    "pleaseEnterImageDescription": "请输入生成图片的描述",
+    "@pleaseEnterImageDescription": {
+        "description": "请输入生成图片的描述"
+    },
+    "generateImageFailed": "生成图片失败: {error}",
+    "@generateImageFailed": {
+        "description": "生成图片失败的提示",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "generatingImage": "正在生成图片，请稍候...",
+    "@generatingImage": {
+        "description": "正在生成图片的提示"
+    },
+    "generatedImage": "图片已生成",
+    "@generatedImage": {
+        "description": "图片生成成功的提示"
     }
 }

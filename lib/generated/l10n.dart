@@ -1169,6 +1169,46 @@ class S {
       args: [],
     );
   }
+
+  /// `Please enter a description for image generation`
+  String get pleaseEnterImageDescription {
+    return Intl.message(
+      'Please enter a description for image generation',
+      name: 'pleaseEnterImageDescription',
+      desc: 'Prompt for entering description for image generation',
+      args: [],
+    );
+  }
+
+  /// `Generate image failed: {error}`
+  String generateImageFailed(String error) {
+    return Intl.message(
+      'Generate image failed: $error',
+      name: 'generateImageFailed',
+      desc: 'Error message when image generation fails',
+      args: [error],
+    );
+  }
+
+  /// `Generating image, please wait...`
+  String get generatingImage {
+    return Intl.message(
+      'Generating image, please wait...',
+      name: 'generatingImage',
+      desc: 'Message while image is being generated',
+      args: [],
+    );
+  }
+
+  /// `Image generated`
+  String get generatedImage {
+    return Intl.message(
+      'Image generated',
+      name: 'generatedImage',
+      desc: 'Message when image is generated',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

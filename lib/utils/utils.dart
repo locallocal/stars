@@ -45,17 +45,16 @@ Future<void> createChatDirectory(String chatId) async {
 
 // 删除聊天文件夹
 Future<bool> deleteChatDirectory(String chatId) async {
+  var chatDirStr = await getChatDirectoryPath(chatId);
   try {
-    final appDir = await getApplicationDocumentsDirectory();
-    final chatDir = Directory(path.join(appDir.path, 'chats', chatId));
-
+    final chatDir = Directory(chatDirStr);
     if (await chatDir.exists()) {
       await chatDir.delete(recursive: true);
       return true;
     }
     return false;
   } catch (e) {
-    debugPrint('Delete chat directory for $chatId failed: $e');
+    debugPrint('Delete chat directory $chatDirStr for $chatId failed: $e');
     return false;
   }
 }

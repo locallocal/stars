@@ -17,6 +17,7 @@ import 'package:bubble/pages/chat/welcome_view.dart';
 import 'package:bubble/pages/chat/message_list.dart';
 import 'package:bubble/pages/chat/typing_indicator.dart';
 import 'package:bubble/utils/utils.dart';
+import 'package:bubble/pages/chat/image_generation_panel.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -42,6 +43,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _showAttachmentBar = false;
   bool _isWebSearchEnabled = false;
   bool _isDeepThinkingEnabled = false;
+  String _selectedImageSize = '1024x1024';
 
   final List<File> _selectedImages = [];
   final List<File> _selectedFiles = [];
@@ -123,6 +125,15 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _sendMessage() async {
+    if (_chatModel.getOutputModalites().contains(OutputModality.image) &&
+        _selectedImageSize.isNotEmpty) {
+      await _generateImage();
+      return;
+    }
+    await _generateText();
+  }
+
+  Future<void> _generateText() async {
     final bool hasText = _messageController.text.trim().isNotEmpty;
     final bool hasImages = _selectedImages.isNotEmpty;
     if (!hasText && !hasImages) return;
@@ -382,6 +393,12 @@ class _ChatPageState extends State<ChatPage> {
                   if (_selectedImages.isNotEmpty || _selectedFiles.isNotEmpty)
                     _showAttachments(),
 
+                  // 图片生成功能
+                  if (_chatModel.getOutputModalites().contains(
+                    OutputModality.image,
+                  ))
+                    _buildImageGenerationPanel(),
+
                   // 输入框区域
                   MessageInput(
                     controller: _messageController,
@@ -555,5 +572,107 @@ class _ChatPageState extends State<ChatPage> {
       onFilePressed: getAttacheFile,
       inputModalities: _chatModel.getInputModalites(),
     );
+  }
+
+  // 修改原文件中的方法
+  Widget _buildImageGenerationPanel() {
+    // 获取支持的图片尺寸
+    List<String> supportedSizes = ['1024x1024', '512x512'];
+    // 如果模型支持获取图片尺寸列表，则使用模型提供的尺寸
+    try {
+      final sizes = _chatModel.getSupportedImageSizes();
+      if (sizes.isNotEmpty) {
+        supportedSizes = sizes;
+      }
+    } catch (e) {
+      // 忽略不支持的方法调用
+    }
+
+    return ImageGenerationPanel(
+      supportedSizes: supportedSizes,
+      selectedSize: _selectedImageSize,
+      onSizeSelected: (size) {
+        setState(() {
+          _selectedImageSize = size;
+        });
+      },
+    );
+  }
+
+  Future<void> _generateImage() async {
+    final prompt = _messageController.text.trim();
+    if (prompt.isEmpty) {
+      showSnackBar(context, S.of(context).pleaseEnterImageDescription);
+      return;
+    }
+    setState(() {
+      _isTyping = true;
+      _isCancellable = false;
+    });
+
+    try {
+      // 创建系统消息记录生成的图片
+      final userMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: _currentUserId,
+        content: prompt,
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(userMessage);
+        _messageController.clear();
+      });
+      // 保存消息到数据库
+      await MessageService.addMessage(userMessage);
+      await ChatService.updateLastMessage(widget.id, userMessage.content);
+
+      // 调用模型生成图片
+      var imageDirPath = await getChatDirectoryPath(widget.id);
+      final imagePath = await _chatModel.generateImage(
+        prompt,
+        _selectedImageSize,
+        imageDirPath,
+      );
+      final botMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: widget.bot.id,
+        content: '',
+        images: [imagePath],
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(botMessage);
+      });
+      await MessageService.addMessage(botMessage);
+
+      if (mounted) {
+        await ChatService.updateLastMessage(
+          widget.id,
+          S.of(context).generatedImage,
+        );
+      }
+
+      // 滚动到底部
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(context, S.of(context).generateImageFailed(e.toString()));
+      }
+    } finally {
+      setState(() {
+        _isTyping = false;
+        _isCancellable = false;
+      });
+    }
   }
 }

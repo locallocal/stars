@@ -89,15 +89,29 @@ abstract class ChatModel {
     return [OutputModality.text];
   }
 
+  // 获取模型列表
+  Future<List<String>> listModels() async {
+    // 默认实现返回空列表，子类可以覆盖此方法
+    return [];
+  }
+
   // 发送消息并获取完整响应
   Future<String> sendMessage(List<ChatMessage> messages);
 
   // 发送消息并获取流式响应
   Future<void> sendMessageStream(List<ChatMessage> messages);
 
-  // 获取模型列表
-  Future<List<String>> listModels() async {
-    // 默认实现返回空列表，子类可以覆盖此方法
+  // 生成图片
+  Future<String> generateImage(
+    String prompt,
+    String size,
+    String imageDirPath,
+  ) async {
+    // 默认实现抛出异常，子类可以覆盖此方法
+    throw UnsupportedError('${bot.apiType}模型不支持图像生成');
+  }
+
+  List<String> getSupportedImageSizes() {
     return [];
   }
 

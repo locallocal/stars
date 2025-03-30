@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/chat.dart';
-import 'package:bubble/pages/chats/chat_tem.dart';
+import 'package:bubble/pages/chats/chat_item.dart';
 import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/utils/utils.dart';

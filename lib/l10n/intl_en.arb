@@ -535,5 +535,27 @@
     "attachedFiles": "Attached Files",
     "@attachedFiles": {
         "description": "Label for attached files"
+    },
+    "pleaseEnterImageDescription": "Please enter a description for image generation",
+    "@pleaseEnterImageDescription": {
+        "description": "Prompt for entering description for image generation"
+    },
+    "generateImageFailed": "Generate image failed: {error}",
+    "@generateImageFailed": {
+        "description": "Error message when image generation fails",
+        "placeholders": {
+            "error": {
+                "type": "String",
+                "example": "Server Error"
+            }
+        }
+    },
+    "generatingImage": "Generating image, please wait...",
+    "@generatingImage": {
+        "description": "Message while image is being generated"
+    },
+    "generatedImage": "Image generated",
+    "@generatedImage": {
+        "description": "Message when image is generated"
     }
 }

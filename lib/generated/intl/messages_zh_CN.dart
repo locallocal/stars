@@ -38,6 +38,8 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m8(botName) => "删除聊天会清空所有的聊天记录，确定要删除与 ${botName} 的聊天吗？";
 
+  static String m13(error) => "生成图片失败: ${error}";
+
   static String m9(language) => "语言已设置为${language}";
 
   static String m10(minutes) => "${minutes}分钟前";
@@ -127,6 +129,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "followSystem": MessageLookupByLibrary.simpleMessage("跟随系统"),
     "fontSizeSettings": MessageLookupByLibrary.simpleMessage("文字大小"),
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage("文字大小已更新"),
+    "generateImageFailed": m13,
+    "generatedImage": MessageLookupByLibrary.simpleMessage("图片已生成"),
+    "generatingImage": MessageLookupByLibrary.simpleMessage("正在生成图片，请稍候..."),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("帮助与反馈"),
     "home": MessageLookupByLibrary.simpleMessage("首页"),
     "justNow": MessageLookupByLibrary.simpleMessage("刚刚"),
@@ -146,6 +151,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noModelsRetrieved": MessageLookupByLibrary.simpleMessage("未获取到模型列表"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("暂停生成"),
     "pleaseEnterApiKey": MessageLookupByLibrary.simpleMessage("请先输入API密钥"),
+    "pleaseEnterImageDescription": MessageLookupByLibrary.simpleMessage(
+      "请输入生成图片的描述",
+    ),
     "previewText": MessageLookupByLibrary.simpleMessage("预览文字效果"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("隐私政策"),
     "profile": MessageLookupByLibrary.simpleMessage("我的"),
