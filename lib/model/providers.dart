@@ -23,12 +23,12 @@ final providers = [
 final modelsByProvider = {
   'OpenAI': {
     'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.openai.com/v1',
+    'base_url': 'https://api.openai.com/v1/',
     'models': [],
   },
   'Anthropic': {
     'api_type': Bot.apiTypeAnthropic,
-    'base_url': 'https://api.anthropic.com',
+    'base_url': 'https://api.anthropic.com/v1/',
   },
   'Gemini': {
     'api_type': Bot.apiTypeGemini,

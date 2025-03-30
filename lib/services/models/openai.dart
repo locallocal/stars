@@ -133,7 +133,7 @@ class OpenAIChatModel extends ChatModel {
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/chat/completions'
+            ? '${bot.baseURL}chat/completions'
             : defaultApiChatUrl;
 
     final response = await http.post(
@@ -164,7 +164,7 @@ class OpenAIChatModel extends ChatModel {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -251,7 +251,7 @@ class OpenAIChatModel extends ChatModel {
     }
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/images/generations'
+            ? '${bot.baseURL}images/generations'
             : 'https://api.openai.com/v1/images/generations';
     final Map<String, dynamic> requestBody = {
       'model': bot.model,

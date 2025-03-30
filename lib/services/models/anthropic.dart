@@ -1,16 +1,49 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
 
 class AnthropicChatModel extends ChatModel {
-  AnthropicChatModel(Bot bot) : super(bot);
+  AnthropicChatModel(super.bot);
+
+  @override
+  bool supportsWebSearch() {
+    return false;
+  }
+
+  @override
+  bool supportsDeepThinking() {
+    switch (bot.model.toLowerCase()) {
+      case 'claude-3-7-sonnet-latest':
+      case 'claude-3-7-sonnet-20250219':
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    switch (bot.model.toLowerCase()) {
+      case 'claude-3-7-sonnet-latest':
+      case 'claude-3-7-sonnet-20250219':
+      case 'claude-3-5-haiku-latest':
+      case 'claude-3-5-haiku-20241022':
+        return [InputModality.text, InputModality.image];
+    }
+    return [InputModality.text];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.text];
+  }
 
   @override
   Future<List<String>> listModels() async {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/models'
+            ? '${bot.baseURL}/models'
             : 'https://api.anthropic.com/v1/models';
     // 添加limit参数，设置为1000
     final uri = Uri.parse(url).replace(queryParameters: {'limit': '1000'});
@@ -36,24 +69,8 @@ class AnthropicChatModel extends ChatModel {
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url = getMessageUrl();
 
-    // 转换消息格式为Anthropic格式
-    final systemPrompt =
-        messages
-            .firstWhere(
-              (m) => m.role == 'system',
-              orElse: () => ChatMessage(role: 'system', content: ''),
-            )
-            .content;
-    final anthropicMessages =
-        messages
-            .where((m) => m.role != 'system')
-            .map(
-              (m) => {
-                'role': m.role == 'assistant' ? 'assistant' : 'user',
-                'content': m.content,
-              },
-            )
-            .toList();
+    // 获取格式化的消息
+    final formattedMessages = formatMessages(messages);
 
     final response = await http.post(
       Uri.parse(url),
@@ -64,10 +81,10 @@ class AnthropicChatModel extends ChatModel {
       },
       body: jsonEncode({
         'model': bot.model,
-        'messages': anthropicMessages,
-        'system': systemPrompt,
-        'max_tokens': getMaxTokens(),
-        'temperature': 0.7,
+        'messages': formattedMessages['messages'],
+        'system': formattedMessages['system'],
+        if (deepThinking)
+          'thinking': {"type": "enabled", "budget_tokens": 16000},
       }),
     );
 
@@ -89,25 +106,8 @@ class AnthropicChatModel extends ChatModel {
 
       final url = getMessageUrl();
 
-      // 提取系统提示
-      final systemPrompt =
-          messages
-              .firstWhere(
-                (m) => m.role == 'system',
-                orElse: () => ChatMessage(role: 'system', content: ''),
-              )
-              .content;
-      // 过滤掉系统提示
-      final anthropicMessages =
-          messages
-              .where((m) => m.role != 'system')
-              .map(
-                (m) => {
-                  'role': m.role == 'assistant' ? 'assistant' : 'user',
-                  'content': m.content,
-                },
-              )
-              .toList();
+      // 获取格式化的消息
+      final formattedMessages = formatMessages(messages);
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -118,11 +118,11 @@ class AnthropicChatModel extends ChatModel {
             })
             ..body = jsonEncode({
               'model': bot.model,
-              'messages': anthropicMessages,
-              'system': systemPrompt,
-              'max_tokens': getMaxTokens(),
-              'temperature': 0.7,
+              'messages': formattedMessages['messages'],
+              'system': formattedMessages['system'],
               'stream': true,
+              if (deepThinking)
+                'thinking': {"type": "enabled", "budget_tokens": 16000},
             });
 
       final streamedResponse = await request.send();
@@ -146,8 +146,12 @@ class AnthropicChatModel extends ChatModel {
           try {
             final data = jsonDecode(jsonStr);
             if (data['type'] == 'content_block_delta') {
-              final delta = data['delta']['text'] ?? '';
-              onResponse(delta);
+              final delta = data['delta'];
+              if (delta['type'] == 'text_delta') {
+                onResponse(delta['text']);
+              } else if (delta['type'] == 'text_delta' && deepThinking) {
+                onReasoningResponse!(delta['thinking']);
+              }
             }
           } catch (e) {
             // 忽略解析错误
@@ -159,7 +163,7 @@ class AnthropicChatModel extends ChatModel {
       if (!isCancelled && onComplete != null) {
         onComplete!();
       } else if (isCancelled && onError != null) {
-        onError!('Request Cancelled by User');
+        onError!('Request canceled by User');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
@@ -172,18 +176,60 @@ class AnthropicChatModel extends ChatModel {
     }
   }
 
-  String getMessageUrl() {
-    return bot.baseURL.isNotEmpty
-        ? '${bot.baseURL}/v1/messages'
-        : 'https://api.anthropic.com/v1/messages';
+  // 格式化消息为Anthropic API所需格式
+  Map<String, dynamic> formatMessages(List<ChatMessage> messages) {
+    // 提取系统提示
+    final systemPrompt =
+        messages
+            .firstWhere(
+              (m) => m.role == 'system',
+              orElse: () => ChatMessage(role: 'system', content: ''),
+            )
+            .content;
+
+    // 过滤掉系统提示，转换其他消息
+    final anthropicMessages =
+        messages.where((m) => m.role != 'system').map((m) {
+          if (m.role == 'assistant') {
+            return {'role': 'assistant', 'content': m.content};
+          } else {
+            // 处理用户消息，可能包含图片
+            final List<Map<String, dynamic>> content = [];
+
+            // 如果有文本内容，添加文本部分
+            if (m.content.isNotEmpty) {
+              content.add({'type': 'text', 'text': m.content});
+            }
+
+            // 如果有图片，添加图片部分
+            if (m.images.isNotEmpty) {
+              for (final image in m.images) {
+                final file = File(image);
+                if (file.existsSync()) {
+                  final bytes = file.readAsBytesSync();
+                  final base64Image = base64Encode(bytes);
+                  final mediaType = getImageMediaType(bytes);
+                  content.add({
+                    'type': 'image',
+                    'source': {
+                      'type': 'base64',
+                      'media_type': mediaType,
+                      'data': base64Image,
+                    },
+                  });
+                }
+              }
+            }
+            return {'role': 'user', 'content': content};
+          }
+        }).toList();
+
+    return {'system': systemPrompt, 'messages': anthropicMessages};
   }
 
-  int getMaxTokens() {
-    if (bot.model.contains("3-7-sonnet") ||
-        bot.model.contains("3-5-sonnet") ||
-        bot.model.contains("3-5-haiku")) {
-      return 8192;
-    }
-    return 4096;
+  String getMessageUrl() {
+    return bot.baseURL.isNotEmpty
+        ? '${bot.baseURL}/messages'
+        : 'https://api.anthropic.com/v1/messages';
   }
 }

@@ -199,4 +199,27 @@ abstract class ChatModel {
       return {'role': message.role, 'content': content};
     }).toList();
   }
+
+  String getImageMediaType(List<int> bytes) {
+    if (bytes.length >= 3) {
+      if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
+        return 'image/jpeg';
+      } else if (bytes[0] == 0x89 &&
+          bytes[1] == 0x50 &&
+          bytes[2] == 0x4E &&
+          bytes[3] == 0x47) {
+        return 'image/png';
+      } else if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
+        return 'image/gif';
+      } else if (bytes[0] == 0x42 && bytes[1] == 0x4D) {
+        return 'image/bmp';
+      } else if (bytes[0] == 0x52 &&
+          bytes[1] == 0x49 &&
+          bytes[2] == 0x46 &&
+          bytes[3] == 0x46) {
+        return 'image/webp';
+      }
+    }
+    return 'application/octet-stream'; // 默认类型
+  }
 }

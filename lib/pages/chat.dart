@@ -639,7 +639,7 @@ class _ChatPageState extends State<ChatPage> {
         botId: widget.bot.id,
         senderId: widget.bot.id,
         content: '',
-        images: [imagePath],
+        images: imagePath,
         timestamp: DateTime.now(),
       );
       setState(() {
