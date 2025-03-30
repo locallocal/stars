@@ -51,12 +51,7 @@ class HuggingFaceChatModel extends ChatModel {
   }
 
   @override
-  Future<void> sendMessageStream(
-    List<ChatMessage> messages,
-    StreamResponseCallback onResponse, {
-    Function? onComplete,
-    Function(String)? onError,
-  }) async {
+  Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();
 
@@ -97,7 +92,7 @@ class HuggingFaceChatModel extends ChatModel {
           if (jsonStr == '[DONE]') {
             // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {
-              onComplete();
+              onComplete!();
             }
             return;
           }
@@ -114,13 +109,13 @@ class HuggingFaceChatModel extends ChatModel {
 
       // 确保在流处理完成后调用onComplete
       if (!isCancelled && onComplete != null) {
-        onComplete();
+        onComplete!();
       } else if (isCancelled && onError != null) {
-        onError('请求已取消');
+        onError!('请求已取消');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
-        onError(e.toString());
+        onError!(e.toString());
       }
     } finally {
       cancelController?.close();

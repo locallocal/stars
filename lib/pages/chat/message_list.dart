@@ -12,6 +12,8 @@ class MessageList extends StatelessWidget {
   final bool isStreaming;
   final String streamingResponse;
   final String currentUserId;
+  final bool? deepThinking;
+  final String? reasoningResponse;
 
   const MessageList({
     super.key,
@@ -20,6 +22,8 @@ class MessageList extends StatelessWidget {
     required this.isStreaming,
     required this.streamingResponse,
     required this.currentUserId,
+    this.deepThinking = false,
+    this.reasoningResponse = '',
   });
 
   @override
@@ -59,21 +63,33 @@ class MessageList extends StatelessWidget {
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(16.0),
                   ),
-                  child: MarkdownBody(
-                    data: streamingResponse,
-                    selectable: true,
-                    styleSheet: MarkdownStyleSheet(
-                      p: TextStyle(
-                        color: Colors.black,
-                        fontSize:
-                            Theme.of(context).textTheme.bodyLarge?.fontSize,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 如果开启了深度思考且有思维链内容，显示思维链部分
+                      if (deepThinking == true &&
+                          reasoningResponse != null &&
+                          reasoningResponse!.isNotEmpty)
+                        _buildReasoningSection(context, reasoningResponse!),
+
+                      // 显示主要响应内容
+                      MarkdownBody(
+                        data: streamingResponse,
+                        selectable: true,
+                        styleSheet: MarkdownStyleSheet(
+                          p: TextStyle(
+                            color: Colors.black,
+                            fontSize:
+                                Theme.of(context).textTheme.bodyLarge?.fontSize,
+                          ),
+                          code: TextStyle(
+                            color: Colors.black,
+                            backgroundColor: Colors.black.withOpacity(0.1),
+                          ),
+                          blockquote: const TextStyle(color: Colors.black),
+                        ),
                       ),
-                      code: TextStyle(
-                        color: Colors.black,
-                        backgroundColor: Colors.black.withOpacity(0.1),
-                      ),
-                      blockquote: const TextStyle(color: Colors.black),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -114,6 +130,9 @@ class MessageList extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (message.reasoning.isNotEmpty)
+                        _buildReasoningSection(context, message.reasoning),
+
                       // 显示文本内容
                       if (message.content.isNotEmpty)
                         MarkdownBody(
@@ -258,6 +277,110 @@ class MessageList extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+// 在MessageList类中添加这个新方法
+Widget _buildReasoningSection(BuildContext context, String reasoning) {
+  return ReasoningSection(reasoning: reasoning);
+}
+
+// 添加一个新的有状态Widget类
+class ReasoningSection extends StatefulWidget {
+  final String reasoning;
+
+  const ReasoningSection({Key? key, required this.reasoning}) : super(key: key);
+
+  @override
+  State<ReasoningSection> createState() => _ReasoningSectionState();
+}
+
+class _ReasoningSectionState extends State<ReasoningSection> {
+  bool isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = Theme.of(context).textTheme.bodyLarge!.fontSize;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 深度思考标题栏，可点击展开/折叠
+        InkWell(
+          onTap: () {
+            setState(() {
+              isExpanded = !isExpanded;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 12.0,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isExpanded ? Icons.expand_less : Icons.expand_more,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '深度思考',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: fontSize! - 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 思维链内容，根据展开状态显示或隐藏
+        if (isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8.0),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: MarkdownBody(
+                data: widget.reasoning,
+                selectable: true,
+                styleSheet: MarkdownStyleSheet(
+                  p: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.8),
+                    fontSize: fontSize - 2,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  code: TextStyle(
+                    color: Colors.black87,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.05),
+                    fontSize: fontSize - 2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        const Divider(),
+      ],
     );
   }
 }

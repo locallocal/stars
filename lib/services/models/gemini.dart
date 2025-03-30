@@ -61,12 +61,7 @@ class GeminiChatModel extends ChatModel {
   }
 
   @override
-  Future<void> sendMessageStream(
-    List<ChatMessage> messages,
-    StreamResponseCallback onResponse, {
-    Function? onComplete,
-    Function(String)? onError,
-  }) async {
+  Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();
 
@@ -84,13 +79,13 @@ class GeminiChatModel extends ChatModel {
       }
 
       if (!isCancelled && onComplete != null) {
-        onComplete();
+        onComplete!();
       } else if (isCancelled && onError != null) {
-        onError('Request Cancelled');
+        onError!('Request Cancelled');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
-        onError(e.toString());
+        onError!(e.toString());
       }
     } finally {
       // 清理资源

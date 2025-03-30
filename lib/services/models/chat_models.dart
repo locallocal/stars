@@ -13,20 +13,20 @@ import 'package:bubble/services/models/volcano_engine.dart';
 import 'package:bubble/services/models/baidu.dart';
 import 'package:bubble/services/models/zhipu.dart';
 
+void _defaultOnResponse(String text) {
+  print(text);
+}
+
 // 定义消息类型
 class ChatMessage {
   final String role;
   final String content;
-  bool? deepThinking;
-  bool? webSearch;
   List<String> images;
   List<String> files;
 
   ChatMessage({
     required this.role,
     required this.content,
-    this.deepThinking,
-    this.webSearch,
     this.images = const [],
     this.files = const [],
   });
@@ -45,6 +45,11 @@ abstract class ChatModel {
   bool isCancelled = false;
   bool webSearch = false;
   bool deepThinking = false;
+  // 回调函数
+  StreamResponseCallback onResponse = _defaultOnResponse;
+  StreamResponseCallback? onReasoningResponse;
+  Function? onComplete;
+  Function(String)? onError;
 
   ChatModel(this.bot);
 
@@ -64,6 +69,18 @@ abstract class ChatModel {
     deepThinking = enabled;
   }
 
+  void setCallbacks({
+    required StreamResponseCallback onResponse,
+    StreamResponseCallback? onReasoningResponse,
+    Function? onComplete,
+    Function(String)? onError,
+  }) {
+    this.onResponse = onResponse;
+    this.onReasoningResponse = onReasoningResponse;
+    this.onComplete = onComplete;
+    this.onError = onError;
+  }
+
   List<InputModality> getInputModalites() {
     return [InputModality.text];
   }
@@ -76,12 +93,7 @@ abstract class ChatModel {
   Future<String> sendMessage(List<ChatMessage> messages);
 
   // 发送消息并获取流式响应
-  Future<void> sendMessageStream(
-    List<ChatMessage> messages,
-    StreamResponseCallback onResponse, {
-    Function? onComplete,
-    Function(String)? onError,
-  });
+  Future<void> sendMessageStream(List<ChatMessage> messages);
 
   // 获取模型列表
   Future<List<String>> listModels() async {

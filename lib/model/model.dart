@@ -154,6 +154,7 @@ class Message {
   final String botId;
   final String senderId;
   final String content;
+  final String reasoning;
   final List<String> images; // 图片路径列表
   final List<String> files; // 文件路径列表
   final DateTime timestamp;
@@ -163,6 +164,7 @@ class Message {
     required this.botId,
     required this.senderId,
     required this.content,
+    this.reasoning = '',
     this.images = const [],
     this.files = const [],
     required this.timestamp,
@@ -204,6 +206,7 @@ class Message {
       botId: map['bot_id'] as String,
       senderId: map['sender_id'] as String,
       content: map['content'] as String,
+      reasoning: map['reasoning'] as String,
       images: imagesList,
       files: filesList,
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
@@ -216,6 +219,7 @@ class Message {
       'bot_id': botId,
       'sender_id': senderId,
       'content': content,
+      'reasoning': reasoning,
       'images': jsonEncode(images),
       'files': jsonEncode(files),
       'timestamp': timestamp.millisecondsSinceEpoch,

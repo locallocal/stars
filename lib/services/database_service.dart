@@ -42,6 +42,7 @@ class DatabaseService {
             bot_id TEXT,
             sender_id TEXT,
             content TEXT,
+            reasoning TEXT,
             images TEXT,
             files TEXT,
             timestamp INTEGER

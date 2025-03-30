@@ -65,12 +65,7 @@ class OpenRouterChatModel extends ChatModel {
   }
 
   @override
-  Future<void> sendMessageStream(
-    List<ChatMessage> messages,
-    StreamResponseCallback onResponse, {
-    Function? onComplete,
-    Function(String)? onError,
-  }) async {
+  Future<void> sendMessageStream(List<ChatMessage> messages) async {
     resetCancelState();
 
     try {
@@ -120,13 +115,13 @@ class OpenRouterChatModel extends ChatModel {
 
       // 确保在流处理完成后调用onComplete
       if (!isCancelled && onComplete != null) {
-        onComplete();
+        onComplete!();
       } else if (isCancelled && onError != null) {
-        onError('Request Cancelled by User');
+        onError!('Request Cancelled by User');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
-        onError(e.toString());
+        onError!(e.toString());
       }
     } finally {
       cancelController?.close();

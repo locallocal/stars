@@ -11,7 +11,7 @@ class DeepSeekChatModel extends ChatModel {
 
   @override
   bool supportsWebSearch() {
-    return true;
+    return false;
   }
 
   @override
@@ -85,12 +85,7 @@ class DeepSeekChatModel extends ChatModel {
   }
 
   @override
-  Future<void> sendMessageStream(
-    List<ChatMessage> messages,
-    StreamResponseCallback onResponse, {
-    Function? onComplete,
-    Function(String)? onError,
-  }) async {
+  Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();
 
@@ -109,6 +104,13 @@ class DeepSeekChatModel extends ChatModel {
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
               'stream': true,
+              if (webSearch)
+                'tools': [
+                  {
+                    'type': 'function',
+                    'function': {'name': 'web_search'},
+                  },
+                ],
             });
 
       cancelController?.stream.listen((_) {
@@ -133,7 +135,7 @@ class DeepSeekChatModel extends ChatModel {
           if (jsonStr == '[DONE]') {
             // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {
-              onComplete();
+              onComplete!();
             }
             return;
           }
@@ -143,6 +145,17 @@ class DeepSeekChatModel extends ChatModel {
             if (data.containsKey('choices') &&
                 data['choices'].isNotEmpty &&
                 data['choices'][0].containsKey('delta')) {
+              if (deepThinking &&
+                  data['choices'][0]['delta'].containsKey(
+                    'reasoning_content',
+                  )) {
+                final reasoning =
+                    data['choices'][0]['delta']['reasoning_content'] ?? '';
+                if (reasoning.isNotEmpty && onReasoningResponse != null) {
+                  onReasoningResponse!(reasoning);
+                }
+              }
+
               final delta = data['choices'][0]['delta']['content'] ?? '';
               if (delta.isNotEmpty) {
                 onResponse(delta);
@@ -155,13 +168,13 @@ class DeepSeekChatModel extends ChatModel {
       }
 
       if (!isCancelled && onComplete != null) {
-        onComplete();
+        onComplete!();
       } else if (isCancelled && onError != null) {
-        onError('Request cancelled by user');
+        onError!('Request cancelled by user');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
-        onError(e.toString());
+        onError!(e.toString());
       }
     } finally {
       cancelController?.close();

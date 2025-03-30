@@ -71,12 +71,7 @@ class OpenAIChatModel extends ChatModel {
   }
 
   @override
-  Future<void> sendMessageStream(
-    List<ChatMessage> messages,
-    StreamResponseCallback onResponse, {
-    Function? onComplete,
-    Function(String)? onError,
-  }) async {
+  Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       // 重置取消状态
       resetCancelState();
@@ -115,7 +110,7 @@ class OpenAIChatModel extends ChatModel {
           if (jsonStr == '[DONE]') {
             // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {
-              onComplete();
+              onComplete!();
             }
             return;
           }
@@ -131,13 +126,13 @@ class OpenAIChatModel extends ChatModel {
       }
 
       if (!isCancelled && onComplete != null) {
-        onComplete();
+        onComplete!();
       } else if (isCancelled && onError != null) {
-        onError('Request cancelled');
+        onError!('Request cancelled');
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
-        onError(e.toString());
+        onError!(e.toString());
       }
     } finally {
       // 清理资源

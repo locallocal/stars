@@ -47,12 +47,20 @@ class _ChatPageState extends State<ChatPage> {
   final List<File> _selectedFiles = [];
   List<Message> _messages = [];
   String _streamingResponse = '';
+  String _reasoningResponse = '';
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
     _chatModel = ChatModel.create(widget.bot);
+
+    _chatModel.setCallbacks(
+      onResponse: _handleStreamResponse,
+      onComplete: _handleStreamComplete,
+      onError: _handleStreamError,
+      onReasoningResponse: _handleReasoningResponse,
+    );
   }
 
   Future<void> _loadMessages() async {
@@ -206,85 +214,12 @@ class _ChatPageState extends State<ChatPage> {
         ChatMessage(
           role: "user",
           content: lastUserMessage,
-          deepThinking: _isDeepThinkingEnabled,
-          webSearch: _isWebSearchEnabled,
           images: userMessage.images,
           files: userMessage.files,
         ),
       );
-      await _chatModel.sendMessageStream(
-        chatMessages,
-        (text) {
-          if (mounted) {
-            setState(() {
-              _streamingResponse += text;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (_scrollController.hasClients) {
-                  _scrollController.animateTo(
-                    _scrollController.position.maxScrollExtent,
-                    duration: const Duration(milliseconds: 100),
-                    curve: Curves.easeOut,
-                  );
-                }
-              });
-            });
-          }
-        },
-        onComplete: () async {
-          if (_streamingResponse.isEmpty) {
-            if (mounted) {
-              setState(() {
-                _isTyping = false;
-                _isStreaming = false;
-                _isCancellable = false;
-              });
-              showSnackBar(context, S.of(context).emptyResponseError);
-            }
-            return;
-          }
-          final botMessage = Message(
-            chatId: widget.id,
-            botId: widget.bot.id,
-            senderId: widget.bot.id,
-            content: _streamingResponse,
-            timestamp: DateTime.now(),
-          );
-          await MessageService.addMessage(botMessage);
-
-          if (mounted) {
-            setState(() {
-              _messages.add(botMessage);
-              _isTyping = false;
-              _isStreaming = false;
-              _streamingResponse = '';
-              _isCancellable = false;
-            });
-          }
-
-          await ChatService.updateLastMessage(widget.id, botMessage.content);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            }
-          });
-        },
-        onError: (error) {
-          if (mounted) {
-            setState(() {
-              _isTyping = false;
-              _isStreaming = false;
-              _isCancellable = false;
-            });
-            showSnackBar(context, S.of(context).responseError(error));
-          }
-        },
-      );
+      await _chatModel.sendMessageStream(chatMessages);
     } catch (e) {
-      // 处理错误
       if (mounted) {
         setState(() {
           _isTyping = false;
@@ -292,6 +227,98 @@ class _ChatPageState extends State<ChatPage> {
         });
         showSnackBar(context, S.of(context).responseError(e.toString()));
       }
+    }
+  }
+
+  void _handleStreamError(String error) {
+    if (mounted) {
+      setState(() {
+        _isTyping = false;
+        _isStreaming = false;
+        _isCancellable = false;
+        _reasoningResponse = '';
+      });
+      showSnackBar(context, S.of(context).responseError(error));
+    }
+  }
+
+  Future<void> _handleStreamComplete() async {
+    if (_streamingResponse.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _isStreaming = false;
+          _isCancellable = false;
+          _reasoningResponse = '';
+        });
+        showSnackBar(context, S.of(context).emptyResponseError);
+      }
+      return;
+    }
+    final botMessage = Message(
+      chatId: widget.id,
+      botId: widget.bot.id,
+      senderId: widget.bot.id,
+      content: _streamingResponse,
+      reasoning: _reasoningResponse,
+      timestamp: DateTime.now(),
+    );
+    await MessageService.addMessage(botMessage);
+
+    if (mounted) {
+      setState(() {
+        _messages.add(botMessage);
+        _isTyping = false;
+        _isStreaming = false;
+        _streamingResponse = '';
+        _reasoningResponse = '';
+        _isCancellable = false;
+      });
+    }
+
+    await ChatService.updateLastMessage(widget.id, botMessage.content);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _handleStreamResponse(String text) {
+    if (mounted) {
+      setState(() {
+        _streamingResponse += text;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      });
+    }
+  }
+
+  void _handleReasoningResponse(String reasoning) {
+    if (mounted) {
+      setState(() {
+        _reasoningResponse += reasoning;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      });
     }
   }
 
@@ -337,6 +364,8 @@ class _ChatPageState extends State<ChatPage> {
                                   isStreaming: _isStreaming,
                                   streamingResponse: _streamingResponse,
                                   currentUserId: _currentUserId,
+                                  deepThinking: _isDeepThinkingEnabled,
+                                  reasoningResponse: _reasoningResponse,
                                 ),
 
                                 if (_isTyping)
@@ -506,11 +535,13 @@ class _ChatPageState extends State<ChatPage> {
       onWebSearchToggle: (value) {
         setState(() {
           _isWebSearchEnabled = value;
+          _chatModel.setWebSearch(_isWebSearchEnabled);
         });
       },
       onDeepThinkingToggle: (value) {
         setState(() {
           _isDeepThinkingEnabled = value;
+          _chatModel.setDeepThinking(_isDeepThinkingEnabled);
         });
       },
     );
