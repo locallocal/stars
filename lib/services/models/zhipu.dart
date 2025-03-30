@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:io';
 import 'package:crypto/crypto.dart';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:bubble/services/models/chat_models.dart';
 import 'package:bubble/model/model.dart';
@@ -133,7 +133,7 @@ class ZhipuChatModel extends ChatModel {
       },
       body: jsonEncode({
         'model': bot.model,
-        'messages': _processMessagesWithImages(messages),
+        'messages': processMessagesWithImages(messages),
       }),
     );
 
@@ -167,7 +167,7 @@ class ZhipuChatModel extends ChatModel {
             })
             ..body = jsonEncode({
               'model': bot.model,
-              'messages': _processMessagesWithImages(messages),
+              'messages': processMessagesWithImages(messages),
               'stream': true,
               if (webSearch)
                 'tools': [
@@ -326,42 +326,5 @@ class ZhipuChatModel extends ChatModel {
     } catch (e) {
       throw Exception('Generate image failed: $e');
     }
-  }
-
-  // 处理带有图片的消息
-  List<Map<String, dynamic>> _processMessagesWithImages(
-    List<ChatMessage> messages,
-  ) {
-    return messages.map((message) {
-      // 如果消息没有图片，直接返回原始消息
-      if (message.images.isEmpty) {
-        return message.toJson();
-      }
-      // 处理带有图片的消息
-      final List<Map<String, dynamic>> content = [];
-      // 添加文本内容（如果有）
-      if (message.content.isNotEmpty) {
-        content.add({'type': 'text', 'text': message.content});
-      }
-
-      // 添加图片内容
-      for (final imagePath in message.images) {
-        try {
-          final file = File(imagePath);
-          if (file.existsSync()) {
-            final bytes = file.readAsBytesSync();
-            final base64Image = base64Encode(bytes);
-
-            content.add({
-              'type': 'image_url',
-              'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
-            });
-          }
-        } catch (e) {
-          print('Process image ${imagePath} failed: $e');
-        }
-      }
-      return {'role': message.role, 'content': content};
-    }).toList();
   }
 }

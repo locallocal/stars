@@ -162,53 +162,58 @@ class MessageList extends StatelessWidget {
 
                       // 显示图片列表
                       if (message.images.isNotEmpty)
-                        Wrap(
-                          spacing: 8.0,
-                          runSpacing: 8.0,
-                          children:
-                              message.images.map((imagePath) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    // 点击图片时显示大图
-                                    showDialog(
-                                      context: context,
-                                      builder:
-                                          (context) => Dialog(
-                                            child: Image.file(
-                                              File(imagePath),
-                                              fit: BoxFit.contain,
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: message.content.isNotEmpty ? 8.0 : 0,
+                          ),
+                          child: Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children:
+                                message.images.map((imagePath) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // 点击图片时显示大图
+                                      showDialog(
+                                        context: context,
+                                        builder:
+                                            (context) => Dialog(
+                                              child: Image.file(
+                                                File(imagePath),
+                                                fit: BoxFit.contain,
+                                              ),
                                             ),
-                                          ),
-                                    );
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    child: Image.file(
-                                      File(imagePath),
-                                      width: 150,
-                                      height: 150,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) {
-                                        return Container(
-                                          width: 150,
-                                          height: 150,
-                                          color: Colors.grey[300],
-                                          child: const Center(
-                                            child: Icon(
-                                              Icons.broken_image,
-                                              color: Colors.grey,
+                                      );
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.file(
+                                        File(imagePath),
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Container(
+                                            width: 150,
+                                            height: 150,
+                                            color: Colors.grey[300],
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey,
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      },
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }).toList(),
+                                  );
+                                }).toList(),
+                          ),
                         ),
 
                       // 显示文件列表

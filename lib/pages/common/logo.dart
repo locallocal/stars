@@ -90,6 +90,9 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE1C4E9); // Moonshot 浅紫色
     case 'zhipu':
       return const Color(0xFFD4F0E2); // 智普 浅绿色
+    case 'zerooneai':
+    case '01ai':
+      return const Color(0xFFE6F0FF); // 零一万物 浅蓝色
     default:
       return defaultColor; // 默认颜色
   }

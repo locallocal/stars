@@ -17,12 +17,13 @@ final providers = [
   'Baidu',
   'Moonshot',
   'ZhiPu',
+  'ZeroOneAI',
 ];
 
 final modelsByProvider = {
   'OpenAI': {
     'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.openai.com',
+    'base_url': 'https://api.openai.com/v1',
     'models': [],
   },
   'Anthropic': {
@@ -81,5 +82,9 @@ final modelsByProvider = {
   'ZhiPu': {
     'api_type': Bot.apiTypeZhipu,
     'base_url': 'https://open.bigmodel.cn',
+  },
+  "ZeroOneAI": {
+    'api_type': Bot.apiTypeZeroOneAI,
+    'base_url': 'https://api.lingyiwanwu.com/v1',
   },
 };

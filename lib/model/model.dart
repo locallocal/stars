@@ -35,7 +35,8 @@ class Bot {
   static const apiTypeVolcanoEngine = "volcanoengine";
   static const apiTypeTencent = "tencent";
   static const apiTypeBaidu = "baidu";
-  static const String apiTypeZhipu = 'zhipu';
+  static const apiTypeZhipu = 'zhipu';
+  static const apiTypeZeroOneAI = "zerooneai";
 
   final String id;
   final String name;
@@ -144,6 +145,7 @@ class Bot {
       apiTypeBaidu,
       apiTypeOpenRouter,
       apiTypeZhipu,
+      apiTypeZeroOneAI,
     ];
   }
 }

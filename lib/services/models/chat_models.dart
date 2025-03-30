@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/models/openai.dart';
 import 'package:bubble/services/models/ollama.dart';
@@ -12,6 +14,7 @@ import 'package:bubble/services/models/tencent.dart';
 import 'package:bubble/services/models/volcano_engine.dart';
 import 'package:bubble/services/models/baidu.dart';
 import 'package:bubble/services/models/zhipu.dart';
+import 'package:bubble/services/models/zero_one_ai.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -153,8 +156,47 @@ abstract class ChatModel {
         return BaiduChatModel(bot);
       case Bot.apiTypeZhipu:
         return ZhipuChatModel(bot);
+      case Bot.apiTypeZeroOneAI:
+        return ZeroOneAIChatModel(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
+  }
+
+  // 处理带有图片的消息
+  List<Map<String, dynamic>> processMessagesWithImages(
+    List<ChatMessage> messages,
+  ) {
+    return messages.map((message) {
+      // 如果消息没有图片，直接返回原始消息
+      if (message.images.isEmpty) {
+        return message.toJson();
+      }
+      // 处理带有图片的消息
+      final List<Map<String, dynamic>> content = [];
+      // 添加文本内容（如果有）
+      if (message.content.isNotEmpty) {
+        content.add({'type': 'text', 'text': message.content});
+      }
+
+      // 添加图片内容
+      for (final imagePath in message.images) {
+        try {
+          final file = File(imagePath);
+          if (file.existsSync()) {
+            final bytes = file.readAsBytesSync();
+            final base64Image = base64Encode(bytes);
+
+            content.add({
+              'type': 'image_url',
+              'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
+            });
+          }
+        } catch (e) {
+          print('Process image ${imagePath} failed: $e');
+        }
+      }
+      return {'role': message.role, 'content': content};
+    }).toList();
   }
 }

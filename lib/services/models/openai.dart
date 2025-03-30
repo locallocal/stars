@@ -14,13 +14,10 @@ class OpenAIChatModel extends ChatModel {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/models'
-            : defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelsUrl;
 
-    final client = http.Client();
     try {
-      final response = await client
+      final response = await http
           .get(
             Uri.parse(url),
             headers: {'Authorization': 'Bearer ${bot.apiKey}'},
@@ -34,12 +31,12 @@ class OpenAIChatModel extends ChatModel {
                 .toList();
         return models;
       } else {
-        throw Exception('List Models Failed: ${response.statusCode}');
+        throw Exception('List models failed: ${response.statusCode}');
       }
     } on TimeoutException {
-      throw Exception('List Models Timeout, Retry later.');
-    } finally {
-      client.close();
+      throw Exception('List models Timeout, retry later.');
+    } catch (e) {
+      throw Exception('List models failed: $e');
     }
   }
 
@@ -47,7 +44,7 @@ class OpenAIChatModel extends ChatModel {
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/chat/completions'
+            ? '${bot.baseURL}/chat/completions'
             : defaultApiChatUrl;
 
     final response = await http.post(
@@ -78,7 +75,7 @@ class OpenAIChatModel extends ChatModel {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
+              ? '${bot.baseURL}/chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -165,10 +162,8 @@ class OpenAIChatModel extends ChatModel {
     }
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/images/generations'
+            ? '${bot.baseURL}/images/generations'
             : 'https://api.openai.com/v1/images/generations';
-
-    // 准备请求参数
     final Map<String, dynamic> requestBody = {
       'model': bot.model,
       'prompt': prompt,
