@@ -87,7 +87,7 @@ Color getProviderColor(String provider, Color defaultColor) {
     case 'baidu':
       return const Color(0xFFC9CBFF); // 百度 浅蓝色
     case 'xinghe':
-      return const Color(0xFF7A6AFF);
+      return const Color(0xFF7A6AFF); // 星河 紫色
     case 'moonshot':
       return const Color(0xFFE1C4E9); // Moonshot 浅紫色
     case 'zhipu':
@@ -95,6 +95,10 @@ Color getProviderColor(String provider, Color defaultColor) {
     case 'zerooneai':
     case '01ai':
       return const Color(0xFFE6F0FF); // 零一万物 浅蓝色
+    case 'infinigence':
+      return const Color.fromARGB(255, 235, 240, 220); // Infinigence 更浅的米色
+    case 'ppio':
+      return const Color(0xFFE8F5FF); // PPIO 浅蓝色
     default:
       return defaultColor; // 默认颜色
   }

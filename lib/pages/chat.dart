@@ -275,6 +275,7 @@ class _ChatPageState extends State<ChatPage> {
       timestamp: DateTime.now(),
     );
     await MessageService.addMessage(botMessage);
+    await ChatService.updateLastMessage(widget.id, botMessage.content);
 
     if (mounted) {
       setState(() {
@@ -286,8 +287,6 @@ class _ChatPageState extends State<ChatPage> {
         _isCancellable = false;
       });
     }
-
-    await ChatService.updateLastMessage(widget.id, botMessage.content);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(

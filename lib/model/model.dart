@@ -37,7 +37,9 @@ class Bot {
   static const apiTypeBaidu = "baidu";
   static const apiTypeXingHe = "xinghe";
   static const apiTypeZhipu = 'zhipu';
-  static const apiTypeZeroOneAI = "zerooneai";
+  static const apiTypeZeroOneAI = 'zerooneai';
+  static const apiTypeInfiniGence = 'infinigence';
+  static const apiTypePPIO = 'ppio';
 
   final String id;
   final String name;
@@ -148,6 +150,8 @@ class Bot {
       apiTypeOpenRouter,
       apiTypeZhipu,
       apiTypeZeroOneAI,
+      apiTypeInfiniGence,
+      apiTypePPIO,
     ];
   }
 }

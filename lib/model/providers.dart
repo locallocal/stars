@@ -19,6 +19,8 @@ final providers = [
   'Moonshot',
   'ZhiPu',
   'ZeroOneAI',
+  'InfiniGence',
+  'PPIO',
 ];
 
 final modelsByProvider = {
@@ -33,7 +35,7 @@ final modelsByProvider = {
   },
   'Gemini': {
     'api_type': Bot.apiTypeGemini,
-    'base_url': 'https://generativelanguage.googleapis.com',
+    'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
   },
   'DeepSeek': {
     'api_type': Bot.apiTypeDeepseek,
@@ -90,6 +92,14 @@ final modelsByProvider = {
   },
   "ZeroOneAI": {
     'api_type': Bot.apiTypeZeroOneAI,
-    'base_url': 'https://api.lingyiwanwu.com/v1',
+    'base_url': 'https://api.lingyiwanwu.com/v1/',
+  },
+  'InfiniGence': {
+    'api_type': Bot.apiTypeInfiniGence,
+    'base_url': 'https://cloud.infini-ai.com/maas/v1/',
+  },
+  'PPIO': {
+    'api_type': Bot.apiTypePPIO,
+    'base_url': 'https://api.ppinfra.com/v3/',
   },
 };

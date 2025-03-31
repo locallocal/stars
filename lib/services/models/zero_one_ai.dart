@@ -17,7 +17,7 @@ class ZeroOneAIChatModel extends ChatModel {
     // yi-lightning
     // yi-vision-v2
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : _defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : _defaultApiModelsUrl;
 
     try {
       final response = await http
@@ -73,7 +73,7 @@ class ZeroOneAIChatModel extends ChatModel {
     try {
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : _defaultApiChatUrl;
       final headers = {
         'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ class ZeroOneAIChatModel extends ChatModel {
       resetCancelState();
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : _defaultApiChatUrl;
       final headers = {
         'Content-Type': 'application/json',

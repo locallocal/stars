@@ -16,6 +16,8 @@ import 'package:bubble/services/models/baidu.dart';
 import 'package:bubble/services/models/xing_he.dart';
 import 'package:bubble/services/models/zhipu.dart';
 import 'package:bubble/services/models/zero_one_ai.dart';
+import 'package:bubble/services/models/infini_gence.dart';
+import 'package:bubble/services/models/ppio.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -161,6 +163,10 @@ abstract class ChatModel {
         return ZhipuChatModel(bot);
       case Bot.apiTypeZeroOneAI:
         return ZeroOneAIChatModel(bot);
+      case Bot.apiTypeInfiniGence:
+        return InfiniAIChatModel(bot);
+      case Bot.apiTypePPIO:
+        return PPIOChatModel(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
