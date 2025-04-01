@@ -21,6 +21,7 @@ final providers = [
   'ZeroOneAI',
   'InfiniGence',
   'PPIO',
+  'StepFun',
 ];
 
 final modelsByProvider = {
@@ -101,5 +102,9 @@ final modelsByProvider = {
   'PPIO': {
     'api_type': Bot.apiTypePPIO,
     'base_url': 'https://api.ppinfra.com/v3/',
+  },
+  'StepFun': {
+    'api_type': Bot.apiTypeStepFun,
+    'base_url': 'https://api.stepfun.com/v1/',
   },
 };

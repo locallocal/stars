@@ -125,6 +125,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _sendMessage() async {
+    if (_isTyping) {
+      return;
+    }
     if (_chatModel.getOutputModalites().contains(OutputModality.image) &&
         _selectedImageSize.isNotEmpty) {
       await _generateImage();

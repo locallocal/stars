@@ -5,7 +5,8 @@ enum InputModality {
   image('image'),
   file('file'),
   audio('audio'),
-  video('video');
+  video('video'),
+  realtime('realtime');
 
   final String value;
   const InputModality(this.value);
@@ -15,6 +16,8 @@ enum OutputModality {
   text('text'),
   image('image'),
   audio('audio'),
+  realtime('realtime'),
+  music('music'),
   video('video');
 
   final String value;
@@ -40,6 +43,7 @@ class Bot {
   static const apiTypeZeroOneAI = 'zerooneai';
   static const apiTypeInfiniGence = 'infinigence';
   static const apiTypePPIO = 'ppio';
+  static const apiTypeStepFun = "stepfun";
 
   final String id;
   final String name;
@@ -152,6 +156,7 @@ class Bot {
       apiTypeZeroOneAI,
       apiTypeInfiniGence,
       apiTypePPIO,
+      apiTypeStepFun,
     ];
   }
 }

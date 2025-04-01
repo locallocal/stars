@@ -96,9 +96,11 @@ Color getProviderColor(String provider, Color defaultColor) {
     case '01ai':
       return const Color(0xFFE6F0FF); // 零一万物 浅蓝色
     case 'infinigence':
-      return const Color.fromARGB(255, 235, 240, 220); // Infinigence 更浅的米色
+      return const Color(0xFFEBF0DC); // Infinigence 更浅的米色
     case 'ppio':
       return const Color(0xFFE8F5FF); // PPIO 浅蓝色
+    case 'stepfun':
+      return const Color(0xFFE6F0E0); // Stemfun 浅绿色
     default:
       return defaultColor; // 默认颜色
   }
