@@ -44,6 +44,7 @@ class Bot {
   static const apiTypeInfiniGence = 'infinigence';
   static const apiTypePPIO = 'ppio';
   static const apiTypeStepFun = "stepfun";
+  static const apiTypeBaiChuan = 'baichuan';
 
   final String id;
   final String name;
@@ -157,6 +158,7 @@ class Bot {
       apiTypeInfiniGence,
       apiTypePPIO,
       apiTypeStepFun,
+      apiTypeBaiChuan,
     ];
   }
 }

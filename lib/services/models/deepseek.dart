@@ -154,6 +154,7 @@ class DeepSeekChatModel extends ChatModel {
                 if (reasoning.isNotEmpty && onReasoningResponse != null) {
                   onReasoningResponse!(reasoning);
                 }
+                continue;
               }
 
               final delta = data['choices'][0]['delta']['content'] ?? '';

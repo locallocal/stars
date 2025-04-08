@@ -19,6 +19,7 @@ import 'package:bubble/services/models/zero_one_ai.dart';
 import 'package:bubble/services/models/infini_gence.dart';
 import 'package:bubble/services/models/ppio.dart';
 import 'package:bubble/services/models/step_fun.dart';
+import 'package:bubble/services/models/bai_chuan.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -170,6 +171,8 @@ abstract class ChatModel {
         return PPIOChatModel(bot);
       case Bot.apiTypeStepFun:
         return StepFunChatModel(bot);
+      case Bot.apiTypeBaiChuan:
+        return BaiChuanChatModel(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

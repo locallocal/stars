@@ -22,6 +22,7 @@ final providers = [
   'InfiniGence',
   'PPIO',
   'StepFun',
+  'BaiChuan',
 ];
 
 final modelsByProvider = {
@@ -106,5 +107,9 @@ final modelsByProvider = {
   'StepFun': {
     'api_type': Bot.apiTypeStepFun,
     'base_url': 'https://api.stepfun.com/v1/',
+  },
+  'BaiChuan': {
+    'api_type': Bot.apiTypeBaiChuan,
+    'base_url': 'https://api.baichuan-ai.com/v1/',
   },
 };

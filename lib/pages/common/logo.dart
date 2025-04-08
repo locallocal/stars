@@ -101,6 +101,8 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE8F5FF); // PPIO 浅蓝色
     case 'stepfun':
       return const Color(0xFFE6F0E0); // Stemfun 浅绿色
+    case 'baichuan':
+      return const Color(0xFFD6E8FF); // 百川 浅蓝色
     default:
       return defaultColor; // 默认颜色
   }
