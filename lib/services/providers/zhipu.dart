@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class ZhipuChatModel extends ChatModel {
+class Zhipu extends Provider {
   static const String defaultApiUrl =
       'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 
-  ZhipuChatModel(Bot bot) : super(bot);
+  Zhipu(Bot bot) : super(bot);
 
   // 生成JWT令牌
   String _generateToken() {
@@ -71,7 +71,7 @@ class ZhipuChatModel extends ChatModel {
   }
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
     if (bot.model.toLowerCase().contains('glm-4-')) {
       return true;
     }
@@ -79,7 +79,7 @@ class ZhipuChatModel extends ChatModel {
   }
 
   @override
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     if (bot.model.toLowerCase().contains('glm-zero')) {
       return true;
     }

@@ -2,15 +2,25 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class ZeroOneAIChatModel extends ChatModel {
+class ZeroOneAI extends Provider {
   static const String _defaultApiModelsUrl =
       'https://api.lingyiwanwu.com/v1/models';
   static const String _defaultApiChatUrl =
       'https://api.lingyiwanwu.com/v1/chat/completions';
 
-  ZeroOneAIChatModel(super.bot);
+  ZeroOneAI(super.bot);
+
+  @override
+  bool supportWebSearch() {
+    return false;
+  }
+
+  @override
+  bool supportDeepThinking() {
+    return false;
+  }
 
   @override
   Future<List<String>> listModels() async {
@@ -56,16 +66,6 @@ class ZeroOneAIChatModel extends ChatModel {
       return [InputModality.text, InputModality.image];
     }
     return [InputModality.text];
-  }
-
-  @override
-  bool supportsWebSearch() {
-    return false;
-  }
-
-  @override
-  bool supportsDeepThinking() {
-    return false;
   }
 
   @override

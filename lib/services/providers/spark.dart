@@ -2,24 +2,26 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class PPIOChatModel extends ChatModel {
-  static const String defaultApiModelsUrl = 'https://api.ppinfra.com/v3/model';
+class Spark extends Provider {
   static const String defaultApiChatUrl =
-      'https://api.ppinfra.com/v3/openai/chat/completions';
-  PPIOChatModel(super.bot);
+      'https://spark-api-open.xf-yun.com/v1/chat/completions';
+  Spark(super.bot);
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
+    switch (bot.model) {
+      case 'pro-128k':
+      case 'max-32k':
+      case '4.0Ultra':
+        return true;
+    }
     return false;
   }
 
   @override
-  bool supportsDeepThinking() {
-    if (bot.model.contains('deepseek-r1')) {
-      return true;
-    }
+  bool supportDeepThinking() {
     return false;
   }
 
@@ -36,33 +38,12 @@ class PPIOChatModel extends ChatModel {
   @override
   Future<List<String>> listModels() async {
     return const [
-      'deepseek/deepseek-r1-turbo',
-      'deepseek/deepseek-v3-turbo',
-      'deepseek/deepseek-v3-0324',
-      'deepseek/deepseek-r1/community',
-      'deepseek/deepseek-v3/community',
-      'deepseek/deepseek-r1',
-      'deepseek/deepseek-v3',
-      'qwen/qwq-32b',
-      'deepseek/deepseek-r1-distill-qwen-32b',
-      'deepseek/deepseek-r1-distill-qwen-14b',
-      'deepseek/deepseek-r1-distill-llama-70b',
-      'deepseek/deepseek-r1-distill-llama-8b',
-      'meta-llama/llama-3.3-70b-instruct',
-      'qwen/qwen-2.5-72b-instruct',
-      'qwen/qwen-2-vl-72b-instruct',
-      'meta-llama/llama-3.2-3b-instruct',
-      'google/gemma-3-27b-it',
-      'qwen/qwen2.5-vl-72b-instruct',
-      'qwen/qwen2.5-32b-instruct',
-      'baichuan/baichuan2-13b-chat',
-      // 仅针对实名认证的企业用户开放
-      // 'meta-llama/llama-3.1-70b-instruct',
-      // 'meta-llama/llama-3.1-8b-instruct',
-      '01-ai/yi-1.5-34b-chat',
-      '01-ai/yi-1.5-9b-chat',
-      'thudm/glm-4-9b-chat',
-      'qwen/qwen-2-7b-instruct',
+      'lite',
+      'generalv3',
+      'pro-128k',
+      'generalv3.5',
+      'max-32k',
+      '4.0Ultra',
     ];
   }
 
@@ -70,7 +51,7 @@ class PPIOChatModel extends ChatModel {
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}openai/chat/completions'
+            ? '${bot.baseURL}chat/completions'
             : defaultApiChatUrl;
 
     final response = await http.post(
@@ -101,7 +82,7 @@ class PPIOChatModel extends ChatModel {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}openai/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -114,6 +95,17 @@ class PPIOChatModel extends ChatModel {
               'model': bot.model,
               'messages': processMessagesWithImages(messages),
               'stream': true,
+              if (webSearch)
+                'tools': [
+                  {
+                    'type': 'web_search',
+                    'web_search': {
+                      'enable': true,
+                      "show_ref_label": true,
+                      "search_mode": "deep",
+                    },
+                  },
+                ],
             });
 
       final streamedResponse = await request.send();

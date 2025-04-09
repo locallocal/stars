@@ -1,35 +1,64 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class TencentChatModel extends ChatModel {
+class Xinghe extends Provider {
   static const String defaultApiChatUrl =
-      'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
+      'https://aistudio.baidu.com/llm/lmapi/v3/chat/completions';
 
-  TencentChatModel(Bot bot) : super(bot);
+  Xinghe(super.bot);
+
+  @override
+  bool supportWebSearch() {
+    switch (bot.model.toLowerCase()) {
+      case 'ernie-4.5-8k-preview':
+      case 'ernie-3.5-8k':
+      case 'ernie-4.0-8k':
+      case 'ernie-4.0-turbo-8k':
+        return true;
+    }
+    return false;
+  }
+
+  @override
+  bool supportDeepThinking() {
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    switch (bot.model.toLowerCase()) {
+      case 'ernie-4.5-8k-preview':
+        return [InputModality.text, InputModality.image];
+    }
+    return [InputModality.text];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    switch (bot.model) {
+      case 'Stable-Diffusion-XL':
+        return [OutputModality.image];
+    }
+    return [OutputModality.text];
+  }
 
   @override
   Future<List<String>> listModels() async {
-    // 腾讯混元目前支持的模型列表
-    return [
-      'hunyuan-t1-latest',
-      'hunyuan-t1-20250321',
-      'hunyuan-turbos-latest',
-      'hunyuan-turbos-20250313',
-      'hunyuan-turbos-20250226',
-      'hunyuan-turbo-latest',
-      'hunyuan-turbo',
-      'hunyuan-turbo-20241223',
-      'hunyuan-large',
-      'hunyuan-large-longcontext',
-      'hunyuan-standard-256K',
-      'hunyuan-standard',
-      'hunyuan-lite',
-      'hunyuan-standard-vision',
-      'hunyuan-lite-vision',
-      'hunyuan-turbo-vision',
-      'hunyuan-vision',
+    return const [
+      'ernie-4.5-8k-preview',
+      'ernie-3.5-8k',
+      'ernie-4.0-8k',
+      'ernie-4.0-turbo-8k',
+      'ernie-char-8k',
+      'ernie-speed-8k',
+      'ernie-speed-128k',
+      'ernie-tiny-8k',
+      'ernie-lite-8k',
+      'deepseek-r1',
+      'Stable-Diffusion-XL',
     ];
   }
 
@@ -38,15 +67,13 @@ class TencentChatModel extends ChatModel {
     try {
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
+              ? '${bot.baseURL}/chat/completions'
               : defaultApiChatUrl;
 
-      // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
         'model': bot.model,
-        'messages': messages.map((m) => m.toJson()).toList(),
-        'temperature': 0.7,
-        'stream': false,
+        'messages': processMessagesWithImages(messages),
+        if (webSearch) 'web_search': {"enable": true, "enable_trace": true},
       };
 
       // 发送请求
@@ -66,7 +93,6 @@ class TencentChatModel extends ChatModel {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = jsonDecode(decodedBody);
 
-        // 腾讯混元API的响应格式
         if (data['choices'] != null && data['choices'].length > 0) {
           final String content = data['choices'][0]['message']['content'];
           // 再次确保内容是有效的UTF-8字符串
@@ -98,7 +124,7 @@ class TencentChatModel extends ChatModel {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
+              ? '${bot.baseURL}/chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -109,8 +135,10 @@ class TencentChatModel extends ChatModel {
             })
             ..body = jsonEncode({
               'model': bot.model,
-              'messages': messages.map((m) => m.toJson()).toList(),
+              'messages': processMessagesWithImages(messages),
               'stream': true,
+              if (webSearch)
+                'web_search': {"enable": true, "enable_trace": true},
             });
 
       final streamedResponse = await request.send();
@@ -125,8 +153,8 @@ class TencentChatModel extends ChatModel {
       await for (final line in stream) {
         if (isCancelled) break;
 
-        if (line.startsWith('data: ')) {
-          final jsonStr = line.substring(6);
+        if (line.startsWith('data:')) {
+          final jsonStr = line.substring(5);
           if (jsonStr == '[DONE]') {
             // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {
@@ -167,6 +195,69 @@ class TencentChatModel extends ChatModel {
     } finally {
       cancelController?.close();
       cancelController = null;
+    }
+  }
+
+  @override
+  Future<List<String>> generateImage(
+    String prompt,
+    String size,
+    String imageDirPath,
+  ) async {
+    // 检查模型是否支持图像生成
+    if (bot.model != 'Stable-Diffusion-XL') {
+      throw UnsupportedError(
+        'Model ${bot.model} dont support generate image，please use Stable-Diffusion-XL model',
+      );
+    }
+
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}images/generations'
+            : 'https://aistudio.baidu.com/llm/lmapi/v3/images/generations';
+    // 准备请求参数
+    final Map<String, dynamic> requestBody = {
+      'model': bot.model,
+      'prompt': prompt,
+      'n': 1, // 生成图片数量
+      'size': size, // 图片尺寸
+      'response_format': 'url', // 返回URL而不是base64
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${bot.apiKey}',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final imageUrl = data['data'][0]['url'];
+        final imageResponse = await http.get(Uri.parse(imageUrl));
+
+        if (imageResponse.statusCode == 200) {
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = 'cogview_$timestamp.png';
+          final filePath = '$imageDirPath/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(imageResponse.bodyBytes);
+          return [filePath];
+        } else {
+          throw Exception(
+            'Download image $imageUrl failed: ${imageResponse.statusCode}',
+          );
+        }
+      } else {
+        throw Exception(
+          'Generate image failed: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Generate image failed: $e');
     }
   }
 }

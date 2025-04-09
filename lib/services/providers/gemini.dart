@@ -1,27 +1,27 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:bubble/model/model.dart';
 
-class GeminiChatModel extends ChatModel {
+class Gemini extends Provider {
   static const String defaultApiModelKey =
       'https://generativelanguage.googleapis.com/v1beta/openai/models';
   static const String defaultApiChatUrl =
       'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
-  GeminiChatModel(super.bot) {
+  Gemini(super.bot) {
     final model = GenerativeModel(model: bot.model, apiKey: bot.apiKey);
     final chat = model.startChat(history: []);
   }
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
     return false;
   }
 
   @override
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     if (bot.model.toLowerCase().contains('gemini-2.0-flash-thinking')) {
       return true;
     }

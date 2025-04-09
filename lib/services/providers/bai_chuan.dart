@@ -1,99 +1,43 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class BaiduChatModel extends ChatModel {
+class BaiChuan extends Provider {
   static const String defaultApiChatUrl =
-      'https://qianfan.baidubce.com/v2/chat/completions';
+      'https://api.baichuan-ai.com/v1/chat/completions';
 
-  BaiduChatModel(super.bot);
+  BaiChuan(super.bot);
 
   @override
-  bool supportsWebSearch() {
-    switch (bot.model.toLowerCase()) {
-      case 'ernie-4.5-8k-preview':
-      case 'ernie-4.0-8k-latest':
-      case 'ernie-4.0-8k-preview':
-      case 'ernie-4.0-8k':
-      case 'ernie-4.0-turbo-8k-latest':
-      case 'ernie-4.0-turbo-8k-preview':
-      case 'ernie-4.0-turbo-8k':
-      case 'ernie-4.0-turbo-128k':
-      case 'ernie-3.5-8k-preview':
-      case 'ernie-3.5-8k':
-      case 'ernie-3.5-128k':
-        return true;
-    }
+  bool supportWebSearch() {
     return false;
   }
 
   @override
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     return false;
   }
 
   @override
   List<InputModality> getInputModalites() {
-    switch (bot.model.toLowerCase()) {
-      case 'ernie-4.5-8k-preview':
-      case 'deepseek-vl2':
-      case 'deepseek-vl2-small':
-      case 'qwen2.5-vl-7b-instruct':
-      case 'internvl2.5-38b-mpo':
-        return [InputModality.text, InputModality.image];
-    }
     return [InputModality.text];
   }
 
   @override
   List<OutputModality> getOutputModalites() {
-    switch (bot.model) {
-      case 'irag-1.0':
-      case 'flux.1-schnell':
-        return [OutputModality.image];
-    }
     return [OutputModality.text];
   }
 
   @override
   Future<List<String>> listModels() async {
     return const [
-      'ernie-4.5-8k-preview',
-      'ernie-4.0-8k-latest',
-      'ernie-4.0-8k-preview',
-      'ernie-4.0-8k',
-      'ernie-4.0-turbo-8k-latest',
-      'ernie-4.0-turbo-8k-preview',
-      'ernie-4.0-turbo-8k',
-      'ernie-4.0-turbo-128k',
-      'ernie-3.5-8k-preview',
-      'ernie-3.5-8k',
-      'ernie-3.5-128k',
-      'ernie-speed-8k',
-      'ernie-speed-128k',
-      'ernie-speed-pro-128k',
-      'ernie-lite-8k',
-      'ernie-lite-pro-128k',
-      'ernie-tiny-8k',
-      'ernie-char-8k',
-      'ernie-char-fiction-8k',
-      'ernie-novel-8k',
-      'deepseek-v3',
-      'deepseek-v3-241226',
-      'deepseek-r1',
-      'deepseek-r1-distill-qwen-32b',
-      'deepseek-r1-distill-qwen-14b',
-      'deepseek-r1-distill-qwen-7b',
-      'deepseek-r1-distill-qwen-1.5b',
-      'deepseek-r1-distill-llama-70b',
-      'deepseek-r1-distill-llama-8b',
-      'deepseek-r1-distill-qianfan-llama-70b',
-      'deepseek-r1-distill-qianfan-llama-8b',
-      'qwq-32b',
-      'irag-1.0',
-      'flux.1-schnell',
+      'Baichuan4-Turbo',
+      'Baichuan4-Air',
+      'Baichuan4',
+      'Baichuan3-Turbo',
+      'Baichuan3-Turbo-128k',
+      'Baichuan2-Turbo',
     ];
   }
 
@@ -129,13 +73,12 @@ class BaiduChatModel extends ChatModel {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = jsonDecode(decodedBody);
 
-        // 腾讯混元API的响应格式
         if (data['choices'] != null && data['choices'].length > 0) {
           final String content = data['choices'][0]['message']['content'];
           // 再次确保内容是有效的UTF-8字符串
           return content;
         } else {
-          return 'Invalid Response Body: ${data['msg'] ?? 'Unknown Error'}';
+          return 'Invalid response body: ${data['msg'] ?? 'Unknown error'}';
         }
       } else {
         // 处理HTTP错误
@@ -150,7 +93,7 @@ class BaiduChatModel extends ChatModel {
         }
       }
     } catch (e) {
-      return 'Send Message Failed: $e';
+      return 'Send message failed: $e';
     }
   }
 
@@ -229,89 +172,6 @@ class BaiduChatModel extends ChatModel {
     } finally {
       cancelController?.close();
       cancelController = null;
-    }
-  }
-
-  @override
-  List<String> getSupportedImageSizes() {
-    return [
-      '512x512',
-      '768x768',
-      '1024x1024',
-      '1536x1536',
-      '2048x2048',
-      '1024x768',
-      '2048x1536',
-      '768x1024',
-      '1536x2048',
-      '1024x576',
-      '2048x1152',
-      '576x1024',
-      '1152x2048',
-    ];
-  }
-
-  @override
-  Future<List<String>> generateImage(
-    String prompt,
-    String size,
-    String imageDirPath,
-  ) async {
-    // 检查模型是否支持图像生成
-    if (bot.model.toLowerCase() != 'irag-1.0' &&
-        bot.model.toLowerCase() != 'flux.1-schnell') {
-      throw UnsupportedError(
-        'Model ${bot.model} dont support generate image，please use Stable-Diffusion-XL model',
-      );
-    }
-
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}images/generations'
-            : 'https://aistudio.baidu.com/llm/lmapi/v3/images/generations';
-    // 准备请求参数
-    final Map<String, dynamic> requestBody = {
-      'model': bot.model,
-      'prompt': prompt,
-      'n': 1, // 生成图片数量
-      'size': size, // 图片尺寸
-      'response_format': 'url', // 返回URL而不是base64
-    };
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${bot.apiKey}',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final imageUrl = data['data'][0]['url'];
-        final imageResponse = await http.get(Uri.parse(imageUrl));
-
-        if (imageResponse.statusCode == 200) {
-          final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final fileName = 'cogview_$timestamp.png';
-          final filePath = '$imageDirPath/$fileName';
-          final file = File(filePath);
-          await file.writeAsBytes(imageResponse.bodyBytes);
-          return [filePath];
-        } else {
-          throw Exception(
-            'Download image $imageUrl failed: ${imageResponse.statusCode}',
-          );
-        }
-      } else {
-        throw Exception(
-          'Generate image failed: ${response.statusCode} - ${response.body}',
-        );
-      }
-    } catch (e) {
-      throw Exception('Generate image failed: $e');
     }
   }
 }

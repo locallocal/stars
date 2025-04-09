@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:bubble/services/message_service.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/chat_service.dart';
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/pages/common/attachment.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/chat/attachments.dart';
@@ -31,7 +31,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  late ChatModel _chatModel;
+  late Provider _provider;
   final String _currentUserId = 'me';
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -55,9 +55,9 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     _loadMessages();
-    _chatModel = ChatModel.create(widget.bot);
+    _provider = Provider.create(widget.bot);
 
-    _chatModel.setCallbacks(
+    _provider.setCallbacks(
       onResponse: _handleStreamResponse,
       onComplete: _handleStreamComplete,
       onError: _handleStreamError,
@@ -128,7 +128,7 @@ class _ChatPageState extends State<ChatPage> {
     if (_isTyping) {
       return;
     }
-    if (_chatModel.getOutputModalites().contains(OutputModality.image) &&
+    if (_provider.getOutputModalites().contains(OutputModality.image) &&
         _selectedImageSize.isNotEmpty) {
       await _generateImage();
       return;
@@ -232,7 +232,7 @@ class _ChatPageState extends State<ChatPage> {
           files: userMessage.files,
         ),
       );
-      await _chatModel.sendMessageStream(chatMessages);
+      await _provider.sendMessageStream(chatMessages);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -396,7 +396,7 @@ class _ChatPageState extends State<ChatPage> {
                     _showAttachments(),
 
                   // 图片生成功能
-                  if (_chatModel.getOutputModalites().contains(
+                  if (_provider.getOutputModalites().contains(
                     OutputModality.image,
                   ))
                     _buildImageGenerationPanel(),
@@ -411,15 +411,15 @@ class _ChatPageState extends State<ChatPage> {
                       });
                     },
                     showAttachmentBar: _showAttachmentBar,
-                    inputModalities: _chatModel.getInputModalites(),
+                    inputModalities: _provider.getInputModalites(),
                     hasAttachments:
                         (_selectedImages.isNotEmpty ||
                             _selectedFiles.isNotEmpty),
                   ),
 
                   // 聊天模型功能
-                  if (_chatModel.supportsWebSearch() ||
-                      _chatModel.supportsDeepThinking())
+                  if (_provider.supportWebSearch() ||
+                      _provider.supportDeepThinking())
                     _showChatModelFeatures(),
 
                   // 附件选择栏
@@ -458,7 +458,7 @@ class _ChatPageState extends State<ChatPage> {
       _isTyping = false;
       _isStreaming = false;
       _isCancellable = false;
-      _chatModel.cancelRequest();
+      _provider.cancelRequest();
 
       if (_streamingResponse.isNotEmpty) {
         final botMessage = Message(
@@ -549,18 +549,18 @@ class _ChatPageState extends State<ChatPage> {
     return ChatModelFeatures(
       isWebSearchEnabled: _isWebSearchEnabled,
       isDeepThinkingEnabled: _isDeepThinkingEnabled,
-      supportsWebSearch: _chatModel.supportsWebSearch(),
-      supportsDeepThinking: _chatModel.supportsDeepThinking(),
+      supportWebSearch: _provider.supportWebSearch(),
+      supportDeepThinking: _provider.supportDeepThinking(),
       onWebSearchToggle: (value) {
         setState(() {
           _isWebSearchEnabled = value;
-          _chatModel.setWebSearch(_isWebSearchEnabled);
+          _provider.setWebSearch(_isWebSearchEnabled);
         });
       },
       onDeepThinkingToggle: (value) {
         setState(() {
           _isDeepThinkingEnabled = value;
-          _chatModel.setDeepThinking(_isDeepThinkingEnabled);
+          _provider.setDeepThinking(_isDeepThinkingEnabled);
         });
       },
     );
@@ -572,7 +572,7 @@ class _ChatPageState extends State<ChatPage> {
       onCameraPressed: getAttachImageFromCamera,
       onGalleryPressed: getAttachImageFromGallery,
       onFilePressed: getAttacheFile,
-      inputModalities: _chatModel.getInputModalites(),
+      inputModalities: _provider.getInputModalites(),
     );
   }
 
@@ -582,7 +582,7 @@ class _ChatPageState extends State<ChatPage> {
     List<String> supportedSizes = ['1024x1024', '512x512'];
     // 如果模型支持获取图片尺寸列表，则使用模型提供的尺寸
     try {
-      final sizes = _chatModel.getSupportedImageSizes();
+      final sizes = _provider.getSupportedImageSizes();
       if (sizes.isNotEmpty) {
         supportedSizes = sizes;
       }
@@ -631,7 +631,7 @@ class _ChatPageState extends State<ChatPage> {
 
       // 调用模型生成图片
       var imageDirPath = await getChatDirectoryPath(widget.id);
-      final imagePath = await _chatModel.generateImage(
+      final imagePath = await _provider.generateImage(
         prompt,
         _selectedImageSize,
         imageDirPath,

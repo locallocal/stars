@@ -2,24 +2,25 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/models/openai.dart';
-import 'package:bubble/services/models/ollama.dart';
-import 'package:bubble/services/models/deepseek.dart';
-import 'package:bubble/services/models/gemini.dart';
-import 'package:bubble/services/models/grok.dart';
-import 'package:bubble/services/models/huggingface.dart';
-import 'package:bubble/services/models/anthropic.dart';
-import 'package:bubble/services/models/openrouter.dart';
-import 'package:bubble/services/models/tencent.dart';
-import 'package:bubble/services/models/volcano_engine.dart';
-import 'package:bubble/services/models/baidu.dart';
-import 'package:bubble/services/models/xing_he.dart';
-import 'package:bubble/services/models/zhipu.dart';
-import 'package:bubble/services/models/zero_one_ai.dart';
-import 'package:bubble/services/models/infini_gence.dart';
-import 'package:bubble/services/models/ppio.dart';
-import 'package:bubble/services/models/step_fun.dart';
-import 'package:bubble/services/models/bai_chuan.dart';
+import 'package:bubble/services/providers/openai.dart';
+import 'package:bubble/services/providers/ollama.dart';
+import 'package:bubble/services/providers/deepseek.dart';
+import 'package:bubble/services/providers/gemini.dart';
+import 'package:bubble/services/providers/grok.dart';
+import 'package:bubble/services/providers/hugging_face.dart';
+import 'package:bubble/services/providers/anthropic.dart';
+import 'package:bubble/services/providers/open_router.dart';
+import 'package:bubble/services/providers/spark.dart';
+import 'package:bubble/services/providers/tencent.dart';
+import 'package:bubble/services/providers/volcano_engine.dart';
+import 'package:bubble/services/providers/baidu.dart';
+import 'package:bubble/services/providers/xing_he.dart';
+import 'package:bubble/services/providers/zhipu.dart';
+import 'package:bubble/services/providers/zero_one_ai.dart';
+import 'package:bubble/services/providers/infini_gence.dart';
+import 'package:bubble/services/providers/ppio.dart';
+import 'package:bubble/services/providers/step_fun.dart';
+import 'package:bubble/services/providers/bai_chuan.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -46,7 +47,7 @@ class ChatMessage {
 typedef StreamResponseCallback = void Function(String text);
 
 // 聊天模型抽象类
-abstract class ChatModel {
+abstract class Provider {
   final Bot bot;
   // 用于取消请求的控制器
   StreamController<bool>? cancelController;
@@ -59,13 +60,17 @@ abstract class ChatModel {
   Function? onComplete;
   Function(String)? onError;
 
-  ChatModel(this.bot);
+  Provider(this.bot);
 
-  bool supportsWebSearch() {
+  bool supportStreamResponse() {
+    return true;
+  }
+
+  bool supportWebSearch() {
     return false;
   }
 
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     return false;
   }
 
@@ -135,44 +140,46 @@ abstract class ChatModel {
     cancelController = StreamController<bool>();
   }
 
-  static ChatModel create(Bot bot) {
+  static Provider create(Bot bot) {
     switch (bot.apiType) {
       case Bot.apiTypeOpenAI:
-        return OpenAIChatModel(bot);
+        return OpenAI(bot);
       case Bot.apiTypeOllama:
-        return OllamaChatModel(bot);
+        return Ollama(bot);
       case Bot.apiTypeDeepseek:
-        return DeepSeekChatModel(bot);
+        return Deepseek(bot);
       case Bot.apiTypeGemini:
-        return GeminiChatModel(bot);
+        return Gemini(bot);
       case Bot.apiTypeGrok:
-        return GrokChatModel(bot);
+        return Grok(bot);
       case Bot.apiTypeHuggingface:
-        return HuggingFaceChatModel(bot);
+        return HuggingFace(bot);
       case Bot.apiTypeAnthropic:
-        return AnthropicChatModel(bot);
+        return Anthropic(bot);
       case Bot.apiTypeVolcanoEngine:
-        return VolcanoEngineChatModel(bot);
+        return VolcanoEngine(bot);
       case Bot.apiTypeTencent:
-        return TencentChatModel(bot);
+        return Tencent(bot);
       case Bot.apiTypeOpenRouter:
-        return OpenRouterChatModel(bot);
+        return OpenRouter(bot);
       case Bot.apiTypeBaidu:
-        return BaiduChatModel(bot);
+        return Baidu(bot);
       case Bot.apiTypeXingHe:
-        return XingheChatModel(bot);
+        return Xinghe(bot);
       case Bot.apiTypeZhipu:
-        return ZhipuChatModel(bot);
+        return Zhipu(bot);
       case Bot.apiTypeZeroOneAI:
-        return ZeroOneAIChatModel(bot);
+        return ZeroOneAI(bot);
       case Bot.apiTypeInfiniGence:
-        return InfiniAIChatModel(bot);
+        return InfiniAI(bot);
       case Bot.apiTypePPIO:
-        return PPIOChatModel(bot);
+        return PPIO(bot);
       case Bot.apiTypeStepFun:
-        return StepFunChatModel(bot);
+        return StepFun(bot);
       case Bot.apiTypeBaiChuan:
-        return BaiChuanChatModel(bot);
+        return BaiChuan(bot);
+      case Bot.apiTypeSpark:
+        return Spark(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/providers.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/logo.dart';
@@ -79,9 +79,8 @@ class _AddBotPageState extends State<AddBotPage> {
       );
 
       // 创建ChatModel并获取模型列表
-      final chatModel = ChatModel.create(tempBot);
-      final models = await chatModel.listModels();
-
+      final provider = Provider.create(tempBot);
+      final models = await provider.listModels();
       if (models.isNotEmpty && mounted) {
         setState(() {
           modelsByProvider[selectedProvider]?['models'] = models;

@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
-import 'package:bubble/model/model.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class VolcanoEngineChatModel extends ChatModel {
+class VolcanoEngine extends Provider {
   static const String defaultApiChatUrl =
       'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
 
-  VolcanoEngineChatModel(Bot bot) : super(bot);
+  VolcanoEngine(super.bot);
 
   @override
   Future<List<String>> listModels() async {

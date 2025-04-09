@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
-import 'package:bubble/model/model.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class OllamaChatModel extends ChatModel {
-  OllamaChatModel(Bot bot) : super(bot);
+class Ollama extends Provider {
+  Ollama(super.bot);
 
   @override
   Future<List<String>> listModels() async {

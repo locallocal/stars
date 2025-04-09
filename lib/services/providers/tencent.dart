@@ -1,43 +1,34 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
-import 'package:bubble/model/model.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class BaiChuanChatModel extends ChatModel {
+class Tencent extends Provider {
   static const String defaultApiChatUrl =
-      'https://api.baichuan-ai.com/v1/chat/completions';
+      'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
 
-  BaiChuanChatModel(super.bot);
-
-  @override
-  bool supportsWebSearch() {
-    return false;
-  }
-
-  @override
-  bool supportsDeepThinking() {
-    return false;
-  }
-
-  @override
-  List<InputModality> getInputModalites() {
-    return [InputModality.text];
-  }
-
-  @override
-  List<OutputModality> getOutputModalites() {
-    return [OutputModality.text];
-  }
+  Tencent(super.bot);
 
   @override
   Future<List<String>> listModels() async {
-    return const [
-      'Baichuan4-Turbo',
-      'Baichuan4-Air',
-      'Baichuan4',
-      'Baichuan3-Turbo',
-      'Baichuan3-Turbo-128k',
-      'Baichuan2-Turbo',
+    // 腾讯混元目前支持的模型列表
+    return [
+      'hunyuan-t1-latest',
+      'hunyuan-t1-20250321',
+      'hunyuan-turbos-latest',
+      'hunyuan-turbos-20250313',
+      'hunyuan-turbos-20250226',
+      'hunyuan-turbo-latest',
+      'hunyuan-turbo',
+      'hunyuan-turbo-20241223',
+      'hunyuan-large',
+      'hunyuan-large-longcontext',
+      'hunyuan-standard-256K',
+      'hunyuan-standard',
+      'hunyuan-lite',
+      'hunyuan-standard-vision',
+      'hunyuan-lite-vision',
+      'hunyuan-turbo-vision',
+      'hunyuan-vision',
     ];
   }
 
@@ -46,14 +37,15 @@ class BaiChuanChatModel extends ChatModel {
     try {
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/chat/completions'
+              ? '${bot.baseURL}/v1/chat/completions'
               : defaultApiChatUrl;
 
       // 构建请求体 - 腾讯混元API特定格式
       final Map<String, dynamic> requestBody = {
         'model': bot.model,
-        'messages': processMessagesWithImages(messages),
-        if (webSearch) 'web_search': {"enable": true, "enable_trace": true},
+        'messages': messages.map((m) => m.toJson()).toList(),
+        'temperature': 0.7,
+        'stream': false,
       };
 
       // 发送请求
@@ -73,12 +65,13 @@ class BaiChuanChatModel extends ChatModel {
         final String decodedBody = utf8.decode(response.bodyBytes);
         final Map<String, dynamic> data = jsonDecode(decodedBody);
 
+        // 腾讯混元API的响应格式
         if (data['choices'] != null && data['choices'].length > 0) {
           final String content = data['choices'][0]['message']['content'];
           // 再次确保内容是有效的UTF-8字符串
           return content;
         } else {
-          return 'Invalid response body: ${data['msg'] ?? 'Unknown error'}';
+          return 'Invalid Response Body: ${data['msg'] ?? 'Unknown Error'}';
         }
       } else {
         // 处理HTTP错误
@@ -93,7 +86,7 @@ class BaiChuanChatModel extends ChatModel {
         }
       }
     } catch (e) {
-      return 'Send message failed: $e';
+      return 'Send Message Failed: $e';
     }
   }
 
@@ -101,10 +94,12 @@ class BaiChuanChatModel extends ChatModel {
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();
+
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}chat/completions'
+              ? '${bot.baseURL}/v1/chat/completions'
               : defaultApiChatUrl;
+
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
@@ -113,10 +108,8 @@ class BaiChuanChatModel extends ChatModel {
             })
             ..body = jsonEncode({
               'model': bot.model,
-              'messages': processMessagesWithImages(messages),
+              'messages': messages.map((m) => m.toJson()).toList(),
               'stream': true,
-              if (webSearch)
-                'web_search': {"enable": true, "enable_trace": true},
             });
 
       final streamedResponse = await request.send();
@@ -130,8 +123,9 @@ class BaiChuanChatModel extends ChatModel {
 
       await for (final line in stream) {
         if (isCancelled) break;
-        if (line.startsWith('data:')) {
-          final jsonStr = line.substring(5);
+
+        if (line.startsWith('data: ')) {
+          final jsonStr = line.substring(6);
           if (jsonStr == '[DONE]') {
             // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {

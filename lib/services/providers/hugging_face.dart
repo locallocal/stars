@@ -1,40 +1,30 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
-import 'package:bubble/model/model.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class GrokChatModel extends ChatModel {
-  static const String defaultApiModelUrl = 'https://api.grok.ai/v1/models';
-  static const String defaultApiChatUrl =
-      'https://api.grok.ai/v1/chat/completions';
-  GrokChatModel(Bot bot) : super(bot);
+class HuggingFace extends Provider {
+  static const defaultApiModelUrl = '';
+
+  HuggingFace(super.bot);
 
   @override
   Future<List<String>> listModels() async {
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/models'
-            : defaultApiModelUrl;
-
-    final response = await http.get(
-      Uri.parse('$url?key=${bot.apiKey}'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      final models = data['data'] as List<dynamic>;
-      return models.map((m) => m['id'] as String).toList();
-    }
-    throw Exception('List Models Failed: ${response.statusCode}');
+    return [
+      'google/gemma-2-2b-it',
+      'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+      'meta-llama/Meta-Llama-3.1-8B-Instruct',
+      'microsoft/phi-4',
+      'Qwen/Qwen2.5-Coder-32B-Instruct',
+      'deepseek-ai/DeepSeek-R1',
+    ];
   }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/chat/completions'
-            : defaultApiChatUrl;
+            ? '${bot.baseURL}/chat/completions'
+            : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
 
     final response = await http.post(
       Uri.parse(url),
@@ -46,6 +36,8 @@ class GrokChatModel extends ChatModel {
         'model': bot.model,
         'messages': messages.map((m) => m.toJson()).toList(),
         'temperature': 0.7,
+        'max_new_tokens': 1000,
+        'return_full_text': false,
       }),
     );
 
@@ -60,13 +52,12 @@ class GrokChatModel extends ChatModel {
   @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
-      // 重置取消状态
       resetCancelState();
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
-              : defaultApiChatUrl;
+              ? '${bot.baseURL}/chat/completions'
+              : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -78,13 +69,14 @@ class GrokChatModel extends ChatModel {
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
               'temperature': 0.7,
+              'return_full_text': false,
               'stream': true,
             });
 
       final streamedResponse = await request.send();
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
-          .transform(LineSplitter());
+          .transform(const LineSplitter());
 
       cancelController?.stream.listen((_) {
         cancelController?.close();
@@ -114,17 +106,17 @@ class GrokChatModel extends ChatModel {
         }
       }
 
+      // 确保在流处理完成后调用onComplete
       if (!isCancelled && onComplete != null) {
         onComplete!();
       } else if (isCancelled && onError != null) {
-        onError!('Request Cancelled');
+        onError!('请求已取消');
       }
     } catch (e) {
-      if (onError != null) {
+      if (!isCancelled && onError != null) {
         onError!(e.toString());
       }
     } finally {
-      // 确保取消控制器关闭
       cancelController?.close();
       cancelController = null;
     }

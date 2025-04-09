@@ -4,8 +4,8 @@ import 'package:bubble/generated/l10n.dart';
 class ChatModelFeatures extends StatelessWidget {
   final bool isWebSearchEnabled;
   final bool isDeepThinkingEnabled;
-  final bool supportsWebSearch;
-  final bool supportsDeepThinking;
+  final bool supportWebSearch;
+  final bool supportDeepThinking;
   final Function(bool) onWebSearchToggle;
   final Function(bool) onDeepThinkingToggle;
 
@@ -13,8 +13,8 @@ class ChatModelFeatures extends StatelessWidget {
     super.key,
     required this.isWebSearchEnabled,
     required this.isDeepThinkingEnabled,
-    required this.supportsWebSearch,
-    required this.supportsDeepThinking,
+    required this.supportWebSearch,
+    required this.supportDeepThinking,
     required this.onWebSearchToggle,
     required this.onDeepThinkingToggle,
   });
@@ -26,7 +26,7 @@ class ChatModelFeatures extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          if (supportsWebSearch)
+          if (supportWebSearch)
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: OutlinedButton.icon(
@@ -64,7 +64,7 @@ class ChatModelFeatures extends StatelessWidget {
                 ),
               ),
             ),
-          if (supportsDeepThinking)
+          if (supportDeepThinking)
             OutlinedButton.icon(
               onPressed: () {
                 onDeepThinkingToggle(!isDeepThinkingEnabled);

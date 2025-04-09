@@ -3,16 +3,16 @@ import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class OpenAIChatModel extends ChatModel {
+class OpenAI extends Provider {
   static const String defaultApiModelsUrl = 'https://api.openai.com/v1/models';
   static const String defaultApiChatUrl =
       'https://api.openai.com/v1/chat/completions';
-  OpenAIChatModel(super.bot);
+  OpenAI(super.bot);
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
     switch (bot.model.toLowerCase()) {
       case 'gpt-4o-mini-search-preview':
       case 'gpt-4o-mini-search-preview-2025-03-11':
@@ -24,7 +24,7 @@ class OpenAIChatModel extends ChatModel {
   }
 
   @override
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     switch (bot.model.toLowerCase()) {
       case 'o1':
       case 'o1-2024-12-17':

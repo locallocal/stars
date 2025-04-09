@@ -1,21 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class DeepSeekChatModel extends ChatModel {
+class Deepseek extends Provider {
   static const String defaultApiModelKey = 'https://api.deepseek.com/models';
   static const String defaultApiChatUrl =
       'https://api.deepseek.com/v1/chat/completions';
-  DeepSeekChatModel(Bot bot) : super(bot);
+  Deepseek(super.bot);
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
     return false;
   }
 
   @override
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     switch (bot.model) {
       case 'deepseek-reasoner':
         return true;

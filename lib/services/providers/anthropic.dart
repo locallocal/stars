@@ -1,19 +1,19 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class AnthropicChatModel extends ChatModel {
-  AnthropicChatModel(super.bot);
+class Anthropic extends Provider {
+  Anthropic(super.bot);
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
     return false;
   }
 
   @override
-  bool supportsDeepThinking() {
+  bool supportDeepThinking() {
     switch (bot.model.toLowerCase()) {
       case 'claude-3-7-sonnet-latest':
       case 'claude-3-7-sonnet-20250219':

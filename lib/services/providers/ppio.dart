@@ -2,88 +2,75 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/models/chat_models.dart';
+import 'package:bubble/services/providers/providers.dart';
 
-class InfiniAIChatModel extends ChatModel {
-  static const String defaultApiModelsUrl =
-      'https://cloud.infini-ai.com/maas/v1/models';
+class PPIO extends Provider {
+  static const String defaultApiModelsUrl = 'https://api.ppinfra.com/v3/model';
   static const String defaultApiChatUrl =
-      'https://cloud.infini-ai.com/maas/v1/chat/completions';
-  InfiniAIChatModel(super.bot);
+      'https://api.ppinfra.com/v3/openai/chat/completions';
+  PPIO(super.bot);
 
   @override
-  bool supportsWebSearch() {
+  bool supportWebSearch() {
     return false;
   }
 
   @override
-  bool supportsDeepThinking() {
-    switch (bot.model.toLowerCase()) {
-      case 'deepseek-r1':
-      case 'qwq-32b':
-      case 'deepseek-r1-distill-qwen-32b':
-        return true;
+  bool supportDeepThinking() {
+    if (bot.model.contains('deepseek-r1')) {
+      return true;
     }
     return false;
   }
 
   @override
   List<InputModality> getInputModalites() {
-    switch (bot.model.toLowerCase()) {
-      case 'qwen2.5-vl-72b-instruct':
-      case 'qwen2.5-vl-32b-instruct':
-      case 'qwen2.5-vl-7b-instruct':
-        return [InputModality.text, InputModality.image];
-    }
     return [InputModality.text];
   }
 
   @override
   List<OutputModality> getOutputModalites() {
-    switch (bot.model.toLowerCase()) {
-      case 'stable-diffusion-1.5':
-        return [OutputModality.image];
-      case 'cogvideox-2b':
-      case 'vidu1.5':
-        return [OutputModality.video];
-    }
     return [OutputModality.text];
   }
 
   @override
   Future<List<String>> listModels() async {
-    final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
-
-    try {
-      final response = await http
-          .get(
-            Uri.parse(url),
-            headers: {'Authorization': 'Bearer ${bot.apiKey}'},
-          )
-          .timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final models =
-            (data['data'] as List)
-                .map((model) => model['id'] as String)
-                .toList();
-        return models;
-      } else {
-        throw Exception('List models failed: ${response.statusCode}');
-      }
-    } on TimeoutException {
-      throw Exception('List models timeout, retry later.');
-    } catch (e) {
-      throw Exception('List models failed: $e');
-    }
+    return const [
+      'deepseek/deepseek-r1-turbo',
+      'deepseek/deepseek-v3-turbo',
+      'deepseek/deepseek-v3-0324',
+      'deepseek/deepseek-r1/community',
+      'deepseek/deepseek-v3/community',
+      'deepseek/deepseek-r1',
+      'deepseek/deepseek-v3',
+      'qwen/qwq-32b',
+      'deepseek/deepseek-r1-distill-qwen-32b',
+      'deepseek/deepseek-r1-distill-qwen-14b',
+      'deepseek/deepseek-r1-distill-llama-70b',
+      'deepseek/deepseek-r1-distill-llama-8b',
+      'meta-llama/llama-3.3-70b-instruct',
+      'qwen/qwen-2.5-72b-instruct',
+      'qwen/qwen-2-vl-72b-instruct',
+      'meta-llama/llama-3.2-3b-instruct',
+      'google/gemma-3-27b-it',
+      'qwen/qwen2.5-vl-72b-instruct',
+      'qwen/qwen2.5-32b-instruct',
+      'baichuan/baichuan2-13b-chat',
+      // 仅针对实名认证的企业用户开放
+      // 'meta-llama/llama-3.1-70b-instruct',
+      // 'meta-llama/llama-3.1-8b-instruct',
+      '01-ai/yi-1.5-34b-chat',
+      '01-ai/yi-1.5-9b-chat',
+      'thudm/glm-4-9b-chat',
+      'qwen/qwen-2-7b-instruct',
+    ];
   }
 
   @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}chat/completions'
+            ? '${bot.baseURL}openai/chat/completions'
             : defaultApiChatUrl;
 
     final response = await http.post(
@@ -114,7 +101,7 @@ class InfiniAIChatModel extends ChatModel {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}chat/completions'
+              ? '${bot.baseURL}openai/chat/completions'
               : defaultApiChatUrl;
 
       final request =

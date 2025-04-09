@@ -1,115 +1,125 @@
 import 'package:bubble/model/model.dart';
 
 final providers = [
-  'OpenAI',
-  'Anthropic',
-  'Gemini',
-  'DeepSeek',
-  'Ollama',
-  'HuggingFace',
-  'Grok',
-  'OpenRouter',
-  'ChatGLM',
+  'AIStudio',
   'Aliyun',
-  'VolcanoEngine',
-  'Tencent',
-  'SiliconFlow',
-  'Baidu',
-  'XingHe',
-  'Moonshot',
-  'ZhiPu',
-  'ZeroOneAI',
-  'InfiniGence',
-  'PPIO',
-  'StepFun',
+  'Anthropic',
   'BaiChuan',
+  'Baidu',
+  'ChatGLM',
+  'DeepSeek',
+  'Gemini',
+  'Grok',
+  'HuggingFace',
+  'InfiniGence',
+  'Moonshot',
+  'Ollama',
+  'OpenAI',
+  'OpenRouter',
+  'PPIO',
+  'SiliconFlow',
+  'Spark',
+  'StepFun',
+  'Tencent',
+  'VolcanoEngine',
+  'XingHe',
+  'ZeroOneAI',
+  'ZhiPu',
 ];
 
 final modelsByProvider = {
-  'OpenAI': {
-    'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.openai.com/v1/',
-    'models': [],
-  },
-  'Anthropic': {
-    'api_type': Bot.apiTypeAnthropic,
-    'base_url': 'https://api.anthropic.com/v1/',
-  },
-  'Gemini': {
+  'AIStudio': {
     'api_type': Bot.apiTypeGemini,
     'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
-  },
-  'DeepSeek': {
-    'api_type': Bot.apiTypeDeepseek,
-    'base_url': 'https://api.deepseek.com',
-  },
-  'Ollama': {
-    'api_type': Bot.apiTypeOllama,
-    'base_url': 'http://localhost:11434',
-  },
-  'HuggingFace': {
-    'api_type': Bot.apiTypeHuggingface,
-    'base_url': 'https://api-inference.huggingface.co',
-  },
-  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
-  'OpenRouter': {
-    'api_type': Bot.apiTypeOpenRouter,
-    'base_url': 'https://openrouter.ai/api',
-  },
-  'ChatGLM': {
-    'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'http://localhost:8000',
   },
   'Aliyun': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'https://dashscope.aliyuncs.com/compatible-mode',
   },
-  'VolcanoEngine': {
-    'api_type': Bot.apiTypeVolcanoEngine,
-    'base_url': 'https://ark.cn-beijing.volces.com/api',
+  'Anthropic': {
+    'api_type': Bot.apiTypeAnthropic,
+    'base_url': 'https://api.anthropic.com/v1/',
   },
-  'Tencent': {
-    'api_type': Bot.apiTypeTencent,
-    'base_url': 'https://api.hunyuan.cloud.tencent.com',
-  },
-  'SiliconFlow': {
-    'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.siliconflow.cn',
+  'BaiChuan': {
+    'api_type': Bot.apiTypeBaiChuan,
+    'base_url': 'https://api.baichuan-ai.com/v1/',
   },
   'Baidu': {
     'api_type': Bot.apiTypeBaidu,
     'base_url': 'https://qianfan.baidubce.com/v2/',
   },
-  'XingHe': {
-    'api_type': Bot.apiTypeXingHe,
-    'base_url': 'https://aistudio.baidu.com/llm/lmapi/v3/',
-  },
-  'Moonshot': {
+  'ChatGLM': {
     'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.moonshot.cn',
+    'base_url': 'http://localhost:8000',
   },
-  'ZhiPu': {
-    'api_type': Bot.apiTypeZhipu,
-    'base_url': 'https://open.bigmodel.cn',
+  'DeepSeek': {
+    'api_type': Bot.apiTypeDeepseek,
+    'base_url': 'https://api.deepseek.com',
   },
-  "ZeroOneAI": {
-    'api_type': Bot.apiTypeZeroOneAI,
-    'base_url': 'https://api.lingyiwanwu.com/v1/',
+  'Gemini': {
+    'api_type': Bot.apiTypeGemini,
+    'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
+  },
+  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
+  'HuggingFace': {
+    'api_type': Bot.apiTypeHuggingface,
+    'base_url': 'https://api-inference.huggingface.co',
   },
   'InfiniGence': {
     'api_type': Bot.apiTypeInfiniGence,
     'base_url': 'https://cloud.infini-ai.com/maas/v1/',
   },
+  'Moonshot': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.moonshot.cn',
+  },
+  'Ollama': {
+    'api_type': Bot.apiTypeOllama,
+    'base_url': 'http://localhost:11434',
+  },
+  'OpenAI': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.openai.com/v1/',
+    'models': [],
+  },
+  'OpenRouter': {
+    'api_type': Bot.apiTypeOpenRouter,
+    'base_url': 'https://openrouter.ai/api',
+  },
   'PPIO': {
     'api_type': Bot.apiTypePPIO,
     'base_url': 'https://api.ppinfra.com/v3/',
+  },
+  'SiliconFlow': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.siliconflow.cn',
   },
   'StepFun': {
     'api_type': Bot.apiTypeStepFun,
     'base_url': 'https://api.stepfun.com/v1/',
   },
-  'BaiChuan': {
-    'api_type': Bot.apiTypeBaiChuan,
-    'base_url': 'https://api.baichuan-ai.com/v1/',
+  'Spark': {
+    'api_type': Bot.apiTypeSpark,
+    'base_url': 'https://spark-api-open.xf-yun.com/v1/',
+  },
+  'Tencent': {
+    'api_type': Bot.apiTypeTencent,
+    'base_url': 'https://api.hunyuan.cloud.tencent.com',
+  },
+  'VolcanoEngine': {
+    'api_type': Bot.apiTypeVolcanoEngine,
+    'base_url': 'https://ark.cn-beijing.volces.com/api',
+  },
+  'XingHe': {
+    'api_type': Bot.apiTypeXingHe,
+    'base_url': 'https://aistudio.baidu.com/llm/lmapi/v3/',
+  },
+  "ZeroOneAI": {
+    'api_type': Bot.apiTypeZeroOneAI,
+    'base_url': 'https://api.lingyiwanwu.com/v1/',
+  },
+  'ZhiPu': {
+    'api_type': Bot.apiTypeZhipu,
+    'base_url': 'https://open.bigmodel.cn',
   },
 };
