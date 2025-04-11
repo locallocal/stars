@@ -12,12 +12,14 @@ final providers = [
   'Grok',
   'HuggingFace',
   'InfiniGence',
+  'Mistral',
   'Moonshot',
   'Ollama',
   'OpenAI',
   'OpenRouter',
   'PPIO',
   'SiliconFlow',
+  'SenseNova',
   'Spark',
   'StepFun',
   'Tencent',
@@ -69,6 +71,10 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeInfiniGence,
     'base_url': 'https://cloud.infini-ai.com/maas/v1/',
   },
+  'Mistral': {
+    'api_type': Bot.apiTypeMistral,
+    'base_url': 'https://api.mistral.ai/v1/',
+  },
   'Moonshot': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'https://api.moonshot.cn',
@@ -94,13 +100,17 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'https://api.siliconflow.cn',
   },
-  'StepFun': {
-    'api_type': Bot.apiTypeStepFun,
-    'base_url': 'https://api.stepfun.com/v1/',
+  'SenseNova': {
+    'api_type': Bot.apiTypeSenseNova,
+    'base_url': 'https://api.sensenova.cn/v1/',
   },
   'Spark': {
     'api_type': Bot.apiTypeSpark,
     'base_url': 'https://spark-api-open.xf-yun.com/v1/',
+  },
+  'StepFun': {
+    'api_type': Bot.apiTypeStepFun,
+    'base_url': 'https://api.stepfun.com/v1/',
   },
   'Tencent': {
     'api_type': Bot.apiTypeTencent,

@@ -103,7 +103,7 @@ class OpenAI extends Provider {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
       final response = await http

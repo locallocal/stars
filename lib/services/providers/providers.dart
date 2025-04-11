@@ -21,6 +21,8 @@ import 'package:bubble/services/providers/infini_gence.dart';
 import 'package:bubble/services/providers/ppio.dart';
 import 'package:bubble/services/providers/step_fun.dart';
 import 'package:bubble/services/providers/bai_chuan.dart';
+import 'package:bubble/services/providers/sense_nova.dart';
+import 'package:bubble/services/providers/mistral.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -180,6 +182,10 @@ abstract class Provider {
         return BaiChuan(bot);
       case Bot.apiTypeSpark:
         return Spark(bot);
+      case Bot.apiTypeSenseNova:
+        return SenseNova(bot);
+      case Bot.apiTypeMistral:
+        return Mistral(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

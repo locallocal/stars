@@ -107,6 +107,10 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFD4E7FF); // Google AI Studio 浅蓝色
     case 'spark':
       return const Color(0xFFFFE8D9); // 讯飞星火 浅橙色
+    case 'sensenova':
+      return const Color(0xFFE0F0FF); // 商汤大模型 浅蓝色
+    case 'mistral':
+      return const Color(0xFFFFF6D6); // Mistral 浅黄色
     default:
       return defaultColor; // 默认颜色
   }
