@@ -8,6 +8,8 @@ final providers = [
   'Baidu',
   'ChatGLM',
   'DeepSeek',
+  'Fireworks',
+  'Flux',
   'Gemini',
   'Grok',
   'HuggingFace',
@@ -58,6 +60,14 @@ final modelsByProvider = {
   'DeepSeek': {
     'api_type': Bot.apiTypeDeepseek,
     'base_url': 'https://api.deepseek.com',
+  },
+  'Fireworks': {
+    'api_type': Bot.apiTypeFireworks,
+    'base_url': 'https://api.fireworks.ai/',
+  },
+  'Flux': {
+    'api_type': Bot.apiTypeFlux,
+    'base_url': 'https://api.us1.bfl.ai/v1/',
   },
   'Gemini': {
     'api_type': Bot.apiTypeGemini,

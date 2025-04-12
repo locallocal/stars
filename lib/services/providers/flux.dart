@@ -1,0 +1,187 @@
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:bubble/services/providers/providers.dart';
+import 'package:bubble/model/model.dart';
+
+class Flux extends Provider {
+  Flux(super.bot);
+
+  @override
+  bool supportWebSearch() {
+    return false;
+  }
+
+  @override
+  bool supportDeepThinking() {
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    switch (bot.model.toLowerCase()) {
+      case 'flux-pro-1.1':
+      case 'flux-pro':
+      case 'flux-dev':
+      case 'flux-pro-1.1-ultra':
+        return [InputModality.text, InputModality.image];
+    }
+    return [InputModality.text];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.image];
+  }
+
+  @override
+  Future<List<String>> listModels() async {
+    return const ['flux-pro-1.1', 'flux-pro', 'flux-dev', 'flux-pro-1.1-ultra'];
+  }
+
+  @override
+  Future<String> sendMessage(List<ChatMessage> messages) async {
+    return 'Not support';
+  }
+
+  @override
+  Future<void> sendMessageStream(List<ChatMessage> messages) async {}
+
+  @override
+  List<String> getSupportedImageSizes() {
+    return const [
+      '512x512',
+      '1024x1024',
+      '1440x1440',
+      '768x768',
+      '1024x768',
+      '768x1024',
+      '1280x720',
+      '720x1280',
+      '1440x768',
+      '768x1440',
+    ];
+  }
+
+  @override
+  Future<List<String>> generateImage(
+    String prompt,
+    String size,
+    String imageDirPath,
+  ) async {
+    final url = '${bot.baseURL}${bot.model}';
+    var width = 1024;
+    var height = 1024;
+    if (size.contains('x')) {
+      width = int.parse(size.split('x')[0]);
+      height = int.parse(size.split('x')[1]);
+    }
+    final Map<String, dynamic> requestBody = {
+      'prompt': prompt,
+      'output_format': 'png',
+    };
+    if (bot.model.toLowerCase() == 'flux-pro-1.1-ultra') {
+      var ratio = '16:9';
+      if (size.isNotEmpty) {
+        ratio = _transformRatio(width, height);
+      }
+      requestBody['raw'] = true;
+      requestBody['aspect_ratio'] = ratio;
+    } else {
+      requestBody['width'] = width;
+      requestBody['height'] = height;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json', 'x-key': '${bot.apiKey}'},
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final pollingUrl = data['polling_url'];
+
+        // 轮询获取生成结果
+        bool isCompleted = false;
+        String? imageUrl;
+
+        // 最多尝试120次，每次间隔500毫秒
+        for (int i = 0; i < 120; i++) {
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          final resultResponse = await http.get(
+            Uri.parse(pollingUrl),
+            headers: {'x-key': '${bot.apiKey}'},
+          );
+
+          if (resultResponse.statusCode == 200) {
+            final resultData = jsonDecode(
+              utf8.decode(resultResponse.bodyBytes),
+            );
+            final status = resultData['status'];
+
+            if (status == 'Ready') {
+              isCompleted = true;
+              imageUrl = resultData['result']['sample'];
+              break;
+            } else if (status == 'Error' || status == 'Task not found') {
+              throw Exception('Image generation failed: $status');
+            }
+            // 如果状态是 PENDING 或 RUNNING，继续轮询
+          } else {
+            throw Exception(
+              'Check task status failed: ${resultResponse.statusCode} - ${resultResponse.body}',
+            );
+          }
+        }
+        if (!isCompleted || imageUrl == null) {
+          throw Exception('Image generation timed out after 60 seconds');
+        }
+
+        // 下载生成的图片
+        final imageResponse = await http.get(Uri.parse(imageUrl));
+        if (imageResponse.statusCode == 200) {
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final fileName = 'flux_$timestamp.png';
+          final filePath = '$imageDirPath/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(imageResponse.bodyBytes);
+          return [filePath];
+        } else {
+          throw Exception('Download image failed: ${imageResponse.statusCode}');
+        }
+      } else {
+        throw Exception(
+          'Generate image task failed: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Generate image failed: $e');
+    }
+  }
+
+  // 将像素尺寸转换为比例字符串
+  String _transformRatio(int width, int height) {
+    // 计算最大公约数
+    int gcd = _calculateGCD(width, height);
+
+    // 使用最大公约数简化比例
+    int ratioWidth = width ~/ gcd;
+    int ratioHeight = height ~/ gcd;
+
+    // 返回标准比例格式
+    return '$ratioWidth:$ratioHeight';
+  }
+
+  // 计算最大公约数的辅助函数
+  int _calculateGCD(int a, int b) {
+    while (b != 0) {
+      int temp = b;
+      b = a % b;
+      a = temp;
+    }
+    return a;
+  }
+}

@@ -153,13 +153,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 64,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      radius: 128,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       backgroundImage:
                           _avatar.isNotEmpty
                               ? FileImage(File(_avatar))
                               : const AssetImage(
-                                    'assets/images/profile/default_avatar.png',
+                                    'assets/images/profile/avatar.png',
                                   )
                                   as ImageProvider,
                     ),

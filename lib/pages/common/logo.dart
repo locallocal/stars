@@ -113,6 +113,10 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFFFF6D6); // Mistral 浅黄色
     case 'stability':
       return const Color(0xFFE8D6FF); // Stability 浅紫
+    case 'fireworks':
+      return const Color(0xFFE6D6FF); // Fireworks 浅紫色
+    case 'flux':
+      return const Color(0xFFE6E6E6); // Flux 浅灰色
     default:
       return defaultColor; // 默认颜色
   }

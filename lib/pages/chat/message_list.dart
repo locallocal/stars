@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/common.dart';
@@ -178,9 +179,74 @@ class MessageList extends StatelessWidget {
                                         context: context,
                                         builder:
                                             (context) => Dialog(
-                                              child: Image.file(
-                                                File(imagePath),
-                                                fit: BoxFit.contain,
+                                              child: Stack(
+                                                children: [
+                                                  Image.file(
+                                                    File(imagePath),
+                                                    fit: BoxFit.contain,
+                                                  ),
+                                                  Positioned(
+                                                    right: 8,
+                                                    bottom: 8,
+                                                    child: Row(
+                                                      children: [
+                                                        FloatingActionButton(
+                                                          mini: true,
+                                                          backgroundColor:
+                                                              Colors.black
+                                                                  .withOpacity(
+                                                                    0.5,
+                                                                  ),
+                                                          onPressed: () async {
+                                                            try {
+                                                              await Share.shareXFiles(
+                                                                [
+                                                                  XFile(
+                                                                    imagePath,
+                                                                  ),
+                                                                ],
+                                                                text:
+                                                                    '来自Bubble的图片',
+                                                              );
+                                                            } catch (e) {
+                                                              if (context
+                                                                  .mounted) {
+                                                                showSnackBar(
+                                                                  context,
+                                                                  '分享失败: $e',
+                                                                );
+                                                              }
+                                                            }
+                                                          },
+                                                          child: const Icon(
+                                                            Icons.share,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        FloatingActionButton(
+                                                          mini: true,
+                                                          backgroundColor:
+                                                              Colors.black
+                                                                  .withOpacity(
+                                                                    0.5,
+                                                                  ),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                              context,
+                                                            ).pop();
+                                                          },
+                                                          child: const Icon(
+                                                            Icons.close,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                       );

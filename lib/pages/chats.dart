@@ -92,6 +92,14 @@ class _ChatListPageState extends State<ChatListPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  /*
+                                  Image.asset(
+                                    'assets/images/profile/no_chats.png',
+                                    width: 512,
+                                    height: 512,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  const SizedBox(height: 16),*/
                                   Text(
                                     S.of(context).noChats,
                                     textAlign: TextAlign.center,
