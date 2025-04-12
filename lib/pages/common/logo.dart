@@ -91,7 +91,7 @@ Color getProviderColor(String provider, Color defaultColor) {
     case 'moonshot':
       return const Color(0xFFE1C4E9); // Moonshot 浅紫色
     case 'zhipu':
-      return const Color(0xFFD4F0E2); // 智普 浅绿色
+      return const Color(0xFFE6F0FF); // 智普 淡浅蓝色
     case 'zerooneai':
     case '01ai':
       return const Color(0xFFE6F0FF); // 零一万物 浅蓝色
@@ -111,6 +111,8 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE0F0FF); // 商汤大模型 浅蓝色
     case 'mistral':
       return const Color(0xFFFFF6D6); // Mistral 浅黄色
+    case 'stability':
+      return const Color(0xFFE8D6FF); // Stability 浅紫
     default:
       return defaultColor; // 默认颜色
   }

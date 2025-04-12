@@ -23,6 +23,7 @@ import 'package:bubble/services/providers/step_fun.dart';
 import 'package:bubble/services/providers/bai_chuan.dart';
 import 'package:bubble/services/providers/sense_nova.dart';
 import 'package:bubble/services/providers/mistral.dart';
+import 'package:bubble/services/providers/stability.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -116,6 +117,14 @@ abstract class Provider {
   // 发送消息并获取流式响应
   Future<void> sendMessageStream(List<ChatMessage> messages);
 
+  List<String> getImageStyles() {
+    return [];
+  }
+
+  List<String> getSupportedImageSizes() {
+    return [];
+  }
+
   // 生成图片
   Future<List<String>> generateImage(
     String prompt,
@@ -123,11 +132,7 @@ abstract class Provider {
     String imageDirPath,
   ) async {
     // 默认实现抛出异常，子类可以覆盖此方法
-    throw UnsupportedError('${bot.apiType}模型不支持图像生成');
-  }
-
-  List<String> getSupportedImageSizes() {
-    return [];
+    throw UnsupportedError('${bot.apiType} Not support generate image');
   }
 
   // 取消当前请求
@@ -186,6 +191,8 @@ abstract class Provider {
         return SenseNova(bot);
       case Bot.apiTypeMistral:
         return Mistral(bot);
+      case Bot.apiTypeStability:
+        return Stability(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

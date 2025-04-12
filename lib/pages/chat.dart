@@ -579,7 +579,7 @@ class _ChatPageState extends State<ChatPage> {
   // 修改原文件中的方法
   Widget _buildImageGenerationPanel() {
     // 获取支持的图片尺寸
-    List<String> supportedSizes = ['1024x1024', '512x512'];
+    List<String> supportedSizes = ['1024x1024'];
     // 如果模型支持获取图片尺寸列表，则使用模型提供的尺寸
     try {
       final sizes = _provider.getSupportedImageSizes();

@@ -18,10 +18,11 @@ final providers = [
   'OpenAI',
   'OpenRouter',
   'PPIO',
-  'SiliconFlow',
   'SenseNova',
+  'SiliconFlow',
   'Spark',
   'StepFun',
+  'Stability',
   'Tencent',
   'VolcanoEngine',
   'XingHe',
@@ -96,13 +97,13 @@ final modelsByProvider = {
     'api_type': Bot.apiTypePPIO,
     'base_url': 'https://api.ppinfra.com/v3/',
   },
-  'SiliconFlow': {
-    'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.siliconflow.cn',
-  },
   'SenseNova': {
     'api_type': Bot.apiTypeSenseNova,
     'base_url': 'https://api.sensenova.cn/v1/',
+  },
+  'SiliconFlow': {
+    'api_type': Bot.apiTypeOpenAI,
+    'base_url': 'https://api.siliconflow.cn',
   },
   'Spark': {
     'api_type': Bot.apiTypeSpark,
@@ -111,6 +112,10 @@ final modelsByProvider = {
   'StepFun': {
     'api_type': Bot.apiTypeStepFun,
     'base_url': 'https://api.stepfun.com/v1/',
+  },
+  'Stability': {
+    'api_type': Bot.apiTypeStability,
+    'base_url': 'https://api.stability.ai/v2beta/',
   },
   'Tencent': {
     'api_type': Bot.apiTypeTencent,

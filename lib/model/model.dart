@@ -48,6 +48,7 @@ class Bot {
   static const apiTypeSpark = 'spark';
   static const apiTypeSenseNova = 'sensenova';
   static const apiTypeMistral = 'mistral';
+  static const apiTypeStability = 'stability';
 
   final String id;
   final String name;
@@ -165,6 +166,7 @@ class Bot {
       apiTypeSpark,
       apiTypeSenseNova,
       apiTypeMistral,
+      apiTypeStability,
     ];
   }
 }
