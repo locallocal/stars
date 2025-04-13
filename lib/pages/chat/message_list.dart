@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/common.dart';
@@ -175,81 +177,7 @@ class MessageList extends StatelessWidget {
                                   return GestureDetector(
                                     onTap: () {
                                       // 点击图片时显示大图
-                                      showDialog(
-                                        context: context,
-                                        builder:
-                                            (context) => Dialog(
-                                              child: Stack(
-                                                children: [
-                                                  Image.file(
-                                                    File(imagePath),
-                                                    fit: BoxFit.contain,
-                                                  ),
-                                                  Positioned(
-                                                    right: 8,
-                                                    bottom: 8,
-                                                    child: Row(
-                                                      children: [
-                                                        FloatingActionButton(
-                                                          mini: true,
-                                                          backgroundColor:
-                                                              Colors.black
-                                                                  .withOpacity(
-                                                                    0.5,
-                                                                  ),
-                                                          onPressed: () async {
-                                                            try {
-                                                              await Share.shareXFiles(
-                                                                [
-                                                                  XFile(
-                                                                    imagePath,
-                                                                  ),
-                                                                ],
-                                                                text:
-                                                                    '来自Bubble的图片',
-                                                              );
-                                                            } catch (e) {
-                                                              if (context
-                                                                  .mounted) {
-                                                                showSnackBar(
-                                                                  context,
-                                                                  '分享失败: $e',
-                                                                );
-                                                              }
-                                                            }
-                                                          },
-                                                          child: const Icon(
-                                                            Icons.share,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        FloatingActionButton(
-                                                          mini: true,
-                                                          backgroundColor:
-                                                              Colors.black
-                                                                  .withOpacity(
-                                                                    0.5,
-                                                                  ),
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                              context,
-                                                            ).pop();
-                                                          },
-                                                          child: const Icon(
-                                                            Icons.close,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                      );
+                                      _showImageDialog(context, imagePath);
                                     },
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
@@ -338,6 +266,130 @@ class MessageList extends StatelessWidget {
       ),
     );
   }
+}
+
+// 在MessageList类中添加这个新方法
+// 在MessageList类中添加这个新方法
+void _showImageDialog(BuildContext context, String imagePath) {
+  showDialog(
+    context: context,
+    builder:
+        (context) => Dialog(
+          child: Stack(
+            children: [
+              Image.file(File(imagePath), fit: BoxFit.contain),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: Row(
+                  children: [
+                    // 添加保存按钮
+                    FloatingActionButton(
+                      mini: true,
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                      onPressed: () async {
+                        try {
+                          // 获取图片文件
+                          final file = File(imagePath);
+                          // 获取原始文件名
+                          final fileName =
+                              imagePath.split(Platform.pathSeparator).last;
+
+                          // 根据平台选择不同的保存方法
+                          if (Platform.isAndroid || Platform.isIOS) {
+                            // 移动平台使用gallery_saver_plus
+                            final result = await GallerySaver.saveImage(
+                              imagePath,
+                              albumName: 'Bubble',
+                            );
+                            if (result == true) {
+                              if (context.mounted) {
+                                // 在图片上方中央显示保存成功提示
+                                showDialog(
+                                  context: context,
+                                  barrierColor: Colors.transparent,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        backgroundColor: Colors.black
+                                            .withOpacity(0.7),
+                                        content: const Text(
+                                          '图片已保存到相册',
+                                          style: TextStyle(color: Colors.white),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                );
+                                // 1.5秒后自动关闭提示
+                                Future.delayed(
+                                  const Duration(milliseconds: 1500),
+                                  () {
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  },
+                                );
+                              }
+                            } else {
+                              throw Exception('保存到相册失败');
+                            }
+                          } else {
+                            // 桌面平台使用FilePicker
+                            final result = await FilePicker.platform.saveFile(
+                              dialogTitle: '保存图片',
+                              fileName: fileName,
+                              type: FileType.image,
+                              allowedExtensions: ['png', 'jpg', 'jpeg'],
+                            );
+
+                            if (result != null) {
+                              // 复制文件到选择的位置
+                              await file.copy(result);
+                              if (context.mounted) {
+                                showSnackBar(context, '图片已保存到: $result');
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            showSnackBar(context, '保存失败: $e');
+                          }
+                        }
+                      },
+                      child: const Icon(Icons.save_alt, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    FloatingActionButton(
+                      mini: true,
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                      onPressed: () async {
+                        try {
+                          await Share.shareXFiles([
+                            XFile(imagePath),
+                          ], text: '来自Bubble的图片');
+                        } catch (e) {
+                          if (context.mounted) {
+                            showSnackBar(context, '分享失败: $e');
+                          }
+                        }
+                      },
+                      child: const Icon(Icons.share, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    FloatingActionButton(
+                      mini: true,
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Icon(Icons.close, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+  );
 }
 
 // 在MessageList类中添加这个新方法
