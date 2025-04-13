@@ -585,6 +585,7 @@ class _ChatPageState extends State<ChatPage> {
       final sizes = _provider.getSupportedImageSizes();
       if (sizes.isNotEmpty) {
         supportedSizes = sizes;
+        _selectedImageSize = sizes[0];
       }
     } catch (e) {
       // 忽略不支持的方法调用

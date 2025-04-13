@@ -117,6 +117,14 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE6D6FF); // Fireworks 浅紫色
     case 'flux':
       return const Color(0xFFE6E6E6); // Flux 浅灰色
+    case 'kluster':
+      return const Color(0xFFE0D1FF); // Kcluster 浅紫色
+    case 'internlm':
+      return const Color(0xFFE8E8E8); // internLM 浅灰色
+    case 'jina':
+      return const Color(0xFFD9D9D9); // Jira 浅黑色
+    case 'lambda':
+      return const Color(0xFFD0D0D0); // Lambda 浅黑色
     default:
       return defaultColor; // 默认颜色
   }

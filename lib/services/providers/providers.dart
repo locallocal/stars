@@ -26,6 +26,10 @@ import 'package:bubble/services/providers/mistral.dart';
 import 'package:bubble/services/providers/stability.dart';
 import 'package:bubble/services/providers/fireworks.dart';
 import 'package:bubble/services/providers/flux.dart';
+import 'package:bubble/services/providers/kluster.dart';
+import 'package:bubble/services/providers/intern_lm.dart';
+import 'package:bubble/services/providers/jina.dart';
+import 'package:bubble/services/providers/lambda.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -201,6 +205,14 @@ abstract class Provider {
         return Fireworks(bot);
       case Bot.apiTypeFlux:
         return Flux(bot);
+      case Bot.apiTypeKluster:
+        return Kluster(bot);
+      case Bot.apiTypeInternLM:
+        return InternLM(bot);
+      case Bot.apiTypeJina:
+        return Jina(bot);
+      case Bot.apiTypeLambda:
+        return Lambda(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

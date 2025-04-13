@@ -51,6 +51,10 @@ class Bot {
   static const apiTypeStability = 'stability';
   static const apiTypeFireworks = 'fireworks';
   static const apiTypeFlux = 'flux';
+  static const apiTypeKluster = 'kluster';
+  static const apiTypeInternLM = 'internlm';
+  static const apiTypeJina = 'jina';
+  static const apiTypeLambda = 'lambda';
 
   final String id;
   final String name;
@@ -171,6 +175,10 @@ class Bot {
       apiTypeStability,
       apiTypeFireworks,
       apiTypeFlux,
+      apiTypeKluster,
+      apiTypeInternLM,
+      apiTypeJina,
+      apiTypeLambda,
     ];
   }
 }

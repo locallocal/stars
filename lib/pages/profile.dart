@@ -153,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 128,
+                      radius: 96,
                       backgroundColor: Theme.of(context).colorScheme.surface,
                       backgroundImage:
                           _avatar.isNotEmpty

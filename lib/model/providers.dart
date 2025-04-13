@@ -14,6 +14,10 @@ final providers = [
   'Grok',
   'HuggingFace',
   'InfiniGence',
+  'InternLM',
+  'Jina',
+  'Kluster',
+  'Lambda',
   'Mistral',
   'Moonshot',
   'Ollama',
@@ -81,6 +85,22 @@ final modelsByProvider = {
   'InfiniGence': {
     'api_type': Bot.apiTypeInfiniGence,
     'base_url': 'https://cloud.infini-ai.com/maas/v1/',
+  },
+  'InternLM': {
+    'api_type': Bot.apiTypeInternLM,
+    'base_url': 'https://chat.intern-ai.org.cn/api/v1/',
+  },
+  'Jina': {
+    'api_type': Bot.apiTypeJina,
+    'base_url': 'https://deepsearch.jina.ai/v1/',
+  },
+  'Kluster': {
+    'api_type': Bot.apiTypeKluster,
+    'base_url': 'https://api.kluster.ai/v1/',
+  },
+  'Lambda': {
+    'api_type': Bot.apiTypeLambda,
+    'base_url': 'https://api.lambda.ai/v1/',
   },
   'Mistral': {
     'api_type': Bot.apiTypeMistral,
