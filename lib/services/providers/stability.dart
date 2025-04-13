@@ -91,8 +91,10 @@ class Stability extends Provider {
   Future<List<String>> generateImage(
     String prompt,
     String size,
-    String imageDirPath,
-  ) async {
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
     var model = bot.model;
     switch (model) {
       case 'sd3-large':

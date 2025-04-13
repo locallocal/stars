@@ -613,16 +613,19 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     try {
+      final imagePaths = await _getSelectedImagePaths();
       // 创建系统消息记录生成的图片
       final userMessage = Message(
         chatId: widget.id,
         botId: widget.bot.id,
         senderId: _currentUserId,
         content: prompt,
+        images: imagePaths,
         timestamp: DateTime.now(),
       );
       setState(() {
         _messages.add(userMessage);
+        _selectedImages.clear();
         _messageController.clear();
       });
       // 保存消息到数据库
@@ -635,6 +638,7 @@ class _ChatPageState extends State<ChatPage> {
         prompt,
         _selectedImageSize,
         imageDirPath,
+        referenceImages: imagePaths,
       );
       final botMessage = Message(
         chatId: widget.id,

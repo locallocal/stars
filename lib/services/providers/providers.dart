@@ -131,8 +131,10 @@ abstract class Provider {
   Future<List<String>> generateImage(
     String prompt,
     String size,
-    String imageDirPath,
-  ) async {
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
     // 默认实现抛出异常，子类可以覆盖此方法
     throw UnsupportedError('${bot.apiType} Not support generate image');
   }

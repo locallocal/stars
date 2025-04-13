@@ -67,8 +67,14 @@ class Flux extends Provider {
   Future<List<String>> generateImage(
     String prompt,
     String size,
-    String imageDirPath,
-  ) async {
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
+    if (referenceImages.length > 1) {
+      throw Exception('Flux not support multi images');
+    }
+
     final url = '${bot.baseURL}${bot.model}';
     var width = 1024;
     var height = 1024;
@@ -80,6 +86,12 @@ class Flux extends Provider {
       'prompt': prompt,
       'output_format': 'png',
     };
+    if (referenceImages.isNotEmpty) {
+      final file = File(referenceImages[0]);
+      final bytes = file.readAsBytesSync();
+      final base64Image = base64Encode(bytes);
+      requestBody['image_prompt'] = base64Image;
+    }
     if (bot.model.toLowerCase() == 'flux-pro-1.1-ultra') {
       var ratio = '16:9';
       if (size.isNotEmpty) {

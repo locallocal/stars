@@ -261,8 +261,10 @@ class Zhipu extends Provider {
   Future<List<String>> generateImage(
     String prompt,
     String size,
-    String imageDirPath,
-  ) async {
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
     // 检查模型是否支持图像生成
     if (!bot.model.toLowerCase().contains('cogview')) {
       throw UnsupportedError(

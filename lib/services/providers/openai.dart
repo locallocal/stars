@@ -241,8 +241,10 @@ class OpenAI extends Provider {
   Future<List<String>> generateImage(
     String prompt,
     String size,
-    String imageDirPath,
-  ) async {
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
     // 检查是否使用DALL-E模型
     if (!bot.model.toLowerCase().contains('dall-e')) {
       throw UnsupportedError(

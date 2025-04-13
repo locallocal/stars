@@ -255,8 +255,10 @@ class Baidu extends Provider {
   Future<List<String>> generateImage(
     String prompt,
     String size,
-    String imageDirPath,
-  ) async {
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
     // 检查模型是否支持图像生成
     if (bot.model.toLowerCase() != 'irag-1.0' &&
         bot.model.toLowerCase() != 'flux.1-schnell') {
