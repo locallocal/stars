@@ -63,6 +63,7 @@ class Bot {
   static const apiTypeMiniMax = 'minimax';
   static const apiTypeModelScope = 'modelscope';
   static const apiTypeMonica = 'monica';
+  static const apiTypeNebius = 'nebius';
 
   final String id;
   final String name;
@@ -195,6 +196,7 @@ class Bot {
       apiTypeMiniMax,
       apiTypeModelScope,
       apiTypeMonica,
+      apiTypeNebius,
     ];
   }
 }

@@ -113,20 +113,23 @@ class AiMass extends Provider {
 
           try {
             final data = jsonDecode(jsonStr);
-            final delta = data['choices'][0]['delta']['content'] ?? '';
-            if (delta == '<think>') {
-              stage = 'thinking';
-              continue;
-            }
-            if (delta == '</think>') {
-              stage = 'response';
-              continue;
-            }
-            if (deepThinking && stage == 'thinking') {
-              onReasoningResponse!(delta);
-              continue;
+            var delta = data['choices'][0]['delta']['content'] ?? '';
+            if (stage.isEmpty) {
+              if (delta.contains('<think>')) {
+                stage = 'thinking';
+                delta = delta.replaceAll('<think>', '');
+              }
             }
             if (stage == 'thinking') {
+              if (delta.contains('</think>')) {
+                delta = delta.replaceAll('</think>', '');
+                stage = 'response';
+              }
+              if (deepThinking &&
+                  delta.isNotEmpty &&
+                  onReasoningResponse != null) {
+                onReasoningResponse!(delta);
+              }
               continue;
             }
             onResponse(delta);

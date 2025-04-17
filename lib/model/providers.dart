@@ -1,5 +1,4 @@
 import 'package:bubble/model/model.dart';
-import 'package:bubble/services/api_service.dart';
 
 final providers = [
   'AiHubMix',
@@ -29,6 +28,7 @@ final providers = [
   'ModelScope',
   'Monica',
   'Moonshot',
+  'Nebius',
   'Ollama',
   'OpenAI',
   'OpenRouter',
@@ -150,6 +150,10 @@ final modelsByProvider = {
   'Moonshot': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'https://api.moonshot.cn',
+  },
+  'Nebius': {
+    'api_type': Bot.apiTypeNebius,
+    'base_url': 'https://api.studio.nebius.com/v1/',
   },
   'Ollama': {
     'api_type': Bot.apiTypeOllama,

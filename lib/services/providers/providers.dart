@@ -38,6 +38,7 @@ import 'package:bubble/services/providers/cohere.dart';
 import 'package:bubble/services/providers/mini_max.dart';
 import 'package:bubble/services/providers/model_scope.dart';
 import 'package:bubble/services/providers/monica.dart';
+import 'package:bubble/services/providers/nebius.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -234,6 +235,8 @@ abstract class Provider {
         return ModelScope(bot);
       case Bot.apiTypeMonica:
         return Monica(bot);
+      case Bot.apiTypeNebius:
+        return Nebius(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

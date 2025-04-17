@@ -141,6 +141,8 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE6D9FF); // ModelScope 浅紫色
     case 'monica':
       return const Color(0xFFE8D8F0); // Monica 浅紫色
+    case 'nebius':
+      return const Color(0xFFCCF2D6); // Nebius 浅亮绿色
     default:
       return defaultColor; // 默认颜色
   }
