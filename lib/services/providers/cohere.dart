@@ -3,11 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class Deepseek extends Provider {
-  static const String defaultApiModelKey = 'https://api.deepseek.com/models';
-  static const String defaultApiChatUrl =
-      'https://api.deepseek.com/v1/chat/completions';
-  Deepseek(super.bot);
+class Cohere extends Provider {
+  static const String defaultApiModelKey = 'https://api.cohere.com/v1/models';
+  static const String defaultApiChatUrl = 'https://api.cohere.com/v2/chat';
+  Cohere(super.bot);
 
   @override
   bool supportWebSearch() {
@@ -16,10 +15,6 @@ class Deepseek extends Provider {
 
   @override
   bool supportDeepThinking() {
-    switch (bot.model) {
-      case 'deepseek-reasoner':
-        return true;
-    }
     return false;
   }
 
@@ -35,22 +30,25 @@ class Deepseek extends Provider {
 
   @override
   Future<List<String>> listModels() async {
-    // deepseek-chat
-    // deepseek-reasoner
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelKey;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelKey;
+    final uri = Uri.parse(url).replace(queryParameters: {'page_size': '1000'});
 
     final response = await http.get(
-      Uri.parse(url),
+      uri,
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer ${bot.apiKey}',
+        'Authorization': 'bearer ${bot.apiKey}',
       },
     );
+    print('hhhhhhhhhhhhh');
+    print(response.body);
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       final models =
-          (data['data'] as List).map((model) => model['id'] as String).toList();
+          (data['models'] as List)
+              .map((model) => model['name'] as String)
+              .toList();
       return models;
     } else {
       throw Exception('List models Failed: ${response.statusCode}');
@@ -63,27 +61,18 @@ class Deepseek extends Provider {
       resetCancelState();
 
       final url =
-          bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
-              : defaultApiChatUrl;
+          bot.baseURL.isNotEmpty ? '${bot.baseURL}chat' : defaultApiChatUrl;
 
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
               'Content-Type': 'application/json; charset=utf-8',
-              'Authorization': 'Bearer ${bot.apiKey}',
+              'Authorization': 'bearer ${bot.apiKey}',
             })
             ..body = jsonEncode({
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
               'stream': true,
-              if (webSearch)
-                'tools': [
-                  {
-                    'type': 'function',
-                    'function': {'name': 'web_search'},
-                  },
-                ],
             });
 
       cancelController?.stream.listen((_) {
@@ -115,22 +104,9 @@ class Deepseek extends Provider {
 
           try {
             final data = jsonDecode(jsonStr);
-            if (data.containsKey('choices') &&
-                data['choices'].isNotEmpty &&
-                data['choices'][0].containsKey('delta')) {
-              if (deepThinking &&
-                  data['choices'][0]['delta'].containsKey(
-                    'reasoning_content',
-                  )) {
-                final reasoning =
-                    data['choices'][0]['delta']['reasoning_content'] ?? '';
-                if (reasoning.isNotEmpty && onReasoningResponse != null) {
-                  onReasoningResponse!(reasoning);
-                }
-                continue;
-              }
-
-              final delta = data['choices'][0]['delta']['content'] ?? '';
+            if (data['type' == 'message-start'] ||
+                data['type' == 'content-delta']) {
+              final delta = data['delta']['message']['content']['text'] ?? '';
               if (delta.isNotEmpty) {
                 onResponse(delta);
               }

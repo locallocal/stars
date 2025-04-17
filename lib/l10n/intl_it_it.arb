@@ -344,7 +344,7 @@
     "@emptyResponseError": {
         "description": "Messaggio di errore quando il server restituisce una risposta vuota"
     },
-    "responseError": "Impossibile ottenere risposta: ${error}",
+    "responseError": "Impossibile ottenere risposta: {error}",
     "@responseError": {
         "description": "Impossibile ottenere risposta",
         "placeholders": {

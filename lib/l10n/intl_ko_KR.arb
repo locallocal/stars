@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "서버가 빈 응답을 반환했을 때 오류 메시지"
     },
-    "responseError": "응답을 가져오지 못했습니다: ${error}",
+    "responseError": "응답을 가져오지 못했습니다: {error}",
     "@responseError": {
         "description": "응답을 가져오지 못했을 때 오류 메시지",
         "placeholders": {

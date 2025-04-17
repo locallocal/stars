@@ -20,36 +20,6 @@ class HuggingFace extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/chat/completions'
-            : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
-
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${bot.apiKey}',
-      },
-      body: jsonEncode({
-        'model': bot.model,
-        'messages': messages.map((m) => m.toJson()).toList(),
-        'temperature': 0.7,
-        'max_new_tokens': 1000,
-        'return_full_text': false,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['choices'][0]['message']['content'];
-    } else {
-      throw Exception('Send Message Failed: ${response.statusCode}');
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();

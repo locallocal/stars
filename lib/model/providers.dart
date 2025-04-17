@@ -1,12 +1,18 @@
 import 'package:bubble/model/model.dart';
+import 'package:bubble/services/api_service.dart';
 
 final providers = [
+  'AiHubMix',
+  'AiMass',
   'AIStudio',
   'Aliyun',
   'Anthropic',
   'BaiChuan',
   'Baidu',
+  'Cerebras',
   'ChatGLM',
+  'Cohere',
+  'DeepInfra',
   'DeepSeek',
   'Fireworks',
   'Flux',
@@ -18,7 +24,10 @@ final providers = [
   'Jina',
   'Kluster',
   'Lambda',
+  'MiniMax',
   'Mistral',
+  'ModelScope',
+  'Monica',
   'Moonshot',
   'Ollama',
   'OpenAI',
@@ -37,6 +46,14 @@ final providers = [
 ];
 
 final modelsByProvider = {
+  'AiHubMix': {
+    'api_type': Bot.apiTypeAiHubMix,
+    'base_url': 'https://aihubmix.com/v1/',
+  },
+  'AiMass': {
+    'api_type': Bot.apiTypeAiMass,
+    'base_url': 'https://platform.wair.ac.cn/maas/v1/',
+  },
   'AIStudio': {
     'api_type': Bot.apiTypeGemini,
     'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
@@ -57,9 +74,21 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeBaidu,
     'base_url': 'https://qianfan.baidubce.com/v2/',
   },
+  'Cerebras': {
+    'api_type': Bot.apiTypeCerebras,
+    'base_url': 'https://api.cerebras.ai/v1/',
+  },
   'ChatGLM': {
     'api_type': Bot.apiTypeOpenAI,
     'base_url': 'http://localhost:8000',
+  },
+  'Cohere': {
+    'api_type': Bot.apiTypeCohere,
+    'base_url': 'https://api.cohere.com/v1/',
+  },
+  'DeepInfra': {
+    'api_type': Bot.apiTypeDeepInfra,
+    'base_url': 'https://api.deepinfra.com/v1/openai/',
   },
   'DeepSeek': {
     'api_type': Bot.apiTypeDeepseek,
@@ -102,9 +131,21 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeLambda,
     'base_url': 'https://api.lambda.ai/v1/',
   },
+  'MiniMax': {
+    'api_type': Bot.apiTypeMiniMax,
+    'base_url': 'https://api.minimaxi.chat/v1/',
+  },
   'Mistral': {
     'api_type': Bot.apiTypeMistral,
     'base_url': 'https://api.mistral.ai/v1/',
+  },
+  'ModelScope': {
+    'api_type': Bot.apiTypeModelScope,
+    'base_urlt': 'https://api-inference.modelscope.cn/v1/',
+  },
+  'Monica': {
+    'api_type': Bot.apiTypeMonica,
+    'base_url': 'https://openapi.monica.im/v1/',
   },
   'Moonshot': {
     'api_type': Bot.apiTypeOpenAI,

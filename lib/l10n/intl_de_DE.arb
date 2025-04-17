@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "Fehlermeldung bei leerer Serverantwort"
     },
-    "responseError": "Antwort konnte nicht abgerufen werden: ${error}",
+    "responseError": "Antwort konnte nicht abgerufen werden: {error}",
     "@responseError": {
         "description": "Fehlermeldung beim Abrufen einer Antwort",
         "placeholders": {

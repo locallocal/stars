@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "伺服器返回空響應的錯誤提示"
     },
-    "responseError": "獲取回覆失敗: ${error}",
+    "responseError": "獲取回覆失敗: {error}",
     "@responseError": {
         "description": "獲取回覆失敗",
         "placeholders": {

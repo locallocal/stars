@@ -4,22 +4,19 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
-class PPIO extends Provider {
-  static const String defaultApiModelsUrl = 'https://api.ppinfra.com/v3/model';
+class AiHubMix extends Provider {
+  static const String defaultApiModelsUrl = 'https://aihubmix.com/v1/models';
   static const String defaultApiChatUrl =
-      'https://api.ppinfra.com/v3/openai/chat/completions';
-  PPIO(super.bot);
+      'https://aihubmix.com/v1/chat/completions';
+  AiHubMix(super.bot);
 
   @override
   bool supportWebSearch() {
-    return false;
+    return true;
   }
 
   @override
   bool supportDeepThinking() {
-    if (bot.model.contains('deepseek-r1')) {
-      return true;
-    }
     return false;
   }
 
@@ -35,35 +32,35 @@ class PPIO extends Provider {
 
   @override
   Future<List<String>> listModels() async {
-    return const [
-      'deepseek/deepseek-r1-turbo',
-      'deepseek/deepseek-v3-turbo',
-      'deepseek/deepseek-v3-0324',
-      'deepseek/deepseek-r1/community',
-      'deepseek/deepseek-v3/community',
-      'deepseek/deepseek-r1',
-      'deepseek/deepseek-v3',
-      'qwen/qwq-32b',
-      'deepseek/deepseek-r1-distill-qwen-32b',
-      'deepseek/deepseek-r1-distill-qwen-14b',
-      'deepseek/deepseek-r1-distill-llama-70b',
-      'deepseek/deepseek-r1-distill-llama-8b',
-      'meta-llama/llama-3.3-70b-instruct',
-      'qwen/qwen-2.5-72b-instruct',
-      'qwen/qwen-2-vl-72b-instruct',
-      'meta-llama/llama-3.2-3b-instruct',
-      'google/gemma-3-27b-it',
-      'qwen/qwen2.5-vl-72b-instruct',
-      'qwen/qwen2.5-32b-instruct',
-      'baichuan/baichuan2-13b-chat',
-      // 仅针对实名认证的企业用户开放
-      // 'meta-llama/llama-3.1-70b-instruct',
-      // 'meta-llama/llama-3.1-8b-instruct',
-      '01-ai/yi-1.5-34b-chat',
-      '01-ai/yi-1.5-9b-chat',
-      'thudm/glm-4-9b-chat',
-      'qwen/qwen-2-7b-instruct',
-    ];
+    final url =
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final models =
+            (data['data'] as List)
+                .map((model) => model['id'] as String)
+                .toList();
+        // 对模型列表进行去重处理
+        final uniqueModels = models.toSet().toList();
+        // 可选：对模型列表进行排序
+        uniqueModels.sort();
+        return uniqueModels;
+      } else {
+        throw Exception('List models failed: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('List models Timeout, retry later.');
+    } catch (e) {
+      throw Exception('List models failed: $e');
+    }
   }
 
   @override
@@ -71,10 +68,14 @@ class PPIO extends Provider {
     try {
       // 重置取消状态
       resetCancelState();
+      var modeName = bot.model;
+      if (webSearch) {
+        modeName += ':surfing';
+      }
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}openai/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -84,7 +85,7 @@ class PPIO extends Provider {
               'Authorization': 'Bearer ${bot.apiKey}',
             })
             ..body = jsonEncode({
-              'model': bot.model,
+              'model': modeName,
               'messages': processMessagesWithImages(messages),
               'stream': true,
             });
@@ -97,7 +98,6 @@ class PPIO extends Provider {
         cancelController?.close();
       });
 
-      var stage = "";
       await for (final line in stream) {
         // 检查是否已取消
         if (isCancelled) break;
@@ -115,21 +115,6 @@ class PPIO extends Provider {
           try {
             final data = jsonDecode(jsonStr);
             final delta = data['choices'][0]['delta']['content'] ?? '';
-            if (delta == '<think>') {
-              stage = 'thinking';
-              continue;
-            }
-            if (delta == '</think>') {
-              stage = 'response';
-              continue;
-            }
-            if (deepThinking && stage == 'thinking') {
-              onReasoningResponse!(delta);
-              continue;
-            }
-            if (stage == 'thinking') {
-              continue;
-            }
             onResponse(delta);
           } catch (e) {
             // 忽略解析错误

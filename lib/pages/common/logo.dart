@@ -125,6 +125,22 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFD9D9D9); // Jira 浅黑色
     case 'lambda':
       return const Color(0xFFD0D0D0); // Lambda 浅黑色
+    case 'aihubmix':
+      return const Color(0xFFD1E8FF); // AIHubMix 浅蓝色
+    case 'aimass':
+      return const Color(0xFFFFD6D6); // AIMass 浅红色
+    case 'deepinfra':
+      return const Color(0xFFCCE5FF); // DeepInfra 浅蓝色
+    case 'cerebras':
+      return const Color(0xFFFFE0CC); // Cerebras 浅橙色
+    case 'cohere':
+      return const Color(0xFFD6F0E0); // Cohere 浅绿色
+    case 'minimax':
+      return const Color(0xFFFFD9D9); // Minixmax 浅红色
+    case 'modelscope':
+      return const Color(0xFFE6D9FF); // ModelScope 浅紫色
+    case 'monica':
+      return const Color(0xFFE8D8F0); // Monica 浅紫色
     default:
       return defaultColor; // 默认颜色
   }

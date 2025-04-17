@@ -93,7 +93,6 @@ class Gemini extends Provider {
     ];
   }
 
-  @override
   Future<String> sendMessage(List<ChatMessage> messages) async {
     final url =
         bot.baseURL.isNotEmpty

@@ -52,33 +52,6 @@ class Kluster extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}chat/completions'
-            : defaultApiChatUrl;
-
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Bearer ${bot.apiKey}',
-      },
-      body: jsonEncode({
-        'model': bot.model,
-        'messages': messages.map((m) => m.toJson()).toList(),
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['choices'][0]['message']['content'];
-    } else {
-      throw Exception('Send message failed: ${response.statusCode}');
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();

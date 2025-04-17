@@ -5,25 +5,17 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
-class StepFun extends Provider {
-  static const String defaultApiModelsUrl = 'https://api.stepfun.com/v1/models';
+class DeepInfra extends Provider {
+  static const String defaultApiModelsUrl =
+      'https://api.deepinfra.com/v1/openai/models';
   static const String defaultApiChatUrl =
-      'https://api.stepfun.com/v1/chat/completions';
-  StepFun(super.bot);
+      'https://api.deepinfra.com/v1/openai/chat/completions';
+  static const String defaultApiImageUrl =
+      'https://api.deepinfra.com/v1/openai/images/generations';
+  DeepInfra(super.bot);
 
   @override
   bool supportWebSearch() {
-    switch (bot.model.toLowerCase()) {
-      case 'step-1-flash':
-      case 'step-1-8k':
-      case 'step-1-32k':
-      case 'step-1-128k':
-      case 'step-1-256k':
-      case 'step-1v-8k':
-      case 'step-1v-32k':
-      case 'step-2-16k':
-        return true;
-    }
     return false;
   }
 
@@ -34,28 +26,32 @@ class StepFun extends Provider {
 
   @override
   List<InputModality> getInputModalites() {
-    switch (bot.model.toLowerCase()) {
-      case 'step-1v-8k':
-      case 'step-1v-32k':
-      case 'step-1o-vision-32k':
-        return [InputModality.text, InputModality.image];
-      case 'step-1.5v-mini':
-        return [InputModality.text, InputModality.image, InputModality.video];
-      case 'step-1o-audio':
-        return [InputModality.realtime];
-    }
     return [InputModality.text];
   }
 
   @override
   List<OutputModality> getOutputModalites() {
-    switch (bot.model.toLowerCase()) {
-      case 'step-1x-medium':
+    switch (bot.model) {
+      case 'stabilityai/sd3.5':
+      case 'black-forest-labs/FLUX-1.1-pro':
+      case 'black-forest-labs/FLUX-1-schnell':
+      case 'black-forest-labs/FLUX-1-dev':
+      case 'black-forest-labs/FLUX-pro':
+      case 'stabilityai/sd3.5-medium':
+      case 'CompVis/stable-diffusion-v1-4':
+      case 'XpucT/Deliberate':
+      case 'black-forest-labs/FLUX-1-Redux-dev':
+      case 'deepseek-ai/Janus-Pro-1B':
+      case 'deepseek-ai/Janus-Pro-7B':
+      case 'run-diffusion/Juggernaut-Flux':
+      case 'run-diffusion/Juggernaut-Lightning-Flux':
+      case 'runwayml/stable-diffusion-v1-5':
+      case 'stabilityai/sdxl-turbo':
+      case 'stabilityai/stable-diffusion-2-1':
         return [OutputModality.image];
-      case 'step-tts-mini':
-        return [OutputModality.audio];
-      case 'step-1o-audio':
-        return [OutputModality.realtime];
+      case 'Wan-AI/Wan2.1-T2V-1.3B':
+      case 'Wan-AI/Wan2.1-T2V-14B':
+        return [OutputModality.video];
     }
     return [OutputModality.text];
   }
@@ -63,7 +59,7 @@ class StepFun extends Provider {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
       final response = await http
@@ -78,9 +74,6 @@ class StepFun extends Provider {
             (data['data'] as List)
                 .map((model) => model['id'] as String)
                 .toList();
-        if (!models.contains('step-1o-audio')) {
-          models.add('step-1o-audio');
-        }
         return models;
       } else {
         throw Exception('List models failed: ${response.statusCode}');
@@ -97,6 +90,7 @@ class StepFun extends Provider {
     try {
       // 重置取消状态
       resetCancelState();
+
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}chat/completions'
@@ -112,13 +106,6 @@ class StepFun extends Provider {
               'model': bot.model,
               'messages': processMessagesWithImages(messages),
               'stream': true,
-              if (webSearch)
-                'tools ': [
-                  {
-                    'type': 'web_search',
-                    'function': {'description': '这个web_search用来搜索互联网的信息'},
-                  },
-                ],
             });
 
       final streamedResponse = await request.send();
@@ -171,15 +158,10 @@ class StepFun extends Provider {
 
   @override
   List<String> getSupportedImageSizes() {
-    if (bot.model == 'step-1x-medium') {
-      return [
-        '256x256',
-        '512x512',
-        '768x768',
-        '1024x1024',
-        '1280x800',
-        '800x1280',
-      ];
+    if (bot.model == 'dall-e-3') {
+      return ['1024x1024', '1792x1024', '1024x1792'];
+    } else if (bot.model == 'dall-e-2') {
+      return ['256x256', '512x512', '1024x1024'];
     }
     return [''];
   }
@@ -193,15 +175,15 @@ class StepFun extends Provider {
     String style = '',
   }) async {
     // 检查是否使用DALL-E模型
-    if (bot.model.toLowerCase() != 'step-1x-medium') {
+    if (!bot.model.toLowerCase().contains('dall-e')) {
       throw UnsupportedError(
-        'Model ${bot.model} dont support generate image, please use step-1x-medium',
+        'Model ${bot.model} dont support generate image, please use  dall-e-2 or dall-e-3',
       );
     }
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}images/generations'
-            : 'https://api.openai.com/v1/images/generations';
+            : defaultApiImageUrl;
     final Map<String, dynamic> requestBody = {
       'model': bot.model,
       'prompt': prompt,
@@ -227,7 +209,7 @@ class StepFun extends Provider {
 
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final fileName = 'step-1x-medium_$timestamp.png';
+          final fileName = 'dalle_$timestamp.png';
           final filePath = '$imageDirPath/$fileName';
           final file = File(filePath);
           await file.writeAsBytes(imageResponse.bodyBytes);

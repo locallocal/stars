@@ -344,7 +344,7 @@
     "@emptyResponseError": {
         "description": "服务器返回空响应的错误提示"
     },
-    "responseError": "获取回复失败: ${error}",
+    "responseError": "获取回复失败: {error}",
     "@responseError": {
         "description": "获取回复失败",
         "placeholders": {

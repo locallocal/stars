@@ -55,6 +55,14 @@ class Bot {
   static const apiTypeInternLM = 'internlm';
   static const apiTypeJina = 'jina';
   static const apiTypeLambda = 'lambda';
+  static const apiTypeAiHubMix = 'aihubmix';
+  static const apiTypeAiMass = 'aimass';
+  static const apiTypeDeepInfra = 'deepinfra';
+  static const apiTypeCerebras = 'cerebras';
+  static const apiTypeCohere = 'cohere';
+  static const apiTypeMiniMax = 'minimax';
+  static const apiTypeModelScope = 'modelscope';
+  static const apiTypeMonica = 'monica';
 
   final String id;
   final String name;
@@ -179,6 +187,14 @@ class Bot {
       apiTypeInternLM,
       apiTypeJina,
       apiTypeLambda,
+      apiTypeAiHubMix,
+      apiTypeAiMass,
+      apiTypeDeepInfra,
+      apiTypeCerebras,
+      apiTypeCohere,
+      apiTypeMiniMax,
+      apiTypeModelScope,
+      apiTypeMonica,
     ];
   }
 }

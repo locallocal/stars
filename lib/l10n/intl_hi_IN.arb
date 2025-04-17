@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "सर्वर से खाली प्रतिक्रिया मिलने पर त्रुटि संदेश"
     },
-    "responseError": "उत्तर प्राप्त करने में विफल: ${error}",
+    "responseError": "उत्तर प्राप्त करने में विफल: {error}",
     "@responseError": {
         "description": "उत्तर प्राप्त करने में विफल",
         "placeholders": {

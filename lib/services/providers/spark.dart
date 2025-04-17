@@ -48,33 +48,6 @@ class Spark extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}chat/completions'
-            : defaultApiChatUrl;
-
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${bot.apiKey}',
-      },
-      body: jsonEncode({
-        'model': bot.model,
-        'messages': processMessagesWithImages(messages),
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['choices'][0]['message']['content'];
-    } else {
-      throw Exception('Send Message Failed: ${response.statusCode}');
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       // 重置取消状态

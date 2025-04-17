@@ -66,39 +66,6 @@ class Anthropic extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    final url = getMessageUrl();
-
-    // 获取格式化的消息
-    final formattedMessages = formatMessages(messages);
-
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': bot.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: jsonEncode({
-        'model': bot.model,
-        'messages': formattedMessages['messages'],
-        'system': formattedMessages['system'],
-        if (deepThinking)
-          'thinking': {"type": "enabled", "budget_tokens": 16000},
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['content'][0]['text'];
-    } else {
-      throw Exception(
-        'Request Failed: ${response.statusCode} - ${response.body}',
-      );
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       // 重置取消状态

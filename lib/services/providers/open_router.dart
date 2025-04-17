@@ -39,32 +39,6 @@ class OpenRouter extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    try {
-      final response = await http.post(
-        Uri.parse(getMessageUrl()),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${bot.apiKey}',
-        },
-        body: jsonEncode({
-          'model': bot.model,
-          'messages': messages.map((m) => m.toJson()).toList(),
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['choices'][0]['message']['content'] ?? '';
-      } else {
-        throw Exception('${response.statusCode} ${response.body}');
-      }
-    } catch (e) {
-      throw Exception('Requst Failed: $e');
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     resetCancelState();
 

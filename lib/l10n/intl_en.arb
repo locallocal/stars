@@ -344,7 +344,7 @@
     "@emptyResponseError": {
         "description": "Failed to get response: Server returned empty response"
     },
-    "responseError": "Failed to get response: ${error}",
+    "responseError": "Failed to get response: {error}",
     "@responseError": {
         "description": "Failed to get response",
         "placeholders": {

@@ -4,11 +4,10 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
-class PPIO extends Provider {
-  static const String defaultApiModelsUrl = 'https://api.ppinfra.com/v3/model';
+class AiMass extends Provider {
   static const String defaultApiChatUrl =
-      'https://api.ppinfra.com/v3/openai/chat/completions';
-  PPIO(super.bot);
+      'https://platform.wair.ac.cn/maas/v1/chat/completions';
+  AiMass(super.bot);
 
   @override
   bool supportWebSearch() {
@@ -17,14 +16,25 @@ class PPIO extends Provider {
 
   @override
   bool supportDeepThinking() {
-    if (bot.model.contains('deepseek-r1')) {
-      return true;
+    switch (bot.model) {
+      case 'taichu_o1':
+      case 'deepseek_r1_distill_qwen_32b':
+      case 'deepseek_r1_distill_qwen_14b':
+      case 'deepseek_r1_distill_llama_70b':
+      case 'deepseek_r1':
+        return true;
     }
     return false;
   }
 
   @override
   List<InputModality> getInputModalites() {
+    switch (bot.model) {
+      case 'taichu_vl':
+      case 'taichu_vlr_7b':
+      case 'taichu_vlr_3b':
+        return [InputModality.text, InputModality.image];
+    }
     return [InputModality.text];
   }
 
@@ -36,33 +46,16 @@ class PPIO extends Provider {
   @override
   Future<List<String>> listModels() async {
     return const [
-      'deepseek/deepseek-r1-turbo',
-      'deepseek/deepseek-v3-turbo',
-      'deepseek/deepseek-v3-0324',
-      'deepseek/deepseek-r1/community',
-      'deepseek/deepseek-v3/community',
-      'deepseek/deepseek-r1',
-      'deepseek/deepseek-v3',
-      'qwen/qwq-32b',
-      'deepseek/deepseek-r1-distill-qwen-32b',
-      'deepseek/deepseek-r1-distill-qwen-14b',
-      'deepseek/deepseek-r1-distill-llama-70b',
-      'deepseek/deepseek-r1-distill-llama-8b',
-      'meta-llama/llama-3.3-70b-instruct',
-      'qwen/qwen-2.5-72b-instruct',
-      'qwen/qwen-2-vl-72b-instruct',
-      'meta-llama/llama-3.2-3b-instruct',
-      'google/gemma-3-27b-it',
-      'qwen/qwen2.5-vl-72b-instruct',
-      'qwen/qwen2.5-32b-instruct',
-      'baichuan/baichuan2-13b-chat',
-      // 仅针对实名认证的企业用户开放
-      // 'meta-llama/llama-3.1-70b-instruct',
-      // 'meta-llama/llama-3.1-8b-instruct',
-      '01-ai/yi-1.5-34b-chat',
-      '01-ai/yi-1.5-9b-chat',
-      'thudm/glm-4-9b-chat',
-      'qwen/qwen-2-7b-instruct',
+      'taichu_llm',
+      'qwq_32b',
+      'taichu_o1',
+      'deepseek_r1_distill_qwen_32b',
+      'deepseek_r1_distill_qwen_14b',
+      'deepseek_r1_distill_llama_70b',
+      'deepseek_r1',
+      'taichu_vl',
+      'taichu_vlr_7b',
+      'taichu_vlr_3b',
     ];
   }
 
@@ -74,7 +67,7 @@ class PPIO extends Provider {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}openai/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -99,6 +92,12 @@ class PPIO extends Provider {
 
       var stage = "";
       await for (final line in stream) {
+        // 检查错误范围
+        if (line.contains('error')) {
+          final errorData = jsonDecode(line);
+          final errorMessage = errorData['error']['message'];
+          throw Exception('Send Message Failed: $errorMessage');
+        }
         // 检查是否已取消
         if (isCancelled) break;
 

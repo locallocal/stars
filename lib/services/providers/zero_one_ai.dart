@@ -69,43 +69,6 @@ class ZeroOneAI extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    try {
-      final url =
-          bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}chat/completions'
-              : _defaultApiChatUrl;
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${bot.apiKey}',
-      };
-      final formattedMessages = processMessagesWithImages(messages);
-      final body = jsonEncode({
-        'model': bot.model,
-        'messages': formattedMessages,
-      });
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-        body: body,
-      );
-      if (response.statusCode != 200) {
-        throw Exception(
-          'Send message failed: ${response.statusCode} ${response.body}',
-        );
-      }
-      final jsonResponse = jsonDecode(response.body);
-      return jsonResponse['choices'][0]['message']['content'];
-    } catch (e) {
-      if (onError != null) {
-        onError!(e.toString());
-      }
-      return '';
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();

@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "Сообщение об ошибке, когда сервер возвращает пустой ответ"
     },
-    "responseError": "Ошибка получения ответа: ${error}",
+    "responseError": "Ошибка получения ответа: {error}",
     "@responseError": {
         "description": "Ошибка получения ответа",
         "placeholders": {

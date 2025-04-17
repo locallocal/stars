@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "Message d'erreur lorsque le serveur renvoie une réponse vide"
     },
-    "responseError": "Échec de récupération de la réponse: ${error}",
+    "responseError": "Échec de récupération de la réponse: {error}",
     "@responseError": {
         "description": "Échec de récupération de la réponse",
         "placeholders": {

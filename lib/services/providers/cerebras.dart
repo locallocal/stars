@@ -3,11 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
-class Deepseek extends Provider {
-  static const String defaultApiModelKey = 'https://api.deepseek.com/models';
+class Cerebras extends Provider {
+  static const String defaultApiModelKey = 'https://api.cerebras.ai/v1/models';
   static const String defaultApiChatUrl =
-      'https://api.deepseek.com/v1/chat/completions';
-  Deepseek(super.bot);
+      'https://api.cerebras.ai/v1/chat/completions';
+  Cerebras(super.bot);
 
   @override
   bool supportWebSearch() {
@@ -16,10 +16,6 @@ class Deepseek extends Provider {
 
   @override
   bool supportDeepThinking() {
-    switch (bot.model) {
-      case 'deepseek-reasoner':
-        return true;
-    }
     return false;
   }
 
@@ -35,10 +31,8 @@ class Deepseek extends Provider {
 
   @override
   Future<List<String>> listModels() async {
-    // deepseek-chat
-    // deepseek-reasoner
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelKey;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelKey;
 
     final response = await http.get(
       Uri.parse(url),
@@ -64,7 +58,7 @@ class Deepseek extends Provider {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -77,13 +71,6 @@ class Deepseek extends Provider {
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
               'stream': true,
-              if (webSearch)
-                'tools': [
-                  {
-                    'type': 'function',
-                    'function': {'name': 'web_search'},
-                  },
-                ],
             });
 
       cancelController?.stream.listen((_) {
@@ -118,18 +105,6 @@ class Deepseek extends Provider {
             if (data.containsKey('choices') &&
                 data['choices'].isNotEmpty &&
                 data['choices'][0].containsKey('delta')) {
-              if (deepThinking &&
-                  data['choices'][0]['delta'].containsKey(
-                    'reasoning_content',
-                  )) {
-                final reasoning =
-                    data['choices'][0]['delta']['reasoning_content'] ?? '';
-                if (reasoning.isNotEmpty && onReasoningResponse != null) {
-                  onReasoningResponse!(reasoning);
-                }
-                continue;
-              }
-
               final delta = data['choices'][0]['delta']['content'] ?? '';
               if (delta.isNotEmpty) {
                 onResponse(delta);

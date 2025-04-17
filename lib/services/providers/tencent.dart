@@ -33,64 +33,6 @@ class Tencent extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    try {
-      final url =
-          bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
-              : defaultApiChatUrl;
-
-      // 构建请求体 - 腾讯混元API特定格式
-      final Map<String, dynamic> requestBody = {
-        'model': bot.model,
-        'messages': messages.map((m) => m.toJson()).toList(),
-        'temperature': 0.7,
-        'stream': false,
-      };
-
-      // 发送请求
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Bearer ${bot.apiKey}',
-          'Accept': 'application/json; charset=utf-8',
-        },
-        body: jsonEncode(requestBody),
-        encoding: Encoding.getByName('utf-8'), // 确保请求体使用UTF-8编码
-      );
-
-      if (response.statusCode == 200) {
-        // 确保使用UTF-8解码响应内容
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        final Map<String, dynamic> data = jsonDecode(decodedBody);
-
-        // 腾讯混元API的响应格式
-        if (data['choices'] != null && data['choices'].length > 0) {
-          final String content = data['choices'][0]['message']['content'];
-          // 再次确保内容是有效的UTF-8字符串
-          return content;
-        } else {
-          return 'Invalid Response Body: ${data['msg'] ?? 'Unknown Error'}';
-        }
-      } else {
-        // 处理HTTP错误
-        try {
-          // 使用UTF-8解码错误响应
-          final String decodedError = utf8.decode(response.bodyBytes);
-          Map<String, dynamic> errorData = jsonDecode(decodedError);
-          String errorMessage = errorData['msg'] ?? 'Unkown Error';
-          return '$errorMessage (${response.statusCode})';
-        } catch (e) {
-          return 'HTTP: ${response.statusCode}';
-        }
-      }
-    } catch (e) {
-      return 'Send Message Failed: $e';
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();

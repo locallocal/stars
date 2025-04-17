@@ -5,25 +5,15 @@ import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
-class StepFun extends Provider {
-  static const String defaultApiModelsUrl = 'https://api.stepfun.com/v1/models';
+class Monica extends Provider {
+  static const String defaultApiModelsUrl =
+      'https://openapi.monica.im/v1/models';
   static const String defaultApiChatUrl =
-      'https://api.stepfun.com/v1/chat/completions';
-  StepFun(super.bot);
+      'https://openapi.monica.im/v1/chat/completions';
+  Monica(super.bot);
 
   @override
   bool supportWebSearch() {
-    switch (bot.model.toLowerCase()) {
-      case 'step-1-flash':
-      case 'step-1-8k':
-      case 'step-1-32k':
-      case 'step-1-128k':
-      case 'step-1-256k':
-      case 'step-1v-8k':
-      case 'step-1v-32k':
-      case 'step-2-16k':
-        return true;
-    }
     return false;
   }
 
@@ -35,14 +25,17 @@ class StepFun extends Provider {
   @override
   List<InputModality> getInputModalites() {
     switch (bot.model.toLowerCase()) {
-      case 'step-1v-8k':
-      case 'step-1v-32k':
-      case 'step-1o-vision-32k':
+      case 'gpt-4o':
+      case 'gpt-4o-2024-11-20':
+      case 'gpt-4o-2024-08-06':
+      case 'gpt-4o-mini':
+      case 'gpt-4o-mini-2024-07-18':
+      case 'o1-preview':
+      case 'o1-preview-2024-09-12':
+      case 'claude-3-opus-20240229':
+      case 'claude-3-haiku-20240307':
+      case 'gemini-1.5-pro-002':
         return [InputModality.text, InputModality.image];
-      case 'step-1.5v-mini':
-        return [InputModality.text, InputModality.image, InputModality.video];
-      case 'step-1o-audio':
-        return [InputModality.realtime];
     }
     return [InputModality.text];
   }
@@ -50,12 +43,15 @@ class StepFun extends Provider {
   @override
   List<OutputModality> getOutputModalites() {
     switch (bot.model.toLowerCase()) {
-      case 'step-1x-medium':
+      case 'flux_pro':
+      case 'flux_dev':
+      case 'flux_schnell':
+      case 'sdxl':
+      case 'sd3':
+      case 'sd3_5':
+      case 'dall-e-3':
+      case 'playground-v2-5':
         return [OutputModality.image];
-      case 'step-tts-mini':
-        return [OutputModality.audio];
-      case 'step-1o-audio':
-        return [OutputModality.realtime];
     }
     return [OutputModality.text];
   }
@@ -63,7 +59,7 @@ class StepFun extends Provider {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
       final response = await http
@@ -78,9 +74,6 @@ class StepFun extends Provider {
             (data['data'] as List)
                 .map((model) => model['id'] as String)
                 .toList();
-        if (!models.contains('step-1o-audio')) {
-          models.add('step-1o-audio');
-        }
         return models;
       } else {
         throw Exception('List models failed: ${response.statusCode}');
@@ -97,6 +90,7 @@ class StepFun extends Provider {
     try {
       // 重置取消状态
       resetCancelState();
+
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}chat/completions'
@@ -112,13 +106,6 @@ class StepFun extends Provider {
               'model': bot.model,
               'messages': processMessagesWithImages(messages),
               'stream': true,
-              if (webSearch)
-                'tools ': [
-                  {
-                    'type': 'web_search',
-                    'function': {'description': '这个web_search用来搜索互联网的信息'},
-                  },
-                ],
             });
 
       final streamedResponse = await request.send();
@@ -171,17 +158,51 @@ class StepFun extends Provider {
 
   @override
   List<String> getSupportedImageSizes() {
-    if (bot.model == 'step-1x-medium') {
-      return [
-        '256x256',
-        '512x512',
-        '768x768',
-        '1024x1024',
-        '1280x800',
-        '800x1280',
-      ];
+    switch (bot.model) {
+      case 'flux_pro':
+      case 'flux_dev':
+      case 'flux_schnell':
+      case 'sdxl':
+      case 'sd3':
+      case 'sd3_5':
+      case 'playground-v2-5':
+        return const ['1024x1024', '768x1344', '1344x768'];
+      case 'dall-e-3':
+        return const ['1024x1024', '1024x1792', '1792x1024'];
+      case 'V_2':
+        return const [
+          'ASPECT_10_16',
+          'ASPECT_16_10',
+          'ASPECT_9_16',
+          'ASPECT_16_9',
+          'ASPECT_3_2',
+          'ASPECT_2_3',
+          'ASPECT_4_3',
+          'ASPECT_3_4',
+          'ASPECT_1_1',
+          'ASPECT_1_3',
+          'ASPECT_3_1',
+        ];
     }
     return [''];
+  }
+
+  @override
+  List<String> getImageStyles() {
+    switch (bot.model) {
+      case 'dall-e-3':
+        return const ['vivid', 'natural'];
+      case 'V_2':
+        return const [
+          'AUTO',
+          'GENERAL',
+          'REALISTIC',
+          'DESIGN',
+          'RENDER_3D',
+          'ANIME ',
+        ];
+    }
+    return [];
   }
 
   @override
@@ -192,23 +213,45 @@ class StepFun extends Provider {
     List<String> referenceImages = const [],
     String style = '',
   }) async {
-    // 检查是否使用DALL-E模型
-    if (bot.model.toLowerCase() != 'step-1x-medium') {
-      throw UnsupportedError(
-        'Model ${bot.model} dont support generate image, please use step-1x-medium',
-      );
-    }
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}images/generations'
-            : 'https://api.openai.com/v1/images/generations';
     final Map<String, dynamic> requestBody = {
       'model': bot.model,
       'prompt': prompt,
       'n': 1, // 生成图片数量
-      'size': size,
       'response_format': 'url', // 返回URL而不是base64
     };
+
+    var url = "";
+    switch (bot.model) {
+      case 'flux_pro':
+      case 'flux_dev':
+      case 'flux_schnell':
+        url = '${bot.baseURL}image/gen/fluxs';
+        requestBody['size'] = size;
+        requestBody['num_outputs'] = 1;
+      case 'sdxl':
+      case 'sd3':
+      case 'sd3_5':
+        url = '${bot.baseURL}image/gen/sd';
+        requestBody['size'] = size;
+        requestBody['num_outputs'] = 1;
+      case 'playground-v2-5':
+        url = '${bot.baseURL}image/gen/playground';
+        requestBody['size'] = size;
+        requestBody['count'] = 1;
+      case 'dall-e-3':
+        url = '${bot.baseURL}image/gen/dalle';
+        requestBody['size'] = size;
+        requestBody['n'] = 1;
+        if (style.isNotEmpty) {
+          requestBody['style'] = style;
+        }
+      case 'V_2':
+        url = '${bot.baseURL}image/gen/ideogram';
+        requestBody['aspect_ratio'] = size;
+        if (style.isNotEmpty) {
+          requestBody['style_type'] = style;
+        }
+    }
 
     try {
       final response = await http.post(
@@ -227,7 +270,7 @@ class StepFun extends Provider {
 
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final fileName = 'step-1x-medium_$timestamp.png';
+          final fileName = '${bot.model}_$timestamp.png';
           final filePath = '$imageDirPath/$fileName';
           final file = File(filePath);
           await file.writeAsBytes(imageResponse.bodyBytes);

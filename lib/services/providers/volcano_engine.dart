@@ -36,54 +36,6 @@ class VolcanoEngine extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    try {
-      final url =
-          bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v3/chat/completions'
-              : defaultApiChatUrl;
-
-      final Map<String, dynamic> requestBody = {
-        'model': bot.model,
-        'messages': messages.map((m) => m.toJson()).toList(),
-        'stream': false,
-      };
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${bot.apiKey}',
-          'X-VolcEngine-Service': 'volc-llm',
-        },
-        body: jsonEncode(requestBody),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-
-        // 检查火山引擎API的响应格式
-        if (data['choices'] != null && data['choices'].length > 0) {
-          final String content = data['choices'][0]['message']['content'];
-          return content;
-        } else {
-          return 'Invalid Response Body: ${data['msg'] ?? 'Unknown Error'}';
-        }
-      } else {
-        try {
-          Map<String, dynamic> errorData = jsonDecode(response.body);
-          String errorMessage =
-              errorData['base_resp']?['status_message'] ?? 'Unkown Error';
-          return '$errorMessage (${response.statusCode})';
-        } catch (e) {
-          return 'HTTP ${response.statusCode}';
-        }
-      }
-    } catch (e) {
-      return 'Send Message Failed: $e';
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();

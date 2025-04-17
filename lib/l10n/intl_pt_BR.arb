@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "Mensagem de erro quando o servidor retorna uma resposta vazia"
     },
-    "responseError": "Falha ao obter resposta: ${error}",
+    "responseError": "Falha ao obter resposta: {error}",
     "@responseError": {
         "description": "Falha ao obter resposta",
         "placeholders": {

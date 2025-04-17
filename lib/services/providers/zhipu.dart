@@ -118,36 +118,6 @@ class Zhipu extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/api/paas/v4/chat/completions'
-            : defaultApiUrl;
-    final token = _generateToken();
-
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'model': bot.model,
-        'messages': processMessagesWithImages(messages),
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      return data['choices'][0]['message']['content'];
-    } else {
-      throw Exception(
-        'Send Message Failed: ${response.statusCode} - ${response.body}',
-      );
-    }
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       // 重置取消状态

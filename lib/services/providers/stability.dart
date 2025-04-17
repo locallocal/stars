@@ -52,11 +52,6 @@ class Stability extends Provider {
   }
 
   @override
-  Future<String> sendMessage(List<ChatMessage> messages) async {
-    return 'Not support';
-  }
-
-  @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {}
 
   @override

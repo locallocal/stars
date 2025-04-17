@@ -332,7 +332,7 @@
     "@emptyResponseError": {
         "description": "サーバーが空の応答を返した場合のエラーメッセージ"
     },
-    "responseError": "応答の取得に失敗しました：${error}",
+    "responseError": "応答の取得に失敗しました：{error}",
     "@responseError": {
         "description": "応答の取得に失敗した場合のエラーメッセージ",
         "placeholders": {

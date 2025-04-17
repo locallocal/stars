@@ -30,6 +30,14 @@ import 'package:bubble/services/providers/kluster.dart';
 import 'package:bubble/services/providers/intern_lm.dart';
 import 'package:bubble/services/providers/jina.dart';
 import 'package:bubble/services/providers/lambda.dart';
+import 'package:bubble/services/providers/ai_hub_mix.dart';
+import 'package:bubble/services/providers/ai_mass.dart';
+import 'package:bubble/services/providers/deep_infra.dart';
+import 'package:bubble/services/providers/cerebras.dart';
+import 'package:bubble/services/providers/cohere.dart';
+import 'package:bubble/services/providers/mini_max.dart';
+import 'package:bubble/services/providers/model_scope.dart';
+import 'package:bubble/services/providers/monica.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -116,9 +124,6 @@ abstract class Provider {
     // 默认实现返回空列表，子类可以覆盖此方法
     return [];
   }
-
-  // 发送消息并获取完整响应
-  Future<String> sendMessage(List<ChatMessage> messages);
 
   // 发送消息并获取流式响应
   Future<void> sendMessageStream(List<ChatMessage> messages);
@@ -213,6 +218,22 @@ abstract class Provider {
         return Jina(bot);
       case Bot.apiTypeLambda:
         return Lambda(bot);
+      case Bot.apiTypeAiHubMix:
+        return AiHubMix(bot);
+      case Bot.apiTypeAiMass:
+        return AiMass(bot);
+      case Bot.apiTypeDeepInfra:
+        return DeepInfra(bot);
+      case Bot.apiTypeCerebras:
+        return Cerebras(bot);
+      case Bot.apiTypeCohere:
+        return Cohere(bot);
+      case Bot.apiTypeMiniMax:
+        return MiniMax(bot);
+      case Bot.apiTypeModelScope:
+        return ModelScope(bot);
+      case Bot.apiTypeMonica:
+        return Monica(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
