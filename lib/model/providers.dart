@@ -34,6 +34,7 @@ final providers = [
   'OpenAI',
   'OpenRouter',
   'PPIO',
+  'SambaNova',
   'Search1Api',
   'SenseNova',
   'SiliconFlow',
@@ -177,6 +178,10 @@ final modelsByProvider = {
   'PPIO': {
     'api_type': Bot.apiTypePPIO,
     'base_url': 'https://api.ppinfra.com/v3/',
+  },
+  'SambaNova': {
+    'api_type': Bot.apiTypeSambaNova,
+    'base_url': 'https://api.sambanova.ai/v1/',
   },
   'Search1Api': {
     'api_type': Bot.apiTypeSearch1Api,

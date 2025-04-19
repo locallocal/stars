@@ -147,6 +147,8 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFD6F0E6); // Novita 浅绿色
     case 'search1api':
       return const Color(0xFFE0F0FF);
+    case 'sambanova':
+      return const Color(0xFFFFE8CC); // SambaNova 浅橙色
     default:
       return defaultColor; // 默认颜色
   }

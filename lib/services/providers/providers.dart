@@ -41,6 +41,7 @@ import 'package:bubble/services/providers/monica.dart';
 import 'package:bubble/services/providers/nebius.dart';
 import 'package:bubble/services/providers/novita.dart';
 import 'package:bubble/services/providers/search1_api.dart';
+import 'package:bubble/services/providers/samba_nova.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -243,6 +244,8 @@ abstract class Provider {
         return Novita(bot);
       case Bot.apiTypeSearch1Api:
         return Search1Api(bot);
+      case Bot.apiTypeSambaNova:
+        return SambaNova(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }
