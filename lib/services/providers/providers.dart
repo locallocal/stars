@@ -39,6 +39,8 @@ import 'package:bubble/services/providers/mini_max.dart';
 import 'package:bubble/services/providers/model_scope.dart';
 import 'package:bubble/services/providers/monica.dart';
 import 'package:bubble/services/providers/nebius.dart';
+import 'package:bubble/services/providers/novita.dart';
+import 'package:bubble/services/providers/search1_api.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -237,6 +239,10 @@ abstract class Provider {
         return Monica(bot);
       case Bot.apiTypeNebius:
         return Nebius(bot);
+      case Bot.apiTypeNovita:
+        return Novita(bot);
+      case Bot.apiTypeSearch1Api:
+        return Search1Api(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

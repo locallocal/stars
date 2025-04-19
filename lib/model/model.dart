@@ -64,6 +64,8 @@ class Bot {
   static const apiTypeModelScope = 'modelscope';
   static const apiTypeMonica = 'monica';
   static const apiTypeNebius = 'nebius';
+  static const apiTypeNovita = 'novita';
+  static const apiTypeSearch1Api = 'search1api';
 
   final String id;
   final String name;
@@ -197,6 +199,8 @@ class Bot {
       apiTypeModelScope,
       apiTypeMonica,
       apiTypeNebius,
+      apiTypeNovita,
+      apiTypeSearch1Api,
     ];
   }
 }

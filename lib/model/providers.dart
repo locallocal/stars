@@ -29,10 +29,12 @@ final providers = [
   'Monica',
   'Moonshot',
   'Nebius',
+  'Novita',
   'Ollama',
   'OpenAI',
   'OpenRouter',
   'PPIO',
+  'Search1Api',
   'SenseNova',
   'SiliconFlow',
   'Spark',
@@ -155,6 +157,10 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeNebius,
     'base_url': 'https://api.studio.nebius.com/v1/',
   },
+  'Novita': {
+    'api_type': Bot.apiTypeNovita,
+    'base_url': 'https://api.novita.ai/v3/openai/v1/',
+  },
   'Ollama': {
     'api_type': Bot.apiTypeOllama,
     'base_url': 'http://localhost:11434',
@@ -171,6 +177,10 @@ final modelsByProvider = {
   'PPIO': {
     'api_type': Bot.apiTypePPIO,
     'base_url': 'https://api.ppinfra.com/v3/',
+  },
+  'Search1Api': {
+    'api_type': Bot.apiTypeSearch1Api,
+    'base_url': 'https://api.search1api.com/v1/',
   },
   'SenseNova': {
     'api_type': Bot.apiTypeSenseNova,

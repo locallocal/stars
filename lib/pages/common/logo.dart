@@ -143,6 +143,10 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE8D8F0); // Monica 浅紫色
     case 'nebius':
       return const Color(0xFFCCF2D6); // Nebius 浅亮绿色
+    case 'novita':
+      return const Color(0xFFD6F0E6); // Novita 浅绿色
+    case 'search1api':
+      return const Color(0xFFE0F0FF);
     default:
       return defaultColor; // 默认颜色
   }
