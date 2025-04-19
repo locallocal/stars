@@ -81,12 +81,17 @@ class AlibabaCloud extends Provider {
     switch (bot.model) {
       case 'qwen-vl-max':
       case 'qwen-vl-max-latest':
+      case 'qwen-vl-max-2025-04-08':
+      case 'qwen-vl-max-2025-04-02':
       case 'qwen-vl-max-2025-01-25':
       case 'qwen-vl-max-2024-12-30':
       case 'qwen-vl-max-2024-11-19':
       case 'qwen-vl-max-2024-10-30':
       case 'qwen-vl-max-2024-08-09':
       case 'qwen-vl-max-2024-02-01':
+      case 'qwen-vl-max-1030':
+      case 'qwen-vl-max-1119':
+      case 'qwen-vl-max-1230':
       case 'qwen-vl-plus':
       case 'qwen-vl-plus-latest':
       case 'qwen-vl-plus-2025-01-25':
@@ -142,7 +147,10 @@ class AlibabaCloud extends Provider {
       if (!models.contains('wanx2.0-t2i-turbo')) {
         models.add('wanx2.0-t2i-turbo');
       }
-      return models;
+      final uniqueModels = models.toSet().toList();
+      // 可选：对模型列表进行排序
+      uniqueModels.sort();
+      return uniqueModels;
     } else {
       throw Exception('List models Failed: ${response.statusCode}');
     }
@@ -167,6 +175,7 @@ class AlibabaCloud extends Provider {
               'model': bot.model,
               'messages': processMessagesWithImages(messages),
               'stream': true,
+              if (webSearch) 'enable_search': true,
             });
 
       final streamedResponse = await request.send();
@@ -200,14 +209,14 @@ class AlibabaCloud extends Provider {
           }
           try {
             final data = jsonDecode(jsonStr);
-            if (deepThinking &&
-                data['choices'][0]['delta'].containsKey('reasoning_content')) {
+            if (data['choices'][0]['delta'].containsKey('reasoning_content')) {
               final reasoning =
                   data['choices'][0]['delta']['reasoning_content'] ?? '';
-              if (reasoning.isNotEmpty && onReasoningResponse != null) {
+              if (reasoning.isNotEmpty &&
+                  onReasoningResponse != null &&
+                  deepThinking) {
                 onReasoningResponse!(reasoning);
               }
-              continue;
             }
 
             final delta = data['choices'][0]['delta']['content'] ?? '';
