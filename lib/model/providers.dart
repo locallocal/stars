@@ -33,6 +33,7 @@ final providers = [
   'Ollama',
   'OpenAI',
   'OpenRouter',
+  'Perplexity',
   'PPIO',
   'SambaNova',
   'Search1Api',
@@ -42,6 +43,7 @@ final providers = [
   'StepFun',
   'Stability',
   'Tencent',
+  'TogetherAI',
   'VolcanoEngine',
   'XingHe',
   'ZeroOneAI',
@@ -175,6 +177,10 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeOpenRouter,
     'base_url': 'https://openrouter.ai/api',
   },
+  'Perplexity': {
+    'api_type': Bot.apiTypePerplexity,
+    'base_url': 'https://api.perplexity.ai/',
+  },
   'PPIO': {
     'api_type': Bot.apiTypePPIO,
     'base_url': 'https://api.ppinfra.com/v3/',
@@ -210,6 +216,10 @@ final modelsByProvider = {
   'Tencent': {
     'api_type': Bot.apiTypeTencent,
     'base_url': 'https://api.hunyuan.cloud.tencent.com',
+  },
+  'TogetherAI': {
+    'api_type': Bot.apiTypeTogetherAI,
+    'base_url': 'https://api.together.xyz/v1/',
   },
   'VolcanoEngine': {
     'api_type': Bot.apiTypeVolcanoEngine,

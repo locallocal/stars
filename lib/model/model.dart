@@ -67,6 +67,8 @@ class Bot {
   static const apiTypeNovita = 'novita';
   static const apiTypeSearch1Api = 'search1api';
   static const apiTypeSambaNova = 'sambanova';
+  static const apiTypePerplexity = 'perplexity';
+  static const apiTypeTogetherAI = 'togetherai';
 
   final String id;
   final String name;
@@ -203,6 +205,8 @@ class Bot {
       apiTypeNovita,
       apiTypeSearch1Api,
       apiTypeSambaNova,
+      apiTypePerplexity,
+      apiTypeTogetherAI,
     ];
   }
 }

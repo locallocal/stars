@@ -42,6 +42,8 @@ import 'package:bubble/services/providers/nebius.dart';
 import 'package:bubble/services/providers/novita.dart';
 import 'package:bubble/services/providers/search1_api.dart';
 import 'package:bubble/services/providers/samba_nova.dart';
+import 'package:bubble/services/providers/perplexity.dart';
+import 'package:bubble/services/providers/together_ai.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -92,6 +94,10 @@ abstract class Provider {
   }
 
   bool supportDeepThinking() {
+    return false;
+  }
+
+  bool supportDeepResearch() {
     return false;
   }
 
@@ -246,6 +252,10 @@ abstract class Provider {
         return Search1Api(bot);
       case Bot.apiTypeSambaNova:
         return SambaNova(bot);
+      case Bot.apiTypePerplexity:
+        return Perplexity(bot);
+      case Bot.apiTypeTogetherAI:
+        return TogetherAI(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

@@ -149,6 +149,10 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFE0F0FF);
     case 'sambanova':
       return const Color(0xFFFFE8CC); // SambaNova 浅橙色
+    case 'perplexity':
+      return const Color(0xFFCCE6D9); // Perplexity 浅墨绿色
+    case 'togetherai':
+      return const Color(0xFFD1E8FF); // TogetherAi 浅蓝色
     default:
       return defaultColor; // 默认颜色
   }
