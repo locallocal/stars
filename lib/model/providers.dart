@@ -4,7 +4,7 @@ final providers = [
   'AiHubMix',
   'AiMass',
   'AIStudio',
-  'Aliyun',
+  'AlibabaCloud',
   'Anthropic',
   'BaiChuan',
   'Baidu',
@@ -63,9 +63,9 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeGemini,
     'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
   },
-  'Aliyun': {
-    'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://dashscope.aliyuncs.com/compatible-mode',
+  'AlibabaCloud': {
+    'api_type': Bot.apiTypeAlibabaCloud,
+    'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1/',
   },
   'Anthropic': {
     'api_type': Bot.apiTypeAnthropic,

@@ -42,42 +42,64 @@ class OpenAI extends Provider {
   @override
   List<InputModality> getInputModalites() {
     switch (bot.model.toLowerCase()) {
+      case 'chatgpt-4o-latest':
       case 'gpt-4.5-preview':
       case 'gpt-4.5-preview-2025-02-27':
+      case 'gpt-4.1':
+      case 'gpt-4.1-2025-04-14':
+      case 'gpt-4.1-mini':
+      case 'gpt-4.1-mini-2025-04-14':
+      case 'gpt-4.1-nano-2025-04-14':
+      case 'gpt-4.1-nano':
       case 'gpt-4o':
+      case 'gpt-4o-2024-11-20':
       case 'gpt-4o-2024-08-06':
+      case 'gpt-4o-2024-05-13':
       case 'gpt-4o-mini':
       case 'gpt-4o-mini-2024-07-18':
-      case 'o1':
-      case 'o1-2024-12-17':
-      case 'o1-pro':
-      case 'o1-pro-2025-03-19':
-      case 'o1-mini':
-      case 'o1-mini-2024-09-12':
       case 'gpt-4o-mini-search-preview':
       case 'gpt-4o-mini-search-preview-2025-03-11':
       case 'gpt-4o-search-preview':
       case 'gpt-4o-search-preview-2025-03-11':
-      case 'computer-use-preview':
-      case 'computer-use-preview-2025-03-11':
       case 'gpt-4-turbo':
       case 'gpt-4-turbo-2024-04-09':
       case 'gpt-4':
       case 'gpt-4-0613':
+      case 'gpt-4-0314':
       case 'gpt-3.5-turbo':
       case 'gpt-3.5-turbo-0125':
+      case 'o4-mini':
+      case 'o4-mini-2025-04-16':
+      case 'o3':
+      case 'o3-2025-04-16':
+      case 'o1-preview':
+      case 'o1-preview-2024-09-12':
+      case 'o1':
+      case 'o1-2024-12-17':
+      case 'o1-pro':
+      case 'o1-pro-2025-03-19':
+      case 'computer-use-preview':
+      case 'computer-use-preview-2025-03-11':
         return [InputModality.text, InputModality.image];
       case 'gpt-4o-audio-preview':
       case 'gpt-4o-audio-preview-2024-12-17':
+      case 'gpt-4o-audio-preview-2024-10-01':
       case 'gpt-4o-mini-audio-preview':
       case 'gpt-4o-mini-audio-preview-2024-12-17':
       case 'gpt-4o-realtime-preview':
       case 'gpt-4o-realtime-preview-2024-12-17':
+      case 'gpt-4o-mini-realtime-preview':
+      case 'gpt-4o-mini-realtime-preview-2024-12-17':
         return [InputModality.text, InputModality.audio];
+      case 'o1-mini':
+      case 'o1-mini-2024-09-12':
       case 'o3-mini':
       case 'o3-mini-2025-01-31':
       case 'dall-e-3':
       case 'dall-e-2':
+      case 'gpt-4o-mini-tts':
+      case 'tts-1':
+      case 'tts-1-hd':
         return [InputModality.text];
     }
     return [InputModality.text];
@@ -91,11 +113,16 @@ class OpenAI extends Provider {
         return [OutputModality.image];
       case 'gpt-4o-audio-preview':
       case 'gpt-4o-audio-preview-2024-12-17':
+      case 'gpt-4o-audio-preview-2024-10-01':
       case 'gpt-4o-mini-audio-preview':
       case 'gpt-4o-mini-audio-preview-2024-12-17':
       case 'gpt-4o-realtime-preview':
       case 'gpt-4o-realtime-preview-2024-12-17':
         return [OutputModality.text, OutputModality.audio];
+      case 'gpt-4o-mini-tts':
+      case 'tts-1':
+      case 'tts-1-hd':
+        return [OutputModality.speech];
     }
     return [OutputModality.text];
   }
@@ -271,5 +298,43 @@ class OpenAI extends Provider {
     } catch (e) {
       throw Exception('Generate image failed: $e');
     }
+  }
+
+  @override
+  List<Map<String, dynamic>> processMessagesWithImages(
+    List<ChatMessage> messages,
+  ) {
+    return messages.map((message) {
+      // 如果消息没有图片，直接返回原始消息
+      if (message.images.isEmpty) {
+        return message.toJson();
+      }
+      // 处理带有图片的消息
+      final List<Map<String, dynamic>> content = [];
+      // 添加文本内容（如果有）
+      if (message.content.isNotEmpty) {
+        content.add({'type': 'input_text', 'text': message.content});
+      }
+
+      // 添加图片内容
+      for (final imagePath in message.images) {
+        try {
+          final file = File(imagePath);
+          if (file.existsSync()) {
+            final bytes = file.readAsBytesSync();
+            final base64Image = base64Encode(bytes);
+
+            content.add({
+              'type': 'input_image',
+              'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
+              "detail": "auto",
+            });
+          }
+        } catch (e) {
+          print('Process image ${imagePath} failed: $e');
+        }
+      }
+      return {'role': message.role, 'content': content};
+    }).toList();
   }
 }

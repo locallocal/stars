@@ -15,6 +15,7 @@ enum InputModality {
 enum OutputModality {
   text('text'),
   image('image'),
+  speech('speech'),
   audio('audio'),
   realtime('realtime'),
   music('music'),
@@ -40,6 +41,7 @@ class Bot {
   static const apiTypeBaidu = "baidu";
   static const apiTypeXingHe = "xinghe";
   static const apiTypeZhipu = 'zhipu';
+  static const apiTypeAlibabaCloud = 'alibabacloud';
   static const apiTypeZeroOneAI = 'zerooneai';
   static const apiTypeInfiniGence = 'infinigence';
   static const apiTypePPIO = 'ppio';
@@ -178,6 +180,7 @@ class Bot {
       apiTypeXingHe,
       apiTypeOpenRouter,
       apiTypeZhipu,
+      apiTypeAlibabaCloud,
       apiTypeZeroOneAI,
       apiTypeInfiniGence,
       apiTypePPIO,

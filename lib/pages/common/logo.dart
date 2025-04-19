@@ -76,10 +76,10 @@ Color getProviderColor(String provider, Color defaultColor) {
       return const Color(0xFFDCD9FF); // OpenRouter 浅紫色
     case 'chatglm':
       return const Color(0xFFCCEFCE); // ChatGLM 浅绿色
-    case 'aliyun':
+    case 'alibabacloud':
       return const Color(0xFFFFDCC0); // 阿里云 浅橙色
     case 'volcanoengine':
-      return const Color(0xFFFFCCCC); // 火山引擎 浅红色
+      return const Color(0xFFD1E8FF); // 火山引擎 浅蓝色
     case 'tencent':
       return const Color(0xFFC9DFFF); // 腾讯 浅蓝色
     case 'siliconflow':

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
 class VolcanoEngine extends Provider {
@@ -9,14 +10,50 @@ class VolcanoEngine extends Provider {
   VolcanoEngine(super.bot);
 
   @override
+  bool supportWebSearch() {
+    return false;
+  }
+
+  @override
+  bool supportDeepThinking() {
+    if (bot.model.contains('thinking')) {
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    switch (bot.model) {
+      case 'doubao-1-5-thinking-pro-m-250415':
+      case 'doubao-1.5-vision-pro-250328':
+      case 'doubao-1-5-vision-pro-32k-250115':
+      case 'doubao-1.5-vision-lite-250315':
+      case 'doubao-vision-pro-32k-241028':
+      case 'doubao-vision-lite-32k-241015':
+        return [InputModality.text, InputModality.image];
+    }
+    return [InputModality.text];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    return [OutputModality.text];
+  }
+
+  @override
   Future<List<String>> listModels() async {
-    return [
+    return const [
+      'doubao-1-5-thinking-pro-250415',
+      'doubao-1-5-thinking-pro-m-250415',
+      'doubao-1.5-vision-pro-250328',
       'doubao-1-5-vision-pro-32k-250115',
-      'doubao-vision-lite-32k-241015',
-      'doubao-vision-pro-32k-241028',
+      'doubao-1-5-pro-256k-250115',
       'doubao-1-5-pro-32k-250115',
       'doubao-1-5-lite-32k-250115',
-      'doubao-1-5-pro-256k-250115',
+      'doubao-1.5-vision-lite-250315',
+      'doubao-vision-pro-32k-241028',
+      'doubao-vision-lite-32k-241015',
       'doubao-pro-256k-241115',
       'doubao-pro-32k-241215',
       'doubao-pro-32k-240828',
@@ -52,7 +89,7 @@ class VolcanoEngine extends Provider {
             })
             ..body = jsonEncode({
               'model': bot.model,
-              'messages': messages.map((m) => m.toJson()).toList(),
+              'messages': processMessagesWithImages(messages),
               'stream': true,
             });
 
@@ -67,6 +104,14 @@ class VolcanoEngine extends Provider {
 
       await for (final line in stream) {
         if (isCancelled) break;
+        if (line.contains('error')) {
+          final data = jsonDecode(line);
+          if (data['error'] != null && onError != null) {
+            throw Exception(
+              'Code: ${data['error']['code']}, Message: ${data['error']['message']}',
+            );
+          }
+        }
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6);
@@ -79,18 +124,19 @@ class VolcanoEngine extends Provider {
           }
           try {
             final data = jsonDecode(jsonStr);
+            if (deepThinking &&
+                data['choices'][0]['delta'].containsKey('reasoning_content')) {
+              final reasoning =
+                  data['choices'][0]['delta']['reasoning_content'] ?? '';
+              if (reasoning.isNotEmpty && onReasoningResponse != null) {
+                onReasoningResponse!(reasoning);
+              }
+              continue;
+            }
+
             final delta = data['choices'][0]['delta']['content'] ?? '';
-            onResponse(delta);
-          } catch (e) {
-            // 忽略解析错误
-          }
-        } else if (line.isNotEmpty) {
-          try {
-            final data = jsonDecode(line);
-            if (data['error'] != null && onError != null) {
-              onError!(
-                'Code: ${data['error']['code']}, Message: ${data['error']['message']}',
-              );
+            if (delta.isNotEmpty) {
+              onResponse(delta);
             }
           } catch (e) {
             // 忽略解析错误
