@@ -235,6 +235,6 @@ final modelsByProvider = {
   },
   'ZhiPu': {
     'api_type': Bot.apiTypeZhipu,
-    'base_url': 'https://open.bigmodel.cn',
+    'base_url': 'https://open.bigmodel.cn/api/paas/v4/',
   },
 };

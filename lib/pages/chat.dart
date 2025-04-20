@@ -222,7 +222,7 @@ class _ChatPageState extends State<ChatPage> {
 
       String lastUserMessage = messageText;
       if (pendingUserMessage.isNotEmpty) {
-        lastUserMessage = messageText + '\n' + pendingUserMessage;
+        lastUserMessage = '$messageText\n$pendingUserMessage';
       }
       chatMessages.add(
         ChatMessage(
@@ -446,9 +446,6 @@ class _ChatPageState extends State<ChatPage> {
     await MessageService.deleteChatMessage(widget.id);
     await ChatService.updateLastMessage(widget.id, '');
     await _loadMessages();
-    if (mounted) {
-      showSnackBar(context, S.of(context).chatHistoryCleared);
-    }
   }
 
   void _cancelRequest() {

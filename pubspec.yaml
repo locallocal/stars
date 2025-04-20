@@ -51,6 +51,7 @@ dependencies:
   path_provider: ^2.1.1
   share_plus: ^7.2.1
   gallery_saver_plus: ^3.2.4
+  elegant_nav_bar: ^0.0.22
 
 dev_dependencies:
   flutter_test:

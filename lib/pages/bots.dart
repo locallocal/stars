@@ -99,31 +99,30 @@ class _ContactsPageState extends State<ContactsPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  if (filteredBots.isNotEmpty)
-                    // 搜索框
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.secondary,
-                          borderRadius: BorderRadius.circular(24.0),
-                        ),
-                        child: TextField(
-                          onChanged: _filterBots,
-                          decoration: InputDecoration(
-                            hintText: S.of(context).selectBot,
-                            fillColor: Theme.of(context).colorScheme.secondary,
-                            focusColor: Theme.of(context).colorScheme.secondary,
-                            hoverColor: Theme.of(context).colorScheme.secondary,
-                            prefixIcon: const Icon(Icons.search),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
+                  // 搜索框
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(24.0),
+                      ),
+                      child: TextField(
+                        onChanged: _filterBots,
+                        decoration: InputDecoration(
+                          hintText: S.of(context).selectBot,
+                          fillColor: Theme.of(context).colorScheme.secondary,
+                          focusColor: Theme.of(context).colorScheme.secondary,
+                          hoverColor: Theme.of(context).colorScheme.secondary,
+                          prefixIcon: const Icon(Icons.search),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
                           ),
                         ),
                       ),
                     ),
+                  ),
 
                   // 智能体列表
                   Expanded(
@@ -133,6 +132,13 @@ class _ContactsPageState extends State<ContactsPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Image.asset(
+                                    'assets/images/profile/no_bots.png',
+                                    width: 384,
+                                    height: 384,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  const SizedBox(height: 16),
                                   Text(
                                     S.of(context).noBotsAvailable,
                                     textAlign: TextAlign.center,
@@ -238,18 +244,6 @@ class _ContactsPageState extends State<ContactsPage> {
                                         (contact) => contact.id == bot.id,
                                       );
                                     });
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            S.of(context).botDeleted(bot.name),
-                                          ),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
                                   },
                                   child: ListTile(
                                     leading: CircleAvatar(

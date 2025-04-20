@@ -102,6 +102,7 @@ class Deepseek extends Provider {
       await for (final line in stream) {
         if (isCancelled) break;
         if (line.isEmpty) continue;
+        print(line);
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6).trim();
@@ -113,30 +114,24 @@ class Deepseek extends Provider {
             return;
           }
 
-          try {
-            final data = jsonDecode(jsonStr);
-            if (data.containsKey('choices') &&
-                data['choices'].isNotEmpty &&
-                data['choices'][0].containsKey('delta')) {
+          final data = jsonDecode(jsonStr);
+          if (data.containsKey('choices') &&
+              data['choices'].isNotEmpty &&
+              data['choices'][0].containsKey('delta')) {
+            if (data['choices'][0]['delta'].containsKey('reasoning_content')) {
+              final reasoning =
+                  data['choices'][0]['delta']['reasoning_content'] ?? '';
               if (deepThinking &&
-                  data['choices'][0]['delta'].containsKey(
-                    'reasoning_content',
-                  )) {
-                final reasoning =
-                    data['choices'][0]['delta']['reasoning_content'] ?? '';
-                if (reasoning.isNotEmpty && onReasoningResponse != null) {
-                  onReasoningResponse!(reasoning);
-                }
+                  reasoning.isNotEmpty &&
+                  onReasoningResponse != null) {
+                onReasoningResponse!(reasoning);
                 continue;
               }
-
-              final delta = data['choices'][0]['delta']['content'] ?? '';
-              if (delta.isNotEmpty) {
-                onResponse(delta);
-              }
             }
-          } catch (e) {
-            // ignore
+            final delta = data['choices'][0]['delta']['content'] ?? '';
+            if (delta.isNotEmpty) {
+              onResponse(delta);
+            }
           }
         }
       }

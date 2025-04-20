@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dot_curved_bottom_nav/dot_curved_bottom_nav.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:bubble/l10n/app_localizations.dart';
@@ -11,6 +10,7 @@ import 'package:bubble/pages/profile.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/services/database_service.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/utils/dot_curved_bottom_nav.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +57,13 @@ class _MyAppState extends State<MyApp> {
           _locale = Locale(parts[0], parts[1]);
           S.load(_locale);
         }
+      });
+    });
+
+    // 监听字体大小变化
+    ProfileService.fontSizeStream.listen((double fontSize) {
+      setState(() {
+        _fontSize = fontSize;
       });
     });
   }
@@ -169,7 +176,9 @@ class _MainPageState extends State<MainPage> {
         borderRadius: 24,
         height: 70,
         onTap: (index) {
-          setState(() => _currentIndex = index);
+          setState(() {
+            _currentIndex = index;
+          });
         },
         items: [
           Icon(

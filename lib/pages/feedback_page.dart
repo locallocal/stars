@@ -43,15 +43,6 @@ class _FeedbackPageState extends State<FeedbackPage> {
       );
 
       if (!mounted) return;
-
-      // 显示成功消息并返回
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context).feedbackSubmitted),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
       Navigator.pop(context);
     } catch (e) {
       setState(() {

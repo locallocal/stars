@@ -84,17 +84,10 @@ class ChatListBuilder extends StatelessWidget {
           onDismissed: (direction) async {
             // 删除聊天记录
             await ChatService.deleteChat(chat.id);
-
             // 删除聊天目录
             await deleteChatDirectory(chat.id);
-
             // 通知父组件更新
             onChatDeleted(chat.id);
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(S.of(context).chatDeleted(bot.name))),
-              );
-            }
           },
           child: ChatListItem(
             bot: bot,

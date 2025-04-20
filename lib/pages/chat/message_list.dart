@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:bubble/model/model.dart';
-import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/common.dart';
 
 class MessageList extends StatelessWidget {
@@ -107,7 +106,6 @@ class MessageList extends StatelessWidget {
             child: GestureDetector(
               onLongPress: () {
                 Clipboard.setData(ClipboardData(text: message.content));
-                showSnackBar(context, S.of(context).messageCopied);
               },
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -344,9 +342,6 @@ void _showImageDialog(BuildContext context, String imagePath) {
                             if (result != null) {
                               // 复制文件到选择的位置
                               await file.copy(result);
-                              if (context.mounted) {
-                                showSnackBar(context, '图片已保存到: $result');
-                              }
                             }
                           }
                         } catch (e) {
@@ -401,7 +396,7 @@ Widget _buildReasoningSection(BuildContext context, String reasoning) {
 class ReasoningSection extends StatefulWidget {
   final String reasoning;
 
-  const ReasoningSection({Key? key, required this.reasoning}) : super(key: key);
+  const ReasoningSection({super.key, required this.reasoning});
 
   @override
   State<ReasoningSection> createState() => _ReasoningSectionState();

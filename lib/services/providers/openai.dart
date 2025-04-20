@@ -331,7 +331,7 @@ class OpenAI extends Provider {
             });
           }
         } catch (e) {
-          print('Process image ${imagePath} failed: $e');
+          print('Process image $imagePath failed: $e');
         }
       }
       return {'role': message.role, 'content': content};

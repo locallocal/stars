@@ -15,8 +15,10 @@ class ChatListPage extends StatefulWidget {
 
 class _ChatListPageState extends State<ChatListPage> {
   List<Chat> chatList = [];
+  List<Chat> filteredChatList = []; // 添加过滤后的聊天列表
   List<Bot> bots = [];
   bool isLoading = true;
+  String searchQuery = ''; // 添加搜索查询状态
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _ChatListPageState extends State<ChatListPage> {
     if (mounted) {
       setState(() {
         chatList = loadedChats;
+        filteredChatList = loadedChats; // 初始化过滤列表
         bots = loadedBots;
         isLoading = false;
       });
@@ -45,6 +48,44 @@ class _ChatListPageState extends State<ChatListPage> {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadChatList();
+    });
+  }
+
+  // 过滤聊天列表
+  void _filterChats(String query) {
+    setState(() {
+      searchQuery = query;
+      if (query.isEmpty) {
+        filteredChatList = chatList;
+      } else {
+        filteredChatList =
+            chatList.where((chat) {
+              // 获取对应的机器人名称
+              final bot = bots.firstWhere(
+                (bot) => bot.id == chat.botId,
+                orElse:
+                    () => Bot(
+                      id: '',
+                      name: '',
+                      avatar: '',
+                      provider: '',
+                      baseURL: '',
+                      apiKey: '',
+                      apiType: '',
+                      systemPrompt: '',
+                      model: '',
+                      createTimestamp: DateTime.now(),
+                      modifyTimestamp: DateTime.now(),
+                    ),
+              );
+
+              // 搜索聊天标题、最后消息和机器人名称
+              return chat.lastMessage.toLowerCase().contains(
+                    query.toLowerCase(),
+                  ) ||
+                  bot.name.toLowerCase().contains(query.toLowerCase());
+            }).toList();
+      }
     });
   }
 
@@ -85,21 +126,58 @@ class _ChatListPageState extends State<ChatListPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
+                  // 搜索框
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(24.0),
+                      ),
+                      child: TextField(
+                        onChanged: _filterChats,
+                        decoration: InputDecoration(
+                          hintText: S.of(context).selectBot,
+                          fillColor: Theme.of(context).colorScheme.secondary,
+                          focusColor: Theme.of(context).colorScheme.secondary,
+                          hoverColor: Theme.of(context).colorScheme.secondary,
+                          prefixIcon: const Icon(Icons.search),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   Expanded(
                     child:
-                        chatList.isEmpty
+                        filteredChatList.isEmpty
                             ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  /*
-                                  Image.asset(
-                                    'assets/images/profile/no_chats.png',
-                                    width: 512,
-                                    height: 512,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  const SizedBox(height: 16),*/
+                                  if (searchQuery.isNotEmpty)
+                                    Text(
+                                      S.of(context).noModelsRetrieved,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                      ),
+                                    )
+                                  else
+                                    Image.asset(
+                                      'assets/images/profile/no_chats.png',
+                                      width: 384,
+                                      height: 384,
+                                      fit: BoxFit.cover,
+                                    ),
+
+                                  const SizedBox(height: 16),
                                   Text(
                                     S.of(context).noChats,
                                     textAlign: TextAlign.center,
@@ -127,7 +205,7 @@ class _ChatListPageState extends State<ChatListPage> {
                               ),
                             )
                             : ChatListBuilder(
-                              chatList: chatList,
+                              chatList: filteredChatList, // 使用过滤后的列表
                               bots: bots,
                               onChatDeleted: (String id) {
                                 if (id.isNotEmpty) {

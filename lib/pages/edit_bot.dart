@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/logo.dart';
+import 'package:bubble/pages/common/common.dart';
 
 class EditBotPage extends StatefulWidget {
   final Bot bot;
@@ -105,9 +106,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.pop(context); // 关闭对话框
+                            Navigator.pop(context);
                             widget.onBotDeleted();
-                            Navigator.pop(context); // 返回联系人列表
+                            Navigator.pop(context);
                           },
                           child: Text(
                             S.of(context).delete,
@@ -358,7 +359,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 controller: systemPromptController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
+                  contentPadding: EdgeInsets.symmetric(
                     vertical: 12,
                     horizontal: 12,
                   ),
@@ -394,12 +395,8 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
               widget.onBotUpdated(updatedBot);
               Navigator.pop(context);
-              // 显示成功提示
-              _showSnackBar(
-                S.of(context).botUpdated(nameController.text.trim()),
-              );
             } else {
-              _showSnackBar(S.of(context).fillRequiredFields);
+              showSnackBar(context, S.of(context).fillRequiredFields);
             }
           },
           child: Text(
@@ -411,17 +408,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // 显示提示信息
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

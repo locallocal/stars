@@ -292,7 +292,7 @@ class AlibabaCloud extends Provider {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         final pollingId = data['output']['task_id'];
         final pollingUrl =
-            'https://dashscope.aliyuncs.com/api/v1/tasks/${pollingId}';
+            'https://dashscope.aliyuncs.com/api/v1/tasks/$pollingId';
 
         // 轮询获取生成结果
         bool isCompleted = false;

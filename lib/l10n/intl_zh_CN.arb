@@ -557,5 +557,9 @@
     "generatedImage": "图片已生成",
     "@generatedImage": {
         "description": "图片生成成功的提示"
+    },
+    "noMatchingChats": "没有找到匹配的聊天",
+    "@noMatchingChats": {
+        "description": "没有找到匹配的聊天的提示"
     }
 }

@@ -9,8 +9,10 @@ import 'package:bubble/model/model.dart';
 class Zhipu extends Provider {
   static const String defaultApiUrl =
       'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+  static const String defaultApiImageUrl =
+      'https://open.bigmodel.cn/api/paas/v4/images/generations';
 
-  Zhipu(Bot bot) : super(bot);
+  Zhipu(super.bot);
 
   // 生成JWT令牌
   String _generateToken() {
@@ -43,30 +45,41 @@ class Zhipu extends Provider {
   @override
   Future<List<String>> listModels() async {
     // 智普AI目前支持的模型
-    return [
+    return const [
+      // 推理模型
+      'glm-z1-air',
+      'glm-z1-airx',
+      'glm-z1-flash',
       // 文本模型
       'glm-4-plus',
       'glm-4-air',
+      'glm-4-air-250414',
       'glm-4-air-0111',
       'glm-4-airx',
       'glm-4-long',
-      'glm-4-flashx',
       'glm-4-flash',
+      'glm-4-flash-250414',
+      'glm-4-flashx',
+      'glm-4-0520',
+      'chatglm3-6b',
       // 多模态模型
       'glm-4v-plus-0111',
       'glm-4v-flash',
       // 推理模型
       'glm-zero-preview',
       // 图片模型
-      'cogview-4-250304',
       'cogview-4',
+      'cogview-4-250304',
+      'cogview-3',
+      'cogview-3-plus',
       'cogview-3-flash',
       // 视频模型
+      'cogvideox',
       'cogvideox-2',
       'cogvideox-flash',
       // 实时语言
-      // 'glm-4-realtime',
-      // 'glm-4-voice',
+      'glm-4-realtime',
+      'glm-4-voice',
     ];
   }
 
@@ -80,7 +93,8 @@ class Zhipu extends Provider {
 
   @override
   bool supportDeepThinking() {
-    if (bot.model.toLowerCase().contains('glm-zero')) {
+    if (bot.model.toLowerCase().contains('glm-zero') ||
+        bot.model.toLowerCase().contains('glm-z1')) {
       return true;
     }
     return false;
@@ -89,15 +103,6 @@ class Zhipu extends Provider {
   @override
   List<InputModality> getInputModalites() {
     switch (bot.model.toLowerCase()) {
-      case 'glm-4-plus':
-      case 'glm-4-air':
-      case 'glm-4-air-0111':
-      case 'glm-4-airx':
-      case 'glm-4-long':
-      case 'glm-4-flashx':
-      case 'glm-4-flash':
-      case 'glm-zero-preview':
-        return [InputModality.text];
       case 'glm-4v-plus-0111':
       case 'glm-4v-flash':
         return [InputModality.text, InputModality.image];
@@ -125,7 +130,7 @@ class Zhipu extends Provider {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/api/paas/v4/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiUrl;
       final token = _generateToken();
 
@@ -156,7 +161,10 @@ class Zhipu extends Provider {
         cancelController?.close();
       });
 
-      var stage = "";
+      var stage = '';
+      var thinkingContent = '';
+      var hasThinkStart = false;
+      var hasThinkEnd = false;
       await for (final line in stream) {
         if (isCancelled) break;
 
@@ -170,27 +178,88 @@ class Zhipu extends Provider {
           }
           try {
             final data = jsonDecode(jsonStr);
-            if (deepThinking) {
-              if (data['choices'][0]['delta']['content'] != null &&
-                  data['choices'][0]['delta']['content'].contain('Thinking')) {
-                stage = "thinking";
-                continue;
-              } else if (data['choices'][0]['delta']['content'] != null &&
-                  data['choices'][0]['delta']['content'].contain('Response')) {
-                stage = "response";
-                continue;
-              }
-              if (stage == "thinking") {
-                final thinking = data['choices'][0]['delta']['content'] ?? '';
-                if (onReasoningResponse != null && thinking.isNotEmpty) {
-                  onReasoningResponse!(thinking);
+            final content = data['choices'][0]['delta']['content'] ?? '';
+
+            // 处理深度思考模式
+            if (supportDeepThinking() &&
+                (stage == 'thinking' || stage.isEmpty)) {
+              thinkingContent += content;
+              // 检查是否包含开始标签
+              if (!hasThinkStart && thinkingContent.contains('<think>')) {
+                stage = 'thinking';
+                hasThinkStart = true;
+                var thinkPart = '';
+                if (content.contains('<think>') && stage.isEmpty) {
+                  // 提取<think>后面的内容
+                  final startIndex =
+                      content.indexOf('<think>') + '<think>'.length;
+                  thinkPart = content.substring(startIndex);
+                } else {
+                  final endIndex =
+                      thinkingContent.indexOf('<think>') + '<think>'.length;
+                  thinkPart = thinkingContent.substring(endIndex);
                 }
-                continue; // 思考过程单独处理，不作为正常内容输出
+
+                if (deepThinking && onReasoningResponse != null) {
+                  onReasoningResponse!(thinkPart);
+                }
+                thinkingContent = thinkingContent.replaceAll('<think>', '');
+                continue; // 跳过正常内容处理
               }
+
+              // 检查是否包含结束标签
+              if (hasThinkStart &&
+                  !hasThinkEnd &&
+                  thinkingContent.contains('</think>')) {
+                stage = 'response';
+                hasThinkEnd = true;
+                // 提取</think>前面的内容
+                if (content.contains('</think>')) {
+                  final endIndex = content.indexOf('</think>');
+                  final thinkPart = content.substring(0, endIndex);
+
+                  if (deepThinking &&
+                      onReasoningResponse != null &&
+                      thinkPart.isNotEmpty) {
+                    onReasoningResponse!(thinkPart);
+                  }
+
+                  // 提取</think>后面的内容作为正常响应
+                  final responseContent = content.substring(
+                    endIndex + '</think>'.length,
+                  );
+                  if (responseContent.isNotEmpty) {
+                    onResponse(responseContent);
+                  }
+                } else {
+                  final endIndex = thinkingContent.indexOf('</think>');
+                  // 提取</think>后面的内容作为正常响应
+                  final responseContent = thinkingContent.substring(
+                    endIndex + '</think>'.length,
+                  );
+                  if (responseContent.isNotEmpty) {
+                    onResponse(responseContent);
+                  }
+                }
+                thinkingContent = thinkingContent.replaceAll('<think>', '');
+                continue;
+              }
+              if (thinkingContent.contains('<')) {
+                continue;
+              }
+
+              // 处理思考过程中的内容
+              if (hasThinkStart && !hasThinkEnd) {
+                if (deepThinking && onReasoningResponse != null) {
+                  onReasoningResponse!(content);
+                }
+              }
+              continue; // 跳过正常内容处理
             }
             // 处理正常内容
-            final delta = data['choices'][0]['delta']['content'] ?? '';
-            onResponse(delta);
+            if (stage == 'response' || !supportDeepThinking()) {
+              onResponse(content);
+            }
           } catch (e) {
             // 忽略解析错误
             print('Parse response failed: $e');
@@ -238,14 +307,14 @@ class Zhipu extends Provider {
     // 检查模型是否支持图像生成
     if (!bot.model.toLowerCase().contains('cogview')) {
       throw UnsupportedError(
-        'Model ${bot.model} dont support generate image，please use cogview model',
+        'Model ${bot.model} dont support generate image, please use cogview model',
       );
     }
 
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/api/paas/v4/images/generations'
-            : 'https://open.bigmodel.cn/api/paas/v4/images/generations';
+            ? '${bot.baseURL}images/generations'
+            : defaultApiImageUrl;
 
     final token = _generateToken();
     // 准备请求参数

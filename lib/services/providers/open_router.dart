@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
 class OpenRouter extends Provider {
@@ -9,7 +8,7 @@ class OpenRouter extends Provider {
       'https://openrouter.ai/api/v1/models';
   static const String defaultApiChatUrl =
       'https://openrouter.ai/api/v1/chat/completions';
-  OpenRouter(Bot bot) : super(bot);
+  OpenRouter(super.bot);
 
   @override
   Future<List<String>> listModels() async {

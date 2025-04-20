@@ -557,5 +557,9 @@
     "generatedImage": "Image generated",
     "@generatedImage": {
         "description": "Message when image is generated"
+    },
+    "noMatchingChats": "No matching chats found",
+    "@noMatchingChats": {
+        "description": "Message when no matching chats are found"
     }
 }

@@ -6,6 +6,7 @@ import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/providers.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/logo.dart';
+import 'package:bubble/pages/common/common.dart';
 
 class AddBotPage extends StatefulWidget {
   final Function(Bot) onBotAdded;
@@ -51,7 +52,7 @@ class _AddBotPageState extends State<AddBotPage> {
   // 添加获取模型列表的方法
   Future<void> _fetchModels() async {
     if (apiKeyController.text.trim().isEmpty) {
-      _showSnackBar(S.of(context).pleaseEnterApiKey);
+      showSnackBar(context, S.of(context).pleaseEnterApiKey);
     }
 
     setState(() {
@@ -86,14 +87,13 @@ class _AddBotPageState extends State<AddBotPage> {
           modelsByProvider[selectedProvider]?['models'] = models;
           selectedModel = models.first;
         });
-        _showSnackBar(
-          S.of(context).modelsRetrievedSuccess(models.length.toString()),
-        );
       } else if (mounted) {
-        _showSnackBar(S.of(context).noModelsRetrieved);
+        showSnackBar(context, S.of(context).noModelsRetrieved);
       }
     } catch (e) {
-      _showSnackBar(e.toString());
+      if (mounted) {
+        showSnackBar(context, e.toString());
+      }
     } finally {
       setState(() {
         _isLoadingModels = false;
@@ -567,11 +567,8 @@ class _AddBotPageState extends State<AddBotPage> {
 
               widget.onBotAdded(newBot);
               Navigator.pop(context);
-              _showSnackBar(
-                S.of(context).botAddedSuccess(nameController.text.trim()),
-              );
             } else {
-              _showSnackBar(S.of(context).fillRequiredFields);
+              showSnackBar(context, S.of(context).fillRequiredFields);
             }
           },
           child: Text(
@@ -583,17 +580,6 @@ class _AddBotPageState extends State<AddBotPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // 显示提示信息
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

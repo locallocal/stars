@@ -132,10 +132,7 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
         title: Text(
           S.of(context).profile,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: _fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0, // 防止滚动时背景色变化
@@ -153,7 +150,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 96,
+                      radius: 64,
                       backgroundColor: Theme.of(context).colorScheme.surface,
                       backgroundImage:
                           _avatar.isNotEmpty
@@ -183,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
               _showEditNameDialog();
             },
           ),
-          const Divider(),
+          Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
 
           // 主题切换
           ListTile(
@@ -263,7 +260,7 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
           ),
-          const Divider(),
+          Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
 
           // 帮助与反馈
           ListTile(
@@ -367,7 +364,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   });
                   _saveProfile(); // 保存设置
                   Navigator.pop(context);
-                  _showSnackBar(S.of(context).nameUpdated);
                 },
                 child: Text(
                   S.of(context).save,
@@ -411,7 +407,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   // 通知应用程序更新主题
                   ProfileService.notifyThemeChanged(_themeMode);
                   Navigator.pop(context);
-                  _showSnackBar(S.of(context).themeSetToSystem);
                 },
               ),
               RadioListTile<ThemeMode>(
@@ -427,7 +422,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   ProfileService.notifyThemeChanged(_themeMode);
                   Navigator.pop(context);
-                  _showSnackBar(S.of(context).themeSetToLight);
                 },
               ),
               RadioListTile<ThemeMode>(
@@ -443,7 +437,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   ProfileService.notifyThemeChanged(_themeMode);
                   Navigator.pop(context);
-                  _showSnackBar(S.of(context).themeSetToDark);
                 },
               ),
             ],
@@ -519,7 +512,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         });
                         _saveProfile(); // 保存设置
                         Navigator.pop(context);
-                        _showSnackBar(S.of(context).fontSizeUpdated);
                       },
                       child: Text(
                         S.of(context).save,
@@ -531,17 +523,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
           ),
-    );
-  }
-
-  // 显示提示信息
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
     );
   }
 
@@ -704,7 +685,6 @@ class _ProfilePageState extends State<ProfilePage> {
         // 通知应用程序更新语言
         ProfileService.notifyLanguageChanged(_language);
         Navigator.pop(context);
-        _showSnackBar(S.of(context).languageChanged(name));
       },
     );
   }

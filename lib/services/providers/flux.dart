@@ -102,7 +102,7 @@ class Flux extends Provider {
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: {'Content-Type': 'application/json', 'x-key': '${bot.apiKey}'},
+        headers: {'Content-Type': 'application/json', 'x-key': bot.apiKey},
         body: jsonEncode(requestBody),
       );
 
@@ -120,7 +120,7 @@ class Flux extends Provider {
 
           final resultResponse = await http.get(
             Uri.parse(pollingUrl),
-            headers: {'x-key': '${bot.apiKey}'},
+            headers: {'x-key': bot.apiKey},
           );
 
           if (resultResponse.statusCode == 200) {
