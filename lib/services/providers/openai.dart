@@ -9,6 +9,8 @@ class OpenAI extends Provider {
   static const String defaultApiModelsUrl = 'https://api.openai.com/v1/models';
   static const String defaultApiChatUrl =
       'https://api.openai.com/v1/chat/completions';
+  static const String defaultApiImageUrl =
+      'https://api.openai.com/v1/images/generations';
   OpenAI(super.bot);
 
   @override
@@ -145,6 +147,7 @@ class OpenAI extends Provider {
             (data['data'] as List)
                 .map((model) => model['id'] as String)
                 .toList();
+        models.sort();
         return models;
       } else {
         throw Exception('List models failed: ${response.statusCode}');
@@ -187,9 +190,11 @@ class OpenAI extends Provider {
         cancelController?.close();
       });
 
+      var responseContent = '';
       await for (final line in stream) {
         // 检查是否已取消
         if (isCancelled) break;
+        responseContent += line;
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6);
@@ -209,6 +214,15 @@ class OpenAI extends Provider {
             // 忽略解析错误
           }
         }
+      }
+      if (responseContent.contains('error')) {
+        final errorData = jsonDecode(responseContent);
+        final errorMessage = errorData['error']['message'];
+        final errorCode = errorData['error']['code'];
+        final errorType = errorData['error']['type'];
+        throw Exception(
+          'Send message failed: ($errorCode, $errorType) $errorMessage',
+        );
       }
 
       if (!isCancelled && onComplete != null) {
@@ -254,7 +268,7 @@ class OpenAI extends Provider {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}images/generations'
-            : 'https://api.openai.com/v1/images/generations';
+            : defaultApiImageUrl;
     final Map<String, dynamic> requestBody = {
       'model': bot.model,
       'prompt': prompt,
@@ -304,7 +318,16 @@ class OpenAI extends Provider {
   List<Map<String, dynamic>> processMessagesWithImages(
     List<ChatMessage> messages,
   ) {
-    return messages.map((message) {
+    // 检查是否为 o1 或 o3 模型，这些模型不支持 system 消息
+    final bool isO1OrO3Model =
+        bot.model.toLowerCase().startsWith('o1') ||
+        bot.model.toLowerCase().startsWith('o3');
+    // 如果是 o1 或 o3 模型，过滤掉 system 消息
+    final filteredMessages =
+        isO1OrO3Model
+            ? messages.where((msg) => msg.role != "system").toList()
+            : messages;
+    return filteredMessages.map((message) {
       // 如果消息没有图片，直接返回原始消息
       if (message.images.isEmpty) {
         return message.toJson();
@@ -313,7 +336,7 @@ class OpenAI extends Provider {
       final List<Map<String, dynamic>> content = [];
       // 添加文本内容（如果有）
       if (message.content.isNotEmpty) {
-        content.add({'type': 'input_text', 'text': message.content});
+        content.add({'type': 'text', 'text': message.content});
       }
 
       // 添加图片内容
@@ -325,9 +348,8 @@ class OpenAI extends Provider {
             final base64Image = base64Encode(bytes);
 
             content.add({
-              'type': 'input_image',
+              'type': 'image_url',
               'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
-              "detail": "auto",
             });
           }
         } catch (e) {

@@ -401,6 +401,11 @@ class _ChatPageState extends State<ChatPage> {
                   ))
                     _buildImageGenerationPanel(),
 
+                  // 聊天模型功能
+                  if (_provider.supportWebSearch() ||
+                      _provider.supportDeepThinking())
+                    _showChatModelFeatures(),
+
                   // 输入框区域
                   MessageInput(
                     controller: _messageController,
@@ -416,11 +421,6 @@ class _ChatPageState extends State<ChatPage> {
                         (_selectedImages.isNotEmpty ||
                             _selectedFiles.isNotEmpty),
                   ),
-
-                  // 聊天模型功能
-                  if (_provider.supportWebSearch() ||
-                      _provider.supportDeepThinking())
-                    _showChatModelFeatures(),
 
                   // 附件选择栏
                   if (_showAttachmentBar) _showAttachmentBars(),

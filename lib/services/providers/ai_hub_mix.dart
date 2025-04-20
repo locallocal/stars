@@ -99,13 +99,11 @@ class AiHubMix extends Provider {
       });
 
       await for (final line in stream) {
-        // 检查是否已取消
         if (isCancelled) break;
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6);
           if (jsonStr == '[DONE]') {
-            // 当收到[DONE]标记时，确保调用onComplete
             if (!isCancelled && onComplete != null) {
               onComplete!();
             }
@@ -116,9 +114,7 @@ class AiHubMix extends Provider {
             final data = jsonDecode(jsonStr);
             final delta = data['choices'][0]['delta']['content'] ?? '';
             onResponse(delta);
-          } catch (e) {
-            // 忽略解析错误
-          }
+          } catch (e) {}
         }
       }
 

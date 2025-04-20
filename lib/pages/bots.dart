@@ -174,7 +174,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     alignment: Alignment.centerRight,
                                     padding: const EdgeInsets.only(right: 20.0),
                                     color:
-                                        Theme.of(context).colorScheme.primary,
+                                        Theme.of(context).colorScheme.secondary,
                                     child: const Icon(Icons.delete),
                                   ),
                                   confirmDismiss: (direction) async {

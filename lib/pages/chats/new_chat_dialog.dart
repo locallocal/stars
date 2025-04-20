@@ -26,7 +26,7 @@ class NewChatDialog extends StatelessWidget {
       ),
       content: SizedBox(
         width: double.maxFinite,
-        height: 300,
+        height: 512,
         child: FutureBuilder<List<Bot>>(
           future: BotService.getBots(),
           builder: (context, snapshot) {
@@ -44,6 +44,7 @@ class NewChatDialog extends StatelessWidget {
               itemBuilder: (context, index) {
                 final bot = bots[index];
                 return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 0),
                   leading: CircleAvatar(
                     radius: 24,
                     backgroundColor:

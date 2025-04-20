@@ -22,13 +22,13 @@ class ChatModelFeatures extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+      padding: const EdgeInsets.only(top: 8, left: 16.0, right: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           if (supportWebSearch)
             Padding(
-              padding: const EdgeInsets.only(right: 16.0),
+              padding: const EdgeInsets.only(right: 8.0),
               child: OutlinedButton.icon(
                 onPressed: () {
                   onWebSearchToggle(!isWebSearchEnabled);
@@ -53,17 +53,14 @@ class ChatModelFeatures extends StatelessWidget {
                           : Theme.of(
                             context,
                           ).colorScheme.secondary.withOpacity(0.5),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(24.0),
                   ),
                   side: const BorderSide(color: Colors.transparent),
                 ),
               ),
             ),
+
           if (supportDeepThinking)
             OutlinedButton.icon(
               onPressed: () {
@@ -87,12 +84,9 @@ class ChatModelFeatures extends StatelessWidget {
                         : Theme.of(
                           context,
                         ).colorScheme.secondary.withOpacity(0.5),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: BorderRadius.circular(24.0),
                 ),
                 side: const BorderSide(color: Colors.transparent),
               ),

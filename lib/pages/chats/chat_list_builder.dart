@@ -36,7 +36,7 @@ class ChatListBuilder extends StatelessWidget {
         return Dismissible(
           key: Key(chat.id),
           background: Container(
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.secondary,
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20.0),
             child: const Icon(Icons.delete),

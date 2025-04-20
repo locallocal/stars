@@ -183,15 +183,24 @@ class _MainPageState extends State<MainPage> {
         items: [
           Icon(
             Icons.wechat_rounded,
-            color: Theme.of(context).colorScheme.onSurface,
+            color:
+                _currentIndex == 0
+                    ? Theme.of(context).colorScheme.surface
+                    : Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
             Icons.smart_toy_rounded,
-            color: Theme.of(context).colorScheme.onSurface,
+            color:
+                _currentIndex == 1
+                    ? Theme.of(context).colorScheme.surface
+                    : Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
             Icons.person_rounded,
-            color: Theme.of(context).colorScheme.onSurface,
+            color:
+                _currentIndex == 2
+                    ? Theme.of(context).colorScheme.surface
+                    : Theme.of(context).colorScheme.onSurface,
           ),
         ],
       ),

@@ -35,19 +35,19 @@ class AttachmentBars extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 96,
-                  height: 96,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
                     ).colorScheme.secondary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.photo_camera, size: 32),
+                        icon: const Icon(Icons.photo_camera, size: 24),
                         onPressed: onCameraPressed,
                       ),
                       Text(
@@ -65,19 +65,19 @@ class AttachmentBars extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 96,
-                  height: 96,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
                     ).colorScheme.secondary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.insert_photo, size: 32),
+                        icon: const Icon(Icons.insert_photo, size: 24),
                         onPressed: onGalleryPressed,
                       ),
                       Text(
@@ -95,19 +95,19 @@ class AttachmentBars extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 96,
-                  height: 96,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
                     ).colorScheme.secondary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.upload_file_rounded, size: 32),
+                        icon: const Icon(Icons.upload_file_rounded, size: 24),
                         onPressed: onFilePressed,
                       ),
                       Text(

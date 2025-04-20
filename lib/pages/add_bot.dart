@@ -457,6 +457,7 @@ class _AddBotPageState extends State<AddBotPage> {
                     child: DropdownButton<String>(
                       borderRadius: BorderRadius.circular(24.0),
                       isExpanded: true,
+                      menuMaxHeight: 500,
                       value:
                           currentModels.contains(selectedModel)
                               ? selectedModel
