@@ -137,7 +137,7 @@ class _ChatListPageState extends State<ChatListPage> {
                       child: TextField(
                         onChanged: _filterChats,
                         decoration: InputDecoration(
-                          hintText: S.of(context).selectBot,
+                          hintText: '搜索聊天记录',
                           fillColor: Theme.of(context).colorScheme.secondary,
                           focusColor: Theme.of(context).colorScheme.secondary,
                           hoverColor: Theme.of(context).colorScheme.secondary,

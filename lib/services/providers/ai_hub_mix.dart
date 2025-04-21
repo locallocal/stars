@@ -17,11 +17,26 @@ class AiHubMix extends Provider {
 
   @override
   bool supportDeepThinking() {
+    if (bot.model.contains('DeepSeek-R1') ||
+        bot.model == 'deepseek-reasoner' ||
+        bot.model.contains('deepseek-r1')) {
+      return true;
+    }
+    return false;
+  }
+
+  bool supportMultiModalities() {
+    if (bot.model == 'gemini-2.0-flash-exp') {
+      return true;
+    }
     return false;
   }
 
   @override
   List<InputModality> getInputModalites() {
+    if (supportMultiModalities()) {
+      return [InputModality.text, InputModality.image];
+    }
     return [InputModality.text];
   }
 
@@ -68,15 +83,19 @@ class AiHubMix extends Provider {
     try {
       // 重置取消状态
       resetCancelState();
-      var modeName = bot.model;
+      var modelName = bot.model;
       if (webSearch) {
-        modeName += ':surfing';
+        modelName += ':surfing';
       }
-
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
+
+      if (supportMultiModalities()) {
+        _sendMessageMultiModalities(url, modelName, messages);
+        return;
+      }
 
       final request =
           http.Request('POST', Uri.parse(url))
@@ -85,7 +104,7 @@ class AiHubMix extends Provider {
               'Authorization': 'Bearer ${bot.apiKey}',
             })
             ..body = jsonEncode({
-              'model': modeName,
+              'model': modelName,
               'messages': processMessagesWithImages(messages),
               'stream': true,
             });
@@ -102,6 +121,7 @@ class AiHubMix extends Provider {
         if (isCancelled) break;
 
         if (line.startsWith('data: ')) {
+          print(line);
           final jsonStr = line.substring(6);
           if (jsonStr == '[DONE]') {
             if (!isCancelled && onComplete != null) {
@@ -112,9 +132,22 @@ class AiHubMix extends Provider {
 
           try {
             final data = jsonDecode(jsonStr);
+            if (supportDeepThinking()) {
+              final reasonContent =
+                  data['choices'][0]['delta']['reasoning_content'] ?? '';
+              if (deepThinking &&
+                  reasonContent.isNotEmpty &&
+                  onReasoningResponse != null) {
+                onReasoningResponse!(reasonContent);
+              }
+            }
             final delta = data['choices'][0]['delta']['content'] ?? '';
-            onResponse(delta);
-          } catch (e) {}
+            if (delta.isNotEmpty) {
+              onResponse(delta);
+            }
+          } catch (e) {
+            onError!('Decode result failed: $line, ${e.toString()}');
+          }
         }
       }
 
@@ -131,6 +164,77 @@ class AiHubMix extends Provider {
       // 清理资源
       cancelController?.close();
       cancelController = null;
+    }
+  }
+
+  void _sendMessageMultiModalities(
+    String url,
+    String modelName,
+    List<ChatMessage> messages,
+  ) async {
+    final request =
+        http.Request('POST', Uri.parse(url))
+          ..headers.addAll({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${bot.apiKey}',
+          })
+          ..body = jsonEncode({
+            'model': modelName,
+            'messages': processMessagesWithImages(messages),
+            'stream': false,
+            "modalities": ["text", "image"],
+          });
+
+    final response = await request.send();
+    if (isCancelled) {
+      if (onError != null) {
+        onError!('Request cancelled');
+      }
+      return;
+    }
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      final data = jsonDecode(responseBody);
+      final multiModalContent =
+          data['choices'][0]['message']['multi_mod_content'] ?? [];
+      if (multiModalContent.isNotEmpty) {
+        for (var item in multiModalContent) {
+          final text = item['text'] ?? '';
+          if (text.isNotEmpty) {
+            onResponse(text);
+          }
+          final inlineData = item['inline_data'] ?? {};
+          if (inlineData.isNotEmpty && inlineData['data'].isNotEmpty) {
+            try {
+              final String mimeType = inlineData['mime_type'] ?? 'image/jpeg';
+              final String base64Data = inlineData['data'];
+
+              // 直接将base64图片数据以Markdown格式返回
+              final String markdownImage =
+                  '\n\n![Generated Image](data:$mimeType;base64,$base64Data)\n\n';
+              onResponse(markdownImage);
+            } catch (e) {
+              if (onError != null) {
+                onError!('Process Output Image Failed, ${e.toString()}');
+              }
+            }
+          }
+        }
+      } else {
+        final content = data['choices'][0]['message']['content'] ?? '';
+        if (content.isNotEmpty) {
+          onResponse(content);
+        }
+      }
+
+      if (onComplete != null) {
+        onComplete!();
+      }
+    } else {
+      final errorBody = await response.stream.bytesToString();
+      if (onError != null) {
+        onError!('Request Failed: ${response.statusCode}, $errorBody');
+      }
     }
   }
 }

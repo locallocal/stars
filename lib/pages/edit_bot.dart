@@ -174,9 +174,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
             const SizedBox(height: 32),
 
-            // 选择提供商（禁用编辑）
+            // 提供商（禁用编辑）
             Text(
-              S.of(context).provider,
+              '${S.of(context).provider}:',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -281,7 +281,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
             // API密钥（禁用编辑）
             Text(
-              S.of(context).apiKey,
+              '${S.of(context).apiKey}:',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -296,7 +296,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
                   prefixIcon: Icon(Icons.key_rounded),
                   border: InputBorder.none,
                   filled: false,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: EdgeInsets.only(
+                    top: 12,
+                    bottom: 12,
+                    right: 12,
+                  ),
                 ),
                 enabled: false, // 禁用编辑
                 obscureText: true,
@@ -306,7 +310,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
             // 选择模型（禁用编辑）
             Text(
-              S.of(context).model,
+              '${S.of(context).model}:',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),

@@ -561,5 +561,9 @@
     "noMatchingChats": "没有找到匹配的聊天",
     "@noMatchingChats": {
         "description": "没有找到匹配的聊天的提示"
+    },
+    "searchChats": "搜索聊天记录",
+    "@searchChats": {
+      "description": "Hint text for chat search field"
     }
 }

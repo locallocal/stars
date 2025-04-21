@@ -179,6 +179,7 @@ class OpenAI extends Provider {
             ..body = jsonEncode({
               'model': bot.model,
               'messages': processMessagesWithImages(messages),
+              'response_format': {'type': 'text'},
               'stream': true,
             });
 

@@ -561,5 +561,9 @@
     "noMatchingChats": "No matching chats found",
     "@noMatchingChats": {
         "description": "Message when no matching chats are found"
+    },
+    "searchChats": "Search chats",
+    "@searchChats": {
+      "description": "Hint text for chat search field"
     }
 }

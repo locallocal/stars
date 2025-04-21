@@ -53,6 +53,7 @@ class _AddBotPageState extends State<AddBotPage> {
   Future<void> _fetchModels() async {
     if (apiKeyController.text.trim().isEmpty) {
       showSnackBar(context, S.of(context).pleaseEnterApiKey);
+      return;
     }
 
     setState(() {
@@ -227,6 +228,7 @@ class _AddBotPageState extends State<AddBotPage> {
                       child: DropdownButton<String>(
                         borderRadius: BorderRadius.circular(24.0),
                         isExpanded: true,
+                        menuMaxHeight: 500,
                         value: selectedProvider,
                         underline: const SizedBox(),
                         items: [
@@ -414,7 +416,11 @@ class _AddBotPageState extends State<AddBotPage> {
                   hintText: S.of(context).enterApiKey,
                   prefixIcon: const Icon(Icons.key_rounded),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: const EdgeInsets.only(
+                    top: 12,
+                    bottom: 12,
+                    right: 12,
+                  ),
                   suffixIcon:
                       _isLoadingModels
                           ? const SizedBox(
