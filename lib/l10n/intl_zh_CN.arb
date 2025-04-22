@@ -246,7 +246,7 @@
     "@enterProviderName": {
         "description": "提示用户输入自定义供应商名称"
     },
-    "selectProvider": "选择提供商:",
+    "selectProvider": "选择提供商",
     "@selectProvider": {
         "description": "选择AI服务提供商的标签"
     },

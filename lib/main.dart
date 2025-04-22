@@ -185,21 +185,21 @@ class _MainPageState extends State<MainPage> {
             Icons.wechat_rounded,
             color:
                 _currentIndex == 0
-                    ? Theme.of(context).colorScheme.surface
+                    ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
             Icons.smart_toy_rounded,
             color:
                 _currentIndex == 1
-                    ? Theme.of(context).colorScheme.surface
+                    ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurface,
           ),
           Icon(
             Icons.person_rounded,
             color:
                 _currentIndex == 2
-                    ? Theme.of(context).colorScheme.surface
+                    ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurface,
           ),
         ],

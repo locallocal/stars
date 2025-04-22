@@ -30,6 +30,7 @@ class MessageList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Expanded(
       child: ListView.builder(
         controller: scrollController,
@@ -80,15 +81,17 @@ class MessageList extends StatelessWidget {
                         selectable: true,
                         styleSheet: MarkdownStyleSheet(
                           p: TextStyle(
-                            color: Colors.black,
-                            fontSize:
-                                Theme.of(context).textTheme.bodyLarge?.fontSize,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: _fontSize,
                           ),
                           code: TextStyle(
-                            color: Colors.black,
-                            backgroundColor: Colors.black.withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.onSurface,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.surface,
                           ),
-                          blockquote: const TextStyle(color: Colors.black),
+                          blockquote: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                     ],
@@ -141,21 +144,16 @@ class MessageList extends StatelessWidget {
                           selectable: true,
                           styleSheet: MarkdownStyleSheet(
                             p: TextStyle(
-                              color: Colors.black,
-                              fontSize:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodyLarge?.fontSize,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: _fontSize,
                             ),
                             code: TextStyle(
-                              color: Colors.black,
+                              color: Theme.of(context).colorScheme.onSurface,
                               backgroundColor:
-                                  isMe
-                                      ? Colors.white.withOpacity(0.1)
-                                      : Colors.black.withOpacity(0.1),
+                                  Theme.of(context).colorScheme.surface,
                             ),
-                            blockquote: const TextStyle(
-                              color: Colors.black,
+                            blockquote: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -266,8 +264,6 @@ class MessageList extends StatelessWidget {
   }
 }
 
-// 在MessageList类中添加这个新方法
-// 在MessageList类中添加这个新方法
 void _showImageDialog(BuildContext context, String imagePath) {
   showDialog(
     context: context,

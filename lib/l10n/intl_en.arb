@@ -246,7 +246,7 @@
     "@enterProviderName": {
         "description": "Prompt user to enter custom provider name"
     },
-    "selectProvider": "Select Provider:",
+    "selectProvider": "Select Provider",
     "@selectProvider": {
         "description": "Label for selecting AI service provider"
     },

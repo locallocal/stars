@@ -26,7 +26,7 @@ class NewChatDialog extends StatelessWidget {
       ),
       content: SizedBox(
         width: double.maxFinite,
-        height: 512,
+        height: MediaQuery.of(context).size.height * 0.6,
         child: FutureBuilder<List<Bot>>(
           future: BotService.getBots(),
           builder: (context, snapshot) {
