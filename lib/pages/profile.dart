@@ -332,9 +332,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             actions: [
               TextButton(
-                style: TextButton.styleFrom(
-                  overlayColor: Theme.of(context).colorScheme.secondary,
-                ),
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   S.of(context).cancel,
@@ -344,9 +341,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               TextButton(
-                style: TextButton.styleFrom(
-                  overlayColor: Theme.of(context).colorScheme.secondary,
-                ),
                 onPressed: () {
                   setState(() {
                     _profile = Profile(
@@ -382,64 +376,87 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder:
-          (context) => SimpleDialog(
-            title: Center(
-              child: Text(
-                S.of(context).selectTheme,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  fontWeight: FontWeight.bold,
-                ),
+          (context) => Dialog(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        S.of(context).selectTheme,
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RadioListTile<ThemeMode>(
+                            title: Text(S.of(context).followSystem),
+                            activeColor:
+                                Theme.of(context).colorScheme.onSurface,
+                            value: ThemeMode.system,
+                            groupValue: _themeMode,
+                            onChanged: (value) {
+                              setState(() {
+                                _themeMode = value!;
+                              });
+                              _saveProfile(); // 保存设置
+
+                              // 通知应用程序更新主题
+                              ProfileService.notifyThemeChanged(_themeMode);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          RadioListTile<ThemeMode>(
+                            title: Text(S.of(context).lightMode),
+                            activeColor:
+                                Theme.of(context).colorScheme.onSurface,
+                            value: ThemeMode.light,
+                            groupValue: _themeMode,
+                            onChanged: (value) {
+                              setState(() {
+                                _themeMode = value!;
+                              });
+                              _saveProfile();
+
+                              ProfileService.notifyThemeChanged(_themeMode);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          RadioListTile<ThemeMode>(
+                            title: Text(S.of(context).darkMode),
+                            activeColor:
+                                Theme.of(context).colorScheme.onSurface,
+                            value: ThemeMode.dark,
+                            groupValue: _themeMode,
+                            onChanged: (value) {
+                              setState(() {
+                                _themeMode = value!;
+                              });
+                              _saveProfile();
+
+                              ProfileService.notifyThemeChanged(_themeMode);
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            children: [
-              RadioListTile<ThemeMode>(
-                title: Text(S.of(context).followSystem),
-                activeColor: Theme.of(context).colorScheme.onSurface,
-                value: ThemeMode.system,
-                groupValue: _themeMode,
-                onChanged: (value) {
-                  setState(() {
-                    _themeMode = value!;
-                  });
-                  _saveProfile(); // 保存设置
-
-                  // 通知应用程序更新主题
-                  ProfileService.notifyThemeChanged(_themeMode);
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: Text(S.of(context).lightMode),
-                activeColor: Theme.of(context).colorScheme.onSurface,
-                value: ThemeMode.light,
-                groupValue: _themeMode,
-                onChanged: (value) {
-                  setState(() {
-                    _themeMode = value!;
-                  });
-                  _saveProfile();
-
-                  ProfileService.notifyThemeChanged(_themeMode);
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: Text(S.of(context).darkMode),
-                activeColor: Theme.of(context).colorScheme.onSurface,
-                value: ThemeMode.dark,
-                groupValue: _themeMode,
-                onChanged: (value) {
-                  setState(() {
-                    _themeMode = value!;
-                  });
-                  _saveProfile();
-
-                  ProfileService.notifyThemeChanged(_themeMode);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
           ),
     );
   }
@@ -619,9 +636,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             actions: [
               TextButton(
-                style: TextButton.styleFrom(
-                  overlayColor: Theme.of(context).colorScheme.secondary,
-                ),
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   S.of(context).confirm,
@@ -641,30 +655,50 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder:
-          (context) => SimpleDialog(
-            title: Center(
-              child: Text(
-                S.of(context).selectLanguage,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  fontWeight: FontWeight.bold,
-                ),
+          (context) => Dialog(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        S.of(context).selectLanguage,
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLanguageOption('zh_CN', '简体中文'),
+                          _buildLanguageOption('en_US', 'English'),
+                          _buildLanguageOption('zh_TW', '繁體中文'),
+                          _buildLanguageOption('ja_JP', '日本語'),
+                          _buildLanguageOption('fr_FR', 'Français'),
+                          _buildLanguageOption('de_DE', 'Deutsch'),
+                          _buildLanguageOption('ko_KR', '한국어'),
+                          _buildLanguageOption('ru_RU', 'Русский'),
+                          _buildLanguageOption('es_ES', 'Español'),
+                          _buildLanguageOption('hi_IN', 'हिन्दी'),
+                          _buildLanguageOption('pt_BR', 'Português'),
+                          _buildLanguageOption('it_IT', 'Italiano'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            children: [
-              _buildLanguageOption('zh_CN', '简体中文'),
-              _buildLanguageOption('en_US', 'English'),
-              _buildLanguageOption('zh_TW', '繁體中文'),
-              _buildLanguageOption('ja_JP', '日本語'),
-              _buildLanguageOption('fr_FR', 'Français'),
-              _buildLanguageOption('de_DE', 'Deutsch'),
-              _buildLanguageOption('ko_KR', '한국어'),
-              _buildLanguageOption('ru_RU', 'Русский'),
-              _buildLanguageOption('es_ES', 'Español'),
-              _buildLanguageOption('hi_IN', 'हिन्दी'),
-              _buildLanguageOption('pt_BR', 'Português'),
-              _buildLanguageOption('it_IT', 'Italiano'),
-            ],
           ),
     );
   }
