@@ -254,11 +254,11 @@
     "@customProvider": {
         "description": "Option for custom AI service provider"
     },
-    "apiType": "API Type:",
+    "apiType": "API Type",
     "@apiType": {
         "description": "Label for API type selection"
     },
-    "apiAddress": "API Address:",
+    "apiAddress": "API Address",
     "@apiAddress": {
         "description": "Label for API address input"
     },

@@ -254,11 +254,11 @@
     "@customProvider": {
         "description": "自定义AI服务提供商的选项"
     },
-    "apiType": "API类型:",
+    "apiType": "API类型",
     "@apiType": {
         "description": "API类型选择标签"
     },
-    "apiAddress": "API地址:",
+    "apiAddress": "API地址",
     "@apiAddress": {
         "description": "API地址输入标签"
     },

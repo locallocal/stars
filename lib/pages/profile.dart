@@ -175,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(fontSize: _fontSize),
             ),
             subtitle: Text(_name, style: TextStyle(fontSize: _fontSize - 2)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {
               _showEditNameDialog();
             },
@@ -197,7 +197,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   : S.of(context).darkMode,
               style: TextStyle(fontSize: _fontSize - 2),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {
               _showThemeOptions();
             },
@@ -213,7 +213,7 @@ class _ProfilePageState extends State<ProfilePage> {
               getLanguageName(_language),
               style: TextStyle(fontSize: _fontSize - 2),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {
               _showLanguageOptions();
             },
@@ -273,7 +273,7 @@ class _ProfilePageState extends State<ProfilePage> {
               S.of(context).provideFeedback,
               style: TextStyle(fontSize: _fontSize - 2),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {
               Navigator.push(
                 context,
@@ -293,7 +293,7 @@ class _ProfilePageState extends State<ProfilePage> {
               S.of(context).version,
               style: TextStyle(fontSize: _fontSize - 2),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
             onTap: () {
               // 显示自定义关于信息对话框
               _showCustomAboutDialog();

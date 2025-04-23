@@ -19,19 +19,18 @@ class AddBotPage extends StatefulWidget {
 
 class _AddBotPageState extends State<AddBotPage> {
   final nameController = TextEditingController();
-  final apiKeyController = TextEditingController();
+  final providerController = TextEditingController(text: 'OpenAI');
+  final apiTypeController = TextEditingController();
   final baseURLController = TextEditingController();
+  final apiKeyController = TextEditingController();
+  final selectedModelController = TextEditingController();
   final systemPromptController = TextEditingController();
-  final customProviderController = TextEditingController();
 
   bool _isLoadingModels = false;
-  String selectedProvider = 'OpenAI';
-  bool isCustomProvider = false;
-  String selectedModel = '';
   File? avatarImage;
 
   List<String> get currentModels {
-    final providerInfo = modelsByProvider[selectedProvider];
+    final providerInfo = modelsByProvider[providerController.text];
     if (providerInfo != null && providerInfo.containsKey('models')) {
       return List<String>.from(providerInfo['models'] as List);
     }
@@ -61,7 +60,7 @@ class _AddBotPageState extends State<AddBotPage> {
     });
 
     try {
-      final providerInfo = modelsByProvider[selectedProvider];
+      final providerInfo = modelsByProvider[providerController.text];
       final apiType = providerInfo?['api_type'] as String;
       final baseURL = baseURLController.text.trim(); // 使用baseURLController的值
 
@@ -70,7 +69,7 @@ class _AddBotPageState extends State<AddBotPage> {
         id: 'temp_bot',
         name: 'Temp Bot',
         avatar: '',
-        provider: selectedProvider,
+        provider: providerController.text,
         baseURL: baseURL, // 使用用户输入的baseURL
         apiKey: apiKeyController.text.trim(),
         apiType: apiType,
@@ -85,8 +84,8 @@ class _AddBotPageState extends State<AddBotPage> {
       final models = await provider.listModels();
       if (models.isNotEmpty && mounted) {
         setState(() {
-          modelsByProvider[selectedProvider]?['models'] = models;
-          selectedModel = models.first;
+          modelsByProvider[providerController.text]?['models'] = models;
+          selectedModelController.text = models.first;
         });
       } else if (mounted) {
         showSnackBar(context, S.of(context).noModelsRetrieved);
@@ -107,7 +106,7 @@ class _AddBotPageState extends State<AddBotPage> {
     super.initState();
     // 初始化baseURLController
     baseURLController.text =
-        modelsByProvider[selectedProvider]?['base_url'] as String? ?? '';
+        modelsByProvider[providerController.text]?['base_url'] as String? ?? '';
     // 使用国际化字符串初始化系统提示词
     WidgetsBinding.instance.addPostFrameCallback((_) {
       systemPromptController.text = S.of(context).defaultSystemPrompt;
@@ -121,7 +120,7 @@ class _AddBotPageState extends State<AddBotPage> {
     apiKeyController.dispose();
     baseURLController.dispose();
     systemPromptController.dispose();
-    customProviderController.dispose();
+    providerController.dispose();
     super.dispose();
   }
 
@@ -129,15 +128,13 @@ class _AddBotPageState extends State<AddBotPage> {
   void _onProviderChanged(String? value) {
     if (value != null) {
       setState(() {
-        selectedProvider = value;
-        // 更新baseURLController的值
+        providerController.text = value;
         baseURLController.text =
-            modelsByProvider[selectedProvider]?['base_url'] as String? ?? '';
-        if (value == 'custom') {
-          avatarImage = null;
-        }
+            modelsByProvider[value]?['base_url'] as String? ?? '';
+        apiTypeController.text =
+            modelsByProvider[value]?['api_type'] as String? ?? '';
         final models = currentModels;
-        selectedModel = models.isNotEmpty ? models[0] : '';
+        selectedModelController.text = models.isNotEmpty ? models[0] : '';
       });
     }
   }
@@ -159,7 +156,7 @@ class _AddBotPageState extends State<AddBotPage> {
         surfaceTintColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -171,7 +168,7 @@ class _AddBotPageState extends State<AddBotPage> {
                   backgroundColor:
                       avatarImage == null
                           ? getFrostedProviderColor(
-                            selectedProvider,
+                            providerController.text,
                             Theme.of(context).colorScheme.primary,
                           )
                           : Theme.of(context).colorScheme.primary,
@@ -179,87 +176,30 @@ class _AddBotPageState extends State<AddBotPage> {
                       avatarImage != null ? FileImage(avatarImage!) : null,
                   child:
                       avatarImage == null
-                          ? buildProviderLogo(context, '', selectedProvider, 64)
+                          ? buildProviderLogo(
+                            context,
+                            '',
+                            providerController.text,
+                            64,
+                          )
                           : null,
                 ),
               ),
             ),
             const SizedBox(height: 24),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  hintText: S.of(context).enterBotName,
-                  hintStyle: TextStyle(fontSize: fontSize),
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  focusColor: Theme.of(context).colorScheme.secondary,
-                  hoverColor: Theme.of(context).colorScheme.secondary,
-                  prefixIcon: const Icon(Icons.smart_toy_rounded),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
+            _buildNameInput(fontSize),
             const SizedBox(height: 32),
 
+            // provider
             Text(
               S.of(context).selectProvider,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            if (!isCustomProvider)
-              _buildProviderSelector(fontSize)
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(24.0),
-                      ),
-                      child: TextField(
-                        controller: customProviderController,
-                        decoration: InputDecoration(
-                          hintText: S.of(context).enterProviderName,
-                          prefixIcon: const Icon(Icons.business_rounded),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 12),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.close_rounded),
-                            onPressed: () {
-                              setState(() {
-                                isCustomProvider = false;
-                                selectedProvider = providers.first;
-                                _onProviderChanged(selectedProvider);
-                              });
-                            },
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedProvider = value;
-                            if (!modelsByProvider.containsKey(value)) {
-                              modelsByProvider[value] = {
-                                'api_type': Bot.apiTypeOpenAI,
-                                'base_url': '',
-                                'models': [],
-                              };
-                            }
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            _buildProviderInput(fontSize),
             const SizedBox(height: 16),
 
+            // api type
             Text(
               S.of(context).apiType,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -268,32 +208,16 @@ class _AddBotPageState extends State<AddBotPage> {
             _buildApiTypeSelector(fontSize),
             const SizedBox(height: 16),
 
-            // 添加供应商地址输入
+            // provider base url
             Text(
               S.of(context).apiAddress,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              width: double.infinity,
-              child: TextField(
-                controller: baseURLController,
-                decoration: InputDecoration(
-                  hintText: S.of(context).enterApiAddress,
-                  prefixIcon: const Icon(Icons.link_rounded),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onChanged: (value) {},
-              ),
-            ),
+            _buildApiAddressInput(fontSize),
             const SizedBox(height: 16),
 
-            // API密钥
+            // api key
             Text(
               S.of(context).apiKey,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -302,131 +226,26 @@ class _AddBotPageState extends State<AddBotPage> {
             _buildApiKeyInput(fontSize),
             const SizedBox(height: 16),
 
-            // 选择模型
+            // provider models
             Text(
               S.of(context).selectModel,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.auto_awesome_rounded),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Center(
-                                child: Text(
-                                  S.of(context).selectModel,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: fontSize,
-                                  ),
-                                ),
-                              ),
-                              content: SizedBox(
-                                width: double.maxFinite,
-                                height:
-                                    MediaQuery.of(context).size.height * 0.6,
-                                child:
-                                    currentModels.isEmpty
-                                        ? Center(
-                                          child: Text(
-                                            S.of(context).fetchModelListFirst,
-                                            style: TextStyle(
-                                              fontSize: fontSize,
-                                            ),
-                                          ),
-                                        )
-                                        : ListView(
-                                          shrinkWrap: true,
-                                          children:
-                                              currentModels.map((model) {
-                                                return ListTile(
-                                                  title: Text(
-                                                    model,
-                                                    style: TextStyle(
-                                                      fontSize: fontSize,
-                                                    ),
-                                                  ),
-                                                  onTap: () {
-                                                    setState(() {
-                                                      selectedModel = model;
-                                                    });
-                                                    Navigator.pop(context);
-                                                  },
-                                                  selected:
-                                                      selectedModel == model,
-                                                );
-                                              }).toList(),
-                                        ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              currentModels.contains(selectedModel)
-                                  ? selectedModel
-                                  : (currentModels.isNotEmpty
-                                      ? currentModels.first
-                                      : S.of(context).fetchModelListFirst),
-                              style: TextStyle(fontSize: fontSize),
-                            ),
-                            const Icon(Icons.add_rounded),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildModelsInput(fontSize),
             const SizedBox(height: 16),
 
-            // 系统提示词
+            // system prompt
             Text(
               S.of(context).systemPrompt,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: systemPromptController,
-                decoration: InputDecoration(
-                  hintText: S.of(context).enterSystemPrompt,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 12,
-                  ),
-                ),
-                maxLines: 5,
-              ),
-            ),
+            _buildSystemPromptInput(fontSize),
           ],
         ),
       ),
+
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
@@ -438,7 +257,7 @@ class _AddBotPageState extends State<AddBotPage> {
             if (nameController.text.trim().isNotEmpty &&
                 apiKeyController.text.trim().isNotEmpty &&
                 baseURLController.text.trim().isNotEmpty) {
-              final providerInfo = modelsByProvider[selectedProvider];
+              final providerInfo = modelsByProvider[providerController.text];
               final apiType = providerInfo?['api_type'] as String;
               // 使用baseURLController的值而不是providerInfo中的base_url
               final baseURL = baseURLController.text.trim();
@@ -447,11 +266,11 @@ class _AddBotPageState extends State<AddBotPage> {
                 id: 'bot_${DateTime.now().millisecondsSinceEpoch}',
                 name: nameController.text.trim(),
                 avatar: avatarImage?.path ?? '',
-                provider: selectedProvider,
+                provider: providerController.text,
                 baseURL: baseURL, // 使用用户输入的baseURL
                 apiKey: apiKeyController.text.trim(),
                 apiType: apiType,
-                model: selectedModel,
+                model: selectedModelController.text,
                 systemPrompt: systemPromptController.text.trim(),
                 createTimestamp: DateTime.now(),
                 modifyTimestamp: DateTime.now(),
@@ -476,188 +295,335 @@ class _AddBotPageState extends State<AddBotPage> {
     );
   }
 
-  // 构建提供商选择器
-  Widget _buildProviderSelector(double? fontSize) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(24.0),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.business_rounded),
-          const SizedBox(width: 16),
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Center(
-                        child: Text(
-                          S.of(context).selectProvider,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: fontSize,
-                          ),
-                        ),
-                      ),
-                      content: SizedBox(
-                        width: double.maxFinite,
-                        height: MediaQuery.of(context).size.height * 0.6,
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: [
-                            ...providers.map((provider) {
-                              return ListTile(
-                                leading: buildProviderLogo(
-                                  context,
-                                  '',
-                                  provider,
-                                  24,
-                                ),
-                                title: Text(
-                                  provider,
-                                  style: TextStyle(fontSize: fontSize),
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  _onProviderChanged(provider);
-                                },
-                                selected: selectedProvider == provider,
-                              );
-                            }),
-                            ListTile(
-                              leading: const Icon(Icons.smart_toy_rounded),
-                              title: Text(
-                                S.of(context).customProvider,
-                                style: TextStyle(fontSize: fontSize),
-                              ),
-                              onTap: () {
-                                Navigator.pop(context);
-                                setState(() {
-                                  isCustomProvider = true;
-                                  customProviderController.text = '';
-                                });
-                              },
-                              selected: selectedProvider == 'custom',
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      selectedProvider,
-                      style: TextStyle(fontSize: fontSize),
-                    ),
-                    const Icon(Icons.add_rounded),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildNameInput(double? fontSize) {
+    return TextField(
+      controller: nameController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterBotName,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.smart_toy_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
       ),
     );
   }
 
-  // 构建API类型选择器
-  Widget _buildApiTypeSelector(double? fontSize) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(24.0),
+  // 构建提供商选择器
+  Widget _buildProviderInput(double? fontSize) {
+    return TextField(
+      controller: providerController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterBotName,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.business_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
+        suffixIcon: IconButton(
+          icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          onPressed: () {
+            _showProvidersOptions(fontSize);
+          },
+        ),
       ),
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          const Icon(Icons.category_rounded),
-          const SizedBox(width: 16),
-          Expanded(
-            child: DropdownButton<String>(
-              borderRadius: BorderRadius.circular(24.0),
-              isExpanded: true,
-              value:
-                  modelsByProvider[selectedProvider]?['api_type'] as String? ??
-                  Bot.apiTypeOpenAI,
-              underline: const SizedBox(),
-              items: [
-                ...Bot.getAllApiTypes().map((apiType) {
-                  String displayName =
-                      apiType.substring(0, 1).toUpperCase() +
-                      apiType.substring(1);
+    );
+  }
 
-                  return DropdownMenuItem<String>(
-                    value: apiType,
-                    child: Text(
-                      displayName,
-                      style: TextStyle(fontSize: fontSize),
+  void _showProvidersOptions(double? fontSize) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        S.of(context).selectProvider,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  );
-                }),
-              ],
-              onChanged:
-                  isCustomProvider
-                      ? (value) {
-                        if (value != null) {
-                          setState(() {
-                            modelsByProvider[selectedProvider]?['api_type'] =
-                                value;
-                          });
-                        }
-                      }
-                      : null, // 非自定义供应商时禁用更改
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children:
+                            providers.map((provider) {
+                              return RadioListTile<String>(
+                                title: Row(
+                                  children: [
+                                    buildProviderLogo(
+                                      context,
+                                      '',
+                                      provider,
+                                      24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(provider),
+                                  ],
+                                ),
+                                activeColor:
+                                    Theme.of(context).colorScheme.onSurface,
+                                value: provider,
+                                groupValue: providerController.text,
+                                onChanged: (value) {
+                                  _onProviderChanged(value);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+    );
+  }
+
+  Widget _buildApiTypeSelector(double? fontSize) {
+    return TextField(
+      controller: apiTypeController,
+      decoration: InputDecoration(
+        hintText: 'api类型',
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.category_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
+        suffixIcon: IconButton(
+          icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          onPressed: () {
+            _showApiTypeOptions(fontSize);
+          },
+        ),
+        enabled: false,
+      ),
+    );
+  }
+
+  void _showApiTypeOptions(double? fontSize) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        S.of(context).apiType,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children:
+                            Bot.getAllApiTypes().map((apiType) {
+                              return RadioListTile<String>(
+                                title: Text(apiType),
+                                activeColor:
+                                    Theme.of(context).colorScheme.onSurface,
+                                value: apiType,
+                                groupValue: apiTypeController.text,
+                                onChanged: (value) {
+                                  apiTypeController.text = value!;
+                                  Navigator.pop(context);
+                                },
+                              );
+                            }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildApiAddressInput(double? fontSize) {
+    return TextField(
+      controller: baseURLController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterApiAddress,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.link_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
       ),
     );
   }
 
   // 构建API密钥输入框
   Widget _buildApiKeyInput(double? fontSize) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(24.0),
-      ),
-      child: TextField(
-        controller: apiKeyController,
-        decoration: InputDecoration(
-          hintText: S.of(context).enterApiKey,
-          prefixIcon: const Icon(Icons.key_rounded),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(top: 12, bottom: 12, right: 12),
-          suffixIcon:
-              _isLoadingModels
-                  ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                  : IconButton(
-                    icon: const Icon(Icons.refresh_rounded),
-                    tooltip: S.of(context).fetchModelList,
-                    onPressed: _fetchModels,
-                  ),
+    return TextField(
+      controller: apiKeyController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterApiKey,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.key_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        obscureText: true,
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
       ),
+    );
+  }
+
+  Widget _buildModelsInput(double? fontSize) {
+    return TextField(
+      controller: selectedModelController,
+      decoration: InputDecoration(
+        hintText: S.of(context).selectModel,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.auto_awesome_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
+        suffixIcon:
+            currentModels.isEmpty
+                ? _isLoadingModels
+                    ? IconButton(
+                      icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onPressed: () {
+                        _fetchModels();
+                      },
+                    )
+                    : IconButton(
+                      icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onPressed: () {
+                        _fetchModels();
+                      },
+                    )
+                : IconButton(
+                  icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  onPressed: () {
+                    _showModlesOptions(fontSize);
+                  },
+                ),
+      ),
+    );
+  }
+
+  void _showModlesOptions(double? fontSize) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        S.of(context).selectModel,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children:
+                            currentModels.map((apiType) {
+                              return RadioListTile<String>(
+                                title: Text(apiType),
+                                activeColor:
+                                    Theme.of(context).colorScheme.onSurface,
+                                value: apiType,
+                                groupValue: selectedModelController.text,
+                                onChanged: (value) {
+                                  selectedModelController.text = value!;
+                                  Navigator.pop(context);
+                                },
+                              );
+                            }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildSystemPromptInput(double? fontSize) {
+    return TextField(
+      controller: systemPromptController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterSystemPrompt,
+        hintStyle: TextStyle(fontSize: fontSize),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
+      ),
+      maxLines: 6,
     );
   }
 }
