@@ -27,15 +27,10 @@ class _AddBotPageState extends State<AddBotPage> {
   final systemPromptController = TextEditingController();
 
   bool _isLoadingModels = false;
+  bool _isCustomProvider = false;
+  bool _isPasswordVisible = false;
   File? avatarImage;
-
-  List<String> get currentModels {
-    final providerInfo = modelsByProvider[providerController.text];
-    if (providerInfo != null && providerInfo.containsKey('models')) {
-      return List<String>.from(providerInfo['models'] as List);
-    }
-    return [];
-  }
+  List<String> providerModels = [];
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -54,14 +49,16 @@ class _AddBotPageState extends State<AddBotPage> {
       showSnackBar(context, S.of(context).pleaseEnterApiKey);
       return;
     }
-
+    if (baseURLController.text.trim().isEmpty) {
+      showSnackBar(context, '请输入API地址');
+      return;
+    }
     setState(() {
       _isLoadingModels = true;
     });
 
     try {
-      final providerInfo = modelsByProvider[providerController.text];
-      final apiType = providerInfo?['api_type'] as String;
+      final apiType = apiTypeController.text.trim();
       final baseURL = baseURLController.text.trim(); // 使用baseURLController的值
 
       // 创建临时Bot对象
@@ -84,7 +81,7 @@ class _AddBotPageState extends State<AddBotPage> {
       final models = await provider.listModels();
       if (models.isNotEmpty && mounted) {
         setState(() {
-          modelsByProvider[providerController.text]?['models'] = models;
+          providerModels = models;
           selectedModelController.text = models.first;
         });
       } else if (mounted) {
@@ -107,6 +104,8 @@ class _AddBotPageState extends State<AddBotPage> {
     // 初始化baseURLController
     baseURLController.text =
         modelsByProvider[providerController.text]?['base_url'] as String? ?? '';
+    apiTypeController.text =
+        modelsByProvider[providerController.text]?['api_type'] as String? ?? '';
     // 使用国际化字符串初始化系统提示词
     WidgetsBinding.instance.addPostFrameCallback((_) {
       systemPromptController.text = S.of(context).defaultSystemPrompt;
@@ -133,8 +132,9 @@ class _AddBotPageState extends State<AddBotPage> {
             modelsByProvider[value]?['base_url'] as String? ?? '';
         apiTypeController.text =
             modelsByProvider[value]?['api_type'] as String? ?? '';
-        final models = currentModels;
-        selectedModelController.text = models.isNotEmpty ? models[0] : '';
+        providerModels = [];
+        selectedModelController.text = '';
+        _isCustomProvider = !providers.contains(value);
       });
     }
   }
@@ -317,6 +317,13 @@ class _AddBotPageState extends State<AddBotPage> {
   Widget _buildProviderInput(double? fontSize) {
     return TextField(
       controller: providerController,
+      onChanged: (value) {
+        setState(() {
+          _isCustomProvider = !providers.contains(value);
+          providerModels = [];
+          selectedModelController.text = '';
+        });
+      },
       decoration: InputDecoration(
         hintText: S.of(context).enterBotName,
         hintStyle: TextStyle(fontSize: fontSize),
@@ -421,7 +428,7 @@ class _AddBotPageState extends State<AddBotPage> {
             _showApiTypeOptions(fontSize);
           },
         ),
-        enabled: false,
+        enabled: _isCustomProvider,
       ),
     );
   }
@@ -500,6 +507,7 @@ class _AddBotPageState extends State<AddBotPage> {
   Widget _buildApiKeyInput(double? fontSize) {
     return TextField(
       controller: apiKeyController,
+      obscureText: !_isPasswordVisible,
       decoration: InputDecoration(
         hintText: S.of(context).enterApiKey,
         hintStyle: TextStyle(fontSize: fontSize),
@@ -511,6 +519,16 @@ class _AddBotPageState extends State<AddBotPage> {
         contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
         fillColor: Theme.of(context).colorScheme.secondary,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            setState(() {
+              _isPasswordVisible = !_isPasswordVisible;
+            });
+          },
+        ),
       ),
     );
   }
@@ -530,16 +548,16 @@ class _AddBotPageState extends State<AddBotPage> {
         filled: true,
         fillColor: Theme.of(context).colorScheme.secondary,
         suffixIcon:
-            currentModels.isEmpty
+            providerModels.isEmpty
                 ? _isLoadingModels
-                    ? IconButton(
-                      icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onPressed: () {
-                        _fetchModels();
-                      },
+                    ? Container(
+                      width: 16,
+                      height: 16,
+                      margin: const EdgeInsets.all(16),
+                      child: const CircularProgressIndicator(strokeWidth: 2),
                     )
                     : IconButton(
-                      icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      icon: Icon(Icons.refresh_rounded),
                       onPressed: () {
                         _fetchModels();
                       },
@@ -583,7 +601,7 @@ class _AddBotPageState extends State<AddBotPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children:
-                            currentModels.map((apiType) {
+                            providerModels.map((apiType) {
                               return RadioListTile<String>(
                                 title: Text(apiType),
                                 activeColor:
