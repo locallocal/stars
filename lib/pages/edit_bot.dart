@@ -24,8 +24,11 @@ class EditBotPage extends StatefulWidget {
 
 class _EditAIBotPageState extends State<EditBotPage> {
   late final TextEditingController nameController;
+  late final TextEditingController providerController;
+  late final TextEditingController apiTypeController;
   late final TextEditingController apiKeyController;
   late final TextEditingController baseURLController;
+  late final TextEditingController selectedModelController;
   late final TextEditingController systemPromptController;
 
   late String selectedProvider;
@@ -36,8 +39,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.bot.name);
+    providerController = TextEditingController(text: widget.bot.provider);
+    apiTypeController = TextEditingController(text: widget.bot.apiType);
     apiKeyController = TextEditingController(text: widget.bot.apiKey);
     baseURLController = TextEditingController(text: widget.bot.baseURL);
+    selectedModelController = TextEditingController(text: widget.bot.model);
     systemPromptController = TextEditingController(
       text: widget.bot.systemPrompt.isNotEmpty ? widget.bot.systemPrompt : '',
     );
@@ -61,13 +67,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
   @override
   Widget build(BuildContext context) {
-    final fontSzie = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text(
           S.of(context).editBot,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSzie),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0, // 防止滚动时背景色变化
@@ -86,7 +92,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                           S.of(context).deleteBot,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: fontSzie,
+                            fontSize: fontSize,
                           ),
                         ),
                       ),
@@ -99,7 +105,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                           child: Text(
                             S.of(context).cancel,
                             style: TextStyle(
-                              fontSize: fontSzie,
+                              fontSize: fontSize,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
@@ -113,7 +119,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                           child: Text(
                             S.of(context).delete,
                             style: TextStyle(
-                              fontSize: fontSzie,
+                              fontSize: fontSize,
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
@@ -154,22 +160,22 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
             const SizedBox(height: 24),
 
-            // 智能体名称
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  focusColor: Theme.of(context).colorScheme.secondary,
-                  hoverColor: Theme.of(context).colorScheme.secondary,
-                  prefixIcon: const Icon(Icons.smart_toy),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                hintText: S.of(context).enterBotName,
+                hintStyle: TextStyle(fontSize: fontSize),
+                prefixIcon: const Icon(Icons.smart_toy_rounded),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
                 ),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
               ),
             ),
             const SizedBox(height: 32),
@@ -180,36 +186,21 @@ class _EditAIBotPageState extends State<EditBotPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.business_rounded,
-                    color: Theme.of(context).disabledColor,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: selectedProvider,
-                      underline: const SizedBox(),
-                      items:
-                          [selectedProvider].map((provider) {
-                            return DropdownMenuItem<String>(
-                              value: provider,
-                              child: Text(provider),
-                            );
-                          }).toList(),
-                      onChanged: null, // 禁用更改
-                    ),
-                  ),
-                ],
+            TextField(
+              controller: providerController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.business_rounded),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
+                enabled: false,
               ),
             ),
             const SizedBox(height: 16),
@@ -220,36 +211,21 @@ class _EditAIBotPageState extends State<EditBotPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.category_rounded,
-                    color: Theme.of(context).disabledColor,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: widget.bot.apiType,
-                      underline: const SizedBox(),
-                      items:
-                          [widget.bot.apiType].map((type) {
-                            return DropdownMenuItem<String>(
-                              value: type,
-                              child: Text(type),
-                            );
-                          }).toList(),
-                      onChanged: null, // 禁用更改
-                    ),
-                  ),
-                ],
+            TextField(
+              controller: apiTypeController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.category_rounded),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
+                enabled: false,
               ),
             ),
             const SizedBox(height: 16),
@@ -260,21 +236,21 @@ class _EditAIBotPageState extends State<EditBotPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                // 设置初始值
-                controller: baseURLController,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.link_rounded),
-                  border: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+            TextField(
+              controller: baseURLController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.link_rounded),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
                 ),
-                enabled: false, // 禁用编辑
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
+                enabled: false,
               ),
             ),
             const SizedBox(height: 16),
@@ -285,25 +261,21 @@ class _EditAIBotPageState extends State<EditBotPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: apiKeyController,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.key_rounded),
-                  border: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.only(
-                    top: 12,
-                    bottom: 12,
-                    right: 12,
-                  ),
+            TextField(
+              controller: apiKeyController,
+              obscureText: true,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.key_rounded),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
                 ),
-                enabled: false, // 禁用编辑
-                obscureText: true,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
               ),
             ),
             const SizedBox(height: 16),
@@ -314,36 +286,20 @@ class _EditAIBotPageState extends State<EditBotPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Theme.of(context).disabledColor,
-                  ), // 添加模型图标
-                  const SizedBox(width: 16), // 添
-                  Expanded(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: selectedModel,
-                      underline: const SizedBox(),
-                      items:
-                          [selectedModel].map((model) {
-                            return DropdownMenuItem<String>(
-                              value: model,
-                              child: Text(model),
-                            );
-                          }).toList(),
-                      onChanged: null, // 禁用更改
-                    ),
-                  ),
-                ],
+            TextField(
+              controller: selectedModelController,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.auto_awesome_rounded),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
               ),
             ),
             const SizedBox(height: 16),
@@ -354,22 +310,23 @@ class _EditAIBotPageState extends State<EditBotPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: systemPromptController,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 12,
-                  ),
+            TextField(
+              controller: systemPromptController,
+              decoration: InputDecoration(
+                hintText: S.of(context).enterSystemPrompt,
+                hintStyle: TextStyle(fontSize: fontSize),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
                 ),
-                maxLines: 5,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
               ),
+              maxLines: 6,
             ),
           ],
         ),
