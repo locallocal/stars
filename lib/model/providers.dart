@@ -1,56 +1,6 @@
 import 'package:bubble/model/model.dart';
 
-final providers = [
-  'AiHubMix',
-  'AiMass',
-  'AIStudio',
-  'AlibabaCloud',
-  'Anthropic',
-  'BaiChuan',
-  'Baidu',
-  'Cerebras',
-  'ChatGLM',
-  'Cohere',
-  'DeepInfra',
-  'DeepSeek',
-  'Fireworks',
-  'Flux',
-  'Gemini',
-  'Grok',
-  'HuggingFace',
-  'InfiniGence',
-  'InternLM',
-  'Jina',
-  'Kluster',
-  'Lambda',
-  'MiniMax',
-  'Mistral',
-  'ModelScope',
-  'Monica',
-  'Moonshot',
-  'Nebius',
-  'Novita',
-  'Ollama',
-  'OpenAI',
-  'OpenRouter',
-  'Perplexity',
-  'PPIO',
-  'SambaNova',
-  'Search1Api',
-  'SenseNova',
-  'SiliconFlow',
-  'Spark',
-  'StepFun',
-  'Stability',
-  'Tencent',
-  'TogetherAI',
-  'VolcanoEngine',
-  'XingHe',
-  'ZeroOneAI',
-  'ZhiPu',
-];
-
-final modelsByProvider = {
+final providersInfo = {
   'AiHubMix': {
     'api_type': Bot.apiTypeAiHubMix,
     'base_url': 'https://aihubmix.com/v1/',
@@ -111,10 +61,32 @@ final modelsByProvider = {
     'api_type': Bot.apiTypeGemini,
     'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
   },
-  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.grok.ai'},
+  'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.x.ai/v1/'},
   'HuggingFace': {
     'api_type': Bot.apiTypeHuggingface,
-    'base_url': 'https://api-inference.huggingface.co',
+    'sub_providers': {
+      'Cerebras': {'base_url': 'https://router.huggingface.co/cerebras/v1/'},
+      'Cohere': {
+        'base_url': 'https://router.huggingface.co/cohere/compatibility/v1/',
+      },
+      'Fal-AI': {
+        'base_url': 'https://router.huggingface.co/fal-ai/fal-ai/whisper',
+      },
+      'Fireworks-AI': {
+        'base_url': 'https://router.huggingface.co/fireworks-ai/inference/v1/',
+      },
+      'Hyperbolic': {
+        'base_url': 'https://router.huggingface.co/hyperbolic/v1/',
+      },
+      'HF-Inference': {
+        'base_url': 'https://router.huggingface.co/hf-inference/',
+      },
+      'Nebius': {'base_url': 'https://router.huggingface.co/nebius/v1/'},
+      'Novita': {'base_url': 'https://router.huggingface.co/novita/v3/openai/'},
+      'Replicate': {'base_url': 'https://router.huggingface.co/replicate/v1/'},
+      'Sambanova': {'base_url': 'https://router.huggingface.co/sambanova/v1/'},
+      'Together': {'base_url': 'https://router.huggingface.co/together/v1/'},
+    },
   },
   'InfiniGence': {
     'api_type': Bot.apiTypeInfiniGence,

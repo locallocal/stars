@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:bubble/services/providers/providers.dart';
 
@@ -7,28 +8,55 @@ class HuggingFace extends Provider {
 
   HuggingFace(super.bot);
 
+  String _getSubProvider() {
+    final uri = Uri.parse(bot.baseURL);
+    final pathSegments = uri.pathSegments;
+
+    // 确保路径段不为空
+    if (pathSegments.isNotEmpty) {
+      // 第一个路径段通常是子提供商名称
+      return pathSegments.first;
+    }
+    return '';
+  }
+
   @override
   Future<List<String>> listModels() async {
-    return [
-      'google/gemma-2-2b-it',
-      'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-      'meta-llama/Meta-Llama-3.1-8B-Instruct',
-      'microsoft/phi-4',
-      'Qwen/Qwen2.5-Coder-32B-Instruct',
-      'deepseek-ai/DeepSeek-R1',
-    ];
+    final provider = _getSubProvider();
+    final url =
+        'https://huggingface.co/api/models?inference_provider=${provider}';
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final models =
+            (data as List).map((model) {
+              final m = model['id'] as String;
+              return m.substring(m.lastIndexOf('/') + 1); // 提取模型名称部分
+            }).toList();
+        models.sort();
+        return models;
+      } else {
+        throw Exception('List models failed: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('List models Timeout, retry later.');
+    } catch (e) {
+      throw Exception('List models failed: $e');
+    }
   }
 
   @override
   Future<void> sendMessageStream(List<ChatMessage> messages) async {
     try {
       resetCancelState();
-
-      final url =
-          bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/chat/completions'
-              : 'https://router.huggingface.co/hf-inference/v1/chat/completions';
-
+      final url = '${bot.baseURL}chat/completions';
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
@@ -38,8 +66,6 @@ class HuggingFace extends Provider {
             ..body = jsonEncode({
               'model': bot.model,
               'messages': messages.map((m) => m.toJson()).toList(),
-              'temperature': 0.7,
-              'return_full_text': false,
               'stream': true,
             });
 

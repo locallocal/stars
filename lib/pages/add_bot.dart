@@ -20,6 +20,7 @@ class AddBotPage extends StatefulWidget {
 class _AddBotPageState extends State<AddBotPage> {
   final nameController = TextEditingController();
   final providerController = TextEditingController(text: 'OpenAI');
+  final subProviderController = TextEditingController(text: 'HF-Inference');
   final apiTypeController = TextEditingController();
   final baseURLController = TextEditingController();
   final apiKeyController = TextEditingController();
@@ -103,9 +104,9 @@ class _AddBotPageState extends State<AddBotPage> {
     super.initState();
     // 初始化baseURLController
     baseURLController.text =
-        modelsByProvider[providerController.text]?['base_url'] as String? ?? '';
+        providersInfo[providerController.text]?['base_url'] as String? ?? '';
     apiTypeController.text =
-        modelsByProvider[providerController.text]?['api_type'] as String? ?? '';
+        providersInfo[providerController.text]?['api_type'] as String? ?? '';
     // 使用国际化字符串初始化系统提示词
     WidgetsBinding.instance.addPostFrameCallback((_) {
       systemPromptController.text = S.of(context).defaultSystemPrompt;
@@ -129,12 +130,28 @@ class _AddBotPageState extends State<AddBotPage> {
       setState(() {
         providerController.text = value;
         baseURLController.text =
-            modelsByProvider[value]?['base_url'] as String? ?? '';
+            providersInfo[value]?['base_url'] as String? ?? '';
         apiTypeController.text =
-            modelsByProvider[value]?['api_type'] as String? ?? '';
+            providersInfo[value]?['api_type'] as String? ?? '';
         providerModels = [];
         selectedModelController.text = '';
-        _isCustomProvider = !providers.contains(value);
+        _isCustomProvider = !providersInfo.keys.contains(value);
+      });
+    }
+  }
+
+  void _onSubProviderChanged(String? value) {
+    if (value != null) {
+      setState(() {
+        final subProviders =
+            providersInfo[providerController.text]?['sub_providers']
+                as Map<String, Map>;
+        subProviderController.text = value;
+        baseURLController.text =
+            subProviders[value]?['base_url'] as String? ?? '';
+        providerModels = [];
+        selectedModelController.text = '';
+        _isCustomProvider = !subProviders.keys.contains(value);
       });
     }
   }
@@ -197,6 +214,11 @@ class _AddBotPageState extends State<AddBotPage> {
             ),
             const SizedBox(height: 8),
             _buildProviderInput(fontSize),
+            // sub provider
+            if (providerController.text == 'HuggingFace') ...[
+              const SizedBox(height: 16),
+              _buildSubProviderInput(fontSize),
+            ],
             const SizedBox(height: 16),
 
             // api type
@@ -257,7 +279,7 @@ class _AddBotPageState extends State<AddBotPage> {
             if (nameController.text.trim().isNotEmpty &&
                 apiKeyController.text.trim().isNotEmpty &&
                 baseURLController.text.trim().isNotEmpty) {
-              final providerInfo = modelsByProvider[providerController.text];
+              final providerInfo = providersInfo[providerController.text];
               final apiType = providerInfo?['api_type'] as String;
               // 使用baseURLController的值而不是providerInfo中的base_url
               final baseURL = baseURLController.text.trim();
@@ -319,7 +341,7 @@ class _AddBotPageState extends State<AddBotPage> {
       controller: providerController,
       onChanged: (value) {
         setState(() {
-          _isCustomProvider = !providers.contains(value);
+          _isCustomProvider = !providersInfo.keys.contains(value);
           providerModels = [];
           selectedModelController.text = '';
         });
@@ -370,37 +392,147 @@ class _AddBotPageState extends State<AddBotPage> {
                     ),
                   ),
                   Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children:
-                            providers.map((provider) {
-                              return RadioListTile<String>(
-                                title: Row(
-                                  children: [
-                                    buildProviderLogo(
-                                      context,
-                                      '',
-                                      provider,
-                                      24,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(provider),
-                                  ],
-                                ),
-                                activeColor:
-                                    Theme.of(context).colorScheme.onSurface,
-                                value: provider,
-                                groupValue: providerController.text,
-                                onChanged: (value) {
-                                  _onProviderChanged(value);
-                                  Navigator.pop(context);
-                                },
-                              );
-                            }).toList(),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      thickness: 6.0,
+                      radius: const Radius.circular(10.0),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children:
+                              providersInfo.keys.map((provider) {
+                                return RadioListTile<String>(
+                                  title: Row(
+                                    children: [
+                                      buildProviderLogo(
+                                        context,
+                                        '',
+                                        provider,
+                                        24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(provider),
+                                    ],
+                                  ),
+                                  activeColor:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  value: provider,
+                                  groupValue: providerController.text,
+                                  onChanged: (value) {
+                                    _onProviderChanged(value);
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              }).toList(),
+                        ),
                       ),
                     ),
                   ),
+                  SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  // 构建提供商选择器
+  Widget _buildSubProviderInput(double? fontSize) {
+    return TextField(
+      controller: subProviderController,
+      onChanged: (value) {
+        setState(() {
+          _isCustomProvider = providersInfo.keys.contains(value);
+          providerModels = [];
+          selectedModelController.text = '';
+        });
+      },
+      decoration: InputDecoration(
+        hintText: S.of(context).selectProvider,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: const Icon(Icons.business_rounded),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.secondary,
+        suffixIcon: IconButton(
+          icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+          onPressed: () {
+            _showSubProvidersOptions(fontSize);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showSubProvidersOptions(double? fontSize) {
+    final subProviders =
+        providersInfo[providerController.text]?['sub_providers']
+            as Map<String, Object>;
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text(
+                        S.of(context).selectProvider,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      thickness: 6.0,
+                      radius: const Radius.circular(10.0),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children:
+                              subProviders.keys.map((subProvider) {
+                                return RadioListTile<String>(
+                                  title: Row(
+                                    children: [
+                                      buildProviderLogo(
+                                        context,
+                                        '',
+                                        subProvider,
+                                        24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(subProvider),
+                                    ],
+                                  ),
+                                  activeColor:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  value: subProvider,
+                                  groupValue: subProviderController.text,
+                                  onChanged: (value) {
+                                    _onSubProviderChanged(value);
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 24),
                 ],
               ),
             ),
@@ -458,26 +590,32 @@ class _AddBotPageState extends State<AddBotPage> {
                     ),
                   ),
                   Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children:
-                            Bot.getAllApiTypes().map((apiType) {
-                              return RadioListTile<String>(
-                                title: Text(apiType),
-                                activeColor:
-                                    Theme.of(context).colorScheme.onSurface,
-                                value: apiType,
-                                groupValue: apiTypeController.text,
-                                onChanged: (value) {
-                                  apiTypeController.text = value!;
-                                  Navigator.pop(context);
-                                },
-                              );
-                            }).toList(),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      thickness: 6.0,
+                      radius: const Radius.circular(10.0),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children:
+                              Bot.getAllApiTypes().map((apiType) {
+                                return RadioListTile<String>(
+                                  title: Text(apiType),
+                                  activeColor:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  value: apiType,
+                                  groupValue: apiTypeController.text,
+                                  onChanged: (value) {
+                                    apiTypeController.text = value!;
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              }).toList(),
+                        ),
                       ),
                     ),
                   ),
+                  SizedBox(height: 24),
                 ],
               ),
             ),
@@ -565,14 +703,14 @@ class _AddBotPageState extends State<AddBotPage> {
                 : IconButton(
                   icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
                   onPressed: () {
-                    _showModlesOptions(fontSize);
+                    _showModelsOptions(fontSize);
                   },
                 ),
       ),
     );
   }
 
-  void _showModlesOptions(double? fontSize) {
+  void _showModelsOptions(double? fontSize) {
     showDialog(
       context: context,
       builder:
@@ -596,27 +734,51 @@ class _AddBotPageState extends State<AddBotPage> {
                       ),
                     ),
                   ),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children:
-                            providerModels.map((apiType) {
-                              return RadioListTile<String>(
-                                title: Text(apiType),
-                                activeColor:
-                                    Theme.of(context).colorScheme.onSurface,
-                                value: apiType,
-                                groupValue: selectedModelController.text,
-                                onChanged: (value) {
-                                  selectedModelController.text = value!;
-                                  Navigator.pop(context);
-                                },
-                              );
-                            }).toList(),
+                  if (_isLoadingModels)
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    Flexible(
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        thickness: 6.0,
+                        radius: const Radius.circular(10.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children:
+                                providerModels.isEmpty
+                                    ? [
+                                      Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Text(
+                                          S.of(context).noModelsRetrieved,
+                                        ),
+                                      ),
+                                    ]
+                                    : providerModels.map((model) {
+                                      return RadioListTile<String>(
+                                        title: Text(model),
+                                        activeColor:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                        value: model,
+                                        groupValue:
+                                            selectedModelController.text,
+                                        onChanged: (value) {
+                                          selectedModelController.text = value!;
+                                          Navigator.pop(context);
+                                        },
+                                      );
+                                    }).toList(),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  SizedBox(height: 24),
                 ],
               ),
             ),
