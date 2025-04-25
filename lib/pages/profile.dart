@@ -140,6 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
         surfaceTintColor: Colors.transparent,
       ),
       body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         children: [
           // 头像区域
           Padding(
@@ -167,137 +168,174 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
-          // 名称区域
-          ListTile(
-            leading: const Icon(Icons.person_rounded),
-            title: Text(
-              S.of(context).name,
-              style: TextStyle(fontSize: _fontSize),
+          // 个人信息分组
+          Container(
+            margin: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(24.0),
             ),
-            subtitle: Text(_name, style: TextStyle(fontSize: _fontSize - 2)),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {
-              _showEditNameDialog();
-            },
-          ),
-          Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
-
-          // 主题切换
-          ListTile(
-            leading: const Icon(Icons.brightness_6_rounded),
-            title: Text(
-              S.of(context).themeSettings,
-              style: TextStyle(fontSize: _fontSize),
-            ),
-            subtitle: Text(
-              _themeMode == ThemeMode.system
-                  ? S.of(context).followSystem
-                  : _themeMode == ThemeMode.light
-                  ? S.of(context).lightMode
-                  : S.of(context).darkMode,
-              style: TextStyle(fontSize: _fontSize - 2),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {
-              _showThemeOptions();
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.language_rounded),
-            title: Text(
-              S.of(context).languageSettings,
-              style: TextStyle(fontSize: _fontSize),
-            ),
-            subtitle: Text(
-              getLanguageName(_language),
-              style: TextStyle(fontSize: _fontSize - 2),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {
-              _showLanguageOptions();
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.text_fields_rounded),
-            title: Text(
-              S.of(context).fontSizeSettings,
-              style: TextStyle(fontSize: _fontSize),
-            ),
-            subtitle: Text(
-              S.of(context).adjustAppFontSize,
-              style: TextStyle(fontSize: _fontSize - 2),
-            ),
-            onTap: () {
-              _showFontSizeDialog();
-            },
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Slider(
-              value: _fontSize,
-              min: 12.0,
-              max: 24.0,
-              divisions: 6,
-              activeColor: Theme.of(context).colorScheme.onSurface,
-              inactiveColor: Theme.of(context).colorScheme.secondary,
-              label: _fontSize.round().toString(),
-              onChanged: (value) {
-                setState(() {
-                  _profile = Profile(
-                    name: _name,
-                    avatar: _avatar,
-                    fontSize: value,
-                    themeMode: themeModeToInt(_themeMode),
-                    language: _language,
-                    createTimestamp: _profile!.createTimestamp,
-                    modifyTimestamp: DateTime.now(),
-                  );
-                });
-                _saveProfile(); // 保存设置
-              },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Text(
+                    '个人信息',
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // 名称区域
+                _buildSettingItem(
+                  context,
+                  Icons.person_rounded,
+                  S.of(context).name,
+                  _name,
+                  _showEditNameDialog,
+                ),
+              ],
             ),
           ),
-          Divider(color: Theme.of(context).dividerColor.withOpacity(0.3)),
 
-          // 帮助与反馈
-          ListTile(
-            leading: const Icon(Icons.help_rounded),
-            title: Text(
-              S.of(context).helpAndFeedback,
-              style: TextStyle(fontSize: _fontSize),
+          // 外观设置分组
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(24.0),
             ),
-            subtitle: Text(
-              S.of(context).provideFeedback,
-              style: TextStyle(fontSize: _fontSize - 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Text(
+                    '外观设置',
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // 主题设置
+                _buildSettingItem(
+                  context,
+                  Icons.brightness_6_rounded,
+                  S.of(context).themeSettings,
+                  _themeMode == ThemeMode.system
+                      ? S.of(context).followSystem
+                      : _themeMode == ThemeMode.light
+                      ? S.of(context).lightMode
+                      : S.of(context).darkMode,
+                  _showThemeOptions,
+                ),
+                const SizedBox(height: 8.0),
+                // 语言设置
+                _buildSettingItem(
+                  context,
+                  Icons.language_rounded,
+                  S.of(context).languageSettings,
+                  getLanguageName(_language),
+                  _showLanguageOptions,
+                ),
+                const SizedBox(height: 8.0),
+                // 字体大小设置
+                _buildSettingItem(
+                  context,
+                  Icons.text_fields_rounded,
+                  S.of(context).fontSizeSettings,
+                  S.of(context).adjustAppFontSize,
+                  _showFontSizeDialog,
+                  showSlider: true,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 8.0,
+                    right: 8.0,
+                    top: 4.0,
+                  ),
+                  child: Slider(
+                    value: _fontSize,
+                    min: 12.0,
+                    max: 24.0,
+                    divisions: 12,
+                    activeColor: Theme.of(context).colorScheme.onSurface,
+                    inactiveColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.3),
+                    label: _fontSize.round().toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _profile = Profile(
+                          name: _name,
+                          avatar: _avatar,
+                          fontSize: value,
+                          themeMode: themeModeToInt(_themeMode),
+                          language: _language,
+                          createTimestamp: _profile!.createTimestamp,
+                          modifyTimestamp: DateTime.now(),
+                        );
+                      });
+                      _saveProfile(); // 保存设置
+                    },
+                  ),
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FeedbackPage()),
-              );
-            },
           ),
 
-          // 关于
-          ListTile(
-            leading: const Icon(Icons.info_rounded),
-            title: Text(
-              S.of(context).about,
-              style: TextStyle(fontSize: _fontSize),
+          // 帮助与支持分组
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary,
+              borderRadius: BorderRadius.circular(24.0),
             ),
-            subtitle: Text(
-              S.of(context).version,
-              style: TextStyle(fontSize: _fontSize - 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Text(
+                    '帮助与支持',
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // 帮助与反馈
+                _buildSettingItem(
+                  context,
+                  Icons.help_rounded,
+                  S.of(context).helpAndFeedback,
+                  S.of(context).provideFeedback,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedbackPage(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8.0),
+                // 关于
+                _buildSettingItem(
+                  context,
+                  Icons.info_rounded,
+                  S.of(context).about,
+                  S.of(context).version,
+                  _showCustomAboutDialog,
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {
-              // 显示自定义关于信息对话框
-              _showCustomAboutDialog();
-            },
           ),
         ],
       ),
@@ -373,6 +411,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // 显示主题选项
   void _showThemeOptions() {
+    final themes = [
+      {
+        'title': Text(S.of(context).followSystem),
+        'mode': ThemeMode.system,
+        'icon': Icons.brightness_6_rounded,
+      },
+      {
+        'title': Text(S.of(context).lightMode),
+        'mode': ThemeMode.light,
+        'icon': Icons.brightness_5_rounded,
+      },
+      {
+        'title': Text(S.of(context).darkMode),
+        'mode': ThemeMode.dark,
+        'icon': Icons.brightness_2_rounded,
+      },
+    ];
     showDialog(
       context: context,
       builder:
@@ -401,55 +456,36 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          RadioListTile<ThemeMode>(
-                            title: Text(S.of(context).followSystem),
-                            activeColor:
-                                Theme.of(context).colorScheme.onSurface,
-                            value: ThemeMode.system,
-                            groupValue: _themeMode,
-                            onChanged: (value) {
-                              setState(() {
-                                _themeMode = value!;
-                              });
-                              _saveProfile(); // 保存设置
+                          ...themes
+                              .map(
+                                (theme) => RadioListTile<ThemeMode>(
+                                  title: Row(
+                                    children: [
+                                      Icon(theme['icon'] as IconData),
+                                      const SizedBox(width: 12),
+                                      theme['title'] as Text,
+                                    ],
+                                  ),
+                                  activeColor:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  value: theme['mode'] as ThemeMode,
+                                  groupValue: _themeMode,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _themeMode = value!;
+                                    });
+                                    _saveProfile(); // 保存设置
 
-                              // 通知应用程序更新主题
-                              ProfileService.notifyThemeChanged(_themeMode);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          RadioListTile<ThemeMode>(
-                            title: Text(S.of(context).lightMode),
-                            activeColor:
-                                Theme.of(context).colorScheme.onSurface,
-                            value: ThemeMode.light,
-                            groupValue: _themeMode,
-                            onChanged: (value) {
-                              setState(() {
-                                _themeMode = value!;
-                              });
-                              _saveProfile();
-
-                              ProfileService.notifyThemeChanged(_themeMode);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          RadioListTile<ThemeMode>(
-                            title: Text(S.of(context).darkMode),
-                            activeColor:
-                                Theme.of(context).colorScheme.onSurface,
-                            value: ThemeMode.dark,
-                            groupValue: _themeMode,
-                            onChanged: (value) {
-                              setState(() {
-                                _themeMode = value!;
-                              });
-                              _saveProfile();
-
-                              ProfileService.notifyThemeChanged(_themeMode);
-                              Navigator.pop(context);
-                            },
-                          ),
+                                    // 通知应用程序更新主题
+                                    ProfileService.notifyThemeChanged(
+                                      _themeMode,
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              )
+                              .toList(),
+                          SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -692,6 +728,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _buildLanguageOption('hi_IN', 'हिन्दी'),
                           _buildLanguageOption('pt_BR', 'Português'),
                           _buildLanguageOption('it_IT', 'Italiano'),
+                          SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -720,6 +757,61 @@ class _ProfilePageState extends State<ProfilePage> {
         ProfileService.notifyLanguageChanged(_language);
         Navigator.pop(context);
       },
+    );
+  }
+
+  // 构建设置项目
+  Widget _buildSettingItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap, {
+    bool showSlider = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 24.0,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: _fontSize - 2,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!showSlider)
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16.0,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
