@@ -1,12 +1,87 @@
+import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
 class HuggingFace extends Provider {
   static const defaultApiModelUrl = '';
 
   HuggingFace(super.bot);
+
+  @override
+  bool supportWebSearch() {
+    return true;
+  }
+
+  @override
+  bool supportDeepThinking() {
+    return false;
+  }
+
+  @override
+  List<InputModality> getInputModalites() {
+    final model = bot.model.toLowerCase();
+    if (model.contains('qwen2-audio')) {
+      return [InputModality.text, InputModality.audio];
+    } else if (model.contains('llava-1.5-7b-hf') ||
+        model.contains('llava-2') ||
+        model.contains('qwen2-vl') ||
+        model.contains('qwen2.5-vl') ||
+        model.contains('ui-tars-1.5') ||
+        model.contains('skywork-r1v2') ||
+        model.contains('dam-3b') ||
+        model.contains('hyperclovax-ssed-vision-instruct') ||
+        model.contains('gemma-3-27b-it') ||
+        model.contains('llama-4-scout-17b') ||
+        model.contains('llama-3.2-11b-vision') ||
+        model.contains('mistral-small-3.1-24b-instruct') ||
+        model.contains('qvq-72b-preview') ||
+        model.contains('llama-4-maverick-17b')) {
+      return [InputModality.text, InputModality.image];
+    } else if (model.contains('magi-1') || model.contains('skyreels-v2-i2v')) {
+      return [InputModality.image];
+    }
+    return [InputModality.text];
+  }
+
+  @override
+  List<OutputModality> getOutputModalites() {
+    final model = bot.model.toLowerCase();
+    if (model.contains('flux') ||
+        model.contains('stable-diffusion') ||
+        model.contains('sdxl-lightning') ||
+        model.contains('hyper-sd') ||
+        model.contains('sana_sprint') ||
+        model.contains('hidream-i1') ||
+        model.contains('flex.2') ||
+        model.contains('lumina-image-2.0') ||
+        model.contains('cogview4') ||
+        model.contains('playground-v2.5') ||
+        model.contains('pixart-sigma-xl-2') ||
+        model.contains('auraflow-v0.2') ||
+        model.contains('cogview3-plus') ||
+        model.contains('sana_1600m') ||
+        model.contains('sana1.5_4.8b') ||
+        model.contains('sana-1024')) {
+      return [OutputModality.image];
+    } else if (model.contains('whisper') ||
+        model.contains('dia-1.6b') ||
+        model.contains('kokoro-82m') ||
+        model.contains('orpheus-3b')) {
+      return [OutputModality.speech];
+    } else if (model.contains('wan2.1') ||
+        model.contains('magi-1') ||
+        model.contains('skyreels-v2-i2v') ||
+        model.contains('ltx-video') ||
+        model.contains('hunyuanvideo') ||
+        model.contains('cogvideox') ||
+        model.contains('mochi-1')) {
+      return [OutputModality.video];
+    }
+    return [OutputModality.text];
+  }
 
   String _getSubProvider() {
     final uri = Uri.parse(bot.baseURL);
@@ -81,6 +156,9 @@ class HuggingFace extends Provider {
       await for (final line in stream) {
         // 检查是否已取消
         if (isCancelled) break;
+        if (line.contains('error')) {
+          throw Exception('Response failed, $line}');
+        }
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6);
@@ -115,6 +193,64 @@ class HuggingFace extends Provider {
     } finally {
       cancelController?.close();
       cancelController = null;
+    }
+  }
+
+  @override
+  List<String> getSupportedImageSizes() {
+    return const [
+      '512x512',
+      '1024x1024',
+      '1440x1440',
+      '768x768',
+      '1024x768',
+      '768x1024',
+      '1280x720',
+      '720x1280',
+      '1440x768',
+      '768x1440',
+    ];
+  }
+
+  @override
+  Future<List<String>> generateImage(
+    String prompt,
+    String size,
+    String imageDirPath, {
+    List<String> referenceImages = const [],
+    String style = '',
+  }) async {
+    final url = '${bot.baseURL}${bot.model}';
+    var width = 1024;
+    var height = 1024;
+    if (size.contains('x')) {
+      width = int.parse(size.split('x')[0]);
+      height = int.parse(size.split('x')[1]);
+    }
+    final Map<String, dynamic> requestBody = {
+      'inputs': prompt,
+      'parameters': {'width': width, 'height': height},
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json', 'x-key': bot.apiKey},
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        // 生成唯一文件名
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final imagePath = '$imageDirPath/huggingface_$timestamp.png';
+        // 将二进制数据写入文件
+        final file = File(imagePath);
+        await file.writeAsBytes(response.bodyBytes);
+        return [imagePath];
+      }
+      throw Exception('$response.body');
+    } catch (e) {
+      throw Exception('Generate image failed: $e');
     }
   }
 }

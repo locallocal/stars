@@ -227,7 +227,7 @@ class StepFun extends Provider {
 
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final fileName = 'step-1x-medium_$timestamp.png';
+          final fileName = 'step_fun_$timestamp.png';
           final filePath = '$imageDirPath/$fileName';
           final file = File(filePath);
           await file.writeAsBytes(imageResponse.bodyBytes);

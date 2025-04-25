@@ -91,8 +91,10 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         brightness: Brightness.light,
         colorScheme: ColorScheme.light(
+          surface: Colors.grey.shade100,
+          tertiary: Colors.grey.shade300,
           primary: Colors.blue.shade300,
-          secondary: Colors.grey.shade300,
+          secondary: Colors.white,
         ),
         textTheme: TextTheme(
           // 根据用户设置调整字体大小
@@ -108,6 +110,8 @@ class _MyAppState extends State<MyApp> {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         colorScheme: ColorScheme.dark(
+          surface: Colors.grey.shade900,
+          tertiary: Colors.grey.shade700,
           primary: Colors.blue.shade600,
           secondary: Colors.grey.shade600,
         ),

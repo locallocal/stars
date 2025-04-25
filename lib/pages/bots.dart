@@ -102,7 +102,7 @@ class _ContactsPageState extends State<ContactsPage> {
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: Theme.of(context).colorScheme.tertiary,
                         borderRadius: BorderRadius.circular(24.0),
                       ),
                       child: TextField(

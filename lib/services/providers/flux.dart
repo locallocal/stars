@@ -90,7 +90,7 @@ class Flux extends Provider {
     if (bot.model.toLowerCase() == 'flux-pro-1.1-ultra') {
       var ratio = '16:9';
       if (size.isNotEmpty) {
-        ratio = _transformRatio(width, height);
+        ratio = transformRatio(width, height);
       }
       requestBody['raw'] = true;
       requestBody['aspect_ratio'] = ratio;
@@ -167,28 +167,5 @@ class Flux extends Provider {
     } catch (e) {
       throw Exception('Generate image failed: $e');
     }
-  }
-
-  // 将像素尺寸转换为比例字符串
-  String _transformRatio(int width, int height) {
-    // 计算最大公约数
-    int gcd = _calculateGCD(width, height);
-
-    // 使用最大公约数简化比例
-    int ratioWidth = width ~/ gcd;
-    int ratioHeight = height ~/ gcd;
-
-    // 返回标准比例格式
-    return '$ratioWidth:$ratioHeight';
-  }
-
-  // 计算最大公约数的辅助函数
-  int _calculateGCD(int a, int b) {
-    while (b != 0) {
-      int temp = b;
-      b = a % b;
-      a = temp;
-    }
-    return a;
   }
 }

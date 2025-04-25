@@ -91,13 +91,13 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final _fontSzie = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    final fontSzie = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text(
           S.of(context).chats,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: _fontSzie),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSzie),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0, // 防止滚动时背景色变化
@@ -129,7 +129,7 @@ class _ChatListPageState extends State<ChatListPage> {
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: Theme.of(context).colorScheme.tertiary,
                         borderRadius: BorderRadius.circular(24.0),
                       ),
                       child: TextField(
@@ -137,7 +137,7 @@ class _ChatListPageState extends State<ChatListPage> {
                         decoration: InputDecoration(
                           hintText: '搜索聊天记录',
                           hintStyle: TextStyle(
-                            fontSize: _fontSzie,
+                            fontSize: fontSzie,
                             color: Theme.of(
                               context,
                             ).colorScheme.onSurface.withOpacity(0.3),
