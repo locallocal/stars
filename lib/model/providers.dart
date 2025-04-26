@@ -11,7 +11,7 @@ final providersInfo = {
   },
   'AIStudio': {
     'api_type': Bot.apiTypeGemini,
-    'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    'base_url': 'https://generativelanguage.googleapis.com/v1beta/',
   },
   'AlibabaCloud': {
     'api_type': Bot.apiTypeAlibabaCloud,
@@ -59,7 +59,7 @@ final providersInfo = {
   },
   'Gemini': {
     'api_type': Bot.apiTypeGemini,
-    'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    'base_url': 'https://generativelanguage.googleapis.com/v1beta/',
   },
   'Grok': {'api_type': Bot.apiTypeGrok, 'base_url': 'https://api.x.ai/v1/'},
   'HuggingFace': {

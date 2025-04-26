@@ -27,11 +27,11 @@ class MessageInput extends StatelessWidget {
       margin: const EdgeInsets.only(
         left: 16.0,
         right: 16.0,
-        top: 8.0,
+        top: 16.0,
         bottom: 8.0,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.tertiary,
+        color: Theme.of(context).colorScheme.secondary,
         borderRadius: BorderRadius.circular(24.0),
       ),
       child: TextField(
@@ -44,8 +44,10 @@ class MessageInput extends StatelessWidget {
             fontSize: fontSize,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
           ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(width: 0, style: BorderStyle.none),
+            borderRadius: BorderRadius.all(Radius.circular(24.0)),
+          ),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

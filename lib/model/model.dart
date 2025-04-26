@@ -19,7 +19,8 @@ enum OutputModality {
   audio('audio'),
   realtime('realtime'),
   music('music'),
-  video('video');
+  video('video'),
+  multi('multi');
 
   final String value;
   const OutputModality(this.value);

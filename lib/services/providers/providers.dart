@@ -294,7 +294,7 @@ abstract class Provider {
             });
           }
         } catch (e) {
-          print('Process image $imagePath failed: $e');
+          throw Exception('Process image $imagePath failed: $e');
         }
       }
       return {'role': message.role, 'content': content};

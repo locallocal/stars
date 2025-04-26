@@ -401,12 +401,10 @@ class _ChatPageState extends State<ChatPage> {
                   ))
                     _buildImageGenerationPanel(),
 
-                  // 聊天模型功能
                   if (_provider.supportWebSearch() ||
                       _provider.supportDeepThinking())
                     _showChatModelFeatures(),
 
-                  // 输入框区域
                   MessageInput(
                     controller: _messageController,
                     onSend: _sendMessage,

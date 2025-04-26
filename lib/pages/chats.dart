@@ -164,53 +164,58 @@ class _ChatListPageState extends State<ChatListPage> {
                     child:
                         filteredChatList.isEmpty
                             ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (searchQuery.isNotEmpty)
-                                    Text(
-                                      S.of(context).noModelsRetrieved,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
+                              child: SingleChildScrollView(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (searchQuery.isNotEmpty)
+                                        Text(
+                                          S.of(context).noModelsRetrieved,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                          ),
+                                        )
+                                      else
+                                        Image.asset(
+                                          'assets/images/profile/no_chats.png',
+                                          width: 384,
+                                          height: 384,
+                                          fit: BoxFit.cover,
+                                        ),
+
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        S.of(context).noChats,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                        ),
                                       ),
-                                    )
-                                  else
-                                    Image.asset(
-                                      'assets/images/profile/no_chats.png',
-                                      width: 384,
-                                      height: 384,
-                                      fit: BoxFit.cover,
-                                    ),
 
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    S.of(context).noChats,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                    ),
+                                      const SizedBox(height: 8),
+
+                                      Text(
+                                        S.of(context).clickToStartChat,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-
-                                  const SizedBox(height: 8),
-
-                                  Text(
-                                    S.of(context).clickToStartChat,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             )
                             : ChatListBuilder(

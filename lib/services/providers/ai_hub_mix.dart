@@ -63,11 +63,8 @@ class AiHubMix extends Provider {
             (data['data'] as List)
                 .map((model) => model['id'] as String)
                 .toList();
-        // 对模型列表进行去重处理
-        final uniqueModels = models.toSet().toList();
-        // 可选：对模型列表进行排序
-        uniqueModels.sort();
-        return uniqueModels;
+        models.sort();
+        return models;
       } else {
         throw Exception('List models failed: ${response.statusCode}');
       }
@@ -211,7 +208,7 @@ class AiHubMix extends Provider {
 
               // 直接将base64图片数据以Markdown格式返回
               final String markdownImage =
-                  '\n\n![Generated Image](data:$mimeType;base64,$base64Data)\n\n';
+                  '\n![Generated Image](data:$mimeType;base64,$base64Data)\n';
               onResponse(markdownImage);
             } catch (e) {
               if (onError != null) {

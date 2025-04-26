@@ -262,28 +262,37 @@ class _ContactsPageState extends State<ContactsPage> {
   // 显示没有智能体时的UI
   Widget _buildEmptyBotsView() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/images/profile/no_bots.png',
-            width: 384,
-            height: 384,
-            fit: BoxFit.cover,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/profile/no_bots.png',
+                width: 384,
+                height: 384,
+                fit: BoxFit.cover,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                S.of(context).noBotsAvailable,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                S.of(context).clickToCreateBot,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            S.of(context).noBotsAvailable,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            S.of(context).clickToCreateBot,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
-        ],
+        ),
       ),
     );
   }
