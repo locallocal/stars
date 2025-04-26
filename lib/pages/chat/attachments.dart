@@ -59,7 +59,7 @@ class ImageAttachments extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 150,
+                  height: 90,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: images.length,
@@ -72,8 +72,8 @@ class ImageAttachments extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12.0),
                               child: Image.file(
                                 images[index],
-                                height: 150,
-                                width: 150,
+                                height: 90,
+                                width: 60,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -120,7 +120,7 @@ class ImageAttachments extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 80,
+                  height: 90,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: files.length,

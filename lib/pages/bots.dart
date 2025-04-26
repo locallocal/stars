@@ -60,13 +60,13 @@ class _ContactsPageState extends State<ContactsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final fontSzie = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         title: Text(
           S.of(context).Bots,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSzie),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         scrolledUnderElevation: 0, // 防止滚动时背景色变化
@@ -110,7 +110,7 @@ class _ContactsPageState extends State<ContactsPage> {
                         decoration: InputDecoration(
                           hintText: S.of(context).selectBot,
                           hintStyle: TextStyle(
-                            fontSize: fontSzie,
+                            fontSize: fontSize,
                             color: Theme.of(
                               context,
                             ).colorScheme.onSurface.withOpacity(0.3),
@@ -156,7 +156,11 @@ class _ContactsPageState extends State<ContactsPage> {
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20.0),
             color: Theme.of(context).colorScheme.secondary,
-            child: const Icon(Icons.delete),
+            child: Icon(
+              Icons.delete,
+              size: 24,
+              color: Theme.of(context).colorScheme.error,
+            ),
           ),
           confirmDismiss: (direction) async {
             return await showDialog(

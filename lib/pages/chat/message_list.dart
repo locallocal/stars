@@ -30,7 +30,7 @@ class MessageList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Expanded(
       child: ListView.builder(
         controller: scrollController,
@@ -82,7 +82,7 @@ class MessageList extends StatelessWidget {
                         styleSheet: MarkdownStyleSheet(
                           p: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: _fontSize,
+                            fontSize: fontSize,
                           ),
                           code: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
@@ -126,9 +126,7 @@ class MessageList extends StatelessWidget {
                             ? Theme.of(
                               context,
                             ).colorScheme.primary.withOpacity(0.3)
-                            : Theme.of(
-                              context,
-                            ).colorScheme.secondary.withOpacity(0.5),
+                            : Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Column(
@@ -145,7 +143,7 @@ class MessageList extends StatelessWidget {
                           styleSheet: MarkdownStyleSheet(
                             p: TextStyle(
                               color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: _fontSize,
+                              fontSize: fontSize,
                             ),
                             code: TextStyle(
                               color: Theme.of(context).colorScheme.onSurface,

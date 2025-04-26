@@ -10,3 +10,39 @@ void showSnackBar(BuildContext context, String message) {
     ),
   );
 }
+
+// 构建分组容器
+Widget buildSectionContainer(
+  BuildContext context,
+  String title,
+  List<Widget> children,
+) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 8.0),
+    padding: const EdgeInsets.all(16.0),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.secondary,
+      borderRadius: BorderRadius.circular(24.0),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: Theme.of(context).textTheme.titleMedium?.fontSize,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        ...children
+            .expand((child) => [child, const SizedBox(height: 4)])
+            .take(children.length * 2 - 1)
+            .toList(),
+      ],
+    ),
+  );
+}

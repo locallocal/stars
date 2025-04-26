@@ -204,66 +204,28 @@ class _AddBotPageState extends State<AddBotPage> {
               ),
             ),
             const SizedBox(height: 24),
-            _buildNameInput(fontSize),
-            const SizedBox(height: 32),
 
-            // provider
-            Text(
-              S.of(context).selectProvider,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildProviderInput(fontSize),
-            // sub provider
-            if (providerController.text == 'HuggingFace') ...[
-              const SizedBox(height: 16),
-              _buildSubProviderInput(fontSize),
-            ],
+            // 基本信息分组
+            buildSectionContainer(context, '基本信息', [_buildNameInput(fontSize)]),
             const SizedBox(height: 16),
 
-            // api type
-            Text(
-              S.of(context).apiType,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildApiTypeSelector(fontSize),
+            // API提供商分组
+            buildSectionContainer(context, '提供商信息', [
+              _buildProviderInput(fontSize),
+              if (providerController.text == 'HuggingFace')
+                _buildSubProviderInput(fontSize),
+
+              _buildApiTypeSelector(fontSize),
+              _buildApiAddressInput(fontSize),
+              _buildApiKeyInput(fontSize),
+            ]),
             const SizedBox(height: 16),
 
-            // provider base url
-            Text(
-              S.of(context).apiAddress,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildApiAddressInput(fontSize),
-            const SizedBox(height: 16),
-
-            // api key
-            Text(
-              S.of(context).apiKey,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildApiKeyInput(fontSize),
-            const SizedBox(height: 16),
-
-            // provider models
-            Text(
-              S.of(context).selectModel,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildModelsInput(fontSize),
-            const SizedBox(height: 16),
-
-            // system prompt
-            Text(
-              S.of(context).systemPrompt,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _buildSystemPromptInput(fontSize),
+            // API提供商分组
+            buildSectionContainer(context, '模型配置', [
+              _buildModelsInput(fontSize),
+              _buildSystemPromptInput(fontSize),
+            ]),
           ],
         ),
       ),
@@ -274,6 +236,10 @@ class _AddBotPageState extends State<AddBotPage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.onSurface,
             minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.0),
+              side: BorderSide.none,
+            ),
           ),
           onPressed: () {
             if (nameController.text.trim().isNotEmpty &&
@@ -322,15 +288,21 @@ class _AddBotPageState extends State<AddBotPage> {
       controller: nameController,
       decoration: InputDecoration(
         hintText: S.of(context).enterBotName,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.smart_toy_rounded),
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.smart_toy_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -347,16 +319,22 @@ class _AddBotPageState extends State<AddBotPage> {
         });
       },
       decoration: InputDecoration(
-        hintText: S.of(context).enterBotName,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.business_rounded),
+        hintText: S.of(context).selectProvider,
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.business_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
         suffixIcon: IconButton(
           icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onPressed: () {
@@ -449,15 +427,22 @@ class _AddBotPageState extends State<AddBotPage> {
       },
       decoration: InputDecoration(
         hintText: S.of(context).selectProvider,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.business_rounded),
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.business_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
         contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
         suffixIcon: IconButton(
           icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onPressed: () {
@@ -544,16 +529,22 @@ class _AddBotPageState extends State<AddBotPage> {
     return TextField(
       controller: apiTypeController,
       decoration: InputDecoration(
-        hintText: 'api类型',
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.category_rounded),
+        hintText: S.of(context).apiType,
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.category_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
         suffixIcon: IconButton(
           icon: Icon(Icons.arrow_forward_ios_rounded, size: 16),
           onPressed: () {
@@ -627,16 +618,22 @@ class _AddBotPageState extends State<AddBotPage> {
     return TextField(
       controller: baseURLController,
       decoration: InputDecoration(
-        hintText: S.of(context).enterApiAddress,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.link_rounded),
+        hintText: S.of(context).apiAddress,
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.link_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -647,16 +644,22 @@ class _AddBotPageState extends State<AddBotPage> {
       controller: apiKeyController,
       obscureText: !_isPasswordVisible,
       decoration: InputDecoration(
-        hintText: S.of(context).enterApiKey,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.key_rounded),
+        hintText: S.of(context).apiKey,
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.key_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
         suffixIcon: IconButton(
           icon: Icon(
             _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
@@ -676,15 +679,21 @@ class _AddBotPageState extends State<AddBotPage> {
       controller: selectedModelController,
       decoration: InputDecoration(
         hintText: S.of(context).selectModel,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: const Icon(Icons.auto_awesome_rounded),
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.auto_awesome_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
           borderRadius: BorderRadius.all(Radius.circular(24.0)),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
         suffixIcon:
             providerModels.isEmpty
                 ? _isLoadingModels
@@ -790,7 +799,7 @@ class _AddBotPageState extends State<AddBotPage> {
     return TextField(
       controller: systemPromptController,
       decoration: InputDecoration(
-        hintText: S.of(context).enterSystemPrompt,
+        hintText: S.of(context).systemPrompt,
         hintStyle: TextStyle(fontSize: fontSize),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
@@ -801,7 +810,7 @@ class _AddBotPageState extends State<AddBotPage> {
           horizontal: 16,
         ),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.secondary,
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
       maxLines: 6,
     );

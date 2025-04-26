@@ -50,9 +50,7 @@ class ChatModelFeatures extends StatelessWidget {
                           ? Theme.of(
                             context,
                           ).colorScheme.primary.withOpacity(0.3)
-                          : Theme.of(
-                            context,
-                          ).colorScheme.secondary.withOpacity(0.5),
+                          : Theme.of(context).colorScheme.secondary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24.0),
                   ),
@@ -81,9 +79,7 @@ class ChatModelFeatures extends StatelessWidget {
                 backgroundColor:
                     isDeepThinkingEnabled
                         ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
-                        : Theme.of(
-                          context,
-                        ).colorScheme.secondary.withOpacity(0.5),
+                        : Theme.of(context).colorScheme.secondary,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24.0),

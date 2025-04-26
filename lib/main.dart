@@ -95,6 +95,7 @@ class _MyAppState extends State<MyApp> {
           tertiary: Colors.grey.shade300,
           primary: Colors.blue.shade300,
           secondary: Colors.white,
+          error: Colors.red.shade400,
         ),
         textTheme: TextTheme(
           // 根据用户设置调整字体大小
@@ -114,6 +115,7 @@ class _MyAppState extends State<MyApp> {
           tertiary: Colors.grey.shade700,
           primary: Colors.blue.shade600,
           secondary: Colors.grey.shade600,
+          error: Colors.red.shade500,
         ),
         textTheme: TextTheme(
           bodyLarge: TextStyle(fontSize: _fontSize),

@@ -12,7 +12,7 @@ class HuggingFace extends Provider {
 
   @override
   bool supportWebSearch() {
-    return true;
+    return false;
   }
 
   @override
@@ -121,7 +121,7 @@ class HuggingFace extends Provider {
         throw Exception('List models failed: ${response.statusCode}');
       }
     } on TimeoutException {
-      throw Exception('List models Timeout, retry later.');
+      throw Exception('List models timeout, retry later.');
     } catch (e) {
       throw Exception('List models failed: $e');
     }

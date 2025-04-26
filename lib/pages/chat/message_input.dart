@@ -22,6 +22,7 @@ class MessageInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Container(
       margin: const EdgeInsets.only(
         left: 16.0,
@@ -30,7 +31,7 @@ class MessageInput extends StatelessWidget {
         bottom: 8.0,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.tertiary,
         borderRadius: BorderRadius.circular(24.0),
       ),
       child: TextField(
@@ -39,11 +40,12 @@ class MessageInput extends StatelessWidget {
         onSubmitted: (value) => onSend(),
         decoration: InputDecoration(
           hintText: S.of(context).messageHint,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 12.0,
-            horizontal: 12.0,
+          hintStyle: TextStyle(
+            fontSize: fontSize,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
           ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

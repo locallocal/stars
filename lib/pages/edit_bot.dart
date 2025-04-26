@@ -81,7 +81,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_rounded),
+            icon: Icon(
+              Icons.delete_rounded,
+              size: 24,
+              color: Theme.of(context).colorScheme.error,
+            ),
             onPressed: () {
               showDialog(
                 context: context,
@@ -160,174 +164,24 @@ class _EditAIBotPageState extends State<EditBotPage> {
             ),
             const SizedBox(height: 24),
 
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                hintText: S.of(context).enterBotName,
-                hintStyle: TextStyle(fontSize: fontSize),
-                prefixIcon: const Icon(Icons.smart_toy_rounded),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // 提供商（禁用编辑）
-            Text(
-              '${S.of(context).provider}:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: providerController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.business_rounded),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-                enabled: false,
-              ),
-            ),
+            // 基本信息分组
+            buildSectionContainer(context, '基本信息', [_buildNameInput(fontSize)]),
             const SizedBox(height: 16),
 
-            // API类型（禁用编辑）
-            Text(
-              S.of(context).apiType,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: apiTypeController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.category_rounded),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-                enabled: false,
-              ),
-            ),
+            // API提供商分组
+            buildSectionContainer(context, '提供商信息', [
+              _buildProviderInput(fontSize),
+              _buildApiTypeInput(fontSize),
+              _buildApiAddressInput(fontSize),
+              _buildApiKeyInput(fontSize),
+            ]),
             const SizedBox(height: 16),
 
-            // API地址（禁用编辑）
-            Text(
-              S.of(context).apiAddress,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: baseURLController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.link_rounded),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-                enabled: false,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // API密钥（禁用编辑）
-            Text(
-              '${S.of(context).apiKey}:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: apiKeyController,
-              obscureText: true,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.key_rounded),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 选择模型（禁用编辑）
-            Text(
-              '${S.of(context).model}:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: selectedModelController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.auto_awesome_rounded),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 系统提示词（允许编辑）
-            Text(
-              S.of(context).systemPrompt,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: systemPromptController,
-              decoration: InputDecoration(
-                hintText: S.of(context).enterSystemPrompt,
-                hintStyle: TextStyle(fontSize: fontSize),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
-                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 16,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.secondary,
-              ),
-              maxLines: 6,
-            ),
+            // API提供商分组
+            buildSectionContainer(context, '模型配置', [
+              _buildModelsInput(fontSize),
+              _buildSystemPromptInput(fontSize),
+            ]),
           ],
         ),
       ),
@@ -344,11 +198,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 id: widget.bot.id,
                 name: nameController.text.trim(),
                 avatar: avatarImage?.path ?? widget.bot.avatar,
-                provider: widget.bot.provider, // 保持原值
-                baseURL: widget.bot.baseURL, // 保持原值
-                apiKey: widget.bot.apiKey, // 保持原值
-                apiType: widget.bot.apiType, // 保持原值
-                model: widget.bot.model, // 保持原值
+                provider: widget.bot.provider,
+                baseURL: widget.bot.baseURL,
+                apiKey: widget.bot.apiKey,
+                apiType: widget.bot.apiType,
+                model: widget.bot.model,
                 systemPrompt: systemPromptController.text.trim(),
                 createTimestamp: widget.bot.createTimestamp,
                 modifyTimestamp: DateTime.now(),
@@ -370,6 +224,149 @@ class _EditAIBotPageState extends State<EditBotPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNameInput(double? fontSize) {
+    return TextField(
+      controller: nameController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterBotName,
+        hintStyle: TextStyle(fontSize: fontSize),
+        prefixIcon: Icon(
+          Icons.smart_toy_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+      ),
+    );
+  }
+
+  Widget _buildProviderInput(double? fontSize) {
+    return TextField(
+      controller: providerController,
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          Icons.business_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        enabled: false,
+      ),
+    );
+  }
+
+  Widget _buildApiTypeInput(double? fontSize) {
+    return TextField(
+      controller: apiTypeController,
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          Icons.category_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        enabled: false,
+      ),
+    );
+  }
+
+  Widget _buildApiAddressInput(double? fontSize) {
+    return TextField(
+      controller: baseURLController,
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          Icons.link_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        enabled: false,
+      ),
+    );
+  }
+
+  Widget _buildApiKeyInput(double? fontSize) {
+    return TextField(
+      controller: apiKeyController,
+      obscureText: true,
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          Icons.key_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        enabled: false,
+      ),
+    );
+  }
+
+  Widget _buildModelsInput(double? fontSize) {
+    return TextField(
+      controller: selectedModelController,
+      decoration: InputDecoration(
+        prefixIcon: Icon(
+          Icons.auto_awesome_rounded,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        enabled: false,
+      ),
+    );
+  }
+
+  Widget _buildSystemPromptInput(double? fontSize) {
+    return TextField(
+      controller: systemPromptController,
+      decoration: InputDecoration(
+        hintText: S.of(context).enterSystemPrompt,
+        hintStyle: TextStyle(fontSize: fontSize),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+      ),
+      maxLines: 6,
     );
   }
 }
