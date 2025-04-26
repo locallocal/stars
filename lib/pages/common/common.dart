@@ -11,6 +11,29 @@ void showSnackBar(BuildContext context, String message) {
   );
 }
 
+void showWarningSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 24,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          SizedBox(width: 16),
+          Text(message),
+        ],
+      ),
+      duration: const Duration(seconds: 5),
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
+      backgroundColor: Theme.of(context).colorScheme.onSurface,
+    ),
+  );
+}
+
 // 构建分组容器
 Widget buildSectionContainer(
   BuildContext context,

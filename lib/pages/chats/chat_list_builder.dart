@@ -39,7 +39,11 @@ class ChatListBuilder extends StatelessWidget {
             color: Theme.of(context).colorScheme.secondary,
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20.0),
-            child: const Icon(Icons.delete),
+            child: Icon(
+              Icons.delete,
+              size: 24,
+              color: Theme.of(context).colorScheme.error,
+            ),
           ),
           direction: DismissDirection.endToStart,
           confirmDismiss: (direction) async {

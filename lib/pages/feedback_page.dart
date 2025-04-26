@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/services/api_service.dart';
+import 'package:bubble/pages/common/common.dart';
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
@@ -10,44 +11,36 @@ class FeedbackPage extends StatefulWidget {
 }
 
 class _FeedbackPageState extends State<FeedbackPage> {
-  final TextEditingController _feedbackController = TextEditingController();
-  final TextEditingController _contactController = TextEditingController();
+  final TextEditingController feedbackController = TextEditingController();
+  final TextEditingController contactController = TextEditingController();
   bool _isSubmitting = false;
-  String? _errorMessage;
 
   @override
   void dispose() {
-    _feedbackController.dispose();
-    _contactController.dispose();
+    feedbackController.dispose();
+    contactController.dispose();
     super.dispose();
   }
 
   Future<void> _submitFeedback() async {
-    if (_feedbackController.text.trim().isEmpty) {
-      setState(() {
-        _errorMessage = S.of(context).feedbackContentRequired;
-      });
+    if (feedbackController.text.trim().isEmpty || _isSubmitting) {
       return;
     }
-
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     try {
       // 调用API服务发送反馈
       await ApiService.submitFeedback(
-        content: _feedbackController.text.trim(),
-        contact: _contactController.text.trim(),
+        content: feedbackController.text.trim(),
+        contact: contactController.text.trim(),
       );
-
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       setState(() {
         _isSubmitting = false;
-        _errorMessage = S.of(context).feedbackSubmitError;
       });
     }
   }
@@ -72,102 +65,99 @@ class _FeedbackPageState extends State<FeedbackPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              S.of(context).feedbackDescription,
-              style: TextStyle(
-                fontSize: fontSize,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: _feedbackController,
-                maxLines: 8,
-                decoration: InputDecoration(
-                  hintText: S.of(context).feedbackHint,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 12,
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(24.0),
-              ),
-              child: TextField(
-                controller: _contactController,
-                decoration: InputDecoration(
-                  hintText: S.of(context).contactInfoHint,
-                  hintStyle: TextStyle(fontSize: fontSize),
-                  fillColor: Theme.of(context).colorScheme.secondary,
-                  focusColor: Theme.of(context).colorScheme.secondary,
-                  hoverColor: Theme.of(context).colorScheme.secondary,
-                  prefixIcon: const Icon(Icons.email),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: fontSize! - 2,
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitFeedback,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.onSurface,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-                child:
-                    _isSubmitting
-                        ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(context).colorScheme.surface,
-                          ),
-                        )
-                        : Text(
-                          S.of(context).submitFeedback,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize:
-                                Theme.of(context).textTheme.bodyLarge?.fontSize,
-                            color: Theme.of(context).colorScheme.surface,
-                          ),
-                        ),
-              ),
-            ),
+            // 基本信息分组
+            buildSectionContainer(context, '反馈信息', [
+              _buildFeedbacktInput(fontSize),
+              _buildContactInput(fontSize),
+            ]),
           ],
         ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.onSurface,
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.0),
+              side: BorderSide.none,
+            ),
+          ),
+          onPressed: () {
+            if (feedbackController.text.trim().isNotEmpty) {
+              _submitFeedback();
+            } else if (!_isSubmitting) {
+              showWarningSnackBar(context, S.of(context).fillRequiredFields);
+            }
+          },
+          child:
+              _isSubmitting
+                  ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                  )
+                  : Text(
+                    S.of(context).submitFeedback,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSize,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                  ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedbacktInput(double? fontSize) {
+    return TextField(
+      controller: feedbackController,
+      decoration: InputDecoration(
+        hintText: S.of(context).feedbackDescription,
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+      ),
+      maxLines: 6,
+    );
+  }
+
+  Widget _buildContactInput(double? fontSize) {
+    return TextField(
+      controller: contactController,
+      decoration: InputDecoration(
+        hintText: S.of(context).contactInfoHint,
+        hintStyle: TextStyle(
+          fontSize: fontSize,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+        ),
+        prefixIcon: Icon(
+          Icons.email,
+          size: 24,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 0, style: BorderStyle.none),
+          borderRadius: BorderRadius.all(Radius.circular(24.0)),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }

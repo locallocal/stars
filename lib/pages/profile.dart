@@ -251,7 +251,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   S.of(context).fontSizeSettings,
                   S.of(context).adjustAppFontSize,
                   _showFontSizeDialog,
-                  showSlider: true,
                 ),
                 Padding(
                   padding: const EdgeInsets.only(
@@ -361,11 +360,25 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             content: TextField(
               controller: controller,
-              style: TextStyle(fontSize: _fontSize),
               decoration: InputDecoration(
-                hintText: S.of(context).enterNewName,
-                labelStyle: TextStyle(fontSize: _fontSize - 2),
-                hintStyle: TextStyle(fontSize: _fontSize - 2),
+                hintText: S.of(context).enterBotName,
+                hintStyle: TextStyle(
+                  fontSize: _fontSize,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.3),
+                ),
+                prefixIcon: Icon(
+                  Icons.person_rounded,
+                  size: 24,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(width: 0, style: BorderStyle.none),
+                  borderRadius: BorderRadius.all(Radius.circular(24.0)),
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.secondary,
               ),
             ),
             actions: [
@@ -528,9 +541,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         value: tempFontSize,
                         min: 12.0,
                         max: 24.0,
-                        divisions: 6,
+                        divisions: 12,
                         activeColor: Theme.of(context).colorScheme.onSurface,
-                        inactiveColor: Theme.of(context).colorScheme.secondary,
+                        inactiveColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.3),
                         label: tempFontSize.round().toString(),
                         onChanged: (value) {
                           setState(() {
@@ -771,7 +786,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12.0),
+      borderRadius: BorderRadius.circular(16.0),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(

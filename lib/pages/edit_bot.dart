@@ -33,6 +33,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
 
   late String selectedProvider;
   late String selectedModel;
+  bool _isPasswordVisible = false;
   File? avatarImage;
 
   @override
@@ -311,7 +312,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildApiKeyInput(double? fontSize) {
     return TextField(
       controller: apiKeyController,
-      obscureText: true,
+      obscureText: !_isPasswordVisible,
       decoration: InputDecoration(
         prefixIcon: Icon(
           Icons.key_rounded,
@@ -324,7 +325,16 @@ class _EditAIBotPageState extends State<EditBotPage> {
         ),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surface,
-        enabled: false,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            setState(() {
+              _isPasswordVisible = !_isPasswordVisible;
+            });
+          },
+        ),
       ),
     );
   }

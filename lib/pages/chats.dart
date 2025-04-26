@@ -142,16 +142,18 @@ class _ChatListPageState extends State<ChatListPage> {
                               context,
                             ).colorScheme.onSurface.withOpacity(0.3),
                           ),
-                          fillColor: Theme.of(context).colorScheme.secondary,
-                          focusColor: Theme.of(context).colorScheme.secondary,
-                          hoverColor: Theme.of(context).colorScheme.secondary,
                           prefixIcon: const Icon(Icons.search),
                           prefixIconColor: Theme.of(
                             context,
                           ).colorScheme.onSurface.withOpacity(0.3),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12,
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 0,
+                              style: BorderStyle.none,
+                            ),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(24.0),
+                            ),
                           ),
                         ),
                       ),

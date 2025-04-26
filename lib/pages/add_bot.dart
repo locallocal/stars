@@ -267,7 +267,7 @@ class _AddBotPageState extends State<AddBotPage> {
               widget.onBotAdded(newBot);
               Navigator.pop(context);
             } else {
-              showSnackBar(context, S.of(context).fillRequiredFields);
+              showWarningSnackBar(context, S.of(context).fillRequiredFields);
             }
           },
           child: Text(

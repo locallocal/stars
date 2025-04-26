@@ -352,7 +352,7 @@ class _ChatPageState extends State<ChatPage> {
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_sweep),
+            icon: Icon(Icons.cleaning_services_rounded, size: 24),
             tooltip: S.of(context).clearChatHistory,
             onPressed: () {
               _showClearChatDialog();
