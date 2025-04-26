@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:bubble/l10n/app_localizations.dart';
@@ -46,6 +47,7 @@ class _MyAppState extends State<MyApp> {
     ProfileService.themeStream.listen((ThemeMode themeMode) {
       setState(() {
         _themeMode = themeMode;
+        _setSystemUIOverlayStyle();
       });
     });
 
@@ -84,8 +86,33 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _setSystemUIOverlayStyle() {
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor:
+            _themeMode == ThemeMode.dark
+                ? Colors
+                    .grey
+                    .shade900 // 暗色模式下与surface颜色一致
+                : Colors.grey.shade100,
+        statusBarIconBrightness:
+            _themeMode == ThemeMode.dark
+                ? Brightness
+                    .light // 暗色模式下状态栏图标为亮色
+                : Brightness.dark, // 亮色模式下状态栏图标为暗色
+        systemNavigationBarIconBrightness:
+            _themeMode == ThemeMode.dark
+                ? Brightness
+                    .light // 暗色模式下导航栏图标为亮色
+                : Brightness.dark,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    _setSystemUIOverlayStyle();
     return MaterialApp(
       title: 'Bubble',
       theme: ThemeData(
@@ -172,7 +199,7 @@ class _MainPageState extends State<MainPage> {
       body: _pages[_currentIndex],
       bottomNavigationBar: DotCurvedBottomNav(
         scrollController: _scrollController,
-        hideOnScroll: true,
+        hideOnScroll: false,
         indicatorColor: Theme.of(context).colorScheme.onSurface,
         backgroundColor: Theme.of(context).colorScheme.secondary,
         animationDuration: const Duration(milliseconds: 200), // 缩短动画时间
