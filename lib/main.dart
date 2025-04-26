@@ -205,7 +205,7 @@ class _MainPageState extends State<MainPage> {
         animationDuration: const Duration(milliseconds: 200), // 缩短动画时间
         animationCurve: Curves.easeInOut, // 使用更平滑的动画曲线
         selectedIndex: _currentIndex,
-        indicatorSize: 5,
+        indicatorSize: 6,
         borderRadius: 24,
         height: 70,
         onTap: (index) {
