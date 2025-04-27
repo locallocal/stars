@@ -38,9 +38,7 @@ class AttachmentBars extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -68,9 +66,7 @@ class AttachmentBars extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -98,9 +94,7 @@ class AttachmentBars extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(

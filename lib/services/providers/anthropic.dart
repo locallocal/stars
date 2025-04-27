@@ -5,6 +5,10 @@ import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
 
 class Anthropic extends Provider {
+  static const String defaultApiModelsUrl =
+      'https://api.anthropic.com/v1/models';
+  static const String defaultApiChatUrl =
+      'https://api.anthropic.com/v1/messages';
   Anthropic(super.bot);
 
   @override
@@ -42,9 +46,7 @@ class Anthropic extends Provider {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/models'
-            : 'https://api.anthropic.com/v1/models';
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
     // 添加limit参数，设置为1000
     final uri = Uri.parse(url).replace(queryParameters: {'limit': '1000'});
 
@@ -62,7 +64,10 @@ class Anthropic extends Provider {
       );
     }
     final data = jsonDecode(utf8.decode(response.bodyBytes));
-    return data['data'].map<String>((model) => model['id']).toList();
+    final models =
+        (data['data'] as List).map((model) => model['id'] as String).toList();
+    models.sort();
+    return models;
   }
 
   @override
@@ -70,9 +75,7 @@ class Anthropic extends Provider {
     try {
       // 重置取消状态
       resetCancelState();
-
-      final url = getMessageUrl();
-
+      final url = _getMessageUrl();
       // 获取格式化的消息
       final formattedMessages = formatMessages(messages);
 
@@ -88,6 +91,7 @@ class Anthropic extends Provider {
               'messages': formattedMessages['messages'],
               'system': formattedMessages['system'],
               'stream': true,
+              'max_tokens': _getMaxTokens(),
               if (deepThinking)
                 'thinking': {"type": "enabled", "budget_tokens": 16000},
             });
@@ -103,6 +107,10 @@ class Anthropic extends Provider {
       });
 
       await for (final line in stream) {
+        print(line);
+        if (line.contains('error')) {
+          throw Exception('Anthropic API Error: $line');
+        }
         // 检查是否已取消
         if (isCancelled) break;
 
@@ -116,7 +124,7 @@ class Anthropic extends Provider {
               final delta = data['delta'];
               if (delta['type'] == 'text_delta') {
                 onResponse(delta['text']);
-              } else if (delta['type'] == 'text_delta' && deepThinking) {
+              } else if (delta['type'] == 'thinking_delta' && deepThinking) {
                 onReasoningResponse!(delta['thinking']);
               }
             }
@@ -194,9 +202,28 @@ class Anthropic extends Provider {
     return {'system': systemPrompt, 'messages': anthropicMessages};
   }
 
-  String getMessageUrl() {
+  String _getMessageUrl() {
     return bot.baseURL.isNotEmpty
-        ? '${bot.baseURL}/messages'
-        : 'https://api.anthropic.com/v1/messages';
+        ? '${bot.baseURL}messages'
+        : defaultApiChatUrl;
+  }
+
+  int _getMaxTokens() {
+    switch (bot.model.toLowerCase()) {
+      case 'claude-3-7-sonnet-latest':
+      case 'claude-3-7-sonnet-20250219':
+        return 64000;
+      case 'claude-3-5-haiku-latest':
+      case 'claude-3-5-haiku-20241022':
+      case 'claude-3-5-sonnet-latest':
+      case 'claude-3-5-sonnet-20241022':
+      case 'claude-3-5-sonnet-20240620':
+        return 8192;
+      case 'claude-3-opus-latest':
+      case 'claude-3-opus-20240229':
+      case 'claude-3-haiku-20240307':
+        return 4096;
+    }
+    return 4096;
   }
 }

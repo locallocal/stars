@@ -23,10 +23,10 @@ class ImageAttachments extends StatelessWidget {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16.0),
+        color: Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(24.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,11 +35,17 @@ class ImageAttachments extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 16, color: Colors.white),
+                ),
                 onPressed: onClearAll,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                iconSize: 20,
               ),
             ],
           ),
@@ -49,7 +55,6 @@ class ImageAttachments extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
                 Text(
                   S.of(context).attachedImages,
                   style: TextStyle(
@@ -69,7 +74,7 @@ class ImageAttachments extends StatelessWidget {
                           Container(
                             margin: const EdgeInsets.only(right: 8.0),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12.0),
+                              borderRadius: BorderRadius.circular(16.0),
                               child: Image.file(
                                 images[index],
                                 height: 90,
@@ -80,7 +85,7 @@ class ImageAttachments extends StatelessWidget {
                           ),
                           Positioned(
                             top: 0,
-                            right: 8,
+                            right: 6,
                             child: GestureDetector(
                               onTap: () => onRemoveImage(index),
                               child: Container(
@@ -110,7 +115,7 @@ class ImageAttachments extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
+                if (images.isNotEmpty) const SizedBox(height: 8),
                 Text(
                   S.of(context).attachedFiles,
                   style: TextStyle(

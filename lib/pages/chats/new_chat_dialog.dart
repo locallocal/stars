@@ -14,89 +14,117 @@ class NewChatDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Center(
-        child: Text(
-          S.of(context).newChat,
-          style: TextStyle(
-            fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-            fontWeight: FontWeight.bold,
-          ),
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+
+    return Dialog(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
         ),
-      ),
-      content: SizedBox(
-        width: double.maxFinite,
-        height: MediaQuery.of(context).size.height * 0.6,
-        child: FutureBuilder<List<Bot>>(
-          future: BotService.getBots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text(S.of(context).noBotsAvailable));
-            }
-
-            final bots = snapshot.data!;
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: bots.length,
-              itemBuilder: (context, index) {
-                final bot = bots[index];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 0),
-                  leading: CircleAvatar(
-                    radius: 24,
-                    backgroundColor:
-                        bot.avatar.isEmpty
-                            ? getFrostedProviderColor(
-                              bot.provider,
-                              Theme.of(context).colorScheme.primary,
-                            )
-                            : Theme.of(context).colorScheme.primary,
-                    backgroundImage:
-                        bot.avatar.isNotEmpty
-                            ? FileImage(File(bot.avatar))
-                            : null,
-                    child:
-                        bot.avatar.isEmpty
-                            ? buildProviderLogo(context, '', bot.provider, 24)
-                            : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Center(
+                child: Text(
+                  S.of(context).newChat,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.bold,
                   ),
-                  title: Text(
-                    bot.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text('${bot.provider}-${bot.model}'),
-                  onTap: () async {
-                    Navigator.pop(context);
-
-                    final id = 'chat_${DateTime.now().millisecondsSinceEpoch}';
-                    final newChat = Chat(
-                      id: id,
-                      botId: bot.id,
-                      lastMessage: '',
-                      lastMessageTimestamp: DateTime.now(),
-                      createTimestamp: DateTime.now(),
-                      modifyTimestamp: DateTime.now(),
-                    );
-                    await ChatService.addChat(newChat);
-
-                    if (context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatPage(id: id, bot: bot),
-                        ),
-                      ).then((_) {
-                        onChatCreated();
-                      });
+                ),
+              ),
+            ),
+            Flexible(
+              child: Scrollbar(
+                thumbVisibility: true,
+                thickness: 6.0,
+                radius: const Radius.circular(10.0),
+                child: FutureBuilder<List<Bot>>(
+                  future: BotService.getBots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
                     }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(child: Text(S.of(context).noBotsAvailable));
+                    }
+
+                    final bots = snapshot.data!;
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: bots.length,
+                      itemBuilder: (context, index) {
+                        final bot = bots[index];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
+                          leading: CircleAvatar(
+                            radius: 24,
+                            backgroundColor:
+                                bot.avatar.isEmpty
+                                    ? getFrostedProviderColor(
+                                      bot.provider,
+                                      Theme.of(context).colorScheme.primary,
+                                    )
+                                    : Theme.of(context).colorScheme.primary,
+                            backgroundImage:
+                                bot.avatar.isNotEmpty
+                                    ? FileImage(File(bot.avatar))
+                                    : null,
+                            child:
+                                bot.avatar.isEmpty
+                                    ? buildProviderLogo(
+                                      context,
+                                      '',
+                                      bot.provider,
+                                      24,
+                                    )
+                                    : null,
+                          ),
+                          title: Text(
+                            bot.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text('${bot.provider}-${bot.model}'),
+                          onTap: () async {
+                            Navigator.pop(context);
+
+                            final id =
+                                'chat_${DateTime.now().millisecondsSinceEpoch}';
+                            final newChat = Chat(
+                              id: id,
+                              botId: bot.id,
+                              lastMessage: '',
+                              lastMessageTimestamp: DateTime.now(),
+                              createTimestamp: DateTime.now(),
+                              modifyTimestamp: DateTime.now(),
+                            );
+                            await ChatService.addChat(newChat);
+
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => ChatPage(id: id, bot: bot),
+                                ),
+                              ).then((_) {
+                                onChatCreated();
+                              });
+                            }
+                          },
+                        );
+                      },
+                    );
                   },
-                );
-              },
-            );
-          },
+                ),
+              ),
+            ),
+            SizedBox(height: 24),
+          ],
         ),
       ),
     );

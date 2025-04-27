@@ -215,7 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: Text(
-                    '外观设置',
+                    '系统设置',
                     style: TextStyle(
                       fontSize: _fontSize,
                       fontWeight: FontWeight.bold,

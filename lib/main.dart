@@ -92,20 +92,12 @@ class _MyAppState extends State<MyApp> {
         statusBarColor: Colors.transparent,
         systemNavigationBarColor:
             _themeMode == ThemeMode.dark
-                ? Colors
-                    .grey
-                    .shade900 // 暗色模式下与surface颜色一致
+                ? Colors.grey.shade900
                 : Colors.grey.shade100,
         statusBarIconBrightness:
-            _themeMode == ThemeMode.dark
-                ? Brightness
-                    .light // 暗色模式下状态栏图标为亮色
-                : Brightness.dark, // 亮色模式下状态栏图标为暗色
+            _themeMode == ThemeMode.dark ? Brightness.light : Brightness.dark,
         systemNavigationBarIconBrightness:
-            _themeMode == ThemeMode.dark
-                ? Brightness
-                    .light // 暗色模式下导航栏图标为亮色
-                : Brightness.dark,
+            _themeMode == ThemeMode.dark ? Brightness.light : Brightness.dark,
       ),
     );
   }
@@ -209,6 +201,8 @@ class _MainPageState extends State<MainPage> {
         borderRadius: 24,
         height: 70,
         onTap: (index) {
+          // 添加震动反馈
+          HapticFeedback.lightImpact();
           setState(() {
             _currentIndex = index;
           });
