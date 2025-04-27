@@ -22,7 +22,7 @@ class ChatModelFeatures extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, left: 16.0, right: 16.0),
+      padding: const EdgeInsets.only(top: 16, left: 16.0, right: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [

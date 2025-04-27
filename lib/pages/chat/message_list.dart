@@ -175,28 +175,32 @@ class MessageList extends StatelessWidget {
                                     },
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
-                                      child: Image.file(
-                                        File(imagePath),
-                                        width: 150,
-                                        height: 150,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Container(
-                                            width: 150,
-                                            height: 150,
-                                            color: Colors.grey[300],
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.broken_image,
-                                                color: Colors.grey,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: 150,
+                                          maxHeight: 200,
+                                        ),
+                                        child: Image.file(
+                                          File(imagePath),
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Container(
+                                              width: 75,
+                                              height: 75,
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
                                   );

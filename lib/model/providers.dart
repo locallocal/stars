@@ -110,7 +110,7 @@ final providersInfo = {
   },
   'MiniMax': {
     'api_type': Bot.apiTypeMiniMax,
-    'base_url': 'https://api.minimaxi.chat/v1/',
+    'base_url': 'https://api.minimax.chat/v1/',
   },
   'Mistral': {
     'api_type': Bot.apiTypeMistral,
