@@ -224,6 +224,9 @@ class Message {
   final String reasoning;
   final List<String> images; // 图片路径列表
   final List<String> files; // 文件路径列表
+  final String audio;
+  final String music;
+  final String video;
   final DateTime timestamp;
 
   const Message({
@@ -234,6 +237,9 @@ class Message {
     this.reasoning = '',
     this.images = const [],
     this.files = const [],
+    this.audio = '',
+    this.music = '',
+    this.video = '',
     required this.timestamp,
   });
 
@@ -276,6 +282,9 @@ class Message {
       reasoning: map['reasoning'] as String,
       images: imagesList,
       files: filesList,
+      audio: map['audio'] as String,
+      music: map['music'] as String,
+      video: map['video'] as String,
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
     );
   }
@@ -289,6 +298,9 @@ class Message {
       'reasoning': reasoning,
       'images': jsonEncode(images),
       'files': jsonEncode(files),
+      'audio': audio,
+      'music': music,
+      'video': video,
       'timestamp': timestamp.millisecondsSinceEpoch,
     };
   }

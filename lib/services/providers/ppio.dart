@@ -67,7 +67,7 @@ class PPIO extends Provider {
   }
 
   @override
-  Future<void> sendMessageStream(List<ChatMessage> messages) async {
+  Future<void> generateText(List<ChatMessage> messages) async {
     try {
       // 重置取消状态
       resetCancelState();

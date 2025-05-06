@@ -132,6 +132,9 @@ class _ChatPageState extends State<ChatPage> {
         _selectedImageSize.isNotEmpty) {
       await _generateImage();
       return;
+    } else if (_provider.getOutputModalites().contains(OutputModality.speech)) {
+      await _generateSpeech();
+      return;
     }
     await _generateText();
   }
@@ -232,7 +235,7 @@ class _ChatPageState extends State<ChatPage> {
           files: userMessage.files,
         ),
       );
-      await _provider.sendMessageStream(chatMessages);
+      await _provider.generateText(chatMessages);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -668,6 +671,84 @@ class _ChatPageState extends State<ChatPage> {
     } catch (e) {
       if (mounted) {
         showSnackBar(context, S.of(context).generateImageFailed(e.toString()));
+      }
+    } finally {
+      setState(() {
+        _isTyping = false;
+        _isCancellable = false;
+      });
+    }
+  }
+
+  Future<void> _generateSpeech() async {
+    final prompt = _messageController.text.trim();
+    if (prompt.isEmpty) {
+      showSnackBar(context, '请输入语音描述');
+      return;
+    }
+    setState(() {
+      _isTyping = true;
+      _isCancellable = false;
+    });
+
+    try {
+      // 创建用户消息记录
+      final userMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: _currentUserId,
+        content: prompt,
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(userMessage);
+        _messageController.clear();
+      });
+      // 保存消息到数据库
+      await MessageService.addMessage(userMessage);
+      await ChatService.updateLastMessage(widget.id, userMessage.content);
+
+      // 获取语音类型列表
+      List<String> voiceTypes = [];
+      try {
+        voiceTypes = _provider.getSupportVoicTypes();
+      } catch (e) {
+        // 忽略不支持的方法调用
+      }
+
+      // 使用默认语音类型或第一个可用的语音类型
+      String voiceType = '';
+      if (voiceTypes.isNotEmpty) {
+        voiceType = voiceTypes.first;
+      }
+
+      // 调用模型生成语音
+      var outputDirPath = await getChatDirectoryPath(widget.id);
+      final audioPath = await _provider.generateSpeech(
+        prompt,
+        voiceType,
+        outputDirPath,
+      );
+      // 创建机器人回复消息
+      final botMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: widget.bot.id,
+        content: '',
+        audio: audioPath,
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(botMessage);
+      });
+      await MessageService.addMessage(botMessage);
+
+      if (mounted) {
+        await ChatService.updateLastMessage(widget.id, '语音已生成');
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(context, '生成语音失败：$e');
       }
     } finally {
       setState(() {

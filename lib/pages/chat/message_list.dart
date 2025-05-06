@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:bubble/model/model.dart';
+import 'package:bubble/pages/chat/audio_player_widget.dart';
 import 'package:bubble/pages/common/common.dart';
 
 class MessageList extends StatelessWidget {
@@ -254,6 +255,10 @@ class MessageList extends StatelessWidget {
                                 );
                               }).toList(),
                         ),
+
+                      // 展示语音文件并支持播放和暂停
+                      if (message.audio.isNotEmpty)
+                        AudioPlayerWidget(audioFilePath: message.audio),
                     ],
                   ),
                 ),

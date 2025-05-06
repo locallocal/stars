@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
@@ -18,6 +19,55 @@ class MiniMax extends Provider {
   static const String defaultApiImageUrl =
       'https://api.minimax.chat/v1/image_generation';
   MiniMax(super.bot);
+
+  static const Map<String, String> voiceTypes = {
+    '青涩青年音色': 'male-qn-qingse',
+    '精英青年音色': 'male-qn-jingying',
+    '霸道青年音色': 'male-qn-badao',
+    '青年大学生音色': 'male-qn-daxuesheng',
+    '少女音色': 'female-shaonv',
+    '御姐音色': 'female-yujie',
+    '成熟女性音色': 'female-chengshu',
+    '甜美女性音色': 'female-tianmei',
+    '男性主持人': 'presenter_male',
+    '女性主持人': 'presenter_female',
+    '男性有声书1': 'audiobook_male_1',
+    '男性有声书2': 'audiobook_male_2',
+    '女性有声书1': 'audiobook_female_1',
+    '女性有声书2': 'audiobook_female_2',
+    '青涩青年音色-beta': 'male-qn-qingse-jingpin',
+    '精英青年音色-beta': 'male-qn-jingying-jingpin',
+    '霸道青年音色-beta': 'male-qn-badao-jingpin',
+    '青年大学生音色-beta': 'male-qn-daxuesheng-jingpin',
+    '少女音色-beta': 'female-shaonv-jingpin',
+    '御姐音色-beta': 'female-yujie-jingpin',
+    '成熟女性音色-beta': 'female-chengshu-jingpin',
+    '甜美女性音色-beta': 'female-tianmei-jingpin',
+    '聪明男童': 'clever_boy',
+    '可爱男童': 'cute_boy',
+    '萌萌女童': 'lovely_girl',
+    '卡通猪小琪': 'cartoon_pig',
+    '病娇弟弟': 'bingjiao_didi',
+    '俊朗男友': 'junlang_nanyou',
+    '纯真学弟': 'chunzhen_xuedi',
+    '冷淡学长': 'lengdan_xiongzhang',
+    '霸道少爷': 'badao_shaoye',
+    '甜心小玲': 'tianxin_xiaoling',
+    '俏皮萌妹': 'qiaopi_mengmei',
+    '妩媚御姐': 'wumei_yujie',
+    '嗲嗲学妹': 'diadia_xuemei',
+    '淡雅学姐': 'danya_xuejie',
+    'Santa Claus': 'Santa_Claus',
+    'Grinch': 'Grinch',
+    'Rudolph': 'Rudolph',
+    'Arnold': 'Arnold',
+    'Charming Santa': 'Charming_Santa',
+    'Charming Lady': 'Charming_Lady',
+    'Sweet Girl': 'Sweet_Girl',
+    'Cute Elf': 'Cute_Elf',
+    'Attractive Girl': 'Attractive_Girl',
+    'Serene Woman': 'Serene_Woman',
+  };
 
   @override
   bool supportWebSearch() {
@@ -98,7 +148,7 @@ class MiniMax extends Provider {
   }
 
   @override
-  Future<void> sendMessageStream(List<ChatMessage> messages) async {
+  Future<void> generateText(List<ChatMessage> messages) async {
     try {
       resetCancelState();
 
@@ -269,5 +319,75 @@ class MiniMax extends Provider {
     } catch (e) {
       throw Exception('Generate image failed: $e');
     }
+  }
+
+  @override
+  List<String> getSupportVoicTypes() {
+    return voiceTypes.keys.toList();
+  }
+
+  @override
+  Future<String> generateSpeech(
+    String prompt,
+    String voiceType,
+    String outputDirPath,
+  ) async {
+    if (voiceType.isEmpty) {
+      voiceType = 'male-qn-qingse';
+    } else {
+      voiceType = voiceTypes[voiceType] ?? voiceType;
+    }
+    final url =
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}t2a_v2' : defaultApiSpeechUrl;
+
+    final request =
+        http.Request('POST', Uri.parse(url))
+          ..headers.addAll({
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': 'Bearer ${bot.apiKey}',
+          })
+          ..body = jsonEncode({
+            'model': bot.model,
+            'stream': false,
+            'text': prompt,
+            'voice_setting': {'voice_id': voiceType},
+            'audio_setting': {'format': 'mp3'},
+            'output_format': 'hex',
+          });
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      final errorBody = await response.stream.bytesToString();
+      throw Exception(
+        'Generate speech failed, ${response.statusCode}, $errorBody',
+      );
+    }
+
+    final responseBytes = await response.stream.toBytes();
+    final data = jsonDecode(utf8.decode(responseBytes));
+    if (data['base_resp']['status_code'] != 0) {
+      throw Exception(
+        'Generate speech failed: ${data['base_resp']['status_msg']}',
+      );
+    }
+
+    // 解析十六进制字符串为字节数据
+    final audioHex = data['data']['audio'];
+    final audioBytes = _hexToBytes(audioHex);
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final fileName = 'minimax_speech_$timestamp.mp3';
+    final filePath = '$outputDirPath/$fileName';
+    final file = File(filePath);
+    await file.writeAsBytes(audioBytes);
+    return filePath;
+  }
+
+  // 将十六进制字符串转换为字节数组
+  Uint8List _hexToBytes(String hex) {
+    final bytes = Uint8List(hex.length ~/ 2);
+    for (var i = 0; i < hex.length; i += 2) {
+      bytes[i ~/ 2] = int.parse(hex.substring(i, i + 2), radix: 16);
+    }
+    return bytes;
   }
 }

@@ -67,7 +67,7 @@ class Mistral extends Provider {
   }
 
   @override
-  Future<void> sendMessageStream(List<ChatMessage> messages) async {
+  Future<void> generateText(List<ChatMessage> messages) async {
     await _sendRequest(messages, true);
   }
 

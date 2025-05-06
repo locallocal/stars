@@ -45,6 +45,9 @@ class DatabaseService {
             reasoning TEXT,
             images TEXT,
             files TEXT,
+            audio TEXT,
+            music TEXT,
+            video TEXT,
             timestamp INTEGER
           );
         ''');

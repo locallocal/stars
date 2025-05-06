@@ -137,7 +137,7 @@ abstract class Provider {
   }
 
   // 发送消息并获取流式响应
-  Future<void> sendMessageStream(List<ChatMessage> messages);
+  Future<void> generateText(List<ChatMessage> messages);
 
   List<String> getImageStyles() {
     return [];
@@ -147,7 +147,6 @@ abstract class Provider {
     return [];
   }
 
-  // 生成图片
   Future<List<String>> generateImage(
     String prompt,
     String size,
@@ -157,6 +156,19 @@ abstract class Provider {
   }) async {
     // 默认实现抛出异常，子类可以覆盖此方法
     throw UnsupportedError('${bot.apiType} Not support generate image');
+  }
+
+  List<String> getSupportVoicTypes() {
+    return [];
+  }
+
+  Future<String> generateSpeech(
+    String prompt,
+    String voiceType,
+    String outputDirPath,
+  ) async {
+    // 默认实现抛出异常，子类可以覆盖此方法
+    throw UnsupportedError('${bot.apiType} Not support generate speech');
   }
 
   // 取消当前请求
