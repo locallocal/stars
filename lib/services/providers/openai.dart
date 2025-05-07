@@ -150,7 +150,9 @@ class OpenAI extends Provider {
         models.sort();
         return models;
       } else {
-        throw Exception('List models failed: ${response.statusCode}');
+        throw Exception(
+          'List models failed: ${response.statusCode}- ${response.body}',
+        );
       }
     } on TimeoutException {
       throw Exception('List models Timeout, retry later.');

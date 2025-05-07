@@ -1,13 +1,14 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/providers.dart';
 
-class VolcanoEngine extends Provider {
+class Moonshot extends Provider {
+  static const String defaultApiModelsUrl = 'https://api.moonshot.cn/v1/models';
   static const String defaultApiChatUrl =
-      'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
-
-  VolcanoEngine(super.bot);
+      'https://api.moonshot.cn/v1/chat/completions';
+  Moonshot(super.bot);
 
   @override
   bool supportWebSearch() {
@@ -16,7 +17,7 @@ class VolcanoEngine extends Provider {
 
   @override
   bool supportDeepThinking() {
-    if (bot.model.contains('thinking')) {
+    if (bot.model.toLowerCase().contains('thinking')) {
       return true;
     }
     return false;
@@ -24,14 +25,8 @@ class VolcanoEngine extends Provider {
 
   @override
   List<InputModality> getInputModalites() {
-    switch (bot.model) {
-      case 'doubao-1-5-thinking-pro-m-250415':
-      case 'doubao-1.5-vision-pro-250328':
-      case 'doubao-1-5-vision-pro-32k-250115':
-      case 'doubao-1.5-vision-lite-250315':
-      case 'doubao-vision-pro-32k-241028':
-      case 'doubao-vision-lite-32k-241015':
-        return [InputModality.text, InputModality.image];
+    if (bot.model.toLowerCase().contains('vision')) {
+      return [InputModality.text, InputModality.image];
     }
     return [InputModality.text];
   }
@@ -43,44 +38,46 @@ class VolcanoEngine extends Provider {
 
   @override
   Future<List<String>> listModels() async {
-    return const [
-      'doubao-1-5-thinking-pro-250415',
-      'doubao-1-5-thinking-pro-m-250415',
-      'doubao-1.5-vision-pro-250328',
-      'doubao-1-5-vision-pro-32k-250115',
-      'doubao-1-5-pro-256k-250115',
-      'doubao-1-5-pro-32k-250115',
-      'doubao-1-5-lite-32k-250115',
-      'doubao-1.5-vision-lite-250315',
-      'doubao-vision-pro-32k-241028',
-      'doubao-vision-lite-32k-241015',
-      'doubao-pro-256k-241115',
-      'doubao-pro-32k-241215',
-      'doubao-pro-32k-240828',
-      'doubao-pro-32k-240615',
-      'doubao-lite-32k-240828',
-      'doubao-lite-128k-240828',
-      'deepseek-r1-250120',
-      'deepseek-v3-241226',
-      'deepseek-r1-distill-qwen-7b-250120',
-      'deepseek-r1-distill-qwen-32b-250120',
-      'mistral-7b-instruct-v0.2',
-      'chatglm3-130b-fc-v1.0',
-      'moonshot-v1-128k',
-      'moonshot-v1-32k',
-      'moonshot-v1-8k',
-    ];
+    final url =
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final models =
+            (data['data'] as List)
+                .map((model) => model['id'] as String)
+                .toList();
+        models.sort();
+        return models;
+      } else {
+        throw Exception(
+          'List models failed: ${response.statusCode}- ${response.body}',
+        );
+      }
+    } on TimeoutException {
+      throw Exception('List models Timeout, retry later.');
+    } catch (e) {
+      throw Exception('List models failed: $e');
+    }
   }
 
   @override
   Future<void> generateText(List<ChatMessage> messages) async {
     try {
+      // 重置取消状态
       resetCancelState();
-
       final url =
           bot.baseURL.isNotEmpty
               ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
+
       final request =
           http.Request('POST', Uri.parse(url))
             ..headers.addAll({
@@ -90,6 +87,7 @@ class VolcanoEngine extends Provider {
             ..body = jsonEncode({
               'model': bot.model,
               'messages': processMessagesWithImages(messages),
+              'response_format': {'type': 'text'},
               'stream': true,
             });
 
@@ -97,21 +95,15 @@ class VolcanoEngine extends Provider {
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
-
       cancelController?.stream.listen((_) {
         cancelController?.close();
       });
 
+      var responseContent = '';
       await for (final line in stream) {
+        // 检查是否已取消
         if (isCancelled) break;
-        if (line.contains('error')) {
-          final data = jsonDecode(line);
-          if (data['error'] != null && onError != null) {
-            throw Exception(
-              'Code: ${data['error']['code']}, Message: ${data['error']['message']}',
-            );
-          }
-        }
+        responseContent += line;
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6);
@@ -122,26 +114,33 @@ class VolcanoEngine extends Provider {
             }
             return;
           }
+
           try {
             final data = jsonDecode(jsonStr);
-            if (deepThinking &&
-                data['choices'][0]['delta'].containsKey('reasoning_content')) {
-              final reasoning =
+            if (deepThinking) {
+              // 处理深度思考的情况
+              final reasonContent =
                   data['choices'][0]['delta']['reasoning_content'] ?? '';
-              if (reasoning.isNotEmpty && onReasoningResponse != null) {
-                onReasoningResponse!(reasoning);
+              if (reasonContent.isNotEmpty && onReasoningResponse != null) {
+                onReasoningResponse!(reasonContent);
               }
-              continue;
             }
-
-            final delta = data['choices'][0]['delta']['content'] ?? '';
-            if (delta.isNotEmpty) {
-              onResponse(delta);
-            }
+            final content = data['choices'][0]['delta']['content'] ?? '';
+            if (content.isEmpty) continue;
+            onResponse(content);
           } catch (e) {
             // 忽略解析错误
           }
         }
+      }
+      if (responseContent.contains('error')) {
+        final errorData = jsonDecode(responseContent);
+        final errorMessage = errorData['error']['message'];
+        final errorCode = errorData['error']['code'];
+        final errorType = errorData['error']['type'];
+        throw Exception(
+          'Send message failed: ($errorCode, $errorType) $errorMessage',
+        );
       }
 
       if (!isCancelled && onComplete != null) {
@@ -154,6 +153,7 @@ class VolcanoEngine extends Provider {
         onError!(e.toString());
       }
     } finally {
+      // 清理资源
       cancelController?.close();
       cancelController = null;
     }

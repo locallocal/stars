@@ -45,6 +45,7 @@ import 'package:bubble/services/providers/samba_nova.dart';
 import 'package:bubble/services/providers/perplexity.dart';
 import 'package:bubble/services/providers/together_ai.dart';
 import 'package:bubble/services/providers/alibaba_cloud.dart';
+import 'package:bubble/services/providers/moonshot.dart';
 
 void _defaultOnResponse(String text) {
   print(text);
@@ -271,6 +272,8 @@ abstract class Provider {
         return TogetherAI(bot);
       case Bot.apiTypeAlibabaCloud:
         return AlibabaCloud(bot);
+      case Bot.apiTypeMoonshot:
+        return Moonshot(bot);
       default:
         throw UnsupportedError('Not support api type: ${bot.apiType}');
     }

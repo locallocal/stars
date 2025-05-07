@@ -13,9 +13,7 @@ class OpenRouter extends Provider {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/models'
-            : defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
       final response = await http.get(
@@ -105,7 +103,7 @@ class OpenRouter extends Provider {
   String getMessageUrl() {
     final url =
         bot.baseURL.isNotEmpty
-            ? '${bot.baseURL}/v1/chat/completions'
+            ? '${bot.baseURL}chat/completions'
             : defaultApiChatUrl;
     return url;
   }

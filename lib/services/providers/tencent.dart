@@ -74,7 +74,7 @@ class Tencent extends Provider {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
+              ? '${bot.baseURL}chat/completions'
               : defaultApiChatUrl;
 
       final request =

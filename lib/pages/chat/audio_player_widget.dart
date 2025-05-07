@@ -42,16 +42,40 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       }
 
       // 监听播放状态变化
-      _audioPlayer.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed) {
-          setState(() {
-            _isPlaying = false;
-            // _position = Duration.zero;
-            _position = _duration;
-          });
-          // _audioPlayer.seek(Duration.zero);
-        }
-      });
+      _audioPlayer.playerStateStream.listen(
+        (state) {
+          debugPrint(
+            '播放器状态变化: ${state.processingState}, 播放中: ${state.playing}',
+          );
+
+          // 处理所有可能的状态
+          switch (state.processingState) {
+            case ProcessingState.completed:
+              if (mounted) {
+                setState(() {
+                  _isPlaying = false;
+                  _position = _duration;
+                });
+              }
+              break;
+            case ProcessingState.ready:
+              debugPrint('播放器已准备好');
+              break;
+            case ProcessingState.buffering:
+              debugPrint('播放器正在缓冲');
+              break;
+            case ProcessingState.loading:
+              debugPrint('播放器正在加载');
+              break;
+            case ProcessingState.idle:
+              debugPrint('播放器空闲中');
+              break;
+          }
+        },
+        onError: (error) {
+          debugPrint('播放器状态监听错误: $error');
+        },
+      );
 
       // 监听播放位置变化
       _audioPlayer.positionStream.listen((position) {
@@ -65,19 +89,28 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   Future<void> _togglePlay() async {
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
+    // 检查是否在结束位置附近
+    bool isNearEnd =
+        (_duration.inMilliseconds - _position.inMilliseconds) < 500;
+
     if (_isPlaying) {
       await _audioPlayer.pause();
+      setState(() {
+        _isPlaying = false;
+      });
       return;
     }
 
+    // 如果在结束位置附近且要开始播放，则重置到开始位置
+    if (isNearEnd) {
+      debugPrint('播放位置接近结束，重置到开始位置');
+      _position = Duration.zero;
+      await _audioPlayer.seek(Duration.zero);
+    }
+
+    // 开始播放
     setState(() {
-      if (_position == _duration) {
-        _position = Duration.zero;
-        _audioPlayer.seek(Duration.zero);
-      }
+      _isPlaying = true;
     });
     await _audioPlayer.play();
   }
@@ -97,46 +130,54 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // 播放/暂停按钮
-              IconButton(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            // 播放/暂停按钮
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
                 icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                color:
+                    _isPlaying
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.primary,
                 onPressed: () async {
                   _togglePlay();
                 },
               ),
-              // 显示当前播放时间
-              Text(_formatDuration(_position)),
-              const Text(' / '),
-              Text(_formatDuration(_duration)),
-            ],
-          ),
+            ),
+            SizedBox(width: 8.0),
+            // 显示当前播放时间
+            Text(_formatDuration(_position)),
+            const Text(' / '),
+            Text(_formatDuration(_duration)),
+          ],
+        ),
 
-          // 进度条
-          Slider(
-            activeColor: Theme.of(context).colorScheme.primary,
-            value: _position.inSeconds.toDouble(),
-            min: 0,
-            max:
-                _duration.inSeconds.toDouble() > 0
-                    ? _duration.inSeconds.toDouble()
-                    : 1.0,
-            onChanged: (value) {
-              final position = Duration(seconds: value.toInt());
-              _audioPlayer.seek(position);
-              setState(() {
-                _position = position;
-              });
-            },
-          ),
-        ],
-      ),
+        // 进度条
+        Slider(
+          activeColor: Theme.of(context).colorScheme.primary,
+          value: _position.inSeconds.toDouble(),
+          min: 0,
+          max:
+              _duration.inSeconds.toDouble() > 0
+                  ? _duration.inSeconds.toDouble()
+                  : 1.0,
+          onChanged: (value) {
+            final position = Duration(seconds: value.toInt());
+            _audioPlayer.seek(position);
+            setState(() {
+              _position = position;
+            });
+          },
+        ),
+      ],
     );
   }
 }

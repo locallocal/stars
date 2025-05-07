@@ -38,7 +38,7 @@ class Deepseek extends Provider {
     // deepseek-chat
     // deepseek-reasoner
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelKey;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelKey;
 
     final response = await http.get(
       Uri.parse(url),
@@ -64,7 +64,7 @@ class Deepseek extends Provider {
 
       final url =
           bot.baseURL.isNotEmpty
-              ? '${bot.baseURL}/v1/chat/completions'
+              ? '${bot.baseURL}v1/chat/completions'
               : defaultApiChatUrl;
 
       final request =
@@ -102,7 +102,6 @@ class Deepseek extends Provider {
       await for (final line in stream) {
         if (isCancelled) break;
         if (line.isEmpty) continue;
-        print(line);
 
         if (line.startsWith('data: ')) {
           final jsonStr = line.substring(6).trim();

@@ -72,6 +72,7 @@ class Bot {
   static const apiTypeSambaNova = 'sambanova';
   static const apiTypePerplexity = 'perplexity';
   static const apiTypeTogetherAI = 'togetherai';
+  static const apiTypeMoonshot = 'moonshot';
 
   final String id;
   final String name;
@@ -211,6 +212,7 @@ class Bot {
       apiTypeSambaNova,
       apiTypePerplexity,
       apiTypeTogetherAI,
+      apiTypeMoonshot,
     ];
   }
 }

@@ -47,7 +47,7 @@ final providersInfo = {
   },
   'DeepSeek': {
     'api_type': Bot.apiTypeDeepseek,
-    'base_url': 'https://api.deepseek.com',
+    'base_url': 'https://api.deepseek.com/',
   },
   'Fireworks': {
     'api_type': Bot.apiTypeFireworks,
@@ -125,8 +125,8 @@ final providersInfo = {
     'base_url': 'https://openapi.monica.im/v1/',
   },
   'Moonshot': {
-    'api_type': Bot.apiTypeOpenAI,
-    'base_url': 'https://api.moonshot.cn',
+    'api_type': Bot.apiTypeMoonshot,
+    'base_url': 'https://api.moonshot.cn/v1/',
   },
   'Nebius': {
     'api_type': Bot.apiTypeNebius,
@@ -147,7 +147,7 @@ final providersInfo = {
   },
   'OpenRouter': {
     'api_type': Bot.apiTypeOpenRouter,
-    'base_url': 'https://openrouter.ai/api',
+    'base_url': 'https://openrouter.ai/api/v1/',
   },
   'Perplexity': {
     'api_type': Bot.apiTypePerplexity,
@@ -187,7 +187,7 @@ final providersInfo = {
   },
   'Tencent': {
     'api_type': Bot.apiTypeTencent,
-    'base_url': 'https://api.hunyuan.cloud.tencent.com',
+    'base_url': 'https://api.hunyuan.cloud.tencent.com/v1/',
   },
   'TogetherAI': {
     'api_type': Bot.apiTypeTogetherAI,
@@ -195,7 +195,7 @@ final providersInfo = {
   },
   'VolcanoEngine': {
     'api_type': Bot.apiTypeVolcanoEngine,
-    'base_url': 'https://ark.cn-beijing.volces.com/api',
+    'base_url': 'https://ark.cn-beijing.volces.com/api/v3/',
   },
   'XingHe': {
     'api_type': Bot.apiTypeXingHe,
