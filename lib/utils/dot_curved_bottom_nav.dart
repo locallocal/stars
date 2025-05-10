@@ -84,6 +84,7 @@ class _DotCurvedBottomNavState extends State<DotCurvedBottomNav>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late double _pos;
+  int _pressedIndex = -1;
 
   late final AnimationController _sliderController = AnimationController(
     vsync: this,
@@ -168,19 +169,34 @@ class _DotCurvedBottomNavState extends State<DotCurvedBottomNav>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       for (int i = 0; i < widget.items.length; i++)
-                        Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () => _buttonTap(i),
-                            child: widget.items[i],
-                          ),
-                        ),
+                        Expanded(child: _buildAnimatedItem(i)),
                     ],
                   ),
                 ),
                 // Row(),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedItem(int index) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTapDown: (_) => setState(() => _pressedIndex = index),
+          onTapUp: (_) {
+            setState(() => _pressedIndex = -1);
+            _buttonTap(index);
+          },
+          onTapCancel: () => setState(() => _pressedIndex = -1),
+          child: AnimatedScale(
+            scale: _pressedIndex == index ? 0.8 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            child: widget.items[index],
           ),
         );
       },
