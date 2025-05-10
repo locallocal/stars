@@ -29,6 +29,10 @@ class StepFun extends Provider {
 
   @override
   bool supportDeepThinking() {
+    switch (bot.model.toLowerCase()) {
+      case 'step-r1-v-mini':
+        return true;
+    }
     return false;
   }
 
@@ -53,7 +57,9 @@ class StepFun extends Provider {
       case 'step-1x-medium':
         return [OutputModality.image];
       case 'step-tts-mini':
-        return [OutputModality.audio];
+      case 'step-tts-vivd':
+      case 'step-asr':
+        return [OutputModality.speech];
       case 'step-1o-audio':
         return [OutputModality.realtime];
     }
@@ -63,7 +69,7 @@ class StepFun extends Provider {
   @override
   Future<List<String>> listModels() async {
     final url =
-        bot.baseURL.isNotEmpty ? '${bot.baseURL}/models' : defaultApiModelsUrl;
+        bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
       final response = await http

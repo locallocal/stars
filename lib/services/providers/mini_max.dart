@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/model/model.dart';
@@ -12,12 +13,18 @@ class MiniMax extends Provider {
       'wss://api.minimax.chat/ws/v1/realtime';
   static const String defaultApiSpeechUrl =
       'https://api.minimax.chat/v1/t2a_v2';
-  static const String defaultApiVedionUrl =
+  static const String defaultApiVideoUrl =
       'https://api.minimax.chat/v1/video_generation';
+  static const String defaultApiVideoTaskQueryUrl =
+      'https://api.minimax.chat/v1/query/video_generation';
+  static const String defaultApiMusicUploadUrl =
+      'https://api.minimax.chat/v1/music_upload';
   static const String defaultApiMusicUrl =
       'https://api.minimax.chat/v1/music_generation';
   static const String defaultApiImageUrl =
       'https://api.minimax.chat/v1/image_generation';
+  static const String defaultApiFileDownloadUrl =
+      'https://api.minimax.chat/v1/files/retrieve';
   MiniMax(super.bot);
 
   static const Map<String, String> voiceTypes = {
@@ -87,8 +94,13 @@ class MiniMax extends Provider {
 
   @override
   List<InputModality> getInputModalites() {
-    if (bot.model == 'MiniMax-Text-01') {
+    if (bot.model == 'MiniMax-Text-01' ||
+        bot.model == 'I2V-01' ||
+        bot.model == 'I2V-01-Director' ||
+        bot.model == 'I2V-01-live') {
       return [InputModality.text, InputModality.image];
+    } else if (bot.model == 'music-01') {
+      return [InputModality.text, InputModality.file];
     }
     return [InputModality.text];
   }
@@ -380,6 +392,234 @@ class MiniMax extends Provider {
     final file = File(filePath);
     await file.writeAsBytes(audioBytes);
     return filePath;
+  }
+
+  @override
+  Future<String> generateMusic(
+    String lyrics,
+    String outputDirPath,
+    String referMusic,
+  ) async {
+    if (referMusic.isEmpty) {
+      throw Exception('MiniMax need refer music');
+    }
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}music_generation'
+            : defaultApiMusicUrl;
+
+    // upload music
+    final referInfo = await _uploadReferMusic(referMusic);
+    final request =
+        http.Request('POST', Uri.parse(url))
+          ..headers.addAll({
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': 'Bearer ${bot.apiKey}',
+          })
+          ..body = jsonEncode({
+            'model': bot.model,
+            'refer_voice': referInfo[0],
+            'refer_instrumental': referInfo[1],
+            'lyrics': lyrics,
+            'audio_setting': {'format': 'mp3'},
+          });
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      final errorBody = await response.stream.bytesToString();
+      throw Exception(
+        'Generate music failed, ${response.statusCode}, $errorBody',
+      );
+    }
+
+    final responseBytes = await response.stream.toBytes();
+    final data = jsonDecode(utf8.decode(responseBytes));
+    if (data['base_resp']['status_code'] != 0) {
+      throw Exception(
+        'Generate music failed: ${data['base_resp']['status_msg']}',
+      );
+    }
+
+    // 解析十六进制字符串为字节数据
+    final audioHex = data['data']['audio'];
+    final audioBytes = _hexToBytes(audioHex);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final fileName = 'minimax_music_$timestamp.mp3';
+    final filePath = '$outputDirPath/$fileName';
+    final file = File(filePath);
+    await file.writeAsBytes(audioBytes);
+    return filePath;
+  }
+
+  @override
+  Future<String> generateVideo(
+    String prompt,
+    String outputDirPath,
+    String referImage,
+  ) async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}video_generation'
+            : defaultApiVideoUrl;
+    final body = {'model': bot.model, 'prompt': prompt};
+    if (referImage.isNotEmpty) {
+      try {
+        final file = File(referImage);
+        if (file.existsSync()) {
+          final bytes = file.readAsBytesSync();
+          final base64Image = base64Encode(bytes);
+          body['first_frame_image'] = 'data:image/jpeg;base64,$base64Image';
+        }
+      } catch (e) {
+        throw Exception('Process image $referImage failed: $e');
+      }
+    }
+
+    final request =
+        http.Request('POST', Uri.parse(url))
+          ..headers.addAll({
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': 'Bearer ${bot.apiKey}',
+          })
+          ..body = jsonEncode(body);
+
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      final errorBody = await response.stream.bytesToString();
+      throw Exception(
+        'Generate video failed, ${response.statusCode}, $errorBody',
+      );
+    }
+    final responseBytes = await response.stream.toBytes();
+    final data = jsonDecode(utf8.decode(responseBytes));
+    if (data['base_resp']['status_code'] != 0) {
+      throw Exception(
+        'Generate video failed: ${data['base_resp']['status_msg']}',
+      );
+    }
+
+    final fileId = await _waitVedioFinished(data['task_id']);
+    return await _downloadVideo(fileId, outputDirPath);
+  }
+
+  Future<List<String>> _uploadReferMusic(String referMusic) async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}music_upload'
+            : defaultApiMusicUrl;
+
+    // 读取音乐文件
+    final file = File(referMusic);
+    if (!await file.exists()) {
+      throw Exception('参考音乐文件不存在: $referMusic');
+    }
+    final fileName = file.path.split(Platform.isWindows ? '\\' : '/').last;
+    final bytes = await file.readAsBytes();
+    // 创建 multipart 请求
+    var request = http.MultipartRequest('POST', Uri.parse(url));
+    // 添加认证头
+    request.headers.addAll({'Authorization': 'Bearer ${bot.apiKey}'});
+    // 添加表单数据
+    request.fields['purpose'] = 'song';
+    // 添加文件
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: fileName,
+        contentType: MediaType('audio', 'mpeg'),
+      ),
+    );
+
+    // 发送请求
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      final errorBody = await response.stream.bytesToString();
+      throw Exception('获取音乐上传授权失败, ${response.statusCode}, $errorBody');
+    }
+    final responseBytes = await response.stream.toBytes();
+    final data = jsonDecode(utf8.decode(responseBytes));
+    if (data['base_resp']['status_code'] != 0) {
+      throw Exception('获取音乐上传授权失败: $data');
+    }
+    return [data['voice_id'], data['instrumental_id']];
+  }
+
+  Future<String> _waitVedioFinished(String taskId) async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}query/video_generation?task_id=$taskId'
+            : '$defaultApiVideoTaskQueryUrl?task_id=$taskId';
+
+    for (var i = 0; i < 3000; i++) {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer ${bot.apiKey}',
+          'content-type': 'application/json',
+        },
+      );
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      if (data['base_resp']['status_code'] != 0) {
+        throw Exception('获取视频生成授权失败: $data');
+      }
+      if (data['status'] == 'Success') {
+        return data['file_id'];
+      }
+      if (data['status'] == 'Fail') {
+        throw Exception('视频生成失败: $data');
+      }
+      print('等待视频生成中... $data');
+      sleep(Duration(milliseconds: 500));
+    }
+    throw Exception('视频生成超时');
+  }
+
+  Future<String> _downloadVideo(String fileId, String outputDirPath) async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}files/retrieve?file_id=$fileId'
+            : '$defaultApiFileDownloadUrl?file_id=$fileId';
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${bot.apiKey}',
+        'Accept': 'application/json',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('获取文件下载链接失败, ${response.body}');
+    }
+
+    // 检查响应内容类型
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    print('获取文件下载链接成功: $data');
+    // 如果是JSON响应，可能需要从中提取真正的视频URL
+    if (data['file']['download_url'] != null) {
+      final videoUrl = data['file']['download_url'];
+      print('从JSON中提取视频URL: $videoUrl');
+
+      // 下载真正的视频文件
+      final videoResponse = await http.get(Uri.parse(videoUrl));
+      if (videoResponse.statusCode == 200) {
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final fileName = 'minimax_video_$timestamp.mp4';
+        final filePath = '$outputDirPath/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(videoResponse.bodyBytes);
+        // 验证文件大小
+        final fileSize = await file.length();
+        print('保存的视频文件大小: $fileSize 字节');
+        if (fileSize < 1000) {
+          // 如果文件太小，可能不是有效的视频
+          print('警告: 下载的文件太小，可能不是有效的视频文件');
+        }
+        return filePath;
+      } else {
+        throw Exception('从URL下载视频失败: $videoUrl $videoResponse');
+      }
+    }
+    throw Exception('获取下载链接失败: $data');
   }
 
   // 将十六进制字符串转换为字节数组

@@ -172,6 +172,24 @@ abstract class Provider {
     throw UnsupportedError('${bot.apiType} Not support generate speech');
   }
 
+  Future<String> generateMusic(
+    String lyrics,
+    String outputDirPath,
+    String referMusic,
+  ) async {
+    // 默认实现抛出异常，子类可以覆盖此方法
+    throw UnsupportedError('${bot.apiType} Not support generate music');
+  }
+
+  Future<String> generateVideo(
+    String prompt,
+    String outputDirPath,
+    String referImage,
+  ) {
+    // 默认实现抛出异常，子类可以覆盖此方法
+    throw UnsupportedError('${bot.apiType} Not support generate video');
+  }
+
   // 取消当前请求
   void cancelRequest() {
     isCancelled = true;

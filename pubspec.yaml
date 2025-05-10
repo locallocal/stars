@@ -53,6 +53,8 @@ dependencies:
   gallery_saver_plus: ^3.2.4
   elegant_nav_bar: ^0.0.22
   just_audio: ^0.9.34
+  video_player: ^2.7.0
+  chewie: ^1.7.0
 
 dev_dependencies:
   flutter_test:

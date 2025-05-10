@@ -135,6 +135,12 @@ class _ChatPageState extends State<ChatPage> {
     } else if (_provider.getOutputModalites().contains(OutputModality.speech)) {
       await _generateSpeech();
       return;
+    } else if (_provider.getOutputModalites().contains(OutputModality.music)) {
+      await _generateMusic();
+      return;
+    } else if (_provider.getOutputModalites().contains(OutputModality.video)) {
+      await _generateVideo();
+      return;
     }
     await _generateText();
   }
@@ -749,6 +755,170 @@ class _ChatPageState extends State<ChatPage> {
     } catch (e) {
       if (mounted) {
         showSnackBar(context, '生成语音失败：$e');
+      }
+    } finally {
+      setState(() {
+        _isTyping = false;
+        _isCancellable = false;
+      });
+    }
+  }
+
+  Future<void> _generateMusic() async {
+    final prompt = _messageController.text.trim();
+    if (prompt.isEmpty) {
+      showSnackBar(context, '请输入音乐描述');
+      return;
+    }
+    setState(() {
+      _isTyping = true;
+      _isCancellable = false;
+    });
+
+    try {
+      // 获取文件列表的第一个文件作为音乐文件
+      final filePahts = await _getSelectedFilePaths();
+      var referMusicPath = "";
+      if (filePahts.isNotEmpty) {
+        referMusicPath = filePahts.first;
+      }
+
+      // 创建用户消息记录
+      final userMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: _currentUserId,
+        content: prompt,
+        music: referMusicPath,
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(userMessage);
+        _messageController.clear();
+        _selectedFiles.clear();
+      });
+      // 保存消息到数据库
+      await MessageService.addMessage(userMessage);
+      await ChatService.updateLastMessage(widget.id, userMessage.content);
+
+      // 调用模型生成音乐
+      var musicDirPath = await getChatDirectoryPath(widget.id);
+      final musicPath = await _provider.generateMusic(
+        prompt,
+        musicDirPath,
+        referMusicPath,
+      );
+      final botMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: widget.bot.id,
+        content: '',
+        audio: musicPath,
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(botMessage);
+      });
+      await MessageService.addMessage(botMessage);
+
+      if (mounted) {
+        await ChatService.updateLastMessage(widget.id, '生成了音乐');
+      }
+
+      // 滚动到底部
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(context, '生成音乐失败: ${e.toString()}');
+      }
+    } finally {
+      setState(() {
+        _isTyping = false;
+        _isCancellable = false;
+      });
+    }
+  }
+
+  Future<void> _generateVideo() async {
+    final prompt = _messageController.text.trim();
+    if (prompt.isEmpty) {
+      showSnackBar(context, '请输入视频描述');
+      return;
+    }
+    setState(() {
+      _isTyping = true;
+      _isCancellable = false;
+    });
+
+    try {
+      // 创建用户消息记录
+      final imagePaths = await _getSelectedImagePaths();
+      var referImagePath = "";
+      if (imagePaths.isNotEmpty) {
+        referImagePath = imagePaths.first;
+      }
+      final userMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: _currentUserId,
+        content: prompt,
+        images: referImagePath.isEmpty ? [] : [referImagePath],
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(userMessage);
+        _messageController.clear();
+        _selectedImages.clear();
+      });
+      // 保存消息到数据库
+      await MessageService.addMessage(userMessage);
+      await ChatService.updateLastMessage(widget.id, userMessage.content);
+
+      // 调用模型生成视频
+      var videoDirPath = await getChatDirectoryPath(widget.id);
+      final videoPath = await _provider.generateVideo(
+        prompt,
+        videoDirPath,
+        referImagePath,
+      );
+      final botMessage = Message(
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: widget.bot.id,
+        content: '',
+        video: videoPath,
+        timestamp: DateTime.now(),
+      );
+      setState(() {
+        _messages.add(botMessage);
+      });
+      await MessageService.addMessage(botMessage);
+
+      if (mounted) {
+        await ChatService.updateLastMessage(widget.id, '生成了视频');
+      }
+
+      // 滚动到底部
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(context, '生成视频失败: ${e.toString()}');
       }
     } finally {
       setState(() {
