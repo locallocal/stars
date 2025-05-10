@@ -194,7 +194,7 @@ class _ContactsPageState extends State<ContactsPage> {
                 },
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
-                child: Icon(Icons.edit_square, size: 20),
+                child: Icon(Icons.edit_square, size: 18),
               ),
               CustomSlidableAction(
                 onPressed: (context) async {
@@ -249,13 +249,8 @@ class _ContactsPageState extends State<ContactsPage> {
                 },
                 backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
-                ),
                 child: Icon(Icons.delete_rounded, size: 20),
               ),
-              SizedBox(width: 16),
             ],
           ),
           child: ListTile(
