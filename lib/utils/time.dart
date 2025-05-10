@@ -7,7 +7,7 @@ String formatTimestamp(BuildContext context, DateTime timestamp) {
   final difference = now.difference(timestamp);
 
   if (difference.inDays > 0) {
-    return '${timestamp.month}-${timestamp.day}';
+    return '${timestamp.year}-${timestamp.month}-${timestamp.day}';
   } else if (difference.inHours > 0) {
     return '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
   } else if (difference.inMinutes > 0) {

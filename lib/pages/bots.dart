@@ -6,6 +6,9 @@ import 'package:bubble/pages/edit_bot.dart';
 import 'package:bubble/services/bot_service.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/logo.dart';
+import 'package:bubble/utils/time.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:bubble/pages/common/new_chat.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
@@ -151,66 +154,110 @@ class _ContactsPageState extends State<ContactsPage> {
       itemCount: filteredBots.length,
       itemBuilder: (context, index) {
         final bot = filteredBots[index];
-        return Dismissible(
+        return Slidable(
           key: Key(bot.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20.0),
-            color: Theme.of(context).colorScheme.secondary,
-            child: Icon(
-              Icons.delete,
-              size: 24,
-              color: Theme.of(context).colorScheme.error,
-            ),
+          endActionPane: ActionPane(
+            motion: const ScrollMotion(),
+            children: [
+              CustomSlidableAction(
+                onPressed: (context) {
+                  createNewChat(context, bot);
+                },
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                ),
+                child: Icon(Icons.chat_bubble_rounded, size: 18),
+              ),
+              CustomSlidableAction(
+                onPressed: (context) {
+                  // 跳转到编辑页面
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => EditBotPage(
+                            bot: bot,
+                            onBotUpdated: (updatedBot) async {
+                              await BotService.updateBot(updatedBot);
+                              _loadBots();
+                            },
+                            onBotDeleted: () async {
+                              await BotService.deleteBot(bot.id);
+                              _loadBots();
+                            },
+                          ),
+                    ),
+                  );
+                },
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                child: Icon(Icons.edit_square, size: 20),
+              ),
+              CustomSlidableAction(
+                onPressed: (context) async {
+                  final confirm = await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Center(
+                          child: Text(
+                            S.of(context).confirmDelete,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.fontSize,
+                            ),
+                          ),
+                        ),
+                        content: Text(S.of(context).confirmDeleteBot(bot.name)),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: Text(
+                              S.of(context).cancel,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: Text(
+                              S.of(context).delete,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (confirm == true) {
+                    await BotService.deleteBot(bot.id);
+                    setState(() {
+                      filteredBots.removeAt(index);
+                      contacts.removeWhere((contact) => contact.id == bot.id);
+                    });
+                  }
+                },
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                child: Icon(Icons.delete_rounded, size: 20),
+              ),
+              SizedBox(width: 16),
+            ],
           ),
-          confirmDismiss: (direction) async {
-            return await showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Center(
-                    child: Text(
-                      S.of(context).confirmDelete,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize:
-                            Theme.of(context).textTheme.bodyLarge?.fontSize,
-                      ),
-                    ),
-                  ),
-                  content: Text(S.of(context).confirmDeleteBot(bot.name)),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: Text(
-                        S.of(context).cancel,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: Text(
-                        S.of(context).delete,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-          onDismissed: (direction) async {
-            await BotService.deleteBot(bot.id);
-            setState(() {
-              filteredBots.removeAt(index);
-              contacts.removeWhere((contact) => contact.id == bot.id);
-            });
-          },
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor:
@@ -233,7 +280,13 @@ class _ContactsPageState extends State<ContactsPage> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text('${bot.provider} - ${bot.model}'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            trailing: Text(
+              formatTimestamp(context, bot.createTimestamp),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
             onTap: () {
               Navigator.push(
                 context,

@@ -55,6 +55,7 @@ dependencies:
   just_audio: ^0.9.34
   video_player: ^2.7.0
   chewie: ^1.7.0
+  flutter_slidable: ^3.0.1
 
 dev_dependencies:
   flutter_test:
