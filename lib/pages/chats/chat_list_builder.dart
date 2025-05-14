@@ -37,7 +37,6 @@ class ChatListBuilder extends StatelessWidget {
           key: Key(chat.id),
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
-            extentRatio: 0.33,
             children: [
               CustomSlidableAction(
                 onPressed: (context) {
@@ -55,6 +54,12 @@ class ChatListBuilder extends StatelessWidget {
                   bottomLeft: Radius.circular(12),
                 ),
                 child: Icon(Icons.chat_bubble_rounded, size: 18),
+              ),
+              CustomSlidableAction(
+                onPressed: (context) {},
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                child: Icon(Icons.edit_square, size: 18),
               ),
               CustomSlidableAction(
                 onPressed: (context) async {

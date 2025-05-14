@@ -190,6 +190,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: DotCurvedBottomNav(
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 8),
         scrollController: _scrollController,
         hideOnScroll: false,
         indicatorColor: Theme.of(context).colorScheme.onSurface,

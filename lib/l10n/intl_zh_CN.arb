@@ -532,7 +532,7 @@
     "@attachedImages": {
         "description": "已附加图片提示"
     },
-    "attachedFiles": "附件文件",
+    "attachedFiles": "附加文件",
     "@attachedFiles": {
         "description": "已附加的文件提示"
     },

@@ -3,20 +3,13 @@ import 'package:bubble/generated/l10n.dart';
 
 class TypingIndicator extends StatelessWidget {
   final String botName;
-  final bool isCancellable;
-  final VoidCallback onCancelRequest;
 
-  const TypingIndicator({
-    super.key,
-    required this.botName,
-    required this.isCancellable,
-    required this.onCancelRequest,
-  });
+  const TypingIndicator({super.key, required this.botName});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 8),
       alignment: Alignment.centerLeft,
       child: Row(
         children: [
@@ -29,15 +22,6 @@ class TypingIndicator extends StatelessWidget {
           const SizedBox(width: 8),
           Text(S.of(context).botIsTyping(botName)),
           const Spacer(),
-          if (isCancellable)
-            IconButton(
-              onPressed: onCancelRequest,
-              icon: const Icon(Icons.pause_circle_filled),
-              tooltip: S.of(context).pauseGeneration,
-              iconSize: 28,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            ),
         ],
       ),
     );

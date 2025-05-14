@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/common/common.dart';
 
 class ImageAttachments extends StatelessWidget {
   final List<File> images;
@@ -26,7 +27,7 @@ class ImageAttachments extends StatelessWidget {
       padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(24.0),
+        borderRadius: BorderRadius.circular(16.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,17 +36,9 @@ class ImageAttachments extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, size: 16, color: Colors.white),
-                ),
+                icon: buildCloseIcon(context),
                 onPressed: onClearAll,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               ),
             ],
           ),
@@ -74,7 +67,7 @@ class ImageAttachments extends StatelessWidget {
                           Container(
                             margin: const EdgeInsets.only(right: 8.0),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16.0),
+                              borderRadius: BorderRadius.circular(8.0),
                               child: Image.file(
                                 images[index],
                                 height: 90,
@@ -88,18 +81,7 @@ class ImageAttachments extends StatelessWidget {
                             right: 6,
                             child: GestureDetector(
                               onTap: () => onRemoveImage(index),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              child: buildCloseIcon(context),
                             ),
                           ),
                         ],
@@ -136,12 +118,12 @@ class ImageAttachments extends StatelessWidget {
                           Container(
                             margin: const EdgeInsets.only(right: 8.0),
                             padding: const EdgeInsets.all(12.0),
-                            width: 150,
+                            width: 90,
                             decoration: BoxDecoration(
                               color: Theme.of(
                                 context,
                               ).colorScheme.primary.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12.0),
+                              borderRadius: BorderRadius.circular(8.0),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -162,18 +144,7 @@ class ImageAttachments extends StatelessWidget {
                             right: 8,
                             child: GestureDetector(
                               onTap: () => onRemoveFile(index),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
+                              child: buildCloseIcon(context),
                             ),
                           ),
                         ],

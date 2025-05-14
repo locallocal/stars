@@ -69,3 +69,18 @@ Widget buildSectionContainer(
     ),
   );
 }
+
+Widget buildCloseIcon(BuildContext context) {
+  return Container(
+    padding: const EdgeInsets.all(2),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.onSurface,
+      shape: BoxShape.circle,
+    ),
+    child: Icon(
+      Icons.close_rounded,
+      size: 16,
+      color: Theme.of(context).colorScheme.secondary,
+    ),
+  );
+}

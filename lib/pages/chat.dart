@@ -8,7 +8,6 @@ import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/pages/common/attachment.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/chat/attachments.dart';
-import 'package:bubble/pages/chat/model_features.dart';
 import 'package:bubble/pages/chat/attachment_bars.dart';
 import 'package:bubble/pages/common/common.dart';
 import 'package:bubble/pages/chat/clear_chat_dialog.dart';
@@ -18,6 +17,7 @@ import 'package:bubble/pages/chat/message_list.dart';
 import 'package:bubble/pages/chat/typing_indicator.dart';
 import 'package:bubble/utils/utils.dart';
 import 'package:bubble/pages/chat/image_generation_panel.dart';
+import 'package:bubble/pages/chat/attachments.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -40,9 +40,6 @@ class _ChatPageState extends State<ChatPage> {
   bool _isTyping = false;
   bool _isStreaming = false;
   bool _isCancellable = false;
-  bool _showAttachmentBar = false;
-  bool _isWebSearchEnabled = false;
-  bool _isDeepThinkingEnabled = false;
   String _selectedImageSize = '1024x1024';
 
   final List<File> _selectedImages = [];
@@ -97,7 +94,6 @@ class _ChatPageState extends State<ChatPage> {
     if (image != null) {
       setState(() {
         _selectedImages.add(image);
-        _showAttachmentBar = false;
       });
     }
   }
@@ -108,7 +104,6 @@ class _ChatPageState extends State<ChatPage> {
     if (image != null) {
       setState(() {
         _selectedImages.add(image);
-        _showAttachmentBar = false;
       });
     }
   }
@@ -119,7 +114,6 @@ class _ChatPageState extends State<ChatPage> {
     if (file != null) {
       setState(() {
         _selectedFiles.add(file);
-        _showAttachmentBar = false;
       });
     }
   }
@@ -386,52 +380,48 @@ class _ChatPageState extends State<ChatPage> {
                                   isStreaming: _isStreaming,
                                   streamingResponse: _streamingResponse,
                                   currentUserId: _currentUserId,
-                                  deepThinking: _isDeepThinkingEnabled,
+                                  deepThinking: _provider.getDeepThinking(),
                                   reasoningResponse: _reasoningResponse,
                                 ),
 
                                 if (_isTyping)
-                                  TypingIndicator(
-                                    botName: widget.bot.name,
-                                    isCancellable: _isCancellable,
-                                    onCancelRequest: _cancelRequest,
-                                  ),
+                                  TypingIndicator(botName: widget.bot.name),
                               ],
                             ),
                   ),
 
-                  // 图片区域
-                  if (_selectedImages.isNotEmpty || _selectedFiles.isNotEmpty)
-                    _showAttachments(),
-
-                  // 图片生成功能
-                  if (_provider.getOutputModalites().contains(
-                    OutputModality.image,
-                  ))
-                    _buildImageGenerationPanel(),
-
-                  if (_provider.supportWebSearch() ||
-                      _provider.supportDeepThinking())
-                    _showChatModelFeatures(),
+                  if (_selectedFiles.isNotEmpty || _selectedImages.isNotEmpty)
+                    ImageAttachments(
+                      images: _selectedImages,
+                      files: _selectedFiles,
+                      onClearAll: () {
+                        setState(() {
+                          _selectedImages.clear();
+                          _selectedFiles.clear();
+                        });
+                      },
+                      onRemoveImage: (index) {
+                        setState(() {
+                          _selectedImages.removeAt(index);
+                        });
+                      },
+                      onRemoveFile: (index) {
+                        setState(() {
+                          _selectedFiles.removeAt(index);
+                        });
+                      },
+                    ),
 
                   MessageInput(
+                    provider: _provider,
                     controller: _messageController,
+                    waitingBotMessage: _isTyping && _isCancellable,
+                    onCameraPressed: getAttachImageFromCamera,
+                    onGalleryPressed: getAttachImageFromGallery,
+                    onFilePressed: getAttacheFile,
                     onSend: _sendMessage,
-                    onToggleAttachmentBar: () {
-                      setState(() {
-                        _showAttachmentBar = !_showAttachmentBar;
-                      });
-                    },
-                    showAttachmentBar: _showAttachmentBar,
-                    inputModalities: _provider.getInputModalites(),
-                    hasAttachments:
-                        (_selectedImages.isNotEmpty ||
-                            _selectedFiles.isNotEmpty),
+                    onCancelRequest: _cancelRequest,
                   ),
-
-                  // 附件选择栏
-                  if (_showAttachmentBar) _showAttachmentBars(),
-
                   const SizedBox(height: 16),
                 ],
               ),
@@ -546,37 +536,6 @@ class _ChatPageState extends State<ChatPage> {
           _selectedFiles.removeAt(index);
         });
       },
-    );
-  }
-
-  Widget _showChatModelFeatures() {
-    return ChatModelFeatures(
-      isWebSearchEnabled: _isWebSearchEnabled,
-      isDeepThinkingEnabled: _isDeepThinkingEnabled,
-      supportWebSearch: _provider.supportWebSearch(),
-      supportDeepThinking: _provider.supportDeepThinking(),
-      onWebSearchToggle: (value) {
-        setState(() {
-          _isWebSearchEnabled = value;
-          _provider.setWebSearch(_isWebSearchEnabled);
-        });
-      },
-      onDeepThinkingToggle: (value) {
-        setState(() {
-          _isDeepThinkingEnabled = value;
-          _provider.setDeepThinking(_isDeepThinkingEnabled);
-        });
-      },
-    );
-  }
-
-  // 修改原文件中的引用
-  Widget _showAttachmentBars() {
-    return AttachmentBars(
-      onCameraPressed: getAttachImageFromCamera,
-      onGalleryPressed: getAttachImageFromGallery,
-      onFilePressed: getAttacheFile,
-      inputModalities: _provider.getInputModalites(),
     );
   }
 

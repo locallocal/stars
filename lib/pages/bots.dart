@@ -150,6 +150,7 @@ class _ContactsPageState extends State<ContactsPage> {
 
   // 构建智能体列表
   Widget _buildBotsList() {
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return ListView.builder(
       itemCount: filteredBots.length,
       itemBuilder: (context, index) {
@@ -272,13 +273,22 @@ class _ContactsPageState extends State<ContactsPage> {
             ),
             title: Text(
               bot.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: fontSize!,
+              ),
             ),
-            subtitle: Text('${bot.provider} - ${bot.model}'),
+            subtitle: Text(
+              '${bot.provider} - ${bot.model}',
+              style: TextStyle(
+                fontSize: fontSize - 2,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
             trailing: Text(
               formatTimestamp(context, bot.createTimestamp),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: fontSize - 2,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),

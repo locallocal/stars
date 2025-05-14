@@ -111,6 +111,10 @@ abstract class Provider {
     deepThinking = enabled;
   }
 
+  bool getDeepThinking() {
+    return deepThinking;
+  }
+
   void setCallbacks({
     required StreamResponseCallback onResponse,
     StreamResponseCallback? onReasoningResponse,
