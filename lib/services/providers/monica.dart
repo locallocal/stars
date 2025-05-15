@@ -188,7 +188,7 @@ class Monica extends Provider {
   }
 
   @override
-  List<String> getImageStyles() {
+  List<String> getSupportImageStyles() {
     switch (bot.model) {
       case 'dall-e-3':
         return const ['vivid', 'natural'];

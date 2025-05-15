@@ -13,6 +13,8 @@ class MessageInput extends StatefulWidget {
   final Function() onCameraPressed;
   final Function() onGalleryPressed;
   final Function() onFilePressed;
+  final Function(String) onImageSizeSelected;
+  final Function(String) onImageStyleSelected;
 
   const MessageInput({
     super.key,
@@ -22,6 +24,8 @@ class MessageInput extends StatefulWidget {
     required this.onCameraPressed,
     required this.onGalleryPressed,
     required this.onFilePressed,
+    required this.onImageSizeSelected,
+    required this.onImageStyleSelected,
     required this.onSend,
     required this.onCancelRequest,
   });
@@ -31,12 +35,25 @@ class MessageInput extends StatefulWidget {
 }
 
 class _MessageInputState extends State<MessageInput> {
-  String selectedModel = '图片 2.0 Pro';
-  String selectedRatio = '3:4';
+  String selectedImageStyle = '';
+  String selectedRatio = '';
   bool isWebSearchEnabled = false;
   bool isDeepThinkingEnabled = false;
   bool showGenerateImageOptions = false;
   bool showAttachmentInputs = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.provider.getOutputModalites().contains(OutputModality.image)) {
+      if (widget.provider.getSupportImageStyles().isNotEmpty) {
+        selectedImageStyle = widget.provider.getSupportImageStyles().first;
+      }
+      if (widget.provider.getSupportedImageSizes().isNotEmpty) {
+        selectedRatio = widget.provider.getSupportedImageSizes().first;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +68,10 @@ class _MessageInputState extends State<MessageInput> {
             right: 8,
             bottom:
                 (widget.provider.supportWebSearch() ||
-                        widget.provider.supportDeepThinking())
+                        widget.provider.supportDeepThinking() ||
+                        widget.provider.getOutputModalites().contains(
+                          OutputModality.image,
+                        ))
                     ? 8
                     : 0,
           ),
@@ -268,10 +288,16 @@ class _MessageInputState extends State<MessageInput> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Icon(
+                              Icons.image,
+                              size: fontSize! - 2,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            SizedBox(width: 4),
                             Text(
-                              selectedModel,
+                              selectedImageStyle,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: fontSize - 2,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -279,7 +305,7 @@ class _MessageInputState extends State<MessageInput> {
                             Text(
                               selectedRatio,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: fontSize - 2,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -422,7 +448,7 @@ class _MessageInputState extends State<MessageInput> {
                   children: [
                     // 模型选择
                     Text(
-                      '选择风格:',
+                      '选择风格: $selectedImageStyle',
                       style: TextStyle(
                         fontSize: fontSize! - 2,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -434,11 +460,9 @@ class _MessageInputState extends State<MessageInput> {
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: [
-                          _buildModelOption('图片 3.0', true),
-                          _buildModelOption('图片 2.1', false),
-                          _buildModelOption('图片 2.0 Pro', false),
-                          _buildModelOption('图片 2.0', false),
-                          _buildModelOption('图片 XL Pro', false),
+                          ...(widget.provider.getSupportImageStyles()).map(
+                            (model) => _buildStyleOption(model, false),
+                          ),
                         ],
                       ),
                     ),
@@ -450,25 +474,30 @@ class _MessageInputState extends State<MessageInput> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '选择比例:',
+                      '选择比例: $selectedRatio',
                       style: TextStyle(
                         fontSize: fontSize! - 2,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    SizedBox(
-                      height: 96,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          _buildRatioOption('9:16'),
-                          _buildRatioOption('3:4'),
-                          _buildRatioOption('2:3'),
-                          _buildRatioOption('1:1'),
-                          _buildRatioOption('3:2'),
-                        ],
-                      ),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 100,
+                            minHeight: 80,
+                          ),
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              ...(widget.provider.getSupportedImageSizes()).map(
+                                (size) => _buildRatioOption(size),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -479,101 +508,60 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildModelOption(String name, bool isNew) {
-    final isSelected = selectedModel == name;
-
+  Widget _buildStyleOption(String name, bool isNew) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedModel = name;
+          selectedImageStyle = name;
+          widget.onImageStyleSelected(name);
         });
       },
       child: Container(
-        width: 120,
-        margin: const EdgeInsets.only(right: 12),
+        margin: const EdgeInsets.only(right: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
           color:
-              isSelected
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+              selectedImageStyle == name
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
                   : Theme.of(context).colorScheme.surface,
-          border: Border.all(
-            color:
-                isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(12.0),
         ),
-        child: Stack(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 模型预览图
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(11),
-                child: Container(
-                  color:
-                      name == '图片 3.0'
-                          ? Colors.purple.withOpacity(0.2)
-                          : name == '图片 2.1'
-                          ? Colors.blue.withOpacity(0.2)
-                          : name == '图片 2.0 Pro'
-                          ? Colors.green.withOpacity(0.2)
-                          : name == '图片 2.0'
-                          ? Colors.orange.withOpacity(0.2)
-                          : Colors.red.withOpacity(0.2),
-                ),
+            // 风格图标或预览图
+            Container(
+              width: 60,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Icon(
+                Icons.image,
+                color:
+                    selectedImageStyle == name
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                size: 24,
               ),
             ),
-
-            // New 标签
-            if (isNew)
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'New',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-            // 模型名称
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(11),
-                    bottomRight: Radius.circular(11),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+            const SizedBox(height: 8),
+            // 风格名称
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: Theme.of(context).textTheme.bodyLarge!.fontSize! - 2,
+                fontWeight:
+                    selectedImageStyle == name
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                color:
+                    selectedImageStyle == name
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -585,14 +573,23 @@ class _MessageInputState extends State<MessageInput> {
   Widget _buildRatioOption(String ratio) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     // 解析比例
-    final parts = ratio.split(':');
-    final width = double.parse(parts[0]);
-    final height = double.parse(parts[1]);
+    var width = 1.0;
+    var height = 1.0;
+    if (ratio.contains(':')) {
+      final parts = ratio.split(':');
+      width = double.parse(parts[0]);
+      height = double.parse(parts[1]);
+    } else if (ratio.contains('x')) {
+      final parts = ratio.split('x');
+      width = double.parse(parts[0]);
+      height = double.parse(parts[1]);
+    }
 
     return GestureDetector(
       onTap: () {
         setState(() {
           selectedRatio = ratio;
+          widget.onImageSizeSelected(ratio);
         });
       },
       child: Container(
@@ -613,13 +610,13 @@ class _MessageInputState extends State<MessageInput> {
               width: 24,
               height: 24 * (height / width),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(3),
                 border: Border.all(
                   color:
                       selectedRatio == ratio
                           ? Theme.of(context).colorScheme.primary
                           : Theme.of(context).colorScheme.onSurface,
-                  width: 0.5,
+                  width: 0.3,
                 ),
                 color: Theme.of(context).colorScheme.secondary,
               ),

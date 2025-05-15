@@ -8,7 +8,6 @@ import 'package:bubble/services/providers/providers.dart';
 import 'package:bubble/pages/common/attachment.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/chat/attachments.dart';
-import 'package:bubble/pages/chat/attachment_bars.dart';
 import 'package:bubble/pages/common/common.dart';
 import 'package:bubble/pages/chat/clear_chat_dialog.dart';
 import 'package:bubble/pages/chat/message_input.dart';
@@ -16,8 +15,6 @@ import 'package:bubble/pages/chat/welcome_view.dart';
 import 'package:bubble/pages/chat/message_list.dart';
 import 'package:bubble/pages/chat/typing_indicator.dart';
 import 'package:bubble/utils/utils.dart';
-import 'package:bubble/pages/chat/image_generation_panel.dart';
-import 'package:bubble/pages/chat/attachments.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -41,6 +38,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _isStreaming = false;
   bool _isCancellable = false;
   String _selectedImageSize = '1024x1024';
+  String _selectedImageStype = '';
 
   final List<File> _selectedImages = [];
   final List<File> _selectedFiles = [];
@@ -419,6 +417,16 @@ class _ChatPageState extends State<ChatPage> {
                     onCameraPressed: getAttachImageFromCamera,
                     onGalleryPressed: getAttachImageFromGallery,
                     onFilePressed: getAttacheFile,
+                    onImageSizeSelected: (size) {
+                      setState(() {
+                        _selectedImageSize = size;
+                      });
+                    },
+                    onImageStyleSelected: (style) {
+                      setState(() {
+                        _selectedImageStype = style;
+                      });
+                    },
                     onSend: _sendMessage,
                     onCancelRequest: _cancelRequest,
                   ),
@@ -515,55 +523,6 @@ class _ChatPageState extends State<ChatPage> {
     return filePaths;
   }
 
-  // 删除原来的 _showAttachments 方法，替换为以下代码
-  Widget _showAttachments() {
-    return ImageAttachments(
-      images: _selectedImages,
-      files: _selectedFiles,
-      onClearAll: () {
-        setState(() {
-          _selectedImages.clear();
-          _selectedFiles.clear();
-        });
-      },
-      onRemoveImage: (index) {
-        setState(() {
-          _selectedImages.removeAt(index);
-        });
-      },
-      onRemoveFile: (index) {
-        setState(() {
-          _selectedFiles.removeAt(index);
-        });
-      },
-    );
-  }
-
-  // 修改原文件中的方法
-  Widget _buildImageGenerationPanel() {
-    // 获取支持的图片尺寸
-    List<String> supportedSizes = ['1024x1024'];
-    // 如果模型支持获取图片尺寸列表，则使用模型提供的尺寸
-    try {
-      final sizes = _provider.getSupportedImageSizes();
-      if (sizes.isNotEmpty) {
-        supportedSizes = sizes;
-      }
-    } catch (e) {
-      // 忽略不支持的方法调用
-    }
-
-    return ImageGenerationPanel(
-      supportedSizes: supportedSizes,
-      selectedSize: _selectedImageSize,
-      onSizeSelected: (size) {
-        setState(() {
-          _selectedImageSize = size;
-        });
-      },
-    );
-  }
-
   Future<void> _generateImage() async {
     final prompt = _messageController.text.trim();
     if (prompt.isEmpty) {
@@ -602,6 +561,7 @@ class _ChatPageState extends State<ChatPage> {
         _selectedImageSize,
         imageDirPath,
         referenceImages: imagePaths,
+        style: _selectedImageStype,
       );
       final botMessage = Message(
         chatId: widget.id,

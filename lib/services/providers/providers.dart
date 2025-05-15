@@ -144,7 +144,7 @@ abstract class Provider {
   // 发送消息并获取流式响应
   Future<void> generateText(List<ChatMessage> messages);
 
-  List<String> getImageStyles() {
+  List<String> getSupportImageStyles() {
     return [];
   }
 

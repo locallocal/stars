@@ -55,7 +55,7 @@ class Stability extends Provider {
   Future<void> generateText(List<ChatMessage> messages) async {}
 
   @override
-  List<String> getImageStyles() {
+  List<String> getSupportImageStyles() {
     return const [
       '3d-model',
       'analog-film',

@@ -255,6 +255,11 @@ class MiniMax extends Provider {
   }
 
   @override
+  List<String> getSupportImageStyles() {
+    return ['漫画', '元气', '中世纪', '水彩'];
+  }
+
+  @override
   List<String> getSupportedImageSizes() {
     return ['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16', '21:9'];
   }
@@ -288,7 +293,7 @@ class MiniMax extends Provider {
       'n': 1,
     };
     if (style.isNotEmpty) {
-      requestBody['style'] = style;
+      requestBody['style'] = {'style_type': style};
     }
 
     try {
@@ -324,11 +329,13 @@ class MiniMax extends Provider {
           );
         }
       } else {
+        print('hhhhhhhhhhh ${response.body}');
         throw Exception(
           'Generate image failed: ${response.statusCode} - ${response.body}',
         );
       }
     } catch (e) {
+      print('hhhhhhhhhhh ${e}');
       throw Exception('Generate image failed: $e');
     }
   }
