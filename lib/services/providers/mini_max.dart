@@ -329,13 +329,11 @@ class MiniMax extends Provider {
           );
         }
       } else {
-        print('hhhhhhhhhhh ${response.body}');
         throw Exception(
           'Generate image failed: ${response.statusCode} - ${response.body}',
         );
       }
     } catch (e) {
-      print('hhhhhhhhhhh ${e}');
       throw Exception('Generate image failed: $e');
     }
   }
@@ -575,7 +573,6 @@ class MiniMax extends Provider {
       if (data['status'] == 'Fail') {
         throw Exception('视频生成失败: $data');
       }
-      print('等待视频生成中... $data');
       sleep(Duration(milliseconds: 500));
     }
     throw Exception('视频生成超时');
@@ -600,11 +597,9 @@ class MiniMax extends Provider {
 
     // 检查响应内容类型
     final data = jsonDecode(utf8.decode(response.bodyBytes));
-    print('获取文件下载链接成功: $data');
     // 如果是JSON响应，可能需要从中提取真正的视频URL
     if (data['file']['download_url'] != null) {
       final videoUrl = data['file']['download_url'];
-      print('从JSON中提取视频URL: $videoUrl');
 
       // 下载真正的视频文件
       final videoResponse = await http.get(Uri.parse(videoUrl));
@@ -616,10 +611,8 @@ class MiniMax extends Provider {
         await file.writeAsBytes(videoResponse.bodyBytes);
         // 验证文件大小
         final fileSize = await file.length();
-        print('保存的视频文件大小: $fileSize 字节');
         if (fileSize < 1000) {
           // 如果文件太小，可能不是有效的视频
-          print('警告: 下载的文件太小，可能不是有效的视频文件');
         }
         return filePath;
       } else {

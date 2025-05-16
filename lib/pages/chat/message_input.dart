@@ -46,9 +46,6 @@ class _MessageInputState extends State<MessageInput> {
   void initState() {
     super.initState();
     if (widget.provider.getOutputModalites().contains(OutputModality.image)) {
-      if (widget.provider.getSupportImageStyles().isNotEmpty) {
-        selectedImageStyle = widget.provider.getSupportImageStyles().first;
-      }
       if (widget.provider.getSupportedImageSizes().isNotEmpty) {
         selectedRatio = widget.provider.getSupportedImageSizes().first;
       }
@@ -442,7 +439,8 @@ class _MessageInputState extends State<MessageInput> {
 
               if (showGenerateImageOptions) SizedBox(height: 12),
               // 展开的选项面板
-              if (showGenerateImageOptions)
+              if (showGenerateImageOptions &&
+                  widget.provider.getSupportImageStyles().isNotEmpty)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -461,7 +459,7 @@ class _MessageInputState extends State<MessageInput> {
                         scrollDirection: Axis.horizontal,
                         children: [
                           ...(widget.provider.getSupportImageStyles()).map(
-                            (model) => _buildStyleOption(model, false),
+                            (style) => _buildStyleOption(style),
                           ),
                         ],
                       ),
@@ -469,7 +467,8 @@ class _MessageInputState extends State<MessageInput> {
                     SizedBox(height: 12),
                   ],
                 ),
-              if (showGenerateImageOptions)
+              if (showGenerateImageOptions &&
+                  widget.provider.getSupportedImageSizes().isNotEmpty)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -508,12 +507,16 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildStyleOption(String name, bool isNew) {
+  Widget _buildStyleOption(String name) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedImageStyle = name;
-          widget.onImageStyleSelected(name);
+          if (selectedImageStyle == name) {
+            selectedImageStyle = '';
+          } else {
+            selectedImageStyle = name;
+          }
+          widget.onImageStyleSelected(selectedImageStyle);
         });
       },
       child: Container(
