@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/bot_service.dart';
@@ -15,15 +16,27 @@ class ChatListPage extends StatefulWidget {
 
 class _ChatListPageState extends State<ChatListPage> {
   List<Chat> chatList = [];
-  List<Chat> filteredChatList = []; // 添加过滤后的聊天列表
+  List<Chat> filteredChatList = [];
   List<Bot> bots = [];
   bool isLoading = true;
-  String searchQuery = ''; // 添加搜索查询状态
+  String searchQuery = '';
+  late StreamSubscription _chatListSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadChatList();
+
+    // 添加监听器，当聊天列表变化时重新加载
+    _chatListSubscription = ChatService.chatListChanged.listen((_) {
+      _loadChatList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _chatListSubscription.cancel();
+    super.dispose();
   }
 
   Future<void> _loadChatList() async {
@@ -36,22 +49,13 @@ class _ChatListPageState extends State<ChatListPage> {
     if (mounted) {
       setState(() {
         chatList = loadedChats;
-        filteredChatList = loadedChats; // 初始化过滤列表
+        filteredChatList = loadedChats;
         bots = loadedBots;
         isLoading = false;
       });
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadChatList();
-    });
-  }
-
-  // 过滤聊天列表
   void _filterChats(String query) {
     setState(() {
       searchQuery = query;
@@ -60,7 +64,6 @@ class _ChatListPageState extends State<ChatListPage> {
       } else {
         filteredChatList =
             chatList.where((chat) {
-              // 获取对应的机器人名称
               final bot = bots.firstWhere(
                 (bot) => bot.id == chat.botId,
                 orElse:
@@ -79,7 +82,6 @@ class _ChatListPageState extends State<ChatListPage> {
                     ),
               );
 
-              // 搜索聊天标题、最后消息和机器人名称
               return chat.lastMessage.toLowerCase().contains(
                     query.toLowerCase(),
                   ) ||
@@ -100,16 +102,14 @@ class _ChatListPageState extends State<ChatListPage> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        scrolledUnderElevation: 0, // 防止滚动时背景色变化
-        elevation: 0, // 移除阴影
+        scrolledUnderElevation: 0,
+        elevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_rounded),
             onPressed: () async {
-              // 获取智能体列表
               if (!mounted) return;
-
               showDialog(
                 context: context,
                 builder:

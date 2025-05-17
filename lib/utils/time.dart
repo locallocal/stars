@@ -9,7 +9,7 @@ String formatTimestamp(BuildContext context, DateTime timestamp) {
   if (difference.inDays > 0) {
     return '${timestamp.year}-${timestamp.month}-${timestamp.day}';
   } else if (difference.inHours > 0) {
-    return '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}';
+    return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
   } else if (difference.inMinutes > 0) {
     return S.of(context).minutesAgo(difference.inMinutes);
   } else {

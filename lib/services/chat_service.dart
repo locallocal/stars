@@ -1,11 +1,23 @@
-import 'package:bubble/services/message_service.dart';
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
+import 'package:bubble/services/message_service.dart';
 import 'package:bubble/services/database_service.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/utils/utils.dart';
 
 class ChatService {
   static List<Chat> _chats = [];
+
+  // 添加一个 Stream 控制器来发送通知
+  static final _chatListChangedController = StreamController<void>.broadcast();
+  // 获取通知流
+  static Stream<void> get chatListChanged => _chatListChangedController.stream;
+
+  // 发送通知
+  static void notifyChatListChanged() {
+    _chats = []; // 清空缓存，强制下次获取时重新加载
+    _chatListChangedController.add(null);
+  }
 
   // 获取聊天
   static Future<Chat?> getChat(String id) async {
@@ -99,5 +111,10 @@ class ChatService {
         whereArgs: [id],
       );
     }
+  }
+
+  // 在 dispose 方法中关闭控制器
+  static void dispose() {
+    _chatListChangedController.close();
   }
 }
