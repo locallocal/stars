@@ -15,6 +15,7 @@ class MessageInput extends StatefulWidget {
   final Function() onFilePressed;
   final Function(String) onImageSizeSelected;
   final Function(String) onImageStyleSelected;
+  final Function(String) onVideoRatioSelected;
 
   const MessageInput({
     super.key,
@@ -26,6 +27,7 @@ class MessageInput extends StatefulWidget {
     required this.onFilePressed,
     required this.onImageSizeSelected,
     required this.onImageStyleSelected,
+    required this.onVideoRatioSelected,
     required this.onSend,
     required this.onCancelRequest,
   });
@@ -36,10 +38,12 @@ class MessageInput extends StatefulWidget {
 
 class _MessageInputState extends State<MessageInput> {
   String selectedImageStyle = '';
-  String selectedRatio = '';
+  String selectedImageRatio = '';
+  String selectedVideoRatio = '';
   bool isWebSearchEnabled = false;
   bool isDeepThinkingEnabled = false;
   bool showGenerateImageOptions = false;
+  bool showGenerateVideoOptions = false;
   bool showAttachmentInputs = false;
 
   @override
@@ -47,7 +51,10 @@ class _MessageInputState extends State<MessageInput> {
     super.initState();
     if (widget.provider.getOutputModalites().contains(OutputModality.image)) {
       if (widget.provider.getSupportedImageSizes().isNotEmpty) {
-        selectedRatio = widget.provider.getSupportedImageSizes().first;
+        selectedImageRatio = widget.provider.getSupportedImageSizes().first;
+        if (widget.provider.getSupportVideoRatios().isNotEmpty) {
+          selectedVideoRatio = widget.provider.getSupportVideoRatios().first;
+        }
       }
     }
   }
@@ -68,6 +75,9 @@ class _MessageInputState extends State<MessageInput> {
                         widget.provider.supportDeepThinking() ||
                         widget.provider.getOutputModalites().contains(
                           OutputModality.image,
+                        ) ||
+                        widget.provider.getOutputModalites().contains(
+                          OutputModality.video,
                         ))
                     ? 8
                     : 0,
@@ -300,7 +310,7 @@ class _MessageInputState extends State<MessageInput> {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              selectedRatio,
+                              selectedImageRatio,
                               style: TextStyle(
                                 fontSize: fontSize - 2,
                                 fontWeight: FontWeight.w500,
@@ -309,6 +319,52 @@ class _MessageInputState extends State<MessageInput> {
                             SizedBox(width: 4),
                             Icon(
                               showGenerateImageOptions
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  if (widget.provider.getOutputModalites().contains(
+                    OutputModality.video,
+                  ))
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          showGenerateVideoOptions = !showGenerateVideoOptions;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                          vertical: 4.0,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.video_camera_back_rounded,
+                              size: fontSize! - 2,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              selectedVideoRatio,
+                              style: TextStyle(
+                                fontSize: fontSize - 2,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              showGenerateVideoOptions
                                   ? Icons.keyboard_arrow_up
                                   : Icons.keyboard_arrow_down,
                               size: 16,
@@ -473,7 +529,7 @@ class _MessageInputState extends State<MessageInput> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '选择比例: $selectedRatio',
+                      '选择比例: $selectedImageRatio',
                       style: TextStyle(
                         fontSize: fontSize! - 2,
                         color: Theme.of(context).colorScheme.onSurface,
@@ -491,13 +547,50 @@ class _MessageInputState extends State<MessageInput> {
                             scrollDirection: Axis.horizontal,
                             children: [
                               ...(widget.provider.getSupportedImageSizes()).map(
-                                (size) => _buildRatioOption(size),
+                                (size) => _buildImageRatioOption(size),
                               ),
                             ],
                           ),
                         );
                       },
                     ),
+                  ],
+                ),
+
+              if (showGenerateVideoOptions) SizedBox(height: 12),
+              // 展开的选项面板
+              if (showGenerateVideoOptions &&
+                  widget.provider.getSupportVideoRatios().isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '选择比例: $selectedVideoRatio',
+                      style: TextStyle(
+                        fontSize: fontSize! - 2,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Container(
+                          constraints: BoxConstraints(
+                            maxHeight: 120,
+                            minHeight: 80,
+                          ),
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              ...(widget.provider.getSupportVideoRatios()).map(
+                                (size) => _buildVideoRatioOption(size),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    SizedBox(height: 12),
                   ],
                 ),
             ],
@@ -573,7 +666,7 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildRatioOption(String ratio) {
+  Widget _buildImageRatioOption(String ratio) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     // 解析比例
     var width = 1.0;
@@ -591,7 +684,7 @@ class _MessageInputState extends State<MessageInput> {
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedRatio = ratio;
+          selectedImageRatio = ratio;
           widget.onImageSizeSelected(ratio);
         });
       },
@@ -601,7 +694,7 @@ class _MessageInputState extends State<MessageInput> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color:
-              selectedRatio == ratio
+              selectedImageRatio == ratio
                   ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
                   : Theme.of(context).colorScheme.surface,
         ),
@@ -616,7 +709,7 @@ class _MessageInputState extends State<MessageInput> {
                 borderRadius: BorderRadius.circular(3),
                 border: Border.all(
                   color:
-                      selectedRatio == ratio
+                      selectedImageRatio == ratio
                           ? Theme.of(context).colorScheme.primary
                           : Theme.of(context).colorScheme.onSurface,
                   width: 0.3,
@@ -631,7 +724,76 @@ class _MessageInputState extends State<MessageInput> {
                 fontSize: fontSize! - 2,
                 fontWeight: FontWeight.bold,
                 color:
-                    selectedRatio == ratio
+                    selectedImageRatio == ratio
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoRatioOption(String ratio) {
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    // 解析比例
+    var width = 1.0;
+    var height = 1.0;
+    if (ratio.contains(':')) {
+      final parts = ratio.split(':');
+      width = double.parse(parts[0]);
+      height = double.parse(parts[1]);
+    } else if (ratio.contains('x')) {
+      final parts = ratio.split('x');
+      width = double.parse(parts[0]);
+      height = double.parse(parts[1]);
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedVideoRatio = ratio;
+          widget.onVideoRatioSelected(ratio);
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color:
+              selectedVideoRatio == ratio
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                  : Theme.of(context).colorScheme.surface,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 比例可视化
+            Container(
+              width: 24,
+              height: 24 * (height / width),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(
+                  color:
+                      selectedVideoRatio == ratio
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
+                  width: 0.3,
+                ),
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+            ),
+            // 比例文本
+            Text(
+              ratio,
+              style: TextStyle(
+                fontSize: fontSize! - 2,
+                fontWeight: FontWeight.bold,
+                color:
+                    selectedVideoRatio == ratio
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.onSurface,
               ),

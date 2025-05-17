@@ -40,6 +40,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _isCancellable = false;
   String _selectedImageSize = '1024x1024';
   String _selectedImageStype = '';
+  String _selectedVideoRatio = '';
 
   final List<File> _selectedImages = [];
   final List<File> _selectedFiles = [];
@@ -428,6 +429,11 @@ class _ChatPageState extends State<ChatPage> {
                         _selectedImageStype = style;
                       });
                     },
+                    onVideoRatioSelected: (ratio) {
+                      setState(() {
+                        _selectedVideoRatio = ratio;
+                      });
+                    },
                     onSend: _sendMessage,
                     onCancelRequest: _cancelRequest,
                   ),
@@ -788,16 +794,12 @@ class _ChatPageState extends State<ChatPage> {
     try {
       // 创建用户消息记录
       final imagePaths = await _getSelectedImagePaths();
-      var referImagePath = "";
-      if (imagePaths.isNotEmpty) {
-        referImagePath = imagePaths.first;
-      }
       final userMessage = Message(
         chatId: widget.id,
         botId: widget.bot.id,
         senderId: _currentUserId,
         content: prompt,
-        images: referImagePath.isEmpty ? [] : [referImagePath],
+        images: imagePaths,
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -811,11 +813,18 @@ class _ChatPageState extends State<ChatPage> {
 
       // 调用模型生成视频
       var videoDirPath = await getChatDirectoryPath(widget.id);
-      final videoPath = await _provider.generateVideo(
-        prompt,
-        videoDirPath,
-        referImagePath,
-      );
+      // 准备参数
+      final params = {
+        'prompt': prompt,
+        'ratio': _selectedVideoRatio,
+        'dirPath': videoDirPath,
+        'referenceImage': imagePaths,
+      };
+      // 使用compute在后台线程执行图片生成
+      final videoPath = await compute(_generateVedioInBackground, {
+        'bot': widget.bot,
+        'params': params,
+      });
       final botMessage = Message(
         chatId: widget.id,
         botId: widget.bot.id,
@@ -828,7 +837,6 @@ class _ChatPageState extends State<ChatPage> {
         _messages.add(botMessage);
       });
       await MessageService.addMessage(botMessage);
-
       if (mounted) {
         await ChatService.updateLastMessage(widget.id, '生成了视频');
       }
@@ -869,6 +877,22 @@ class _ChatPageState extends State<ChatPage> {
       params['dirPath'],
       referenceImages: params['referenceImages'],
       style: params['style'],
+    );
+  }
+
+  // 在后台线程中执行图片生成的静态方法
+  static Future<String> _generateVedioInBackground(
+    Map<String, dynamic> args,
+  ) async {
+    final bot = args['bot'] as Bot;
+    final params = args['params'] as Map<String, dynamic>;
+    final provider = Provider.create(bot);
+
+    return await provider.generateVideo(
+      params['prompt'],
+      params['ratio'],
+      params['dirPath'],
+      params['referenceImage'],
     );
   }
 }

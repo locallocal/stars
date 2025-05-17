@@ -118,6 +118,13 @@ class AlibabaCloud extends Provider {
       case 'wanx2.1-t2i-turbo':
       case 'wanx2.1-t2i-plus':
       case 'wanx2.0-t2i-turbo':
+      case 'flux-schnell':
+      case 'flux-dev':
+      case 'flux-merged':
+      case 'facechain-finetune':
+      case 'wanx-background-generation-v2':
+      case 'facechain-generation':
+      case 'wordart-texture':
         return [OutputModality.image];
     }
     return [OutputModality.text];

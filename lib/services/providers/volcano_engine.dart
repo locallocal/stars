@@ -9,6 +9,8 @@ class VolcanoEngine extends Provider {
       'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
   static const String defaultApiImageUrl =
       'https://ark.cn-beijing.volces.com/api/v3/images/generations';
+  static const String defaultApiVideoUrl =
+      'https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks';
 
   VolcanoEngine(super.bot);
 
@@ -235,7 +237,6 @@ class VolcanoEngine extends Provider {
         },
         body: jsonEncode(requestBody),
       );
-      print(response.body);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -259,6 +260,154 @@ class VolcanoEngine extends Provider {
       }
     } catch (e) {
       throw Exception('Generate image failed: $e');
+    }
+  }
+
+  @override
+  List<String> getSupportVideoResolutions() {
+    return ['480p', '720p'];
+  }
+
+  @override
+  List<String> getSupportVideoRatios() {
+    final ratios = ['16:9', '4:3', '1:1', '3:4', '9:16', '21:9', '9:21'];
+    if (bot.model.contains('wan2-1-14b')) {
+      ratios.add('keep_ratio');
+    }
+    if (bot.model.contains('doubao-seawee')) {
+      ratios.add('adaptive');
+    }
+    if (bot.model.contains('doubao-seedanc')) {
+      ratios.add('adaptive');
+    }
+    return ratios;
+  }
+
+  @override
+  Future<String> generateVideo(
+    String prompt,
+    String ratio,
+    String outputDirPath,
+    List<String> referImages,
+  ) async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}contents/generations/tasks'
+            : defaultApiVideoUrl;
+    prompt = '$prompt --wm false';
+    if (ratio.isNotEmpty) {
+      prompt = '$prompt --rt $ratio';
+    }
+    final body = {
+      'model': bot.model,
+      'content': [
+        {'type': 'text', 'text': prompt},
+      ],
+      'watermark': false,
+    };
+    if (referImages.isNotEmpty) {
+      try {
+        final file = File(referImages[0]);
+        if (file.existsSync()) {
+          final bytes = file.readAsBytesSync();
+          final base64Image = base64Encode(bytes);
+          final content = body['content'] as List;
+          content.add({
+            'type': 'image_url',
+            'image_url': 'data:image/jpeg;base64,$base64Image',
+            'role': 'first_frame',
+          });
+        }
+      } catch (e) {
+        throw Exception('Process first image $referImages failed: $e');
+      }
+      if (referImages.length > 1) {
+        try {
+          final file = File(referImages[1]);
+          if (file.existsSync()) {
+            final bytes = file.readAsBytesSync();
+            final base64Image = base64Encode(bytes);
+            final content = body['content'] as List;
+            content.add({
+              'type': 'image_url',
+              'image_url': 'data:image/jpeg;base64,$base64Image',
+              'role': 'last_frame',
+            });
+          }
+        } catch (e) {
+          throw Exception('Process last image $referImages failed: $e');
+        }
+      }
+    }
+
+    final request =
+        http.Request('POST', Uri.parse(url))
+          ..headers.addAll({
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': 'Bearer ${bot.apiKey}',
+          })
+          ..body = jsonEncode(body);
+
+    final response = await request.send();
+    if (response.statusCode != 200) {
+      final errorBody = await response.stream.bytesToString();
+      throw Exception(
+        'Generate video failed, ${response.statusCode}, $errorBody',
+      );
+    }
+    final responseBytes = await response.stream.toBytes();
+    final data = jsonDecode(utf8.decode(responseBytes));
+
+    final videoUrl = await _waitVideoFinished(data['id']);
+    return await _downloadVideo(videoUrl, outputDirPath);
+  }
+
+  Future<String> _waitVideoFinished(String taskId) async {
+    final url =
+        bot.baseURL.isNotEmpty
+            ? '${bot.baseURL}contents/generations/tasks/$taskId'
+            : '$defaultApiVideoUrl/$taskId';
+
+    for (var i = 0; i < 3000; i++) {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer ${bot.apiKey}',
+          'content-type': 'application/json',
+        },
+      );
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      if (data['status'] == 'succeeded') {
+        return data['content']['video_url'];
+      }
+      if (data['status'] == 'failed') {
+        throw Exception('视频生成失败: $data');
+      }
+      if (data['status'] == 'cancelled') {
+        throw Exception('视频生成已取消: $data');
+      }
+      sleep(Duration(milliseconds: 500));
+    }
+    throw Exception('视频生成超时');
+  }
+
+  Future<String> _downloadVideo(String videoUrl, String outputDirPath) async {
+    // 下载真正的视频文件
+    final videoResponse = await http.get(Uri.parse(videoUrl));
+    if (videoResponse.statusCode == 200) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'volcano_engine_video_$timestamp.mp4';
+      final filePath = '$outputDirPath/$fileName';
+      final file = File(filePath);
+      await file.writeAsBytes(videoResponse.bodyBytes);
+      // 验证文件大小
+      final fileSize = await file.length();
+      if (fileSize < 1000) {
+        // 如果文件太小，可能不是有效的视频
+      }
+      return filePath;
+    } else {
+      throw Exception('从URL下载视频失败: $videoUrl $videoResponse');
     }
   }
 }

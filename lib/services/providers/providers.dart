@@ -185,10 +185,19 @@ abstract class Provider {
     throw UnsupportedError('${bot.apiType} Not support generate music');
   }
 
+  List<String> getSupportVideoResolutions() {
+    return [];
+  }
+
+  List<String> getSupportVideoRatios() {
+    return [];
+  }
+
   Future<String> generateVideo(
     String prompt,
+    String ratio,
     String outputDirPath,
-    String referImage,
+    List<String> referImages,
   ) {
     // 默认实现抛出异常，子类可以覆盖此方法
     throw UnsupportedError('${bot.apiType} Not support generate video');

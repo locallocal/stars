@@ -318,7 +318,7 @@ class MiniMax extends Provider {
         final imageResponse = await http.get(Uri.parse(imageUrl));
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
-          final fileName = 'minimax_image_$timestamp.png';
+          final fileName = 'mini_max_image_$timestamp.png';
           final filePath = '$imageDirPath/$fileName';
           final file = File(filePath);
           await file.writeAsBytes(imageResponse.bodyBytes);
@@ -390,9 +390,8 @@ class MiniMax extends Provider {
     // 解析十六进制字符串为字节数据
     final audioHex = data['data']['audio'];
     final audioBytes = _hexToBytes(audioHex);
-
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = 'minimax_speech_$timestamp.mp3';
+    final fileName = 'mini_max_speech_$timestamp.mp3';
     final filePath = '$outputDirPath/$fileName';
     final file = File(filePath);
     await file.writeAsBytes(audioBytes);
@@ -448,7 +447,7 @@ class MiniMax extends Provider {
     final audioHex = data['data']['audio'];
     final audioBytes = _hexToBytes(audioHex);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final fileName = 'minimax_music_$timestamp.mp3';
+    final fileName = 'mini_max_music_$timestamp.mp3';
     final filePath = '$outputDirPath/$fileName';
     final file = File(filePath);
     await file.writeAsBytes(audioBytes);
@@ -458,24 +457,25 @@ class MiniMax extends Provider {
   @override
   Future<String> generateVideo(
     String prompt,
+    String ratio,
     String outputDirPath,
-    String referImage,
+    List<String> referImages,
   ) async {
     final url =
         bot.baseURL.isNotEmpty
             ? '${bot.baseURL}video_generation'
             : defaultApiVideoUrl;
     final body = {'model': bot.model, 'prompt': prompt};
-    if (referImage.isNotEmpty) {
+    if (referImages.isNotEmpty) {
       try {
-        final file = File(referImage);
+        final file = File(referImages[0]);
         if (file.existsSync()) {
           final bytes = file.readAsBytesSync();
           final base64Image = base64Encode(bytes);
           body['first_frame_image'] = 'data:image/jpeg;base64,$base64Image';
         }
       } catch (e) {
-        throw Exception('Process image $referImage failed: $e');
+        throw Exception('Process image $referImages failed: $e');
       }
     }
 
@@ -605,7 +605,7 @@ class MiniMax extends Provider {
       final videoResponse = await http.get(Uri.parse(videoUrl));
       if (videoResponse.statusCode == 200) {
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fileName = 'minimax_video_$timestamp.mp4';
+        final fileName = 'mini_max_video_$timestamp.mp4';
         final filePath = '$outputDirPath/$fileName';
         final file = File(filePath);
         await file.writeAsBytes(videoResponse.bodyBytes);
