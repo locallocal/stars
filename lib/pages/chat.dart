@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:bubble/services/message_service.dart';
@@ -556,13 +557,20 @@ class _ChatPageState extends State<ChatPage> {
 
       // 调用模型生成图片
       var imageDirPath = await getChatDirectoryPath(widget.id);
-      final imagePath = await _provider.generateImage(
-        prompt,
-        _selectedImageSize,
-        imageDirPath,
-        referenceImages: imagePaths,
-        style: _selectedImageStype,
-      );
+      // 准备参数
+      final params = {
+        'prompt': prompt,
+        'size': _selectedImageSize,
+        'dirPath': imageDirPath,
+        'referenceImages': imagePaths,
+        'style': _selectedImageStype,
+      };
+      // 使用compute在后台线程执行图片生成
+      final imagePath = await compute(_generateImageInBackground, {
+        'bot': widget.bot,
+        'params': params,
+      });
+
       final botMessage = Message(
         chatId: widget.id,
         botId: widget.bot.id,
@@ -845,5 +853,22 @@ class _ChatPageState extends State<ChatPage> {
         _isCancellable = false;
       });
     }
+  }
+
+  // 在后台线程中执行图片生成的静态方法
+  static Future<List<String>> _generateImageInBackground(
+    Map<String, dynamic> args,
+  ) async {
+    final bot = args['bot'] as Bot;
+    final params = args['params'] as Map<String, dynamic>;
+    final provider = Provider.create(bot);
+
+    return await provider.generateImage(
+      params['prompt'],
+      params['size'],
+      params['dirPath'],
+      referenceImages: params['referenceImages'],
+      style: params['style'],
+    );
   }
 }

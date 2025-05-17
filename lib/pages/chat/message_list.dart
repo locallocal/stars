@@ -65,7 +65,7 @@ class MessageList extends StatelessWidget {
                   ),
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Column(
@@ -89,7 +89,7 @@ class MessageList extends StatelessWidget {
                           code: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
                             backgroundColor:
-                                Theme.of(context).colorScheme.surface,
+                                Theme.of(context).colorScheme.secondary,
                           ),
                           blockquote: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
@@ -193,11 +193,17 @@ class MessageList extends StatelessWidget {
                                             return Container(
                                               width: 75,
                                               height: 75,
-                                              color: Colors.grey[300],
-                                              child: const Center(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                              child: Center(
                                                 child: Icon(
                                                   Icons.broken_image,
-                                                  color: Colors.grey,
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.onSurface,
                                                 ),
                                               ),
                                             );
