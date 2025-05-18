@@ -663,11 +663,16 @@ class _ChatPageState extends State<ChatPage> {
 
       // 调用模型生成语音
       var outputDirPath = await getChatDirectoryPath(widget.id);
-      final audioPath = await _provider.generateSpeech(
-        prompt,
-        voiceType,
-        outputDirPath,
-      );
+      final params = {
+        'prompt': prompt,
+        'dirPath': outputDirPath,
+        'voiceType': voiceType,
+      };
+      // 使用compute在后台线程执行语音的生成
+      final audioPath = await compute(_generateSpeechInBackground, {
+        'bot': widget.bot,
+        'params': params,
+      });
       // 创建机器人回复消息
       final botMessage = Message(
         chatId: widget.id,
@@ -880,7 +885,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  // 在后台线程中执行图片生成的静态方法
+  // 在后台线程中执行视频生成的静态方法
   static Future<String> _generateVedioInBackground(
     Map<String, dynamic> args,
   ) async {
@@ -893,6 +898,21 @@ class _ChatPageState extends State<ChatPage> {
       params['ratio'],
       params['dirPath'],
       params['referenceImage'],
+    );
+  }
+
+  // 在后台线程中执行语音生成的静态方法
+  static Future<String> _generateSpeechInBackground(
+    Map<String, dynamic> args,
+  ) async {
+    final bot = args['bot'] as Bot;
+    final params = args['params'] as Map<String, dynamic>;
+    final provider = Provider.create(bot);
+
+    return await provider.generateSpeech(
+      params['prompt'],
+      params['voiceType'],
+      params['dirPath'],
     );
   }
 }

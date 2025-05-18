@@ -52,9 +52,11 @@ class _MessageInputState extends State<MessageInput> {
     if (widget.provider.getOutputModalites().contains(OutputModality.image)) {
       if (widget.provider.getSupportedImageSizes().isNotEmpty) {
         selectedImageRatio = widget.provider.getSupportedImageSizes().first;
-        if (widget.provider.getSupportVideoRatios().isNotEmpty) {
-          selectedVideoRatio = widget.provider.getSupportVideoRatios().first;
-        }
+      }
+    }
+    if (widget.provider.getOutputModalites().contains(OutputModality.video)) {
+      if (widget.provider.getSupportVideoRatios().isNotEmpty) {
+        selectedVideoRatio = widget.provider.getSupportVideoRatios().first;
       }
     }
   }
@@ -386,7 +388,11 @@ class _MessageInputState extends State<MessageInput> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            margin: const EdgeInsets.only(right: 8, bottom: 8),
+                            margin: const EdgeInsets.only(
+                              right: 8,
+                              bottom: 8,
+                              top: 8,
+                            ),
                             padding: const EdgeInsets.only(
                               bottom: 8,
                               left: 6,
@@ -423,7 +429,11 @@ class _MessageInputState extends State<MessageInput> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            margin: const EdgeInsets.only(right: 8, bottom: 8),
+                            margin: const EdgeInsets.only(
+                              right: 8,
+                              bottom: 8,
+                              top: 8,
+                            ),
                             padding: const EdgeInsets.only(
                               bottom: 8,
                               left: 6,

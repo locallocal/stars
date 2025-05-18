@@ -33,24 +33,18 @@ class MessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    // 在构建完成后直接滚动到底部
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+      }
+    });
     return Expanded(
       child: ListView.builder(
         controller: scrollController,
         itemCount: messages.length + (isStreaming ? 1 : 0),
         padding: const EdgeInsets.all(8.0),
         itemBuilder: (context, index) {
-          if (index == messages.length - 1) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (scrollController.hasClients) {
-                scrollController.animateTo(
-                  scrollController.position.maxScrollExtent,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              }
-            });
-          }
-
           if (isStreaming && index == messages.length) {
             return Align(
               alignment: Alignment.centerLeft,

@@ -38,7 +38,8 @@ class VolcanoEngine extends Provider {
       case 'doubao-vision-lite-32k-241015':
       case 'doubao-seaweed-241128':
       case 'doubao-seedance-1-0-lite-i2v-250428':
-      case 'wan2-1-14b-i2v':
+      case 'wan2-1-14b-i2v-250225':
+      case 'wan2-1-14b-flf2v-250417':
         return [InputModality.text, InputModality.image];
     }
     return [InputModality.text];
@@ -298,39 +299,34 @@ class VolcanoEngine extends Provider {
     if (ratio.isNotEmpty) {
       prompt = '$prompt --rt $ratio';
     }
-    final body = {
-      'model': bot.model,
-      'content': [
-        {'type': 'text', 'text': prompt},
-      ],
-      'watermark': false,
-    };
+    final body = {'model': bot.model, 'watermark': false};
+    List<Map<String, Object>> content = [
+      {'type': 'text', 'text': prompt},
+    ];
     if (referImages.isNotEmpty) {
       try {
         final file = File(referImages[0]);
         if (file.existsSync()) {
           final bytes = file.readAsBytesSync();
           final base64Image = base64Encode(bytes);
-          final content = body['content'] as List;
           content.add({
             'type': 'image_url',
-            'image_url': 'data:image/jpeg;base64,$base64Image',
+            'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
             'role': 'first_frame',
           });
         }
       } catch (e) {
         throw Exception('Process first image $referImages failed: $e');
       }
-      if (referImages.length > 1) {
+      if (referImages.length > 1 && bot.model.contains('wan2-1-14b-flf2v')) {
         try {
           final file = File(referImages[1]);
           if (file.existsSync()) {
             final bytes = file.readAsBytesSync();
             final base64Image = base64Encode(bytes);
-            final content = body['content'] as List;
             content.add({
               'type': 'image_url',
-              'image_url': 'data:image/jpeg;base64,$base64Image',
+              'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
               'role': 'last_frame',
             });
           }
@@ -339,6 +335,7 @@ class VolcanoEngine extends Provider {
         }
       }
     }
+    body['content'] = content;
 
     final request =
         http.Request('POST', Uri.parse(url))
