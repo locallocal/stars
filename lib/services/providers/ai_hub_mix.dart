@@ -118,7 +118,6 @@ class AiHubMix extends Provider {
         if (isCancelled) break;
 
         if (line.startsWith('data: ')) {
-          print(line);
           final jsonStr = line.substring(6);
           if (jsonStr == '[DONE]') {
             if (!isCancelled && onComplete != null) {

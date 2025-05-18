@@ -31,6 +31,7 @@ class AiMass extends Provider {
   List<InputModality> getInputModalites() {
     switch (bot.model) {
       case 'taichu_vl':
+      case 'taichu_vl_2b':
       case 'taichu_vlr_7b':
       case 'taichu_vlr_3b':
         return [InputModality.text, InputModality.image];
@@ -40,6 +41,12 @@ class AiMass extends Provider {
 
   @override
   List<OutputModality> getOutputModalites() {
+    switch (bot.model) {
+      case 'taichu_tts':
+        return [OutputModality.speech];
+      case 'taichu_txt2image':
+        return [OutputModality.image];
+    }
     return [OutputModality.text];
   }
 
@@ -47,6 +54,7 @@ class AiMass extends Provider {
   Future<List<String>> listModels() async {
     return const [
       'taichu_llm',
+      'taichu_llm_2b',
       'qwq_32b',
       'taichu_o1',
       'deepseek_r1_distill_qwen_32b',
@@ -54,8 +62,11 @@ class AiMass extends Provider {
       'deepseek_r1_distill_llama_70b',
       'deepseek_r1',
       'taichu_vl',
+      'taichu_vl_2b',
       'taichu_vlr_7b',
       'taichu_vlr_3b',
+      'taichu_tts',
+      'taichu_txt2image',
     ];
   }
 
