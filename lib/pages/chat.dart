@@ -741,11 +741,15 @@ class _ChatPageState extends State<ChatPage> {
 
       // 调用模型生成音乐
       var musicDirPath = await getChatDirectoryPath(widget.id);
-      final musicPath = await _provider.generateMusic(
-        prompt,
-        musicDirPath,
-        referMusicPath,
-      );
+      final params = {
+        'prompt': prompt,
+        'dirPath': musicDirPath,
+        'referMusicPath': referMusicPath,
+      };
+      final musicPath = await compute(_generateMusicInBackground, {
+        'bot': widget.bot,
+        'params': params,
+      });
       final botMessage = Message(
         chatId: widget.id,
         botId: widget.bot.id,
@@ -913,6 +917,21 @@ class _ChatPageState extends State<ChatPage> {
       params['prompt'],
       params['voiceType'],
       params['dirPath'],
+    );
+  }
+
+  // 在后台线程中执行语音生成的静态方法
+  static Future<String> _generateMusicInBackground(
+    Map<String, dynamic> args,
+  ) async {
+    final bot = args['bot'] as Bot;
+    final params = args['params'] as Map<String, dynamic>;
+    final provider = Provider.create(bot);
+
+    return await provider.generateSpeech(
+      params['prompt'],
+      params['dirPath'],
+      params['referMusicPath'],
     );
   }
 }
