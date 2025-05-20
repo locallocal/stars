@@ -328,8 +328,8 @@ class _ContactsPageState extends State<ContactsPage> {
             children: [
               Image.asset(
                 'assets/images/profile/no_bots.png',
-                width: 384,
-                height: 384,
+                width: 256,
+                height: 256,
                 fit: BoxFit.cover,
               ),
               const SizedBox(height: 16),
@@ -346,6 +346,39 @@ class _ContactsPageState extends State<ContactsPage> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => AddBotPage(
+                            onBotAdded: (newBot) async {
+                              await BotService.addBot(newBot);
+                              _loadBots(); // 重新加载联系人列表
+                            },
+                          ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                label: Text(S.of(context).addBot),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             ],

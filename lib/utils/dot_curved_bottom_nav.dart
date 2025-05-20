@@ -173,7 +173,6 @@ class _DotCurvedBottomNavState extends State<DotCurvedBottomNav>
                     ],
                   ),
                 ),
-                // Row(),
               ],
             ),
           ),

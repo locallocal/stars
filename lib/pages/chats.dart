@@ -184,8 +184,8 @@ class _ChatListPageState extends State<ChatListPage> {
                                       else
                                         Image.asset(
                                           'assets/images/profile/no_chats.png',
-                                          width: 384,
-                                          height: 384,
+                                          width: 256,
+                                          height: 256,
                                           fit: BoxFit.cover,
                                         ),
 
@@ -200,9 +200,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                               ).colorScheme.onSurface,
                                         ),
                                       ),
-
                                       const SizedBox(height: 8),
-
                                       Text(
                                         S.of(context).clickToStartChat,
                                         textAlign: TextAlign.center,
@@ -211,6 +209,41 @@ class _ChatListPageState extends State<ChatListPage> {
                                               Theme.of(
                                                 context,
                                               ).colorScheme.onSurface,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 24),
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder:
+                                                (context) => NewChatDialog(
+                                                  onChatCreated: _loadChatList,
+                                                ),
+                                          );
+                                        },
+                                        icon: const Icon(
+                                          Icons.add_circle_outline,
+                                        ),
+                                        label: Text(S.of(context).newChat),
+                                        style: ElevatedButton.styleFrom(
+                                          elevation: 0,
+                                          shadowColor: Colors.transparent,
+                                          surfaceTintColor: Colors.transparent,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          backgroundColor:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.secondary,
                                         ),
                                       ),
                                     ],
