@@ -139,204 +139,213 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0, // 移除阴影
         surfaceTintColor: Colors.transparent,
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        children: [
-          // 头像区域
-          Padding(
-            padding: const EdgeInsets.only(top: 30.0, bottom: 20.0),
-            child: Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 64,
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      backgroundImage:
-                          _avatar.isNotEmpty
-                              ? FileImage(File(_avatar))
-                              : const AssetImage(
-                                    'assets/images/profile/avatar.png',
-                                  )
-                                  as ImageProvider,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 800),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            children: [
+              // 头像区域
+              Padding(
+                padding: const EdgeInsets.only(top: 30.0, bottom: 20.0),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 64,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.surface,
+                          backgroundImage:
+                              _avatar.isNotEmpty
+                                  ? FileImage(File(_avatar))
+                                  : const AssetImage(
+                                        'assets/images/profile/avatar.png',
+                                      )
+                                      as ImageProvider,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                ),
+              ),
+
+              // 个人信息分组
+              Container(
+                margin: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(24.0),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        '个人信息',
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    // 名称区域
+                    _buildSettingItem(
+                      context,
+                      Icons.person_rounded,
+                      S.of(context).name,
+                      _name,
+                      _showEditNameDialog,
+                    ),
                   ],
                 ),
               ),
-            ),
-          ),
 
-          // 个人信息分组
-          Container(
-            margin: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary,
-              borderRadius: BorderRadius.circular(24.0),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Text(
-                    '个人信息',
-                    style: TextStyle(
-                      fontSize: _fontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              // 外观设置分组
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(24.0),
                 ),
-                // 名称区域
-                _buildSettingItem(
-                  context,
-                  Icons.person_rounded,
-                  S.of(context).name,
-                  _name,
-                  _showEditNameDialog,
-                ),
-              ],
-            ),
-          ),
-
-          // 外观设置分组
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary,
-              borderRadius: BorderRadius.circular(24.0),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Text(
-                    '系统设置',
-                    style: TextStyle(
-                      fontSize: _fontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                // 主题设置
-                _buildSettingItem(
-                  context,
-                  Icons.brightness_6_rounded,
-                  S.of(context).themeSettings,
-                  _themeMode == ThemeMode.system
-                      ? S.of(context).followSystem
-                      : _themeMode == ThemeMode.light
-                      ? S.of(context).lightMode
-                      : S.of(context).darkMode,
-                  _showThemeOptions,
-                ),
-                const SizedBox(height: 8.0),
-                // 语言设置
-                _buildSettingItem(
-                  context,
-                  Icons.language_rounded,
-                  S.of(context).languageSettings,
-                  getLanguageName(_language),
-                  _showLanguageOptions,
-                ),
-                const SizedBox(height: 8.0),
-                // 字体大小设置
-                _buildSettingItem(
-                  context,
-                  Icons.text_fields_rounded,
-                  S.of(context).fontSizeSettings,
-                  S.of(context).adjustAppFontSize,
-                  _showFontSizeDialog,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 8.0,
-                    right: 8.0,
-                    top: 4.0,
-                  ),
-                  child: Slider(
-                    value: _fontSize,
-                    min: 12.0,
-                    max: 24.0,
-                    divisions: 12,
-                    activeColor: Theme.of(context).colorScheme.onSurface,
-                    inactiveColor: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.3),
-                    label: _fontSize.round().toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        _profile = Profile(
-                          name: _name,
-                          avatar: _avatar,
-                          fontSize: value,
-                          themeMode: themeModeToInt(_themeMode),
-                          language: _language,
-                          createTimestamp: _profile!.createTimestamp,
-                          modifyTimestamp: DateTime.now(),
-                        );
-                      });
-                      _saveProfile(); // 保存设置
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 帮助与支持分组
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary,
-              borderRadius: BorderRadius.circular(24.0),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Text(
-                    '帮助与支持',
-                    style: TextStyle(
-                      fontSize: _fontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                // 帮助与反馈
-                _buildSettingItem(
-                  context,
-                  Icons.help_rounded,
-                  S.of(context).helpAndFeedback,
-                  S.of(context).provideFeedback,
-                  () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FeedbackPage(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        '系统设置',
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    );
-                  },
+                    ),
+                    // 主题设置
+                    _buildSettingItem(
+                      context,
+                      Icons.brightness_6_rounded,
+                      S.of(context).themeSettings,
+                      _themeMode == ThemeMode.system
+                          ? S.of(context).followSystem
+                          : _themeMode == ThemeMode.light
+                          ? S.of(context).lightMode
+                          : S.of(context).darkMode,
+                      _showThemeOptions,
+                    ),
+                    const SizedBox(height: 8.0),
+                    // 语言设置
+                    _buildSettingItem(
+                      context,
+                      Icons.language_rounded,
+                      S.of(context).languageSettings,
+                      getLanguageName(_language),
+                      _showLanguageOptions,
+                    ),
+                    const SizedBox(height: 8.0),
+                    // 字体大小设置
+                    _buildSettingItem(
+                      context,
+                      Icons.text_fields_rounded,
+                      S.of(context).fontSizeSettings,
+                      S.of(context).adjustAppFontSize,
+                      _showFontSizeDialog,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 8.0,
+                        right: 8.0,
+                        top: 4.0,
+                      ),
+                      child: Slider(
+                        value: _fontSize,
+                        min: 12.0,
+                        max: 24.0,
+                        divisions: 12,
+                        activeColor: Theme.of(context).colorScheme.onSurface,
+                        inactiveColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.3),
+                        label: _fontSize.round().toString(),
+                        onChanged: (value) {
+                          setState(() {
+                            _profile = Profile(
+                              name: _name,
+                              avatar: _avatar,
+                              fontSize: value,
+                              themeMode: themeModeToInt(_themeMode),
+                              language: _language,
+                              createTimestamp: _profile!.createTimestamp,
+                              modifyTimestamp: DateTime.now(),
+                            );
+                          });
+                          _saveProfile(); // 保存设置
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8.0),
-                // 关于
-                _buildSettingItem(
-                  context,
-                  Icons.info_rounded,
-                  S.of(context).about,
-                  S.of(context).version,
-                  _showCustomAboutDialog,
+              ),
+
+              // 帮助与支持分组
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(24.0),
                 ),
-              ],
-            ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        '帮助与支持',
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    // 帮助与反馈
+                    _buildSettingItem(
+                      context,
+                      Icons.help_rounded,
+                      S.of(context).helpAndFeedback,
+                      S.of(context).provideFeedback,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FeedbackPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8.0),
+                    // 关于
+                    _buildSettingItem(
+                      context,
+                      Icons.info_rounded,
+                      S.of(context).about,
+                      S.of(context).version,
+                      _showCustomAboutDialog,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -100,7 +100,6 @@ class _ContactsPageState extends State<ContactsPage> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // 搜索框
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
@@ -111,7 +110,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       child: TextField(
                         onChanged: _filterBots,
                         decoration: InputDecoration(
-                          hintText: S.of(context).selectBot,
+                          hintText: '搜索智能体',
                           hintStyle: TextStyle(
                             fontSize: fontSize,
                             color: Theme.of(

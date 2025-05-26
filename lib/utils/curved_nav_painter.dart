@@ -39,12 +39,11 @@ class CurvedNavPainter extends CustomPainter {
     final width = size.width;
 
     const s = 0.06;
-    const depth = 0.24;
+    const depth = 0.20;
     final valleyWith = indicatorSize + 5;
 
     // 修正loc计算，使指示器居中
     final centerLoc = 1.0 / itemsLength * (startingLoc + 0.5);
-
     final path =
         Path()
           // top Left Corner
@@ -56,15 +55,15 @@ class CurvedNavPainter extends CustomPainter {
             size.height * 0.05,
             centerLoc * size.width - valleyWith,
             size.height * depth,
-            (centerLoc + s * 0.50) * size.width - valleyWith,
+            centerLoc * size.width,
             size.height * depth,
           )
           ..cubicTo(
-            (centerLoc + s * 0.20) * size.width + valleyWith,
-            size.height * depth,
             centerLoc * size.width + valleyWith,
-            0,
-            (centerLoc + s * 0.60) * size.width + valleyWith,
+            size.height * depth,
+            (centerLoc - s * 0.20) * size.width + valleyWith,
+            size.height * 0.05,
+            centerLoc * width + valleyWith * 2,
             0,
           )
           // top right corner

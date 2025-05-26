@@ -471,7 +471,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                border: null,
               ),
               child: MarkdownBody(
                 data: widget.reasoning,
@@ -482,13 +482,10 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                       context,
                     ).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: fontSize - 2,
-                    fontStyle: FontStyle.italic,
                   ),
                   code: TextStyle(
-                    color: Colors.black87,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.05),
+                    color: Theme.of(context).colorScheme.onSurface,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
                     fontSize: fontSize - 2,
                   ),
                 ),

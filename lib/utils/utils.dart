@@ -63,3 +63,16 @@ Future<String> getChatDirectoryPath(String chatId) async {
   final appDir = await getApplicationDocumentsDirectory();
   return path.join(appDir.path, 'chats', chatId);
 }
+
+bool isDesktopOrTabletPlatform(BuildContext context) {
+  // 检测当前平台
+  final bool isDesktopOrTablet =
+      Theme.of(context).platform == TargetPlatform.windows ||
+      Theme.of(context).platform == TargetPlatform.macOS ||
+      Theme.of(context).platform == TargetPlatform.linux ||
+      (Theme.of(context).platform == TargetPlatform.iOS &&
+          MediaQuery.of(context).size.width >= 768) ||
+      (Theme.of(context).platform == TargetPlatform.android &&
+          MediaQuery.of(context).size.width >= 768);
+  return isDesktopOrTablet;
+}

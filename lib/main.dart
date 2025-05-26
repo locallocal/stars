@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -12,9 +15,15 @@ import 'package:bubble/utils/utils.dart';
 import 'package:bubble/services/database_service.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/utils/dot_curved_bottom_nav.dart';
+import 'package:bubble/pages/desktop_layout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 添加这段代码来初始化 FFI 数据库工厂
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // 初始化 FFI
+    databaseFactory = databaseFactoryFfi;
+  }
   // 初始化数据库
   await DatabaseService.initDatabase();
   Intl.defaultLocale = 'zh';
@@ -178,60 +187,99 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
   final ScrollController _scrollController = ScrollController();
+  String? _selectedChatId;
+  Bot? _selectedBot;
+  late final List<Widget> _pages;
 
-  final List<Widget> _pages = [
-    const ChatListPage(),
-    const ContactsPage(),
-    const ProfilePage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      ChatListPage(onChatSelected: _onChatSelected),
+      const ContactsPage(),
+      const ProfilePage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDesktopOrTablet = isDesktopOrTabletPlatform(context);
     return Scaffold(
-      // body: _pages[_currentIndex],
-      body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: DotCurvedBottomNav(
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 8),
-        scrollController: _scrollController,
-        hideOnScroll: false,
-        indicatorColor: Theme.of(context).colorScheme.onSurface,
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        animationDuration: const Duration(milliseconds: 200), // 缩短动画时间
-        animationCurve: Curves.easeInOut, // 使用更平滑的动画曲线
-        selectedIndex: _currentIndex,
-        borderRadius: 24,
-        height: 70,
-        onTap: (index) {
-          // 添加震动反馈
-          HapticFeedback.lightImpact();
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: [
-          Icon(
-            Icons.wechat_rounded,
-            color:
-                _currentIndex == 0
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface,
-          ),
-          Icon(
-            Icons.smart_toy_rounded,
-            color:
-                _currentIndex == 1
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface,
-          ),
-          Icon(
-            Icons.person_rounded,
-            color:
-                _currentIndex == 2
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurface,
-          ),
-        ],
-      ),
+      body:
+          isDesktopOrTablet
+              ? DesktopLayout(
+                currentIndex: _currentIndex,
+                onPageChanged: _onPageChanged,
+                pages: _pages,
+                selectedChatId: _selectedChatId,
+                selectedBot: _selectedBot,
+              )
+              : IndexedStack(index: _currentIndex, children: _pages),
+      bottomNavigationBar:
+          isDesktopOrTablet
+              ? null
+              : DotCurvedBottomNav(
+                margin: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  top: 8,
+                ),
+                scrollController: _scrollController,
+                hideOnScroll: false,
+                indicatorColor: Theme.of(context).colorScheme.onSurface,
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                animationDuration: const Duration(milliseconds: 200), // 缩短动画时间
+                animationCurve: Curves.easeInOut, // 使用更平滑的动画曲线
+                selectedIndex: _currentIndex,
+                borderRadius: 24,
+                height: 70,
+                onTap: (index) {
+                  // 添加震动反馈
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                items: [
+                  Icon(
+                    Icons.wechat_rounded,
+                    color:
+                        _currentIndex == 0
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurface,
+                  ),
+                  Icon(
+                    Icons.smart_toy_rounded,
+                    color:
+                        _currentIndex == 1
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurface,
+                  ),
+                  Icon(
+                    Icons.person_rounded,
+                    color:
+                        _currentIndex == 2
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ],
+              ),
     );
+  }
+
+  // 新增：处理聊天选择的回调
+  void _onChatSelected(String chatId, Bot bot) {
+    setState(() {
+      _selectedChatId = chatId;
+      _selectedBot = bot;
+      print('Selected chat: $_selectedChatId');
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
   }
 }

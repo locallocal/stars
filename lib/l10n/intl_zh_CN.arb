@@ -564,6 +564,10 @@
     },
     "searchChats": "搜索聊天记录",
     "@searchChats": {
-      "description": "Hint text for chat search field"
+      "description": "搜索聊天记录的输入提示"
+    },
+    "searchBots": "搜索智能体",
+    "@searchBots": {
+      "description": "搜索智能体的输入提示"
     }
 }

@@ -565,5 +565,9 @@
     "searchChats": "Search chats",
     "@searchChats": {
       "description": "Hint text for chat search field"
+    },
+    "searchBots": "Search Bots",
+    "@searchBots": {
+        "description": "Hint text for bot search field"
     }
 }

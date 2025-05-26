@@ -8,7 +8,8 @@ import 'package:bubble/pages/chats/new_chat_dialog.dart';
 import 'package:bubble/pages/chats/chat_list_builder.dart';
 
 class ChatListPage extends StatefulWidget {
-  const ChatListPage({super.key});
+  final Function(String chatId, Bot bot) onChatSelected;
+  const ChatListPage({super.key, required this.onChatSelected});
 
   @override
   State<ChatListPage> createState() => _ChatListPageState();
@@ -265,6 +266,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                   _loadChatList();
                                 }
                               },
+                              onChatSelected: widget.onChatSelected,
                             ),
                   ),
                 ],

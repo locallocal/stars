@@ -12,12 +12,14 @@ class ChatListBuilder extends StatelessWidget {
   final List<Chat> chatList;
   final List<Bot> bots;
   final Function onChatDeleted;
+  final Function(String chatId, Bot bot) onChatSelected;
 
   const ChatListBuilder({
     super.key,
     required this.chatList,
     required this.bots,
     required this.onChatDeleted,
+    required this.onChatSelected,
   });
 
   @override
@@ -132,6 +134,17 @@ class ChatListBuilder extends StatelessWidget {
                     : chat.lastMessage,
             timestamp: formatTimestamp(context, chat.lastMessageTimestamp),
             onTap: () {
+              // 恢复平台判断
+              if (isDesktopOrTabletPlatform(context)) {
+                print('Desktop/Tablet: Selected chat: ${chat.id}');
+                onChatSelected(chat.id, bot);
+                return;
+              }
+
+              // 在移动设备上，执行导航
+              print('Mobile: Navigating to ChatPage for chat: ${chat.id}');
+
+              // 在移动设备上，执行导航
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -139,7 +152,7 @@ class ChatListBuilder extends StatelessWidget {
                 ),
               ).then((_) {
                 // 刷新聊天列表
-                onChatDeleted(''); // 使用空字符串表示不删除任何项，只刷新
+                onChatDeleted('');
               });
             },
           ),
