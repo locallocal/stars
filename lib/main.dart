@@ -196,7 +196,7 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _pages = [
       ChatListPage(onChatSelected: _onChatSelected),
-      const ContactsPage(),
+      ContactsPage(onBotSelected: _onBotSelected),
       const ProfilePage(),
     ];
   }
@@ -273,12 +273,19 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       _selectedChatId = chatId;
       _selectedBot = bot;
-      print('Selected chat: $_selectedChatId');
+    });
+  }
+
+  void _onBotSelected(Bot bot) {
+    setState(() {
+      _selectedBot = bot;
     });
   }
 
   void _onPageChanged(int index) {
     setState(() {
+      _selectedBot = null;
+      _selectedChatId = null;
       _currentIndex = index;
     });
   }

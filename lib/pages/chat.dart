@@ -366,79 +366,88 @@ class _ChatPageState extends State<ChatPage> {
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  Expanded(
-                    child:
-                        _messages.isEmpty
-                            ? WelcomeView(bot: widget.bot, fontSize: fontSize)
-                            : Column(
-                              children: [
-                                MessageList(
-                                  messages: _messages,
-                                  scrollController: _scrollController,
-                                  isStreaming: _isStreaming,
-                                  streamingResponse: _streamingResponse,
-                                  currentUserId: _currentUserId,
-                                  deepThinking: _provider.getDeepThinking(),
-                                  reasoningResponse: _reasoningResponse,
+              : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child:
+                            _messages.isEmpty
+                                ? WelcomeView(
+                                  bot: widget.bot,
+                                  fontSize: fontSize,
+                                )
+                                : Column(
+                                  children: [
+                                    MessageList(
+                                      messages: _messages,
+                                      scrollController: _scrollController,
+                                      isStreaming: _isStreaming,
+                                      streamingResponse: _streamingResponse,
+                                      currentUserId: _currentUserId,
+                                      deepThinking: _provider.getDeepThinking(),
+                                      reasoningResponse: _reasoningResponse,
+                                    ),
+
+                                    if (_isTyping)
+                                      TypingIndicator(botName: widget.bot.name),
+                                  ],
                                 ),
+                      ),
 
-                                if (_isTyping)
-                                  TypingIndicator(botName: widget.bot.name),
-                              ],
-                            ),
+                      if (_selectedFiles.isNotEmpty ||
+                          _selectedImages.isNotEmpty)
+                        ImageAttachments(
+                          images: _selectedImages,
+                          files: _selectedFiles,
+                          onClearAll: () {
+                            setState(() {
+                              _selectedImages.clear();
+                              _selectedFiles.clear();
+                            });
+                          },
+                          onRemoveImage: (index) {
+                            setState(() {
+                              _selectedImages.removeAt(index);
+                            });
+                          },
+                          onRemoveFile: (index) {
+                            setState(() {
+                              _selectedFiles.removeAt(index);
+                            });
+                          },
+                        ),
+
+                      MessageInput(
+                        provider: _provider,
+                        controller: _messageController,
+                        waitingBotMessage: _isTyping && _isCancellable,
+                        onCameraPressed: getAttachImageFromCamera,
+                        onGalleryPressed: getAttachImageFromGallery,
+                        onFilePressed: getAttacheFile,
+                        onImageSizeSelected: (size) {
+                          setState(() {
+                            _selectedImageSize = size;
+                          });
+                        },
+                        onImageStyleSelected: (style) {
+                          setState(() {
+                            _selectedImageStype = style;
+                          });
+                        },
+                        onVideoRatioSelected: (ratio) {
+                          setState(() {
+                            _selectedVideoRatio = ratio;
+                          });
+                        },
+                        onSend: _sendMessage,
+                        onCancelRequest: _cancelRequest,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-
-                  if (_selectedFiles.isNotEmpty || _selectedImages.isNotEmpty)
-                    ImageAttachments(
-                      images: _selectedImages,
-                      files: _selectedFiles,
-                      onClearAll: () {
-                        setState(() {
-                          _selectedImages.clear();
-                          _selectedFiles.clear();
-                        });
-                      },
-                      onRemoveImage: (index) {
-                        setState(() {
-                          _selectedImages.removeAt(index);
-                        });
-                      },
-                      onRemoveFile: (index) {
-                        setState(() {
-                          _selectedFiles.removeAt(index);
-                        });
-                      },
-                    ),
-
-                  MessageInput(
-                    provider: _provider,
-                    controller: _messageController,
-                    waitingBotMessage: _isTyping && _isCancellable,
-                    onCameraPressed: getAttachImageFromCamera,
-                    onGalleryPressed: getAttachImageFromGallery,
-                    onFilePressed: getAttacheFile,
-                    onImageSizeSelected: (size) {
-                      setState(() {
-                        _selectedImageSize = size;
-                      });
-                    },
-                    onImageStyleSelected: (style) {
-                      setState(() {
-                        _selectedImageStype = style;
-                      });
-                    },
-                    onVideoRatioSelected: (ratio) {
-                      setState(() {
-                        _selectedVideoRatio = ratio;
-                      });
-                    },
-                    onSend: _sendMessage,
-                    onCancelRequest: _cancelRequest,
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                ),
               ),
     );
   }

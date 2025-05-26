@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bubble/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
@@ -136,54 +137,66 @@ class _EditAIBotPageState extends State<EditBotPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 头像选择
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 64,
-                  backgroundColor:
-                      avatarImage == null
-                          ? getFrostedProviderColor(
-                            selectedProvider,
-                            Theme.of(context).colorScheme.primary,
-                          )
-                          : Theme.of(context).colorScheme.primary,
-                  backgroundImage:
-                      avatarImage != null ? FileImage(avatarImage!) : null,
-                  child:
-                      avatarImage == null
-                          ? buildProviderLogo(context, '', selectedProvider, 64)
-                          : null,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 头像选择
+                Center(
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: CircleAvatar(
+                      radius: 64,
+                      backgroundColor:
+                          avatarImage == null
+                              ? getFrostedProviderColor(
+                                selectedProvider,
+                                Theme.of(context).colorScheme.primary,
+                              )
+                              : Theme.of(context).colorScheme.primary,
+                      backgroundImage:
+                          avatarImage != null ? FileImage(avatarImage!) : null,
+                      child:
+                          avatarImage == null
+                              ? buildProviderLogo(
+                                context,
+                                '',
+                                selectedProvider,
+                                64,
+                              )
+                              : null,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 24),
+
+                // 基本信息分组
+                buildSectionContainer(context, '基本信息', [
+                  _buildNameInput(fontSize),
+                ]),
+                const SizedBox(height: 16),
+
+                // API提供商分组
+                buildSectionContainer(context, '提供商信息', [
+                  _buildProviderInput(fontSize),
+                  _buildApiTypeInput(fontSize),
+                  _buildApiAddressInput(fontSize),
+                  _buildApiKeyInput(fontSize),
+                ]),
+                const SizedBox(height: 16),
+
+                // API提供商分组
+                buildSectionContainer(context, '模型配置', [
+                  _buildModelsInput(fontSize),
+                  _buildSystemPromptInput(fontSize),
+                ]),
+              ],
             ),
-            const SizedBox(height: 24),
-
-            // 基本信息分组
-            buildSectionContainer(context, '基本信息', [_buildNameInput(fontSize)]),
-            const SizedBox(height: 16),
-
-            // API提供商分组
-            buildSectionContainer(context, '提供商信息', [
-              _buildProviderInput(fontSize),
-              _buildApiTypeInput(fontSize),
-              _buildApiAddressInput(fontSize),
-              _buildApiKeyInput(fontSize),
-            ]),
-            const SizedBox(height: 16),
-
-            // API提供商分组
-            buildSectionContainer(context, '模型配置', [
-              _buildModelsInput(fontSize),
-              _buildSystemPromptInput(fontSize),
-            ]),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: Padding(
@@ -210,7 +223,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
               );
 
               widget.onBotUpdated(updatedBot);
-              Navigator.pop(context);
+              if (!isDesktopOrTabletPlatform(context)) {
+                Navigator.pop(context);
+              }
             } else {
               showSnackBar(context, S.of(context).fillRequiredFields);
             }

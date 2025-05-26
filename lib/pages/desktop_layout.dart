@@ -1,10 +1,8 @@
+import 'package:bubble/pages/edit_bot.dart';
 import 'package:flutter/material.dart';
 import 'package:sidebarx/sidebarx.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/chat.dart';
-import 'package:bubble/pages/chats.dart';
-import 'package:bubble/pages/bots.dart';
-import 'package:bubble/pages/profile.dart';
 import 'package:bubble/model/model.dart';
 
 class DesktopLayout extends StatelessWidget {
@@ -41,7 +39,7 @@ class DesktopLayout extends StatelessWidget {
           )
         else
           Container(
-            width: 400,
+            width: 350,
             margin: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.secondary,
@@ -89,6 +87,14 @@ class DesktopLayout extends StatelessWidget {
         );
       }
     } else if (currentIndex == 1) {
+      if (selectedBot != null) {
+        // 如果有选中的智能体，显示 BotDetailPage
+        return EditBotPage(
+          bot: selectedBot!,
+          onBotUpdated: (Bot bot) => {},
+          onBotDeleted: () => {},
+        );
+      }
       return const Center(child: Text('请选择一个智能体'));
     } else {
       // 个人资料详情不在此处显示，因为它占据整个中间区域

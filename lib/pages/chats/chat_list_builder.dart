@@ -136,13 +136,9 @@ class ChatListBuilder extends StatelessWidget {
             onTap: () {
               // 恢复平台判断
               if (isDesktopOrTabletPlatform(context)) {
-                print('Desktop/Tablet: Selected chat: ${chat.id}');
                 onChatSelected(chat.id, bot);
                 return;
               }
-
-              // 在移动设备上，执行导航
-              print('Mobile: Navigating to ChatPage for chat: ${chat.id}');
 
               // 在移动设备上，执行导航
               Navigator.push(

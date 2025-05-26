@@ -9,9 +9,11 @@ import 'package:bubble/pages/common/logo.dart';
 import 'package:bubble/utils/time.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:bubble/pages/common/new_chat.dart';
+import 'package:bubble/utils/utils.dart';
 
 class ContactsPage extends StatefulWidget {
-  const ContactsPage({super.key});
+  final Function(Bot bot) onBotSelected;
+  const ContactsPage({super.key, required this.onBotSelected});
 
   @override
   State<ContactsPage> createState() => _ContactsPageState();
@@ -292,6 +294,10 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
             ),
             onTap: () {
+              if (isDesktopOrTabletPlatform(context)) {
+                widget.onBotSelected(bot);
+                return;
+              }
               Navigator.push(
                 context,
                 MaterialPageRoute(
