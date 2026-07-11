@@ -11,6 +11,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 class ChatListBuilder extends StatelessWidget {
   final List<Chat> chatList;
   final List<Bot> bots;
+  final String? selectedChatId;
   final Function onChatDeleted;
   final Function(String chatId, Bot bot) onChatSelected;
 
@@ -18,23 +19,37 @@ class ChatListBuilder extends StatelessWidget {
     super.key,
     required this.chatList,
     required this.bots,
+    this.selectedChatId,
     required this.onChatDeleted,
     required this.onChatSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    final isDesktop = isDesktopOrTabletPlatform(context);
+    return ListView.separated(
+      padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: chatList.length,
+      separatorBuilder: (context, index) => SizedBox(height: isDesktop ? 8 : 0),
       itemBuilder: (context, index) {
         final chat = chatList[index];
-        final bot =
-            bots.where((bot) {
-              if (bot.id == chat.botId) {
-                return true;
-              }
-              return false;
-            }).first;
+        final bot = bots.firstWhere(
+          (bot) => bot.id == chat.botId,
+          orElse:
+              () => Bot(
+                id: '',
+                name: 'Unknown Bot',
+                avatar: '',
+                provider: '',
+                baseURL: '',
+                apiKey: '',
+                apiType: '',
+                systemPrompt: '',
+                model: '',
+                createTimestamp: DateTime.now(),
+                modifyTimestamp: DateTime.now(),
+              ),
+        );
         return Slidable(
           key: Key(chat.id),
           endActionPane: ActionPane(
@@ -42,6 +57,10 @@ class ChatListBuilder extends StatelessWidget {
             children: [
               CustomSlidableAction(
                 onPressed: (context) {
+                  if (isDesktopOrTabletPlatform(context)) {
+                    onChatSelected(chat.id, bot);
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -126,6 +145,7 @@ class ChatListBuilder extends StatelessWidget {
           ),
           child: ChatListItem(
             bot: bot,
+            isSelected: isDesktop && selectedChatId == chat.id,
             lastMessage:
                 chat.lastMessage.isEmpty
                     ? S.of(context).startChatting

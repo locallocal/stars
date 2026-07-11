@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/database_service.dart';
@@ -5,6 +6,14 @@ import 'package:bubble/services/chat_service.dart';
 
 class BotService {
   static List<Bot> _bots = [];
+  static final _botListChangedController = StreamController<void>.broadcast();
+
+  static Stream<void> get botListChanged => _botListChangedController.stream;
+
+  static void notifyBotListChanged() {
+    _bots = [];
+    _botListChangedController.add(null);
+  }
 
   // 获取所有联系人
   static Future<List<Bot>> getBots() async {
@@ -51,6 +60,7 @@ class BotService {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     _bots.add(bot);
+    _botListChangedController.add(null);
   }
 
   // 删除智能体
@@ -61,6 +71,7 @@ class BotService {
     final db = await DatabaseService.database;
     await db.delete('bots', where: 'id = ?', whereArgs: [id]);
     _bots.removeWhere((bot) => bot.id == id);
+    _botListChangedController.add(null);
   }
 
   // 更新智能体
@@ -85,5 +96,10 @@ class BotService {
     if (index != -1) {
       _bots[index] = updatedBot;
     }
+    _botListChangedController.add(null);
+  }
+
+  static void dispose() {
+    _botListChangedController.close();
   }
 }

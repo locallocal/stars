@@ -2,10 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/common.dart';
+import 'package:bubble/utils/theme.dart';
 
 class ImageAttachments extends StatelessWidget {
   final List<File> images;
   final List<File> files;
+  final bool desktopMode;
   final VoidCallback onClearAll;
   final Function(int) onRemoveImage;
   final Function(int) onRemoveFile;
@@ -14,36 +16,83 @@ class ImageAttachments extends StatelessWidget {
     super.key,
     required this.images,
     required this.files,
+    this.desktopMode = false,
     required this.onClearAll,
     required this.onRemoveImage,
-    required this.onRemoveFile, // Add this parameter for the onRemoveImage callback from the men
+    required this.onRemoveFile,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
+
     return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, top: 16),
-      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+      margin: EdgeInsets.only(
+        left: desktopMode ? 0 : 16,
+        right: desktopMode ? 0 : 16,
+        top: 12,
+      ),
+      padding: EdgeInsets.fromLTRB(
+        desktopMode ? 16 : 8,
+        desktopMode ? 14 : 0,
+        desktopMode ? 16 : 8,
+        desktopMode ? 16 : 8,
+      ),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(16.0),
+        color:
+            desktopMode
+                ? BubbleDesktopTheme.elevatedSurface(context)
+                : Theme.of(context).colorScheme.secondary,
+        borderRadius: BorderRadius.circular(desktopMode ? 22 : 16),
+        border:
+            desktopMode
+                ? Border.all(color: BubbleDesktopTheme.borderColor(context))
+                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '附件',
+                  style: TextStyle(
+                    fontSize: fontSize - 1,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        desktopMode
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+              Text(
+                '${images.length + files.length} 项',
+                style: TextStyle(
+                  fontSize: fontSize - 3,
+                  color: BubbleDesktopTheme.mutedText(context),
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
                 icon: buildCloseIcon(context),
                 onPressed: onClearAll,
+                tooltip: '清空附件',
+                visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
               ),
             ],
           ),
 
-          // 显示图片列表
           if (images.isNotEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,13 +100,13 @@ class ImageAttachments extends StatelessWidget {
                 Text(
                   S.of(context).attachedImages,
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: fontSize! - 2,
+                    fontWeight: FontWeight.w600,
+                    fontSize: fontSize - 2,
                   ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 90,
+                  height: desktopMode ? 104 : 90,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: images.length,
@@ -65,20 +114,38 @@ class ImageAttachments extends StatelessWidget {
                       return Stack(
                         children: [
                           Container(
-                            margin: const EdgeInsets.only(right: 8.0),
+                            margin: const EdgeInsets.only(right: 10),
+                            padding: EdgeInsets.all(desktopMode ? 6 : 0),
+                            decoration:
+                                desktopMode
+                                    ? BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surface
+                                          .withValues(alpha: 0.72),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: BubbleDesktopTheme.borderColor(
+                                          context,
+                                        ),
+                                      ),
+                                    )
+                                    : null,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
+                              borderRadius: BorderRadius.circular(
+                                desktopMode ? 12 : 8,
+                              ),
                               child: Image.file(
                                 images[index],
-                                height: 90,
-                                width: 60,
+                                height: desktopMode ? 92 : 90,
+                                width: desktopMode ? 74 : 60,
                                 fit: BoxFit.cover,
                               ),
                             ),
                           ),
                           Positioned(
-                            top: 0,
-                            right: 6,
+                            top: desktopMode ? 6 : 0,
+                            right: desktopMode ? 6 : 6,
                             child: GestureDetector(
                               onTap: () => onRemoveImage(index),
                               child: buildCloseIcon(context),
@@ -92,7 +159,6 @@ class ImageAttachments extends StatelessWidget {
               ],
             ),
 
-          // 显示文件列表
           if (files.isNotEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,47 +167,79 @@ class ImageAttachments extends StatelessWidget {
                 Text(
                   S.of(context).attachedFiles,
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: fontSize! - 2,
+                    fontWeight: FontWeight.w600,
+                    fontSize: fontSize - 2,
                   ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 90,
+                  height: desktopMode ? 104 : 90,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: files.length,
                     itemBuilder: (context, index) {
-                      final fileName = files[index].path.split('/').last;
+                      final fileName =
+                          files[index].path.split(Platform.pathSeparator).last;
                       return Stack(
                         children: [
                           Container(
-                            margin: const EdgeInsets.only(right: 8.0),
-                            padding: const EdgeInsets.all(12.0),
-                            width: 90,
+                            margin: const EdgeInsets.only(right: 10),
+                            padding: EdgeInsets.all(desktopMode ? 14 : 12),
+                            width: desktopMode ? 132 : 90,
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8.0),
+                              color:
+                                  desktopMode
+                                      ? Theme.of(context).colorScheme.surface
+                                          .withValues(alpha: 0.78)
+                                      : Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(
+                                desktopMode ? 16 : 8,
+                              ),
+                              border:
+                                  desktopMode
+                                      ? Border.all(
+                                        color: BubbleDesktopTheme.borderColor(
+                                          context,
+                                        ),
+                                      )
+                                      : null,
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.insert_drive_file, size: 24),
-                                const SizedBox(height: 4),
+                                Icon(
+                                  Icons.insert_drive_file_rounded,
+                                  size: desktopMode ? 26 : 24,
+                                  color:
+                                      desktopMode
+                                          ? BubbleDesktopTheme.mutedText(
+                                            context,
+                                          )
+                                          : null,
+                                ),
+                                SizedBox(height: desktopMode ? 8 : 4),
                                 Text(
                                   fileName,
-                                  maxLines: 1,
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: desktopMode ? 12.5 : 12,
+                                    color:
+                                        desktopMode
+                                            ? Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface
+                                            : null,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           Positioned(
-                            top: 0,
-                            right: 8,
+                            top: desktopMode ? 6 : 0,
+                            right: desktopMode ? 8 : 8,
                             child: GestureDetector(
                               onTap: () => onRemoveFile(index),
                               child: buildCloseIcon(context),

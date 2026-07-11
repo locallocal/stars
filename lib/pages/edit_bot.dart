@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:bubble/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:bubble/model/model.dart';
@@ -9,14 +8,16 @@ import 'package:bubble/pages/common/common.dart';
 
 class EditBotPage extends StatefulWidget {
   final Bot bot;
-  final Function(Bot) onBotUpdated;
-  final VoidCallback onBotDeleted;
+  final Future<void> Function(Bot) onBotUpdated;
+  final Future<void> Function() onBotDeleted;
+  final bool embedded;
 
   const EditBotPage({
     super.key,
     required this.bot,
     required this.onBotUpdated,
     required this.onBotDeleted,
+    this.embedded = false,
   });
 
   @override
@@ -71,72 +72,24 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          S.of(context).editBot,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        scrolledUnderElevation: 0, // 防止滚动时背景色变化
-        elevation: 0, // 移除阴影
-        surfaceTintColor: Colors.transparent,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.delete_rounded,
-              size: 24,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder:
-                    (context) => AlertDialog(
-                      title: Center(
-                        child: Text(
-                          S.of(context).deleteBot,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: fontSize,
-                          ),
-                        ),
-                      ),
-                      content: Text(
-                        S.of(context).confirmDeleteBot(widget.bot.name),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            S.of(context).cancel,
-                            style: TextStyle(
-                              fontSize: fontSize,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            widget.onBotDeleted();
-                            Navigator.pop(context);
-                          },
-                          child: Text(
-                            S.of(context).delete,
-                            style: TextStyle(
-                              fontSize: fontSize,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar:
+          widget.embedded
+              ? null
+              : AppBar(
+                centerTitle: true,
+                title: Text(
+                  S.of(context).editBot,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: fontSize,
+                  ),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                scrolledUnderElevation: 0,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                actions: [_buildDeleteButton(fontSize)],
+              ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -145,6 +98,21 @@ class _EditAIBotPageState extends State<EditBotPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.embedded) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          S.of(context).editBot,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      _buildDeleteButton(fontSize),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 // 头像选择
                 Center(
                   child: GestureDetector(
@@ -206,8 +174,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
             backgroundColor: Theme.of(context).colorScheme.onSurface,
             minimumSize: const Size.fromHeight(50),
           ),
-          onPressed: () {
+          onPressed: () async {
             if (nameController.text.trim().isNotEmpty) {
+              final navigator = Navigator.of(context);
               final updatedBot = Bot(
                 id: widget.bot.id,
                 name: nameController.text.trim(),
@@ -222,9 +191,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 modifyTimestamp: DateTime.now(),
               );
 
-              widget.onBotUpdated(updatedBot);
-              if (!isDesktopOrTabletPlatform(context)) {
-                Navigator.pop(context);
+              await widget.onBotUpdated(updatedBot);
+              if (!widget.embedded && mounted) {
+                navigator.pop();
               }
             } else {
               showSnackBar(context, S.of(context).fillRequiredFields);
@@ -240,6 +209,65 @@ class _EditAIBotPageState extends State<EditBotPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDeleteButton(double? fontSize) {
+    return IconButton(
+      icon: Icon(
+        Icons.delete_rounded,
+        size: 24,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      onPressed: () async {
+        final shouldDelete = await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Center(
+                  child: Text(
+                    S.of(context).deleteBot,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSize,
+                    ),
+                  ),
+                ),
+                content: Text(S.of(context).confirmDeleteBot(widget.bot.name)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(
+                      S.of(context).cancel,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(
+                      S.of(context).delete,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        );
+
+        if (shouldDelete != true) {
+          return;
+        }
+
+        await widget.onBotDeleted();
+        if (!widget.embedded && mounted) {
+          Navigator.pop(context);
+        }
+      },
     );
   }
 

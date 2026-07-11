@@ -15,6 +15,8 @@ import 'package:bubble/pages/chat/message_input.dart';
 import 'package:bubble/pages/chat/welcome_view.dart';
 import 'package:bubble/pages/chat/message_list.dart';
 import 'package:bubble/pages/chat/typing_indicator.dart';
+import 'package:bubble/pages/common/logo.dart';
+import 'package:bubble/utils/theme.dart';
 import 'package:bubble/utils/utils.dart';
 
 // 聊天页面
@@ -47,6 +49,9 @@ class _ChatPageState extends State<ChatPage> {
   List<Message> _messages = [];
   String _streamingResponse = '';
   String _reasoningResponse = '';
+  Stopwatch? _processStopwatch;
+  final List<MessageToolCall> _toolCalls = [];
+  final List<MessageCommandExecution> _commandExecutions = [];
 
   @override
   void initState() {
@@ -59,6 +64,8 @@ class _ChatPageState extends State<ChatPage> {
       onComplete: _handleStreamComplete,
       onError: _handleStreamError,
       onReasoningResponse: _handleReasoningResponse,
+      onToolCall: _handleToolCall,
+      onCommandExecution: _handleCommandExecution,
     );
   }
 
@@ -142,7 +149,8 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _generateText() async {
     final bool hasText = _messageController.text.trim().isNotEmpty;
     final bool hasImages = _selectedImages.isNotEmpty;
-    if (!hasText && !hasImages) return;
+    final bool hasFiles = _selectedFiles.isNotEmpty;
+    if (!hasText && !hasImages && !hasFiles) return;
 
     final messageText = _messageController.text;
     final imagePaths = await _getSelectedImagePaths();
@@ -154,9 +162,15 @@ class _ChatPageState extends State<ChatPage> {
       content: messageText,
       images: imagePaths,
       files: filePahts,
+      processInfo: _buildProcessInfo(
+        imagePaths: imagePaths,
+        filePaths: filePahts,
+        fileStatus: 'attached',
+      ),
       timestamp: DateTime.now(),
     );
 
+    _startProcessTracking();
     setState(() {
       _messages.add(userMessage);
       _messageController.clear();
@@ -237,6 +251,7 @@ class _ChatPageState extends State<ChatPage> {
       );
       await _provider.generateText(chatMessages);
     } catch (e) {
+      _resetProcessTracking();
       if (mounted) {
         setState(() {
           _isTyping = false;
@@ -255,6 +270,7 @@ class _ChatPageState extends State<ChatPage> {
         _isCancellable = false;
         _reasoningResponse = '';
       });
+      _resetProcessTracking();
       showSnackBar(context, S.of(context).responseError(error));
     }
   }
@@ -268,6 +284,7 @@ class _ChatPageState extends State<ChatPage> {
           _isCancellable = false;
           _reasoningResponse = '';
         });
+        _resetProcessTracking();
         showSnackBar(context, S.of(context).emptyResponseError);
       }
       return;
@@ -278,6 +295,15 @@ class _ChatPageState extends State<ChatPage> {
       senderId: widget.bot.id,
       content: _streamingResponse,
       reasoning: _reasoningResponse,
+      processInfo: _buildProcessInfo(
+        durationMs: _stopProcessTracking(),
+        reasoningStatus:
+            _reasoningResponse.isNotEmpty
+                ? 'completed'
+                : (_provider.getDeepThinking() ? 'completed' : ''),
+        toolCalls: _toolCalls,
+        commandExecutions: _commandExecutions,
+      ),
       timestamp: DateTime.now(),
     );
     await MessageService.addMessage(botMessage);
@@ -292,6 +318,8 @@ class _ChatPageState extends State<ChatPage> {
         _reasoningResponse = '';
         _isCancellable = false;
       });
+      _toolCalls.clear();
+      _commandExecutions.clear();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -338,10 +366,30 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _handleToolCall(MessageToolCall toolCall) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _toolCalls.add(toolCall);
+    });
+  }
+
+  void _handleCommandExecution(MessageCommandExecution commandExecution) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _commandExecutions.add(commandExecution);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
-
+    if (isDesktopOrTabletPlatform(context)) {
+      return _buildDesktopWorkspace(context, fontSize);
+    }
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -363,92 +411,282 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            children: [
+              Expanded(child: _buildConversationBody(context, fontSize)),
+              _buildAttachmentsBar(),
+              MessageInput(
+                provider: _provider,
+                controller: _messageController,
+                waitingBotMessage: _isTyping && _isCancellable,
+                hasPendingAttachments:
+                    _selectedFiles.isNotEmpty || _selectedImages.isNotEmpty,
+                onCameraPressed: getAttachImageFromCamera,
+                onGalleryPressed: getAttachImageFromGallery,
+                onFilePressed: getAttacheFile,
+                onImageSizeSelected: (size) {
+                  setState(() {
+                    _selectedImageSize = size;
+                  });
+                },
+                onImageStyleSelected: (style) {
+                  setState(() {
+                    _selectedImageStype = style;
+                  });
+                },
+                onVideoRatioSelected: (ratio) {
+                  setState(() {
+                    _selectedVideoRatio = ratio;
+                  });
+                },
+                onSend: _sendMessage,
+                onCancelRequest: _cancelRequest,
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopWorkspace(BuildContext context, double? fontSize) {
+    return Container(
+      color: BubbleDesktopTheme.workspaceBackground(context),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _buildDesktopHeader(context, fontSize),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: BubbleDesktopTheme.panelBackground(context),
+                  ),
                   child: Column(
                     children: [
                       Expanded(
-                        child:
-                            _messages.isEmpty
-                                ? WelcomeView(
-                                  bot: widget.bot,
-                                  fontSize: fontSize,
-                                )
-                                : Column(
-                                  children: [
-                                    MessageList(
-                                      messages: _messages,
-                                      scrollController: _scrollController,
-                                      isStreaming: _isStreaming,
-                                      streamingResponse: _streamingResponse,
-                                      currentUserId: _currentUserId,
-                                      deepThinking: _provider.getDeepThinking(),
-                                      reasoningResponse: _reasoningResponse,
-                                    ),
-
-                                    if (_isTyping)
-                                      TypingIndicator(botName: widget.bot.name),
-                                  ],
-                                ),
-                      ),
-
-                      if (_selectedFiles.isNotEmpty ||
-                          _selectedImages.isNotEmpty)
-                        ImageAttachments(
-                          images: _selectedImages,
-                          files: _selectedFiles,
-                          onClearAll: () {
-                            setState(() {
-                              _selectedImages.clear();
-                              _selectedFiles.clear();
-                            });
-                          },
-                          onRemoveImage: (index) {
-                            setState(() {
-                              _selectedImages.removeAt(index);
-                            });
-                          },
-                          onRemoveFile: (index) {
-                            setState(() {
-                              _selectedFiles.removeAt(index);
-                            });
-                          },
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                          child: _buildConversationBody(
+                            context,
+                            fontSize,
+                            isDesktop: true,
+                          ),
                         ),
-
-                      MessageInput(
-                        provider: _provider,
-                        controller: _messageController,
-                        waitingBotMessage: _isTyping && _isCancellable,
-                        onCameraPressed: getAttachImageFromCamera,
-                        onGalleryPressed: getAttachImageFromGallery,
-                        onFilePressed: getAttacheFile,
-                        onImageSizeSelected: (size) {
-                          setState(() {
-                            _selectedImageSize = size;
-                          });
-                        },
-                        onImageStyleSelected: (style) {
-                          setState(() {
-                            _selectedImageStype = style;
-                          });
-                        },
-                        onVideoRatioSelected: (ratio) {
-                          setState(() {
-                            _selectedVideoRatio = ratio;
-                          });
-                        },
-                        onSend: _sendMessage,
-                        onCancelRequest: _cancelRequest,
                       ),
-                      const SizedBox(height: 16),
+                      _buildDesktopInputSection(context),
                     ],
                   ),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopInputSection(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 18),
+      decoration: BoxDecoration(
+        color: BubbleDesktopTheme.panelBackground(context),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: BubbleDesktopTheme.inputMaxWidth,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildAttachmentsBar(desktopMode: true),
+              MessageInput(
+                provider: _provider,
+                controller: _messageController,
+                waitingBotMessage: _isTyping && _isCancellable,
+                hasPendingAttachments:
+                    _selectedFiles.isNotEmpty || _selectedImages.isNotEmpty,
+                desktopMode: true,
+                onCameraPressed: getAttachImageFromCamera,
+                onGalleryPressed: getAttachImageFromGallery,
+                onFilePressed: getAttacheFile,
+                onImageSizeSelected: (size) {
+                  setState(() {
+                    _selectedImageSize = size;
+                  });
+                },
+                onImageStyleSelected: (style) {
+                  setState(() {
+                    _selectedImageStype = style;
+                  });
+                },
+                onVideoRatioSelected: (ratio) {
+                  setState(() {
+                    _selectedVideoRatio = ratio;
+                  });
+                },
+                onSend: _sendMessage,
+                onCancelRequest: _cancelRequest,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader(BuildContext context, double? fontSize) {
+    return Container(
+      height: 58,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: BubbleDesktopTheme.panelBackground(context),
+        border: Border(
+          bottom: BorderSide(color: BubbleDesktopTheme.borderColor(context)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: BubbleDesktopTheme.elevatedSurface(context),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: buildProviderLogo(
+                context,
+                widget.bot.avatar,
+                widget.bot.provider,
+                24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.bot.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '${widget.bot.provider} · ${widget.bot.model}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: BubbleDesktopTheme.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: BubbleDesktopTheme.borderColor(context),
+              ),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.cleaning_services_rounded, size: 20),
+              tooltip: S.of(context).clearChatHistory,
+              onPressed: _showClearChatDialog,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConversationBody(
+    BuildContext context,
+    double? fontSize, {
+    bool isDesktop = false,
+  }) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child:
+              _messages.isEmpty
+                  ? WelcomeView(bot: widget.bot, fontSize: fontSize)
+                  : Column(
+                    children: [
+                      MessageList(
+                        messages: _messages,
+                        scrollController: _scrollController,
+                        isStreaming: _isStreaming,
+                        streamingResponse: _streamingResponse,
+                        streamingProcessInfo: _buildStreamingProcessInfo(),
+                        currentUserId: _currentUserId,
+                        deepThinking: _provider.getDeepThinking(),
+                        reasoningResponse: _reasoningResponse,
+                        isDesktop: isDesktop,
+                      ),
+                      if (_isTyping)
+                        TypingIndicator(
+                          botName: widget.bot.name,
+                          isDesktop: isDesktop,
+                        ),
+                    ],
+                  ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttachmentsBar({bool desktopMode = false}) {
+    if (_selectedFiles.isEmpty && _selectedImages.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return ImageAttachments(
+      images: _selectedImages,
+      files: _selectedFiles,
+      desktopMode: desktopMode,
+      onClearAll: () {
+        setState(() {
+          _selectedImages.clear();
+          _selectedFiles.clear();
+        });
+      },
+      onRemoveImage: (index) {
+        setState(() {
+          _selectedImages.removeAt(index);
+        });
+      },
+      onRemoveFile: (index) {
+        setState(() {
+          _selectedFiles.removeAt(index);
+        });
+      },
     );
   }
 
@@ -484,16 +722,30 @@ class _ChatPageState extends State<ChatPage> {
           botId: widget.bot.id,
           senderId: widget.bot.id,
           content: _streamingResponse,
+          reasoning: _reasoningResponse,
+          processInfo: _buildProcessInfo(
+            durationMs: _stopProcessTracking(),
+            reasoningStatus:
+                _reasoningResponse.isNotEmpty
+                    ? 'cancelled'
+                    : (_provider.getDeepThinking() ? 'cancelled' : ''),
+            toolCalls: _toolCalls,
+            commandExecutions: _commandExecutions,
+          ),
           timestamp: DateTime.now(),
         );
         _messages.add(botMessage);
         _streamingResponse = '';
+        _reasoningResponse = '';
 
         MessageService.addMessage(botMessage).then((_) {
           ChatService.updateLastMessage(widget.id, botMessage.content);
         });
       }
     });
+    _toolCalls.clear();
+    _commandExecutions.clear();
+    _resetProcessTracking();
     showSnackBar(context, S.of(context).replyCancelled);
   }
 
@@ -551,6 +803,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     try {
+      _startProcessTracking();
       final imagePaths = await _getSelectedImagePaths();
       // 创建系统消息记录生成的图片
       final userMessage = Message(
@@ -559,6 +812,10 @@ class _ChatPageState extends State<ChatPage> {
         senderId: _currentUserId,
         content: prompt,
         images: imagePaths,
+        processInfo: _buildProcessInfo(
+          imagePaths: imagePaths,
+          fileStatus: 'attached',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -592,6 +849,11 @@ class _ChatPageState extends State<ChatPage> {
         senderId: widget.bot.id,
         content: '',
         images: imagePath,
+        processInfo: _buildProcessInfo(
+          durationMs: _stopProcessTracking(),
+          imagePaths: imagePath,
+          fileStatus: 'created',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -617,6 +879,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       });
     } catch (e) {
+      _resetProcessTracking();
       if (mounted) {
         showSnackBar(context, S.of(context).generateImageFailed(e.toString()));
       }
@@ -640,6 +903,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     try {
+      _startProcessTracking();
       // 创建用户消息记录
       final userMessage = Message(
         chatId: widget.id,
@@ -689,6 +953,11 @@ class _ChatPageState extends State<ChatPage> {
         senderId: widget.bot.id,
         content: '',
         audio: audioPath,
+        processInfo: _buildProcessInfo(
+          durationMs: _stopProcessTracking(),
+          audioPath: audioPath,
+          fileStatus: 'created',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -700,6 +969,7 @@ class _ChatPageState extends State<ChatPage> {
         await ChatService.updateLastMessage(widget.id, '语音已生成');
       }
     } catch (e) {
+      _resetProcessTracking();
       if (mounted) {
         showSnackBar(context, '生成语音失败：$e');
       }
@@ -723,6 +993,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     try {
+      _startProcessTracking();
       // 获取文件列表的第一个文件作为音乐文件
       final filePahts = await _getSelectedFilePaths();
       var referMusicPath = "";
@@ -737,6 +1008,10 @@ class _ChatPageState extends State<ChatPage> {
         senderId: _currentUserId,
         content: prompt,
         music: referMusicPath,
+        processInfo: _buildProcessInfo(
+          musicPath: referMusicPath,
+          fileStatus: 'attached',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -765,6 +1040,11 @@ class _ChatPageState extends State<ChatPage> {
         senderId: widget.bot.id,
         content: '',
         audio: musicPath,
+        processInfo: _buildProcessInfo(
+          durationMs: _stopProcessTracking(),
+          musicPath: musicPath,
+          fileStatus: 'created',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -787,6 +1067,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       });
     } catch (e) {
+      _resetProcessTracking();
       if (mounted) {
         showSnackBar(context, '生成音乐失败: ${e.toString()}');
       }
@@ -810,6 +1091,7 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     try {
+      _startProcessTracking();
       // 创建用户消息记录
       final imagePaths = await _getSelectedImagePaths();
       final userMessage = Message(
@@ -818,6 +1100,10 @@ class _ChatPageState extends State<ChatPage> {
         senderId: _currentUserId,
         content: prompt,
         images: imagePaths,
+        processInfo: _buildProcessInfo(
+          imagePaths: imagePaths,
+          fileStatus: 'attached',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -849,6 +1135,11 @@ class _ChatPageState extends State<ChatPage> {
         senderId: widget.bot.id,
         content: '',
         video: videoPath,
+        processInfo: _buildProcessInfo(
+          durationMs: _stopProcessTracking(),
+          videoPath: videoPath,
+          fileStatus: 'created',
+        ),
         timestamp: DateTime.now(),
       );
       setState(() {
@@ -870,6 +1161,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       });
     } catch (e) {
+      _resetProcessTracking();
       if (mounted) {
         showSnackBar(context, '生成视频失败: ${e.toString()}');
       }
@@ -879,6 +1171,113 @@ class _ChatPageState extends State<ChatPage> {
         _isCancellable = false;
       });
     }
+  }
+
+  void _startProcessTracking() {
+    _processStopwatch
+      ?..stop()
+      ..reset();
+    _processStopwatch = Stopwatch()..start();
+    _toolCalls.clear();
+    _commandExecutions.clear();
+  }
+
+  int? _stopProcessTracking() {
+    final elapsedMilliseconds = _processStopwatch?.elapsedMilliseconds;
+    _processStopwatch?.stop();
+    return elapsedMilliseconds;
+  }
+
+  void _resetProcessTracking() {
+    _processStopwatch
+      ?..stop()
+      ..reset();
+    _toolCalls.clear();
+    _commandExecutions.clear();
+  }
+
+  MessageProcessInfo _buildStreamingProcessInfo() {
+    if (!_isStreaming && !_isTyping) {
+      return const MessageProcessInfo();
+    }
+
+    return _buildProcessInfo(
+      durationMs: _processStopwatch?.elapsedMilliseconds,
+      reasoningStatus: _provider.getDeepThinking() ? 'streaming' : '',
+      toolCalls: _toolCalls,
+      commandExecutions: _commandExecutions,
+    );
+  }
+
+  MessageProcessInfo _buildProcessInfo({
+    String reasoningStatus = '',
+    int? durationMs,
+    List<MessageToolCall> toolCalls = const [],
+    List<MessageCommandExecution> commandExecutions = const [],
+    List<String> imagePaths = const [],
+    List<String> filePaths = const [],
+    String audioPath = '',
+    String musicPath = '',
+    String videoPath = '',
+    String fileStatus = '',
+  }) {
+    final fileEdits = <MessageFileEdit>[
+      ...imagePaths.map(
+        (imagePath) => MessageFileEdit(
+          path: imagePath,
+          type: 'image',
+          status: fileStatus,
+          detail: fileStatus == 'attached' ? '图片附件' : '图片结果',
+        ),
+      ),
+      ...filePaths.map(
+        (filePath) => MessageFileEdit(
+          path: filePath,
+          type: 'file',
+          status: fileStatus,
+          detail: fileStatus == 'attached' ? '文件附件' : '文件结果',
+        ),
+      ),
+    ];
+
+    if (audioPath.isNotEmpty) {
+      fileEdits.add(
+        MessageFileEdit(
+          path: audioPath,
+          type: 'audio',
+          status: fileStatus,
+          detail: '语音结果',
+        ),
+      );
+    }
+    if (musicPath.isNotEmpty) {
+      fileEdits.add(
+        MessageFileEdit(
+          path: musicPath,
+          type: 'music',
+          status: fileStatus,
+          detail: fileStatus == 'attached' ? '参考音频' : '音乐结果',
+        ),
+      );
+    }
+    if (videoPath.isNotEmpty) {
+      fileEdits.add(
+        MessageFileEdit(
+          path: videoPath,
+          type: 'video',
+          status: fileStatus,
+          detail: '视频结果',
+        ),
+      );
+    }
+
+    return MessageProcessInfo(
+      reasoningStatus: reasoningStatus,
+      durationMs: durationMs,
+      toolCalls: List<MessageToolCall>.from(toolCalls),
+      commandExecutions: List<MessageCommandExecution>.from(commandExecutions),
+      fileEdits: fileEdits,
+    );
   }
 
   // 在后台线程中执行图片生成的静态方法

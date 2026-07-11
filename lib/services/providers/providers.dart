@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/providers/openai.dart';
 import 'package:bubble/services/providers/ollama.dart';
@@ -48,7 +49,7 @@ import 'package:bubble/services/providers/alibaba_cloud.dart';
 import 'package:bubble/services/providers/moonshot.dart';
 
 void _defaultOnResponse(String text) {
-  print(text);
+  debugPrint(text);
 }
 
 // 定义消息类型
@@ -70,6 +71,9 @@ class ChatMessage {
 
 // 定义流式响应回调
 typedef StreamResponseCallback = void Function(String text);
+typedef ToolCallCallback = void Function(MessageToolCall toolCall);
+typedef CommandExecutionCallback =
+    void Function(MessageCommandExecution commandExecution);
 
 // 聊天模型抽象类
 abstract class Provider {
@@ -82,6 +86,8 @@ abstract class Provider {
   // 回调函数
   StreamResponseCallback onResponse = _defaultOnResponse;
   StreamResponseCallback? onReasoningResponse;
+  ToolCallCallback? onToolCall;
+  CommandExecutionCallback? onCommandExecution;
   Function? onComplete;
   Function(String)? onError;
 
@@ -118,13 +124,25 @@ abstract class Provider {
   void setCallbacks({
     required StreamResponseCallback onResponse,
     StreamResponseCallback? onReasoningResponse,
+    ToolCallCallback? onToolCall,
+    CommandExecutionCallback? onCommandExecution,
     Function? onComplete,
     Function(String)? onError,
   }) {
     this.onResponse = onResponse;
     this.onReasoningResponse = onReasoningResponse;
+    this.onToolCall = onToolCall;
+    this.onCommandExecution = onCommandExecution;
     this.onComplete = onComplete;
     this.onError = onError;
+  }
+
+  void emitToolCall(MessageToolCall toolCall) {
+    onToolCall?.call(toolCall);
+  }
+
+  void emitCommandExecution(MessageCommandExecution commandExecution) {
+    onCommandExecution?.call(commandExecution);
   }
 
   List<InputModality> getInputModalites() {

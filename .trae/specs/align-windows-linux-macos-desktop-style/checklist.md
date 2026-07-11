@@ -1,0 +1,37 @@
+- [x] 已确认 `Windows`、`Linux`、`macOS` 三平台全部纳入本次桌面样式对齐范围
+  - 验证说明: [代码核验] `lib/utils/utils.dart` 中桌面平台判断覆盖 `windows/macOS/linux`，`lib/main.dart` 中桌面数据库初始化也覆盖三平台。
+- [x] 左侧导航栏已调整为接近参考图的窄侧栏样式
+  - 验证说明: [代码核验] `lib/pages/desktop_layout.dart` 已使用固定窄侧栏、品牌区、一级导航和底部账户入口；`Windows` 图形界面外观未在当前回合直接启动验证。
+- [x] Chats 与 Bots 列表区已统一为白色圆角桌面面板
+  - 验证说明: [代码核验] `lib/pages/chats.dart` 与 `lib/pages/bots.dart` 均复用 `DesktopListPanel`，面板样式由 `lib/utils/theme.dart` 统一提供。
+- [x] 右侧详情区已调整为居中内容画布，而非移动端页面放大版
+  - 验证说明: [代码核验] `lib/pages/desktop_layout.dart` 与 `lib/pages/chat.dart` 已拆分桌面工作区、标题区、消息区和输入区，消息内容在桌面模式下进入独立工作台容器。
+- [x] 消息流已增加最大宽度限制，正文阅读节奏接近参考图
+  - 验证说明: [代码核验] `lib/utils/theme.dart` 定义了 `contentMaxWidth` 与 `messageBubbleMaxWidth`，`lib/pages/chat/message_list.dart` 已按桌面模式应用宽度约束。
+- [x] 文件编辑、命令执行、耗时、思考中等过程信息已采用状态卡片或轻量标签呈现
+  - 验证说明: [代码核验] `lib/model/model.dart` 已为 `Message` 补充 `processInfo` 结构化字段，覆盖思考状态、耗时、工具调用、命令执行、文件编辑状态；`lib/services/database_service.dart` 已补持久化字段与迁移；`lib/pages/chat.dart` 已为当前聊天流程产出耗时、思考状态与文件状态；`lib/pages/chat/message_list.dart` 已在桌面消息区渲染对应状态卡片。
+- [x] 底部输入区已调整为白底、大圆角、吸底样式
+  - 验证说明: [代码核验] `lib/pages/chat.dart` 的桌面输入区已吸附在工作区底部，`lib/pages/chat/message_input.dart` 已使用白底、大圆角、聚焦边框和轻阴影样式。
+- [x] 未选中聊天或智能体时已展示桌面空状态
+  - 验证说明: [代码核验] `lib/pages/desktop_layout.dart`、`lib/pages/chats.dart`、`lib/pages/bots.dart` 均接入 `DesktopEmptyStateCard`。
+- [x] 桌面端颜色、圆角、边框、间距已抽离为统一 token 或等效常量
+  - 验证说明: [代码核验] `lib/utils/theme.dart` 已集中定义桌面端颜色、圆角、边框、阴影、宽度和间距 token。
+- [x] `Windows`、`Linux`、`macOS` 三平台内容区视觉风格一致，仅保留系统级差异
+  - 验证说明: [代码核验] 三平台共用同一桌面布局入口、同一套 token 和工作区组件；[当前环境无法直接运行] 本回合未在 `Linux` / `macOS` 实机上打开界面，但从代码分支看未见平台特化内容区样式。
+- [x] 移动端与 Web 现有外观未因桌面改造出现明显回归
+  - 验证说明: [代码核验] `lib/utils/utils.dart` 已改为基于 `kIsWeb` 与 `defaultTargetPlatform` 判断桌面平台，`Flutter Web` 不再误入桌面工作台布局，Android / iOS 仍保留非桌面分支。[静态检查] `flutter analyze lib/model/model.dart lib/services/database_service.dart lib/services/providers/providers.dart lib/utils/utils.dart lib/pages/chat.dart lib/pages/chat/message_list.dart` 通过。[构建验证] `flutter build windows --debug` 与 `flutter build web --debug` 均通过；本回合未直接目测浏览器/桌面 GUI，残余风险主要限于视觉细节而非平台分支错误。
+
+## 最小必要验证结论
+
+- 已通过并勾选: 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11
+- 未通过: 无
+- 已执行静态检查:
+  - [代码核验] `flutter analyze lib/model/model.dart lib/services/database_service.dart lib/services/providers/providers.dart lib/utils/utils.dart lib/pages/chat.dart lib/pages/chat/message_list.dart`
+  - 结果: `No issues found!`
+- 已执行构建验证:
+  - [Windows] `flutter build windows --debug`
+  - [Web] `flutter build web --debug`
+  - 结果: 两者均构建成功
+- 当前环境限制:
+  - [Windows / Web 本机图形验证未直接目测] 本回合已完成构建验证，但未直接观察 GUI 中字体、滚动、hover 等细节
+  - [当前环境无法直接运行] `Linux` / `macOS` 实机界面一致性无法在本回合直接验证

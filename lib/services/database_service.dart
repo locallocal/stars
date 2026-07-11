@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 class DatabaseService {
   static Database? _database;
+  static const int _databaseVersion = 2;
 
   // 获取数据库实例
   static Future<Database> get database async {
@@ -21,7 +22,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: _databaseVersion,
       onCreate: (db, version) async {
         // 创建聊天列表表
         await db.execute('''
@@ -43,6 +44,7 @@ class DatabaseService {
             sender_id TEXT,
             content TEXT,
             reasoning TEXT,
+            process_info TEXT,
             images TEXT,
             files TEXT,
             audio TEXT,
@@ -84,6 +86,26 @@ class DatabaseService {
           );
         ''');
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await _addColumnIfMissing(db, 'messages', 'process_info', 'TEXT');
+        }
+      },
     );
+  }
+
+  static Future<void> _addColumnIfMissing(
+    Database db,
+    String tableName,
+    String columnName,
+    String columnType,
+  ) async {
+    final columns = await db.rawQuery('PRAGMA table_info($tableName)');
+    final hasColumn = columns.any((column) => column['name'] == columnName);
+    if (!hasColumn) {
+      await db.execute(
+        'ALTER TABLE $tableName ADD COLUMN $columnName $columnType',
+      );
+    }
   }
 }

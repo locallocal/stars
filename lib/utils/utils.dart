@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -64,15 +65,18 @@ Future<String> getChatDirectoryPath(String chatId) async {
   return path.join(appDir.path, 'chats', chatId);
 }
 
+bool isDesktopPlatform(BuildContext context) {
+  if (kIsWeb) {
+    return false;
+  }
+
+  final platform = defaultTargetPlatform;
+  return platform == TargetPlatform.windows ||
+      platform == TargetPlatform.macOS ||
+      platform == TargetPlatform.linux;
+}
+
 bool isDesktopOrTabletPlatform(BuildContext context) {
-  // 检测当前平台
-  final bool isDesktopOrTablet =
-      Theme.of(context).platform == TargetPlatform.windows ||
-      Theme.of(context).platform == TargetPlatform.macOS ||
-      Theme.of(context).platform == TargetPlatform.linux ||
-      (Theme.of(context).platform == TargetPlatform.iOS &&
-          MediaQuery.of(context).size.width >= 768) ||
-      (Theme.of(context).platform == TargetPlatform.android &&
-          MediaQuery.of(context).size.width >= 768);
-  return isDesktopOrTablet;
+  // 兼容既有调用方，但桌面工作台样式现在只对 Windows/Linux/macOS 生效。
+  return isDesktopPlatform(context);
 }

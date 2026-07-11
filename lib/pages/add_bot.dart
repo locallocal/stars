@@ -9,9 +9,14 @@ import 'package:bubble/pages/common/logo.dart';
 import 'package:bubble/pages/common/common.dart';
 
 class AddBotPage extends StatefulWidget {
-  final Function(Bot) onBotAdded;
+  final Future<void> Function(Bot) onBotAdded;
+  final bool embedded;
 
-  const AddBotPage({super.key, required this.onBotAdded});
+  const AddBotPage({
+    super.key,
+    required this.onBotAdded,
+    this.embedded = false,
+  });
 
   @override
   State<AddBotPage> createState() => _AddBotPageState();
@@ -161,17 +166,23 @@ class _AddBotPageState extends State<AddBotPage> {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
 
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          S.of(context).addBot,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        scrolledUnderElevation: 0,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-      ),
+      appBar:
+          widget.embedded
+              ? null
+              : AppBar(
+                centerTitle: true,
+                title: Text(
+                  S.of(context).addBot,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: fontSize,
+                  ),
+                ),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                scrolledUnderElevation: 0,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+              ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -180,6 +191,15 @@ class _AddBotPageState extends State<AddBotPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.embedded) ...[
+                  Text(
+                    S.of(context).addBot,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 Center(
                   child: GestureDetector(
                     onTap: _pickImage,
@@ -248,12 +268,15 @@ class _AddBotPageState extends State<AddBotPage> {
               side: BorderSide.none,
             ),
           ),
-          onPressed: () {
+          onPressed: () async {
             if (nameController.text.trim().isNotEmpty &&
                 apiKeyController.text.trim().isNotEmpty &&
                 baseURLController.text.trim().isNotEmpty) {
+              final navigator = Navigator.of(context);
               final providerInfo = providersInfo[providerController.text];
-              final apiType = providerInfo?['api_type'] as String;
+              final apiType =
+                  (providerInfo?['api_type'] as String?) ??
+                  apiTypeController.text.trim();
               // 使用baseURLController的值而不是providerInfo中的base_url
               final baseURL = baseURLController.text.trim();
 
@@ -271,8 +294,10 @@ class _AddBotPageState extends State<AddBotPage> {
                 modifyTimestamp: DateTime.now(),
               );
 
-              widget.onBotAdded(newBot);
-              Navigator.pop(context);
+              await widget.onBotAdded(newBot);
+              if (!widget.embedded && mounted) {
+                navigator.pop();
+              }
             } else {
               showWarningSnackBar(context, S.of(context).fillRequiredFields);
             }

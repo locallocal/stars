@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 enum InputModality {
   text('text'),
@@ -111,7 +112,7 @@ class Bot {
         params =
             jsonDecode(map['parameters'] as String) as Map<String, dynamic>;
       } catch (e) {
-        print('解析parameters失败: $e');
+        debugPrint('解析parameters失败: $e');
         params = {};
       }
     } else if (map['parameters'] is Map) {
@@ -146,7 +147,7 @@ class Bot {
       try {
         paramsJson = jsonEncode(parameters);
       } catch (e) {
-        print('序列化parameters失败: $e');
+        debugPrint('序列化parameters失败: $e');
       }
     }
 
@@ -218,12 +219,214 @@ class Bot {
 }
 
 // 消息
+class MessageToolCall {
+  final String name;
+  final String status;
+  final String detail;
+  final int? durationMs;
+
+  const MessageToolCall({
+    required this.name,
+    this.status = '',
+    this.detail = '',
+    this.durationMs,
+  });
+
+  factory MessageToolCall.fromMap(Map<String, dynamic> map) {
+    return MessageToolCall(
+      name: (map['name'] ?? '') as String,
+      status: (map['status'] ?? '') as String,
+      detail: (map['detail'] ?? '') as String,
+      durationMs: map['duration_ms'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'status': status,
+      'detail': detail,
+      'duration_ms': durationMs,
+    };
+  }
+}
+
+class MessageCommandExecution {
+  final String command;
+  final String status;
+  final String detail;
+  final int? durationMs;
+
+  const MessageCommandExecution({
+    required this.command,
+    this.status = '',
+    this.detail = '',
+    this.durationMs,
+  });
+
+  factory MessageCommandExecution.fromMap(Map<String, dynamic> map) {
+    return MessageCommandExecution(
+      command: (map['command'] ?? '') as String,
+      status: (map['status'] ?? '') as String,
+      detail: (map['detail'] ?? '') as String,
+      durationMs: map['duration_ms'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'command': command,
+      'status': status,
+      'detail': detail,
+      'duration_ms': durationMs,
+    };
+  }
+}
+
+class MessageFileEdit {
+  final String path;
+  final String type;
+  final String status;
+  final String detail;
+
+  const MessageFileEdit({
+    required this.path,
+    this.type = '',
+    this.status = '',
+    this.detail = '',
+  });
+
+  factory MessageFileEdit.fromMap(Map<String, dynamic> map) {
+    return MessageFileEdit(
+      path: (map['path'] ?? '') as String,
+      type: (map['type'] ?? '') as String,
+      status: (map['status'] ?? '') as String,
+      detail: (map['detail'] ?? '') as String,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {'path': path, 'type': type, 'status': status, 'detail': detail};
+  }
+}
+
+class MessageProcessInfo {
+  final String reasoningStatus;
+  final int? durationMs;
+  final List<MessageToolCall> toolCalls;
+  final List<MessageCommandExecution> commandExecutions;
+  final List<MessageFileEdit> fileEdits;
+
+  const MessageProcessInfo({
+    this.reasoningStatus = '',
+    this.durationMs,
+    this.toolCalls = const [],
+    this.commandExecutions = const [],
+    this.fileEdits = const [],
+  });
+
+  bool get hasData =>
+      reasoningStatus.isNotEmpty ||
+      durationMs != null ||
+      toolCalls.isNotEmpty ||
+      commandExecutions.isNotEmpty ||
+      fileEdits.isNotEmpty;
+
+  factory MessageProcessInfo.fromRaw(dynamic raw) {
+    if (raw == null) {
+      return const MessageProcessInfo();
+    }
+
+    if (raw is String) {
+      if (raw.isEmpty) {
+        return const MessageProcessInfo();
+      }
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) {
+          return MessageProcessInfo.fromMap(decoded);
+        }
+        if (decoded is Map) {
+          return MessageProcessInfo.fromMap(decoded.cast<String, dynamic>());
+        }
+      } catch (e) {
+        debugPrint('Parse process info failed: $e');
+      }
+      return const MessageProcessInfo();
+    }
+
+    if (raw is Map<String, dynamic>) {
+      return MessageProcessInfo.fromMap(raw);
+    }
+
+    if (raw is Map) {
+      return MessageProcessInfo.fromMap(raw.cast<String, dynamic>());
+    }
+
+    return const MessageProcessInfo();
+  }
+
+  factory MessageProcessInfo.fromMap(Map<String, dynamic> map) {
+    List<MessageToolCall> toolCalls = [];
+    final rawToolCalls = map['tool_calls'];
+    if (rawToolCalls is List) {
+      toolCalls =
+          rawToolCalls
+              .whereType<Map>()
+              .map((e) => MessageToolCall.fromMap(e.cast<String, dynamic>()))
+              .toList();
+    }
+
+    List<MessageCommandExecution> commandExecutions = [];
+    final rawCommandExecutions = map['command_executions'];
+    if (rawCommandExecutions is List) {
+      commandExecutions =
+          rawCommandExecutions
+              .whereType<Map>()
+              .map(
+                (e) =>
+                    MessageCommandExecution.fromMap(e.cast<String, dynamic>()),
+              )
+              .toList();
+    }
+
+    List<MessageFileEdit> fileEdits = [];
+    final rawFileEdits = map['file_edits'];
+    if (rawFileEdits is List) {
+      fileEdits =
+          rawFileEdits
+              .whereType<Map>()
+              .map((e) => MessageFileEdit.fromMap(e.cast<String, dynamic>()))
+              .toList();
+    }
+
+    return MessageProcessInfo(
+      reasoningStatus: (map['reasoning_status'] ?? '') as String,
+      durationMs: map['duration_ms'] as int?,
+      toolCalls: toolCalls,
+      commandExecutions: commandExecutions,
+      fileEdits: fileEdits,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'reasoning_status': reasoningStatus,
+      'duration_ms': durationMs,
+      'tool_calls': toolCalls.map((e) => e.toMap()).toList(),
+      'command_executions': commandExecutions.map((e) => e.toMap()).toList(),
+      'file_edits': fileEdits.map((e) => e.toMap()).toList(),
+    };
+  }
+}
+
 class Message {
   final String chatId;
   final String botId;
   final String senderId;
   final String content;
   final String reasoning;
+  final MessageProcessInfo processInfo;
   final List<String> images; // 图片路径列表
   final List<String> files; // 文件路径列表
   final String audio;
@@ -237,6 +440,7 @@ class Message {
     required this.senderId,
     required this.content,
     this.reasoning = '',
+    this.processInfo = const MessageProcessInfo(),
     this.images = const [],
     this.files = const [],
     this.audio = '',
@@ -254,7 +458,7 @@ class Message {
           final List<dynamic> decoded = jsonDecode(map['images'] as String);
           imagesList = decoded.map((e) => e.toString()).toList();
         } catch (e) {
-          print('Parse images failed: $e');
+          debugPrint('Parse images failed: $e');
         }
       } else if (map['images'] is List) {
         imagesList = (map['images'] as List).map((e) => e.toString()).toList();
@@ -269,7 +473,7 @@ class Message {
           final List<dynamic> decoded = jsonDecode(map['files'] as String);
           filesList = decoded.map((e) => e.toString()).toList();
         } catch (e) {
-          print('Parse files failed: $e');
+          debugPrint('Parse files failed: $e');
         }
       } else if (map['files'] is List) {
         filesList = (map['files'] as List).map((e) => e.toString()).toList();
@@ -280,13 +484,14 @@ class Message {
       chatId: map['chat_id'] as String,
       botId: map['bot_id'] as String,
       senderId: map['sender_id'] as String,
-      content: map['content'] as String,
-      reasoning: map['reasoning'] as String,
+      content: (map['content'] ?? '') as String,
+      reasoning: (map['reasoning'] ?? '') as String,
+      processInfo: MessageProcessInfo.fromRaw(map['process_info']),
       images: imagesList,
       files: filesList,
-      audio: map['audio'] as String,
-      music: map['music'] as String,
-      video: map['video'] as String,
+      audio: (map['audio'] ?? '') as String,
+      music: (map['music'] ?? '') as String,
+      video: (map['video'] ?? '') as String,
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
     );
   }
@@ -298,6 +503,7 @@ class Message {
       'sender_id': senderId,
       'content': content,
       'reasoning': reasoning,
+      'process_info': jsonEncode(processInfo.toMap()),
       'images': jsonEncode(images),
       'files': jsonEncode(files),
       'audio': audio,
@@ -375,17 +581,32 @@ class Profile {
   });
 
   factory Profile.fromMap(Map<String, dynamic> map) {
+    final fontSizeValue = map['font_size'];
+    final themeModeValue = map['theme_mode'];
+    final createTimestampValue = map['create_timestamp'];
+    final modifyTimestampValue = map['modify_timestamp'];
+
     return Profile(
-      name: map['name'] as String,
-      avatar: map['avatar'] as String,
-      fontSize: map['font_size'] as double,
-      themeMode: map['theme_mode'] as int,
-      language: map['language'] as String,
+      name: map['name']?.toString() ?? '用户名',
+      avatar: map['avatar']?.toString() ?? '',
+      fontSize:
+          fontSizeValue is num
+              ? fontSizeValue.toDouble()
+              : double.tryParse(fontSizeValue?.toString() ?? '') ?? 16.0,
+      themeMode:
+          themeModeValue is num
+              ? themeModeValue.toInt()
+              : int.tryParse(themeModeValue?.toString() ?? '') ?? 0,
+      language: map['language']?.toString() ?? 'zh_CN',
       createTimestamp: DateTime.fromMillisecondsSinceEpoch(
-        map['create_timestamp'] as int,
+        createTimestampValue is num
+            ? createTimestampValue.toInt()
+            : int.tryParse(createTimestampValue?.toString() ?? '') ?? 0,
       ),
       modifyTimestamp: DateTime.fromMillisecondsSinceEpoch(
-        map['modify_timestamp'] as int,
+        modifyTimestampValue is num
+            ? modifyTimestampValue.toInt()
+            : int.tryParse(modifyTimestampValue?.toString() ?? '') ?? 0,
       ),
     );
   }

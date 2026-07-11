@@ -1,19 +1,31 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/add_bot.dart';
+import 'package:bubble/pages/chat.dart';
 import 'package:bubble/pages/edit_bot.dart';
 import 'package:bubble/services/bot_service.dart';
+import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/pages/common/logo.dart';
 import 'package:bubble/utils/time.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:bubble/pages/common/new_chat.dart';
 import 'package:bubble/utils/utils.dart';
+import 'package:bubble/utils/theme.dart';
 
 class ContactsPage extends StatefulWidget {
+  final String? selectedBotId;
   final Function(Bot bot) onBotSelected;
-  const ContactsPage({super.key, required this.onBotSelected});
+  final void Function(String chatId, Bot bot)? onChatCreated;
+
+  const ContactsPage({
+    super.key,
+    this.selectedBotId,
+    required this.onBotSelected,
+    this.onChatCreated,
+  });
 
   @override
   State<ContactsPage> createState() => _ContactsPageState();
@@ -24,11 +36,21 @@ class _ContactsPageState extends State<ContactsPage> {
   List<Bot> filteredBots = [];
   String searchQuery = '';
   bool isLoading = true;
+  StreamSubscription? _botListSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadBots();
+    _botListSubscription = BotService.botListChanged.listen((_) {
+      _loadBots();
+    });
+  }
+
+  @override
+  void dispose() {
+    _botListSubscription?.cancel();
+    super.dispose();
   }
 
   // 加载联系人数据
@@ -38,6 +60,7 @@ class _ContactsPageState extends State<ContactsPage> {
     });
 
     final loadedBots = await BotService.getBots();
+    if (!mounted) return;
     setState(() {
       contacts = loadedBots;
       filteredBots = List.from(contacts);
@@ -65,95 +88,64 @@ class _ContactsPageState extends State<ContactsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = isDesktopOrTabletPlatform(context);
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          S.of(context).Bots,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        scrolledUnderElevation: 0, // 防止滚动时背景色变化
-        elevation: 0, // 移除阴影
-        surfaceTintColor: Colors.transparent,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_rounded),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) => AddBotPage(
-                        onBotAdded: (newBot) async {
-                          await BotService.addBot(newBot);
-                          _loadBots(); // 重新加载联系人列表
-                        },
-                      ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body:
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiary,
-                        borderRadius: BorderRadius.circular(24.0),
-                      ),
-                      child: TextField(
-                        onChanged: _filterBots,
-                        decoration: InputDecoration(
-                          hintText: '搜索智能体',
-                          hintStyle: TextStyle(
-                            fontSize: fontSize,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.3),
-                          ),
-                          prefixIcon: const Icon(Icons.search),
-                          prefixIconColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.3),
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              width: 0,
-                              style: BorderStyle.none,
-                            ),
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(24.0),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+    final body = isLoading ? _buildLoadingState() : _buildBody(isDesktop);
 
-                  // 智能体列表
-                  Expanded(
-                    child:
-                        filteredBots.isEmpty
-                            ? _buildEmptyBotsView()
-                            : _buildBotsList(),
-                  ),
-                ],
-              ),
+    if (!isDesktop) {
+      return Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: Text(
+            S.of(context).Bots,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          scrolledUnderElevation: 0,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add_circle_rounded),
+              onPressed: _openAddBotPage,
+            ),
+          ],
+        ),
+        body: body,
+      );
+    }
+
+    return DesktopListPanel(
+      title: S.of(context).Bots,
+      description: '管理可用智能体，并在右侧查看或编辑当前配置。',
+      searchHintText: '搜索智能体',
+      onSearchChanged: _filterBots,
+      action: ElevatedButton.icon(
+        onPressed: _openAddBotPage,
+        icon: const Icon(Icons.add_circle_outline_rounded),
+        label: Text(S.of(context).addBot),
+        style: DesktopThemeTokens.primaryButtonStyle(context),
+      ),
+      child: body,
     );
   }
 
-  // 构建智能体列表
-  Widget _buildBotsList() {
+  Widget _buildLoadingState() =>
+      const Center(child: CircularProgressIndicator());
+
+  Widget _buildBody(bool isDesktop) {
+    if (filteredBots.isEmpty) {
+      return _buildEmptyBotsView(isDesktop);
+    }
+    return _buildBotsList(isDesktop);
+  }
+
+  Widget _buildBotsList(bool isDesktop) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
-    return ListView.builder(
+    return ListView.separated(
+      padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: filteredBots.length,
+      separatorBuilder: (context, index) => SizedBox(height: isDesktop ? 8 : 0),
       itemBuilder: (context, index) {
         final bot = filteredBots[index];
         return Slidable(
@@ -162,8 +154,21 @@ class _ContactsPageState extends State<ContactsPage> {
             motion: const ScrollMotion(),
             children: [
               CustomSlidableAction(
-                onPressed: (context) {
-                  createNewChat(context, bot);
+                onPressed: (context) async {
+                  final chat = await createNewChat(bot);
+                  if (!context.mounted) return;
+                  if (isDesktopOrTabletPlatform(context)) {
+                    widget.onChatCreated?.call(chat.id, bot);
+                    return;
+                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatPage(id: chat.id, bot: bot),
+                    ),
+                  ).then((_) {
+                    ChatService.notifyChatListChanged();
+                  });
                 },
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -175,6 +180,10 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
               CustomSlidableAction(
                 onPressed: (context) {
+                  if (isDesktopOrTabletPlatform(context)) {
+                    widget.onBotSelected(bot);
+                    return;
+                  }
                   // 跳转到编辑页面
                   Navigator.push(
                     context,
@@ -255,44 +264,14 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
             ],
           ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor:
-                  bot.avatar.isEmpty
-                      ? getFrostedProviderColor(
-                        bot.provider,
-                        Theme.of(context).colorScheme.primary,
-                      )
-                      : Theme.of(context).colorScheme.primary,
-              radius: 24,
-              backgroundImage:
-                  bot.avatar.isNotEmpty ? FileImage(File(bot.avatar)) : null,
-              child:
-                  bot.avatar.isEmpty
-                      ? buildProviderLogo(context, '', bot.provider, 24)
-                      : null,
-            ),
-            title: Text(
-              bot.name,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: fontSize!,
-              ),
-            ),
-            subtitle: Text(
-              '${bot.provider} - ${bot.model}',
-              style: TextStyle(
-                fontSize: fontSize - 2,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-            trailing: Text(
-              formatTimestamp(context, bot.createTimestamp),
-              style: TextStyle(
-                fontSize: fontSize - 2,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
+          child: _BotListItem(
+            bot: bot,
+            timestamp: formatTimestamp(context, bot.createTimestamp),
+            subtitle:
+                bot.model.isEmpty
+                    ? bot.provider
+                    : '${bot.provider} - ${bot.model}',
+            isSelected: isDesktop && widget.selectedBotId == bot.id,
             onTap: () {
               if (isDesktopOrTabletPlatform(context)) {
                 widget.onBotSelected(bot);
@@ -316,14 +295,43 @@ class _ContactsPageState extends State<ContactsPage> {
                 ),
               );
             },
+            fontSize: fontSize ?? 16,
           ),
         );
       },
     );
   }
 
-  // 显示没有智能体时的UI
-  Widget _buildEmptyBotsView() {
+  Widget _buildEmptyBotsView(bool isDesktop) {
+    if (isDesktop) {
+      return DesktopEmptyStateCard(
+        icon:
+            searchQuery.isNotEmpty
+                ? Icons.search_off_rounded
+                : Icons.smart_toy_outlined,
+        imageAsset:
+            searchQuery.isEmpty ? 'assets/images/profile/no_bots.png' : null,
+        title:
+            searchQuery.isNotEmpty
+                ? '没有找到匹配的智能体'
+                : S.of(context).noBotsAvailable,
+        description:
+            searchQuery.isNotEmpty
+                ? '换个关键词试试，或直接创建一个新的智能体。'
+                : S.of(context).clickToCreateBot,
+        supportingText:
+            searchQuery.isNotEmpty
+                ? '搜索会按智能体名称过滤列表。'
+                : '创建完成后会留在桌面工作台中，便于继续编辑。',
+        action: ElevatedButton.icon(
+          onPressed: _openAddBotPage,
+          icon: const Icon(Icons.add_circle_outline),
+          label: Text(S.of(context).addBot),
+          style: DesktopThemeTokens.primaryButtonStyle(context),
+        ),
+      );
+    }
+
     return Center(
       child: SingleChildScrollView(
         child: Padding(
@@ -353,23 +361,9 @@ class _ContactsPageState extends State<ContactsPage> {
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => AddBotPage(
-                            onBotAdded: (newBot) async {
-                              await BotService.addBot(newBot);
-                              _loadBots(); // 重新加载联系人列表
-                            },
-                          ),
-                    ),
-                  );
-                },
+                onPressed: _openAddBotPage,
                 icon: const Icon(Icons.add_circle_outline),
                 label: Text(S.of(context).addBot),
                 style: ElevatedButton.styleFrom(
@@ -389,6 +383,138 @@ class _ContactsPageState extends State<ContactsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _openAddBotPage() async {
+    if (isDesktopOrTabletPlatform(context)) {
+      await showDialog(
+        context: context,
+        builder:
+            (context) => Dialog(
+              insetPadding: const EdgeInsets.all(24),
+              child: SizedBox(
+                width: 920,
+                height: 760,
+                child: AddBotPage(
+                  embedded: true,
+                  onBotAdded: (newBot) async {
+                    await BotService.addBot(newBot);
+                    _loadBots();
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ),
+            ),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddBotPage(
+              onBotAdded: (newBot) async {
+                await BotService.addBot(newBot);
+                _loadBots();
+              },
+            ),
+      ),
+    );
+  }
+}
+
+class _BotListItem extends StatefulWidget {
+  final Bot bot;
+  final String subtitle;
+  final String timestamp;
+  final bool isSelected;
+  final double fontSize;
+  final VoidCallback onTap;
+
+  const _BotListItem({
+    required this.bot,
+    required this.subtitle,
+    required this.timestamp,
+    required this.isSelected,
+    required this.fontSize,
+    required this.onTap,
+  });
+
+  @override
+  State<_BotListItem> createState() => _BotListItemState();
+}
+
+class _BotListItemState extends State<_BotListItem> {
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = DesktopThemeTokens.bodyStyle(
+      context,
+    )?.copyWith(fontWeight: FontWeight.w700, fontSize: widget.fontSize);
+    final metaStyle = DesktopThemeTokens.metaStyle(
+      context,
+    )?.copyWith(fontSize: widget.fontSize - 2);
+
+    return DesktopInteractiveListItem(
+      selected: widget.isSelected,
+      onTap: widget.onTap,
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor:
+                widget.bot.avatar.isEmpty
+                    ? getFrostedProviderColor(
+                      widget.bot.provider,
+                      Theme.of(context).colorScheme.primary,
+                    )
+                    : Theme.of(context).colorScheme.primary,
+            radius: 20,
+            backgroundImage:
+                widget.bot.avatar.isNotEmpty
+                    ? FileImage(File(widget.bot.avatar))
+                    : null,
+            child:
+                widget.bot.avatar.isEmpty
+                    ? buildProviderLogo(context, '', widget.bot.provider, 20)
+                    : null,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.bot.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: titleStyle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(widget.timestamp, style: metaStyle),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: metaStyle?.copyWith(
+                    color: DesktopThemeTokens.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

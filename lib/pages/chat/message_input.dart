@@ -1,13 +1,17 @@
-import 'package:bubble/services/providers/providers.dart';
-import 'package:flutter/material.dart';
 import 'package:bubble/generated/l10n.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/pages/common/common.dart';
+import 'package:bubble/services/providers/providers.dart';
+import 'package:bubble/utils/theme.dart';
+import 'package:bubble/utils/utils.dart';
+import 'package:flutter/material.dart';
 
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
   final Provider provider;
   final bool waitingBotMessage;
+  final bool hasPendingAttachments;
+  final bool desktopMode;
   final Function() onSend;
   final Function() onCancelRequest;
   final Function() onCameraPressed;
@@ -22,6 +26,8 @@ class MessageInput extends StatefulWidget {
     required this.provider,
     required this.controller,
     required this.waitingBotMessage,
+    this.hasPendingAttachments = false,
+    this.desktopMode = false,
     required this.onCameraPressed,
     required this.onGalleryPressed,
     required this.onFilePressed,
@@ -45,564 +51,149 @@ class _MessageInputState extends State<MessageInput> {
   bool showGenerateImageOptions = false;
   bool showGenerateVideoOptions = false;
   bool showAttachmentInputs = false;
+  final FocusNode _focusNode = FocusNode();
+  bool _hasFocus = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.provider.getOutputModalites().contains(OutputModality.image)) {
-      if (widget.provider.getSupportedImageSizes().isNotEmpty) {
-        selectedImageRatio = widget.provider.getSupportedImageSizes().first;
-      }
+    if (widget.provider.getOutputModalites().contains(OutputModality.image) &&
+        widget.provider.getSupportedImageSizes().isNotEmpty) {
+      selectedImageRatio = widget.provider.getSupportedImageSizes().first;
     }
-    if (widget.provider.getOutputModalites().contains(OutputModality.video)) {
-      if (widget.provider.getSupportVideoRatios().isNotEmpty) {
-        selectedVideoRatio = widget.provider.getSupportVideoRatios().first;
-      }
+    if (widget.provider.getOutputModalites().contains(OutputModality.video) &&
+        widget.provider.getSupportVideoRatios().isNotEmpty) {
+      selectedVideoRatio = widget.provider.getSupportVideoRatios().first;
     }
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_handleFocusChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChanged() {
+    if (_hasFocus != _focusNode.hasFocus) {
+      setState(() {
+        _hasFocus = _focusNode.hasFocus;
+      });
+    }
+  }
+
+  bool get _canSubmit =>
+      widget.controller.text.trim().isNotEmpty || widget.hasPendingAttachments;
+
+  bool get _isDesktop => widget.desktopMode;
+
+  String get _modelSummary {
+    final provider = widget.provider.bot.provider.trim();
+    final model = widget.provider.bot.model.trim();
+    if (provider.isEmpty) {
+      return model;
+    }
+    return '$provider · $model';
   }
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
+    final isDesktop = _isDesktop || isDesktopOrTabletPlatform(context);
+
     return Column(
       children: [
-        // 主输入区域
-        Container(
-          margin: const EdgeInsets.only(left: 16, right: 16, top: 8),
-          padding: EdgeInsets.only(
-            left: 8,
-            right: 8,
-            bottom:
-                (widget.provider.supportWebSearch() ||
-                        widget.provider.supportDeepThinking() ||
-                        widget.provider.getOutputModalites().contains(
-                          OutputModality.image,
-                        ) ||
-                        widget.provider.getOutputModalites().contains(
-                          OutputModality.video,
-                        ))
-                    ? 8
-                    : 0,
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          margin: EdgeInsets.only(
+            left: isDesktop ? 0 : 16,
+            right: isDesktop ? 0 : 16,
+            top: 8,
+          ),
+          padding: EdgeInsets.fromLTRB(
+            isDesktop ? 18 : 8,
+            isDesktop ? 12 : 0,
+            isDesktop ? 18 : 8,
+            isDesktop ? 12 : 14,
           ),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(16.0),
+            color:
+                isDesktop
+                    ? BubbleDesktopTheme.panelBackground(context)
+                    : Theme.of(context).colorScheme.secondary,
+            borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
+            border: Border.all(
+              color:
+                  _hasFocus && isDesktop
+                      ? Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.28)
+                      : isDesktop
+                      ? BubbleDesktopTheme.borderColor(context)
+                      : Colors.transparent,
+              width: _hasFocus && isDesktop ? 1.4 : 1,
+            ),
+            boxShadow:
+                isDesktop
+                    ? [
+                      ...BubbleDesktopTheme.panelShadow(context),
+                      if (_hasFocus)
+                        BoxShadow(
+                          color: Colors.transparent,
+                          blurRadius: 0,
+                          offset: const Offset(0, 8),
+                        ),
+                    ]
+                    : null,
           ),
           child: Column(
             children: [
-              // 文本输入区域
               TextField(
                 controller: widget.controller,
+                focusNode: _focusNode,
                 textInputAction: TextInputAction.send,
-                onSubmitted: (value) => widget.onSend(),
+                onSubmitted: (_) => widget.onSend(),
                 decoration: InputDecoration(
-                  hintText: '请输入提示词',
+                  hintText: '输入消息、指令或任务说明',
                   hintStyle: TextStyle(
                     fontSize: fontSize,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.3),
+                    color: BubbleDesktopTheme.subtleText(context),
                   ),
                   border: InputBorder.none,
-                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: widget.controller,
-                    builder: (context, value, child) {
-                      if (widget.waitingBotMessage) {
-                        return IconButton(
-                          onPressed: widget.onCancelRequest,
-                          icon: const Icon(Icons.pause_circle_filled),
-                          tooltip: S.of(context).pauseGeneration,
-                          padding: EdgeInsets.zero,
-                        );
-                      }
-                      // 同时显示附件和发送按钮
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          // 附件按钮
-                          if (widget.provider.getInputModalites().contains(
-                                InputModality.image,
-                              ) ||
-                              widget.provider.getInputModalites().contains(
-                                InputModality.file,
-                              ))
-                            IconButton(
-                              icon:
-                                  showAttachmentInputs
-                                      ? buildCloseIcon(context)
-                                      : Icon(Icons.add_circle_rounded),
-                              onPressed: () {
-                                setState(() {
-                                  showAttachmentInputs = !showAttachmentInputs;
-                                });
-                                // 这里添加处理附件的逻辑
-                              },
-                            ),
-
-                          // 发送按钮 - 仅当有文本或附件时显示
-                          if (value.text.isNotEmpty)
-                            IconButton(
-                              icon: Icon(
-                                Icons.send_rounded,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                              onPressed: widget.onSend,
-                            ),
-                        ],
-                      );
-                    },
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 4 : 0,
+                    vertical: isDesktop ? 8 : 12,
                   ),
                 ),
-                maxLines: 6,
-                minLines: 3,
+                maxLines: isDesktop ? 6 : 6,
+                minLines: isDesktop ? 2 : 3,
                 textAlignVertical: TextAlignVertical.center,
+                style: TextStyle(
+                  height: isDesktop ? 1.5 : null,
+                  fontSize: fontSize,
+                ),
               ),
-
-              // 底部工具栏
-              Row(
-                children: [
-                  if (widget.provider.supportWebSearch())
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isWebSearchEnabled = !isWebSearchEnabled;
-                          widget.provider.setWebSearch(isWebSearchEnabled);
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isWebSearchEnabled
-                                  ? Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withOpacity(0.3)
-                                  : Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.public,
-                              size: fontSize,
-                              color:
-                                  isWebSearchEnabled
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurface,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              S.of(context).webSearch,
-                              style: TextStyle(
-                                fontSize: fontSize! - 2,
-                                color:
-                                    isWebSearchEnabled
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                fontWeight:
-                                    isWebSearchEnabled
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (widget.provider.supportWebSearch()) SizedBox(width: 8),
-
-                  if (widget.provider.supportDeepThinking())
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isDeepThinkingEnabled = !isDeepThinkingEnabled;
-                          widget.provider.setDeepThinking(
-                            isDeepThinkingEnabled,
-                          );
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isDeepThinkingEnabled
-                                  ? Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withOpacity(0.3)
-                                  : Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.psychology,
-                              size: fontSize! + 2,
-                              color:
-                                  isDeepThinkingEnabled
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurface,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              S.of(context).deepThinking,
-                              style: TextStyle(
-                                fontSize: fontSize - 2,
-                                color:
-                                    isDeepThinkingEnabled
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                fontWeight:
-                                    isDeepThinkingEnabled
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (widget.provider.supportDeepThinking()) SizedBox(width: 8),
-
-                  if (widget.provider.getOutputModalites().contains(
-                    OutputModality.image,
-                  ))
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          showGenerateImageOptions = !showGenerateImageOptions;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.image,
-                              size: fontSize! - 2,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              selectedImageStyle,
-                              style: TextStyle(
-                                fontSize: fontSize - 2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              selectedImageRatio,
-                              style: TextStyle(
-                                fontSize: fontSize - 2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              showGenerateImageOptions
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  if (widget.provider.getOutputModalites().contains(
-                    OutputModality.video,
-                  ))
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          showGenerateVideoOptions = !showGenerateVideoOptions;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.video_camera_back_rounded,
-                              size: fontSize! - 2,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              selectedVideoRatio,
-                              style: TextStyle(
-                                fontSize: fontSize - 2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              showGenerateVideoOptions
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+              SizedBox(height: isDesktop ? 8 : 12),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: widget.controller,
+                builder: (context, value, child) {
+                  return _buildBottomToolbar(context, fontSize, isDesktop);
+                },
               ),
-
-              if (showAttachmentInputs)
-                Row(
-                  children: [
-                    if (widget.provider.getInputModalites().contains(
-                      InputModality.image,
-                    ))
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(
-                              right: 8,
-                              bottom: 8,
-                              top: 8,
-                            ),
-                            padding: const EdgeInsets.only(
-                              bottom: 8,
-                              left: 6,
-                              right: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.photo_camera,
-                                    size: 24,
-                                  ),
-                                  onPressed: widget.onCameraPressed,
-                                ),
-                                Text(
-                                  S.of(context).takePhoto,
-                                  style: TextStyle(fontSize: fontSize! - 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                    if (widget.provider.getInputModalites().contains(
-                      InputModality.image,
-                    ))
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(
-                              right: 8,
-                              bottom: 8,
-                              top: 8,
-                            ),
-                            padding: const EdgeInsets.only(
-                              bottom: 8,
-                              left: 6,
-                              right: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.insert_photo,
-                                    size: 24,
-                                  ),
-                                  onPressed: widget.onGalleryPressed,
-                                ),
-                                Text(
-                                  S.of(context).chooseFromGallery,
-                                  style: TextStyle(fontSize: fontSize! - 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                    if (widget.provider.getInputModalites().contains(
-                      InputModality.file,
-                    ))
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(right: 8, bottom: 8),
-                            padding: const EdgeInsets.only(
-                              bottom: 8,
-                              left: 6,
-                              right: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.upload_file_rounded,
-                                    size: 24,
-                                  ),
-                                  onPressed: widget.onFilePressed,
-                                ),
-                                Text(
-                                  S.of(context).uploadFile,
-                                  style: TextStyle(fontSize: fontSize! - 2),
-                                ),
-                                SizedBox(height: 8),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-
-              if (showGenerateImageOptions) SizedBox(height: 12),
-              // 展开的选项面板
-              if (showGenerateImageOptions &&
-                  widget.provider.getSupportImageStyles().isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 模型选择
-                    Text(
-                      '选择风格: $selectedImageStyle',
-                      style: TextStyle(
-                        fontSize: fontSize! - 2,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 96,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          ...(widget.provider.getSupportImageStyles()).map(
-                            (style) => _buildStyleOption(style),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                  ],
-                ),
-              if (showGenerateImageOptions &&
-                  widget.provider.getSupportedImageSizes().isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '选择比例: $selectedImageRatio',
-                      style: TextStyle(
-                        fontSize: fontSize! - 2,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 100,
-                            minHeight: 80,
-                          ),
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              ...(widget.provider.getSupportedImageSizes()).map(
-                                (size) => _buildImageRatioOption(size),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-
-              if (showGenerateVideoOptions) SizedBox(height: 12),
-              // 展开的选项面板
-              if (showGenerateVideoOptions &&
-                  widget.provider.getSupportVideoRatios().isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '选择比例: $selectedVideoRatio',
-                      style: TextStyle(
-                        fontSize: fontSize! - 2,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Container(
-                          constraints: BoxConstraints(
-                            maxHeight: 120,
-                            minHeight: 80,
-                          ),
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              ...(widget.provider.getSupportVideoRatios()).map(
-                                (size) => _buildVideoRatioOption(size),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(height: 12),
-                  ],
-                ),
+              if (showAttachmentInputs) ...[
+                const SizedBox(height: 14),
+                _buildAttachmentPanel(context, fontSize, isDesktop),
+              ],
+              if (showGenerateImageOptions) ...[
+                const SizedBox(height: 14),
+                _buildGenerateImageOptions(context, fontSize),
+              ],
+              if (showGenerateVideoOptions) ...[
+                const SizedBox(height: 14),
+                _buildGenerateVideoOptions(context, fontSize),
+              ],
             ],
           ),
         ),
@@ -610,52 +201,602 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
+  Widget _buildBottomToolbar(
+    BuildContext context,
+    double fontSize,
+    bool isDesktop,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (isDesktop)
+                _buildInfoChip(
+                  context,
+                  icon: Icons.tune_rounded,
+                  label: _modelSummary,
+                ),
+              if (widget.provider.supportWebSearch())
+                _buildToggleChip(
+                  context,
+                  icon: Icons.public,
+                  label: S.of(context).webSearch,
+                  active: isWebSearchEnabled,
+                  onTap: () {
+                    setState(() {
+                      isWebSearchEnabled = !isWebSearchEnabled;
+                      widget.provider.setWebSearch(isWebSearchEnabled);
+                    });
+                  },
+                ),
+              if (widget.provider.supportDeepThinking())
+                _buildToggleChip(
+                  context,
+                  icon: Icons.psychology_alt_rounded,
+                  label: S.of(context).deepThinking,
+                  active: isDeepThinkingEnabled,
+                  onTap: () {
+                    setState(() {
+                      isDeepThinkingEnabled = !isDeepThinkingEnabled;
+                      widget.provider.setDeepThinking(isDeepThinkingEnabled);
+                    });
+                  },
+                ),
+              if (widget.provider.getOutputModalites().contains(
+                OutputModality.image,
+              ))
+                _buildActionChip(
+                  context,
+                  icon: Icons.image_outlined,
+                  label:
+                      selectedImageStyle.isEmpty
+                          ? selectedImageRatio
+                          : '$selectedImageStyle · $selectedImageRatio',
+                  active: showGenerateImageOptions,
+                  onTap: () {
+                    setState(() {
+                      showGenerateImageOptions = !showGenerateImageOptions;
+                    });
+                  },
+                ),
+              if (widget.provider.getOutputModalites().contains(
+                OutputModality.video,
+              ))
+                _buildActionChip(
+                  context,
+                  icon: Icons.video_camera_back_outlined,
+                  label: selectedVideoRatio,
+                  active: showGenerateVideoOptions,
+                  onTap: () {
+                    setState(() {
+                      showGenerateVideoOptions = !showGenerateVideoOptions;
+                    });
+                  },
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_supportsAttachments)
+              _buildCircleActionButton(
+                context,
+                icon:
+                    showAttachmentInputs
+                        ? buildCloseIcon(context)
+                        : const Icon(Icons.add_rounded),
+                tooltip: S.of(context).uploadFile,
+                active: showAttachmentInputs || widget.hasPendingAttachments,
+                onPressed: () {
+                  setState(() {
+                    showAttachmentInputs = !showAttachmentInputs;
+                  });
+                },
+              ),
+            const SizedBox(width: 10),
+            _buildPrimaryActionButton(context, isDesktop),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrimaryActionButton(BuildContext context, bool isDesktop) {
+    final enabled = widget.waitingBotMessage || _canSubmit;
+    final onPressed =
+        enabled
+            ? (widget.waitingBotMessage
+                ? widget.onCancelRequest
+                : widget.onSend)
+            : null;
+    final backgroundColor =
+        widget.waitingBotMessage
+            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.92)
+            : enabled
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.primary.withValues(alpha: 0.18);
+    final foregroundColor =
+        enabled
+            ? Theme.of(context).colorScheme.onPrimary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35);
+
+    if (!isDesktop) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: IconButton(
+          icon: Icon(
+            widget.waitingBotMessage ? Icons.pause_rounded : Icons.send_rounded,
+            color: foregroundColor,
+          ),
+          tooltip:
+              widget.waitingBotMessage
+                  ? S.of(context).pauseGeneration
+                  : S.of(context).send,
+          onPressed: onPressed,
+        ),
+      );
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow:
+            enabled
+                ? [
+                  BoxShadow(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.16),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+                : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Row(
+                key: ValueKey<bool>(widget.waitingBotMessage),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.waitingBotMessage) ...[
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: foregroundColor,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ] else ...[
+                    Icon(Icons.send_rounded, size: 18, color: foregroundColor),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    widget.waitingBotMessage ? '停止生成' : '发送',
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize:
+                          Theme.of(context).textTheme.bodyMedium?.fontSize,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentPanel(
+    BuildContext context,
+    double fontSize,
+    bool isDesktop,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color:
+            isDesktop
+                ? BubbleDesktopTheme.elevatedSurface(context)
+                : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border:
+            isDesktop
+                ? Border.all(color: BubbleDesktopTheme.borderColor(context))
+                : null,
+      ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          if (widget.provider.getInputModalites().contains(InputModality.image))
+            _buildAttachmentTile(
+              context,
+              label: S.of(context).takePhoto,
+              icon: Icons.photo_camera,
+              onTap: widget.onCameraPressed,
+              fontSize: fontSize,
+            ),
+          if (widget.provider.getInputModalites().contains(InputModality.image))
+            _buildAttachmentTile(
+              context,
+              label: S.of(context).chooseFromGallery,
+              icon: Icons.insert_photo,
+              onTap: widget.onGalleryPressed,
+              fontSize: fontSize,
+            ),
+          if (widget.provider.getInputModalites().contains(InputModality.file))
+            _buildAttachmentTile(
+              context,
+              label: S.of(context).uploadFile,
+              icon: Icons.upload_file_rounded,
+              onTap: widget.onFilePressed,
+              fontSize: fontSize,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenerateImageOptions(BuildContext context, double fontSize) {
+    return _buildOptionPanel(
+      context,
+      title:
+          selectedImageStyle.isEmpty
+              ? '图像生成设置'
+              : '图像生成设置 · $selectedImageStyle',
+      children: [
+        if (widget.provider.getSupportImageStyles().isNotEmpty) ...[
+          Text(
+            '选择风格',
+            style: TextStyle(
+              fontSize: fontSize - 1,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 96,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children:
+                  widget.provider
+                      .getSupportImageStyles()
+                      .map((style) => _buildStyleOption(style))
+                      .toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+        if (widget.provider.getSupportedImageSizes().isNotEmpty) ...[
+          Text(
+            '选择比例',
+            style: TextStyle(
+              fontSize: fontSize - 1,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 100,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children:
+                  widget.provider
+                      .getSupportedImageSizes()
+                      .map((size) => _buildImageRatioOption(size))
+                      .toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGenerateVideoOptions(BuildContext context, double fontSize) {
+    return _buildOptionPanel(
+      context,
+      title: '视频生成设置',
+      children: [
+        Text(
+          '选择比例',
+          style: TextStyle(fontSize: fontSize - 1, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 110,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children:
+                widget.provider
+                    .getSupportVideoRatios()
+                    .map((size) => _buildVideoRatioOption(size))
+                    .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOptionPanel(
+    BuildContext context, {
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: BubbleDesktopTheme.elevatedSurface(context),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return _buildActionChip(
+      context,
+      icon: icon,
+      label: label,
+      active: active,
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildActionChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color:
+              active
+                  ? Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.12)
+                  : BubbleDesktopTheme.elevatedSurface(context),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color:
+                active
+                    ? Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.22)
+                    : BubbleDesktopTheme.borderColor(context),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color:
+                  active
+                      ? Theme.of(context).colorScheme.primary
+                      : BubbleDesktopTheme.mutedText(context),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                color:
+                    active
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: BubbleDesktopTheme.elevatedSurface(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: BubbleDesktopTheme.mutedText(context)),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCircleActionButton(
+    BuildContext context, {
+    required Widget icon,
+    required String tooltip,
+    bool active = false,
+    required VoidCallback onPressed,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color:
+            active
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.10)
+                : BubbleDesktopTheme.elevatedSurface(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color:
+              active
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                  : BubbleDesktopTheme.borderColor(context),
+        ),
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        color:
+            active
+                ? Theme.of(context).colorScheme.primary
+                : BubbleDesktopTheme.mutedText(context),
+        icon: icon,
+      ),
+    );
+  }
+
+  Widget _buildAttachmentTile(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    required double fontSize,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        width: 108,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 22),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: fontSize - 2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool get _supportsAttachments =>
+      widget.provider.getInputModalites().contains(InputModality.image) ||
+      widget.provider.getInputModalites().contains(InputModality.file);
+
   Widget _buildStyleOption(String name) {
     return GestureDetector(
       onTap: () {
         setState(() {
-          if (selectedImageStyle == name) {
-            selectedImageStyle = '';
-          } else {
-            selectedImageStyle = name;
-          }
+          selectedImageStyle = selectedImageStyle == name ? '' : name;
           widget.onImageStyleSelected(selectedImageStyle);
         });
       },
       child: Container(
-        margin: const EdgeInsets.only(right: 12.0),
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color:
               selectedImageStyle == name
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                  : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12.0),
+                  ? Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.14)
+                  : Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 风格图标或预览图
             Container(
               width: 60,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.0),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                Icons.image,
+                Icons.image_outlined,
                 color:
                     selectedImageStyle == name
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
+                        : BubbleDesktopTheme.mutedText(context),
                 size: 24,
               ),
             ),
             const SizedBox(height: 8),
-            // 风格名称
             Text(
               name,
               style: TextStyle(
@@ -677,77 +818,37 @@ class _MessageInputState extends State<MessageInput> {
   }
 
   Widget _buildImageRatioOption(String ratio) {
-    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
-    // 解析比例
-    var width = 1.0;
-    var height = 1.0;
-    if (ratio.contains(':')) {
-      final parts = ratio.split(':');
-      width = double.parse(parts[0]);
-      height = double.parse(parts[1]);
-    } else if (ratio.contains('x')) {
-      final parts = ratio.split('x');
-      width = double.parse(parts[0]);
-      height = double.parse(parts[1]);
-    }
-
-    return GestureDetector(
+    return _buildRatioOption(
+      ratio: ratio,
+      selected: selectedImageRatio == ratio,
       onTap: () {
         setState(() {
           selectedImageRatio = ratio;
           widget.onImageSizeSelected(ratio);
         });
       },
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color:
-              selectedImageRatio == ratio
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                  : Theme.of(context).colorScheme.surface,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 比例可视化
-            Container(
-              width: 24,
-              height: 24 * (height / width),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(
-                  color:
-                      selectedImageRatio == ratio
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurface,
-                  width: 0.3,
-                ),
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            // 比例文本
-            Text(
-              ratio,
-              style: TextStyle(
-                fontSize: fontSize! - 2,
-                fontWeight: FontWeight.bold,
-                color:
-                    selectedImageRatio == ratio
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildVideoRatioOption(String ratio) {
-    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
-    // 解析比例
+    return _buildRatioOption(
+      ratio: ratio,
+      selected: selectedVideoRatio == ratio,
+      onTap: () {
+        setState(() {
+          selectedVideoRatio = ratio;
+          widget.onVideoRatioSelected(ratio);
+        });
+      },
+    );
+  }
+
+  Widget _buildRatioOption({
+    required String ratio,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
     var width = 1.0;
     var height = 1.0;
     if (ratio.contains(':')) {
@@ -761,49 +862,48 @@ class _MessageInputState extends State<MessageInput> {
     }
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedVideoRatio = ratio;
-          widget.onVideoRatioSelected(ratio);
-        });
-      },
+      onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
+        margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           color:
-              selectedVideoRatio == ratio
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                  : Theme.of(context).colorScheme.surface,
+              selected
+                  ? Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.14)
+                  : Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.75),
+          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // 比例可视化
             Container(
               width: 24,
               height: 24 * (height / width),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(4),
                 border: Border.all(
                   color:
-                      selectedVideoRatio == ratio
+                      selected
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurface,
-                  width: 0.3,
+                          : BubbleDesktopTheme.mutedText(context),
+                  width: 0.8,
                 ),
                 color: Theme.of(context).colorScheme.secondary,
               ),
             ),
-            // 比例文本
+            const SizedBox(height: 10),
             Text(
               ratio,
               style: TextStyle(
-                fontSize: fontSize! - 2,
+                fontSize: fontSize - 2,
                 fontWeight: FontWeight.bold,
                 color:
-                    selectedVideoRatio == ratio
+                    selected
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.onSurface,
               ),

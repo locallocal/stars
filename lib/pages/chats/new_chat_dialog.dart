@@ -2,12 +2,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bubble/model/model.dart';
 import 'package:bubble/services/bot_service.dart';
+import 'package:bubble/services/chat_service.dart';
 import 'package:bubble/generated/l10n.dart';
+import 'package:bubble/pages/chat.dart';
 import 'package:bubble/pages/common/logo.dart';
 import 'package:bubble/pages/common/new_chat.dart';
+import 'package:bubble/utils/utils.dart';
 
 class NewChatDialog extends StatelessWidget {
-  final Function onChatCreated;
+  final void Function(String chatId, Bot bot)? onChatCreated;
 
   const NewChatDialog({super.key, required this.onChatCreated});
 
@@ -89,9 +92,31 @@ class NewChatDialog extends StatelessWidget {
                           ),
                           subtitle: Text('${bot.provider}-${bot.model}'),
                           onTap: () async {
-                            createNewChat(context, bot);
-                            onChatCreated();
-                            Navigator.pop(context);
+                            final chat = await createNewChat(bot);
+                            if (!context.mounted) return;
+                            final navigator = Navigator.of(context);
+                            final isDesktop = isDesktopOrTabletPlatform(
+                              context,
+                            );
+
+                            onChatCreated?.call(chat.id, bot);
+                            navigator.pop();
+
+                            if (isDesktop) {
+                              return;
+                            }
+
+                            navigator
+                                .push(
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            ChatPage(id: chat.id, bot: bot),
+                                  ),
+                                )
+                                .then((_) {
+                                  ChatService.notifyChatListChanged();
+                                });
                           },
                         );
                       },
