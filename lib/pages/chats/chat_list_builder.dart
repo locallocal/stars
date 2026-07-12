@@ -30,7 +30,8 @@ class ChatListBuilder extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: chatList.length,
-      separatorBuilder: (context, index) => SizedBox(height: isDesktop ? 8 : 0),
+      separatorBuilder:
+          (context, index) => SizedBox(height: isDesktop ? 8 : 0),
       itemBuilder: (context, index) {
         final chat = chatList[index];
         final bot = bots.firstWhere(

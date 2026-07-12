@@ -694,31 +694,34 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          ...themes.map(
-                            (theme) => RadioListTile<ThemeMode>(
-                              title: Row(
-                                children: [
-                                  Icon(theme['icon'] as IconData),
-                                  const SizedBox(width: 12),
-                                  theme['title'] as Text,
-                                ],
-                              ),
-                              activeColor:
-                                  Theme.of(context).colorScheme.onSurface,
-                              value: theme['mode'] as ThemeMode,
-                              groupValue: _themeMode,
-                              onChanged: (value) {
-                                setState(() {
-                                  _themeMode = value!;
-                                });
-                                _saveProfile(); // 保存设置
+                          ...themes
+                              .map(
+                                (theme) => RadioListTile<ThemeMode>(
+                                  title: Row(
+                                    children: [
+                                      Icon(theme['icon'] as IconData),
+                                      const SizedBox(width: 12),
+                                      theme['title'] as Text,
+                                    ],
+                                  ),
+                                  activeColor:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  value: theme['mode'] as ThemeMode,
+                                  groupValue: _themeMode,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _themeMode = value!;
+                                    });
+                                    _saveProfile(); // 保存设置
 
-                                // 通知应用程序更新主题
-                                ProfileService.notifyThemeChanged(_themeMode);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ),
+                                    // 通知应用程序更新主题
+                                    ProfileService.notifyThemeChanged(
+                                      _themeMode,
+                                    );
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
                           SizedBox(height: 24),
                         ],
                       ),
@@ -1095,7 +1098,9 @@ class BubbleLogo extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 10,
             spreadRadius: 2,
           ),

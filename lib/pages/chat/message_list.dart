@@ -732,12 +732,11 @@ class ProcessInfoSection extends StatelessWidget {
               icon: Icons.build_outlined,
               items: processInfo.toolCalls,
               titleBuilder: (item) => item.name,
-              subtitleBuilder:
-                  (item) => _joinMeta([
-                    if (item.detail.isNotEmpty) item.detail,
-                    if (item.durationMs != null)
-                      '耗时 ${_formatDuration(item.durationMs!)}',
-                  ]),
+              subtitleBuilder: (item) => _joinMeta([
+                if (item.detail.isNotEmpty) item.detail,
+                if (item.durationMs != null)
+                  '耗时 ${_formatDuration(item.durationMs!)}',
+              ]),
               statusBuilder: (item) => item.status,
             ),
           ],
@@ -748,12 +747,11 @@ class ProcessInfoSection extends StatelessWidget {
               icon: Icons.terminal_rounded,
               items: processInfo.commandExecutions,
               titleBuilder: (item) => item.command,
-              subtitleBuilder:
-                  (item) => _joinMeta([
-                    if (item.detail.isNotEmpty) item.detail,
-                    if (item.durationMs != null)
-                      '耗时 ${_formatDuration(item.durationMs!)}',
-                  ]),
+              subtitleBuilder: (item) => _joinMeta([
+                if (item.detail.isNotEmpty) item.detail,
+                if (item.durationMs != null)
+                  '耗时 ${_formatDuration(item.durationMs!)}',
+              ]),
               statusBuilder: (item) => item.status,
             ),
           ],
@@ -763,13 +761,11 @@ class ProcessInfoSection extends StatelessWidget {
               title: '文件状态',
               icon: Icons.description_outlined,
               items: processInfo.fileEdits,
-              titleBuilder:
-                  (item) => item.path.split(Platform.pathSeparator).last,
-              subtitleBuilder:
-                  (item) => _joinMeta([
-                    if (item.detail.isNotEmpty) item.detail,
-                    if (item.type.isNotEmpty) _fileTypeLabel(item.type),
-                  ]),
+              titleBuilder: (item) => item.path.split(Platform.pathSeparator).last,
+              subtitleBuilder: (item) => _joinMeta([
+                if (item.detail.isNotEmpty) item.detail,
+                if (item.type.isNotEmpty) _fileTypeLabel(item.type),
+              ]),
               statusBuilder: (item) => item.status,
             ),
           ],
@@ -814,7 +810,11 @@ class _ProcessChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: BubbleDesktopTheme.mutedText(context)),
+          Icon(
+            icon,
+            size: 14,
+            color: BubbleDesktopTheme.mutedText(context),
+          ),
           const SizedBox(width: 6),
           Text(
             label,
@@ -861,13 +861,12 @@ class _ProcessListCard<T> extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: BubbleDesktopTheme.mutedText(context),
-              ),
+              Icon(icon, size: 16, color: BubbleDesktopTheme.mutedText(context)),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -876,9 +875,7 @@ class _ProcessListCard<T> extends StatelessWidget {
             final subtitle = subtitleBuilder(item);
             final hasSubtitle = subtitle.isNotEmpty;
             return Padding(
-              padding: EdgeInsets.only(
-                bottom: entry.key == items.length - 1 ? 0 : 10,
-              ),
+              padding: EdgeInsets.only(bottom: entry.key == items.length - 1 ? 0 : 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
