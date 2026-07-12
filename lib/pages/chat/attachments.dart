@@ -119,10 +119,11 @@ class ImageAttachments extends StatelessWidget {
                             decoration:
                                 desktopMode
                                     ? BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .surface
-                                          .withValues(alpha: 0.72),
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface.withValues(
+                                        alpha: 0.72,
+                                      ),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: BubbleDesktopTheme.borderColor(
@@ -189,9 +190,14 @@ class ImageAttachments extends StatelessWidget {
                             decoration: BoxDecoration(
                               color:
                                   desktopMode
-                                      ? Theme.of(context).colorScheme.surface
-                                          .withValues(alpha: 0.78)
-                                      : Theme.of(context).colorScheme.primary
+                                      ? Theme.of(
+                                        context,
+                                      ).colorScheme.surface.withValues(
+                                        alpha: 0.78,
+                                      )
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .primary
                                           .withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(
                                 desktopMode ? 16 : 8,
