@@ -40,7 +40,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.1.2
   sqflite: ^2.4.2
-  sqflite_common_ffi: ^2.0.0+1
+  sqflite_common_ffi: ^2.4.2
+  # sqlite3 3.x uses build hooks to bundle SQLite on desktop platforms.
+  sqlite3: ^3.4.0
   path: ^1.9.1
   dart_openai: ^5.1.0
   flutter_markdown: ^0.7.6
