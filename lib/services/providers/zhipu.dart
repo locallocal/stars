@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/providers/providers.dart';
-import 'package:bubble/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
+import 'package:stars/model/model.dart';
 
 class Zhipu extends Provider {
   static const String defaultApiUrl =

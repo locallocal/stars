@@ -2,22 +2,22 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
-import 'package:bubble/services/message_service.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/chat_service.dart';
-import 'package:bubble/services/providers/providers.dart';
-import 'package:bubble/pages/common/attachment.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/chat/attachments.dart';
-import 'package:bubble/pages/common/common.dart';
-import 'package:bubble/pages/chat/clear_chat_dialog.dart';
-import 'package:bubble/pages/chat/message_input.dart';
-import 'package:bubble/pages/chat/welcome_view.dart';
-import 'package:bubble/pages/chat/message_list.dart';
-import 'package:bubble/pages/chat/typing_indicator.dart';
-import 'package:bubble/pages/common/logo.dart';
-import 'package:bubble/utils/theme.dart';
-import 'package:bubble/utils/utils.dart';
+import 'package:stars/services/message_service.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/chat_service.dart';
+import 'package:stars/services/providers/providers.dart';
+import 'package:stars/pages/common/attachment.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/chat/attachments.dart';
+import 'package:stars/pages/common/common.dart';
+import 'package:stars/pages/chat/clear_chat_dialog.dart';
+import 'package:stars/pages/chat/message_input.dart';
+import 'package:stars/pages/chat/welcome_view.dart';
+import 'package:stars/pages/chat/message_list.dart';
+import 'package:stars/pages/chat/typing_indicator.dart';
+import 'package:stars/pages/common/logo.dart';
+import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 
 // 聊天页面
 class ChatPage extends StatefulWidget {
@@ -455,7 +455,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildDesktopWorkspace(BuildContext context, double? fontSize) {
     return Container(
-      color: BubbleDesktopTheme.workspaceBackground(context),
+      color: StarsDesktopTheme.workspaceBackground(context),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -467,7 +467,7 @@ class _ChatPageState extends State<ChatPage> {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: BubbleDesktopTheme.panelBackground(context),
+                    color: StarsDesktopTheme.panelBackground(context),
                   ),
                   child: Column(
                     children: [
@@ -498,12 +498,12 @@ class _ChatPageState extends State<ChatPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 18),
       decoration: BoxDecoration(
-        color: BubbleDesktopTheme.panelBackground(context),
+        color: StarsDesktopTheme.panelBackground(context),
       ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxWidth: BubbleDesktopTheme.inputMaxWidth,
+            maxWidth: StarsDesktopTheme.inputMaxWidth,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -550,9 +550,9 @@ class _ChatPageState extends State<ChatPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: BubbleDesktopTheme.panelBackground(context),
+        color: StarsDesktopTheme.panelBackground(context),
         border: Border(
-          bottom: BorderSide(color: BubbleDesktopTheme.borderColor(context)),
+          bottom: BorderSide(color: StarsDesktopTheme.borderColor(context)),
         ),
       ),
       child: Row(
@@ -562,7 +562,7 @@ class _ChatPageState extends State<ChatPage> {
             height: 34,
             padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
-              color: BubbleDesktopTheme.elevatedSurface(context),
+              color: StarsDesktopTheme.elevatedSurface(context),
               borderRadius: BorderRadius.circular(9),
             ),
             child: ClipRRect(
@@ -597,7 +597,7 @@ class _ChatPageState extends State<ChatPage> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
-                    color: BubbleDesktopTheme.mutedText(context),
+                    color: StarsDesktopTheme.mutedText(context),
                   ),
                 ),
               ],
@@ -609,7 +609,7 @@ class _ChatPageState extends State<ChatPage> {
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(9),
               border: Border.all(
-                color: BubbleDesktopTheme.borderColor(context),
+                color: StarsDesktopTheme.borderColor(context),
               ),
             ),
             child: IconButton(

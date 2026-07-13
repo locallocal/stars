@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/providers/providers.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
 
 class Mistral extends Provider {
   static const defaultApiModelsUrl = 'https://api.mistral.ai/v1/models';

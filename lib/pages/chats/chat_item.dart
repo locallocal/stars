@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:bubble/pages/common/logo.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/pages/common/logo.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/utils/theme.dart';
 
 class ChatListItem extends StatefulWidget {
   final Bot bot;

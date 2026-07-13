@@ -1,5 +1,5 @@
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/chat_service.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/chat_service.dart';
 
 Future<Chat> createNewChat(Bot bot) async {
   final id = 'chat_${DateTime.now().millisecondsSinceEpoch}';

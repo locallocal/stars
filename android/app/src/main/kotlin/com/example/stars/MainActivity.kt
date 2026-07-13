@@ -1,4 +1,4 @@
-package com.example.bubble
+package com.example.stars
 
 import io.flutter.embedding.android.FlutterActivity
 

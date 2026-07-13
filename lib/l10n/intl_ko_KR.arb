@@ -1,6 +1,6 @@
 {
     "@@locale": "ko_KR",
-    "appName": "버블",
+    "appName": "Stars",
     "@appName": {
         "description": "애플리케이션 이름"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "테마가 다크 모드로 설정되었습니다"
     },
-    "aboutApp": "버블 정보",
+    "aboutApp": "Stars 정보",
     "@aboutApp": {
         "description": "앱 정보"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "앱 설명"
     },
-    "copyright": "© 2025 버블 팀",
+    "copyright": "© 2025 Stars 팀",
     "@copyright": {
         "description": "저작권 정보"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "버전 정보"
     },
-    "appTitle": "버블 - AI 채팅 어시스턴트",
+    "appTitle": "Stars - AI 채팅 어시스턴트",
     "@appTitle": {
         "description": "앱 제목"
     },

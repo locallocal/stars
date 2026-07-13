@@ -1,11 +1,11 @@
 {
-    "name": "bubble",
-    "short_name": "bubble",
+    "name": "Stars",
+    "short_name": "Stars",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Stars AI chat assistant.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

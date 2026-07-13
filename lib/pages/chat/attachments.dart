@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/common/common.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/common/common.dart';
+import 'package:stars/utils/theme.dart';
 
 class ImageAttachments extends StatelessWidget {
   final List<File> images;
@@ -41,12 +41,12 @@ class ImageAttachments extends StatelessWidget {
       decoration: BoxDecoration(
         color:
             desktopMode
-                ? BubbleDesktopTheme.elevatedSurface(context)
+                ? StarsDesktopTheme.elevatedSurface(context)
                 : Theme.of(context).colorScheme.secondary,
         borderRadius: BorderRadius.circular(desktopMode ? 22 : 16),
         border:
             desktopMode
-                ? Border.all(color: BubbleDesktopTheme.borderColor(context))
+                ? Border.all(color: StarsDesktopTheme.borderColor(context))
                 : null,
       ),
       child: Column(
@@ -73,7 +73,7 @@ class ImageAttachments extends StatelessWidget {
                 '${images.length + files.length} 项',
                 style: TextStyle(
                   fontSize: fontSize - 3,
-                  color: BubbleDesktopTheme.mutedText(context),
+                  color: StarsDesktopTheme.mutedText(context),
                 ),
               ),
               const SizedBox(width: 4),
@@ -126,7 +126,7 @@ class ImageAttachments extends StatelessWidget {
                                       ),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                        color: BubbleDesktopTheme.borderColor(
+                                        color: StarsDesktopTheme.borderColor(
                                           context,
                                         ),
                                       ),
@@ -205,7 +205,7 @@ class ImageAttachments extends StatelessWidget {
                               border:
                                   desktopMode
                                       ? Border.all(
-                                        color: BubbleDesktopTheme.borderColor(
+                                        color: StarsDesktopTheme.borderColor(
                                           context,
                                         ),
                                       )
@@ -219,7 +219,7 @@ class ImageAttachments extends StatelessWidget {
                                   size: desktopMode ? 26 : 24,
                                   color:
                                       desktopMode
-                                          ? BubbleDesktopTheme.mutedText(
+                                          ? StarsDesktopTheme.mutedText(
                                             context,
                                           )
                                           : null,

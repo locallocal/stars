@@ -55,7 +55,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("Bots"),
     "about": MessageLookupByLibrary.simpleMessage("Über"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("Über Bubble"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("Über Stars"),
     "addBot": MessageLookupByLibrary.simpleMessage("Bot hinzufügen"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage(
       "App-Schriftgröße anpassen",
@@ -69,9 +69,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "Eine einfache, aber leistungsstarke KI-Chat-Anwendung, mit der Sie jederzeit und überall mit KI chatten können.",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("Bubble"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
     "appTitle": MessageLookupByLibrary.simpleMessage(
-      "Bubble - KI-Chat-Assistent",
+      "Stars - KI-Chat-Assistent",
     ),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Bot-Avatar"),
@@ -105,7 +105,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "Kontaktinformationen (optional)",
     ),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Bubble-Team"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Stars-Team"),
     "customProvider": MessageLookupByLibrary.simpleMessage(
       "Benutzerdefinierter Anbieter...",
     ),

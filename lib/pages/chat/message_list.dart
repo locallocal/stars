@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/chat/audio_player_widget.dart';
-import 'package:bubble/pages/chat/video_player_widget.dart';
-import 'package:bubble/pages/common/common.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/pages/chat/audio_player_widget.dart';
+import 'package:stars/pages/chat/video_player_widget.dart';
+import 'package:stars/pages/common/common.dart';
+import 'package:stars/utils/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -98,7 +98,7 @@ class MessageList extends StatelessWidget {
     bool isCurrentUser = false,
   }) {
     final viewportMaxWidth =
-        isDesktop ? BubbleDesktopTheme.contentMaxWidth : double.infinity;
+        isDesktop ? StarsDesktopTheme.contentMaxWidth : double.infinity;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isDesktop ? 10 : 4),
@@ -113,8 +113,8 @@ class MessageList extends StatelessWidget {
                 maxWidth:
                     isDesktop
                         ? (isCurrentUser
-                            ? BubbleDesktopTheme.messageBubbleMaxWidth
-                            : BubbleDesktopTheme.contentMaxWidth - 48)
+                            ? StarsDesktopTheme.messageBubbleMaxWidth
+                            : StarsDesktopTheme.contentMaxWidth - 48)
                         : MediaQuery.of(context).size.width * 0.8,
               ),
               child: bubble,
@@ -165,8 +165,8 @@ class _MessageBubble extends StatelessWidget {
     final useBubbleShell = !isDesktop || isCurrentUser || hasStructuredSections;
     final backgroundColor =
         isCurrentUser
-            ? BubbleDesktopTheme.userBubble(context)
-            : BubbleDesktopTheme.assistantBubble(context);
+            ? StarsDesktopTheme.userBubble(context)
+            : StarsDesktopTheme.assistantBubble(context);
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,11 +302,11 @@ class _MessageBubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(
-          isDesktop ? BubbleDesktopTheme.bubbleRadius : 16,
+          isDesktop ? StarsDesktopTheme.bubbleRadius : 16,
         ),
         border:
             isDesktop
-                ? Border.all(color: BubbleDesktopTheme.borderColor(context))
+                ? Border.all(color: StarsDesktopTheme.borderColor(context))
                 : null,
       ),
       child: body,
@@ -373,7 +373,7 @@ class _MessageBubble extends StatelessWidget {
                 ? Colors.white.withValues(alpha: 0.28)
                 : Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -381,7 +381,7 @@ class _MessageBubble extends StatelessWidget {
           Icon(
             Icons.insert_drive_file_rounded,
             size: 24,
-            color: BubbleDesktopTheme.mutedText(context),
+            color: StarsDesktopTheme.mutedText(context),
           ),
           const SizedBox(height: 8),
           Text(
@@ -408,7 +408,7 @@ class _MessageBubble extends StatelessWidget {
       ),
       code: TextStyle(
         color: Theme.of(context).colorScheme.onSurface,
-        backgroundColor: BubbleDesktopTheme.elevatedSurface(context),
+        backgroundColor: StarsDesktopTheme.elevatedSurface(context),
         fontSize: fontSize - 1,
       ),
       h1: TextStyle(
@@ -431,13 +431,13 @@ class _MessageBubble extends StatelessWidget {
         fontStyle: FontStyle.italic,
       ),
       codeblockDecoration: BoxDecoration(
-        color: BubbleDesktopTheme.elevatedSurface(context),
+        color: StarsDesktopTheme.elevatedSurface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       blockSpacing: 10,
       listBullet: TextStyle(
-        color: BubbleDesktopTheme.mutedText(context),
+        color: StarsDesktopTheme.mutedText(context),
         fontSize: fontSize,
       ),
     );
@@ -461,15 +461,15 @@ class _StatusCardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = isDesktop ? BubbleDesktopTheme.cardRadius : 14.0;
+    final radius = isDesktop ? StarsDesktopTheme.cardRadius : 14.0;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isDesktop ? 14 : 12),
       decoration: BoxDecoration(
-        color: BubbleDesktopTheme.statusCardBackground(context),
+        color: StarsDesktopTheme.statusCardBackground(context),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,7 +510,7 @@ class _StatusCardSection extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: BubbleDesktopTheme.mutedText(context),
+                        color: StarsDesktopTheme.mutedText(context),
                         fontSize:
                             (Theme.of(context).textTheme.bodyMedium?.fontSize ??
                                 12) -
@@ -555,7 +555,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
                           if (Platform.isAndroid || Platform.isIOS) {
                             final result = await GallerySaver.saveImage(
                               imagePath,
-                              albumName: 'Bubble',
+                              albumName: 'Stars',
                             );
                             if (result == true) {
                               if (context.mounted) {
@@ -613,7 +613,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
                         try {
                           await Share.shareXFiles([
                             XFile(imagePath),
-                          ], text: '来自Bubble的图片');
+                          ], text: '来自 Stars 的图片');
                         } catch (e) {
                           if (context.mounted) {
                             showSnackBar(context, '分享失败: $e');
@@ -805,7 +805,7 @@ class _ProcessChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -813,7 +813,7 @@ class _ProcessChip extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: BubbleDesktopTheme.mutedText(context),
+            color: StarsDesktopTheme.mutedText(context),
           ),
           const SizedBox(width: 6),
           Text(
@@ -854,14 +854,14 @@ class _ProcessListCard<T> extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: BubbleDesktopTheme.mutedText(context)),
+              Icon(icon, size: 16, color: StarsDesktopTheme.mutedText(context)),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -893,7 +893,7 @@ class _ProcessListCard<T> extends StatelessWidget {
                             subtitle,
                             style: TextStyle(
                               fontSize: 12,
-                              color: BubbleDesktopTheme.mutedText(context),
+                              color: StarsDesktopTheme.mutedText(context),
                             ),
                           ),
                         ],
@@ -966,9 +966,9 @@ class _StatusBadge extends StatelessWidget {
         );
       default:
         return (
-          BubbleDesktopTheme.elevatedSurface(context),
-          BubbleDesktopTheme.borderColor(context),
-          BubbleDesktopTheme.mutedText(context),
+          StarsDesktopTheme.elevatedSurface(context),
+          StarsDesktopTheme.borderColor(context),
+          StarsDesktopTheme.mutedText(context),
         );
     }
   }
@@ -1043,18 +1043,18 @@ class _ReasoningSectionState extends State<ReasoningSection> {
 
     return Container(
       decoration: BoxDecoration(
-        color: BubbleDesktopTheme.statusCardBackground(context),
+        color: StarsDesktopTheme.statusCardBackground(context),
         borderRadius: BorderRadius.circular(
-          widget.isDesktop ? BubbleDesktopTheme.cardRadius : 14,
+          widget.isDesktop ? StarsDesktopTheme.cardRadius : 14,
         ),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(
-              widget.isDesktop ? BubbleDesktopTheme.cardRadius : 14,
+              widget.isDesktop ? StarsDesktopTheme.cardRadius : 14,
             ),
             onTap: () {
               setState(() {
@@ -1098,7 +1098,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                           '深度思考',
                           style: TextStyle(
                             fontSize: fontSize - 3,
-                            color: BubbleDesktopTheme.mutedText(context),
+                            color: StarsDesktopTheme.mutedText(context),
                           ),
                         ),
                       ],
@@ -1109,7 +1109,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                     turns: isExpanded ? 0 : 0.5,
                     child: Icon(
                       Icons.keyboard_arrow_up_rounded,
-                      color: BubbleDesktopTheme.mutedText(context),
+                      color: StarsDesktopTheme.mutedText(context),
                     ),
                   ),
                 ],
@@ -1133,22 +1133,22 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                   selectable: true,
                   styleSheet: MarkdownStyleSheet(
                     p: TextStyle(
-                      color: BubbleDesktopTheme.mutedText(context),
+                      color: StarsDesktopTheme.mutedText(context),
                       fontSize: fontSize - 1,
                       height: 1.5,
                     ),
                     code: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
-                      backgroundColor: BubbleDesktopTheme.elevatedSurface(
+                      backgroundColor: StarsDesktopTheme.elevatedSurface(
                         context,
                       ),
                       fontSize: fontSize - 2,
                     ),
                     codeblockDecoration: BoxDecoration(
-                      color: BubbleDesktopTheme.elevatedSurface(context),
+                      color: StarsDesktopTheme.elevatedSurface(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: BubbleDesktopTheme.borderColor(context),
+                        color: StarsDesktopTheme.borderColor(context),
                       ),
                     ),
                     blockSpacing: 8,

@@ -1,6 +1,6 @@
 {
     "@@locale": "zh_TW",
-    "appName": "泡泡",
+    "appName": "Stars",
     "@appName": {
         "description": "應用名稱"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "已設置為深色模式"
     },
-    "aboutApp": "關於泡泡",
+    "aboutApp": "關於 Stars",
     "@aboutApp": {
         "description": "關於應用"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "應用描述"
     },
-    "copyright": "© 2025 泡泡團隊",
+    "copyright": "© 2025 Stars 團隊",
     "@copyright": {
         "description": "版權信息"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "版本信息"
     },
-    "appTitle": "泡泡 - AI聊天助手",
+    "appTitle": "Stars - AI 聊天助手",
     "@appTitle": {
         "description": "應用標題"
     },

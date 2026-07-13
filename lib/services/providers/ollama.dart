@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/providers/providers.dart';
+import 'package:stars/services/providers/providers.dart';
 
 class Ollama extends Provider {
   Ollama(super.bot);

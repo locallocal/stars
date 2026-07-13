@@ -1,4 +1,4 @@
-import 'package:bubble/model/model.dart';
+import 'package:stars/model/model.dart';
 
 final providersInfo = {
   'AiHubMix': {

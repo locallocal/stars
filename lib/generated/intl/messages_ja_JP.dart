@@ -54,7 +54,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("ボット"),
     "about": MessageLookupByLibrary.simpleMessage("アプリについて"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("バブルについて"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("Starsについて"),
     "addBot": MessageLookupByLibrary.simpleMessage("ボットを追加"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage(
       "アプリのフォントサイズを調整する",
@@ -66,8 +66,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "いつでもどこでもAIとチャットできるシンプルで強力なAIチャットアプリケーション。",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("バブル"),
-    "appTitle": MessageLookupByLibrary.simpleMessage("バブル - AIチャットアシスタント"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
+    "appTitle": MessageLookupByLibrary.simpleMessage("Stars - AIチャットアシスタント"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("ボットのアバター"),
     "botDeleted": m1,
@@ -96,7 +96,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmDeleteBot": m7,
     "confirmDeleteChat": m8,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("連絡先情報（任意）"),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 バブルチーム"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Starsチーム"),
     "customProvider": MessageLookupByLibrary.simpleMessage("カスタムプロバイダー..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("ダークモード"),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(

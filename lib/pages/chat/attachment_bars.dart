@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/model/model.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/model/model.dart';
 
 class AttachmentBars extends StatelessWidget {
   final Function() onCameraPressed;

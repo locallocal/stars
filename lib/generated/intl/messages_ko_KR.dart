@@ -54,7 +54,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("봇"),
     "about": MessageLookupByLibrary.simpleMessage("정보"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("버블 정보"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("Stars 정보"),
     "addBot": MessageLookupByLibrary.simpleMessage("봇 추가"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage("앱 글꼴 크기 조정"),
     "adjustFontSize": MessageLookupByLibrary.simpleMessage("글꼴 크기 조정"),
@@ -64,8 +64,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "언제 어디서나 AI와 채팅할 수 있는 간단하면서도 강력한 AI 채팅 애플리케이션입니다.",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("버블"),
-    "appTitle": MessageLookupByLibrary.simpleMessage("버블 - AI 채팅 어시스턴트"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
+    "appTitle": MessageLookupByLibrary.simpleMessage("Stars - AI 채팅 어시스턴트"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("봇 아바타"),
     "botDeleted": m1,
@@ -92,7 +92,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmDeleteBot": m7,
     "confirmDeleteChat": m8,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("연락처 정보(선택 사항)"),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 버블 팀"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Stars 팀"),
     "customProvider": MessageLookupByLibrary.simpleMessage("사용자 정의 제공업체..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("다크 모드"),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(

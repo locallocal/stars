@@ -2,21 +2,21 @@
 
 **Last Updated: April 01, 2025**
 
-## Welcome to Bubble
+## Welcome to Stars
 
-Welcome to the Bubble application (hereinafter referred to as "the App" or "Bubble"). This User Agreement (hereinafter referred to as "Agreement") is the agreement between you and the Bubble application regarding your use of Bubble services.
+Welcome to the Stars application (hereinafter referred to as "the App" or "Stars"). This User Agreement (hereinafter referred to as "Agreement") is the agreement between you and the Stars application regarding your use of Stars services.
 
 Please read this Agreement carefully before using the App. If you do not agree with any terms of this Agreement, please do not register, log in, or use this App and related services. Once you register, log in, use, or indicate acceptance of this Agreement in any way, it means that you fully understand and completely accept all terms of this Agreement.
 
 ## 1. Service Content
 
-1.1 Bubble is an application that provides AI chat services, allowing users to engage in conversations with AI assistants.
+1.1 Stars is an application that provides AI chat services, allowing users to engage in conversations with AI assistants.
 
 1.2 The App may continuously update its service content. The specific content of the service is provided by the App based on actual circumstances, including but not limited to content in the form of text, images, links, etc.
 
 ## 2. Account Registration and Security
 
-2.1 You need to register a Bubble account before using this service. You promise to provide true, accurate, and complete registration information, and update it promptly when information changes.
+2.1 You need to register a Stars account before using this service. You promise to provide true, accurate, and complete registration information, and update it promptly when information changes.
 
 2.2 You should be responsible for keeping your account and password confidential, and are responsible for all activities and events under your account. If you discover any unauthorized use of your account or other circumstances that may jeopardize your account security, you should immediately notify the App.
 
@@ -81,4 +81,4 @@ Please read this Agreement carefully before using the App. If you do not agree w
 
 10.3 If any term of this Agreement is wholly or partially invalid or unenforceable for any reason, the remaining terms of this Agreement shall remain valid and binding.
 
-Thank you for using the Bubble application! If you have any questions about this Agreement, please contact our customer service team.
+Thank you for using the Stars application! If you have any questions about this Agreement, please contact our customer service team.

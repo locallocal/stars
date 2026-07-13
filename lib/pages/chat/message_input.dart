@@ -1,9 +1,9 @@
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/common/common.dart';
-import 'package:bubble/services/providers/providers.dart';
-import 'package:bubble/utils/theme.dart';
-import 'package:bubble/utils/utils.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/pages/common/common.dart';
+import 'package:stars/services/providers/providers.dart';
+import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class MessageInput extends StatefulWidget {
@@ -121,7 +121,7 @@ class _MessageInputState extends State<MessageInput> {
           decoration: BoxDecoration(
             color:
                 isDesktop
-                    ? BubbleDesktopTheme.panelBackground(context)
+                    ? StarsDesktopTheme.panelBackground(context)
                     : Theme.of(context).colorScheme.secondary,
             borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
             border: Border.all(
@@ -131,14 +131,14 @@ class _MessageInputState extends State<MessageInput> {
                         context,
                       ).colorScheme.onSurface.withValues(alpha: 0.28)
                       : isDesktop
-                      ? BubbleDesktopTheme.borderColor(context)
+                      ? StarsDesktopTheme.borderColor(context)
                       : Colors.transparent,
               width: _hasFocus && isDesktop ? 1.4 : 1,
             ),
             boxShadow:
                 isDesktop
                     ? [
-                      ...BubbleDesktopTheme.panelShadow(context),
+                      ...StarsDesktopTheme.panelShadow(context),
                       if (_hasFocus)
                         BoxShadow(
                           color: Colors.transparent,
@@ -159,7 +159,7 @@ class _MessageInputState extends State<MessageInput> {
                   hintText: '输入消息、指令或任务说明',
                   hintStyle: TextStyle(
                     fontSize: fontSize,
-                    color: BubbleDesktopTheme.subtleText(context),
+                    color: StarsDesktopTheme.subtleText(context),
                   ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
@@ -421,12 +421,12 @@ class _MessageInputState extends State<MessageInput> {
       decoration: BoxDecoration(
         color:
             isDesktop
-                ? BubbleDesktopTheme.elevatedSurface(context)
+                ? StarsDesktopTheme.elevatedSurface(context)
                 : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border:
             isDesktop
-                ? Border.all(color: BubbleDesktopTheme.borderColor(context))
+                ? Border.all(color: StarsDesktopTheme.borderColor(context))
                 : null,
       ),
       child: Wrap(
@@ -551,9 +551,9 @@ class _MessageInputState extends State<MessageInput> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: BubbleDesktopTheme.elevatedSurface(context),
+        color: StarsDesktopTheme.elevatedSurface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +606,7 @@ class _MessageInputState extends State<MessageInput> {
                   ? Theme.of(
                     context,
                   ).colorScheme.primary.withValues(alpha: 0.12)
-                  : BubbleDesktopTheme.elevatedSurface(context),
+                  : StarsDesktopTheme.elevatedSurface(context),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color:
@@ -614,7 +614,7 @@ class _MessageInputState extends State<MessageInput> {
                     ? Theme.of(
                       context,
                     ).colorScheme.primary.withValues(alpha: 0.22)
-                    : BubbleDesktopTheme.borderColor(context),
+                    : StarsDesktopTheme.borderColor(context),
           ),
         ),
         child: Row(
@@ -626,7 +626,7 @@ class _MessageInputState extends State<MessageInput> {
               color:
                   active
                       ? Theme.of(context).colorScheme.primary
-                      : BubbleDesktopTheme.mutedText(context),
+                      : StarsDesktopTheme.mutedText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -654,14 +654,14 @@ class _MessageInputState extends State<MessageInput> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: BubbleDesktopTheme.elevatedSurface(context),
+        color: StarsDesktopTheme.elevatedSurface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: BubbleDesktopTheme.mutedText(context)),
+          Icon(icon, size: 16, color: StarsDesktopTheme.mutedText(context)),
           const SizedBox(width: 6),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 220),
@@ -693,13 +693,13 @@ class _MessageInputState extends State<MessageInput> {
         color:
             active
                 ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.10)
-                : BubbleDesktopTheme.elevatedSurface(context),
+                : StarsDesktopTheme.elevatedSurface(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color:
               active
                   ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
-                  : BubbleDesktopTheme.borderColor(context),
+                  : StarsDesktopTheme.borderColor(context),
         ),
       ),
       child: IconButton(
@@ -708,7 +708,7 @@ class _MessageInputState extends State<MessageInput> {
         color:
             active
                 ? Theme.of(context).colorScheme.primary
-                : BubbleDesktopTheme.mutedText(context),
+                : StarsDesktopTheme.mutedText(context),
         icon: icon,
       ),
     );
@@ -730,7 +730,7 @@ class _MessageInputState extends State<MessageInput> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.75),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -773,7 +773,7 @@ class _MessageInputState extends State<MessageInput> {
                     context,
                   ).colorScheme.surface.withValues(alpha: 0.75),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -792,7 +792,7 @@ class _MessageInputState extends State<MessageInput> {
                 color:
                     selectedImageStyle == name
                         ? Theme.of(context).colorScheme.primary
-                        : BubbleDesktopTheme.mutedText(context),
+                        : StarsDesktopTheme.mutedText(context),
                 size: 24,
               ),
             ),
@@ -876,7 +876,7 @@ class _MessageInputState extends State<MessageInput> {
                   : Theme.of(
                     context,
                   ).colorScheme.surface.withValues(alpha: 0.75),
-          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -890,7 +890,7 @@ class _MessageInputState extends State<MessageInput> {
                   color:
                       selected
                           ? Theme.of(context).colorScheme.primary
-                          : BubbleDesktopTheme.mutedText(context),
+                          : StarsDesktopTheme.mutedText(context),
                   width: 0.8,
                 ),
                 color: Theme.of(context).colorScheme.secondary,

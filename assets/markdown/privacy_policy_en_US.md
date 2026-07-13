@@ -4,9 +4,9 @@
 
 ## Introduction
 
-Welcome to Bubble ("we", "our", or "the app"). Protecting your privacy is extremely important to us. This Privacy Policy is designed to inform you about how we collect, use, store, and protect your personal information.
+Welcome to Stars ("we", "our", or "the app"). Protecting your privacy is extremely important to us. This Privacy Policy is designed to inform you about how we collect, use, store, and protect your personal information.
 
-Please read this Privacy Policy carefully before using the app. By using Bubble, you agree to the data practices described in this policy.
+Please read this Privacy Policy carefully before using the app. By using Stars, you agree to the data practices described in this policy.
 
 ## Information We Collect
 
@@ -70,7 +70,7 @@ We may update this Privacy Policy from time to time. We will notify you of any c
 
 If you have any questions or suggestions about this Privacy Policy, please contact us at:
 
-- Email: privacy@bubble-app.com
+- Email: privacy@stars-app.com
 - Address: 2 Science Academy South Road, Haidian District, Beijing, China
 
-Thank you for trusting Bubble!
+Thank you for trusting Stars!

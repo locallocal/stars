@@ -2,15 +2,15 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:bubble/services/profile_service.dart';
-import 'package:bubble/utils/utils.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/l10n/app_localizations.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/user_agreement.dart';
-import 'package:bubble/pages/privacy_policy.dart';
-import 'package:bubble/pages/feedback_page.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/services/profile_service.dart';
+import 'package:stars/utils/utils.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/l10n/app_localizations.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/user_agreement.dart';
+import 'package:stars/pages/privacy_policy.dart';
+import 'package:stars/pages/feedback_page.dart';
+import 'package:stars/utils/theme.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -836,7 +836,7 @@ class _ProfilePageState extends State<ProfilePage> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const BubbleLogo(size: 60),
+                const StarsLogo(size: 60),
                 const SizedBox(height: 24),
                 Text(
                   S.of(context).appTitle,
@@ -1083,10 +1083,10 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 // 自定义Logo组件
-class BubbleLogo extends StatelessWidget {
+class StarsLogo extends StatelessWidget {
   final double size;
 
-  const BubbleLogo({super.key, required this.size});
+  const StarsLogo({super.key, required this.size});
 
   @override
   Widget build(BuildContext context) {

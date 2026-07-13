@@ -1,6 +1,6 @@
 {
     "@@locale": "ru_RU",
-    "appName": "Баббл",
+    "appName": "Stars",
     "@appName": {
         "description": "Название приложения"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "Установлена тёмная тема"
     },
-    "aboutApp": "О приложении Баббл",
+    "aboutApp": "О приложении Stars",
     "@aboutApp": {
         "description": "О приложении"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "Описание приложения"
     },
-    "copyright": "© 2025 Команда Баббл",
+    "copyright": "© 2025 Команда Stars",
     "@copyright": {
         "description": "Информация об авторских правах"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "Информация о версии"
     },
-    "appTitle": "Баббл - ИИ чат-ассистент",
+    "appTitle": "Stars - ИИ чат-ассистент",
     "@appTitle": {
         "description": "Заголовок приложения"
     },

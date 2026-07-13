@@ -54,7 +54,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("बॉट्स"),
     "about": MessageLookupByLibrary.simpleMessage("के बारे में"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("बबल के बारे में"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("Stars के बारे में"),
     "addBot": MessageLookupByLibrary.simpleMessage("बॉट जोड़ें"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage(
       "एप्लिकेशन फॉन्ट साइज़ समायोजित करें",
@@ -68,8 +68,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "एक सरल लेकिन शक्तिशाली AI चैट एप्लयन जो आपको कहीं भी, कभी भी AI के साथ चैट करने की अनुमति देता है।",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("बबल"),
-    "appTitle": MessageLookupByLibrary.simpleMessage("बबल - AI चैट सहायक"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
+    "appTitle": MessageLookupByLibrary.simpleMessage("Stars - AI चैट सहायक"),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("बॉट अवतार"),
     "botDeleted": m1,
@@ -104,7 +104,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "संपर्क जानकारी (वैकल्पिक)",
     ),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 बबल टीम"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Stars टीम"),
     "customProvider": MessageLookupByLibrary.simpleMessage("कस्टम प्रदाता..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("डार्क मोड"),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(

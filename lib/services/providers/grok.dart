@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/providers/providers.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
 
 class Grok extends Provider {
   static const String defaultApiModelsUrl = 'https://api.grok.ai/v1/models';

@@ -1,6 +1,6 @@
 {
     "@@locale": "pt_BR",
-    "appName": "Bubble",
+    "appName": "Stars",
     "@appName": {
         "description": "Nome do aplicativo"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "Tema configurado para modo escuro"
     },
-    "aboutApp": "Sobre o Bubble",
+    "aboutApp": "Sobre o Stars",
     "@aboutApp": {
         "description": "Sobre o aplicativo"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "Descrição do aplicativo"
     },
-    "copyright": "© 2025 Equipe Bubble",
+    "copyright": "© 2025 Equipe Stars",
     "@copyright": {
         "description": "Informações de direitos autorais"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "Informações de versão"
     },
-    "appTitle": "Bubble - Assistente de chat com IA",
+    "appTitle": "Stars - Assistente de chat com IA",
     "@appTitle": {
         "description": "Título do aplicativo"
     },

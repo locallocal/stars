@@ -54,7 +54,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("Боты"),
     "about": MessageLookupByLibrary.simpleMessage("О приложении"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("О приложении Баббл"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("О приложении Stars"),
     "addBot": MessageLookupByLibrary.simpleMessage("Добавить бота"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage(
       "Настроить размер шрифта приложения",
@@ -68,9 +68,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "Простое, но мощное приложение для чата с ИИ, которое позволяет общаться с искусственным интеллектом в любое время и в любом месте.",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("Баббл"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
     "appTitle": MessageLookupByLibrary.simpleMessage(
-      "Баббл - ИИ чат-ассистент",
+      "Stars - ИИ чат-ассистент",
     ),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Аватар бота"),
@@ -106,7 +106,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "Контактная информация (необязательно)",
     ),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Команда Баббл"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Команда Stars"),
     "customProvider": MessageLookupByLibrary.simpleMessage(
       "Пользовательский провайдер...",
     ),
