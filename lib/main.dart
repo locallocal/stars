@@ -110,7 +110,14 @@ class StartupShell extends StatelessWidget {
                     (context) => Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const FlutterLogo(size: 72),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.asset(
+                            'assets/icon/app_icon.png',
+                            width: 72,
+                            height: 72,
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           title,

@@ -158,7 +158,14 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
             child: Row(
               children: [
-                Image.asset('assets/icon/app_icon.png', width: 28, height: 28),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: Image.asset(
+                    'assets/icon/app_icon.png',
+                    width: 28,
+                    height: 28,
+                  ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(

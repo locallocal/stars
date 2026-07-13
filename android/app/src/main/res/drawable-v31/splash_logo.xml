@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/splash_logo_vector">
+    <target
+        android:name="bubble_path"
+        android:animation="@animator/splash_bubble_draw" />
+    <target
+        android:name="main_star_group"
+        android:animation="@animator/splash_main_star_scale" />
+    <target
+        android:name="main_star_path"
+        android:animation="@animator/splash_main_star_fade" />
+    <target
+        android:name="accent_star_group"
+        android:animation="@animator/splash_accent_star_scale" />
+    <target
+        android:name="accent_star_path"
+        android:animation="@animator/splash_accent_star_fade" />
+</animated-vector>

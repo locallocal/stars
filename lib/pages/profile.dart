@@ -1090,28 +1090,13 @@ class StarsLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Center(
-        child: Image.asset(
-          'assets/icon/app_icon.png',
-          width: size * 0.7,
-          height: size * 0.7,
-        ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.24),
+      child: Image.asset(
+        'assets/icon/app_icon.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
       ),
     );
   }
