@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/add_bot.dart';
@@ -19,23 +20,26 @@ class ContactsPage extends StatefulWidget {
   final String? selectedBotId;
   final Function(Bot bot) onBotSelected;
   final void Function(String chatId, Bot bot)? onChatCreated;
+  final VoidCallback? onSelectionCleared;
 
   const ContactsPage({
     super.key,
     this.selectedBotId,
     required this.onBotSelected,
     this.onChatCreated,
+    this.onSelectionCleared,
   });
 
   @override
-  State<ContactsPage> createState() => _ContactsPageState();
+  State<ContactsPage> createState() => ContactsPageState();
 }
 
-class _ContactsPageState extends State<ContactsPage> {
+class ContactsPageState extends State<ContactsPage> {
   List<Bot> contacts = [];
   List<Bot> filteredBots = [];
   String searchQuery = '';
   bool isLoading = true;
+  final FocusNode _searchFocusNode = FocusNode();
   StreamSubscription? _botListSubscription;
 
   @override
@@ -50,8 +54,13 @@ class _ContactsPageState extends State<ContactsPage> {
   @override
   void dispose() {
     _botListSubscription?.cancel();
+    _searchFocusNode.dispose();
     super.dispose();
   }
+
+  void focusSearch() => _searchFocusNode.requestFocus();
+
+  Future<void> openAddBotPage() => _openAddBotPage();
 
   // 加载联系人数据
   Future<void> _loadBots() async {
@@ -86,6 +95,98 @@ class _ContactsPageState extends State<ContactsPage> {
     });
   }
 
+  Future<void> _startChat(Bot bot) async {
+    final chat = await createNewChat(bot);
+    if (!mounted) return;
+
+    if (isDesktopOrTabletPlatform(context)) {
+      widget.onChatCreated?.call(chat.id, bot);
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChatPage(id: chat.id, bot: bot)),
+    );
+    ChatService.notifyChatListChanged();
+  }
+
+  void _editBot(Bot bot) {
+    if (isDesktopOrTabletPlatform(context)) {
+      widget.onBotSelected(bot);
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditBotPage(
+              bot: bot,
+              onBotUpdated: (updatedBot) async {
+                await BotService.updateBot(updatedBot);
+                _loadBots();
+              },
+              onBotDeleted: () async {
+                await BotService.deleteBot(bot.id);
+                _loadBots();
+              },
+            ),
+      ),
+    );
+  }
+
+  Future<void> _deleteBot(Bot bot) async {
+    final wasSelected = widget.selectedBotId == bot.id;
+    final deletedIndex = contacts.indexWhere((item) => item.id == bot.id);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Center(
+              child: Text(
+                S.of(context).confirmDelete,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                ),
+              ),
+            ),
+            content: Text(S.of(context).confirmDeleteBot(bot.name)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(S.of(context).cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  S.of(context).delete,
+                  style: TextStyle(color: DesktopThemeTokens.error(context)),
+                ),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm != true || !mounted) return;
+    await BotService.deleteBot(bot.id);
+    if (!mounted) return;
+    setState(() {
+      filteredBots.removeWhere((item) => item.id == bot.id);
+      contacts.removeWhere((item) => item.id == bot.id);
+    });
+    if (wasSelected) {
+      if (contacts.isEmpty) {
+        widget.onSelectionCleared?.call();
+      } else {
+        final adjacentIndex =
+            deletedIndex.clamp(0, contacts.length - 1).toInt();
+        widget.onBotSelected(contacts[adjacentIndex]);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = isDesktopOrTabletPlatform(context);
@@ -117,8 +218,9 @@ class _ContactsPageState extends State<ContactsPage> {
 
     return DesktopListPanel(
       title: S.of(context).Bots,
-      description: '管理可用智能体，并在右侧查看或编辑当前配置。',
-      searchHintText: '搜索智能体',
+      description: '',
+      searchHintText: S.of(context).searchBots,
+      searchFocusNode: _searchFocusNode,
       onSearchChanged: _filterBots,
       action: ElevatedButton.icon(
         onPressed: _openAddBotPage,
@@ -148,6 +250,63 @@ class _ContactsPageState extends State<ContactsPage> {
       separatorBuilder: (context, index) => SizedBox(height: isDesktop ? 8 : 0),
       itemBuilder: (context, index) {
         final bot = filteredBots[index];
+        if (isDesktop) {
+          return MenuAnchor(
+            key: ValueKey('bot-menu-${bot.id}'),
+            menuChildren: [
+              MenuItemButton(
+                leadingIcon: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 17,
+                ),
+                onPressed: () => _startChat(bot),
+                child: Text(S.of(context).startChatting),
+              ),
+              MenuItemButton(
+                leadingIcon: const Icon(Icons.edit_outlined, size: 17),
+                onPressed: () => _editBot(bot),
+                child: Text(S.of(context).editBot),
+              ),
+              MenuItemButton(
+                leadingIcon: const Icon(Icons.delete_outline_rounded, size: 17),
+                onPressed: () => _deleteBot(bot),
+                style: ButtonStyle(
+                  foregroundColor: WidgetStatePropertyAll(
+                    DesktopThemeTokens.error(context),
+                  ),
+                ),
+                child: Text(S.of(context).delete),
+              ),
+            ],
+            builder: (context, controller, child) {
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onSecondaryTapDown: (details) {
+                  if (controller.isOpen) controller.close();
+                  controller.open(position: details.localPosition);
+                },
+                child: _BotListItem(
+                  bot: bot,
+                  timestamp: formatTimestamp(context, bot.createTimestamp),
+                  subtitle:
+                      bot.model.isEmpty
+                          ? bot.provider
+                          : '${bot.provider} - ${bot.model}',
+                  isSelected: widget.selectedBotId == bot.id,
+                  onTap: () => _editBot(bot),
+                  fontSize: fontSize ?? 16,
+                  trailing: IconButton(
+                    tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                    onPressed:
+                        controller.isOpen ? controller.close : controller.open,
+                    icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+
         return Slidable(
           key: Key(bot.id),
           endActionPane: ActionPane(
@@ -313,16 +472,16 @@ class _ContactsPageState extends State<ContactsPage> {
             searchQuery.isEmpty ? 'assets/images/profile/no_bots.png' : null,
         title:
             searchQuery.isNotEmpty
-                ? '没有找到匹配的智能体'
+                ? S.of(context).noMatchingBots
                 : S.of(context).noBotsAvailable,
         description:
             searchQuery.isNotEmpty
-                ? '换个关键词试试，或直接创建一个新的智能体。'
+                ? S.of(context).tryDifferentSearch
                 : S.of(context).clickToCreateBot,
         supportingText:
             searchQuery.isNotEmpty
-                ? '搜索会按智能体名称过滤列表。'
-                : '创建完成后会留在桌面工作台中，便于继续编辑。',
+                ? S.of(context).botSearchScope
+                : S.of(context).newBotWorkspaceHint,
         action: ElevatedButton.icon(
           onPressed: _openAddBotPage,
           icon: const Icon(Icons.add_circle_outline),
@@ -391,24 +550,38 @@ class _ContactsPageState extends State<ContactsPage> {
     if (isDesktopOrTabletPlatform(context)) {
       await showDialog(
         context: context,
-        builder:
-            (context) => Dialog(
-              insetPadding: const EdgeInsets.all(24),
-              child: SizedBox(
-                width: 920,
-                height: 760,
-                child: AddBotPage(
-                  embedded: true,
-                  onBotAdded: (newBot) async {
-                    await BotService.addBot(newBot);
-                    _loadBots();
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  },
-                ),
+        builder: (dialogContext) {
+          final windowSize = MediaQuery.sizeOf(dialogContext);
+          final inset =
+              windowSize.width < 960 || windowSize.height < 808 ? 16.0 : 24.0;
+          final dialogWidth = math.max(
+            0.0,
+            math.min(920.0, windowSize.width - inset * 2),
+          );
+          final dialogHeight = math.max(
+            0.0,
+            math.min(760.0, windowSize.height - inset * 2),
+          );
+
+          return Dialog(
+            insetPadding: EdgeInsets.all(inset),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(
+              width: dialogWidth,
+              height: dialogHeight,
+              child: AddBotPage(
+                embedded: true,
+                onBotAdded: (newBot) async {
+                  await BotService.addBot(newBot);
+                  _loadBots();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
+                },
               ),
             ),
+          );
+        },
       );
       return;
     }
@@ -435,6 +608,7 @@ class _BotListItem extends StatefulWidget {
   final bool isSelected;
   final double fontSize;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const _BotListItem({
     required this.bot,
@@ -443,6 +617,7 @@ class _BotListItem extends StatefulWidget {
     required this.isSelected,
     required this.fontSize,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -514,6 +689,10 @@ class _BotListItemState extends State<_BotListItem> {
               ],
             ),
           ),
+          if (widget.trailing != null) ...[
+            const SizedBox(width: 6),
+            widget.trailing!,
+          ],
         ],
       ),
     );

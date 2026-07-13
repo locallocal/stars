@@ -46,7 +46,7 @@ class WelcomeView extends StatelessWidget {
                     fontSize: fontSize,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -61,7 +61,7 @@ class WelcomeView extends StatelessWidget {
                   style: TextStyle(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primary.withOpacity(0.7),
+                    ).colorScheme.primary.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                     fontSize: fontSize! - 2,
                   ),

@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/pages/common/common.dart';
+import 'package:stars/utils/theme.dart';
 
 class EditBotPage extends StatefulWidget {
   final Bot bot;
@@ -69,9 +71,23 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   @override
+  void dispose() {
+    nameController.dispose();
+    providerController.dispose();
+    apiTypeController.dispose();
+    apiKeyController.dispose();
+    baseURLController.dispose();
+    selectedModelController.dispose();
+    systemPromptController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
+      backgroundColor:
+          widget.embedded ? DesktopThemeTokens.workspaceSurface(context) : null,
       appBar:
           widget.embedded
               ? null
@@ -92,20 +108,63 @@ class _EditAIBotPageState extends State<EditBotPage> {
               ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
+          constraints: BoxConstraints(maxWidth: widget.embedded ? 760 : 800),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(
+              widget.embedded ? 28 : 16,
+              widget.embedded ? 24 : 16,
+              widget.embedded ? 28 : 16,
+              widget.embedded ? 32 : 16,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.embedded) ...[
                   Row(
                     children: [
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundColor:
+                              avatarImage == null
+                                  ? getFrostedProviderColor(
+                                    selectedProvider,
+                                    Theme.of(context).colorScheme.primary,
+                                  )
+                                  : Theme.of(context).colorScheme.primary,
+                          backgroundImage:
+                              avatarImage != null
+                                  ? FileImage(avatarImage!)
+                                  : null,
+                          child:
+                              avatarImage == null
+                                  ? buildProviderLogo(
+                                    context,
+                                    '',
+                                    selectedProvider,
+                                    28,
+                                  )
+                                  : null,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
                       Expanded(
-                        child: Text(
-                          S.of(context).editBot,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.bot.name,
+                              style: DesktopThemeTokens.pageTitleStyle(context),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${widget.bot.provider} · ${widget.bot.model}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DesktopThemeTokens.metaStyle(context),
+                            ),
+                          ],
                         ),
                       ),
                       _buildDeleteButton(fontSize),
@@ -114,42 +173,46 @@ class _EditAIBotPageState extends State<EditBotPage> {
                   const SizedBox(height: 24),
                 ],
                 // 头像选择
-                Center(
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: CircleAvatar(
-                      radius: 64,
-                      backgroundColor:
-                          avatarImage == null
-                              ? getFrostedProviderColor(
-                                selectedProvider,
-                                Theme.of(context).colorScheme.primary,
-                              )
-                              : Theme.of(context).colorScheme.primary,
-                      backgroundImage:
-                          avatarImage != null ? FileImage(avatarImage!) : null,
-                      child:
-                          avatarImage == null
-                              ? buildProviderLogo(
-                                context,
-                                '',
-                                selectedProvider,
-                                64,
-                              )
-                              : null,
+                if (!widget.embedded) ...[
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: CircleAvatar(
+                        radius: 64,
+                        backgroundColor:
+                            avatarImage == null
+                                ? getFrostedProviderColor(
+                                  selectedProvider,
+                                  Theme.of(context).colorScheme.primary,
+                                )
+                                : Theme.of(context).colorScheme.primary,
+                        backgroundImage:
+                            avatarImage != null
+                                ? FileImage(avatarImage!)
+                                : null,
+                        child:
+                            avatarImage == null
+                                ? buildProviderLogo(
+                                  context,
+                                  '',
+                                  selectedProvider,
+                                  64,
+                                )
+                                : null,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
 
                 // 基本信息分组
-                buildSectionContainer(context, '基本信息', [
+                _buildFormSection(context, S.of(context).basicInformation, [
                   _buildNameInput(fontSize),
                 ]),
                 const SizedBox(height: 16),
 
                 // API提供商分组
-                buildSectionContainer(context, '提供商信息', [
+                _buildFormSection(context, S.of(context).providerInformation, [
                   _buildProviderInput(fontSize),
                   _buildApiTypeInput(fontSize),
                   _buildApiAddressInput(fontSize),
@@ -158,7 +221,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 const SizedBox(height: 16),
 
                 // API提供商分组
-                buildSectionContainer(context, '模型配置', [
+                _buildFormSection(context, S.of(context).modelConfiguration, [
                   _buildModelsInput(fontSize),
                   _buildSystemPromptInput(fontSize),
                 ]),
@@ -167,56 +230,174 @@ class _EditAIBotPageState extends State<EditBotPage> {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.onSurface,
-            minimumSize: const Size.fromHeight(50),
-          ),
-          onPressed: () async {
-            if (nameController.text.trim().isNotEmpty) {
-              final navigator = Navigator.of(context);
-              final updatedBot = Bot(
-                id: widget.bot.id,
-                name: nameController.text.trim(),
-                avatar: avatarImage?.path ?? widget.bot.avatar,
-                provider: widget.bot.provider,
-                baseURL: widget.bot.baseURL,
-                apiKey: widget.bot.apiKey,
-                apiType: widget.bot.apiType,
-                model: widget.bot.model,
-                systemPrompt: systemPromptController.text.trim(),
-                createTimestamp: widget.bot.createTimestamp,
-                modifyTimestamp: DateTime.now(),
-              );
+      bottomNavigationBar:
+          widget.embedded
+              ? Container(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                decoration: BoxDecoration(
+                  color: DesktopThemeTokens.workspaceSurface(context),
+                  border: Border(
+                    top: BorderSide(
+                      width: 0,
+                      color: DesktopThemeTokens.divider(context),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FilledButton.icon(
+                      style: DesktopThemeTokens.primaryButtonStyle(context),
+                      onPressed: _saveBot,
+                      icon: const Icon(Icons.check_rounded, size: 17),
+                      label: Text(S.of(context).saveChanges),
+                    ),
+                  ],
+                ),
+              )
+              : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.onSurface,
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                  onPressed: _saveBot,
+                  child: Text(
+                    S.of(context).saveChanges,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                  ),
+                ),
+              ),
+    );
+  }
 
-              await widget.onBotUpdated(updatedBot);
-              if (!widget.embedded && mounted) {
-                navigator.pop();
-              }
-            } else {
-              showSnackBar(context, S.of(context).fillRequiredFields);
-            }
-          },
-          child: Text(
-            S.of(context).saveChanges,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-              color: Theme.of(context).colorScheme.surface,
-            ),
-          ),
+  Widget _buildFormSection(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
+    if (!widget.embedded) {
+      return buildSectionContainer(context, title, children);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: DesktopThemeTokens.sectionTitleStyle(
+            context,
+          )?.copyWith(fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        for (final child in children) ...[
+          child,
+          if (child != children.last) const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _saveBot() async {
+    if (nameController.text.trim().isEmpty) {
+      showSnackBar(context, S.of(context).fillRequiredFields);
+      return;
+    }
+    final navigator = Navigator.of(context);
+    final updatedBot = Bot(
+      id: widget.bot.id,
+      name: nameController.text.trim(),
+      avatar: avatarImage?.path ?? widget.bot.avatar,
+      provider: providerController.text.trim(),
+      baseURL: baseURLController.text.trim(),
+      apiKey: apiKeyController.text.trim(),
+      apiType: apiTypeController.text.trim(),
+      model: selectedModelController.text.trim(),
+      systemPrompt: systemPromptController.text.trim(),
+      parameters: widget.bot.parameters,
+      createTimestamp: widget.bot.createTimestamp,
+      modifyTimestamp: DateTime.now(),
+    );
+
+    await widget.onBotUpdated(updatedBot);
+    if (!widget.embedded && mounted) {
+      navigator.pop();
+    }
+  }
+
+  InputDecoration _desktopFieldDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 18),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: DesktopThemeTokens.controlFill(context),
+      border: OutlineInputBorder(
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(
+          width: 0,
+          color: DesktopThemeTokens.divider(context),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(
+          width: 1.5,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
   }
 
+  InputDecoration _fieldDecoration({
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+    String? hintText,
+  }) {
+    if (widget.embedded) {
+      return _desktopFieldDecoration(
+        label: label,
+        icon: icon,
+        suffixIcon: suffixIcon,
+      ).copyWith(hintText: hintText);
+    }
+    return InputDecoration(
+      labelText: label,
+      hintText: hintText,
+      prefixIcon: Icon(
+        icon,
+        size: 24,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      suffixIcon: suffixIcon,
+      border: const OutlineInputBorder(
+        borderSide: BorderSide(width: 0, style: BorderStyle.none),
+        borderRadius: BorderRadius.all(Radius.circular(24.0)),
+      ),
+      filled: true,
+      fillColor: Theme.of(context).colorScheme.surface,
+    );
+  }
+
   Widget _buildDeleteButton(double? fontSize) {
     return IconButton(
+      tooltip: S.of(context).deleteBot,
       icon: Icon(
-        Icons.delete_rounded,
-        size: 24,
+        Icons.delete_outline_rounded,
+        size: widget.embedded ? 18 : 24,
         color: Theme.of(context).colorScheme.error,
       ),
       onPressed: () async {
@@ -274,20 +455,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildNameInput(double? fontSize) {
     return TextField(
       controller: nameController,
-      decoration: InputDecoration(
+      decoration: _fieldDecoration(
+        label: S.of(context).botName,
+        icon: Icons.auto_awesome_outlined,
         hintText: S.of(context).enterBotName,
-        hintStyle: TextStyle(fontSize: fontSize),
-        prefixIcon: Icon(
-          Icons.smart_toy_rounded,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }
@@ -295,19 +466,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildProviderInput(double? fontSize) {
     return TextField(
       controller: providerController,
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          Icons.business_rounded,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        enabled: false,
+      onChanged: (value) => setState(() => selectedProvider = value),
+      decoration: _fieldDecoration(
+        label: S.of(context).provider,
+        icon: Icons.business_outlined,
       ),
     );
   }
@@ -315,19 +477,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildApiTypeInput(double? fontSize) {
     return TextField(
       controller: apiTypeController,
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          Icons.category_rounded,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        enabled: false,
+      decoration: _fieldDecoration(
+        label: S.of(context).apiType,
+        icon: Icons.category_outlined,
       ),
     );
   }
@@ -335,19 +487,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildApiAddressInput(double? fontSize) {
     return TextField(
       controller: baseURLController,
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          Icons.link_rounded,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        enabled: false,
+      decoration: _fieldDecoration(
+        label: S.of(context).apiAddress,
+        icon: Icons.link_rounded,
       ),
     );
   }
@@ -356,27 +498,40 @@ class _EditAIBotPageState extends State<EditBotPage> {
     return TextField(
       controller: apiKeyController,
       obscureText: !_isPasswordVisible,
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          Icons.key_rounded,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        suffixIcon: IconButton(
-          icon: Icon(
-            _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-          ),
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
+      decoration: _fieldDecoration(
+        label: S.of(context).apiKey,
+        icon: Icons.key_outlined,
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: S.of(context).copyApiKey,
+              icon: const Icon(Icons.copy_outlined, size: 17),
+              onPressed:
+                  apiKeyController.text.isEmpty
+                      ? null
+                      : () => Clipboard.setData(
+                        ClipboardData(text: apiKeyController.text),
+                      ),
+            ),
+            IconButton(
+              tooltip:
+                  _isPasswordVisible
+                      ? S.of(context).hideApiKey
+                      : S.of(context).showApiKey,
+              icon: Icon(
+                _isPasswordVisible
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+                size: 18,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordVisible = !_isPasswordVisible;
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -385,19 +540,9 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildModelsInput(double? fontSize) {
     return TextField(
       controller: selectedModelController,
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          Icons.auto_awesome_rounded,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
-        enabled: false,
+      decoration: _fieldDecoration(
+        label: S.of(context).model,
+        icon: Icons.memory_outlined,
       ),
     );
   }
@@ -405,21 +550,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildSystemPromptInput(double? fontSize) {
     return TextField(
       controller: systemPromptController,
-      decoration: InputDecoration(
+      decoration: _fieldDecoration(
+        label: S.of(context).systemPrompt.replaceAll(':', ''),
+        icon: Icons.subject_rounded,
         hintText: S.of(context).enterSystemPrompt,
-        hintStyle: TextStyle(fontSize: fontSize),
-        border: OutlineInputBorder(
-          borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          borderRadius: BorderRadius.all(Radius.circular(24.0)),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
       ),
-      maxLines: 6,
+      minLines: 4,
+      maxLines: 8,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:stars/model/model.dart';
@@ -56,7 +57,7 @@ class _AddBotPageState extends State<AddBotPage> {
       return;
     }
     if (baseURLController.text.trim().isEmpty) {
-      showSnackBar(context, '请输入API地址');
+      showSnackBar(context, S.of(context).enterApiAddress);
       return;
     }
     setState(() {
@@ -98,9 +99,11 @@ class _AddBotPageState extends State<AddBotPage> {
         showSnackBar(context, e.toString());
       }
     } finally {
-      setState(() {
-        _isLoadingModels = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingModels = false;
+        });
+      }
     }
   }
 
@@ -126,6 +129,9 @@ class _AddBotPageState extends State<AddBotPage> {
     baseURLController.dispose();
     systemPromptController.dispose();
     providerController.dispose();
+    subProviderController.dispose();
+    apiTypeController.dispose();
+    selectedModelController.dispose();
     super.dispose();
   }
 
@@ -161,28 +167,60 @@ class _AddBotPageState extends State<AddBotPage> {
     }
   }
 
+  Future<void> _submitBot() async {
+    if (nameController.text.trim().isEmpty ||
+        apiKeyController.text.trim().isEmpty ||
+        baseURLController.text.trim().isEmpty) {
+      showWarningSnackBar(context, S.of(context).fillRequiredFields);
+      return;
+    }
+
+    final navigator = Navigator.of(context);
+    final providerInfo = providersInfo[providerController.text];
+    final apiType =
+        (providerInfo?['api_type'] as String?) ?? apiTypeController.text.trim();
+    final baseURL = baseURLController.text.trim();
+
+    final newBot = Bot(
+      id: 'bot_${DateTime.now().millisecondsSinceEpoch}',
+      name: nameController.text.trim(),
+      avatar: avatarImage?.path ?? '',
+      provider: providerController.text,
+      baseURL: baseURL,
+      apiKey: apiKeyController.text.trim(),
+      apiType: apiType,
+      model: selectedModelController.text,
+      systemPrompt: systemPromptController.text.trim(),
+      createTimestamp: DateTime.now(),
+      modifyTimestamp: DateTime.now(),
+    );
+
+    await widget.onBotAdded(newBot);
+    if (!widget.embedded && mounted) {
+      navigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
 
+    if (widget.embedded) {
+      return _buildEmbeddedDesktop(context, fontSize);
+    }
+
     return Scaffold(
-      appBar:
-          widget.embedded
-              ? null
-              : AppBar(
-                centerTitle: true,
-                title: Text(
-                  S.of(context).addBot,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: fontSize,
-                  ),
-                ),
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                scrolledUnderElevation: 0,
-                elevation: 0,
-                surfaceTintColor: Colors.transparent,
-              ),
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          S.of(context).addBot,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: fontSize),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
@@ -191,15 +229,6 @@ class _AddBotPageState extends State<AddBotPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.embedded) ...[
-                  Text(
-                    S.of(context).addBot,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
                 Center(
                   child: GestureDetector(
                     onTap: _pickImage,
@@ -229,28 +258,36 @@ class _AddBotPageState extends State<AddBotPage> {
                 const SizedBox(height: 24),
 
                 // 基本信息分组
-                buildSectionContainer(context, '基本信息', [
+                buildSectionContainer(context, S.of(context).basicInformation, [
                   _buildNameInput(fontSize),
                 ]),
                 const SizedBox(height: 16),
 
                 // API提供商分组
-                buildSectionContainer(context, '提供商信息', [
-                  _buildProviderInput(fontSize),
-                  if (providerController.text == 'HuggingFace')
-                    _buildSubProviderInput(fontSize),
+                buildSectionContainer(
+                  context,
+                  S.of(context).providerInformation,
+                  [
+                    _buildProviderInput(fontSize),
+                    if (providerController.text == 'HuggingFace')
+                      _buildSubProviderInput(fontSize),
 
-                  _buildApiTypeSelector(fontSize),
-                  _buildApiAddressInput(fontSize),
-                  _buildApiKeyInput(fontSize),
-                ]),
+                    _buildApiTypeSelector(fontSize),
+                    _buildApiAddressInput(fontSize),
+                    _buildApiKeyInput(fontSize),
+                  ],
+                ),
                 const SizedBox(height: 16),
 
                 // API提供商分组
-                buildSectionContainer(context, '模型配置', [
-                  _buildModelsInput(fontSize),
-                  _buildSystemPromptInput(fontSize),
-                ]),
+                buildSectionContainer(
+                  context,
+                  S.of(context).modelConfiguration,
+                  [
+                    _buildModelsInput(fontSize),
+                    _buildSystemPromptInput(fontSize),
+                  ],
+                ),
               ],
             ),
           ),
@@ -268,40 +305,7 @@ class _AddBotPageState extends State<AddBotPage> {
               side: BorderSide.none,
             ),
           ),
-          onPressed: () async {
-            if (nameController.text.trim().isNotEmpty &&
-                apiKeyController.text.trim().isNotEmpty &&
-                baseURLController.text.trim().isNotEmpty) {
-              final navigator = Navigator.of(context);
-              final providerInfo = providersInfo[providerController.text];
-              final apiType =
-                  (providerInfo?['api_type'] as String?) ??
-                  apiTypeController.text.trim();
-              // 使用baseURLController的值而不是providerInfo中的base_url
-              final baseURL = baseURLController.text.trim();
-
-              final newBot = Bot(
-                id: 'bot_${DateTime.now().millisecondsSinceEpoch}',
-                name: nameController.text.trim(),
-                avatar: avatarImage?.path ?? '',
-                provider: providerController.text,
-                baseURL: baseURL, // 使用用户输入的baseURL
-                apiKey: apiKeyController.text.trim(),
-                apiType: apiType,
-                model: selectedModelController.text,
-                systemPrompt: systemPromptController.text.trim(),
-                createTimestamp: DateTime.now(),
-                modifyTimestamp: DateTime.now(),
-              );
-
-              await widget.onBotAdded(newBot);
-              if (!widget.embedded && mounted) {
-                navigator.pop();
-              }
-            } else {
-              showWarningSnackBar(context, S.of(context).fillRequiredFields);
-            }
-          },
+          onPressed: _submitBot,
           child: Text(
             S.of(context).addBot,
             style: TextStyle(
@@ -315,6 +319,444 @@ class _AddBotPageState extends State<AddBotPage> {
     );
   }
 
+  Widget _buildEmbeddedDesktop(BuildContext context, double? fontSize) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isHuggingFace = providerController.text == 'HuggingFace';
+
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      body: Column(
+        children: [
+          Expanded(
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: FocusTraversalGroup(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildDesktopHeader(context),
+                          const SizedBox(height: 24),
+                          _buildDesktopSection(
+                            context,
+                            S.of(context).basicInformation,
+                            [_buildDesktopNameInput()],
+                          ),
+                          const SizedBox(height: 24),
+                          _buildDesktopSection(
+                            context,
+                            S.of(context).providerInformation,
+                            [
+                              _buildDesktopFieldPair(
+                                _buildDesktopProviderInput(fontSize),
+                                isHuggingFace
+                                    ? _buildDesktopSubProviderInput(fontSize)
+                                    : _buildDesktopApiTypeSelector(fontSize),
+                              ),
+                              if (isHuggingFace)
+                                _buildDesktopFieldPair(
+                                  _buildDesktopApiTypeSelector(fontSize),
+                                  _buildDesktopApiAddressInput(),
+                                )
+                              else
+                                _buildDesktopFieldPair(
+                                  _buildDesktopApiAddressInput(),
+                                  _buildDesktopApiKeyInput(),
+                                ),
+                              if (isHuggingFace) _buildDesktopApiKeyInput(),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          _buildDesktopSection(
+                            context,
+                            S.of(context).modelConfiguration,
+                            [
+                              _buildDesktopModelsInput(fontSize),
+                              _buildDesktopSystemPromptInput(),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          _buildDesktopFooter(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final strings = S.of(context);
+
+    return Row(
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Tooltip(
+              message: strings.botAvatar,
+              excludeFromSemantics: true,
+              child: Semantics(
+                button: true,
+                label: strings.botAvatar,
+                child: InkWell(
+                  onTap: _pickImage,
+                  customBorder: const CircleBorder(),
+                  child: CircleAvatar(
+                    radius: 32,
+                    backgroundColor:
+                        avatarImage == null
+                            ? getFrostedProviderColor(
+                              providerController.text,
+                              theme.colorScheme.primary,
+                            )
+                            : theme.colorScheme.primary,
+                    backgroundImage:
+                        avatarImage != null ? FileImage(avatarImage!) : null,
+                    child:
+                        avatarImage == null
+                            ? buildProviderLogo(
+                              context,
+                              '',
+                              providerController.text,
+                              32,
+                            )
+                            : null,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              strings.botAvatar,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 18),
+        Expanded(
+          child: Text(
+            strings.addBot,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopSection(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+        const SizedBox(height: 14),
+        for (var index = 0; index < children.length; index++) ...[
+          children[index],
+          if (index != children.length - 1) const SizedBox(height: 14),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDesktopFieldPair(Widget first, Widget second) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 560) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [first, const SizedBox(height: 14), second],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 14),
+            Expanded(child: second),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopFooter(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton(
+                    onPressed: _submitBot,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(96, 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(S.of(context).addBot),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _desktopInputDecoration({
+    required String labelText,
+    String? hintText,
+    Widget? suffixIcon,
+    bool multiline = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final enabledBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: colorScheme.outlineVariant),
+    );
+    final disabledBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(
+        color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+      ),
+    );
+
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      alignLabelWithHint: multiline,
+      isDense: true,
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest,
+      contentPadding:
+          multiline
+              ? const EdgeInsets.fromLTRB(12, 14, 12, 12)
+              : const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      border: enabledBorder,
+      enabledBorder: enabledBorder,
+      disabledBorder: disabledBorder,
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: colorScheme.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: colorScheme.error, width: 1.4),
+      ),
+      suffixIcon: suffixIcon,
+      suffixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+    );
+  }
+
+  Widget _desktopIconButton({
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: tooltip,
+      icon: Icon(icon),
+      iconSize: 16,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+    );
+  }
+
+  Widget _buildDesktopNameInput() {
+    return TextField(
+      controller: nameController,
+      textInputAction: TextInputAction.next,
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).botName,
+        hintText: S.of(context).enterBotName,
+      ),
+    );
+  }
+
+  Widget _buildDesktopProviderInput(double? fontSize) {
+    return TextField(
+      controller: providerController,
+      textInputAction: TextInputAction.next,
+      onChanged: (value) {
+        setState(() {
+          _isCustomProvider = !providersInfo.keys.contains(value);
+          providerModels = [];
+          selectedModelController.text = '';
+        });
+      },
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).provider,
+        hintText: S.of(context).selectProvider,
+        suffixIcon: _desktopIconButton(
+          tooltip: S.of(context).selectProvider,
+          icon: Icons.expand_more_rounded,
+          onPressed: () => _showProvidersOptions(fontSize),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopSubProviderInput(double? fontSize) {
+    return TextField(
+      controller: subProviderController,
+      textInputAction: TextInputAction.next,
+      onChanged: (value) {
+        setState(() {
+          _isCustomProvider = providersInfo.keys.contains(value);
+          providerModels = [];
+          selectedModelController.text = '';
+        });
+      },
+      decoration: _desktopInputDecoration(
+        labelText: '${S.of(context).provider} (HuggingFace)',
+        hintText: S.of(context).selectProvider,
+        suffixIcon: _desktopIconButton(
+          tooltip: S.of(context).selectProvider,
+          icon: Icons.expand_more_rounded,
+          onPressed: () => _showSubProvidersOptions(fontSize),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopApiTypeSelector(double? fontSize) {
+    return TextField(
+      controller: apiTypeController,
+      enabled: _isCustomProvider,
+      textInputAction: TextInputAction.next,
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).apiType,
+        suffixIcon: _desktopIconButton(
+          tooltip: S.of(context).apiType,
+          icon: Icons.expand_more_rounded,
+          onPressed:
+              _isCustomProvider ? () => _showApiTypeOptions(fontSize) : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopApiAddressInput() {
+    return TextField(
+      controller: baseURLController,
+      textInputAction: TextInputAction.next,
+      decoration: _desktopInputDecoration(labelText: S.of(context).apiAddress),
+    );
+  }
+
+  Widget _buildDesktopApiKeyInput() {
+    return TextField(
+      controller: apiKeyController,
+      obscureText: !_isPasswordVisible,
+      textInputAction: TextInputAction.next,
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).apiKey,
+        suffixIcon: _desktopIconButton(
+          tooltip: S.of(context).apiKey,
+          icon: _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+          onPressed: () {
+            setState(() {
+              _isPasswordVisible = !_isPasswordVisible;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopModelsInput(double? fontSize) {
+    final suffixIcon =
+        providerModels.isEmpty
+            ? _isLoadingModels
+                ? const SizedBox.square(
+                  dimension: 36,
+                  child: Center(
+                    child: SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+                : _desktopIconButton(
+                  tooltip: S.of(context).selectModel,
+                  icon: Icons.refresh_rounded,
+                  onPressed: _fetchModels,
+                )
+            : _desktopIconButton(
+              tooltip: S.of(context).selectModel,
+              icon: Icons.expand_more_rounded,
+              onPressed: () => _showModelsOptions(fontSize),
+            );
+
+    return TextField(
+      controller: selectedModelController,
+      textInputAction: TextInputAction.next,
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).model,
+        hintText: S.of(context).selectModel,
+        suffixIcon: suffixIcon,
+      ),
+    );
+  }
+
+  Widget _buildDesktopSystemPromptInput() {
+    return TextField(
+      controller: systemPromptController,
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      minLines: 3,
+      maxLines: 4,
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).systemPrompt,
+        multiline: true,
+      ),
+    );
+  }
+
   Widget _buildNameInput(double? fontSize) {
     return TextField(
       controller: nameController,
@@ -322,7 +764,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).enterBotName,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.smart_toy_rounded,
@@ -354,7 +796,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).selectProvider,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.business_rounded,
@@ -402,38 +844,40 @@ class _AddBotPageState extends State<AddBotPage> {
                     ),
                   ),
                   Flexible(
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      thickness: 6.0,
-                      radius: const Radius.circular(10.0),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children:
-                              providersInfo.keys.map((provider) {
-                                return RadioListTile<String>(
-                                  title: Row(
-                                    children: [
-                                      buildProviderLogo(
-                                        context,
-                                        '',
-                                        provider,
-                                        24,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(provider),
-                                    ],
-                                  ),
-                                  activeColor:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  value: provider,
-                                  groupValue: providerController.text,
-                                  onChanged: (value) {
-                                    _onProviderChanged(value);
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              }).toList(),
+                    child: RadioGroup<String>(
+                      groupValue: providerController.text,
+                      onChanged: (value) {
+                        _onProviderChanged(value);
+                        Navigator.pop(context);
+                      },
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        thickness: 6.0,
+                        radius: const Radius.circular(10.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children:
+                                providersInfo.keys.map((provider) {
+                                  return RadioListTile<String>(
+                                    title: Row(
+                                      children: [
+                                        buildProviderLogo(
+                                          context,
+                                          '',
+                                          provider,
+                                          24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(provider),
+                                      ],
+                                    ),
+                                    activeColor:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    value: provider,
+                                  );
+                                }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -461,7 +905,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).selectProvider,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.business_rounded,
@@ -513,38 +957,40 @@ class _AddBotPageState extends State<AddBotPage> {
                     ),
                   ),
                   Flexible(
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      thickness: 6.0,
-                      radius: const Radius.circular(10.0),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children:
-                              subProviders.keys.map((subProvider) {
-                                return RadioListTile<String>(
-                                  title: Row(
-                                    children: [
-                                      buildProviderLogo(
-                                        context,
-                                        '',
-                                        subProvider,
-                                        24,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(subProvider),
-                                    ],
-                                  ),
-                                  activeColor:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  value: subProvider,
-                                  groupValue: subProviderController.text,
-                                  onChanged: (value) {
-                                    _onSubProviderChanged(value);
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              }).toList(),
+                    child: RadioGroup<String>(
+                      groupValue: subProviderController.text,
+                      onChanged: (value) {
+                        _onSubProviderChanged(value);
+                        Navigator.pop(context);
+                      },
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        thickness: 6.0,
+                        radius: const Radius.circular(10.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children:
+                                subProviders.keys.map((subProvider) {
+                                  return RadioListTile<String>(
+                                    title: Row(
+                                      children: [
+                                        buildProviderLogo(
+                                          context,
+                                          '',
+                                          subProvider,
+                                          24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(subProvider),
+                                      ],
+                                    ),
+                                    activeColor:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    value: subProvider,
+                                  );
+                                }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -564,7 +1010,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).apiType,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.category_rounded,
@@ -613,27 +1059,30 @@ class _AddBotPageState extends State<AddBotPage> {
                     ),
                   ),
                   Flexible(
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      thickness: 6.0,
-                      radius: const Radius.circular(10.0),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children:
-                              Bot.getAllApiTypes().map((apiType) {
-                                return RadioListTile<String>(
-                                  title: Text(apiType),
-                                  activeColor:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  value: apiType,
-                                  groupValue: apiTypeController.text,
-                                  onChanged: (value) {
-                                    apiTypeController.text = value!;
-                                    Navigator.pop(context);
-                                  },
-                                );
-                              }).toList(),
+                    child: RadioGroup<String>(
+                      groupValue: apiTypeController.text,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        apiTypeController.text = value;
+                        Navigator.pop(context);
+                      },
+                      child: Scrollbar(
+                        thumbVisibility: true,
+                        thickness: 6.0,
+                        radius: const Radius.circular(10.0),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children:
+                                Bot.getAllApiTypes().map((apiType) {
+                                  return RadioListTile<String>(
+                                    title: Text(apiType),
+                                    activeColor:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    value: apiType,
+                                  );
+                                }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -653,7 +1102,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).apiAddress,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.link_rounded,
@@ -679,7 +1128,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).apiKey,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.key_rounded,
@@ -713,7 +1162,7 @@ class _AddBotPageState extends State<AddBotPage> {
         hintText: S.of(context).selectModel,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.auto_awesome_rounded,
@@ -782,39 +1231,41 @@ class _AddBotPageState extends State<AddBotPage> {
                     )
                   else
                     Flexible(
-                      child: Scrollbar(
-                        thumbVisibility: true,
-                        thickness: 6.0,
-                        radius: const Radius.circular(10.0),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children:
-                                providerModels.isEmpty
-                                    ? [
-                                      Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Text(
-                                          S.of(context).noModelsRetrieved,
+                      child: RadioGroup<String>(
+                        groupValue: selectedModelController.text,
+                        onChanged: (value) {
+                          if (value == null) return;
+                          selectedModelController.text = value;
+                          Navigator.pop(context);
+                        },
+                        child: Scrollbar(
+                          thumbVisibility: true,
+                          thickness: 6.0,
+                          radius: const Radius.circular(10.0),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children:
+                                  providerModels.isEmpty
+                                      ? [
+                                        Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Text(
+                                            S.of(context).noModelsRetrieved,
+                                          ),
                                         ),
-                                      ),
-                                    ]
-                                    : providerModels.map((model) {
-                                      return RadioListTile<String>(
-                                        title: Text(model),
-                                        activeColor:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                        value: model,
-                                        groupValue:
-                                            selectedModelController.text,
-                                        onChanged: (value) {
-                                          selectedModelController.text = value!;
-                                          Navigator.pop(context);
-                                        },
-                                      );
-                                    }).toList(),
+                                      ]
+                                      : providerModels.map((model) {
+                                        return RadioListTile<String>(
+                                          title: Text(model),
+                                          activeColor:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                          value: model,
+                                        );
+                                      }).toList(),
+                            ),
                           ),
                         ),
                       ),

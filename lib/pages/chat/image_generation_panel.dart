@@ -18,7 +18,7 @@ class ImageGenerationPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
       ),
       margin: const EdgeInsets.only(top: 8, left: 16, right: 16),
@@ -61,7 +61,7 @@ class ImageGenerationPanel extends StatelessWidget {
                                   Theme.of(context).colorScheme.secondary,
                               selectedColor: Theme.of(
                                 context,
-                              ).colorScheme.primary.withOpacity(0.3),
+                              ).colorScheme.primary.withValues(alpha: 0.3),
                               labelStyle: TextStyle(
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),

@@ -1,50 +1,300 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Semantic desktop colors and accessibility state for Stars.
+///
+/// The fallback palette mirrors the desktop UI specification. Platform-native
+/// accent and material integrations can replace these values later without
+/// changing business widgets.
+@immutable
+class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
+  const StarsDesktopTokens({
+    required this.windowBackground,
+    required this.contentBackground,
+    required this.sidebarOpaque,
+    required this.raisedSurface,
+    required this.controlFill,
+    required this.hoverFill,
+    required this.pressedFill,
+    required this.selectedFill,
+    required this.separator,
+    required this.primaryText,
+    required this.secondaryText,
+    required this.tertiaryText,
+    required this.accent,
+    required this.focusRing,
+    required this.success,
+    required this.warning,
+    required this.danger,
+    required this.reduceTransparency,
+    required this.highContrast,
+  });
+
+  factory StarsDesktopTokens.light({
+    bool reduceTransparency = false,
+    bool highContrast = false,
+  }) {
+    return StarsDesktopTokens(
+      windowBackground: const Color(0xFFF5F5F7),
+      contentBackground: const Color(0xFFFFFFFF),
+      sidebarOpaque: const Color(0xFFF0F0F2),
+      raisedSurface: const Color(0xFFFFFFFF),
+      controlFill: const Color(0x1F787880),
+      hoverFill: const Color(0x0D000000),
+      pressedFill: const Color(0x17000000),
+      selectedFill:
+          highContrast ? const Color(0x3D007AFF) : const Color(0x1F007AFF),
+      separator:
+          highContrast ? const Color(0x6B3C3C43) : const Color(0x2E3C3C43),
+      primaryText: const Color(0xFF1D1D1F),
+      secondaryText: const Color(0xFF6E6E73),
+      tertiaryText: const Color(0xFF8E8E93),
+      accent: const Color(0xFF007AFF),
+      focusRing: const Color(0xFF007AFF),
+      success: const Color(0xFF248A3D),
+      warning: const Color(0xFFC93400),
+      danger: const Color(0xFFD70015),
+      reduceTransparency: reduceTransparency,
+      highContrast: highContrast,
+    );
+  }
+
+  factory StarsDesktopTokens.dark({
+    bool reduceTransparency = false,
+    bool highContrast = false,
+  }) {
+    return StarsDesktopTokens(
+      windowBackground: const Color(0xFF1C1C1E),
+      contentBackground: const Color(0xFF18181A),
+      sidebarOpaque: const Color(0xFF242426),
+      raisedSurface: const Color(0xFF2C2C2E),
+      controlFill: const Color(0x14FFFFFF),
+      hoverFill: const Color(0x12FFFFFF),
+      pressedFill: const Color(0x1CFFFFFF),
+      selectedFill:
+          highContrast ? const Color(0x610A84FF) : const Color(0x380A84FF),
+      separator:
+          highContrast ? const Color(0x6BFFFFFF) : const Color(0x24FFFFFF),
+      primaryText: const Color(0xFFF5F5F7),
+      secondaryText: const Color(0xFFAEAEB2),
+      tertiaryText: const Color(0xFF8E8E93),
+      accent: const Color(0xFF0A84FF),
+      focusRing: const Color(0xFF0A84FF),
+      success: const Color(0xFF30D158),
+      warning: const Color(0xFFFF9F0A),
+      danger: const Color(0xFFFF453A),
+      reduceTransparency: reduceTransparency,
+      highContrast: highContrast,
+    );
+  }
+
+  final Color windowBackground;
+  final Color contentBackground;
+  final Color sidebarOpaque;
+  final Color raisedSurface;
+  final Color controlFill;
+  final Color hoverFill;
+  final Color pressedFill;
+  final Color selectedFill;
+  final Color separator;
+  final Color primaryText;
+  final Color secondaryText;
+  final Color tertiaryText;
+  final Color accent;
+  final Color focusRing;
+  final Color success;
+  final Color warning;
+  final Color danger;
+  final bool reduceTransparency;
+  final bool highContrast;
+
+  static StarsDesktopTokens of(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    var tokens =
+        Theme.of(context).extension<StarsDesktopTokens>() ??
+        (brightness == Brightness.dark
+            ? StarsDesktopTokens.dark()
+            : StarsDesktopTokens.light());
+    final mediaHighContrast =
+        MediaQuery.maybeOf(context)?.highContrast ?? false;
+    if (mediaHighContrast && !tokens.highContrast) {
+      tokens = tokens._withHighContrast(brightness);
+    }
+    return tokens;
+  }
+
+  StarsDesktopTokens _withHighContrast(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    return copyWith(
+      highContrast: true,
+      selectedFill: isDark ? const Color(0x610A84FF) : const Color(0x3D007AFF),
+      separator: isDark ? const Color(0x6BFFFFFF) : const Color(0x6B3C3C43),
+      focusRing: accent,
+    );
+  }
+
+  @override
+  StarsDesktopTokens copyWith({
+    Color? windowBackground,
+    Color? contentBackground,
+    Color? sidebarOpaque,
+    Color? raisedSurface,
+    Color? controlFill,
+    Color? hoverFill,
+    Color? pressedFill,
+    Color? selectedFill,
+    Color? separator,
+    Color? primaryText,
+    Color? secondaryText,
+    Color? tertiaryText,
+    Color? accent,
+    Color? focusRing,
+    Color? success,
+    Color? warning,
+    Color? danger,
+    bool? reduceTransparency,
+    bool? highContrast,
+  }) {
+    return StarsDesktopTokens(
+      windowBackground: windowBackground ?? this.windowBackground,
+      contentBackground: contentBackground ?? this.contentBackground,
+      sidebarOpaque: sidebarOpaque ?? this.sidebarOpaque,
+      raisedSurface: raisedSurface ?? this.raisedSurface,
+      controlFill: controlFill ?? this.controlFill,
+      hoverFill: hoverFill ?? this.hoverFill,
+      pressedFill: pressedFill ?? this.pressedFill,
+      selectedFill: selectedFill ?? this.selectedFill,
+      separator: separator ?? this.separator,
+      primaryText: primaryText ?? this.primaryText,
+      secondaryText: secondaryText ?? this.secondaryText,
+      tertiaryText: tertiaryText ?? this.tertiaryText,
+      accent: accent ?? this.accent,
+      focusRing: focusRing ?? this.focusRing,
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      danger: danger ?? this.danger,
+      reduceTransparency: reduceTransparency ?? this.reduceTransparency,
+      highContrast: highContrast ?? this.highContrast,
+    );
+  }
+
+  @override
+  StarsDesktopTokens lerp(covariant StarsDesktopTokens? other, double t) {
+    if (other == null) {
+      return this;
+    }
+    return StarsDesktopTokens(
+      windowBackground:
+          Color.lerp(windowBackground, other.windowBackground, t)!,
+      contentBackground:
+          Color.lerp(contentBackground, other.contentBackground, t)!,
+      sidebarOpaque: Color.lerp(sidebarOpaque, other.sidebarOpaque, t)!,
+      raisedSurface: Color.lerp(raisedSurface, other.raisedSurface, t)!,
+      controlFill: Color.lerp(controlFill, other.controlFill, t)!,
+      hoverFill: Color.lerp(hoverFill, other.hoverFill, t)!,
+      pressedFill: Color.lerp(pressedFill, other.pressedFill, t)!,
+      selectedFill: Color.lerp(selectedFill, other.selectedFill, t)!,
+      separator: Color.lerp(separator, other.separator, t)!,
+      primaryText: Color.lerp(primaryText, other.primaryText, t)!,
+      secondaryText: Color.lerp(secondaryText, other.secondaryText, t)!,
+      tertiaryText: Color.lerp(tertiaryText, other.tertiaryText, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
+      focusRing: Color.lerp(focusRing, other.focusRing, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      reduceTransparency:
+          t < 0.5 ? reduceTransparency : other.reduceTransparency,
+      highContrast: t < 0.5 ? highContrast : other.highContrast,
+    );
+  }
+}
+
 ThemeData buildAppTheme({
   required Brightness brightness,
   required double fontSize,
+  bool highContrast = false,
+  bool reduceTransparency = false,
 }) {
-  final isDark = brightness == Brightness.dark;
-  final colorScheme =
-      isDark
-          ? const ColorScheme.dark(
-            primary: Color(0xFF7CAEFF),
-            onPrimary: Colors.white,
-            surface: Color(0xFF0F1116),
-            onSurface: Color(0xFFF5F7FB),
-            secondary: Color(0xFF171B24),
-            tertiary: Color(0xFF2A3140),
-            error: Color(0xFFF47070),
+  final tokens =
+      brightness == Brightness.dark
+          ? StarsDesktopTokens.dark(
+            highContrast: highContrast,
+            reduceTransparency: reduceTransparency,
           )
-          : const ColorScheme.light(
-            primary: Color(0xFF5B8DEF),
-            onPrimary: Colors.white,
-            surface: Color(0xFFF3F5F9),
-            onSurface: Color(0xFF1C2333),
-            secondary: Colors.white,
-            tertiary: Color(0xFFE7EBF2),
-            error: Color(0xFFD95C5C),
+          : StarsDesktopTokens.light(
+            highContrast: highContrast,
+            reduceTransparency: reduceTransparency,
           );
+  final colorScheme = (brightness == Brightness.dark
+          ? ColorScheme.dark(
+            primary: tokens.accent,
+            onPrimary: Colors.white,
+            secondary: tokens.raisedSurface,
+            onSecondary: tokens.primaryText,
+            surface: tokens.contentBackground,
+            onSurface: tokens.primaryText,
+            error: tokens.danger,
+            onError: Colors.white,
+          )
+          : ColorScheme.light(
+            primary: tokens.accent,
+            onPrimary: Colors.white,
+            secondary: tokens.raisedSurface,
+            onSecondary: tokens.primaryText,
+            surface: tokens.contentBackground,
+            onSurface: tokens.primaryText,
+            error: tokens.danger,
+            onError: Colors.white,
+          ))
+      .copyWith(
+        tertiary: tokens.controlFill,
+        onTertiary: tokens.primaryText,
+        surfaceContainerHighest: tokens.controlFill,
+        surfaceContainerHigh: tokens.raisedSurface,
+        outline: tokens.separator,
+        outlineVariant: tokens.separator,
+        onSurfaceVariant: tokens.secondaryText,
+      );
+  final contentFontSize = fontSize.clamp(12.0, 24.0);
 
   return ThemeData(
     brightness: brightness,
     colorScheme: colorScheme,
-    scaffoldBackgroundColor: colorScheme.surface,
+    scaffoldBackgroundColor: tokens.windowBackground,
+    dividerColor: tokens.separator,
+    focusColor: tokens.focusRing,
+    hoverColor: tokens.hoverFill,
+    splashColor: tokens.pressedFill,
+    extensions: <ThemeExtension<dynamic>>[tokens],
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     textTheme: TextTheme(
-      titleMedium: TextStyle(
+      titleLarge: const TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+        fontFamilyFallback: _desktopFontFallback,
+      ),
+      titleMedium: const TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.w600,
+        height: 1.35,
+        fontFamilyFallback: _desktopFontFallback,
+      ),
+      titleSmall: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
         fontFamilyFallback: _desktopFontFallback,
       ),
       bodyLarge: TextStyle(
-        fontSize: fontSize.clamp(14, 16).toDouble(),
+        fontSize: contentFontSize,
         height: 1.6,
         fontFamilyFallback: _desktopFontFallback,
       ),
       bodyMedium: TextStyle(
-        fontSize: (fontSize - 2).clamp(13, 15).toDouble(),
-        height: 1.55,
+        fontSize: (contentFontSize - 2).clamp(12.0, 22.0),
+        height: 1.45,
         fontFamilyFallback: _desktopFontFallback,
       ),
       bodySmall: const TextStyle(
@@ -54,15 +304,77 @@ ThemeData buildAppTheme({
       ),
       labelLarge: const TextStyle(
         fontSize: 14,
+        fontWeight: FontWeight.w500,
+        height: 1.4,
+        fontFamilyFallback: _desktopFontFallback,
+      ),
+      labelMedium: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        height: 1.4,
+        fontFamilyFallback: _desktopFontFallback,
+      ),
+      labelSmall: const TextStyle(
+        fontSize: 11,
+        height: 1.4,
         fontFamilyFallback: _desktopFontFallback,
       ),
     ),
-    textButtonTheme: TextButtonThemeData(
-      style: ButtonStyle(
-        overlayColor: WidgetStateProperty.all(
-          colorScheme.onSurface.withValues(alpha: 0.08),
+    dividerTheme: DividerThemeData(
+      color: tokens.separator,
+      space: 1,
+      thickness: 0,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: tokens.controlFill,
+      isDense: true,
+      hintStyle: TextStyle(color: tokens.tertiaryText),
+      border: OutlineInputBorder(
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(color: tokens.separator, width: 0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(
+          color: tokens.focusRing,
+          width: highContrast ? 2 : 1.5,
         ),
       ),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: tokens.accent,
+      selectionColor: tokens.accent.withValues(alpha: 0.24),
+      selectionHandleColor: tokens.accent,
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStatePropertyAll(tokens.accent),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.pressed)
+              ? tokens.pressedFill
+              : tokens.hoverFill;
+        }),
+        shape: const WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: DesktopThemeTokens.controlRadius,
+          ),
+        ),
+      ),
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: tokens.raisedSurface,
+        border: Border.all(color: tokens.separator, width: 0),
+        borderRadius: DesktopThemeTokens.containerRadius,
+        boxShadow: DesktopThemeTokens.floatingShadowFor(tokens, subtle: true),
+      ),
+      textStyle: TextStyle(color: tokens.primaryText, fontSize: 12),
+      waitDuration: const Duration(milliseconds: 450),
     ),
   );
 }
@@ -72,148 +384,178 @@ const List<String> _desktopFontFallback = [
   'Microsoft YaHei UI',
   'PingFang SC',
   'Noto Sans CJK SC',
+  'Noto Sans',
+  'Ubuntu',
   'sans-serif',
 ];
 
+/// Compatibility facade for existing desktop widgets.
+///
+/// New widgets should read [StarsDesktopTokens] directly. Keeping this API
+/// avoids a flag-day migration while the desktop shell is rebuilt.
 class DesktopThemeTokens {
-  static const double sidebarWidth = 340;
-  static const double listPanelWidth = 340;
-  static const double profileRailWidth = 340;
-  static const double inspectorWidth = 380;
-  static const double menuBarHeight = 42;
+  static const double sidebarWidth = 300;
+  static const double sidebarMinWidth = 240;
+  static const double sidebarMaxWidth = 360;
+  static const double listPanelWidth = 300;
+  static const double profileRailWidth = 300;
+  static const double inspectorWidth = 320;
+  static const double inspectorMinWidth = 280;
+  static const double inspectorMaxWidth = 380;
+  static const double detailMinWidth = 560;
+  static const double toolbarHeight = 50;
+  static const double menuBarHeight = toolbarHeight;
   static const double shellGap = 0;
-  static const double controlHeight = 40;
-  static const double iconButtonSize = 36;
-  static const double listItemMinHeight = 38;
-  static const double panelRadiusValue = 0;
-  static const double itemRadiusValue = 11;
+  static const double controlHeight = 32;
+  static const double iconButtonSize = 32;
+  static const double listItemMinHeight = 44;
+  static const double panelRadiusValue = 12;
+  static const double itemRadiusValue = 8;
   static const double workspaceRadiusValue = 0;
-  static const double inputRadiusValue = 20;
-  static const double statusRadiusValue = 11;
+  static const double inputRadiusValue = 16;
+  static const double statusRadiusValue = 12;
+  static const double bubbleRadiusValue = 14;
+  static const double splitterHitWidth = 6;
   static const EdgeInsets shellPadding = EdgeInsets.zero;
-  static const EdgeInsets panelPadding = EdgeInsets.all(14);
+  static const EdgeInsets panelPadding = EdgeInsets.all(12);
   static const EdgeInsets workspacePadding = EdgeInsets.all(24);
-  static const BorderRadius sidebarRadius = BorderRadius.all(
-    Radius.circular(workspaceRadiusValue),
-  );
-  static const BorderRadius panelRadius = BorderRadius.all(
-    Radius.circular(panelRadiusValue),
-  );
-  static const BorderRadius workspaceRadius = BorderRadius.all(
-    Radius.circular(workspaceRadiusValue),
-  );
-  static const BorderRadius itemRadius = BorderRadius.all(
-    Radius.circular(itemRadiusValue),
-  );
-  static const BorderRadius inputRadius = BorderRadius.all(
-    Radius.circular(inputRadiusValue),
-  );
+  static const BorderRadius sidebarRadius = BorderRadius.zero;
+  static const BorderRadius panelRadius = BorderRadius.all(Radius.circular(12));
+  static const BorderRadius workspaceRadius = BorderRadius.zero;
+  static const BorderRadius itemRadius = BorderRadius.all(Radius.circular(8));
+  static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(16));
   static const BorderRadius statusRadius = BorderRadius.all(
-    Radius.circular(statusRadiusValue),
+    Radius.circular(12),
   );
   static const BorderRadius controlRadius = BorderRadius.all(
-    Radius.circular(9),
+    Radius.circular(8),
   );
   static const BorderRadius selectionRadius = BorderRadius.all(
-    Radius.circular(11),
+    Radius.circular(8),
   );
-  static const BorderRadius inspectorRadius = BorderRadius.all(
-    Radius.circular(22),
+  static const BorderRadius containerRadius = BorderRadius.all(
+    Radius.circular(12),
   );
+  static const BorderRadius inspectorRadius = containerRadius;
+
+  static StarsDesktopTokens tokens(BuildContext context) =>
+      StarsDesktopTokens.of(context);
 
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 
   static Color shellBackground(BuildContext context) =>
-      isDark(context) ? const Color(0xFF11161D) : const Color(0xFFF2F5F9);
+      tokens(context).windowBackground;
 
   static Color sidebarSurface(BuildContext context) =>
-      isDark(context) ? const Color(0xFF151B23) : const Color(0xFFEFF3F8);
+      tokens(context).sidebarOpaque;
 
   static Color panelSurface(BuildContext context) =>
-      isDark(context) ? const Color(0xFF171F2B) : Colors.white;
+      tokens(context).contentBackground;
 
   static Color workspaceSurface(BuildContext context) =>
-      isDark(context) ? const Color(0xFF12171E) : Colors.white;
+      tokens(context).contentBackground;
 
   static Color secondarySurface(BuildContext context) =>
-      isDark(context) ? const Color(0xFF1B222C) : const Color(0xFFF6F7F9);
+      tokens(context).controlFill;
 
-  static Color outline(BuildContext context) =>
-      isDark(context)
-          ? Colors.white.withValues(alpha: 0.08)
-          : const Color(0xFFE4E7EB);
+  static Color raisedSurface(BuildContext context) =>
+      tokens(context).raisedSurface;
 
-  static Color divider(BuildContext context) => outline(context);
+  static Color toolbarSurface(BuildContext context) =>
+      tokens(context).raisedSurface;
 
-  static Color text(BuildContext context) =>
-      Theme.of(context).colorScheme.onSurface;
+  static Color controlFill(BuildContext context) => tokens(context).controlFill;
 
-  static Color mutedText(BuildContext context) =>
-      isDark(context) ? const Color(0xFF9BA4AF) : const Color(0xFF6F757D);
+  static Color outline(BuildContext context) => tokens(context).separator;
 
-  static Color softText(BuildContext context) =>
-      isDark(context) ? const Color(0xFF7F8995) : const Color(0xFF9AA0A8);
+  static Color divider(BuildContext context) => tokens(context).separator;
 
-  static Color hoverFill(BuildContext context) =>
-      isDark(context)
-          ? Colors.white.withValues(alpha: 0.05)
-          : const Color(0xFFE9EDF2);
+  static Color text(BuildContext context) => tokens(context).primaryText;
+
+  static Color mutedText(BuildContext context) => tokens(context).secondaryText;
+
+  static Color softText(BuildContext context) => tokens(context).tertiaryText;
+
+  static Color hoverFill(BuildContext context) => tokens(context).hoverFill;
+
+  static Color pressedFill(BuildContext context) => tokens(context).pressedFill;
 
   static Color selectedFill(BuildContext context) =>
-      isDark(context)
-          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.18)
-          : const Color(0xFFE2E7ED);
+      tokens(context).selectedFill;
 
-  static Color success(BuildContext context) =>
-      isDark(context) ? const Color(0xFF5BB498) : const Color(0xFF2E7D67);
+  static Color success(BuildContext context) => tokens(context).success;
 
-  static Color warning(BuildContext context) =>
-      isDark(context) ? const Color(0xFFE4B869) : const Color(0xFFA66A00);
+  static Color warning(BuildContext context) => tokens(context).warning;
 
-  static Color error(BuildContext context) =>
-      isDark(context) ? const Color(0xFFF08A8A) : const Color(0xFFC44545);
+  static Color error(BuildContext context) => tokens(context).danger;
 
   static TextStyle? pageTitleStyle(BuildContext context) =>
-      Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontSize: 15,
+      Theme.of(context).textTheme.titleLarge?.copyWith(
+        fontSize: 17,
         fontWeight: FontWeight.w600,
+        height: 1.3,
         color: text(context),
       );
 
-  static TextStyle? sectionTitleStyle(BuildContext context) => Theme.of(context)
-      .textTheme
-      .titleMedium
-      ?.copyWith(fontWeight: FontWeight.w600, color: text(context));
+  static TextStyle? toolbarTitleStyle(BuildContext context) =>
+      Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+        color: text(context),
+      );
+
+  static TextStyle? sectionTitleStyle(BuildContext context) =>
+      Theme.of(context).textTheme.titleSmall?.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+        color: text(context),
+      );
 
   static TextStyle? bodyStyle(BuildContext context) => Theme.of(
     context,
-  ).textTheme.bodyMedium?.copyWith(color: text(context), height: 1.5);
+  ).textTheme.bodyMedium?.copyWith(color: text(context), height: 1.45);
 
   static TextStyle? metaStyle(BuildContext context) => Theme.of(
     context,
-  ).textTheme.bodySmall?.copyWith(color: mutedText(context), height: 1.45);
+  ).textTheme.bodySmall?.copyWith(color: mutedText(context), height: 1.4);
 
-  static List<BoxShadow> panelShadow(BuildContext context) {
-    if (isDark(context)) {
+  /// Structural and content panels do not cast shadows.
+  static List<BoxShadow> panelShadow(BuildContext context) => const [];
+
+  static List<BoxShadow> floatingShadow(
+    BuildContext context, {
+    bool subtle = false,
+  }) => floatingShadowFor(tokens(context), subtle: subtle);
+
+  static List<BoxShadow> floatingShadowFor(
+    StarsDesktopTokens tokens, {
+    bool subtle = false,
+  }) {
+    if (tokens.highContrast) {
       return const [];
     }
-
-    return const [
+    final dark = tokens.windowBackground.computeLuminance() < 0.2;
+    return [
       BoxShadow(
-        color: Color(0x120F172A),
-        blurRadius: 24,
-        offset: Offset(0, 10),
+        color:
+            dark
+                ? const Color(0x52000000)
+                : Color(subtle ? 0x1A000000 : 0x24000000),
+        blurRadius: subtle ? 12 : 24,
+        offset: Offset(0, subtle ? 4 : 8),
       ),
     ];
   }
 
   static BorderSide panelBorder(BuildContext context) =>
-      BorderSide(color: outline(context));
+      BorderSide(color: outline(context), width: 0);
 
   static BoxDecoration sidebarDecoration(BuildContext context) => BoxDecoration(
     color: sidebarSurface(context),
-    border: Border(right: BorderSide(color: outline(context))),
+    border: Border(right: BorderSide(color: outline(context), width: 0)),
   );
 
   static BoxDecoration panelDecoration(
@@ -223,119 +565,350 @@ class DesktopThemeTokens {
   }) => BoxDecoration(
     color: color ?? panelSurface(context),
     borderRadius: borderRadius,
-    border: Border.all(color: outline(context)),
-    boxShadow: panelShadow(context),
+    border: Border.all(color: outline(context), width: 0),
   );
 
   static BoxDecoration workspaceDecoration(BuildContext context) =>
-      panelDecoration(
-        context,
-        color: workspaceSurface(context),
-        borderRadius: workspaceRadius,
-      );
+      BoxDecoration(color: workspaceSurface(context));
 
+  /// The compatibility inspector decoration is the docked, structural form.
+  /// Overlay inspectors should use [StarsGlassSurface].
   static BoxDecoration inspectorDecoration(BuildContext context) =>
       BoxDecoration(
         color: panelSurface(context),
-        borderRadius: inspectorRadius,
-        border: Border.all(color: outline(context)),
-        boxShadow: panelShadow(context),
+        border: Border(left: BorderSide(color: outline(context), width: 0)),
       );
+
+  static BoxDecoration overlayInspectorDecoration(BuildContext context) {
+    final semanticTokens = tokens(context);
+    return BoxDecoration(
+      color: semanticTokens.raisedSurface,
+      borderRadius: inspectorRadius,
+      border: Border.all(color: semanticTokens.separator, width: 0),
+      boxShadow: floatingShadow(context),
+    );
+  }
 
   static BoxDecoration statusDecoration(BuildContext context, {Color? color}) =>
       BoxDecoration(
         color: color ?? secondarySurface(context),
         borderRadius: statusRadius,
-        border: Border.all(color: outline(context)),
+        border: Border.all(color: outline(context), width: 0),
       );
 
   static BoxDecoration listItemDecoration(
     BuildContext context, {
     required bool selected,
     required bool hovered,
+    bool pressed = false,
     bool focused = false,
   }) {
+    final semanticTokens = tokens(context);
     final color =
-        selected
-            ? selectedFill(context)
+        pressed
+            ? semanticTokens.pressedFill
+            : selected
+            ? semanticTokens.selectedFill
             : hovered
-            ? hoverFill(context)
+            ? semanticTokens.hoverFill
             : Colors.transparent;
 
     return BoxDecoration(
       color: color,
       borderRadius: itemRadius,
       border: Border.all(
-        color:
-            selected
-                ? Colors.transparent
-                : focused
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.42)
-                : Colors.transparent,
+        color: focused ? semanticTokens.focusRing : Colors.transparent,
+        width: focused ? (semanticTokens.highContrast ? 2 : 1.5) : 0,
       ),
-      boxShadow: focused ? const [] : null,
     );
   }
 
   static InputDecoration searchDecoration(
     BuildContext context, {
     required String hintText,
-  }) => InputDecoration(
-    hintText: hintText,
-    hintStyle: TextStyle(
-      color: softText(context),
-      fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-    ),
-    prefixIcon: Icon(Icons.search, color: softText(context)),
-    filled: true,
-    fillColor: secondarySurface(context),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    border: OutlineInputBorder(
-      borderRadius: controlRadius,
-      borderSide: BorderSide(color: outline(context)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: controlRadius,
-      borderSide: BorderSide(color: outline(context)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: controlRadius,
-      borderSide: BorderSide(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+    Widget? suffixIcon,
+  }) {
+    final semanticTokens = tokens(context);
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        color: semanticTokens.tertiaryText,
+        fontSize: 13,
+        height: 1.35,
       ),
-    ),
-  );
+      prefixIcon: Icon(
+        Icons.search_rounded,
+        size: 16,
+        color: semanticTokens.secondaryText,
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      suffixIcon: suffixIcon,
+      suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      filled: true,
+      fillColor: semanticTokens.controlFill,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      border: OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide(color: semanticTokens.separator, width: 0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide(
+          color: semanticTokens.focusRing,
+          width: semanticTokens.highContrast ? 2 : 1.5,
+        ),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide(
+          color: semanticTokens.separator.withValues(alpha: 0.6),
+          width: 0,
+        ),
+      ),
+    );
+  }
 
-  static ButtonStyle primaryButtonStyle(BuildContext context) =>
-      ElevatedButton.styleFrom(
-        elevation: 0,
-        shadowColor: Colors.transparent,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        minimumSize: const Size(0, controlHeight),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: controlRadius),
-      );
+  static ButtonStyle primaryButtonStyle(BuildContext context) {
+    final semanticTokens = tokens(context);
+    return ElevatedButton.styleFrom(
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      backgroundColor: semanticTokens.accent,
+      foregroundColor: Colors.white,
+      disabledBackgroundColor: semanticTokens.controlFill,
+      disabledForegroundColor: semanticTokens.tertiaryText,
+      minimumSize: const Size(0, controlHeight),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      shape: const RoundedRectangleBorder(borderRadius: controlRadius),
+    );
+  }
 
-  static ButtonStyle secondaryButtonStyle(BuildContext context) =>
-      OutlinedButton.styleFrom(
-        minimumSize: const Size(0, controlHeight),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        foregroundColor: text(context),
-        backgroundColor: secondarySurface(context),
-        side: BorderSide(color: outline(context)),
-        shape: RoundedRectangleBorder(borderRadius: controlRadius),
-      );
+  static ButtonStyle secondaryButtonStyle(BuildContext context) {
+    final semanticTokens = tokens(context);
+    return OutlinedButton.styleFrom(
+      minimumSize: const Size(0, controlHeight),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      foregroundColor: semanticTokens.primaryText,
+      disabledForegroundColor: semanticTokens.tertiaryText,
+      backgroundColor: semanticTokens.controlFill,
+      side: BorderSide(color: semanticTokens.separator, width: 0),
+      shape: const RoundedRectangleBorder(borderRadius: controlRadius),
+    );
+  }
 
-  static ButtonStyle iconButtonStyle(BuildContext context) =>
-      IconButton.styleFrom(
-        minimumSize: const Size(iconButtonSize, iconButtonSize),
-        backgroundColor: secondarySurface(context),
-        foregroundColor: mutedText(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      );
+  static ButtonStyle iconButtonStyle(BuildContext context) {
+    final semanticTokens = tokens(context);
+    return IconButton.styleFrom(
+      minimumSize: const Size(iconButtonSize, iconButtonSize),
+      maximumSize: const Size(iconButtonSize, iconButtonSize),
+      backgroundColor: semanticTokens.controlFill,
+      foregroundColor: semanticTokens.secondaryText,
+      disabledForegroundColor: semanticTokens.tertiaryText,
+      shape: const RoundedRectangleBorder(borderRadius: controlRadius),
+    );
+  }
 }
 
+enum StarsGlassRole { toolbar, sidebar, composer, popover, overlayInspector }
+
+/// Solid semantic fallback for glass-role surfaces.
+///
+/// This widget intentionally never constructs a BackdropFilter. Native/window
+/// material integration can be added behind this API when it is reliable.
+class StarsGlassSurface extends StatelessWidget {
+  const StarsGlassSurface({super.key, required this.role, required this.child});
+
+  final StarsGlassRole role;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = StarsDesktopTokens.of(context);
+    final transient =
+        role == StarsGlassRole.popover ||
+        role == StarsGlassRole.overlayInspector;
+    final composer = role == StarsGlassRole.composer;
+    final borderRadius =
+        transient
+            ? DesktopThemeTokens.containerRadius
+            : composer
+            ? DesktopThemeTokens.inputRadius
+            : BorderRadius.zero;
+    final color = switch (role) {
+      StarsGlassRole.sidebar => tokens.sidebarOpaque,
+      StarsGlassRole.toolbar => tokens.raisedSurface,
+      StarsGlassRole.composer => tokens.raisedSurface,
+      StarsGlassRole.popover => tokens.raisedSurface,
+      StarsGlassRole.overlayInspector => tokens.raisedSurface,
+    };
+    final border = switch (role) {
+      StarsGlassRole.toolbar => Border(
+        bottom: BorderSide(color: tokens.separator, width: 0),
+      ),
+      StarsGlassRole.sidebar => Border(
+        right: BorderSide(color: tokens.separator, width: 0),
+      ),
+      _ => Border.all(color: tokens.separator, width: 0),
+    };
+
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        border: border,
+        borderRadius: borderRadius,
+        boxShadow:
+            transient || composer
+                ? DesktopThemeTokens.floatingShadow(context, subtle: composer)
+                : null,
+      ),
+      clipBehavior:
+          borderRadius == BorderRadius.zero ? Clip.none : Clip.antiAlias,
+      child: child,
+    );
+  }
+}
+
+class StarsToolbarButton extends StatelessWidget {
+  const StarsToolbarButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.semanticLabel,
+    this.selected = false,
+  });
+
+  final Widget icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final String? semanticLabel;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = StarsDesktopTokens.of(context);
+    final style = ButtonStyle(
+      minimumSize: const WidgetStatePropertyAll(Size(32, 32)),
+      maximumSize: const WidgetStatePropertyAll(Size(32, 32)),
+      padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      iconSize: const WidgetStatePropertyAll(18),
+      foregroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return tokens.tertiaryText;
+        }
+        return selected ? tokens.accent : tokens.primaryText;
+      }),
+      backgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
+          return Colors.transparent;
+        }
+        if (states.contains(WidgetState.pressed)) {
+          return tokens.pressedFill;
+        }
+        if (selected) {
+          return tokens.selectedFill;
+        }
+        if (states.contains(WidgetState.hovered) ||
+            states.contains(WidgetState.focused)) {
+          return tokens.hoverFill;
+        }
+        return Colors.transparent;
+      }),
+      overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+      side: WidgetStateProperty.resolveWith((states) {
+        if (!states.contains(WidgetState.focused)) {
+          return BorderSide.none;
+        }
+        return BorderSide(
+          color: tokens.focusRing,
+          width: tokens.highContrast ? 2 : 1.5,
+        );
+      }),
+      shape: const WidgetStatePropertyAll(
+        RoundedRectangleBorder(borderRadius: DesktopThemeTokens.controlRadius),
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      selected: selected,
+      label: semanticLabel ?? tooltip,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: tooltip,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Center(
+            child: IconButton(onPressed: onPressed, style: style, icon: icon),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class StarsSearchField extends StatelessWidget {
+  const StarsSearchField({
+    super.key,
+    required this.hintText,
+    this.controller,
+    this.focusNode,
+    this.onChanged,
+    this.onSubmitted,
+    this.semanticLabel,
+    this.enabled = true,
+    this.autofocus = false,
+    this.suffixIcon,
+  });
+
+  final String hintText;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final String? semanticLabel;
+  final bool enabled;
+  final bool autofocus;
+  final Widget? suffixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      textField: true,
+      enabled: enabled,
+      label: semanticLabel ?? hintText,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 32),
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          enabled: enabled,
+          autofocus: autofocus,
+          textInputAction: TextInputAction.search,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          style: Theme.of(context).textTheme.bodyMedium,
+          decoration: DesktopThemeTokens.searchDecoration(
+            context,
+            hintText: hintText,
+            suffixIcon: suffixIcon,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Retained name for source compatibility; the visual is intentionally flat.
 class DesktopEmptyStateCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -356,70 +929,79 @@ class DesktopEmptyStateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = DesktopThemeTokens.sectionTitleStyle(
+    final tokens = StarsDesktopTokens.of(context);
+    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+      color: tokens.primaryText,
+      fontWeight: FontWeight.w600,
+    );
+    final bodyStyle = Theme.of(
       context,
-    )?.copyWith(fontWeight: FontWeight.w700);
-    final bodyStyle = DesktopThemeTokens.bodyStyle(
-      context,
-    )?.copyWith(color: DesktopThemeTokens.mutedText(context));
+    ).textTheme.bodyMedium?.copyWith(color: tokens.secondaryText);
 
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: DesktopThemeTokens.panelDecoration(
-            context,
-            color:
-                DesktopThemeTokens.isDark(context)
-                    ? Colors.white.withValues(alpha: 0.02)
-                    : const Color(0xFFFDFEFF),
-            borderRadius: const BorderRadius.all(Radius.circular(24)),
-          ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (imageAsset != null) ...[
                 Image.asset(
                   imageAsset!,
-                  width: 180,
-                  height: 180,
-                  fit: BoxFit.cover,
+                  width: 96,
+                  height: 96,
+                  cacheWidth: 192,
+                  cacheHeight: 192,
+                  fit: BoxFit.contain,
+                  errorBuilder:
+                      (context, error, stackTrace) =>
+                          _EmptyStateIcon(icon: icon, tokens: tokens),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
               ] else ...[
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: DesktopThemeTokens.selectedFill(context),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 34,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 20),
+                _EmptyStateIcon(icon: icon, tokens: tokens),
+                const SizedBox(height: 16),
               ],
               Text(title, textAlign: TextAlign.center, style: titleStyle),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(description, textAlign: TextAlign.center, style: bodyStyle),
               if (supportingText != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   supportingText!,
                   textAlign: TextAlign.center,
-                  style: bodyStyle?.copyWith(
-                    color: DesktopThemeTokens.softText(context),
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: tokens.tertiaryText),
                 ),
               ],
-              if (action != null) ...[const SizedBox(height: 24), action!],
+              if (action != null) ...[const SizedBox(height: 16), action!],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _EmptyStateIcon extends StatelessWidget {
+  const _EmptyStateIcon({required this.icon, required this.tokens});
+
+  final IconData icon;
+  final StarsDesktopTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: tokens.selectedFill,
+          borderRadius: DesktopThemeTokens.containerRadius,
+        ),
+        child: Icon(icon, size: 18, color: tokens.accent),
       ),
     );
   }
@@ -432,6 +1014,7 @@ class DesktopListPanel extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final Widget action;
   final Widget child;
+  final FocusNode? searchFocusNode;
 
   const DesktopListPanel({
     super.key,
@@ -441,53 +1024,57 @@ class DesktopListPanel extends StatelessWidget {
     required this.onSearchChanged,
     required this.action,
     required this.child,
+    this.searchFocusNode,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: DesktopThemeTokens.sidebarSurface(context),
-      padding: DesktopThemeTokens.panelPadding,
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: DesktopThemeTokens.pageTitleStyle(
-                        context,
-                      )?.copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      description,
-                      style: DesktopThemeTokens.bodyStyle(
-                        context,
-                      )?.copyWith(color: DesktopThemeTokens.mutedText(context)),
-                    ),
-                  ],
+    final tokens = StarsDesktopTokens.of(context);
+    return ColoredBox(
+      color: tokens.sidebarOpaque,
+      child: Padding(
+        padding: DesktopThemeTokens.panelPadding,
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DesktopThemeTokens.sectionTitleStyle(context),
+                      ),
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: DesktopThemeTokens.metaStyle(context),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              action,
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            onChanged: onSearchChanged,
-            decoration: DesktopThemeTokens.searchDecoration(
-              context,
-              hintText: searchHintText,
+                const SizedBox(width: 8),
+                action,
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(child: child),
-        ],
+            const SizedBox(height: 12),
+            StarsSearchField(
+              hintText: searchHintText,
+              focusNode: searchFocusNode,
+              onChanged: onSearchChanged,
+            ),
+            const SizedBox(height: 12),
+            Expanded(child: child),
+          ],
+        ),
       ),
     );
   }
@@ -504,7 +1091,7 @@ class DesktopInteractiveListItem extends StatefulWidget {
     required this.selected,
     required this.onTap,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
   });
 
   @override
@@ -516,56 +1103,68 @@ class _DesktopInteractiveListItemState
     extends State<DesktopInteractiveListItem> {
   bool _hovered = false;
   bool _focused = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      constraints: const BoxConstraints(
-        minHeight: DesktopThemeTokens.listItemMinHeight,
-      ),
-      decoration: DesktopThemeTokens.listItemDecoration(
-        context,
-        selected: widget.selected,
-        hovered: _hovered,
-        focused: _focused,
-      ),
-      child: FocusableActionDetector(
-        mouseCursor: SystemMouseCursors.click,
-        shortcuts: const <ShortcutActivator, Intent>{
-          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
-          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
-        },
-        actions: <Type, Action<Intent>>{
-          ActivateIntent: CallbackAction<ActivateIntent>(
-            onInvoke: (intent) {
-              widget.onTap();
-              return null;
-            },
-          ),
-        },
-        onShowHoverHighlight: (value) {
-          if (_hovered == value) {
-            return;
-          }
-          setState(() {
-            _hovered = value;
-          });
-        },
-        onShowFocusHighlight: (value) {
-          if (_focused == value) {
-            return;
-          }
-          setState(() {
-            _focused = value;
-          });
-        },
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: widget.onTap,
-            borderRadius: DesktopThemeTokens.itemRadius,
-            child: Padding(padding: widget.padding, child: widget.child),
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return Semantics(
+      button: true,
+      selected: widget.selected,
+      child: AnimatedContainer(
+        duration:
+            disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 100),
+        curve: Curves.easeOutCubic,
+        constraints: const BoxConstraints(
+          minHeight: DesktopThemeTokens.listItemMinHeight,
+        ),
+        decoration: DesktopThemeTokens.listItemDecoration(
+          context,
+          selected: widget.selected,
+          hovered: _hovered,
+          pressed: _pressed,
+          focused: _focused,
+        ),
+        child: FocusableActionDetector(
+          mouseCursor: SystemMouseCursors.click,
+          shortcuts: const <ShortcutActivator, Intent>{
+            SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+            SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+          },
+          actions: <Type, Action<Intent>>{
+            ActivateIntent: CallbackAction<ActivateIntent>(
+              onInvoke: (intent) {
+                widget.onTap();
+                return null;
+              },
+            ),
+          },
+          onShowHoverHighlight: (value) {
+            if (_hovered != value) {
+              setState(() => _hovered = value);
+            }
+          },
+          onShowFocusHighlight: (value) {
+            if (_focused != value) {
+              setState(() => _focused = value);
+            }
+          },
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onTap,
+              onHighlightChanged: (value) {
+                if (_pressed != value) {
+                  setState(() => _pressed = value);
+                }
+              },
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+              borderRadius: DesktopThemeTokens.itemRadius,
+              child: Padding(padding: widget.padding, child: widget.child),
+            ),
           ),
         ),
       ),
@@ -576,7 +1175,7 @@ class _DesktopInteractiveListItemState
 class StarsDesktopTheme {
   static double get panelRadius => DesktopThemeTokens.panelRadiusValue;
   static double get cardRadius => DesktopThemeTokens.statusRadiusValue;
-  static double get bubbleRadius => DesktopThemeTokens.itemRadiusValue;
+  static double get bubbleRadius => DesktopThemeTokens.bubbleRadiusValue;
   static double get workspacePadding =>
       DesktopThemeTokens.workspacePadding.left;
   static const double contentMaxWidth = 920;
@@ -608,13 +1207,11 @@ class StarsDesktopTheme {
   }
 
   static Color assistantBubble(BuildContext context) {
-    return DesktopThemeTokens.secondarySurface(context);
+    return DesktopThemeTokens.panelSurface(context);
   }
 
   static Color userBubble(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark
-        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.24)
-        : const Color(0xFFE9F1FF);
+    return DesktopThemeTokens.selectedFill(context);
   }
 
   static Color statusCardBackground(BuildContext context) {

@@ -246,6 +246,73 @@ class MessageLookup extends MessageLookupByLibrary {
     "uploadImage": MessageLookupByLibrary.simpleMessage("Image"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("User Agreement"),
     "version": MessageLookupByLibrary.simpleMessage("Version 1.0.0"),
+    "searchChats": MessageLookupByLibrary.simpleMessage("Search chats"),
+    "searchBots": MessageLookupByLibrary.simpleMessage("Search bots"),
+    "noMatchingChats": MessageLookupByLibrary.simpleMessage(
+      "No matching chats found",
+    ),
+    "desktopPersonalInformation": MessageLookupByLibrary.simpleMessage(
+      "Personal Information",
+    ),
+    "desktopAppearanceAndLanguage": MessageLookupByLibrary.simpleMessage(
+      "Appearance & Language",
+    ),
+    "desktopHelpAndSupport": MessageLookupByLibrary.simpleMessage(
+      "Help & Support",
+    ),
+    "desktopAboutAndLegal": MessageLookupByLibrary.simpleMessage(
+      "About & Legal",
+    ),
+    "desktopSettingsDescription": MessageLookupByLibrary.simpleMessage(
+      "Manage your profile, appearance, language, and app support.",
+    ),
+    "desktopEditProfileDescription": MessageLookupByLibrary.simpleMessage(
+      "Change your avatar and display name.",
+    ),
+    "desktopSavedImmediatelyDescription": MessageLookupByLibrary.simpleMessage(
+      "Changes take effect immediately and are saved locally.",
+    ),
+    "changeAvatar": MessageLookupByLibrary.simpleMessage("Change avatar"),
+    "resetToDefault": MessageLookupByLibrary.simpleMessage("Reset to Default"),
+    "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
+    "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
+    "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
+    "jumpToLatest": MessageLookupByLibrary.simpleMessage("Jump to Latest"),
+    "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
+    "stop": MessageLookupByLibrary.simpleMessage("Stop"),
+    "basicInformation": MessageLookupByLibrary.simpleMessage(
+      "Basic Information",
+    ),
+    "providerInformation": MessageLookupByLibrary.simpleMessage(
+      "Provider Information",
+    ),
+    "modelConfiguration": MessageLookupByLibrary.simpleMessage(
+      "Model Configuration",
+    ),
+    "copyApiKey": MessageLookupByLibrary.simpleMessage("Copy API Key"),
+    "showApiKey": MessageLookupByLibrary.simpleMessage("Show API Key"),
+    "hideApiKey": MessageLookupByLibrary.simpleMessage("Hide API Key"),
+    "noMatchingBots": MessageLookupByLibrary.simpleMessage(
+      "No matching bots found",
+    ),
+    "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
+      "Try a different search, or create a new item.",
+    ),
+    "chatSearchScope": MessageLookupByLibrary.simpleMessage(
+      "Search includes message content and bot names.",
+    ),
+    "newChatWorkspaceHint": MessageLookupByLibrary.simpleMessage(
+      "A new chat opens directly in the workspace.",
+    ),
+    "botSearchScope": MessageLookupByLibrary.simpleMessage(
+      "Search filters the list by bot name.",
+    ),
+    "newBotWorkspaceHint": MessageLookupByLibrary.simpleMessage(
+      "New bots remain in the workspace for editing.",
+    ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
   };
 }
