@@ -116,6 +116,8 @@ class StartupShell extends StatelessWidget {
                             'assets/icon/app_icon.png',
                             width: 72,
                             height: 72,
+                            cacheWidth: 144,
+                            cacheHeight: 144,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -242,6 +244,18 @@ class _MyAppState extends State<MyApp> {
         brightness: Brightness.dark,
         fontSize: _fontSize,
       ),
+      highContrastTheme: buildAppTheme(
+        brightness: Brightness.light,
+        fontSize: _fontSize,
+        highContrast: true,
+        reduceTransparency: true,
+      ),
+      highContrastDarkTheme: buildAppTheme(
+        brightness: Brightness.dark,
+        fontSize: _fontSize,
+        highContrast: true,
+        reduceTransparency: true,
+      ),
       themeMode: _themeMode,
 
       // 国际化配置
@@ -279,23 +293,33 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ChatListPageState> _chatListKey =
+      GlobalKey<ChatListPageState>();
+  final GlobalKey<ContactsPageState> _botListKey =
+      GlobalKey<ContactsPageState>();
   String? _selectedChatId;
+  Bot? _selectedChatBot;
   Bot? _selectedBot;
+  int _selectedProfileSection = 0;
 
   @override
   Widget build(BuildContext context) {
     final isDesktopOrTablet = isDesktopOrTabletPlatform(context);
     final pages = [
       ChatListPage(
+        key: _chatListKey,
         selectedChatId: _selectedChatId,
         onChatSelected: _onChatSelected,
+        onSelectionCleared: _clearSelectedChat,
       ),
       ContactsPage(
+        key: _botListKey,
         selectedBotId: _selectedBot?.id,
         onBotSelected: _onBotSelected,
         onChatCreated: _onChatSelected,
+        onSelectionCleared: _clearSelectedBot,
       ),
-      const ProfilePage(),
+      ProfilePage(selectedSection: _selectedProfileSection),
     ];
 
     return Scaffold(
@@ -306,7 +330,21 @@ class _MainPageState extends State<MainPage> {
                 onPageChanged: _onPageChanged,
                 pages: pages,
                 selectedChatId: _selectedChatId,
+                selectedChatBot: _selectedChatBot,
                 selectedBot: _selectedBot,
+                selectedProfileSection: _selectedProfileSection,
+                onProfileSectionChanged: (section) {
+                  setState(() {
+                    _selectedProfileSection = section;
+                    _currentIndex = 2;
+                  });
+                },
+                onCreateChat:
+                    () => _chatListKey.currentState?.openNewChatDialog(),
+                onAddBot: () {
+                  _botListKey.currentState?.openAddBotPage();
+                },
+                onSearchRequested: _focusCurrentListSearch,
                 onBotUpdated: _onBotUpdated,
                 onBotDeleted: _onBotDeleted,
               )
@@ -368,7 +406,7 @@ class _MainPageState extends State<MainPage> {
   void _onChatSelected(String chatId, Bot bot) {
     setState(() {
       _selectedChatId = chatId;
-      _selectedBot = bot;
+      _selectedChatBot = bot;
       _currentIndex = 0;
     });
   }
@@ -380,12 +418,31 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void _onPageChanged(int index) {
+  void _clearSelectedChat() {
+    setState(() {
+      _selectedChatId = null;
+      _selectedChatBot = null;
+    });
+  }
+
+  void _clearSelectedBot() {
     setState(() {
       _selectedBot = null;
-      _selectedChatId = null;
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
       _currentIndex = index;
     });
+  }
+
+  void _focusCurrentListSearch() {
+    if (_currentIndex == 0) {
+      _chatListKey.currentState?.focusSearch();
+    } else if (_currentIndex == 1) {
+      _botListKey.currentState?.focusSearch();
+    }
   }
 
   Future<void> _onBotUpdated(Bot bot) async {
@@ -394,6 +451,9 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       if (_selectedBot?.id == bot.id) {
         _selectedBot = bot;
+      }
+      if (_selectedChatBot?.id == bot.id) {
+        _selectedChatBot = bot;
       }
     });
   }
@@ -407,7 +467,10 @@ class _MainPageState extends State<MainPage> {
     await BotService.deleteBot(botId);
     if (!mounted) return;
     setState(() {
-      _selectedChatId = null;
+      if (_selectedChatBot?.id == botId) {
+        _selectedChatId = null;
+        _selectedChatBot = null;
+      }
       _selectedBot = null;
     });
   }

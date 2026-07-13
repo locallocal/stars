@@ -13,17 +13,25 @@ import 'package:stars/pages/feedback_page.dart';
 import 'package:stars/utils/theme.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.selectedSection = 0});
+
+  final int selectedSection;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  static const double _defaultFontSize = 16.0;
+
   Profile? _profile;
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
   String _language = 'zh_CN'; // 语言设置
+  final List<GlobalKey> _desktopSectionKeys = List<GlobalKey>.generate(
+    4,
+    (_) => GlobalKey(),
+  );
 
   // 随机英文名称列表
   final List<String> _randomNames = [
@@ -64,6 +72,14 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadProfileInfo();
   }
 
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedSection != widget.selectedSection) {
+      _scheduleSelectedSectionScroll();
+    }
+  }
+
   Future<void> _loadProfileInfo() async {
     setState(() {
       _isLoading = true;
@@ -71,11 +87,38 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final loadedProfile = await ProfileService.getProfile();
 
+    if (!mounted) return;
+
     setState(() {
       _profile = loadedProfile;
       _themeMode = intToThemeMode(loadedProfile.themeMode);
       _language = loadedProfile.language; // 加载语言设置
       _isLoading = false;
+    });
+    _scheduleSelectedSectionScroll();
+  }
+
+  void _scheduleSelectedSectionScroll() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !isDesktopPlatform(context)) return;
+
+      final index = widget.selectedSection.clamp(
+        0,
+        _desktopSectionKeys.length - 1,
+      );
+      final sectionContext = _desktopSectionKeys[index].currentContext;
+      if (sectionContext == null) return;
+
+      final disableAnimations = MediaQuery.disableAnimationsOf(context);
+      Scrollable.ensureVisible(
+        sectionContext,
+        alignment: 0.08,
+        duration:
+            disableAnimations
+                ? Duration.zero
+                : const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+      );
     });
   }
 
@@ -180,7 +223,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             _buildSettingsSection(
               context,
-              title: '个人信息',
+              title: S.of(context).desktopPersonalInformation,
               children: [
                 _buildSettingItem(
                   context,
@@ -193,7 +236,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             _buildSettingsSection(
               context,
-              title: '系统设置',
+              title: S.of(context).desktopAppearanceAndLanguage,
               children: [
                 _buildSettingItem(
                   context,
@@ -223,7 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             _buildSettingsSection(
               context,
-              title: '帮助与支持',
+              title: S.of(context).desktopHelpAndSupport,
               children: [
                 _buildSettingItem(
                   context,
@@ -249,156 +292,189 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildDesktopBody(BuildContext context) {
-    return SingleChildScrollView(
-      padding: DesktopThemeTokens.workspacePadding,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.of(context).profile,
-                style: DesktopThemeTokens.pageTitleStyle(context),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '在桌面工作台中统一管理账户、外观与支持信息。',
-                style: DesktopThemeTokens.bodyStyle(
+    return ColoredBox(
+      color: DesktopThemeTokens.workspaceSurface(context),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(32, 28, 32, 48),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  S.of(context).profile,
+                  style: DesktopThemeTokens.pageTitleStyle(context),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  S.of(context).desktopSettingsDescription,
+                  style: DesktopThemeTokens.bodyStyle(
+                    context,
+                  )?.copyWith(color: DesktopThemeTokens.mutedText(context)),
+                ),
+                const SizedBox(height: 32),
+                _buildDesktopSettingsSection(
                   context,
-                )?.copyWith(color: DesktopThemeTokens.mutedText(context)),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 5, child: _buildDesktopHeroCard(context)),
-                  const SizedBox(width: 16),
-                  Expanded(flex: 4, child: _buildDesktopOverviewCard(context)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _buildDesktopSectionCard(
-                          context,
-                          title: '个人信息',
-                          children: [
-                            _buildSettingItem(
-                              context,
-                              Icons.person_rounded,
-                              S.of(context).name,
-                              _name,
-                              _showEditNameDialog,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDesktopSectionCard(
-                          context,
-                          title: '帮助与支持',
-                          children: [
-                            _buildSettingItem(
-                              context,
-                              Icons.help_rounded,
-                              S.of(context).helpAndFeedback,
-                              S.of(context).provideFeedback,
-                              _openFeedbackPage,
-                            ),
-                            const SizedBox(height: 10),
-                            _buildSettingItem(
-                              context,
-                              Icons.info_rounded,
-                              S.of(context).about,
-                              S.of(context).version,
-                              _showCustomAboutDialog,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildDesktopSectionCard(
+                  sectionKey: _desktopSectionKeys[0],
+                  title: S.of(context).desktopPersonalInformation,
+                  description: S.of(context).desktopEditProfileDescription,
+                  children: [_buildDesktopProfileRow(context)],
+                ),
+                const SizedBox(height: 32),
+                _buildDesktopSettingsSection(
+                  context,
+                  sectionKey: _desktopSectionKeys[1],
+                  title: S.of(context).desktopAppearanceAndLanguage,
+                  description: S.of(context).desktopSavedImmediatelyDescription,
+                  children: [
+                    _buildDesktopSettingRow(
                       context,
-                      title: '系统设置',
-                      children: [
-                        _buildSettingItem(
-                          context,
-                          Icons.brightness_6_rounded,
-                          S.of(context).themeSettings,
-                          _themeLabel(context),
-                          _showThemeOptions,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildSettingItem(
-                          context,
-                          Icons.language_rounded,
-                          S.of(context).languageSettings,
-                          getLanguageName(_language),
-                          _showLanguageOptions,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildSettingItem(
-                          context,
-                          Icons.text_fields_rounded,
-                          S.of(context).fontSizeSettings,
-                          '${S.of(context).adjustAppFontSize} ${_fontSize.round()}',
-                          _showFontSizeDialog,
-                        ),
-                        const SizedBox(height: 6),
-                        _buildFontSizeSlider(context),
-                      ],
+                      icon: Icons.brightness_6_outlined,
+                      title: S.of(context).themeSettings,
+                      value: _themeLabel(context),
+                      onTap: _showThemeOptions,
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    _buildDesktopSettingRow(
+                      context,
+                      icon: Icons.language_outlined,
+                      title: S.of(context).languageSettings,
+                      value: getLanguageName(_language),
+                      onTap: _showLanguageOptions,
+                    ),
+                    _buildDesktopFontSizeControl(context),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                _buildDesktopSettingsSection(
+                  context,
+                  sectionKey: _desktopSectionKeys[2],
+                  title: S.of(context).desktopHelpAndSupport,
+                  children: [
+                    _buildDesktopSettingRow(
+                      context,
+                      icon: Icons.help_outline_rounded,
+                      title: S.of(context).helpAndFeedback,
+                      subtitle: S.of(context).provideFeedback,
+                      onTap: _openFeedbackPage,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                _buildDesktopSettingsSection(
+                  context,
+                  sectionKey: _desktopSectionKeys[3],
+                  title: S.of(context).desktopAboutAndLegal,
+                  children: [
+                    _buildDesktopSettingRow(
+                      context,
+                      icon: Icons.info_outline_rounded,
+                      title: S.of(context).about,
+                      subtitle: S.of(context).version,
+                      onTap: _showCustomAboutDialog,
+                    ),
+                    _buildDesktopSettingRow(
+                      context,
+                      icon: Icons.description_outlined,
+                      title: S.of(context).userAgreement,
+                      onTap: _openUserAgreementPage,
+                    ),
+                    _buildDesktopSettingRow(
+                      context,
+                      icon: Icons.privacy_tip_outlined,
+                      title: S.of(context).privacyPolicy,
+                      onTap: _openPrivacyPolicyPage,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDesktopHeroCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: DesktopThemeTokens.panelDecoration(context),
-      child: Row(
+  Widget _buildDesktopSettingsSection(
+    BuildContext context, {
+    required GlobalKey sectionKey,
+    required String title,
+    String? description,
+    required List<Widget> children,
+  }) {
+    return KeyedSubtree(
+      key: sectionKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
-            onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 42,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              backgroundImage: _buildAvatarImageProvider(),
+          Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
+          if (description != null) ...[
+            const SizedBox(height: 4),
+            Text(description, style: DesktopThemeTokens.metaStyle(context)),
+          ],
+          const SizedBox(height: 12),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: DesktopThemeTokens.divider(context)),
+                bottom: BorderSide(color: DesktopThemeTokens.divider(context)),
+              ),
+            ),
+            child: Column(
+              children: [
+                for (var index = 0; index < children.length; index++) ...[
+                  children[index],
+                  if (index != children.length - 1)
+                    Divider(
+                      height: 1,
+                      indent: 40,
+                      color: DesktopThemeTokens.divider(context),
+                    ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(width: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopProfileRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      child: Row(
+        children: [
+          Tooltip(
+            message: S.of(context).changeAvatar,
+            child: Semantics(
+              button: true,
+              label: S.of(context).changeAvatar,
+              child: InkWell(
+                onTap: _pickImage,
+                customBorder: const CircleBorder(),
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: DesktopThemeTokens.secondarySurface(context),
+                  backgroundImage: _buildAvatarImageProvider(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   _name,
-                  style: DesktopThemeTokens.sectionTitleStyle(context),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '当前语言：${getLanguageName(_language)}',
-                  style: DesktopThemeTokens.metaStyle(context),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '点击头像可更换图片，桌面端内容区保持统一面板与留白节奏。',
                   style: DesktopThemeTokens.bodyStyle(
                     context,
-                  )?.copyWith(color: DesktopThemeTokens.mutedText(context)),
+                  )?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  S.of(context).name,
+                  style: DesktopThemeTokens.metaStyle(context),
                 ),
               ],
             ),
@@ -406,7 +482,7 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(width: 16),
           OutlinedButton.icon(
             onPressed: _showEditNameDialog,
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit_outlined, size: 16),
             label: Text(S.of(context).editName),
             style: DesktopThemeTokens.secondaryButtonStyle(context),
           ),
@@ -415,56 +491,156 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildDesktopOverviewCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: DesktopThemeTokens.statusDecoration(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('账户概览', style: DesktopThemeTokens.sectionTitleStyle(context)),
-          const SizedBox(height: 14),
-          _buildOverviewRow(context, '主题', _themeLabel(context)),
-          const SizedBox(height: 10),
-          _buildOverviewRow(context, '语言', getLanguageName(_language)),
-          const SizedBox(height: 10),
-          _buildOverviewRow(context, '字体大小', '${_fontSize.round()}'),
-        ],
+  Widget _buildDesktopSettingRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    String? value,
+    required VoidCallback onTap,
+  }) {
+    return Semantics(
+      button: true,
+      label: title,
+      value: value ?? subtitle,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          hoverColor: DesktopThemeTokens.hoverFill(context),
+          borderRadius: DesktopThemeTokens.controlRadius,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 58),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: DesktopThemeTokens.mutedText(context),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: DesktopThemeTokens.bodyStyle(context),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: DesktopThemeTokens.metaStyle(context),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (value != null) ...[
+                    const SizedBox(width: 16),
+                    Flexible(
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DesktopThemeTokens.metaStyle(context),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: DesktopThemeTokens.softText(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildOverviewRow(BuildContext context, String label, String value) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(label, style: DesktopThemeTokens.metaStyle(context)),
-        ),
-        Text(
-          value,
-          style: DesktopThemeTokens.bodyStyle(
-            context,
-          )?.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
+  Widget _buildDesktopFontSizeControl(BuildContext context) {
+    final isDefault = (_fontSize - _defaultFontSize).abs() < 0.01;
 
-  Widget _buildDesktopSectionCard(
-    BuildContext context, {
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: DesktopThemeTokens.panelDecoration(context),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 14, 8, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
-          const SizedBox(height: 12),
-          ...children,
+          Row(
+            children: [
+              SizedBox(
+                width: 24,
+                child: Icon(
+                  Icons.text_fields_outlined,
+                  size: 18,
+                  color: DesktopThemeTokens.mutedText(context),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  S.of(context).fontSizeSettings,
+                  style: DesktopThemeTokens.bodyStyle(context),
+                ),
+              ),
+              Text(
+                '${_fontSize.round()} px',
+                style: DesktopThemeTokens.metaStyle(
+                  context,
+                )?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 12),
+              TextButton.icon(
+                onPressed:
+                    isDefault ? null : () => _updateFontSize(_defaultFontSize),
+                icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                label: Text(S.of(context).resetToDefault),
+              ),
+            ],
+          ),
+          Slider(
+            value: _fontSize,
+            min: 12,
+            max: 24,
+            divisions: 12,
+            label: _fontSize.round().toString(),
+            onChanged: _updateFontSize,
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: DesktopThemeTokens.statusDecoration(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  S.of(context).previewText,
+                  style: DesktopThemeTokens.metaStyle(context),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  S.of(context).appDescription,
+                  style: TextStyle(
+                    color: DesktopThemeTokens.text(context),
+                    fontSize: _fontSize,
+                    height: 1.55,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -501,6 +677,23 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _updateFontSize(double value) {
+    if (_profile == null || (_fontSize - value).abs() < 0.01) return;
+
+    setState(() {
+      _profile = Profile(
+        name: _name,
+        avatar: _avatar,
+        fontSize: value,
+        themeMode: themeModeToInt(_themeMode),
+        language: _language,
+        createTimestamp: _profile!.createTimestamp,
+        modifyTimestamp: DateTime.now(),
+      );
+    });
+    _saveProfile();
+  }
+
   Widget _buildFontSizeSlider(BuildContext context) {
     final slider = Slider(
       value: _fontSize,
@@ -512,20 +705,7 @@ class _ProfilePageState extends State<ProfilePage> {
         context,
       ).colorScheme.onSurface.withValues(alpha: 0.3),
       label: _fontSize.round().toString(),
-      onChanged: (value) {
-        setState(() {
-          _profile = Profile(
-            name: _name,
-            avatar: _avatar,
-            fontSize: value,
-            themeMode: themeModeToInt(_themeMode),
-            language: _language,
-            createTimestamp: _profile!.createTimestamp,
-            modifyTimestamp: DateTime.now(),
-          );
-        });
-        _saveProfile();
-      },
+      onChanged: _updateFontSize,
     );
 
     if (isDesktopPlatform(context)) {
@@ -556,13 +736,31 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_avatar.isNotEmpty) {
       return FileImage(File(_avatar));
     }
-    return const AssetImage('assets/images/profile/avatar.png');
+    return const ResizeImage(
+      AssetImage('assets/images/profile/avatar.png'),
+      width: 256,
+      height: 256,
+    );
   }
 
   void _openFeedbackPage() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const FeedbackPage()),
+    );
+  }
+
+  void _openUserAgreementPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const UserAgreementPage()),
+    );
+  }
+
+  void _openPrivacyPolicyPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
     );
   }
 
@@ -690,40 +888,38 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ...themes
-                              .map(
-                                (theme) => RadioListTile<ThemeMode>(
-                                  title: Row(
-                                    children: [
-                                      Icon(theme['icon'] as IconData),
-                                      const SizedBox(width: 12),
-                                      theme['title'] as Text,
-                                    ],
-                                  ),
-                                  activeColor:
-                                      Theme.of(context).colorScheme.onSurface,
-                                  value: theme['mode'] as ThemeMode,
-                                  groupValue: _themeMode,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _themeMode = value!;
-                                    });
-                                    _saveProfile(); // 保存设置
-
-                                    // 通知应用程序更新主题
-                                    ProfileService.notifyThemeChanged(
-                                      _themeMode,
-                                    );
-                                    Navigator.pop(context);
-                                  },
+                    child: RadioGroup<ThemeMode>(
+                      groupValue: _themeMode,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _themeMode = value;
+                        });
+                        _saveProfile();
+                        ProfileService.notifyThemeChanged(_themeMode);
+                        Navigator.pop(context);
+                      },
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ...themes.map(
+                              (theme) => RadioListTile<ThemeMode>(
+                                title: Row(
+                                  children: [
+                                    Icon(theme['icon'] as IconData),
+                                    const SizedBox(width: 12),
+                                    theme['title'] as Text,
+                                  ],
                                 ),
+                                activeColor:
+                                    Theme.of(context).colorScheme.onSurface,
+                                value: theme['mode'] as ThemeMode,
                               ),
-                          SizedBox(height: 24),
-                        ],
+                            ),
+                            SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -951,24 +1147,36 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildLanguageOption('zh_CN', '简体中文'),
-                          _buildLanguageOption('en_US', 'English'),
-                          _buildLanguageOption('zh_TW', '繁體中文'),
-                          _buildLanguageOption('ja_JP', '日本語'),
-                          _buildLanguageOption('fr_FR', 'Français'),
-                          _buildLanguageOption('de_DE', 'Deutsch'),
-                          _buildLanguageOption('ko_KR', '한국어'),
-                          _buildLanguageOption('ru_RU', 'Русский'),
-                          _buildLanguageOption('es_ES', 'Español'),
-                          _buildLanguageOption('hi_IN', 'हिन्दी'),
-                          _buildLanguageOption('pt_BR', 'Português'),
-                          _buildLanguageOption('it_IT', 'Italiano'),
-                          SizedBox(height: 24),
-                        ],
+                    child: RadioGroup<String>(
+                      groupValue: _language,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _language = value;
+                        });
+                        _saveProfile();
+                        ProfileService.notifyLanguageChanged(_language);
+                        Navigator.pop(context);
+                      },
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildLanguageOption('zh_CN', '简体中文'),
+                            _buildLanguageOption('en_US', 'English'),
+                            _buildLanguageOption('zh_TW', '繁體中文'),
+                            _buildLanguageOption('ja_JP', '日本語'),
+                            _buildLanguageOption('fr_FR', 'Français'),
+                            _buildLanguageOption('de_DE', 'Deutsch'),
+                            _buildLanguageOption('ko_KR', '한국어'),
+                            _buildLanguageOption('ru_RU', 'Русский'),
+                            _buildLanguageOption('es_ES', 'Español'),
+                            _buildLanguageOption('hi_IN', 'हिन्दी'),
+                            _buildLanguageOption('pt_BR', 'Português'),
+                            _buildLanguageOption('it_IT', 'Italiano'),
+                            SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -985,17 +1193,6 @@ class _ProfilePageState extends State<ProfilePage> {
       title: Text(name),
       activeColor: Theme.of(context).colorScheme.onSurface,
       value: code,
-      groupValue: _language,
-      onChanged: (value) {
-        setState(() {
-          _language = value!;
-        });
-        _saveProfile(); // 保存设置
-
-        // 通知应用程序更新语言
-        ProfileService.notifyLanguageChanged(_language);
-        Navigator.pop(context);
-      },
     );
   }
 

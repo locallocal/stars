@@ -184,6 +184,55 @@ class MessageLookup extends MessageLookupByLibrary {
     "uploadImage": MessageLookupByLibrary.simpleMessage("图片"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("用户协议"),
     "version": MessageLookupByLibrary.simpleMessage("版本 1.0.0"),
+    "searchChats": MessageLookupByLibrary.simpleMessage("搜索聊天记录"),
+    "searchBots": MessageLookupByLibrary.simpleMessage("搜索智能体"),
+    "noMatchingChats": MessageLookupByLibrary.simpleMessage("没有找到匹配的聊天"),
+    "desktopPersonalInformation": MessageLookupByLibrary.simpleMessage("个人信息"),
+    "desktopAppearanceAndLanguage": MessageLookupByLibrary.simpleMessage(
+      "外观与语言",
+    ),
+    "desktopHelpAndSupport": MessageLookupByLibrary.simpleMessage("帮助与支持"),
+    "desktopAboutAndLegal": MessageLookupByLibrary.simpleMessage("关于与法律信息"),
+    "desktopSettingsDescription": MessageLookupByLibrary.simpleMessage(
+      "管理个人信息、外观、语言与应用支持。",
+    ),
+    "desktopEditProfileDescription": MessageLookupByLibrary.simpleMessage(
+      "修改头像与展示名称。",
+    ),
+    "desktopSavedImmediatelyDescription": MessageLookupByLibrary.simpleMessage(
+      "修改后会立即生效并保存到本地。",
+    ),
+    "changeAvatar": MessageLookupByLibrary.simpleMessage("更换头像"),
+    "resetToDefault": MessageLookupByLibrary.simpleMessage("恢复默认"),
+    "hideSidebar": MessageLookupByLibrary.simpleMessage("隐藏侧栏"),
+    "showSidebar": MessageLookupByLibrary.simpleMessage("显示侧栏"),
+    "hideInspector": MessageLookupByLibrary.simpleMessage("隐藏智能体信息"),
+    "showInspector": MessageLookupByLibrary.simpleMessage("显示智能体信息"),
+    "botInformation": MessageLookupByLibrary.simpleMessage("智能体信息"),
+    "jumpToLatest": MessageLookupByLibrary.simpleMessage("回到最新"),
+    "imageStyle": MessageLookupByLibrary.simpleMessage("图像风格"),
+    "imageSize": MessageLookupByLibrary.simpleMessage("图像尺寸"),
+    "stop": MessageLookupByLibrary.simpleMessage("停止"),
+    "basicInformation": MessageLookupByLibrary.simpleMessage("基本信息"),
+    "providerInformation": MessageLookupByLibrary.simpleMessage("提供商信息"),
+    "modelConfiguration": MessageLookupByLibrary.simpleMessage("模型配置"),
+    "copyApiKey": MessageLookupByLibrary.simpleMessage("复制 API 密钥"),
+    "showApiKey": MessageLookupByLibrary.simpleMessage("显示 API 密钥"),
+    "hideApiKey": MessageLookupByLibrary.simpleMessage("隐藏 API 密钥"),
+    "noMatchingBots": MessageLookupByLibrary.simpleMessage("没有找到匹配的智能体"),
+    "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
+      "试试其他关键词，或直接新建。",
+    ),
+    "chatSearchScope": MessageLookupByLibrary.simpleMessage(
+      "搜索会同时匹配消息内容和智能体名称。",
+    ),
+    "newChatWorkspaceHint": MessageLookupByLibrary.simpleMessage(
+      "新建聊天后会直接在工作区打开会话。",
+    ),
+    "botSearchScope": MessageLookupByLibrary.simpleMessage("搜索会按智能体名称过滤列表。"),
+    "newBotWorkspaceHint": MessageLookupByLibrary.simpleMessage(
+      "新建智能体会留在工作区中继续编辑。",
+    ),
     "webSearch": MessageLookupByLibrary.simpleMessage("联网搜索"),
   };
 }

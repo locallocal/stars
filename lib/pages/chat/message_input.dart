@@ -1,10 +1,10 @@
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
-import 'package:stars/pages/common/common.dart';
 import 'package:stars/services/providers/providers.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
@@ -48,9 +48,6 @@ class _MessageInputState extends State<MessageInput> {
   String selectedVideoRatio = '';
   bool isWebSearchEnabled = false;
   bool isDeepThinkingEnabled = false;
-  bool showGenerateImageOptions = false;
-  bool showGenerateVideoOptions = false;
-  bool showAttachmentInputs = false;
   final FocusNode _focusNode = FocusNode();
   bool _hasFocus = false;
 
@@ -65,6 +62,15 @@ class _MessageInputState extends State<MessageInput> {
         widget.provider.getSupportVideoRatios().isNotEmpty) {
       selectedVideoRatio = widget.provider.getSupportVideoRatios().first;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (selectedImageRatio.isNotEmpty) {
+        widget.onImageSizeSelected(selectedImageRatio);
+      }
+      if (selectedVideoRatio.isNotEmpty) {
+        widget.onVideoRatioSelected(selectedVideoRatio);
+      }
+    });
     _focusNode.addListener(_handleFocusChanged);
   }
 
@@ -88,6 +94,33 @@ class _MessageInputState extends State<MessageInput> {
       widget.controller.text.trim().isNotEmpty || widget.hasPendingAttachments;
 
   bool get _isDesktop => widget.desktopMode;
+
+  bool get _isComposing {
+    final composing = widget.controller.value.composing;
+    return composing.isValid && !composing.isCollapsed;
+  }
+
+  KeyEventResult _handleComposerKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        (event.logicalKey != LogicalKeyboardKey.enter &&
+            event.logicalKey != LogicalKeyboardKey.numpadEnter)) {
+      return KeyEventResult.ignored;
+    }
+
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isShiftPressed ||
+        keyboard.isAltPressed ||
+        keyboard.isControlPressed ||
+        keyboard.isMetaPressed ||
+        _isComposing) {
+      return KeyEventResult.ignored;
+    }
+
+    if (!widget.waitingBotMessage && _canSubmit) {
+      widget.onSend();
+    }
+    return KeyEventResult.handled;
+  }
 
   String get _modelSummary {
     final provider = widget.provider.bot.provider.trim();
@@ -113,23 +146,23 @@ class _MessageInputState extends State<MessageInput> {
             top: 8,
           ),
           padding: EdgeInsets.fromLTRB(
-            isDesktop ? 18 : 8,
-            isDesktop ? 12 : 0,
-            isDesktop ? 18 : 8,
-            isDesktop ? 12 : 14,
+            isDesktop ? 12 : 8,
+            isDesktop ? 8 : 0,
+            isDesktop ? 12 : 8,
+            isDesktop ? 10 : 14,
           ),
           decoration: BoxDecoration(
             color:
                 isDesktop
                     ? StarsDesktopTheme.panelBackground(context)
                     : Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(isDesktop ? 20 : 16),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color:
                   _hasFocus && isDesktop
                       ? Theme.of(
                         context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.28)
+                      ).colorScheme.primary.withValues(alpha: 0.72)
                       : isDesktop
                       ? StarsDesktopTheme.borderColor(context)
                       : Colors.transparent,
@@ -150,50 +183,59 @@ class _MessageInputState extends State<MessageInput> {
           ),
           child: Column(
             children: [
-              TextField(
-                controller: widget.controller,
-                focusNode: _focusNode,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => widget.onSend(),
-                decoration: InputDecoration(
-                  hintText: '输入消息、指令或任务说明',
-                  hintStyle: TextStyle(
-                    fontSize: fontSize,
-                    color: StarsDesktopTheme.subtleText(context),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 4 : 0,
-                    vertical: isDesktop ? 8 : 12,
-                  ),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: isDesktop ? 96 : double.infinity,
                 ),
-                maxLines: isDesktop ? 6 : 6,
-                minLines: isDesktop ? 2 : 3,
-                textAlignVertical: TextAlignVertical.center,
-                style: TextStyle(
-                  height: isDesktop ? 1.5 : null,
-                  fontSize: fontSize,
+                child: Focus(
+                  canRequestFocus: false,
+                  skipTraversal: true,
+                  onKeyEvent: isDesktop ? _handleComposerKeyEvent : null,
+                  child: TextField(
+                    controller: widget.controller,
+                    focusNode: _focusNode,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction:
+                        isDesktop
+                            ? TextInputAction.newline
+                            : TextInputAction.send,
+                    onSubmitted:
+                        isDesktop
+                            ? null
+                            : (_) {
+                              if (!_isComposing && _canSubmit) {
+                                widget.onSend();
+                              }
+                            },
+                    decoration: InputDecoration(
+                      hintText: S.of(context).messageHint,
+                      hintStyle: TextStyle(
+                        fontSize: fontSize,
+                        color: StarsDesktopTheme.subtleText(context),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isDesktop ? 4 : 0,
+                        vertical: isDesktop ? 2 : 12,
+                      ),
+                    ),
+                    maxLines: isDesktop ? null : 6,
+                    minLines: isDesktop ? 1 : 3,
+                    textAlignVertical: TextAlignVertical.center,
+                    style: TextStyle(
+                      height: isDesktop ? 1.45 : null,
+                      fontSize: fontSize,
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: isDesktop ? 8 : 12),
+              SizedBox(height: isDesktop ? 6 : 12),
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: widget.controller,
                 builder: (context, value, child) {
                   return _buildBottomToolbar(context, fontSize, isDesktop);
                 },
               ),
-              if (showAttachmentInputs) ...[
-                const SizedBox(height: 14),
-                _buildAttachmentPanel(context, fontSize, isDesktop),
-              ],
-              if (showGenerateImageOptions) ...[
-                const SizedBox(height: 14),
-                _buildGenerateImageOptions(context, fontSize),
-              ],
-              if (showGenerateVideoOptions) ...[
-                const SizedBox(height: 14),
-                _buildGenerateVideoOptions(context, fontSize),
-              ],
             ],
           ),
         ),
@@ -247,36 +289,16 @@ class _MessageInputState extends State<MessageInput> {
                   },
                 ),
               if (widget.provider.getOutputModalites().contains(
-                OutputModality.image,
-              ))
-                _buildActionChip(
-                  context,
-                  icon: Icons.image_outlined,
-                  label:
-                      selectedImageStyle.isEmpty
-                          ? selectedImageRatio
-                          : '$selectedImageStyle · $selectedImageRatio',
-                  active: showGenerateImageOptions,
-                  onTap: () {
-                    setState(() {
-                      showGenerateImageOptions = !showGenerateImageOptions;
-                    });
-                  },
-                ),
+                    OutputModality.image,
+                  ) &&
+                  (widget.provider.getSupportImageStyles().isNotEmpty ||
+                      widget.provider.getSupportedImageSizes().isNotEmpty))
+                _buildImageOptionsMenu(context),
               if (widget.provider.getOutputModalites().contains(
-                OutputModality.video,
-              ))
-                _buildActionChip(
-                  context,
-                  icon: Icons.video_camera_back_outlined,
-                  label: selectedVideoRatio,
-                  active: showGenerateVideoOptions,
-                  onTap: () {
-                    setState(() {
-                      showGenerateVideoOptions = !showGenerateVideoOptions;
-                    });
-                  },
-                ),
+                    OutputModality.video,
+                  ) &&
+                  widget.provider.getSupportVideoRatios().isNotEmpty)
+                _buildVideoOptionsMenu(context),
             ],
           ),
         ),
@@ -284,26 +306,169 @@ class _MessageInputState extends State<MessageInput> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_supportsAttachments)
-              _buildCircleActionButton(
-                context,
-                icon:
-                    showAttachmentInputs
-                        ? buildCloseIcon(context)
-                        : const Icon(Icons.add_rounded),
-                tooltip: S.of(context).uploadFile,
-                active: showAttachmentInputs || widget.hasPendingAttachments,
-                onPressed: () {
-                  setState(() {
-                    showAttachmentInputs = !showAttachmentInputs;
-                  });
-                },
-              ),
+            if (_supportsAttachments) _buildAttachmentMenu(context),
             const SizedBox(width: 10),
             _buildPrimaryActionButton(context, isDesktop),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildAttachmentMenu(BuildContext context) {
+    final menuChildren = <Widget>[
+      if (widget.provider.getInputModalites().contains(InputModality.image))
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.photo_camera_outlined, size: 18),
+          onPressed: widget.onCameraPressed,
+          child: Text(S.of(context).takePhoto),
+        ),
+      if (widget.provider.getInputModalites().contains(InputModality.image))
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.photo_library_outlined, size: 18),
+          onPressed: widget.onGalleryPressed,
+          child: Text(S.of(context).chooseFromGallery),
+        ),
+      if (widget.provider.getInputModalites().contains(InputModality.file))
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.upload_file_outlined, size: 18),
+          onPressed: widget.onFilePressed,
+          child: Text(S.of(context).uploadFile),
+        ),
+    ];
+
+    return MenuAnchor(
+      menuChildren: menuChildren,
+      builder: (context, controller, child) {
+        return _buildCircleActionButton(
+          context,
+          icon: const Icon(Icons.add_rounded, size: 18),
+          tooltip: S.of(context).uploadFile,
+          active: controller.isOpen || widget.hasPendingAttachments,
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildImageOptionsMenu(BuildContext context) {
+    final styles = widget.provider.getSupportImageStyles();
+    final sizes = widget.provider.getSupportedImageSizes();
+
+    return MenuAnchor(
+      menuChildren: [
+        if (styles.isNotEmpty)
+          SubmenuButton(
+            leadingIcon: const Icon(Icons.brush_outlined, size: 18),
+            menuChildren:
+                styles
+                    .map(
+                      (style) => MenuItemButton(
+                        leadingIcon:
+                            selectedImageStyle == style
+                                ? const Icon(Icons.check_rounded, size: 18)
+                                : const SizedBox(width: 18),
+                        onPressed: () {
+                          setState(() {
+                            selectedImageStyle =
+                                selectedImageStyle == style ? '' : style;
+                          });
+                          widget.onImageStyleSelected(selectedImageStyle);
+                        },
+                        child: Text(style),
+                      ),
+                    )
+                    .toList(),
+            child: Text(S.of(context).imageStyle),
+          ),
+        if (sizes.isNotEmpty)
+          SubmenuButton(
+            leadingIcon: const Icon(Icons.aspect_ratio_outlined, size: 18),
+            menuChildren:
+                sizes
+                    .map(
+                      (size) => MenuItemButton(
+                        leadingIcon:
+                            selectedImageRatio == size
+                                ? const Icon(Icons.check_rounded, size: 18)
+                                : const SizedBox(width: 18),
+                        onPressed: () {
+                          setState(() {
+                            selectedImageRatio = size;
+                          });
+                          widget.onImageSizeSelected(size);
+                        },
+                        child: Text(size),
+                      ),
+                    )
+                    .toList(),
+            child: Text(S.of(context).imageSize),
+          ),
+      ],
+      builder: (context, controller, child) {
+        return _buildActionChip(
+          context,
+          icon: Icons.image_outlined,
+          label:
+              selectedImageStyle.isEmpty
+                  ? selectedImageRatio
+                  : '$selectedImageStyle · $selectedImageRatio',
+          active: controller.isOpen,
+          onTap: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildVideoOptionsMenu(BuildContext context) {
+    final ratios = widget.provider.getSupportVideoRatios();
+
+    return MenuAnchor(
+      menuChildren:
+          ratios
+              .map(
+                (ratio) => MenuItemButton(
+                  leadingIcon:
+                      selectedVideoRatio == ratio
+                          ? const Icon(Icons.check_rounded, size: 18)
+                          : const SizedBox(width: 18),
+                  onPressed: () {
+                    setState(() {
+                      selectedVideoRatio = ratio;
+                    });
+                    widget.onVideoRatioSelected(ratio);
+                  },
+                  child: Text(ratio),
+                ),
+              )
+              .toList(),
+      builder: (context, controller, child) {
+        return _buildActionChip(
+          context,
+          icon: Icons.video_camera_back_outlined,
+          label: selectedVideoRatio,
+          active: controller.isOpen,
+          onTap: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+        );
+      },
     );
   }
 
@@ -335,7 +500,7 @@ class _MessageInputState extends State<MessageInput> {
         ),
         child: IconButton(
           icon: Icon(
-            widget.waitingBotMessage ? Icons.pause_rounded : Icons.send_rounded,
+            widget.waitingBotMessage ? Icons.stop_rounded : Icons.send_rounded,
             color: foregroundColor,
           ),
           tooltip:
@@ -347,53 +512,38 @@ class _MessageInputState extends State<MessageInput> {
       );
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow:
-            enabled
-                ? [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.16),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-                : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+    return SizedBox(
+      width: 96,
+      height: 36,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onPressed,
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
+              duration: const Duration(milliseconds: 120),
               child: Row(
                 key: ValueKey<bool>(widget.waitingBotMessage),
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (widget.waitingBotMessage) ...[
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: foregroundColor,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                  ] else ...[
-                    Icon(Icons.send_rounded, size: 18, color: foregroundColor),
-                    const SizedBox(width: 8),
-                  ],
+                  Icon(
+                    widget.waitingBotMessage
+                        ? Icons.stop_rounded
+                        : Icons.send_rounded,
+                    size: 17,
+                    color: foregroundColor,
+                  ),
+                  const SizedBox(width: 6),
                   Text(
-                    widget.waitingBotMessage ? '停止生成' : '发送',
+                    widget.waitingBotMessage
+                        ? S.of(context).stop
+                        : S.of(context).send,
                     style: TextStyle(
                       color: foregroundColor,
                       fontWeight: FontWeight.w600,
@@ -406,168 +556,6 @@ class _MessageInputState extends State<MessageInput> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentPanel(
-    BuildContext context,
-    double fontSize,
-    bool isDesktop,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color:
-            isDesktop
-                ? StarsDesktopTheme.elevatedSurface(context)
-                : Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border:
-            isDesktop
-                ? Border.all(color: StarsDesktopTheme.borderColor(context))
-                : null,
-      ),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: [
-          if (widget.provider.getInputModalites().contains(InputModality.image))
-            _buildAttachmentTile(
-              context,
-              label: S.of(context).takePhoto,
-              icon: Icons.photo_camera,
-              onTap: widget.onCameraPressed,
-              fontSize: fontSize,
-            ),
-          if (widget.provider.getInputModalites().contains(InputModality.image))
-            _buildAttachmentTile(
-              context,
-              label: S.of(context).chooseFromGallery,
-              icon: Icons.insert_photo,
-              onTap: widget.onGalleryPressed,
-              fontSize: fontSize,
-            ),
-          if (widget.provider.getInputModalites().contains(InputModality.file))
-            _buildAttachmentTile(
-              context,
-              label: S.of(context).uploadFile,
-              icon: Icons.upload_file_rounded,
-              onTap: widget.onFilePressed,
-              fontSize: fontSize,
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGenerateImageOptions(BuildContext context, double fontSize) {
-    return _buildOptionPanel(
-      context,
-      title:
-          selectedImageStyle.isEmpty
-              ? '图像生成设置'
-              : '图像生成设置 · $selectedImageStyle',
-      children: [
-        if (widget.provider.getSupportImageStyles().isNotEmpty) ...[
-          Text(
-            '选择风格',
-            style: TextStyle(
-              fontSize: fontSize - 1,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 96,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children:
-                  widget.provider
-                      .getSupportImageStyles()
-                      .map((style) => _buildStyleOption(style))
-                      .toList(),
-            ),
-          ),
-          const SizedBox(height: 14),
-        ],
-        if (widget.provider.getSupportedImageSizes().isNotEmpty) ...[
-          Text(
-            '选择比例',
-            style: TextStyle(
-              fontSize: fontSize - 1,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 100,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children:
-                  widget.provider
-                      .getSupportedImageSizes()
-                      .map((size) => _buildImageRatioOption(size))
-                      .toList(),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildGenerateVideoOptions(BuildContext context, double fontSize) {
-    return _buildOptionPanel(
-      context,
-      title: '视频生成设置',
-      children: [
-        Text(
-          '选择比例',
-          style: TextStyle(fontSize: fontSize - 1, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 110,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children:
-                widget.provider
-                    .getSupportVideoRatios()
-                    .map((size) => _buildVideoRatioOption(size))
-                    .toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOptionPanel(
-    BuildContext context, {
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: StarsDesktopTheme.elevatedSurface(context),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
       ),
     );
   }
@@ -596,10 +584,10 @@ class _MessageInputState extends State<MessageInput> {
     required VoidCallback onTap,
   }) {
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color:
               active
@@ -607,7 +595,7 @@ class _MessageInputState extends State<MessageInput> {
                     context,
                   ).colorScheme.primary.withValues(alpha: 0.12)
                   : StarsDesktopTheme.elevatedSurface(context),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
                 active
@@ -652,10 +640,10 @@ class _MessageInputState extends State<MessageInput> {
     required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: StarsDesktopTheme.elevatedSurface(context),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Row(
@@ -664,7 +652,7 @@ class _MessageInputState extends State<MessageInput> {
           Icon(icon, size: 16, color: StarsDesktopTheme.mutedText(context)),
           const SizedBox(width: 6),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 220),
+            constraints: const BoxConstraints(maxWidth: 180),
             child: Text(
               label,
               maxLines: 1,
@@ -694,7 +682,7 @@ class _MessageInputState extends State<MessageInput> {
             active
                 ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.10)
                 : StarsDesktopTheme.elevatedSurface(context),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color:
               active
@@ -705,6 +693,12 @@ class _MessageInputState extends State<MessageInput> {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
+        style: IconButton.styleFrom(
+          minimumSize: const Size(34, 34),
+          maximumSize: const Size(34, 34),
+          padding: EdgeInsets.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
         color:
             active
                 ? Theme.of(context).colorScheme.primary
@@ -714,203 +708,7 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildAttachmentTile(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-    required double fontSize,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Container(
-        width: 108,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 22),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: fontSize - 2),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   bool get _supportsAttachments =>
       widget.provider.getInputModalites().contains(InputModality.image) ||
       widget.provider.getInputModalites().contains(InputModality.file);
-
-  Widget _buildStyleOption(String name) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedImageStyle = selectedImageStyle == name ? '' : name;
-          widget.onImageStyleSelected(selectedImageStyle);
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color:
-              selectedImageStyle == name
-                  ? Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.14)
-                  : Theme.of(
-                    context,
-                  ).colorScheme.surface.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 60,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.image_outlined,
-                color:
-                    selectedImageStyle == name
-                        ? Theme.of(context).colorScheme.primary
-                        : StarsDesktopTheme.mutedText(context),
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: Theme.of(context).textTheme.bodyLarge!.fontSize! - 2,
-                fontWeight:
-                    selectedImageStyle == name
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                color:
-                    selectedImageStyle == name
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageRatioOption(String ratio) {
-    return _buildRatioOption(
-      ratio: ratio,
-      selected: selectedImageRatio == ratio,
-      onTap: () {
-        setState(() {
-          selectedImageRatio = ratio;
-          widget.onImageSizeSelected(ratio);
-        });
-      },
-    );
-  }
-
-  Widget _buildVideoRatioOption(String ratio) {
-    return _buildRatioOption(
-      ratio: ratio,
-      selected: selectedVideoRatio == ratio,
-      onTap: () {
-        setState(() {
-          selectedVideoRatio = ratio;
-          widget.onVideoRatioSelected(ratio);
-        });
-      },
-    );
-  }
-
-  Widget _buildRatioOption({
-    required String ratio,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
-    var width = 1.0;
-    var height = 1.0;
-    if (ratio.contains(':')) {
-      final parts = ratio.split(':');
-      width = double.parse(parts[0]);
-      height = double.parse(parts[1]);
-    } else if (ratio.contains('x')) {
-      final parts = ratio.split('x');
-      width = double.parse(parts[0]);
-      height = double.parse(parts[1]);
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color:
-              selected
-                  ? Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.14)
-                  : Theme.of(
-                    context,
-                  ).colorScheme.surface.withValues(alpha: 0.75),
-          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 24,
-              height: 24 * (height / width),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color:
-                      selected
-                          ? Theme.of(context).colorScheme.primary
-                          : StarsDesktopTheme.mutedText(context),
-                  width: 0.8,
-                ),
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              ratio,
-              style: TextStyle(
-                fontSize: fontSize - 2,
-                fontWeight: FontWeight.bold,
-                color:
-                    selected
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

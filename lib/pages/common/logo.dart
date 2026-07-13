@@ -168,5 +168,5 @@ Color getFrostedProviderColor(
   Color baseColor = getProviderColor(provider, defaultColor);
 
   // 创建磨砂效果（通过调整透明度）
-  return baseColor.withOpacity(opacity);
+  return baseColor.withValues(alpha: opacity);
 }

@@ -566,8 +566,38 @@
     "@searchChats": {
       "description": "Hint text for chat search field"
     },
-    "searchBots": "Search Bots",
+    "searchBots": "Search bots",
     "@searchBots": {
         "description": "Hint text for bot search field"
-    }
+    },
+    "desktopPersonalInformation": "Personal Information",
+    "desktopAppearanceAndLanguage": "Appearance & Language",
+    "desktopHelpAndSupport": "Help & Support",
+    "desktopAboutAndLegal": "About & Legal",
+    "desktopSettingsDescription": "Manage your profile, appearance, language, and app support.",
+    "desktopEditProfileDescription": "Change your avatar and display name.",
+    "desktopSavedImmediatelyDescription": "Changes take effect immediately and are saved locally.",
+    "changeAvatar": "Change avatar",
+    "resetToDefault": "Reset to Default",
+    "hideSidebar": "Hide Sidebar",
+    "showSidebar": "Show Sidebar",
+    "hideInspector": "Hide Bot Info",
+    "showInspector": "Show Bot Info",
+    "botInformation": "Bot Information",
+    "jumpToLatest": "Jump to Latest",
+    "imageStyle": "Image Style",
+    "imageSize": "Image Size",
+    "stop": "Stop",
+    "basicInformation": "Basic Information",
+    "providerInformation": "Provider Information",
+    "modelConfiguration": "Model Configuration",
+    "copyApiKey": "Copy API Key",
+    "showApiKey": "Show API Key",
+    "hideApiKey": "Hide API Key",
+    "noMatchingBots": "No matching bots found",
+    "tryDifferentSearch": "Try a different search, or create a new item.",
+    "chatSearchScope": "Search includes message content and bot names.",
+    "newChatWorkspaceHint": "A new chat opens directly in the workspace.",
+    "botSearchScope": "Search filters the list by bot name.",
+    "newBotWorkspaceHint": "New bots remain in the workspace for editing."
 }

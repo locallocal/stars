@@ -12,22 +12,25 @@ import 'package:stars/utils/utils.dart';
 class ChatListPage extends StatefulWidget {
   final String? selectedChatId;
   final Function(String chatId, Bot bot) onChatSelected;
+  final VoidCallback? onSelectionCleared;
   const ChatListPage({
     super.key,
     this.selectedChatId,
     required this.onChatSelected,
+    this.onSelectionCleared,
   });
 
   @override
-  State<ChatListPage> createState() => _ChatListPageState();
+  State<ChatListPage> createState() => ChatListPageState();
 }
 
-class _ChatListPageState extends State<ChatListPage> {
+class ChatListPageState extends State<ChatListPage> {
   List<Chat> chatList = [];
   List<Chat> filteredChatList = [];
   List<Bot> bots = [];
   bool isLoading = true;
   String searchQuery = '';
+  final FocusNode _searchFocusNode = FocusNode();
   late StreamSubscription _chatListSubscription;
   late StreamSubscription _botListSubscription;
 
@@ -49,8 +52,13 @@ class _ChatListPageState extends State<ChatListPage> {
   void dispose() {
     _chatListSubscription.cancel();
     _botListSubscription.cancel();
+    _searchFocusNode.dispose();
     super.dispose();
   }
+
+  void focusSearch() => _searchFocusNode.requestFocus();
+
+  void openNewChatDialog() => _openNewChatDialog();
 
   Future<void> _loadChatList() async {
     setState(() {
@@ -136,8 +144,9 @@ class _ChatListPageState extends State<ChatListPage> {
 
     return DesktopListPanel(
       title: S.of(context).chats,
-      description: '查看最近会话，并在右侧继续当前聊天。',
-      searchHintText: '搜索聊天记录',
+      description: '',
+      searchHintText: S.of(context).searchChats,
+      searchFocusNode: _searchFocusNode,
       onSearchChanged: _filterChats,
       action: ElevatedButton.icon(
         onPressed: _openNewChatDialog,
@@ -163,10 +172,30 @@ class _ChatListPageState extends State<ChatListPage> {
       selectedChatId: widget.selectedChatId,
       onChatDeleted: (String id) {
         if (id.isNotEmpty) {
+          final wasSelected = widget.selectedChatId == id;
+          final deletedIndex = chatList.indexWhere((chat) => chat.id == id);
           setState(() {
             chatList.removeWhere((chat) => chat.id == id);
             filteredChatList.removeWhere((chat) => chat.id == id);
           });
+          if (wasSelected) {
+            if (chatList.isEmpty) {
+              widget.onSelectionCleared?.call();
+            } else {
+              final adjacentIndex =
+                  deletedIndex.clamp(0, chatList.length - 1).toInt();
+              final adjacentChat = chatList[adjacentIndex];
+              final adjacentBot = bots.cast<Bot?>().firstWhere(
+                (bot) => bot?.id == adjacentChat.botId,
+                orElse: () => null,
+              );
+              if (adjacentBot == null) {
+                widget.onSelectionCleared?.call();
+              } else {
+                widget.onChatSelected(adjacentChat.id, adjacentBot);
+              }
+            }
+          }
         } else {
           _loadChatList();
         }
@@ -184,15 +213,18 @@ class _ChatListPageState extends State<ChatListPage> {
                 : Icons.chat_bubble_outline_rounded,
         imageAsset:
             searchQuery.isEmpty ? 'assets/images/profile/no_chats.png' : null,
-        title: searchQuery.isNotEmpty ? '没有找到匹配的聊天' : S.of(context).noChats,
+        title:
+            searchQuery.isNotEmpty
+                ? S.of(context).noMatchingChats
+                : S.of(context).noChats,
         description:
             searchQuery.isNotEmpty
-                ? '试试更换关键词，或直接创建一个新聊天。'
+                ? S.of(context).tryDifferentSearch
                 : S.of(context).clickToStartChat,
         supportingText:
             searchQuery.isNotEmpty
-                ? '搜索会同时匹配消息内容和智能体名称。'
-                : '新建聊天后，右侧工作区会直接打开对应会话。',
+                ? S.of(context).chatSearchScope
+                : S.of(context).newChatWorkspaceHint,
         action: ElevatedButton.icon(
           onPressed: _openNewChatDialog,
           icon: const Icon(Icons.add_circle_outline),
@@ -211,7 +243,7 @@ class _ChatListPageState extends State<ChatListPage> {
             children: [
               if (searchQuery.isNotEmpty)
                 Text(
-                  '没有找到匹配的聊天',
+                  S.of(context).noMatchingChats,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,

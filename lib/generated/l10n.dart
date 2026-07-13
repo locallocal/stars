@@ -1209,6 +1209,239 @@ class S {
       args: [],
     );
   }
+
+  /// `Search chats`
+  String get searchChats {
+    return Intl.message('Search chats', name: 'searchChats', args: []);
+  }
+
+  /// `Search bots`
+  String get searchBots {
+    return Intl.message('Search bots', name: 'searchBots', args: []);
+  }
+
+  /// `No matching chats found`
+  String get noMatchingChats {
+    return Intl.message(
+      'No matching chats found',
+      name: 'noMatchingChats',
+      args: [],
+    );
+  }
+
+  /// `Personal Information`
+  String get desktopPersonalInformation {
+    return Intl.message(
+      'Personal Information',
+      name: 'desktopPersonalInformation',
+      args: [],
+    );
+  }
+
+  /// `Appearance & Language`
+  String get desktopAppearanceAndLanguage {
+    return Intl.message(
+      'Appearance & Language',
+      name: 'desktopAppearanceAndLanguage',
+      args: [],
+    );
+  }
+
+  /// `Help & Support`
+  String get desktopHelpAndSupport {
+    return Intl.message(
+      'Help & Support',
+      name: 'desktopHelpAndSupport',
+      args: [],
+    );
+  }
+
+  /// `About & Legal`
+  String get desktopAboutAndLegal {
+    return Intl.message(
+      'About & Legal',
+      name: 'desktopAboutAndLegal',
+      args: [],
+    );
+  }
+
+  /// `Manage your profile, appearance, language, and app support.`
+  String get desktopSettingsDescription {
+    return Intl.message(
+      'Manage your profile, appearance, language, and app support.',
+      name: 'desktopSettingsDescription',
+      args: [],
+    );
+  }
+
+  /// `Change your avatar and display name.`
+  String get desktopEditProfileDescription {
+    return Intl.message(
+      'Change your avatar and display name.',
+      name: 'desktopEditProfileDescription',
+      args: [],
+    );
+  }
+
+  /// `Changes take effect immediately and are saved locally.`
+  String get desktopSavedImmediatelyDescription {
+    return Intl.message(
+      'Changes take effect immediately and are saved locally.',
+      name: 'desktopSavedImmediatelyDescription',
+      args: [],
+    );
+  }
+
+  /// `Change avatar`
+  String get changeAvatar {
+    return Intl.message('Change avatar', name: 'changeAvatar', args: []);
+  }
+
+  /// `Reset to Default`
+  String get resetToDefault {
+    return Intl.message('Reset to Default', name: 'resetToDefault', args: []);
+  }
+
+  /// `Hide Sidebar`
+  String get hideSidebar {
+    return Intl.message('Hide Sidebar', name: 'hideSidebar', args: []);
+  }
+
+  /// `Show Sidebar`
+  String get showSidebar {
+    return Intl.message('Show Sidebar', name: 'showSidebar', args: []);
+  }
+
+  /// `Hide Bot Info`
+  String get hideInspector {
+    return Intl.message('Hide Bot Info', name: 'hideInspector', args: []);
+  }
+
+  /// `Show Bot Info`
+  String get showInspector {
+    return Intl.message('Show Bot Info', name: 'showInspector', args: []);
+  }
+
+  /// `Bot Information`
+  String get botInformation {
+    return Intl.message('Bot Information', name: 'botInformation', args: []);
+  }
+
+  /// `Jump to Latest`
+  String get jumpToLatest {
+    return Intl.message('Jump to Latest', name: 'jumpToLatest', args: []);
+  }
+
+  /// `Image Style`
+  String get imageStyle {
+    return Intl.message('Image Style', name: 'imageStyle', args: []);
+  }
+
+  /// `Image Size`
+  String get imageSize {
+    return Intl.message('Image Size', name: 'imageSize', args: []);
+  }
+
+  /// `Stop`
+  String get stop {
+    return Intl.message('Stop', name: 'stop', args: []);
+  }
+
+  /// `Basic Information`
+  String get basicInformation {
+    return Intl.message(
+      'Basic Information',
+      name: 'basicInformation',
+      args: [],
+    );
+  }
+
+  /// `Provider Information`
+  String get providerInformation {
+    return Intl.message(
+      'Provider Information',
+      name: 'providerInformation',
+      args: [],
+    );
+  }
+
+  /// `Model Configuration`
+  String get modelConfiguration {
+    return Intl.message(
+      'Model Configuration',
+      name: 'modelConfiguration',
+      args: [],
+    );
+  }
+
+  /// `Copy API Key`
+  String get copyApiKey {
+    return Intl.message('Copy API Key', name: 'copyApiKey', args: []);
+  }
+
+  /// `Show API Key`
+  String get showApiKey {
+    return Intl.message('Show API Key', name: 'showApiKey', args: []);
+  }
+
+  /// `Hide API Key`
+  String get hideApiKey {
+    return Intl.message('Hide API Key', name: 'hideApiKey', args: []);
+  }
+
+  /// `No matching bots found`
+  String get noMatchingBots {
+    return Intl.message(
+      'No matching bots found',
+      name: 'noMatchingBots',
+      args: [],
+    );
+  }
+
+  /// `Try a different search, or create a new item.`
+  String get tryDifferentSearch {
+    return Intl.message(
+      'Try a different search, or create a new item.',
+      name: 'tryDifferentSearch',
+      args: [],
+    );
+  }
+
+  /// `Search includes message content and bot names.`
+  String get chatSearchScope {
+    return Intl.message(
+      'Search includes message content and bot names.',
+      name: 'chatSearchScope',
+      args: [],
+    );
+  }
+
+  /// `A new chat opens directly in the workspace.`
+  String get newChatWorkspaceHint {
+    return Intl.message(
+      'A new chat opens directly in the workspace.',
+      name: 'newChatWorkspaceHint',
+      args: [],
+    );
+  }
+
+  /// `Search filters the list by bot name.`
+  String get botSearchScope {
+    return Intl.message(
+      'Search filters the list by bot name.',
+      name: 'botSearchScope',
+      args: [],
+    );
+  }
+
+  /// `New bots remain in the workspace for editing.`
+  String get newBotWorkspaceHint {
+    return Intl.message(
+      'New bots remain in the workspace for editing.',
+      name: 'newBotWorkspaceHint',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

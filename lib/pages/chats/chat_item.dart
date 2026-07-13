@@ -10,6 +10,7 @@ class ChatListItem extends StatefulWidget {
   final String timestamp;
   final bool isSelected;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const ChatListItem({
     super.key,
@@ -18,6 +19,7 @@ class ChatListItem extends StatefulWidget {
     required this.timestamp,
     this.isSelected = false,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -97,6 +99,10 @@ class _ChatListItemState extends State<ChatListItem> {
               ],
             ),
           ),
+          if (widget.trailing != null) ...[
+            const SizedBox(width: 6),
+            widget.trailing!,
+          ],
         ],
       ),
     );

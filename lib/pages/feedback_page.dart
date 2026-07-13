@@ -121,7 +121,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
         hintText: S.of(context).feedbackDescription,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         border: OutlineInputBorder(
           borderSide: BorderSide(width: 0, style: BorderStyle.none),
@@ -145,7 +145,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
         hintText: S.of(context).contactInfoHint,
         hintStyle: TextStyle(
           fontSize: fontSize,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: Icon(
           Icons.email,

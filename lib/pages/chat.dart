@@ -15,7 +15,6 @@ import 'package:stars/pages/chat/message_input.dart';
 import 'package:stars/pages/chat/welcome_view.dart';
 import 'package:stars/pages/chat/message_list.dart';
 import 'package:stars/pages/chat/typing_indicator.dart';
-import 'package:stars/pages/common/logo.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 
@@ -27,13 +26,20 @@ class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.id, required this.bot});
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  ChatPageState createState() => ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class ChatPageState extends State<ChatPage> {
+  static const double _followLatestThreshold = 96;
+  static final Map<String, String> _draftsByChat = <String, String>{};
+  static final Map<String, List<File>> _draftImagesByChat =
+      <String, List<File>>{};
+  static final Map<String, List<File>> _draftFilesByChat =
+      <String, List<File>>{};
+
   late Provider _provider;
   final String _currentUserId = 'me';
-  final TextEditingController _messageController = TextEditingController();
+  late final TextEditingController _messageController;
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = true;
@@ -52,13 +58,28 @@ class _ChatPageState extends State<ChatPage> {
   Stopwatch? _processStopwatch;
   final List<MessageToolCall> _toolCalls = [];
   final List<MessageCommandExecution> _commandExecutions = [];
+  bool _followLatest = true;
+  bool _showJumpToLatest = false;
+  bool _providerNeedsRefresh = false;
+  String? _pendingDraftText;
+  List<File> _pendingDraftImages = const [];
+  List<File> _pendingDraftFiles = const [];
 
   @override
   void initState() {
     super.initState();
+    _messageController = TextEditingController(
+      text: _draftsByChat[widget.id] ?? '',
+    )..addListener(_persistTextDraft);
+    _selectedImages.addAll(_draftImagesByChat[widget.id] ?? const []);
+    _selectedFiles.addAll(_draftFilesByChat[widget.id] ?? const []);
+    _scrollController.addListener(_handleScrollPositionChanged);
     _loadMessages();
-    _provider = Provider.create(widget.bot);
+    _configureProvider(widget.bot);
+  }
 
+  void _configureProvider(Bot bot) {
+    _provider = Provider.create(bot);
     _provider.setCallbacks(
       onResponse: _handleStreamResponse,
       onComplete: _handleStreamComplete,
@@ -69,30 +90,115 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  @override
+  void didUpdateWidget(covariant ChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bot != widget.bot) {
+      if (_isTyping) {
+        _providerNeedsRefresh = true;
+      } else {
+        _configureProvider(widget.bot);
+      }
+    }
+  }
+
+  void _refreshProviderIfNeeded() {
+    if (!_providerNeedsRefresh) return;
+    _providerNeedsRefresh = false;
+    _configureProvider(widget.bot);
+  }
+
   Future<void> _loadMessages() async {
     setState(() {
       _isLoading = true;
     });
 
     final messages = await MessageService.getMessages(widget.id);
+    if (!mounted) return;
     setState(() {
       _messages = messages;
       _isLoading = false;
+      _followLatest = true;
+      _showJumpToLatest = false;
     });
 
-    // 延迟滚动以确保列表已构建
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-      }
-    });
+    _scheduleScrollToLatest(force: true);
   }
 
   @override
   void dispose() {
+    _persistAttachmentDrafts();
+    _scrollController.removeListener(_handleScrollPositionChanged);
     _scrollController.dispose();
-    _messageController.dispose();
+    _messageController
+      ..removeListener(_persistTextDraft)
+      ..dispose();
     super.dispose();
+  }
+
+  void _persistTextDraft() {
+    final value = _messageController.text;
+    if (value.isEmpty) {
+      _draftsByChat.remove(widget.id);
+    } else {
+      _draftsByChat[widget.id] = value;
+    }
+  }
+
+  void _persistAttachmentDrafts() {
+    if (_selectedImages.isEmpty) {
+      _draftImagesByChat.remove(widget.id);
+    } else {
+      _draftImagesByChat[widget.id] = List<File>.of(_selectedImages);
+    }
+    if (_selectedFiles.isEmpty) {
+      _draftFilesByChat.remove(widget.id);
+    } else {
+      _draftFilesByChat[widget.id] = List<File>.of(_selectedFiles);
+    }
+  }
+
+  void _handleScrollPositionChanged() {
+    if (!_scrollController.hasClients) return;
+
+    final nearLatest =
+        _scrollController.position.extentAfter <= _followLatestThreshold;
+    if (_followLatest == nearLatest && _showJumpToLatest == !nearLatest) {
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _followLatest = nearLatest;
+      _showJumpToLatest = !nearLatest;
+    });
+  }
+
+  void _scheduleScrollToLatest({bool force = false, bool animate = false}) {
+    final shouldScroll = force || _followLatest;
+    if (!shouldScroll) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+
+      final target = _scrollController.position.maxScrollExtent;
+      if (animate) {
+        _scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        _scrollController.jumpTo(target);
+      }
+    });
+  }
+
+  void _jumpToLatest() {
+    setState(() {
+      _followLatest = true;
+      _showJumpToLatest = false;
+    });
+    _scheduleScrollToLatest(force: true, animate: true);
   }
 
   // 从相机获取图片
@@ -153,6 +259,9 @@ class _ChatPageState extends State<ChatPage> {
     if (!hasText && !hasImages && !hasFiles) return;
 
     final messageText = _messageController.text;
+    _pendingDraftText = messageText;
+    _pendingDraftImages = List<File>.of(_selectedImages);
+    _pendingDraftFiles = List<File>.of(_selectedFiles);
     final imagePaths = await _getSelectedImagePaths();
     final filePahts = await _getSelectedFilePaths();
     final userMessage = Message(
@@ -180,19 +289,13 @@ class _ChatPageState extends State<ChatPage> {
       _isCancellable = true;
       _selectedImages.clear();
       _selectedFiles.clear();
+      _followLatest = true;
+      _showJumpToLatest = false;
     });
 
     await MessageService.addMessage(userMessage);
     await ChatService.updateLastMessage(widget.id, messageText);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    _scheduleScrollToLatest(force: true, animate: true);
 
     try {
       final List<ChatMessage> chatMessages = [];
@@ -256,7 +359,10 @@ class _ChatPageState extends State<ChatPage> {
         setState(() {
           _isTyping = false;
           _isStreaming = false;
+          _isCancellable = false;
+          _restorePendingDraft();
         });
+        _refreshProviderIfNeeded();
         showSnackBar(context, S.of(context).responseError(e.toString()));
       }
     }
@@ -269,8 +375,10 @@ class _ChatPageState extends State<ChatPage> {
         _isStreaming = false;
         _isCancellable = false;
         _reasoningResponse = '';
+        _restorePendingDraft();
       });
       _resetProcessTracking();
+      _refreshProviderIfNeeded();
       showSnackBar(context, S.of(context).responseError(error));
     }
   }
@@ -283,8 +391,10 @@ class _ChatPageState extends State<ChatPage> {
           _isStreaming = false;
           _isCancellable = false;
           _reasoningResponse = '';
+          _restorePendingDraft();
         });
         _resetProcessTracking();
+        _refreshProviderIfNeeded();
         showSnackBar(context, S.of(context).emptyResponseError);
       }
       return;
@@ -320,32 +430,18 @@ class _ChatPageState extends State<ChatPage> {
       });
       _toolCalls.clear();
       _commandExecutions.clear();
+      _clearPendingDraft();
+      _refreshProviderIfNeeded();
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    _scheduleScrollToLatest(animate: true);
   }
 
   void _handleStreamResponse(String text) {
     if (mounted) {
       setState(() {
         _streamingResponse += text;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
-            );
-          }
-        });
       });
+      _scheduleScrollToLatest();
     }
   }
 
@@ -353,16 +449,8 @@ class _ChatPageState extends State<ChatPage> {
     if (mounted) {
       setState(() {
         _reasoningResponse += reasoning;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _scrollController.animateTo(
-              _scrollController.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
-            );
-          }
-        });
       });
+      _scheduleScrollToLatest();
     }
   }
 
@@ -405,9 +493,7 @@ class _ChatPageState extends State<ChatPage> {
           IconButton(
             icon: Icon(Icons.cleaning_services_rounded, size: 24),
             tooltip: S.of(context).clearChatHistory,
-            onPressed: () {
-              _showClearChatDialog();
-            },
+            onPressed: requestClearChat,
           ),
         ],
       ),
@@ -456,38 +542,25 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildDesktopWorkspace(BuildContext context, double? fontSize) {
     return Container(
       color: StarsDesktopTheme.workspaceBackground(context),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _buildDesktopHeader(context, fontSize),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: StarsDesktopTheme.panelBackground(context),
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-                          child: _buildConversationBody(
-                            context,
-                            fontSize,
-                            isDesktop: true,
-                          ),
-                        ),
-                      ),
-                      _buildDesktopInputSection(context),
-                    ],
-                  ),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: StarsDesktopTheme.panelBackground(context),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
+                child: _buildConversationBody(
+                  context,
+                  fontSize,
+                  isDesktop: true,
                 ),
               ),
-            ],
-          ),
+            ),
+            _buildDesktopInputSection(context),
+          ],
         ),
       ),
     );
@@ -544,85 +617,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildDesktopHeader(BuildContext context, double? fontSize) {
-    return Container(
-      height: 58,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: StarsDesktopTheme.panelBackground(context),
-        border: Border(
-          bottom: BorderSide(color: StarsDesktopTheme.borderColor(context)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: StarsDesktopTheme.elevatedSurface(context),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: buildProviderLogo(
-                context,
-                widget.bot.avatar,
-                widget.bot.provider,
-                24,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.bot.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  '${widget.bot.provider} · ${widget.bot.model}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: StarsDesktopTheme.mutedText(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(9),
-              border: Border.all(
-                color: StarsDesktopTheme.borderColor(context),
-              ),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.cleaning_services_rounded, size: 20),
-              tooltip: S.of(context).clearChatHistory,
-              onPressed: _showClearChatDialog,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildConversationBody(
     BuildContext context,
     double? fontSize, {
@@ -632,33 +626,48 @@ class _ChatPageState extends State<ChatPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child:
-              _messages.isEmpty
-                  ? WelcomeView(bot: widget.bot, fontSize: fontSize)
-                  : Column(
-                    children: [
-                      MessageList(
-                        messages: _messages,
-                        scrollController: _scrollController,
-                        isStreaming: _isStreaming,
-                        streamingResponse: _streamingResponse,
-                        streamingProcessInfo: _buildStreamingProcessInfo(),
-                        currentUserId: _currentUserId,
-                        deepThinking: _provider.getDeepThinking(),
-                        reasoningResponse: _reasoningResponse,
-                        isDesktop: isDesktop,
-                      ),
-                      if (_isTyping)
-                        TypingIndicator(
-                          botName: widget.bot.name,
-                          isDesktop: isDesktop,
-                        ),
-                    ],
+    final conversation =
+        _messages.isEmpty
+            ? WelcomeView(bot: widget.bot, fontSize: fontSize)
+            : Column(
+              children: [
+                MessageList(
+                  messages: _messages,
+                  scrollController: _scrollController,
+                  isStreaming: _isStreaming,
+                  streamingResponse: _streamingResponse,
+                  streamingProcessInfo: _buildStreamingProcessInfo(),
+                  currentUserId: _currentUserId,
+                  deepThinking: _provider.getDeepThinking(),
+                  reasoningResponse: _reasoningResponse,
+                  isDesktop: isDesktop,
+                ),
+                if (_isTyping)
+                  TypingIndicator(
+                    botName: widget.bot.name,
+                    isDesktop: isDesktop,
                   ),
-        ),
+              ],
+            );
+
+    return Stack(
+      children: [
+        Positioned.fill(child: conversation),
+        if (_showJumpToLatest && _messages.isNotEmpty)
+          Positioned(
+            right: isDesktop ? 20 : 12,
+            bottom: _isTyping ? 60 : 12,
+            child: FilledButton.tonalIcon(
+              onPressed: _jumpToLatest,
+              icon: const Icon(Icons.arrow_downward_rounded, size: 16),
+              label: Text(S.of(context).jumpToLatest),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 32),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -690,10 +699,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _showClearChatDialog() async {
+  Future<void> requestClearChat() async {
     final shouldClear = await showClearChatDialog(context, widget.bot.name);
+    if (!mounted) return;
     if (shouldClear) {
-      _clearChatMessages();
+      await _clearChatMessages();
     }
   }
 
@@ -715,6 +725,7 @@ class _ChatPageState extends State<ChatPage> {
       _isStreaming = false;
       _isCancellable = false;
       _provider.cancelRequest();
+      _clearPendingDraft();
 
       if (_streamingResponse.isNotEmpty) {
         final botMessage = Message(
@@ -746,7 +757,31 @@ class _ChatPageState extends State<ChatPage> {
     _toolCalls.clear();
     _commandExecutions.clear();
     _resetProcessTracking();
+    _refreshProviderIfNeeded();
     showSnackBar(context, S.of(context).replyCancelled);
+  }
+
+  void _restorePendingDraft() {
+    final text = _pendingDraftText;
+    if (text != null && _messageController.text.isEmpty) {
+      _messageController.text = text;
+      _messageController.selection = TextSelection.collapsed(
+        offset: _messageController.text.length,
+      );
+    }
+    if (_selectedImages.isEmpty) {
+      _selectedImages.addAll(_pendingDraftImages);
+    }
+    if (_selectedFiles.isEmpty) {
+      _selectedFiles.addAll(_pendingDraftFiles);
+    }
+    _clearPendingDraft();
+  }
+
+  void _clearPendingDraft() {
+    _pendingDraftText = null;
+    _pendingDraftImages = const [];
+    _pendingDraftFiles = const [];
   }
 
   Future<List<String>> _getSelectedImagePaths() async {
@@ -868,16 +903,7 @@ class _ChatPageState extends State<ChatPage> {
         );
       }
 
-      // 滚动到底部
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+      _scheduleScrollToLatest(animate: true);
     } catch (e) {
       _resetProcessTracking();
       if (mounted) {
@@ -1056,16 +1082,7 @@ class _ChatPageState extends State<ChatPage> {
         await ChatService.updateLastMessage(widget.id, '生成了音乐');
       }
 
-      // 滚动到底部
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+      _scheduleScrollToLatest(animate: true);
     } catch (e) {
       _resetProcessTracking();
       if (mounted) {
@@ -1150,16 +1167,7 @@ class _ChatPageState extends State<ChatPage> {
         await ChatService.updateLastMessage(widget.id, '生成了视频');
       }
 
-      // 滚动到底部
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+      _scheduleScrollToLatest(animate: true);
     } catch (e) {
       _resetProcessTracking();
       if (mounted) {
