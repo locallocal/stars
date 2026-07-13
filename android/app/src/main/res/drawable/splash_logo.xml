@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SplashScreen AVD artwork uses the official 432dp canvas and 288dp safe area. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:width="432dp"
+    android:height="432dp"
+    android:viewportWidth="432"
+    android:viewportHeight="432"
+    tools:ignore="VectorRaster">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M270,126 C232,103 183,102 145,124 C105,147 85,192 96,235 C102,263 117,282 139,296 L129,317 L158,306 C195,327 238,327 272,307 C311,284 330,244 325,202"
+        android:strokeColor="@color/splash_bubble"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="22" />
+    <path
+        android:fillColor="@color/splash_star"
+        android:pathData="M216,148 C221,189 243,211 284,216 C243,221 221,243 216,284 C211,243 189,221 148,216 C189,211 211,189 216,148 Z" />
+    <path
+        android:fillColor="@color/splash_accent"
+        android:pathData="M299,126 C302,141 309,148 324,151 C309,154 302,161 299,176 C296,161 289,154 274,151 C289,148 296,141 299,126 Z" />
+</vector>
