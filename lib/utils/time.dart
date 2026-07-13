@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:bubble/generated/l10n.dart';
+import 'package:stars/generated/l10n.dart';
 
 // 格式化时间戳
 String formatTimestamp(BuildContext context, DateTime timestamp) {

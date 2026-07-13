@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/providers/providers.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
 
 class VolcanoEngine extends Provider {
   static const String defaultApiChatUrl =

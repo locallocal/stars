@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/chat.dart';
-import 'package:bubble/pages/chats/chat_item.dart';
-import 'package:bubble/services/chat_service.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/utils/utils.dart';
-import 'package:bubble/utils/time.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/pages/chat.dart';
+import 'package:stars/pages/chats/chat_item.dart';
+import 'package:stars/services/chat_service.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/utils/utils.dart';
+import 'package:stars/utils/time.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 class ChatListBuilder extends StatelessWidget {

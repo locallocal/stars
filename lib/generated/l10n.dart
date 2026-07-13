@@ -55,10 +55,10 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
-  /// `Bubble`
+  /// `Stars`
   String get appName {
     return Intl.message(
-      'Bubble',
+      'Stars',
       name: 'appName',
       desc: 'Application name',
       args: [],
@@ -420,10 +420,10 @@ class S {
     );
   }
 
-  /// `About Bubble`
+  /// `About Stars`
   String get aboutApp {
     return Intl.message(
-      'About Bubble',
+      'About Stars',
       name: 'aboutApp',
       desc: 'About the app',
       args: [],
@@ -440,10 +440,10 @@ class S {
     );
   }
 
-  /// `© 2025 Bubble Team`
+  /// `© 2025 Stars Team`
   String get copyright {
     return Intl.message(
-      '© 2025 Bubble Team',
+      '© 2025 Stars Team',
       name: 'copyright',
       desc: 'Copyright information',
       args: [],
@@ -480,10 +480,10 @@ class S {
     );
   }
 
-  /// `Bubble - AI Chat Assistant`
+  /// `Stars - AI Chat Assistant`
   String get appTitle {
     return Intl.message(
-      'Bubble - AI Chat Assistant',
+      'Stars - AI Chat Assistant',
       name: 'appTitle',
       desc: 'App title',
       args: [],

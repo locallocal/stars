@@ -4,19 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:bubble/l10n/app_localizations.dart';
-import 'package:bubble/services/profile_service.dart';
-import 'package:bubble/services/bot_service.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/chats.dart';
-import 'package:bubble/pages/bots.dart';
-import 'package:bubble/pages/profile.dart';
-import 'package:bubble/utils/utils.dart';
-import 'package:bubble/services/database_service.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/utils/dot_curved_bottom_nav.dart';
-import 'package:bubble/pages/desktop_layout.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/l10n/app_localizations.dart';
+import 'package:stars/services/profile_service.dart';
+import 'package:stars/services/bot_service.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/pages/chats.dart';
+import 'package:stars/pages/bots.dart';
+import 'package:stars/pages/profile.dart';
+import 'package:stars/utils/utils.dart';
+import 'package:stars/services/database_service.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/utils/dot_curved_bottom_nav.dart';
+import 'package:stars/pages/desktop_layout.dart';
+import 'package:stars/utils/theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,17 +24,17 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   }
   Intl.defaultLocale = 'zh';
-  runApp(const BubbleBootstrapApp());
+  runApp(const StarsBootstrapApp());
 }
 
-class BubbleBootstrapApp extends StatefulWidget {
-  const BubbleBootstrapApp({super.key});
+class StarsBootstrapApp extends StatefulWidget {
+  const StarsBootstrapApp({super.key});
 
   @override
-  State<BubbleBootstrapApp> createState() => _BubbleBootstrapAppState();
+  State<StarsBootstrapApp> createState() => _StarsBootstrapAppState();
 }
 
-class _BubbleBootstrapAppState extends State<BubbleBootstrapApp> {
+class _StarsBootstrapAppState extends State<StarsBootstrapApp> {
   late Future<Profile> _bootstrapFuture;
 
   @override
@@ -60,12 +60,12 @@ class _BubbleBootstrapAppState extends State<BubbleBootstrapApp> {
       future: _bootstrapFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const StartupShell(title: 'Bubble', message: '正在启动...');
+          return const StartupShell(title: 'Stars', message: '正在启动...');
         }
 
         if (snapshot.hasError || !snapshot.hasData) {
           return StartupShell(
-            title: 'Bubble',
+            title: 'Stars',
             message: '启动失败，请重试',
             details: snapshot.error?.toString(),
             onRetry: _retryBootstrap,
@@ -229,7 +229,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     _setSystemUIOverlayStyle();
     return MaterialApp(
-      title: 'Bubble',
+      title: 'Stars',
       theme: buildAppTheme(brightness: Brightness.light, fontSize: _fontSize),
       darkTheme: buildAppTheme(
         brightness: Brightness.dark,

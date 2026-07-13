@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/providers/providers.dart';
-import 'package:bubble/model/providers.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/common/logo.dart';
-import 'package:bubble/pages/common/common.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
+import 'package:stars/model/providers.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/common/logo.dart';
+import 'package:stars/pages/common/common.dart';
 
 class AddBotPage extends StatefulWidget {
   final Future<void> Function(Bot) onBotAdded;

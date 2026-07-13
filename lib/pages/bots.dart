@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/add_bot.dart';
-import 'package:bubble/pages/chat.dart';
-import 'package:bubble/pages/edit_bot.dart';
-import 'package:bubble/services/bot_service.dart';
-import 'package:bubble/services/chat_service.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/common/logo.dart';
-import 'package:bubble/utils/time.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/pages/add_bot.dart';
+import 'package:stars/pages/chat.dart';
+import 'package:stars/pages/edit_bot.dart';
+import 'package:stars/services/bot_service.dart';
+import 'package:stars/services/chat_service.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/common/logo.dart';
+import 'package:stars/utils/time.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:bubble/pages/common/new_chat.dart';
-import 'package:bubble/utils/utils.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/pages/common/new_chat.dart';
+import 'package:stars/utils/utils.dart';
+import 'package:stars/utils/theme.dart';
 
 class ContactsPage extends StatefulWidget {
   final String? selectedBotId;

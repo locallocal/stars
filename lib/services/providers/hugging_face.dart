@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/providers/providers.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
 
 class HuggingFace extends Provider {
   static const defaultApiModelUrl = '';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:bubble/generated/l10n.dart';
+import 'package:stars/generated/l10n.dart';
 
 /// 显示清除聊天历史对话框
 Future<bool> showClearChatDialog(BuildContext context, String botName) async {

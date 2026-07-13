@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/utils/theme.dart';
 
 class TypingIndicator extends StatelessWidget {
   final String botName;
@@ -20,9 +20,9 @@ class TypingIndicator extends StatelessWidget {
         margin: const EdgeInsets.only(top: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: BubbleDesktopTheme.statusCardBackground(context),
-          borderRadius: BorderRadius.circular(BubbleDesktopTheme.cardRadius),
-          border: Border.all(color: BubbleDesktopTheme.borderColor(context)),
+          color: StarsDesktopTheme.statusCardBackground(context),
+          borderRadius: BorderRadius.circular(StarsDesktopTheme.cardRadius),
+          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
         ),
         child: Row(
           children: [
@@ -39,7 +39,7 @@ class TypingIndicator extends StatelessWidget {
               child: Text(
                 S.of(context).botIsTyping(botName),
                 style: TextStyle(
-                  color: BubbleDesktopTheme.mutedText(context),
+                  color: StarsDesktopTheme.mutedText(context),
                   fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
                 ),
               ),

@@ -1,8 +1,8 @@
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/pages/chat.dart';
-import 'package:bubble/pages/edit_bot.dart';
-import 'package:bubble/utils/theme.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/pages/chat.dart';
+import 'package:stars/pages/edit_bot.dart';
+import 'package:stars/utils/theme.dart';
 import 'package:flutter/material.dart';
 
 class DesktopLayout extends StatefulWidget {
@@ -162,7 +162,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Bubble',
+                    'Stars',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),

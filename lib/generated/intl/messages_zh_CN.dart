@@ -52,7 +52,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("智能体"),
     "about": MessageLookupByLibrary.simpleMessage("关于"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("关于泡泡"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("关于 Stars"),
     "addAttachment": MessageLookupByLibrary.simpleMessage("上传附件"),
     "addBot": MessageLookupByLibrary.simpleMessage("添加智能体"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage("调整应用内文字大小"),
@@ -63,8 +63,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "一个简单而强大的AI聊天应用，让您随时随地与AI进行对话。",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("泡泡"),
-    "appTitle": MessageLookupByLibrary.simpleMessage("泡泡 - AI聊天助手"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
+    "appTitle": MessageLookupByLibrary.simpleMessage("Stars - AI 聊天助手"),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("附件文件"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("附加图片"),
     "botAddedSuccess": m0,
@@ -90,7 +90,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmDeleteBot": m7,
     "confirmDeleteChat": m8,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("联系方式（可选）"),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 泡泡团队"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Stars 团队"),
     "customProvider": MessageLookupByLibrary.simpleMessage("自定义供应商..."),
     "darkMode": MessageLookupByLibrary.simpleMessage("深色模式"),
     "deepThinking": MessageLookupByLibrary.simpleMessage("深度思考"),

@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/database_service.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/database_service.dart';
 
 class MessageService {
   // 获取聊天列表

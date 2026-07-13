@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:bubble/services/providers/providers.dart';
-import 'package:bubble/model/model.dart';
+import 'package:stars/services/providers/providers.dart';
+import 'package:stars/model/model.dart';
 
 class Jina extends Provider {
   static const String defaultApiChatUrl =

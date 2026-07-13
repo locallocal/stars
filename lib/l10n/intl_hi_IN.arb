@@ -1,6 +1,6 @@
 {
     "@@locale": "hi_IN",
-    "appName": "बबल",
+    "appName": "Stars",
     "@appName": {
         "description": "एप्लिकेशन का नाम"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "थीम डार्क मोड पर सेट की गई"
     },
-    "aboutApp": "बबल के बारे में",
+    "aboutApp": "Stars के बारे में",
     "@aboutApp": {
         "description": "एप्लयन के बारे में"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "एप्लयन विवरण"
     },
-    "copyright": "© 2025 बबल टीम",
+    "copyright": "© 2025 Stars टीम",
     "@copyright": {
         "description": "कॉपीराइट जानकारी"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "संस्करण जानकारी"
     },
-    "appTitle": "बबल - AI चैट सहायक",
+    "appTitle": "Stars - AI चैट सहायक",
     "@appTitle": {
         "description": "एप्लयन शीर्षक"
     },

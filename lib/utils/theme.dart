@@ -573,7 +573,7 @@ class _DesktopInteractiveListItemState
   }
 }
 
-class BubbleDesktopTheme {
+class StarsDesktopTheme {
   static double get panelRadius => DesktopThemeTokens.panelRadiusValue;
   static double get cardRadius => DesktopThemeTokens.statusRadiusValue;
   static double get bubbleRadius => DesktopThemeTokens.itemRadiusValue;

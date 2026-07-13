@@ -1,6 +1,6 @@
 {
     "@@locale": "de_DE",
-    "appName": "Bubble",
+    "appName": "Stars",
     "@appName": {
         "description": "Anwendungsname"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "Thema auf dunkles Design gesetzt"
     },
-    "aboutApp": "Über Bubble",
+    "aboutApp": "Über Stars",
     "@aboutApp": {
         "description": "Über die App"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "App-Beschreibung"
     },
-    "copyright": "© 2025 Bubble-Team",
+    "copyright": "© 2025 Stars-Team",
     "@copyright": {
         "description": "Copyright-Informationen"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "Versionsinformationen"
     },
-    "appTitle": "Bubble - KI-Chat-Assistent",
+    "appTitle": "Stars - KI-Chat-Assistent",
     "@appTitle": {
         "description": "App-Titel"
     },

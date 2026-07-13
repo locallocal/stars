@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/services/api_service.dart';
-import 'package:bubble/pages/common/common.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/services/api_service.dart';
+import 'package:stars/pages/common/common.dart';
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});

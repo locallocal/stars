@@ -1,6 +1,6 @@
-# bubble
+# Stars
 
-A new Flutter project.
+Stars is a cross-platform Flutter AI chat assistant.
 
 ## Getting Started
 

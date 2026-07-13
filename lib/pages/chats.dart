@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/bot_service.dart';
-import 'package:bubble/services/chat_service.dart';
-import 'package:bubble/generated/l10n.dart';
-import 'package:bubble/pages/chats/new_chat_dialog.dart';
-import 'package:bubble/pages/chats/chat_list_builder.dart';
-import 'package:bubble/utils/theme.dart';
-import 'package:bubble/utils/utils.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/bot_service.dart';
+import 'package:stars/services/chat_service.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/chats/new_chat_dialog.dart';
+import 'package:stars/pages/chats/chat_list_builder.dart';
+import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 
 class ChatListPage extends StatefulWidget {
   final String? selectedChatId;

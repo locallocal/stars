@@ -1,6 +1,6 @@
 {
     "@@locale": "ja_JP",
-    "appName": "バブル",
+    "appName": "Stars",
     "@appName": {
         "description": "アプリケーション名"
     },
@@ -170,7 +170,7 @@
     "@themeSetToDark": {
         "description": "テーマがダークモードに設定されました"
     },
-    "aboutApp": "バブルについて",
+    "aboutApp": "Starsについて",
     "@aboutApp": {
         "description": "アプリについて"
     },
@@ -178,7 +178,7 @@
     "@appDescription": {
         "description": "アプリの説明"
     },
-    "copyright": "© 2025 バブルチーム",
+    "copyright": "© 2025 Starsチーム",
     "@copyright": {
         "description": "著作権情報"
     },
@@ -194,7 +194,7 @@
     "@version": {
         "description": "バージョン情報"
     },
-    "appTitle": "バブル - AIチャットアシスタント",
+    "appTitle": "Stars - AIチャットアシスタント",
     "@appTitle": {
         "description": "アプリのタイトル"
     },

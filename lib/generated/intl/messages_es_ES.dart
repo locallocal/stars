@@ -54,7 +54,7 @@ class MessageLookup extends MessageLookupByLibrary {
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "Bots": MessageLookupByLibrary.simpleMessage("Bots"),
     "about": MessageLookupByLibrary.simpleMessage("Acerca de"),
-    "aboutApp": MessageLookupByLibrary.simpleMessage("Acerca de Bubble"),
+    "aboutApp": MessageLookupByLibrary.simpleMessage("Acerca de Stars"),
     "addBot": MessageLookupByLibrary.simpleMessage("Añadir bot"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage(
       "Ajustar tamaño de fuente de la aplicación",
@@ -68,9 +68,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "appDescription": MessageLookupByLibrary.simpleMessage(
       "Una aplicación de chat con IA simple pero potente que te permite chatear con inteligencia artificial en cualquier momento y lugar.",
     ),
-    "appName": MessageLookupByLibrary.simpleMessage("Bubble"),
+    "appName": MessageLookupByLibrary.simpleMessage("Stars"),
     "appTitle": MessageLookupByLibrary.simpleMessage(
-      "Bubble - Asistente de chat IA",
+      "Stars - Asistente de chat IA",
     ),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Avatar del bot"),
@@ -106,7 +106,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "Información de contacto (opcional)",
     ),
-    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Equipo Bubble"),
+    "copyright": MessageLookupByLibrary.simpleMessage("© 2025 Equipo Stars"),
     "customProvider": MessageLookupByLibrary.simpleMessage(
       "Proveedor personalizado...",
     ),

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:bubble/model/model.dart';
-import 'package:bubble/services/database_service.dart';
-import 'package:bubble/utils/utils.dart';
+import 'package:stars/model/model.dart';
+import 'package:stars/services/database_service.dart';
+import 'package:stars/utils/utils.dart';
 
 class ProfileService {
   // 主题变更流
