@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat.dart';
@@ -68,40 +69,37 @@ class _NewChatDialogState extends State<NewChatDialog> {
       math.min(560.0, windowSize.height - inset * 2),
     );
 
-    return Dialog(
-      insetPadding: EdgeInsets.all(inset),
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: dialogWidth,
-          maxHeight: dialogMaxHeight,
-        ),
-        child: SizedBox(
-          width: dialogWidth,
-          child: StarsGlassSurface(
-            role: StarsGlassRole.popover,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDesktopHeader(context),
-                Divider(
-                  height: 1,
-                  thickness: 0,
-                  color: DesktopThemeTokens.divider(context),
-                ),
-                Flexible(child: _buildDesktopContent(context)),
-              ],
+    return ShadDialog(
+      constraints: BoxConstraints(
+        maxWidth: dialogWidth,
+        maxHeight: dialogMaxHeight,
+      ),
+      padding: EdgeInsets.zero,
+      gap: 0,
+      scrollable: false,
+      useSafeArea: false,
+      removeBorderRadiusWhenTiny: false,
+      closeIcon: const SizedBox.shrink(),
+      child: SizedBox(
+        key: const ValueKey<String>('new-chat-dialog-content'),
+        width: dialogWidth,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDesktopHeader(context),
+            ShadSeparator.horizontal(
+              thickness: 1,
+              color: DesktopThemeTokens.divider(context),
             ),
-          ),
+            Flexible(child: _buildDesktopContent(context)),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildDesktopHeader(BuildContext context) {
+    final closeLabel = MaterialLocalizations.of(context).closeButtonTooltip;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
       child: Row(
@@ -127,10 +125,18 @@ class _NewChatDialogState extends State<NewChatDialog> {
             ),
           ),
           const SizedBox(width: 8),
-          StarsToolbarButton(
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close_rounded),
+          Semantics(
+            label: closeLabel,
+            child: ShadTooltip(
+              builder: (context) => Text(closeLabel),
+              child: ShadIconButton.ghost(
+                width: DesktopThemeTokens.iconButtonSize,
+                height: DesktopThemeTokens.iconButtonSize,
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.close_rounded, size: 18),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
           ),
         ],
       ),

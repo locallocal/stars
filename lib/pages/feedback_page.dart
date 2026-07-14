@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
-import 'package:stars/services/api_service.dart';
 import 'package:stars/pages/common/common.dart';
+import 'package:stars/services/api_service.dart';
+import 'package:stars/utils/utils.dart';
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
@@ -39,14 +41,151 @@ class _FeedbackPageState extends State<FeedbackPage> {
       if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isSubmitting = false;
       });
     }
   }
 
+  Future<void> _handleSubmit() async {
+    if (_isSubmitting) {
+      return;
+    }
+    if (feedbackController.text.trim().isEmpty) {
+      showWarningSnackBar(context, S.of(context).fillRequiredFields);
+      return;
+    }
+    await _submitFeedback();
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isDesktopPlatform(context)) {
+      return _buildDesktopPage(context);
+    }
+    return _buildMobilePage(context);
+  }
+
+  Widget _buildDesktopPage(BuildContext context) {
+    final shadTheme = ShadTheme.of(context);
+    final backTooltip = MaterialLocalizations.of(context).backButtonTooltip;
+
+    return Scaffold(
+      backgroundColor: shadTheme.colorScheme.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 52,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    if (Navigator.of(context).canPop()) ...[
+                      Semantics(
+                        button: true,
+                        label: backTooltip,
+                        child: ShadTooltip(
+                          builder: (context) => Text(backTooltip),
+                          child: ShadIconButton.ghost(
+                            width: 32,
+                            height: 32,
+                            padding: EdgeInsets.zero,
+                            iconSize: 18,
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            icon: const Icon(Icons.arrow_back_rounded),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      S.of(context).helpAndFeedback,
+                      style: shadTheme.textTheme.h4,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const ShadSeparator.horizontal(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: ShadCard(
+                      width: double.infinity,
+                      title: const Text('反馈信息'),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ShadTextarea(
+                              controller: feedbackController,
+                              placeholder: Text(
+                                S.of(context).feedbackDescription,
+                              ),
+                              leading: const Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 18,
+                              ),
+                              minHeight: 160,
+                              maxHeight: 320,
+                            ),
+                            const SizedBox(height: 16),
+                            ShadInput(
+                              controller: contactController,
+                              placeholder: Text(S.of(context).contactInfoHint),
+                              leading: const Icon(
+                                Icons.email_outlined,
+                                size: 18,
+                              ),
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _handleSubmit(),
+                            ),
+                            const SizedBox(height: 24),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ShadButton(
+                                enabled: !_isSubmitting,
+                                onPressed: _isSubmitting ? null : _handleSubmit,
+                                leading:
+                                    _isSubmitting
+                                        ? SizedBox.square(
+                                          dimension: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color:
+                                                shadTheme
+                                                    .colorScheme
+                                                    .primaryForeground,
+                                          ),
+                                        )
+                                        : const Icon(
+                                          Icons.send_outlined,
+                                          size: 17,
+                                        ),
+                                child: Text(S.of(context).submitFeedback),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobilePage(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
       appBar: AppBar(
@@ -84,13 +223,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
               side: BorderSide.none,
             ),
           ),
-          onPressed: () {
-            if (feedbackController.text.trim().isNotEmpty) {
-              _submitFeedback();
-            } else if (!_isSubmitting) {
-              showWarningSnackBar(context, S.of(context).fillRequiredFields);
-            }
-          },
+          onPressed: _handleSubmit,
           child:
               _isSubmitting
                   ? SizedBox(

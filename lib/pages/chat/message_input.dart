@@ -5,6 +5,7 @@ import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
@@ -191,42 +192,53 @@ class _MessageInputState extends State<MessageInput> {
                   canRequestFocus: false,
                   skipTraversal: true,
                   onKeyEvent: isDesktop ? _handleComposerKeyEvent : null,
-                  child: TextField(
-                    controller: widget.controller,
-                    focusNode: _focusNode,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction:
-                        isDesktop
-                            ? TextInputAction.newline
-                            : TextInputAction.send,
-                    onSubmitted:
-                        isDesktop
-                            ? null
-                            : (_) {
+                  child:
+                      isDesktop
+                          ? ShadInput(
+                            controller: widget.controller,
+                            focusNode: _focusNode,
+                            placeholder: Text(S.of(context).messageHint),
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: TextInputAction.newline,
+                            minLines: 1,
+                            maxLines: null,
+                            constraints: const BoxConstraints(
+                              minHeight: 44,
+                              maxHeight: 96,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            style: TextStyle(height: 1.45, fontSize: fontSize),
+                          )
+                          : TextField(
+                            controller: widget.controller,
+                            focusNode: _focusNode,
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) {
                               if (!_isComposing && _canSubmit) {
                                 widget.onSend();
                               }
                             },
-                    decoration: InputDecoration(
-                      hintText: S.of(context).messageHint,
-                      hintStyle: TextStyle(
-                        fontSize: fontSize,
-                        color: StarsDesktopTheme.subtleText(context),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 4 : 0,
-                        vertical: isDesktop ? 2 : 12,
-                      ),
-                    ),
-                    maxLines: isDesktop ? null : 6,
-                    minLines: isDesktop ? 1 : 3,
-                    textAlignVertical: TextAlignVertical.center,
-                    style: TextStyle(
-                      height: isDesktop ? 1.45 : null,
-                      fontSize: fontSize,
-                    ),
-                  ),
+                            decoration: InputDecoration(
+                              hintText: S.of(context).messageHint,
+                              hintStyle: TextStyle(
+                                fontSize: fontSize,
+                                color: StarsDesktopTheme.subtleText(context),
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 0,
+                                vertical: 12,
+                              ),
+                            ),
+                            maxLines: 6,
+                            minLines: 3,
+                            textAlignVertical: TextAlignVertical.center,
+                            style: TextStyle(fontSize: fontSize),
+                          ),
                 ),
               ),
               SizedBox(height: isDesktop ? 6 : 12),
@@ -512,51 +524,30 @@ class _MessageInputState extends State<MessageInput> {
       );
     }
 
-    return SizedBox(
+    final label =
+        widget.waitingBotMessage ? S.of(context).stop : S.of(context).send;
+    final icon = Icon(
+      widget.waitingBotMessage ? Icons.stop_rounded : Icons.send_rounded,
+      size: 17,
+    );
+    if (widget.waitingBotMessage) {
+      return ShadButton.destructive(
+        size: ShadButtonSize.sm,
+        width: 96,
+        height: 36,
+        onPressed: onPressed,
+        leading: icon,
+        child: Text(label),
+      );
+    }
+    return ShadButton(
+      size: ShadButtonSize.sm,
       width: 96,
       height: 36,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: onPressed,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 120),
-              child: Row(
-                key: ValueKey<bool>(widget.waitingBotMessage),
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    widget.waitingBotMessage
-                        ? Icons.stop_rounded
-                        : Icons.send_rounded,
-                    size: 17,
-                    color: foregroundColor,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    widget.waitingBotMessage
-                        ? S.of(context).stop
-                        : S.of(context).send,
-                    style: TextStyle(
-                      color: foregroundColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize:
-                          Theme.of(context).textTheme.bodyMedium?.fontSize,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      enabled: enabled,
+      onPressed: onPressed,
+      leading: icon,
+      child: Text(label),
     );
   }
 
@@ -583,6 +574,22 @@ class _MessageInputState extends State<MessageInput> {
     required bool active,
     required VoidCallback onTap,
   }) {
+    if (_isDesktop || isDesktopOrTabletPlatform(context)) {
+      final iconWidget = Icon(icon, size: 16);
+      return active
+          ? ShadButton.secondary(
+            size: ShadButtonSize.sm,
+            leading: iconWidget,
+            onPressed: onTap,
+            child: Text(label),
+          )
+          : ShadButton.outline(
+            size: ShadButtonSize.sm,
+            leading: iconWidget,
+            onPressed: onTap,
+            child: Text(label),
+          );
+    }
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
@@ -639,6 +646,31 @@ class _MessageInputState extends State<MessageInput> {
     required IconData icon,
     required String label,
   }) {
+    if (_isDesktop || isDesktopOrTabletPlatform(context)) {
+      return ShadCard(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: ShadTheme.of(context).colorScheme.mutedForeground,
+            ),
+            const SizedBox(width: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ShadTheme.of(context).textTheme.small,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
@@ -676,6 +708,28 @@ class _MessageInputState extends State<MessageInput> {
     bool active = false,
     required VoidCallback onPressed,
   }) {
+    if (_isDesktop || isDesktopOrTabletPlatform(context)) {
+      final button =
+          active
+              ? ShadIconButton.secondary(
+                icon: icon,
+                iconSize: 18,
+                width: 34,
+                height: 34,
+                onPressed: onPressed,
+              )
+              : ShadIconButton.outline(
+                icon: icon,
+                iconSize: 18,
+                width: 34,
+                height: 34,
+                onPressed: onPressed,
+              );
+      return Semantics(
+        label: tooltip,
+        child: ShadTooltip(builder: (context) => Text(tooltip), child: button),
+      );
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         color:

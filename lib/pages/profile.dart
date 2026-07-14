@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/services/profile_service.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:stars/model/model.dart';
@@ -28,6 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
   String _language = 'zh_CN'; // 语言设置
+  late final ShadSliderController _desktopFontSizeController;
   final List<GlobalKey> _desktopSectionKeys = List<GlobalKey>.generate(
     4,
     (_) => GlobalKey(),
@@ -69,7 +71,16 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    _desktopFontSizeController = ShadSliderController(
+      initialValue: _defaultFontSize,
+    );
     _loadProfileInfo();
+  }
+
+  @override
+  void dispose() {
+    _desktopFontSizeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -93,6 +104,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _profile = loadedProfile;
       _themeMode = intToThemeMode(loadedProfile.themeMode);
       _language = loadedProfile.language; // 加载语言设置
+      _desktopFontSizeController.value = loadedProfile.fontSize;
       _isLoading = false;
     });
     _scheduleSelectedSectionScroll();
@@ -404,37 +416,25 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return KeyedSubtree(
       key: sectionKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
-          if (description != null) ...[
-            const SizedBox(height: 4),
-            Text(description, style: DesktopThemeTokens.metaStyle(context)),
-          ],
-          const SizedBox(height: 12),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: DesktopThemeTokens.divider(context)),
-                bottom: BorderSide(color: DesktopThemeTokens.divider(context)),
-              ),
-            ),
-            child: Column(
-              children: [
-                for (var index = 0; index < children.length; index++) ...[
-                  children[index],
-                  if (index != children.length - 1)
-                    Divider(
-                      height: 1,
-                      indent: 40,
-                      color: DesktopThemeTokens.divider(context),
-                    ),
-                ],
+      child: ShadCard(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        title: Text(title),
+        description: description == null ? null : Text(description),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(
+            children: [
+              for (var index = 0; index < children.length; index++) ...[
+                children[index],
+                if (index != children.length - 1)
+                  const ShadSeparator.horizontal(
+                    margin: EdgeInsetsDirectional.only(start: 40),
+                  ),
               ],
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -444,14 +444,16 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       child: Row(
         children: [
-          Tooltip(
-            message: S.of(context).changeAvatar,
-            child: Semantics(
-              button: true,
-              label: S.of(context).changeAvatar,
-              child: InkWell(
-                onTap: _pickImage,
-                customBorder: const CircleBorder(),
+          ShadTooltip(
+            builder: (context) => Text(S.of(context).changeAvatar),
+            child: ShadButton.ghost(
+              width: 56,
+              height: 56,
+              padding: EdgeInsets.zero,
+              onPressed: _pickImage,
+              child: Semantics(
+                label: S.of(context).changeAvatar,
+                image: true,
                 child: CircleAvatar(
                   radius: 28,
                   backgroundColor: DesktopThemeTokens.secondarySurface(context),
@@ -480,11 +482,10 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           const SizedBox(width: 16),
-          OutlinedButton.icon(
+          ShadButton.outline(
             onPressed: _showEditNameDialog,
-            icon: const Icon(Icons.edit_outlined, size: 16),
-            label: Text(S.of(context).editName),
-            style: DesktopThemeTokens.secondaryButtonStyle(context),
+            leading: const Icon(Icons.edit_outlined, size: 16),
+            child: Text(S.of(context).editName),
           ),
         ],
       ),
@@ -503,66 +504,58 @@ class _ProfilePageState extends State<ProfilePage> {
       button: true,
       label: title,
       value: value ?? subtitle,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          hoverColor: DesktopThemeTokens.hoverFill(context),
-          borderRadius: DesktopThemeTokens.controlRadius,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 58),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 24,
-                    child: Icon(
-                      icon,
-                      size: 18,
-                      color: DesktopThemeTokens.mutedText(context),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          title,
-                          style: DesktopThemeTokens.bodyStyle(context),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: DesktopThemeTokens.metaStyle(context),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (value != null) ...[
-                    const SizedBox(width: 16),
-                    Flexible(
-                      child: Text(
-                        value,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+      child: ShadButton.ghost(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        mainAxisAlignment: MainAxisAlignment.start,
+        onPressed: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 38),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: DesktopThemeTokens.mutedText(context),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(title, style: DesktopThemeTokens.bodyStyle(context)),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
                         style: DesktopThemeTokens.metaStyle(context),
                       ),
-                    ),
+                    ],
                   ],
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: DesktopThemeTokens.softText(context),
-                  ),
-                ],
+                ),
               ),
-            ),
+              if (value != null) ...[
+                const SizedBox(width: 16),
+                Flexible(
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DesktopThemeTokens.metaStyle(context),
+                  ),
+                ),
+              ],
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: DesktopThemeTokens.softText(context),
+              ),
+            ],
           ),
         ),
       ),
@@ -601,21 +594,24 @@ class _ProfilePageState extends State<ProfilePage> {
                 )?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(width: 12),
-              TextButton.icon(
-                onPressed:
-                    isDefault ? null : () => _updateFontSize(_defaultFontSize),
-                icon: const Icon(Icons.restart_alt_rounded, size: 16),
-                label: Text(S.of(context).resetToDefault),
+              ShadButton.ghost(
+                enabled: !isDefault,
+                size: ShadButtonSize.sm,
+                onPressed: () => _updateFontSize(_defaultFontSize),
+                leading: const Icon(Icons.restart_alt_rounded, size: 16),
+                child: Text(S.of(context).resetToDefault),
               ),
             ],
           ),
-          Slider(
-            value: _fontSize,
+          ShadSlider(
+            controller: _desktopFontSizeController,
             min: 12,
             max: 24,
             divisions: 12,
             label: _fontSize.round().toString(),
             onChanged: _updateFontSize,
+            semanticFormatterCallback:
+                (value) => '${value.round()} ${S.of(context).fontSizeSettings}',
           ),
           const SizedBox(height: 6),
           Container(
@@ -681,6 +677,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_profile == null || (_fontSize - value).abs() < 0.01) return;
 
     setState(() {
+      _desktopFontSizeController.value = value;
       _profile = Profile(
         name: _name,
         avatar: _avatar,
@@ -768,6 +765,63 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showEditNameDialog() {
     final TextEditingController controller = TextEditingController(text: _name);
 
+    void saveName(BuildContext dialogContext) {
+      setState(() {
+        _profile = Profile(
+          name:
+              controller.text.trim().isEmpty
+                  ? _randomName
+                  : controller.text.trim(),
+          avatar: _avatar,
+          fontSize: _fontSize,
+          themeMode: themeModeToInt(_themeMode),
+          language: _language,
+          createTimestamp: _profile!.createTimestamp,
+          modifyTimestamp: DateTime.now(),
+        );
+      });
+      _saveProfile();
+      Navigator.pop(dialogContext);
+    }
+
+    if (isDesktopPlatform(context)) {
+      showShadDialog<void>(
+        context: context,
+        builder:
+            (dialogContext) => ShadDialog(
+              title: Text(S.of(dialogContext).editName),
+              description: Text(S.of(dialogContext).enterBotName),
+              actions: [
+                ShadButton.outline(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(S.of(dialogContext).cancel),
+                ),
+                ShadButton(
+                  onPressed: () => saveName(dialogContext),
+                  child: Text(S.of(dialogContext).save),
+                ),
+              ],
+              child: SizedBox(
+                width: 380,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: ShadInput(
+                    controller: controller,
+                    autofocus: true,
+                    placeholder: Text(S.of(dialogContext).enterBotName),
+                    leading: const Padding(
+                      padding: EdgeInsetsDirectional.only(end: 8),
+                      child: Icon(Icons.person_outline_rounded, size: 18),
+                    ),
+                    onSubmitted: (_) => saveName(dialogContext),
+                  ),
+                ),
+              ),
+            ),
+      ).whenComplete(controller.dispose);
+      return;
+    }
+
     showDialog(
       context: context,
       builder:
@@ -815,24 +869,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  setState(() {
-                    _profile = Profile(
-                      name:
-                          controller.text.trim().isEmpty
-                              ? _randomName
-                              : controller.text.trim(),
-                      avatar: _avatar,
-                      fontSize: _fontSize,
-                      themeMode: themeModeToInt(_themeMode),
-                      language: _language,
-                      createTimestamp: _profile!.createTimestamp,
-                      modifyTimestamp: DateTime.now(),
-                    );
-                  });
-                  _saveProfile(); // 保存设置
-                  Navigator.pop(context);
-                },
+                onPressed: () => saveName(context),
                 child: Text(
                   S.of(context).save,
                   style: TextStyle(
@@ -864,6 +901,47 @@ class _ProfilePageState extends State<ProfilePage> {
         'icon': Icons.brightness_2_rounded,
       },
     ];
+    if (isDesktopPlatform(context)) {
+      showShadDialog<void>(
+        context: context,
+        builder:
+            (dialogContext) => ShadDialog(
+              title: Text(S.of(dialogContext).selectTheme),
+              description: Text(
+                S.of(dialogContext).desktopSavedImmediatelyDescription,
+              ),
+              child: SizedBox(
+                width: 380,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: ShadRadioGroup<ThemeMode>(
+                    initialValue: _themeMode,
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _themeMode = value);
+                      _saveProfile();
+                      ProfileService.notifyThemeChanged(_themeMode);
+                      Navigator.pop(dialogContext);
+                    },
+                    items: themes.map(
+                      (theme) => ShadRadio<ThemeMode>(
+                        value: theme['mode'] as ThemeMode,
+                        label: Row(
+                          children: [
+                            Icon(theme['icon'] as IconData, size: 18),
+                            const SizedBox(width: 10),
+                            theme['title'] as Text,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder:
@@ -1016,6 +1094,76 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // 显示自定义关于对话框
   void _showCustomAboutDialog() {
+    if (isDesktopPlatform(context)) {
+      showShadDialog<void>(
+        context: context,
+        builder:
+            (dialogContext) => ShadDialog(
+              title: Text(S.of(dialogContext).aboutApp),
+              actions: [
+                ShadButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(S.of(dialogContext).confirm),
+                ),
+              ],
+              child: SizedBox(
+                width: 440,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const StarsLogo(size: 60),
+                      const SizedBox(height: 20),
+                      Text(
+                        S.of(dialogContext).appTitle,
+                        style: ShadTheme.of(dialogContext).textTheme.h4,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        S.of(dialogContext).version,
+                        style: ShadTheme.of(dialogContext).textTheme.muted,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        S.of(dialogContext).appDescription,
+                        textAlign: TextAlign.start,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        S.of(dialogContext).copyright,
+                        style: ShadTheme.of(dialogContext).textTheme.muted,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          ShadButton.link(
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                              _openUserAgreementPage();
+                            },
+                            child: Text(S.of(dialogContext).userAgreement),
+                          ),
+                          ShadButton.link(
+                            onPressed: () {
+                              Navigator.pop(dialogContext);
+                              _openPrivacyPolicyPage();
+                            },
+                            child: Text(S.of(dialogContext).privacyPolicy),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder:
@@ -1123,6 +1271,56 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // 显示语言选项
   void _showLanguageOptions() {
+    const languages = [
+      (code: 'zh_CN', name: '简体中文'),
+      (code: 'en_US', name: 'English'),
+      (code: 'zh_TW', name: '繁體中文'),
+      (code: 'ja_JP', name: '日本語'),
+      (code: 'fr_FR', name: 'Français'),
+      (code: 'de_DE', name: 'Deutsch'),
+      (code: 'ko_KR', name: '한국어'),
+      (code: 'ru_RU', name: 'Русский'),
+      (code: 'es_ES', name: 'Español'),
+      (code: 'hi_IN', name: 'हिन्दी'),
+      (code: 'pt_BR', name: 'Português'),
+      (code: 'it_IT', name: 'Italiano'),
+    ];
+    if (isDesktopPlatform(context)) {
+      showShadDialog<void>(
+        context: context,
+        builder:
+            (dialogContext) => ShadDialog(
+              title: Text(S.of(dialogContext).selectLanguage),
+              description: Text(
+                S.of(dialogContext).desktopSavedImmediatelyDescription,
+              ),
+              child: SizedBox(
+                width: 400,
+                height: 440,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: ShadRadioGroup<String>(
+                    initialValue: _language,
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _language = value);
+                      _saveProfile();
+                      ProfileService.notifyLanguageChanged(_language);
+                      Navigator.pop(dialogContext);
+                    },
+                    items: languages.map(
+                      (language) => ShadRadio<String>(
+                        value: language.code,
+                        label: Text(language.name),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder:

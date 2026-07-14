@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/services/bot_service.dart';
 import 'package:stars/services/chat_service.dart';
@@ -148,11 +149,12 @@ class ChatListPageState extends State<ChatListPage> {
       searchHintText: S.of(context).searchChats,
       searchFocusNode: _searchFocusNode,
       onSearchChanged: _filterChats,
-      action: ElevatedButton.icon(
+      action: ShadButton(
         onPressed: _openNewChatDialog,
-        icon: const Icon(Icons.add_circle_outline_rounded),
-        label: Text(S.of(context).newChat),
-        style: DesktopThemeTokens.primaryButtonStyle(context),
+        height: DesktopThemeTokens.controlHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        leading: const Icon(Icons.add_circle_outline_rounded, size: 16),
+        child: Text(S.of(context).newChat),
       ),
       child: body,
     );
@@ -225,11 +227,12 @@ class ChatListPageState extends State<ChatListPage> {
             searchQuery.isNotEmpty
                 ? S.of(context).chatSearchScope
                 : S.of(context).newChatWorkspaceHint,
-        action: ElevatedButton.icon(
+        action: ShadButton(
           onPressed: _openNewChatDialog,
-          icon: const Icon(Icons.add_circle_outline),
-          label: Text(S.of(context).newChat),
-          style: DesktopThemeTokens.primaryButtonStyle(context),
+          height: DesktopThemeTokens.controlHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          leading: const Icon(Icons.add_circle_outline, size: 16),
+          child: Text(S.of(context).newChat),
         ),
       );
     }
@@ -300,15 +303,23 @@ class ChatListPageState extends State<ChatListPage> {
 
   void _openNewChatDialog() {
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder:
-          (context) => NewChatDialog(
-            onChatCreated: (chatId, bot) {
-              _loadChatList();
-              widget.onChatSelected(chatId, bot);
-            },
-          ),
+    Widget dialogBuilder(BuildContext dialogContext) => NewChatDialog(
+      onChatCreated: (chatId, bot) {
+        _loadChatList();
+        widget.onChatSelected(chatId, bot);
+      },
     );
+
+    if (isDesktopOrTabletPlatform(context)) {
+      showShadDialog<void>(
+        context: context,
+        barrierLabel:
+            MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        builder: dialogBuilder,
+      );
+      return;
+    }
+
+    showDialog<void>(context: context, builder: dialogBuilder);
   }
 }

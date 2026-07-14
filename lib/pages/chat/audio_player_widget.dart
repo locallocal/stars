@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stars/utils/utils.dart';
 
 class AudioPlayerWidget extends StatefulWidget {
   final String audioFilePath;
@@ -16,10 +18,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   bool _isPlaying = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  late final ShadSliderController _sliderController;
+  final FocusNode _playButtonFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _sliderController = ShadSliderController(initialValue: 0);
     _initAudioPlayer();
   }
 
@@ -52,6 +57,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           switch (state.processingState) {
             case ProcessingState.completed:
               if (mounted) {
+                _sliderController.value = _sliderValueFor(_duration);
                 setState(() {
                   _isPlaying = false;
                   _position = _duration;
@@ -79,6 +85,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
       // 监听播放位置变化
       _audioPlayer.positionStream.listen((position) {
+        if (!mounted) return;
+        _sliderController.value = _sliderValueFor(position);
         setState(() {
           _position = position;
         });
@@ -105,6 +113,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     if (isNearEnd) {
       debugPrint('播放位置接近结束，重置到开始位置');
       _position = Duration.zero;
+      _sliderController.value = 0;
       await _audioPlayer.seek(Duration.zero);
     }
 
@@ -118,6 +127,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   @override
   void dispose() {
     _audioPlayer.dispose();
+    _sliderController.dispose();
+    _playButtonFocusNode.dispose();
     super.dispose();
   }
 
@@ -130,28 +141,46 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = isDesktopOrTabletPlatform(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             // 播放/暂停按钮
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                shape: BoxShape.circle,
+            if (isDesktop)
+              ShadTooltip(
+                focusNode: _playButtonFocusNode,
+                builder: (context) => Text(_isPlaying ? '暂停播放' : '播放音频'),
+                child: ShadIconButton.outline(
+                  focusNode: _playButtonFocusNode,
+                  width: 48,
+                  height: 48,
+                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                  foregroundColor:
+                      _isPlaying
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.primary,
+                  onPressed: _togglePlay,
+                ),
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                  color:
+                      _isPlaying
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.primary,
+                  onPressed: () async {
+                    _togglePlay();
+                  },
+                ),
               ),
-              child: IconButton(
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                color:
-                    _isPlaying
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.primary,
-                onPressed: () async {
-                  _togglePlay();
-                },
-              ),
-            ),
             SizedBox(width: 8.0),
             // 显示当前播放时间
             Text(_formatDuration(_position)),
@@ -161,23 +190,45 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         ),
 
         // 进度条
-        Slider(
-          activeColor: Theme.of(context).colorScheme.primary,
-          value: _position.inSeconds.toDouble(),
-          min: 0,
-          max:
-              _duration.inSeconds.toDouble() > 0
-                  ? _duration.inSeconds.toDouble()
-                  : 1.0,
-          onChanged: (value) {
-            final position = Duration(seconds: value.toInt());
-            _audioPlayer.seek(position);
-            setState(() {
-              _position = position;
-            });
-          },
-        ),
+        if (isDesktop)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: ShadSlider(
+              controller: _sliderController,
+              min: 0,
+              max: _sliderMax,
+              semanticFormatterCallback:
+                  (value) =>
+                      '${_formatDuration(Duration(seconds: value.toInt()))} / ${_formatDuration(_duration)}',
+              onChanged: _seekToSeconds,
+            ),
+          )
+        else
+          Slider(
+            activeColor: Theme.of(context).colorScheme.primary,
+            value: _sliderValueFor(_position),
+            min: 0,
+            max: _sliderMax,
+            onChanged: _seekToSeconds,
+          ),
       ],
     );
+  }
+
+  double get _sliderMax {
+    final durationSeconds = _duration.inSeconds.toDouble();
+    return durationSeconds > 0 ? durationSeconds : 1;
+  }
+
+  double _sliderValueFor(Duration position) {
+    return position.inSeconds.toDouble().clamp(0, _sliderMax).toDouble();
+  }
+
+  void _seekToSeconds(double value) {
+    final position = Duration(seconds: value.toInt());
+    _audioPlayer.seek(position);
+    setState(() {
+      _position = position;
+    });
   }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/services/providers/providers.dart';
 import 'package:stars/model/providers.dart';
@@ -25,19 +26,22 @@ class AddBotDialog extends StatelessWidget {
     final dialogHeight =
         (windowSize.height - inset * 2).clamp(0.0, 720.0).toDouble();
 
-    return Dialog(
-      insetPadding: EdgeInsets.all(inset),
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      backgroundColor: Colors.transparent,
-      child: SizedBox(
+    return ShadDialog(
+      constraints: BoxConstraints.tightFor(
         width: dialogWidth,
         height: dialogHeight,
-        child: StarsGlassSurface(
-          role: StarsGlassRole.popover,
-          child: AddBotPage(embedded: true, onBotAdded: onBotAdded),
-        ),
+      ),
+      padding: EdgeInsets.zero,
+      gap: 0,
+      scrollable: false,
+      useSafeArea: false,
+      removeBorderRadiusWhenTiny: false,
+      closeIcon: const SizedBox.shrink(),
+      child: SizedBox(
+        key: const ValueKey<String>('add-bot-dialog-content'),
+        width: dialogWidth,
+        height: dialogHeight,
+        child: AddBotPage(embedded: true, onBotAdded: onBotAdded),
       ),
     );
   }
@@ -58,7 +62,7 @@ class AddBotPage extends StatefulWidget {
 }
 
 class _AddBotPageState extends State<AddBotPage> {
-  final _desktopFormKey = GlobalKey<FormState>();
+  final _desktopFormKey = GlobalKey<ShadFormState>();
   final _desktopScrollController = ScrollController();
   final nameController = TextEditingController();
   final providerController = TextEditingController(text: 'OpenAI');
@@ -72,6 +76,7 @@ class _AddBotPageState extends State<AddBotPage> {
   bool _isLoadingModels = false;
   bool _isSubmitting = false;
   bool _isCustomProvider = false;
+  bool _isSyncingProviderFields = false;
   bool _isPasswordVisible = false;
   File? avatarImage;
   List<String> providerModels = [];
@@ -175,41 +180,85 @@ class _AddBotPageState extends State<AddBotPage> {
 
   // 修改onChanged方法
   void _onProviderChanged(String? value) {
-    if (value != null) {
-      setState(() {
-        providerController.text = value;
-        baseURLController.text =
-            providersInfo[value]?['base_url'] as String? ?? '';
-        apiTypeController.text =
-            providersInfo[value]?['api_type'] as String? ?? '';
-        providerModels = [];
-        selectedModelController.text = '';
-        _isCustomProvider = !providersInfo.keys.contains(value);
-      });
+    if (value == null) return;
+    if (providerController.text == value) {
+      _handleProviderTextChanged(value);
+    } else {
+      providerController.text = value;
     }
   }
 
   void _onSubProviderChanged(String? value) {
-    if (value != null) {
-      setState(() {
-        final subProviders =
-            providersInfo[providerController.text]?['sub_providers']
-                as Map<String, Map>;
-        subProviderController.text = value;
-        baseURLController.text =
-            subProviders[value]?['base_url'] as String? ?? '';
+    if (value == null) return;
+    if (subProviderController.text == value) {
+      _handleSubProviderTextChanged(value);
+    } else {
+      subProviderController.text = value;
+    }
+  }
+
+  void _handleProviderTextChanged(String value) {
+    if (_isSyncingProviderFields) return;
+
+    final providerInfo = providersInfo[value];
+    setState(() {
+      _isSyncingProviderFields = true;
+      try {
+        _isCustomProvider = providerInfo == null;
+        if (providerInfo != null) {
+          apiTypeController.text = providerInfo['api_type'] as String? ?? '';
+
+          if (value == 'HuggingFace') {
+            final subProviders =
+                providerInfo['sub_providers'] as Map<String, Map>;
+            if (subProviders.isNotEmpty) {
+              final selectedSubProvider =
+                  subProviders.containsKey(subProviderController.text)
+                      ? subProviderController.text
+                      : subProviders.keys.first;
+              subProviderController.text = selectedSubProvider;
+              baseURLController.text =
+                  subProviders[selectedSubProvider]?['base_url'] as String? ??
+                  '';
+            } else {
+              baseURLController.text =
+                  providerInfo['base_url'] as String? ?? '';
+            }
+          } else {
+            baseURLController.text = providerInfo['base_url'] as String? ?? '';
+          }
+        }
         providerModels = [];
         selectedModelController.text = '';
-        _isCustomProvider = !subProviders.keys.contains(value);
-      });
-    }
+      } finally {
+        _isSyncingProviderFields = false;
+      }
+    });
+  }
+
+  void _handleSubProviderTextChanged(String value) {
+    if (_isSyncingProviderFields) return;
+
+    final subProviders =
+        providersInfo[providerController.text]?['sub_providers']
+            as Map<String, Map>;
+    setState(() {
+      _isCustomProvider = !subProviders.containsKey(value);
+      if (!_isCustomProvider) {
+        baseURLController.text =
+            subProviders[value]?['base_url'] as String? ?? '';
+      }
+      providerModels = [];
+      selectedModelController.text = '';
+    });
   }
 
   Future<void> _submitBot() async {
     if (_isSubmitting) return;
 
     final desktopFormValid =
-        !widget.embedded || (_desktopFormKey.currentState?.validate() ?? false);
+        !widget.embedded ||
+        (_desktopFormKey.currentState?.saveAndValidate() ?? false);
     if (!desktopFormValid) return;
 
     if (!widget.embedded &&
@@ -385,11 +434,7 @@ class _AddBotPageState extends State<AddBotPage> {
       body: Column(
         children: [
           _buildDesktopHeader(context),
-          Divider(
-            height: 1,
-            thickness: 0,
-            color: DesktopThemeTokens.divider(context),
-          ),
+          const ShadSeparator.horizontal(),
           Expanded(
             child: Scrollbar(
               controller: _desktopScrollController,
@@ -399,9 +444,10 @@ class _AddBotPageState extends State<AddBotPage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 760),
-                    child: Form(
+                    child: ShadForm(
                       key: _desktopFormKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      autovalidateMode:
+                          ShadAutovalidateMode.alwaysAfterFirstValidation,
                       child: FocusTraversalGroup(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -467,15 +513,16 @@ class _AddBotPageState extends State<AddBotPage> {
       padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
       child: Row(
         children: [
-          Tooltip(
-            message: strings.botAvatar,
-            excludeFromSemantics: true,
-            child: Semantics(
-              button: true,
-              label: strings.botAvatar,
-              child: InkWell(
-                onTap: _pickImage,
-                customBorder: const CircleBorder(),
+          ShadTooltip(
+            builder: (context) => Text(strings.botAvatar),
+            child: ShadButton.ghost(
+              width: 48,
+              height: 48,
+              padding: EdgeInsets.zero,
+              onPressed: _pickImage,
+              child: Semantics(
+                label: strings.botAvatar,
+                image: true,
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -546,10 +593,19 @@ class _AddBotPageState extends State<AddBotPage> {
             ),
           ),
           const SizedBox(width: 8),
-          StarsToolbarButton(
-            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-            onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close_rounded),
+          ShadTooltip(
+            builder:
+                (context) =>
+                    Text(MaterialLocalizations.of(context).closeButtonTooltip),
+            child: ShadIconButton.ghost(
+              enabled: !_isSubmitting,
+              onPressed:
+                  _isSubmitting ? null : () => Navigator.of(context).pop(),
+              width: 36,
+              height: 36,
+              iconSize: 17,
+              icon: const Icon(Icons.close_rounded),
+            ),
           ),
         ],
       ),
@@ -598,106 +654,56 @@ class _AddBotPageState extends State<AddBotPage> {
   }
 
   Widget _buildDesktopFooter(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: DesktopThemeTokens.raisedSurface(context),
-        border: Border(
-          top: BorderSide(color: DesktopThemeTokens.divider(context), width: 0),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton(
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                    style: DesktopThemeTokens.secondaryButtonStyle(context),
-                    child: Text(S.of(context).cancel),
+    final shadTheme = ShadTheme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const ShadSeparator.horizontal(),
+        ColoredBox(
+          color: shadTheme.colorScheme.background,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 760),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ShadButton.outline(
+                        enabled: !_isSubmitting,
+                        onPressed:
+                            _isSubmitting
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                        child: Text(S.of(context).cancel),
+                      ),
+                      const SizedBox(width: 8),
+                      ShadButton(
+                        enabled: !_isSubmitting,
+                        onPressed: _isSubmitting ? null : _submitBot,
+                        leading:
+                            _isSubmitting
+                                ? SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color:
+                                        shadTheme.colorScheme.primaryForeground,
+                                  ),
+                                )
+                                : const Icon(Icons.add_rounded, size: 17),
+                        child: Text(S.of(context).addBot),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _isSubmitting ? null : _submitBot,
-                    style: DesktopThemeTokens.primaryButtonStyle(context),
-                    icon:
-                        _isSubmitting
-                            ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Icon(Icons.add_rounded, size: 17),
-                    label: Text(S.of(context).addBot),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  InputDecoration _desktopInputDecoration({
-    required String labelText,
-    required IconData icon,
-    String? hintText,
-    Widget? suffixIcon,
-    bool multiline = false,
-  }) {
-    final tokens = StarsDesktopTokens.of(context);
-    final enabledBorder = OutlineInputBorder(
-      borderRadius: DesktopThemeTokens.controlRadius,
-      borderSide: BorderSide(color: tokens.separator, width: 0),
-    );
-    final disabledBorder = OutlineInputBorder(
-      borderRadius: DesktopThemeTokens.controlRadius,
-      borderSide: BorderSide(
-        color: tokens.separator.withValues(alpha: 0.55),
-        width: 0,
-      ),
-    );
-
-    return InputDecoration(
-      labelText: labelText,
-      hintText: hintText,
-      alignLabelWithHint: multiline,
-      isDense: true,
-      filled: true,
-      fillColor: tokens.controlFill,
-      contentPadding:
-          multiline
-              ? const EdgeInsets.fromLTRB(10, 12, 10, 12)
-              : const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      prefixIcon: Icon(icon, size: 17, color: tokens.secondaryText),
-      prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 44),
-      border: enabledBorder,
-      enabledBorder: enabledBorder,
-      disabledBorder: disabledBorder,
-      focusedBorder: OutlineInputBorder(
-        borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide(
-          color: tokens.focusRing,
-          width: tokens.highContrast ? 2 : 1.5,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide(color: tokens.danger),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide(color: tokens.danger, width: 1.5),
-      ),
-      suffixIcon: suffixIcon,
-      suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      ],
     );
   }
 
@@ -706,13 +712,17 @@ class _AddBotPageState extends State<AddBotPage> {
     required IconData icon,
     required VoidCallback? onPressed,
   }) {
-    return IconButton(
-      onPressed: onPressed,
-      tooltip: tooltip,
-      icon: Icon(icon),
-      iconSize: 16,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+    return ShadTooltip(
+      builder: (context) => Text(tooltip),
+      child: ShadIconButton.ghost(
+        enabled: onPressed != null,
+        onPressed: onPressed,
+        icon: Icon(icon),
+        iconSize: 16,
+        width: 30,
+        height: 30,
+        padding: EdgeInsets.zero,
+      ),
     );
   }
 
@@ -767,19 +777,17 @@ class _AddBotPageState extends State<AddBotPage> {
   }
 
   Widget _buildDesktopNameInput() {
-    return TextFormField(
+    return ShadInputFormField(
+      key: const ValueKey<String>('add-bot-name'),
+      id: 'name',
       controller: nameController,
       textInputAction: TextInputAction.next,
+      label: Text(S.of(context).botName),
+      placeholder: Text(S.of(context).enterBotName),
+      leading: const Icon(Icons.auto_awesome_outlined, size: 17),
       validator:
           (value) =>
-              value == null || value.trim().isEmpty
-                  ? S.of(context).fillRequiredFields
-                  : null,
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).botName,
-        hintText: S.of(context).enterBotName,
-        icon: Icons.auto_awesome_outlined,
-      ),
+              value.trim().isEmpty ? S.of(context).fillRequiredFields : null,
     );
   }
 
@@ -791,25 +799,19 @@ class _AddBotPageState extends State<AddBotPage> {
       leadingBuilder:
           (provider) => buildProviderLogo(context, '', provider, 18),
       fieldBuilder:
-          (menuController) => TextField(
+          (menuController) => ShadInputFormField(
+            key: const ValueKey<String>('add-bot-provider'),
+            id: 'provider',
             controller: providerController,
             textInputAction: TextInputAction.next,
-            onChanged: (value) {
-              setState(() {
-                _isCustomProvider = !providersInfo.keys.contains(value);
-                providerModels = [];
-                selectedModelController.text = '';
-              });
-            },
-            decoration: _desktopInputDecoration(
-              labelText: S.of(context).provider,
-              hintText: S.of(context).selectProvider,
-              icon: Icons.business_outlined,
-              suffixIcon: _desktopIconButton(
-                tooltip: S.of(context).selectProvider,
-                icon: Icons.expand_more_rounded,
-                onPressed: () => _toggleMenu(menuController),
-              ),
+            label: Text(S.of(context).provider),
+            placeholder: Text(S.of(context).selectProvider),
+            leading: const Icon(Icons.business_outlined, size: 17),
+            onChanged: _handleProviderTextChanged,
+            trailing: _desktopIconButton(
+              tooltip: S.of(context).selectProvider,
+              icon: Icons.expand_more_rounded,
+              onPressed: () => _toggleMenu(menuController),
             ),
           ),
     );
@@ -826,25 +828,19 @@ class _AddBotPageState extends State<AddBotPage> {
       leadingBuilder:
           (provider) => buildProviderLogo(context, '', provider, 18),
       fieldBuilder:
-          (menuController) => TextField(
+          (menuController) => ShadInputFormField(
+            key: const ValueKey<String>('add-bot-sub-provider'),
+            id: 'subProvider',
             controller: subProviderController,
             textInputAction: TextInputAction.next,
-            onChanged: (value) {
-              setState(() {
-                _isCustomProvider = !subProviders.keys.contains(value);
-                providerModels = [];
-                selectedModelController.text = '';
-              });
-            },
-            decoration: _desktopInputDecoration(
-              labelText: '${S.of(context).provider} (HuggingFace)',
-              hintText: S.of(context).selectProvider,
-              icon: Icons.hub_outlined,
-              suffixIcon: _desktopIconButton(
-                tooltip: S.of(context).selectProvider,
-                icon: Icons.expand_more_rounded,
-                onPressed: () => _toggleMenu(menuController),
-              ),
+            label: Text('${S.of(context).provider} (HuggingFace)'),
+            placeholder: Text(S.of(context).selectProvider),
+            leading: const Icon(Icons.hub_outlined, size: 17),
+            onChanged: _handleSubProviderTextChanged,
+            trailing: _desktopIconButton(
+              tooltip: S.of(context).selectProvider,
+              icon: Icons.expand_more_rounded,
+              onPressed: () => _toggleMenu(menuController),
             ),
           ),
     );
@@ -858,67 +854,61 @@ class _AddBotPageState extends State<AddBotPage> {
         setState(() => apiTypeController.text = value);
       },
       fieldBuilder:
-          (menuController) => TextField(
+          (menuController) => ShadInputFormField(
+            key: const ValueKey<String>('add-bot-api-type'),
+            id: 'apiType',
             controller: apiTypeController,
             enabled: _isCustomProvider,
             textInputAction: TextInputAction.next,
-            decoration: _desktopInputDecoration(
-              labelText: S.of(context).apiType,
-              icon: Icons.category_outlined,
-              suffixIcon: _desktopIconButton(
-                tooltip: S.of(context).apiType,
-                icon: Icons.expand_more_rounded,
-                onPressed:
-                    _isCustomProvider
-                        ? () => _toggleMenu(menuController)
-                        : null,
-              ),
+            label: Text(S.of(context).apiType),
+            leading: const Icon(Icons.category_outlined, size: 17),
+            trailing: _desktopIconButton(
+              tooltip: S.of(context).apiType,
+              icon: Icons.expand_more_rounded,
+              onPressed:
+                  _isCustomProvider ? () => _toggleMenu(menuController) : null,
             ),
           ),
     );
   }
 
   Widget _buildDesktopApiAddressInput() {
-    return TextFormField(
+    return ShadInputFormField(
+      key: const ValueKey<String>('add-bot-base-url'),
+      id: 'baseUrl',
       controller: baseURLController,
       textInputAction: TextInputAction.next,
+      label: Text(S.of(context).apiAddress),
+      leading: const Icon(Icons.link_rounded, size: 17),
       validator:
           (value) =>
-              value == null || value.trim().isEmpty
-                  ? S.of(context).enterApiAddress
-                  : null,
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).apiAddress,
-        icon: Icons.link_rounded,
-      ),
+              value.trim().isEmpty ? S.of(context).enterApiAddress : null,
     );
   }
 
   Widget _buildDesktopApiKeyInput() {
-    return TextFormField(
+    return ShadInputFormField(
+      key: const ValueKey<String>('add-bot-api-key'),
+      id: 'apiKey',
       controller: apiKeyController,
       obscureText: !_isPasswordVisible,
       textInputAction: TextInputAction.next,
+      label: Text(S.of(context).apiKey),
+      leading: const Icon(Icons.key_outlined, size: 17),
       validator:
           (value) =>
-              value == null || value.trim().isEmpty
-                  ? S.of(context).pleaseEnterApiKey
-                  : null,
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).apiKey,
-        icon: Icons.key_outlined,
-        suffixIcon: _desktopIconButton(
-          tooltip:
-              _isPasswordVisible
-                  ? S.of(context).hideApiKey
-                  : S.of(context).showApiKey,
-          icon: _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
-        ),
+              value.trim().isEmpty ? S.of(context).pleaseEnterApiKey : null,
+      trailing: _desktopIconButton(
+        tooltip:
+            _isPasswordVisible
+                ? S.of(context).hideApiKey
+                : S.of(context).showApiKey,
+        icon: _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+        onPressed: () {
+          setState(() {
+            _isPasswordVisible = !_isPasswordVisible;
+          });
+        },
       ),
     );
   }
@@ -931,54 +921,50 @@ class _AddBotPageState extends State<AddBotPage> {
         setState(() => selectedModelController.text = value);
       },
       fieldBuilder:
-          (menuController) => TextField(
+          (menuController) => ShadInputFormField(
+            key: const ValueKey<String>('add-bot-model'),
+            id: 'model',
             controller: selectedModelController,
             textInputAction: TextInputAction.next,
-            decoration: _desktopInputDecoration(
-              labelText: S.of(context).model,
-              hintText: S.of(context).selectModel,
-              icon: Icons.memory_outlined,
-              suffixIcon:
-                  providerModels.isEmpty
-                      ? _isLoadingModels
-                          ? const SizedBox.square(
-                            dimension: 44,
-                            child: Center(
-                              child: SizedBox.square(
-                                dimension: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
+            label: Text(S.of(context).model),
+            placeholder: Text(S.of(context).selectModel),
+            leading: const Icon(Icons.memory_outlined, size: 17),
+            trailing:
+                providerModels.isEmpty
+                    ? _isLoadingModels
+                        ? const SizedBox.square(
+                          dimension: 30,
+                          child: Center(
+                            child: SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                          )
-                          : _desktopIconButton(
-                            tooltip: S.of(context).fetchModelList,
-                            icon: Icons.refresh_rounded,
-                            onPressed: _fetchModels,
-                          )
-                      : _desktopIconButton(
-                        tooltip: S.of(context).selectModel,
-                        icon: Icons.expand_more_rounded,
-                        onPressed: () => _toggleMenu(menuController),
-                      ),
-            ),
+                          ),
+                        )
+                        : _desktopIconButton(
+                          tooltip: S.of(context).fetchModelList,
+                          icon: Icons.refresh_rounded,
+                          onPressed: _fetchModels,
+                        )
+                    : _desktopIconButton(
+                      tooltip: S.of(context).selectModel,
+                      icon: Icons.expand_more_rounded,
+                      onPressed: () => _toggleMenu(menuController),
+                    ),
           ),
     );
   }
 
   Widget _buildDesktopSystemPromptInput() {
-    return TextField(
+    return ShadTextareaFormField(
+      key: const ValueKey<String>('add-bot-system-prompt'),
+      id: 'systemPrompt',
       controller: systemPromptController,
-      keyboardType: TextInputType.multiline,
-      textInputAction: TextInputAction.newline,
-      minLines: 3,
-      maxLines: 4,
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).systemPrompt,
-        icon: Icons.notes_rounded,
-        multiline: true,
-      ),
+      label: Text(S.of(context).systemPrompt),
+      leading: const Icon(Icons.notes_rounded, size: 17),
+      minHeight: 96,
+      maxHeight: 144,
+      resizable: false,
     );
   }
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 /// Semantic desktop colors and accessibility state for Stars.
 ///
-/// The fallback palette mirrors the desktop UI specification. Platform-native
-/// accent and material integrations can replace these values later without
-/// changing business widgets.
+/// The fallback palette mirrors the shadcn Zinc scheme. Keeping these semantic
+/// names lets legacy Material-only widgets share the same desktop appearance.
 @immutable
 class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
   const StarsDesktopTokens({
@@ -35,25 +35,26 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
     bool highContrast = false,
   }) {
     return StarsDesktopTokens(
-      windowBackground: const Color(0xFFF5F5F7),
+      windowBackground: const Color(0xFFFFFFFF),
       contentBackground: const Color(0xFFFFFFFF),
-      sidebarOpaque: const Color(0xFFF0F0F2),
+      sidebarOpaque: const Color(0xFFFAFAFA),
       raisedSurface: const Color(0xFFFFFFFF),
-      controlFill: const Color(0x1F787880),
-      hoverFill: const Color(0x0D000000),
-      pressedFill: const Color(0x17000000),
+      controlFill: const Color(0xFFF4F4F5),
+      hoverFill: const Color(0xFFF4F4F5),
+      pressedFill: const Color(0xFFE4E4E7),
       selectedFill:
-          highContrast ? const Color(0x3D007AFF) : const Color(0x1F007AFF),
+          highContrast ? const Color(0xFFE4E4E7) : const Color(0xFFF4F4F5),
       separator:
-          highContrast ? const Color(0x6B3C3C43) : const Color(0x2E3C3C43),
-      primaryText: const Color(0xFF1D1D1F),
-      secondaryText: const Color(0xFF6E6E73),
-      tertiaryText: const Color(0xFF8E8E93),
-      accent: const Color(0xFF007AFF),
-      focusRing: const Color(0xFF007AFF),
-      success: const Color(0xFF248A3D),
-      warning: const Color(0xFFC93400),
-      danger: const Color(0xFFD70015),
+          highContrast ? const Color(0xFFA1A1AA) : const Color(0xFFE4E4E7),
+      primaryText: const Color(0xFF09090B),
+      secondaryText: const Color(0xFF71717A),
+      tertiaryText: const Color(0xFFA1A1AA),
+      accent: const Color(0xFF18181B),
+      focusRing:
+          highContrast ? const Color(0xFF09090B) : const Color(0xFF18181B),
+      success: const Color(0xFF16A34A),
+      warning: const Color(0xFFD97706),
+      danger: const Color(0xFFEF4444),
       reduceTransparency: reduceTransparency,
       highContrast: highContrast,
     );
@@ -64,25 +65,26 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
     bool highContrast = false,
   }) {
     return StarsDesktopTokens(
-      windowBackground: const Color(0xFF1C1C1E),
-      contentBackground: const Color(0xFF18181A),
-      sidebarOpaque: const Color(0xFF242426),
-      raisedSurface: const Color(0xFF2C2C2E),
-      controlFill: const Color(0x14FFFFFF),
-      hoverFill: const Color(0x12FFFFFF),
-      pressedFill: const Color(0x1CFFFFFF),
+      windowBackground: const Color(0xFF09090B),
+      contentBackground: const Color(0xFF09090B),
+      sidebarOpaque: const Color(0xFF18181B),
+      raisedSurface: const Color(0xFF18181B),
+      controlFill: const Color(0xFF27272A),
+      hoverFill: const Color(0xFF27272A),
+      pressedFill: const Color(0xFF3F3F46),
       selectedFill:
-          highContrast ? const Color(0x610A84FF) : const Color(0x380A84FF),
+          highContrast ? const Color(0xFF3F3F46) : const Color(0xFF27272A),
       separator:
-          highContrast ? const Color(0x6BFFFFFF) : const Color(0x24FFFFFF),
-      primaryText: const Color(0xFFF5F5F7),
-      secondaryText: const Color(0xFFAEAEB2),
-      tertiaryText: const Color(0xFF8E8E93),
-      accent: const Color(0xFF0A84FF),
-      focusRing: const Color(0xFF0A84FF),
-      success: const Color(0xFF30D158),
-      warning: const Color(0xFFFF9F0A),
-      danger: const Color(0xFFFF453A),
+          highContrast ? const Color(0xFF71717A) : const Color(0xFF27272A),
+      primaryText: const Color(0xFFFAFAFA),
+      secondaryText: const Color(0xFFA1A1AA),
+      tertiaryText: const Color(0xFF71717A),
+      accent: const Color(0xFFFAFAFA),
+      focusRing:
+          highContrast ? const Color(0xFFFAFAFA) : const Color(0xFFD4D4D8),
+      success: const Color(0xFF22C55E),
+      warning: const Color(0xFFF59E0B),
+      danger: const Color(0xFFEF4444),
       reduceTransparency: reduceTransparency,
       highContrast: highContrast,
     );
@@ -110,11 +112,19 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
 
   static StarsDesktopTokens of(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final extension = Theme.of(context).extension<StarsDesktopTokens>();
+    final shadTheme = ShadTheme.maybeOf(context);
     var tokens =
-        Theme.of(context).extension<StarsDesktopTokens>() ??
-        (brightness == Brightness.dark
-            ? StarsDesktopTokens.dark()
-            : StarsDesktopTokens.light());
+        shadTheme == null
+            ? extension ??
+                (brightness == Brightness.dark
+                    ? StarsDesktopTokens.dark()
+                    : StarsDesktopTokens.light())
+            : StarsDesktopTokens.fromShad(
+              shadTheme,
+              reduceTransparency: extension?.reduceTransparency ?? false,
+              highContrast: extension?.highContrast ?? false,
+            );
     final mediaHighContrast =
         MediaQuery.maybeOf(context)?.highContrast ?? false;
     if (mediaHighContrast && !tokens.highContrast) {
@@ -127,10 +137,41 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
     final isDark = brightness == Brightness.dark;
     return copyWith(
       highContrast: true,
-      selectedFill: isDark ? const Color(0x610A84FF) : const Color(0x3D007AFF),
-      separator: isDark ? const Color(0x6BFFFFFF) : const Color(0x6B3C3C43),
-      focusRing: accent,
+      selectedFill: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+      separator: isDark ? const Color(0xFF71717A) : const Color(0xFFA1A1AA),
+      focusRing: isDark ? const Color(0xFFFAFAFA) : const Color(0xFF09090B),
     );
+  }
+
+  factory StarsDesktopTokens.fromShad(
+    ShadThemeData theme, {
+    bool reduceTransparency = false,
+    bool highContrast = false,
+  }) {
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final tokens = StarsDesktopTokens(
+      windowBackground: colors.background,
+      contentBackground: colors.background,
+      sidebarOpaque: isDark ? colors.card : const Color(0xFFFAFAFA),
+      raisedSurface: colors.card,
+      controlFill: colors.secondary,
+      hoverFill: colors.accent,
+      pressedFill: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+      selectedFill: colors.accent,
+      separator: colors.border,
+      primaryText: colors.foreground,
+      secondaryText: colors.mutedForeground,
+      tertiaryText: colors.mutedForeground.withValues(alpha: 0.72),
+      accent: colors.primary,
+      focusRing: colors.ring,
+      success: isDark ? const Color(0xFF22C55E) : const Color(0xFF16A34A),
+      warning: isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706),
+      danger: colors.destructive,
+      reduceTransparency: reduceTransparency,
+      highContrast: highContrast,
+    );
+    return highContrast ? tokens._withHighContrast(theme.brightness) : tokens;
   }
 
   @override
@@ -210,7 +251,92 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
   }
 }
 
-ThemeData buildAppTheme({
+ShadThemeData buildStarsShadTheme({
+  required Brightness brightness,
+  required double fontSize,
+  bool highContrast = false,
+}) {
+  final contentFontSize = fontSize.clamp(12.0, 24.0);
+  final isDark = brightness == Brightness.dark;
+  final baseColorScheme =
+      isDark
+          ? const ShadZincColorScheme.dark()
+          : const ShadZincColorScheme.light();
+  final colorScheme =
+      highContrast
+          ? baseColorScheme.copyWith(
+            secondary:
+                isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+            mutedForeground:
+                isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B),
+            accent: isDark ? const Color(0xFF3F3F46) : const Color(0xFFE4E4E7),
+            border: isDark ? const Color(0xFF71717A) : const Color(0xFFA1A1AA),
+            input: isDark ? const Color(0xFF71717A) : const Color(0xFFA1A1AA),
+            ring: isDark ? const Color(0xFFFAFAFA) : const Color(0xFF09090B),
+          )
+          : baseColorScheme;
+  final baseTextTheme = ShadTextTheme(
+    p: TextStyle(
+      fontSize: contentFontSize,
+      height: 1.6,
+      fontFamilyFallback: _desktopFontFallback,
+    ),
+    large: TextStyle(
+      fontSize: (contentFontSize - 1).clamp(13.0, 23.0),
+      fontWeight: FontWeight.w600,
+      height: 1.4,
+      fontFamilyFallback: _desktopFontFallback,
+    ),
+    small: TextStyle(
+      fontSize: (contentFontSize - 3).clamp(12.0, 21.0),
+      height: 1.4,
+      fontFamilyFallback: _desktopFontFallback,
+    ),
+    muted: TextStyle(
+      fontSize: (contentFontSize - 3).clamp(12.0, 21.0),
+      height: 1.4,
+      fontFamilyFallback: _desktopFontFallback,
+    ),
+  );
+
+  return ShadThemeData(
+    brightness: brightness,
+    colorScheme: colorScheme,
+    radius: const BorderRadius.all(Radius.circular(6)),
+    textTheme: baseTextTheme,
+  );
+}
+
+/// Keeps existing Material-only mobile widgets usable while the desktop tree
+/// consumes Shad components and Shad's Zinc color system.
+ThemeData buildShadMaterialBridgeTheme({
+  required BuildContext context,
+  required double fontSize,
+  bool highContrast = false,
+  bool reduceTransparency = false,
+}) {
+  final shadMaterialTheme = Theme.of(context);
+  final legacyTheme = buildAppTheme(
+    brightness: shadMaterialTheme.brightness,
+    fontSize: fontSize,
+    highContrast: highContrast,
+    reduceTransparency: reduceTransparency,
+  );
+
+  return legacyTheme.copyWith(
+    colorScheme: shadMaterialTheme.colorScheme,
+    scaffoldBackgroundColor: shadMaterialTheme.scaffoldBackgroundColor,
+    dividerTheme: shadMaterialTheme.dividerTheme.copyWith(space: 1),
+    textSelectionTheme: shadMaterialTheme.textSelectionTheme,
+    iconTheme: shadMaterialTheme.iconTheme,
+    scrollbarTheme: shadMaterialTheme.scrollbarTheme,
+  );
+}
+
+/// The original Material palette used by mobile before the desktop Shad
+/// migration. Keeping it separate prevents desktop Zinc tokens from changing
+/// existing Android and iOS surfaces.
+ThemeData buildLegacyMobileTheme({
   required Brightness brightness,
   required double fontSize,
   bool highContrast = false,
@@ -218,13 +344,59 @@ ThemeData buildAppTheme({
 }) {
   final tokens =
       brightness == Brightness.dark
-          ? StarsDesktopTokens.dark(
-            highContrast: highContrast,
+          ? StarsDesktopTokens(
+            windowBackground: const Color(0xFF1C1C1E),
+            contentBackground: const Color(0xFF18181A),
+            sidebarOpaque: const Color(0xFF242426),
+            raisedSurface: const Color(0xFF2C2C2E),
+            controlFill: const Color(0x14FFFFFF),
+            hoverFill: const Color(0x12FFFFFF),
+            pressedFill: const Color(0x1CFFFFFF),
+            selectedFill:
+                highContrast
+                    ? const Color(0x610A84FF)
+                    : const Color(0x380A84FF),
+            separator:
+                highContrast
+                    ? const Color(0x6BFFFFFF)
+                    : const Color(0x24FFFFFF),
+            primaryText: const Color(0xFFF5F5F7),
+            secondaryText: const Color(0xFFAEAEB2),
+            tertiaryText: const Color(0xFF8E8E93),
+            accent: const Color(0xFF0A84FF),
+            focusRing: const Color(0xFF0A84FF),
+            success: const Color(0xFF30D158),
+            warning: const Color(0xFFFF9F0A),
+            danger: const Color(0xFFFF453A),
             reduceTransparency: reduceTransparency,
+            highContrast: highContrast,
           )
-          : StarsDesktopTokens.light(
-            highContrast: highContrast,
+          : StarsDesktopTokens(
+            windowBackground: const Color(0xFFF5F5F7),
+            contentBackground: const Color(0xFFFFFFFF),
+            sidebarOpaque: const Color(0xFFF0F0F2),
+            raisedSurface: const Color(0xFFFFFFFF),
+            controlFill: const Color(0x1F787880),
+            hoverFill: const Color(0x0D000000),
+            pressedFill: const Color(0x17000000),
+            selectedFill:
+                highContrast
+                    ? const Color(0x3D007AFF)
+                    : const Color(0x1F007AFF),
+            separator:
+                highContrast
+                    ? const Color(0x6B3C3C43)
+                    : const Color(0x2E3C3C43),
+            primaryText: const Color(0xFF1D1D1F),
+            secondaryText: const Color(0xFF6E6E73),
+            tertiaryText: const Color(0xFF8E8E93),
+            accent: const Color(0xFF007AFF),
+            focusRing: const Color(0xFF007AFF),
+            success: const Color(0xFF248A3D),
+            warning: const Color(0xFFC93400),
+            danger: const Color(0xFFD70015),
             reduceTransparency: reduceTransparency,
+            highContrast: highContrast,
           );
   final colorScheme = (brightness == Brightness.dark
           ? ColorScheme.dark(
@@ -246,6 +418,126 @@ ThemeData buildAppTheme({
             onSurface: tokens.primaryText,
             error: tokens.danger,
             onError: Colors.white,
+          ))
+      .copyWith(
+        tertiary: tokens.controlFill,
+        onTertiary: tokens.primaryText,
+        surfaceContainerHighest: tokens.controlFill,
+        surfaceContainerHigh: tokens.raisedSurface,
+        outline: tokens.separator,
+        outlineVariant: tokens.separator,
+        onSurfaceVariant: tokens.secondaryText,
+      );
+  const controlRadius = BorderRadius.all(Radius.circular(8));
+  const containerRadius = BorderRadius.all(Radius.circular(12));
+  final base = buildAppTheme(
+    brightness: brightness,
+    fontSize: fontSize,
+    highContrast: highContrast,
+    reduceTransparency: reduceTransparency,
+  );
+
+  return base.copyWith(
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: tokens.windowBackground,
+    dividerColor: tokens.separator,
+    focusColor: tokens.focusRing,
+    hoverColor: tokens.hoverFill,
+    splashColor: tokens.pressedFill,
+    extensions: <ThemeExtension<dynamic>>[tokens],
+    dividerTheme: DividerThemeData(
+      color: tokens.separator,
+      space: 1,
+      thickness: 0,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: tokens.controlFill,
+      isDense: true,
+      hintStyle: TextStyle(color: tokens.tertiaryText),
+      border: const OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide(color: tokens.separator, width: 0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: controlRadius,
+        borderSide: BorderSide(
+          color: tokens.focusRing,
+          width: highContrast ? 2 : 1.5,
+        ),
+      ),
+    ),
+    textSelectionTheme: TextSelectionThemeData(
+      cursorColor: tokens.accent,
+      selectionColor: tokens.accent.withValues(alpha: 0.24),
+      selectionHandleColor: tokens.accent,
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStatePropertyAll(tokens.accent),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.pressed)
+              ? tokens.pressedFill
+              : tokens.hoverFill;
+        }),
+        shape: const WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: controlRadius),
+        ),
+      ),
+    ),
+    tooltipTheme: TooltipThemeData(
+      decoration: BoxDecoration(
+        color: tokens.raisedSurface,
+        border: Border.all(color: tokens.separator, width: 0),
+        borderRadius: containerRadius,
+        boxShadow: DesktopThemeTokens.floatingShadowFor(tokens, subtle: true),
+      ),
+      textStyle: TextStyle(color: tokens.primaryText, fontSize: 12),
+      waitDuration: const Duration(milliseconds: 450),
+    ),
+  );
+}
+
+ThemeData buildAppTheme({
+  required Brightness brightness,
+  required double fontSize,
+  bool highContrast = false,
+  bool reduceTransparency = false,
+}) {
+  final tokens =
+      brightness == Brightness.dark
+          ? StarsDesktopTokens.dark(
+            highContrast: highContrast,
+            reduceTransparency: reduceTransparency,
+          )
+          : StarsDesktopTokens.light(
+            highContrast: highContrast,
+            reduceTransparency: reduceTransparency,
+          );
+  final colorScheme = (brightness == Brightness.dark
+          ? ColorScheme.dark(
+            primary: tokens.accent,
+            onPrimary: const Color(0xFF18181B),
+            secondary: tokens.raisedSurface,
+            onSecondary: tokens.primaryText,
+            surface: tokens.contentBackground,
+            onSurface: tokens.primaryText,
+            error: tokens.danger,
+            onError: const Color(0xFFFAFAFA),
+          )
+          : ColorScheme.light(
+            primary: tokens.accent,
+            onPrimary: const Color(0xFFFAFAFA),
+            secondary: tokens.raisedSurface,
+            onSecondary: tokens.primaryText,
+            surface: tokens.contentBackground,
+            onSurface: tokens.primaryText,
+            error: tokens.danger,
+            onError: const Color(0xFFFAFAFA),
           ))
       .copyWith(
         tertiary: tokens.controlFill,
@@ -323,11 +615,11 @@ ThemeData buildAppTheme({
     dividerTheme: DividerThemeData(
       color: tokens.separator,
       space: 1,
-      thickness: 0,
+      thickness: 1,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: tokens.controlFill,
+      fillColor: tokens.contentBackground,
       isDense: true,
       hintStyle: TextStyle(color: tokens.tertiaryText),
       border: OutlineInputBorder(
@@ -336,7 +628,7 @@ ThemeData buildAppTheme({
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide(color: tokens.separator, width: 0),
+        borderSide: BorderSide(color: tokens.separator),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: DesktopThemeTokens.controlRadius,
@@ -369,7 +661,7 @@ ThemeData buildAppTheme({
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: tokens.raisedSurface,
-        border: Border.all(color: tokens.separator, width: 0),
+        border: Border.all(color: tokens.separator),
         borderRadius: DesktopThemeTokens.containerRadius,
         boxShadow: DesktopThemeTokens.floatingShadowFor(tokens, subtle: true),
       ),
@@ -409,32 +701,30 @@ class DesktopThemeTokens {
   static const double controlHeight = 32;
   static const double iconButtonSize = 32;
   static const double listItemMinHeight = 44;
-  static const double panelRadiusValue = 12;
-  static const double itemRadiusValue = 8;
+  static const double panelRadiusValue = 8;
+  static const double itemRadiusValue = 6;
   static const double workspaceRadiusValue = 0;
-  static const double inputRadiusValue = 16;
-  static const double statusRadiusValue = 12;
-  static const double bubbleRadiusValue = 14;
+  static const double inputRadiusValue = 6;
+  static const double statusRadiusValue = 8;
+  static const double bubbleRadiusValue = 8;
   static const double splitterHitWidth = 6;
   static const EdgeInsets shellPadding = EdgeInsets.zero;
   static const EdgeInsets panelPadding = EdgeInsets.all(12);
   static const EdgeInsets workspacePadding = EdgeInsets.all(24);
   static const BorderRadius sidebarRadius = BorderRadius.zero;
-  static const BorderRadius panelRadius = BorderRadius.all(Radius.circular(12));
+  static const BorderRadius panelRadius = BorderRadius.all(Radius.circular(8));
   static const BorderRadius workspaceRadius = BorderRadius.zero;
-  static const BorderRadius itemRadius = BorderRadius.all(Radius.circular(8));
-  static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(16));
-  static const BorderRadius statusRadius = BorderRadius.all(
-    Radius.circular(12),
-  );
+  static const BorderRadius itemRadius = BorderRadius.all(Radius.circular(6));
+  static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(6));
+  static const BorderRadius statusRadius = BorderRadius.all(Radius.circular(8));
   static const BorderRadius controlRadius = BorderRadius.all(
-    Radius.circular(8),
+    Radius.circular(6),
   );
   static const BorderRadius selectionRadius = BorderRadius.all(
-    Radius.circular(8),
+    Radius.circular(6),
   );
   static const BorderRadius containerRadius = BorderRadius.all(
-    Radius.circular(12),
+    Radius.circular(8),
   );
   static const BorderRadius inspectorRadius = containerRadius;
 
@@ -551,11 +841,11 @@ class DesktopThemeTokens {
   }
 
   static BorderSide panelBorder(BuildContext context) =>
-      BorderSide(color: outline(context), width: 0);
+      BorderSide(color: outline(context));
 
   static BoxDecoration sidebarDecoration(BuildContext context) => BoxDecoration(
     color: sidebarSurface(context),
-    border: Border(right: BorderSide(color: outline(context), width: 0)),
+    border: Border(right: BorderSide(color: outline(context))),
   );
 
   static BoxDecoration panelDecoration(
@@ -565,7 +855,7 @@ class DesktopThemeTokens {
   }) => BoxDecoration(
     color: color ?? panelSurface(context),
     borderRadius: borderRadius,
-    border: Border.all(color: outline(context), width: 0),
+    border: Border.all(color: outline(context)),
   );
 
   static BoxDecoration workspaceDecoration(BuildContext context) =>
@@ -576,7 +866,7 @@ class DesktopThemeTokens {
   static BoxDecoration inspectorDecoration(BuildContext context) =>
       BoxDecoration(
         color: panelSurface(context),
-        border: Border(left: BorderSide(color: outline(context), width: 0)),
+        border: Border(left: BorderSide(color: outline(context))),
       );
 
   static BoxDecoration overlayInspectorDecoration(BuildContext context) {
@@ -584,7 +874,7 @@ class DesktopThemeTokens {
     return BoxDecoration(
       color: semanticTokens.raisedSurface,
       borderRadius: inspectorRadius,
-      border: Border.all(color: semanticTokens.separator, width: 0),
+      border: Border.all(color: semanticTokens.separator),
       boxShadow: floatingShadow(context),
     );
   }
@@ -593,7 +883,7 @@ class DesktopThemeTokens {
       BoxDecoration(
         color: color ?? secondarySurface(context),
         borderRadius: statusRadius,
-        border: Border.all(color: outline(context), width: 0),
+        border: Border.all(color: outline(context)),
       );
 
   static BoxDecoration listItemDecoration(
@@ -645,7 +935,7 @@ class DesktopThemeTokens {
       suffixIcon: suffixIcon,
       suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
       filled: true,
-      fillColor: semanticTokens.controlFill,
+      fillColor: semanticTokens.raisedSurface,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       border: OutlineInputBorder(
@@ -654,7 +944,7 @@ class DesktopThemeTokens {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: controlRadius,
-        borderSide: BorderSide(color: semanticTokens.separator, width: 0),
+        borderSide: BorderSide(color: semanticTokens.separator),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: controlRadius,
@@ -667,7 +957,7 @@ class DesktopThemeTokens {
         borderRadius: controlRadius,
         borderSide: BorderSide(
           color: semanticTokens.separator.withValues(alpha: 0.6),
-          width: 0,
+          width: 1,
         ),
       ),
     );
@@ -679,7 +969,10 @@ class DesktopThemeTokens {
       elevation: 0,
       shadowColor: Colors.transparent,
       backgroundColor: semanticTokens.accent,
-      foregroundColor: Colors.white,
+      foregroundColor:
+          semanticTokens.accent.computeLuminance() > 0.5
+              ? const Color(0xFF18181B)
+              : const Color(0xFFFAFAFA),
       disabledBackgroundColor: semanticTokens.controlFill,
       disabledForegroundColor: semanticTokens.tertiaryText,
       minimumSize: const Size(0, controlHeight),
@@ -696,7 +989,7 @@ class DesktopThemeTokens {
       foregroundColor: semanticTokens.primaryText,
       disabledForegroundColor: semanticTokens.tertiaryText,
       backgroundColor: semanticTokens.controlFill,
-      side: BorderSide(color: semanticTokens.separator, width: 0),
+      side: BorderSide(color: semanticTokens.separator),
       shape: const RoundedRectangleBorder(borderRadius: controlRadius),
     );
   }
@@ -792,6 +1085,38 @@ class StarsToolbarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = StarsDesktopTokens.of(context);
+    final shadTheme = ShadTheme.maybeOf(context);
+    if (shadTheme != null) {
+      final button = ShadIconButton.ghost(
+        icon: icon,
+        iconSize: 18,
+        width: 32,
+        height: 32,
+        enabled: onPressed != null,
+        onPressed: onPressed,
+        foregroundColor:
+            selected ? shadTheme.colorScheme.accentForeground : null,
+        backgroundColor:
+            selected ? shadTheme.colorScheme.accent : Colors.transparent,
+      );
+      return Semantics(
+        button: true,
+        enabled: onPressed != null,
+        selected: selected,
+        label: semanticLabel ?? tooltip,
+        excludeSemantics: true,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Center(
+            child: ShadTooltip(
+              builder: (context) => Text(tooltip),
+              child: button,
+            ),
+          ),
+        ),
+      );
+    }
     final style = ButtonStyle(
       minimumSize: const WidgetStatePropertyAll(Size(32, 32)),
       maximumSize: const WidgetStatePropertyAll(Size(32, 32)),
@@ -881,6 +1206,7 @@ class StarsSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shadTheme = ShadTheme.maybeOf(context);
     return Semantics(
       container: true,
       textField: true,
@@ -888,21 +1214,43 @@ class StarsSearchField extends StatelessWidget {
       label: semanticLabel ?? hintText,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 32),
-        child: TextField(
-          controller: controller,
-          focusNode: focusNode,
-          enabled: enabled,
-          autofocus: autofocus,
-          textInputAction: TextInputAction.search,
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
-          style: Theme.of(context).textTheme.bodyMedium,
-          decoration: DesktopThemeTokens.searchDecoration(
-            context,
-            hintText: hintText,
-            suffixIcon: suffixIcon,
-          ),
-        ),
+        child:
+            shadTheme == null
+                ? TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  enabled: enabled,
+                  autofocus: autofocus,
+                  textInputAction: TextInputAction.search,
+                  onChanged: onChanged,
+                  onSubmitted: onSubmitted,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  decoration: DesktopThemeTokens.searchDecoration(
+                    context,
+                    hintText: hintText,
+                    suffixIcon: suffixIcon,
+                  ),
+                )
+                : ShadInput(
+                  controller: controller,
+                  focusNode: focusNode,
+                  enabled: enabled,
+                  autofocus: autofocus,
+                  textInputAction: TextInputAction.search,
+                  onChanged: onChanged,
+                  onSubmitted: onSubmitted,
+                  placeholder: Text(hintText),
+                  leading: Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 8),
+                    child: Icon(
+                      Icons.search_rounded,
+                      size: 16,
+                      color: shadTheme.colorScheme.mutedForeground,
+                    ),
+                  ),
+                  trailing: suffixIcon,
+                  constraints: const BoxConstraints(minHeight: 36),
+                ),
       ),
     );
   }
@@ -930,6 +1278,7 @@ class DesktopEmptyStateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = StarsDesktopTokens.of(context);
+    final shadTheme = ShadTheme.maybeOf(context);
     final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
       color: tokens.primaryText,
       fontWeight: FontWeight.w600,
@@ -938,47 +1287,56 @@ class DesktopEmptyStateCard extends StatelessWidget {
       context,
     ).textTheme.bodyMedium?.copyWith(color: tokens.secondaryText);
 
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (imageAsset != null) ...[
+          Image.asset(
+            imageAsset!,
+            width: 96,
+            height: 96,
+            cacheWidth: 192,
+            cacheHeight: 192,
+            fit: BoxFit.contain,
+            errorBuilder:
+                (context, error, stackTrace) =>
+                    _EmptyStateIcon(icon: icon, tokens: tokens),
+          ),
+          const SizedBox(height: 16),
+        ] else ...[
+          _EmptyStateIcon(icon: icon, tokens: tokens),
+          const SizedBox(height: 16),
+        ],
+        Text(title, textAlign: TextAlign.center, style: titleStyle),
+        const SizedBox(height: 8),
+        Text(description, textAlign: TextAlign.center, style: bodyStyle),
+        if (supportingText != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            supportingText!,
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: tokens.tertiaryText),
+          ),
+        ],
+        if (action != null) ...[const SizedBox(height: 16), action!],
+      ],
+    );
+
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (imageAsset != null) ...[
-                Image.asset(
-                  imageAsset!,
-                  width: 96,
-                  height: 96,
-                  cacheWidth: 192,
-                  cacheHeight: 192,
-                  fit: BoxFit.contain,
-                  errorBuilder:
-                      (context, error, stackTrace) =>
-                          _EmptyStateIcon(icon: icon, tokens: tokens),
-                ),
-                const SizedBox(height: 16),
-              ] else ...[
-                _EmptyStateIcon(icon: icon, tokens: tokens),
-                const SizedBox(height: 16),
-              ],
-              Text(title, textAlign: TextAlign.center, style: titleStyle),
-              const SizedBox(height: 8),
-              Text(description, textAlign: TextAlign.center, style: bodyStyle),
-              if (supportingText != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  supportingText!,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: tokens.tertiaryText),
-                ),
-              ],
-              if (action != null) ...[const SizedBox(height: 16), action!],
-            ],
-          ),
+          child:
+              shadTheme == null
+                  ? content
+                  : ShadCard(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(28),
+                    child: content,
+                  ),
         ),
       ),
     );
@@ -1107,6 +1465,32 @@ class _DesktopInteractiveListItemState
 
   @override
   Widget build(BuildContext context) {
+    if (ShadTheme.maybeOf(context) != null) {
+      return Semantics(
+        button: true,
+        selected: widget.selected,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: DesktopThemeTokens.listItemMinHeight,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: ShadButton.raw(
+              variant:
+                  widget.selected
+                      ? ShadButtonVariant.secondary
+                      : ShadButtonVariant.ghost,
+              expands: true,
+              height: 0,
+              padding: widget.padding,
+              mainAxisAlignment: MainAxisAlignment.start,
+              onPressed: widget.onTap,
+              child: widget.child,
+            ),
+          ),
+        ),
+      );
+    }
     final disableAnimations =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Semantics(

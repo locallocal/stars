@@ -4,11 +4,13 @@ import 'package:stars/pages/chat/audio_player_widget.dart';
 import 'package:stars/pages/chat/video_player_widget.dart';
 import 'package:stars/pages/common/common.dart';
 import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
 class MessageList extends StatelessWidget {
@@ -296,18 +298,25 @@ class _MessageBubble extends StatelessWidget {
       );
     }
 
+    if (isDesktop) {
+      return Padding(
+        padding: EdgeInsets.zero,
+        child: ShadCard(
+          padding: const EdgeInsets.all(16),
+          backgroundColor: backgroundColor,
+          radius: BorderRadius.circular(StarsDesktopTheme.bubbleRadius),
+          border: ShadBorder.all(color: StarsDesktopTheme.borderColor(context)),
+          child: body,
+        ),
+      );
+    }
+
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 8),
-      padding: EdgeInsets.all(isDesktop ? 16 : 12),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(
-          isDesktop ? StarsDesktopTheme.bubbleRadius : 16,
-        ),
-        border:
-            isDesktop
-                ? Border.all(color: StarsDesktopTheme.borderColor(context))
-                : null,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: body,
     );
@@ -462,181 +471,251 @@ class _StatusCardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = isDesktop ? StarsDesktopTheme.cardRadius : 14.0;
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize:
+                          (Theme.of(context).textTheme.bodyLarge?.fontSize ??
+                              14) -
+                          1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: StarsDesktopTheme.mutedText(context),
+                      fontSize:
+                          (Theme.of(context).textTheme.bodyMedium?.fontSize ??
+                              12) -
+                          1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        child,
+      ],
+    );
+
+    if (isDesktop) {
+      return ShadCard(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        backgroundColor: StarsDesktopTheme.statusCardBackground(context),
+        radius: BorderRadius.circular(radius),
+        border: ShadBorder.all(color: StarsDesktopTheme.borderColor(context)),
+        child: content,
+      );
+    }
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isDesktop ? 14 : 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: StarsDesktopTheme.statusCardBackground(context),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize:
-                            (Theme.of(context).textTheme.bodyLarge?.fontSize ??
-                                14) -
-                            1,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: StarsDesktopTheme.mutedText(context),
-                        fontSize:
-                            (Theme.of(context).textTheme.bodyMedium?.fontSize ??
-                                12) -
-                            1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
+      child: content,
     );
   }
 }
 
 void _showImageDialog(BuildContext context, String imagePath) {
-  showDialog(
-    context: context,
-    builder:
-        (context) => Dialog(
-          child: Stack(
-            children: [
-              Image.file(File(imagePath), fit: BoxFit.contain),
-              Positioned(
-                right: 8,
-                bottom: 8,
-                child: Row(
-                  children: [
-                    FloatingActionButton(
-                      mini: true,
-                      backgroundColor: Colors.black.withValues(alpha: 0.5),
-                      onPressed: () async {
-                        try {
-                          final file = File(imagePath);
-                          final fileName =
-                              imagePath.split(Platform.pathSeparator).last;
+  final isDesktop = isDesktopPlatform(context);
 
-                          if (Platform.isAndroid || Platform.isIOS) {
-                            final result = await GallerySaver.saveImage(
-                              imagePath,
-                              albumName: 'Stars',
-                            );
-                            if (result == true) {
-                              if (context.mounted) {
-                                showDialog(
-                                  context: context,
-                                  barrierColor: Colors.transparent,
-                                  builder:
-                                      (context) => AlertDialog(
-                                        backgroundColor: Colors.black
-                                            .withValues(alpha: 0.7),
-                                        content: const Text(
-                                          '图片已保存到相册',
-                                          style: TextStyle(color: Colors.white),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                );
-                                Future.delayed(
-                                  const Duration(milliseconds: 1500),
-                                  () {
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop();
-                                    }
-                                  },
-                                );
-                              }
-                            } else {
-                              throw Exception('保存到相册失败');
-                            }
-                          } else {
-                            final result = await FilePicker.platform.saveFile(
-                              dialogTitle: '保存图片',
-                              fileName: fileName,
-                              type: FileType.image,
-                              allowedExtensions: ['png', 'jpg', 'jpeg'],
-                            );
+  Future<void> saveImage(BuildContext dialogContext) async {
+    try {
+      final file = File(imagePath);
+      final fileName = imagePath.split(Platform.pathSeparator).last;
 
-                            if (result != null) {
-                              await file.copy(result);
-                            }
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            showSnackBar(context, '保存失败: $e');
-                          }
-                        }
-                      },
-                      child: const Icon(Icons.save_alt, color: Colors.white),
-                    ),
-                    const SizedBox(width: 8),
-                    FloatingActionButton(
-                      mini: true,
-                      backgroundColor: Colors.black.withValues(alpha: 0.5),
-                      onPressed: () async {
-                        try {
-                          await Share.shareXFiles([
-                            XFile(imagePath),
-                          ], text: '来自 Stars 的图片');
-                        } catch (e) {
-                          if (context.mounted) {
-                            showSnackBar(context, '分享失败: $e');
-                          }
-                        }
-                      },
-                      child: const Icon(Icons.share, color: Colors.white),
-                    ),
-                    const SizedBox(width: 8),
-                    FloatingActionButton(
-                      mini: true,
-                      backgroundColor: Colors.black.withValues(alpha: 0.5),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Icon(Icons.close, color: Colors.white),
-                    ),
-                  ],
+      if (Platform.isAndroid || Platform.isIOS) {
+        final result = await GallerySaver.saveImage(
+          imagePath,
+          albumName: 'Stars',
+        );
+        if (result != true) {
+          throw Exception('保存到相册失败');
+        }
+        if (!dialogContext.mounted) return;
+        showDialog<void>(
+          context: dialogContext,
+          barrierColor: Colors.transparent,
+          builder:
+              (context) => AlertDialog(
+                backgroundColor: Colors.black.withValues(alpha: 0.7),
+                content: const Text(
+                  '图片已保存到相册',
+                  style: TextStyle(color: Colors.white),
+                  textAlign: TextAlign.center,
                 ),
+              ),
+        );
+        Future<void>.delayed(const Duration(milliseconds: 1500), () {
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+        return;
+      }
+
+      final result = await FilePicker.platform.saveFile(
+        dialogTitle: '保存图片',
+        fileName: fileName,
+        type: FileType.image,
+        allowedExtensions: ['png', 'jpg', 'jpeg'],
+      );
+      if (result != null) {
+        await file.copy(result);
+      }
+    } catch (error) {
+      if (dialogContext.mounted) {
+        showSnackBar(dialogContext, '保存失败: $error');
+      }
+    }
+  }
+
+  Future<void> shareImage(BuildContext dialogContext) async {
+    try {
+      await Share.shareXFiles([XFile(imagePath)], text: '来自 Stars 的图片');
+    } catch (error) {
+      if (dialogContext.mounted) {
+        showSnackBar(dialogContext, '分享失败: $error');
+      }
+    }
+  }
+
+  Widget actionButton({
+    required BuildContext dialogContext,
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    if (!isDesktop) {
+      return FloatingActionButton(
+        mini: true,
+        backgroundColor: Colors.black.withValues(alpha: 0.5),
+        onPressed: onPressed,
+        tooltip: tooltip,
+        child: Icon(icon, color: Colors.white),
+      );
+    }
+
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: ShadTooltip(
+        builder: (context) => Text(tooltip),
+        child: ShadIconButton.secondary(
+          width: 36,
+          height: 36,
+          padding: EdgeInsets.zero,
+          iconSize: 18,
+          onPressed: onPressed,
+          icon: Icon(icon),
+        ),
+      ),
+    );
+  }
+
+  Widget preview(BuildContext dialogContext) {
+    return Stack(
+      children: [
+        if (isDesktop)
+          Positioned.fill(
+            child: ColoredBox(
+              color: Colors.black,
+              child: Center(
+                child: Image.file(File(imagePath), fit: BoxFit.contain),
+              ),
+            ),
+          )
+        else
+          Image.file(File(imagePath), fit: BoxFit.contain),
+        Positioned(
+          right: 12,
+          bottom: 12,
+          child: Row(
+            children: [
+              actionButton(
+                dialogContext: dialogContext,
+                tooltip: '保存图片',
+                icon: Icons.save_alt_rounded,
+                onPressed: () => saveImage(dialogContext),
+              ),
+              const SizedBox(width: 8),
+              actionButton(
+                dialogContext: dialogContext,
+                tooltip: '分享图片',
+                icon: Icons.share_rounded,
+                onPressed: () => shareImage(dialogContext),
+              ),
+              const SizedBox(width: 8),
+              actionButton(
+                dialogContext: dialogContext,
+                tooltip:
+                    MaterialLocalizations.of(dialogContext).closeButtonTooltip,
+                icon: Icons.close_rounded,
+                onPressed: () => Navigator.of(dialogContext).pop(),
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  if (isDesktop) {
+    final windowSize = MediaQuery.sizeOf(context);
+    final width = (windowSize.width - 32).clamp(0.0, 960.0).toDouble();
+    final height = (windowSize.height - 32).clamp(0.0, 720.0).toDouble();
+    showShadDialog<void>(
+      context: context,
+      builder:
+          (dialogContext) => ShadDialog(
+            constraints: BoxConstraints.tightFor(width: width, height: height),
+            padding: EdgeInsets.zero,
+            gap: 0,
+            closeIcon: const SizedBox.shrink(),
+            child: preview(dialogContext),
+          ),
+    );
+    return;
+  }
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => Dialog(child: preview(dialogContext)),
   );
 }
 
