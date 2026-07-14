@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/model/model.dart';
+import 'package:stars/pages/add_bot.dart';
 import 'package:stars/pages/chats/new_chat_dialog.dart';
 import 'package:stars/pages/desktop_layout.dart';
 import 'package:stars/utils/theme.dart';
@@ -437,6 +440,102 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  testWidgets('add bot uses the desktop form dialog and anchored menus', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 900);
+    addTearDown(tester.view.reset);
+
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        _addBotDialogHarness(
+          brightness: Brightness.light,
+          onBotAdded: (_) async {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(StarsGlassSurface), findsOneWidget);
+      expect(find.byType(Form), findsOneWidget);
+      expect(find.byType(MenuAnchor), findsNWidgets(3));
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      expect(find.text('取消'), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(StarsGlassSurface)),
+        const Size(840, 720),
+      );
+
+      await tester.tap(find.byIcon(Icons.expand_more_rounded).first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(MenuItemButton), findsWidgets);
+      expect(find.text('OpenAI'), findsWidgets);
+
+      await tester.ensureVisible(find.text('HuggingFace').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('HuggingFace').last);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(MenuAnchor), findsNWidgets(4));
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  testWidgets('add bot stays responsive and prevents duplicate submission', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 600);
+    addTearDown(tester.view.reset);
+    final submission = Completer<void>();
+    var submitCount = 0;
+
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        _addBotDialogHarness(
+          brightness: Brightness.dark,
+          textScaler: const TextScaler.linear(2),
+          onBotAdded: (_) {
+            submitCount += 1;
+            return submission.future;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSize(find.byType(StarsGlassSurface)),
+        const Size(768, 568),
+      );
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      expect(find.text('取消'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      final fields = find.byType(TextFormField);
+      expect(fields, findsNWidgets(3));
+      await tester.enterText(fields.at(0), 'Researcher');
+      await tester.enterText(fields.at(2), 'secret-key');
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pump();
+
+      expect(submitCount, 1);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.tap(find.text('添加智能体').last);
+      await tester.pump();
+      expect(submitCount, 1);
+
+      submission.complete();
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
 
 Future<void> _withDesktopPlatform(Future<void> Function() body) async {
@@ -464,6 +563,31 @@ Widget _newChatDialogHarness({
     ],
     home: Scaffold(
       body: NewChatDialog(botsFuture: botsFuture, onChatCreated: (_, _) {}),
+    ),
+  );
+}
+
+Widget _addBotDialogHarness({
+  required Brightness brightness,
+  required Future<void> Function(Bot) onBotAdded,
+  TextScaler textScaler = TextScaler.noScaling,
+}) {
+  return MaterialApp(
+    theme: buildAppTheme(brightness: brightness, fontSize: 16),
+    locale: const Locale('zh', 'CN'),
+    supportedLocales: supportedLocales,
+    localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      S.delegate,
+    ],
+    home: Builder(
+      builder:
+          (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+            child: Scaffold(body: AddBotDialog(onBotAdded: onBotAdded)),
+          ),
     ),
   );
 }

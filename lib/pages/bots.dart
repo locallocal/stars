@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/add_bot.dart';
@@ -550,38 +549,17 @@ class ContactsPageState extends State<ContactsPage> {
     if (isDesktopOrTabletPlatform(context)) {
       await showDialog(
         context: context,
-        builder: (dialogContext) {
-          final windowSize = MediaQuery.sizeOf(dialogContext);
-          final inset =
-              windowSize.width < 960 || windowSize.height < 808 ? 16.0 : 24.0;
-          final dialogWidth = math.max(
-            0.0,
-            math.min(920.0, windowSize.width - inset * 2),
-          );
-          final dialogHeight = math.max(
-            0.0,
-            math.min(760.0, windowSize.height - inset * 2),
-          );
-
-          return Dialog(
-            insetPadding: EdgeInsets.all(inset),
-            clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              width: dialogWidth,
-              height: dialogHeight,
-              child: AddBotPage(
-                embedded: true,
-                onBotAdded: (newBot) async {
-                  await BotService.addBot(newBot);
-                  _loadBots();
-                  if (dialogContext.mounted) {
-                    Navigator.of(dialogContext).pop();
-                  }
-                },
-              ),
+        barrierDismissible: false,
+        builder:
+            (dialogContext) => AddBotDialog(
+              onBotAdded: (newBot) async {
+                await BotService.addBot(newBot);
+                _loadBots();
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
             ),
-          );
-        },
       );
       return;
     }
