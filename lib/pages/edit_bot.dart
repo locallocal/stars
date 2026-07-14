@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/logo.dart';
@@ -38,6 +39,8 @@ class _EditAIBotPageState extends State<EditBotPage> {
   late String selectedProvider;
   late String selectedModel;
   bool _isPasswordVisible = false;
+  bool _isSaving = false;
+  bool _isDeleting = false;
   File? avatarImage;
 
   @override
@@ -122,30 +125,36 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 if (widget.embedded) ...[
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: _pickImage,
-                        child: CircleAvatar(
-                          radius: 28,
-                          backgroundColor:
-                              avatarImage == null
-                                  ? getFrostedProviderColor(
-                                    selectedProvider,
-                                    Theme.of(context).colorScheme.primary,
-                                  )
-                                  : Theme.of(context).colorScheme.primary,
-                          backgroundImage:
-                              avatarImage != null
-                                  ? FileImage(avatarImage!)
-                                  : null,
-                          child:
-                              avatarImage == null
-                                  ? buildProviderLogo(
-                                    context,
-                                    '',
-                                    selectedProvider,
-                                    28,
-                                  )
-                                  : null,
+                      ShadTooltip(
+                        builder: (context) => Text(S.of(context).botAvatar),
+                        child: ShadButton.ghost(
+                          width: 56,
+                          height: 56,
+                          padding: EdgeInsets.zero,
+                          onPressed: _pickImage,
+                          child: CircleAvatar(
+                            radius: 28,
+                            backgroundColor:
+                                avatarImage == null
+                                    ? getFrostedProviderColor(
+                                      selectedProvider,
+                                      Theme.of(context).colorScheme.primary,
+                                    )
+                                    : Theme.of(context).colorScheme.primary,
+                            backgroundImage:
+                                avatarImage != null
+                                    ? FileImage(avatarImage!)
+                                    : null,
+                            child:
+                                avatarImage == null
+                                    ? buildProviderLogo(
+                                      context,
+                                      '',
+                                      selectedProvider,
+                                      28,
+                                    )
+                                    : null,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -232,28 +241,41 @@ class _EditAIBotPageState extends State<EditBotPage> {
       ),
       bottomNavigationBar:
           widget.embedded
-              ? Container(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                decoration: BoxDecoration(
-                  color: DesktopThemeTokens.workspaceSurface(context),
-                  border: Border(
-                    top: BorderSide(
-                      width: 0,
-                      color: DesktopThemeTokens.divider(context),
+              ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const ShadSeparator.horizontal(),
+                  ColoredBox(
+                    color: ShadTheme.of(context).colorScheme.background,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ShadButton(
+                            enabled: !_isSaving && !_isDeleting,
+                            onPressed:
+                                _isSaving || _isDeleting ? null : _saveBot,
+                            leading:
+                                _isSaving
+                                    ? SizedBox.square(
+                                      dimension: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color:
+                                            ShadTheme.of(
+                                              context,
+                                            ).colorScheme.primaryForeground,
+                                      ),
+                                    )
+                                    : const Icon(Icons.check_rounded, size: 17),
+                            child: Text(S.of(context).saveChanges),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FilledButton.icon(
-                      style: DesktopThemeTokens.primaryButtonStyle(context),
-                      onPressed: _saveBot,
-                      icon: const Icon(Icons.check_rounded, size: 17),
-                      label: Text(S.of(context).saveChanges),
-                    ),
-                  ],
-                ),
+                ],
               )
               : Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -303,6 +325,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Future<void> _saveBot() async {
+    if (_isSaving || _isDeleting) return;
     if (nameController.text.trim().isEmpty) {
       showSnackBar(context, S.of(context).fillRequiredFields);
       return;
@@ -323,40 +346,85 @@ class _EditAIBotPageState extends State<EditBotPage> {
       modifyTimestamp: DateTime.now(),
     );
 
-    await widget.onBotUpdated(updatedBot);
-    if (!widget.embedded && mounted) {
-      navigator.pop();
+    setState(() => _isSaving = true);
+    try {
+      await widget.onBotUpdated(updatedBot);
+      if (!widget.embedded && mounted) {
+        navigator.pop();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
-  InputDecoration _desktopFieldDecoration({
+  Widget _buildDesktopInput({
     required String label,
     required IconData icon,
-    Widget? suffixIcon,
+    required TextEditingController controller,
+    Widget? trailing,
+    String? placeholder,
+    bool obscureText = false,
+    ValueChanged<String>? onChanged,
   }) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, size: 18),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: DesktopThemeTokens.controlFill(context),
-      border: OutlineInputBorder(
-        borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide(
-          width: 0,
-          color: DesktopThemeTokens.divider(context),
+    final shadTheme = ShadTheme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: shadTheme.textTheme.small),
+        const SizedBox(height: 6),
+        ShadInput(
+          controller: controller,
+          placeholder: placeholder == null ? null : Text(placeholder),
+          leading: Icon(icon, size: 17),
+          trailing: trailing,
+          obscureText: obscureText,
+          textInputAction: TextInputAction.next,
+          onChanged: onChanged,
         ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: DesktopThemeTokens.controlRadius,
-        borderSide: BorderSide(
-          width: 1.5,
-          color: Theme.of(context).colorScheme.primary,
+      ],
+    );
+  }
+
+  Widget _buildDesktopTextarea({
+    required String label,
+    required IconData icon,
+    required TextEditingController controller,
+    String? placeholder,
+  }) {
+    final shadTheme = ShadTheme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: shadTheme.textTheme.small),
+        const SizedBox(height: 6),
+        ShadTextarea(
+          controller: controller,
+          placeholder: placeholder == null ? null : Text(placeholder),
+          leading: Icon(icon, size: 17),
+          minHeight: 112,
+          maxHeight: 220,
         ),
+      ],
+    );
+  }
+
+  Widget _desktopInputAction({
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return ShadTooltip(
+      builder: (context) => Text(tooltip),
+      child: ShadIconButton.ghost(
+        enabled: onPressed != null,
+        onPressed: onPressed,
+        icon: Icon(icon),
+        iconSize: 16,
+        width: 28,
+        height: 28,
+        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -367,13 +435,6 @@ class _EditAIBotPageState extends State<EditBotPage> {
     Widget? suffixIcon,
     String? hintText,
   }) {
-    if (widget.embedded) {
-      return _desktopFieldDecoration(
-        label: label,
-        icon: icon,
-        suffixIcon: suffixIcon,
-      ).copyWith(hintText: hintText);
-    }
     return InputDecoration(
       labelText: label,
       hintText: hintText,
@@ -393,66 +454,123 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildDeleteButton(double? fontSize) {
-    return IconButton(
-      tooltip: S.of(context).deleteBot,
-      icon: Icon(
-        Icons.delete_outline_rounded,
-        size: widget.embedded ? 18 : 24,
-        color: Theme.of(context).colorScheme.error,
-      ),
-      onPressed: () async {
-        final shouldDelete = await showDialog<bool>(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: Center(
-                  child: Text(
-                    S.of(context).deleteBot,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: fontSize,
-                    ),
-                  ),
-                ),
-                content: Text(S.of(context).confirmDeleteBot(widget.bot.name)),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: Text(
-                      S.of(context).cancel,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        color: Theme.of(context).colorScheme.onSurface,
+    Future<void> deleteBot() async {
+      if (_isDeleting || _isSaving) return;
+      final shouldDelete =
+          widget.embedded
+              ? await showShadDialog<bool>(
+                context: context,
+                variant: ShadDialogVariant.alert,
+                builder:
+                    (context) => ShadDialog.alert(
+                      title: Text(S.of(context).deleteBot),
+                      description: Text(
+                        S.of(context).confirmDeleteBot(widget.bot.name),
                       ),
+                      actions: [
+                        ShadButton.outline(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text(S.of(context).cancel),
+                        ),
+                        ShadButton.destructive(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(S.of(context).delete),
+                        ),
+                      ],
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: Text(
-                      S.of(context).delete,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        color: Theme.of(context).colorScheme.onSurface,
+              )
+              : await showDialog<bool>(
+                context: context,
+                builder:
+                    (context) => AlertDialog(
+                      title: Center(
+                        child: Text(
+                          S.of(context).deleteBot,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: fontSize,
+                          ),
+                        ),
                       ),
+                      content: Text(
+                        S.of(context).confirmDeleteBot(widget.bot.name),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text(
+                            S.of(context).cancel,
+                            style: TextStyle(
+                              fontSize: fontSize,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text(
+                            S.of(context).delete,
+                            style: TextStyle(
+                              fontSize: fontSize,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-        );
+              );
 
-        if (shouldDelete != true) {
-          return;
-        }
+      if (shouldDelete != true) return;
 
+      if (_isDeleting || _isSaving) return;
+      setState(() => _isDeleting = true);
+      try {
         await widget.onBotDeleted();
         if (!widget.embedded && mounted) {
           Navigator.pop(context);
         }
-      },
+      } finally {
+        if (mounted) {
+          setState(() => _isDeleting = false);
+        }
+      }
+    }
+
+    if (widget.embedded) {
+      return ShadTooltip(
+        builder: (context) => Text(S.of(context).deleteBot),
+        child: ShadIconButton.destructive(
+          enabled: !_isSaving && !_isDeleting,
+          width: 34,
+          height: 34,
+          padding: EdgeInsets.zero,
+          iconSize: 18,
+          icon: const Icon(Icons.delete_outline_rounded),
+          onPressed: _isSaving || _isDeleting ? null : deleteBot,
+        ),
+      );
+    }
+
+    return IconButton(
+      tooltip: S.of(context).deleteBot,
+      icon: Icon(
+        Icons.delete_outline_rounded,
+        size: 24,
+        color: Theme.of(context).colorScheme.error,
+      ),
+      onPressed: deleteBot,
     );
   }
 
   Widget _buildNameInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopInput(
+        label: S.of(context).botName,
+        icon: Icons.auto_awesome_outlined,
+        controller: nameController,
+        placeholder: S.of(context).enterBotName,
+      );
+    }
     return TextField(
       controller: nameController,
       decoration: _fieldDecoration(
@@ -464,6 +582,14 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildProviderInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopInput(
+        label: S.of(context).provider,
+        icon: Icons.business_outlined,
+        controller: providerController,
+        onChanged: (value) => setState(() => selectedProvider = value),
+      );
+    }
     return TextField(
       controller: providerController,
       onChanged: (value) => setState(() => selectedProvider = value),
@@ -475,6 +601,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildApiTypeInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopInput(
+        label: S.of(context).apiType,
+        icon: Icons.category_outlined,
+        controller: apiTypeController,
+      );
+    }
     return TextField(
       controller: apiTypeController,
       decoration: _fieldDecoration(
@@ -485,6 +618,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildApiAddressInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopInput(
+        label: S.of(context).apiAddress,
+        icon: Icons.link_rounded,
+        controller: baseURLController,
+      );
+    }
     return TextField(
       controller: baseURLController,
       decoration: _fieldDecoration(
@@ -495,6 +635,44 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildApiKeyInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopInput(
+        label: S.of(context).apiKey,
+        icon: Icons.key_outlined,
+        controller: apiKeyController,
+        obscureText: !_isPasswordVisible,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _desktopInputAction(
+              tooltip: S.of(context).copyApiKey,
+              icon: Icons.copy_outlined,
+              onPressed:
+                  apiKeyController.text.isEmpty
+                      ? null
+                      : () => Clipboard.setData(
+                        ClipboardData(text: apiKeyController.text),
+                      ),
+            ),
+            _desktopInputAction(
+              tooltip:
+                  _isPasswordVisible
+                      ? S.of(context).hideApiKey
+                      : S.of(context).showApiKey,
+              icon:
+                  _isPasswordVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+              onPressed: () {
+                setState(() {
+                  _isPasswordVisible = !_isPasswordVisible;
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    }
     return TextField(
       controller: apiKeyController,
       obscureText: !_isPasswordVisible,
@@ -538,6 +716,13 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildModelsInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopInput(
+        label: S.of(context).model,
+        icon: Icons.memory_outlined,
+        controller: selectedModelController,
+      );
+    }
     return TextField(
       controller: selectedModelController,
       decoration: _fieldDecoration(
@@ -548,6 +733,14 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildSystemPromptInput(double? fontSize) {
+    if (widget.embedded) {
+      return _buildDesktopTextarea(
+        label: S.of(context).systemPrompt.replaceAll(':', ''),
+        icon: Icons.subject_rounded,
+        controller: systemPromptController,
+        placeholder: S.of(context).enterSystemPrompt,
+      );
+    }
     return TextField(
       controller: systemPromptController,
       decoration: _fieldDecoration(

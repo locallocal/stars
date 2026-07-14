@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/add_bot.dart';
 import 'package:stars/pages/chat.dart';
@@ -138,31 +139,21 @@ class ContactsPageState extends State<ContactsPage> {
   Future<void> _deleteBot(Bot bot) async {
     final wasSelected = widget.selectedBotId == bot.id;
     final deletedIndex = contacts.indexWhere((item) => item.id == bot.id);
-    final confirm = await showDialog<bool>(
+    final confirm = await showShadDialog<bool>(
       context: context,
+      variant: ShadDialogVariant.alert,
       builder:
-          (context) => AlertDialog(
-            title: Center(
-              child: Text(
-                S.of(context).confirmDelete,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
-                ),
-              ),
-            ),
-            content: Text(S.of(context).confirmDeleteBot(bot.name)),
+          (context) => ShadDialog.alert(
+            title: Text(S.of(context).confirmDelete),
+            description: Text(S.of(context).confirmDeleteBot(bot.name)),
             actions: [
-              TextButton(
+              ShadButton.outline(
                 onPressed: () => Navigator.of(context).pop(false),
                 child: Text(S.of(context).cancel),
               ),
-              TextButton(
+              ShadButton.destructive(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: Text(
-                  S.of(context).delete,
-                  style: TextStyle(color: DesktopThemeTokens.error(context)),
-                ),
+                child: Text(S.of(context).delete),
               ),
             ],
           ),
@@ -221,11 +212,10 @@ class ContactsPageState extends State<ContactsPage> {
       searchHintText: S.of(context).searchBots,
       searchFocusNode: _searchFocusNode,
       onSearchChanged: _filterBots,
-      action: ElevatedButton.icon(
+      action: ShadButton(
         onPressed: _openAddBotPage,
-        icon: const Icon(Icons.add_circle_outline_rounded),
-        label: Text(S.of(context).addBot),
-        style: DesktopThemeTokens.primaryButtonStyle(context),
+        leading: const Icon(Icons.add_circle_outline_rounded, size: 17),
+        child: Text(S.of(context).addBot),
       ),
       child: body,
     );
@@ -294,11 +284,22 @@ class ContactsPageState extends State<ContactsPage> {
                   isSelected: widget.selectedBotId == bot.id,
                   onTap: () => _editBot(bot),
                   fontSize: fontSize ?? 16,
-                  trailing: IconButton(
-                    tooltip: MaterialLocalizations.of(context).showMenuTooltip,
-                    onPressed:
-                        controller.isOpen ? controller.close : controller.open,
-                    icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                  trailing: ShadTooltip(
+                    builder:
+                        (context) => Text(
+                          MaterialLocalizations.of(context).showMenuTooltip,
+                        ),
+                    child: ShadIconButton.ghost(
+                      width: 32,
+                      height: 32,
+                      padding: EdgeInsets.zero,
+                      onPressed:
+                          controller.isOpen
+                              ? controller.close
+                              : controller.open,
+                      icon: const Icon(Icons.more_horiz_rounded),
+                      iconSize: 18,
+                    ),
                   ),
                 ),
               );
@@ -481,11 +482,10 @@ class ContactsPageState extends State<ContactsPage> {
             searchQuery.isNotEmpty
                 ? S.of(context).botSearchScope
                 : S.of(context).newBotWorkspaceHint,
-        action: ElevatedButton.icon(
+        action: ShadButton(
           onPressed: _openAddBotPage,
-          icon: const Icon(Icons.add_circle_outline),
-          label: Text(S.of(context).addBot),
-          style: DesktopThemeTokens.primaryButtonStyle(context),
+          leading: const Icon(Icons.add_circle_outline, size: 17),
+          child: Text(S.of(context).addBot),
         ),
       );
     }
@@ -547,7 +547,7 @@ class ContactsPageState extends State<ContactsPage> {
 
   Future<void> _openAddBotPage() async {
     if (isDesktopOrTabletPlatform(context)) {
-      await showDialog(
+      await showShadDialog(
         context: context,
         barrierDismissible: false,
         builder:

@@ -7,6 +7,7 @@ import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat.dart';
 import 'package:stars/pages/edit_bot.dart';
 import 'package:stars/utils/theme.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 /// Adaptive desktop shell for macOS, Windows and Linux.
 ///
@@ -389,7 +390,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             ),
           ),
           const SizedBox(height: 8),
-          Divider(height: 0, thickness: 0),
+          const ShadSeparator.horizontal(),
           Expanded(
             child: IndexedStack(
               index: widget.currentIndex,
@@ -400,7 +401,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               ],
             ),
           ),
-          Divider(height: 0, thickness: 0),
+          const ShadSeparator.horizontal(),
           Padding(
             padding: const EdgeInsets.all(8),
             child: _AccountButton(
@@ -613,7 +614,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                   style: DesktopThemeTokens.sectionTitleStyle(context),
                 ),
               ),
-              IconButton(
+              _DesktopToolbarIconAction(
                 tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                 onPressed: () => setState(() => _inspectorOpen = false),
                 icon: const Icon(Icons.close_rounded, size: 17),
@@ -702,7 +703,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          IconButton(
+          _DesktopToolbarIconAction(
             tooltip:
                 sidebarVisible
                     ? S.of(context).hideSidebar
@@ -747,18 +748,19 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (onSearchRequested != null)
-                  IconButton(
+                  _DesktopToolbarIconAction(
                     tooltip: MaterialLocalizations.of(context).searchFieldLabel,
                     onPressed: onSearchRequested,
                     icon: const Icon(Icons.search_rounded, size: 17),
                   ),
                 if (inspectorAvailable)
-                  IconButton(
+                  _DesktopToolbarIconAction(
                     tooltip:
                         inspectorVisible
                             ? S.of(context).hideInspector
                             : S.of(context).showInspector,
                     onPressed: onToggleInspector,
+                    selected: inspectorVisible,
                     icon: Icon(
                       inspectorVisible
                           ? Icons.vertical_split_rounded
@@ -779,7 +781,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                       ),
                     ],
                     builder: (context, controller, child) {
-                      return IconButton(
+                      return _DesktopToolbarIconAction(
                         tooltip:
                             MaterialLocalizations.of(context).moreButtonTooltip,
                         onPressed:
@@ -791,7 +793,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                     },
                   ),
                 if (currentIndex != 2)
-                  IconButton(
+                  _DesktopToolbarIconAction(
                     tooltip: S.of(context).settings,
                     onPressed: onOpenSettings,
                     icon: const Icon(Icons.settings_outlined, size: 17),
@@ -800,6 +802,67 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DesktopToolbarIconAction extends StatefulWidget {
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Widget icon;
+  final bool selected;
+
+  const _DesktopToolbarIconAction({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+    this.selected = false,
+  });
+
+  @override
+  State<_DesktopToolbarIconAction> createState() =>
+      _DesktopToolbarIconActionState();
+}
+
+class _DesktopToolbarIconActionState extends State<_DesktopToolbarIconAction> {
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      enabled: widget.onPressed != null,
+      selected: widget.selected,
+      label: widget.tooltip,
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Center(
+          child: ShadTooltip(
+            focusNode: _focusNode,
+            builder: (context) => Text(widget.tooltip),
+            child: ShadIconButton.raw(
+              variant:
+                  widget.selected
+                      ? ShadButtonVariant.secondary
+                      : ShadButtonVariant.ghost,
+              focusNode: _focusNode,
+              width: 32,
+              height: 32,
+              iconSize: 18,
+              enabled: widget.onPressed != null,
+              onPressed: widget.onPressed,
+              icon: widget.icon,
+            ),
+          ),
+        ),
       ),
     );
   }

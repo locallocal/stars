@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat.dart';
 import 'package:stars/pages/chats/chat_item.dart';
@@ -69,38 +70,71 @@ class ChatListBuilder extends StatelessWidget {
         }
 
         Future<void> deleteChat() async {
-          final confirm = await showDialog<bool>(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: Center(
-                    child: Text(
-                      S.of(context).deleteChat,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize:
-                            Theme.of(context).textTheme.bodyLarge?.fontSize,
-                      ),
-                    ),
-                  ),
-                  content: Text(S.of(context).confirmDeleteChat(bot.name)),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: Text(S.of(context).cancel),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: Text(
-                        S.of(context).delete,
-                        style: TextStyle(
-                          color: DesktopThemeTokens.error(context),
+          final confirm =
+              isDesktop
+                  ? await showShadDialog<bool>(
+                    context: context,
+                    variant: ShadDialogVariant.alert,
+                    builder:
+                        (dialogContext) => ShadDialog.alert(
+                          title: Text(S.of(dialogContext).deleteChat),
+                          description: Text(
+                            S.of(dialogContext).confirmDeleteChat(bot.name),
+                          ),
+                          actions: [
+                            ShadButton.outline(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, false),
+                              child: Text(S.of(dialogContext).cancel),
+                            ),
+                            ShadButton.destructive(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, true),
+                              child: Text(S.of(dialogContext).delete),
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-          );
+                  )
+                  : await showDialog<bool>(
+                    context: context,
+                    builder:
+                        (dialogContext) => AlertDialog(
+                          title: Center(
+                            child: Text(
+                              S.of(dialogContext).deleteChat,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize:
+                                    Theme.of(
+                                      dialogContext,
+                                    ).textTheme.bodyLarge?.fontSize,
+                              ),
+                            ),
+                          ),
+                          content: Text(
+                            S.of(dialogContext).confirmDeleteChat(bot.name),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, false),
+                              child: Text(S.of(dialogContext).cancel),
+                            ),
+                            TextButton(
+                              onPressed:
+                                  () => Navigator.pop(dialogContext, true),
+                              child: Text(
+                                S.of(dialogContext).delete,
+                                style: TextStyle(
+                                  color: DesktopThemeTokens.error(
+                                    dialogContext,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                  );
 
           if (confirm != true || !context.mounted) return;
           await ChatService.deleteChat(chat.id);
@@ -155,11 +189,26 @@ class ChatListBuilder extends StatelessWidget {
                   controller.open(position: details.localPosition);
                 },
                 child: buildListItem(
-                  trailing: IconButton(
-                    tooltip: MaterialLocalizations.of(context).showMenuTooltip,
-                    onPressed:
-                        controller.isOpen ? controller.close : controller.open,
-                    icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                  trailing: Semantics(
+                    button: true,
+                    label: MaterialLocalizations.of(context).showMenuTooltip,
+                    child: ShadTooltip(
+                      builder:
+                          (context) => Text(
+                            MaterialLocalizations.of(context).showMenuTooltip,
+                          ),
+                      child: ShadIconButton.ghost(
+                        width: 32,
+                        height: 32,
+                        padding: EdgeInsets.zero,
+                        iconSize: 18,
+                        onPressed:
+                            controller.isOpen
+                                ? controller.close
+                                : controller.open,
+                        icon: const Icon(Icons.more_horiz_rounded),
+                      ),
+                    ),
                   ),
                 ),
               );

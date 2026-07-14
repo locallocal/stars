@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/model/model.dart';
@@ -32,22 +33,22 @@ void main() {
     );
 
     final tokens = StarsDesktopTokens.of(testContext);
-    expect(tokens.windowBackground, const Color(0xFFF5F5F7));
+    expect(tokens.windowBackground, const Color(0xFFFFFFFF));
     expect(tokens.contentBackground, const Color(0xFFFFFFFF));
-    expect(tokens.sidebarOpaque, const Color(0xFFF0F0F2));
+    expect(tokens.sidebarOpaque, const Color(0xFFFAFAFA));
     expect(tokens.raisedSurface, const Color(0xFFFFFFFF));
-    expect(tokens.controlFill, const Color(0x1F787880));
-    expect(tokens.hoverFill, const Color(0x0D000000));
-    expect(tokens.pressedFill, const Color(0x17000000));
-    expect(tokens.selectedFill, const Color(0x1F007AFF));
-    expect(tokens.separator, const Color(0x2E3C3C43));
-    expect(tokens.primaryText, const Color(0xFF1D1D1F));
-    expect(tokens.secondaryText, const Color(0xFF6E6E73));
-    expect(tokens.tertiaryText, const Color(0xFF8E8E93));
-    expect(tokens.accent, const Color(0xFF007AFF));
-    expect(tokens.success, const Color(0xFF248A3D));
-    expect(tokens.warning, const Color(0xFFC93400));
-    expect(tokens.danger, const Color(0xFFD70015));
+    expect(tokens.controlFill, const Color(0xFFF4F4F5));
+    expect(tokens.hoverFill, const Color(0xFFF4F4F5));
+    expect(tokens.pressedFill, const Color(0xFFE4E4E7));
+    expect(tokens.selectedFill, const Color(0xFFF4F4F5));
+    expect(tokens.separator, const Color(0xFFE4E4E7));
+    expect(tokens.primaryText, const Color(0xFF09090B));
+    expect(tokens.secondaryText, const Color(0xFF71717A));
+    expect(tokens.tertiaryText, const Color(0xFFA1A1AA));
+    expect(tokens.accent, const Color(0xFF18181B));
+    expect(tokens.success, const Color(0xFF16A34A));
+    expect(tokens.warning, const Color(0xFFD97706));
+    expect(tokens.danger, const Color(0xFFEF4444));
     expect(tokens.highContrast, isFalse);
     expect(tokens.reduceTransparency, isFalse);
 
@@ -79,22 +80,22 @@ void main() {
     );
 
     final tokens = StarsDesktopTokens.of(testContext);
-    expect(tokens.windowBackground, const Color(0xFF1C1C1E));
-    expect(tokens.contentBackground, const Color(0xFF18181A));
-    expect(tokens.sidebarOpaque, const Color(0xFF242426));
-    expect(tokens.raisedSurface, const Color(0xFF2C2C2E));
-    expect(tokens.controlFill, const Color(0x14FFFFFF));
-    expect(tokens.hoverFill, const Color(0x12FFFFFF));
-    expect(tokens.pressedFill, const Color(0x1CFFFFFF));
-    expect(tokens.selectedFill, const Color(0x380A84FF));
-    expect(tokens.separator, const Color(0x24FFFFFF));
-    expect(tokens.primaryText, const Color(0xFFF5F5F7));
-    expect(tokens.secondaryText, const Color(0xFFAEAEB2));
-    expect(tokens.tertiaryText, const Color(0xFF8E8E93));
-    expect(tokens.accent, const Color(0xFF0A84FF));
-    expect(tokens.success, const Color(0xFF30D158));
-    expect(tokens.warning, const Color(0xFFFF9F0A));
-    expect(tokens.danger, const Color(0xFFFF453A));
+    expect(tokens.windowBackground, const Color(0xFF09090B));
+    expect(tokens.contentBackground, const Color(0xFF09090B));
+    expect(tokens.sidebarOpaque, const Color(0xFF18181B));
+    expect(tokens.raisedSurface, const Color(0xFF18181B));
+    expect(tokens.controlFill, const Color(0xFF27272A));
+    expect(tokens.hoverFill, const Color(0xFF27272A));
+    expect(tokens.pressedFill, const Color(0xFF3F3F46));
+    expect(tokens.selectedFill, const Color(0xFF27272A));
+    expect(tokens.separator, const Color(0xFF27272A));
+    expect(tokens.primaryText, const Color(0xFFFAFAFA));
+    expect(tokens.secondaryText, const Color(0xFFA1A1AA));
+    expect(tokens.tertiaryText, const Color(0xFF71717A));
+    expect(tokens.accent, const Color(0xFFFAFAFA));
+    expect(tokens.success, const Color(0xFF22C55E));
+    expect(tokens.warning, const Color(0xFFF59E0B));
+    expect(tokens.danger, const Color(0xFFEF4444));
   });
 
   testWidgets('high contrast strengthens semantic boundaries and selection', (
@@ -122,9 +123,9 @@ void main() {
     final tokens = StarsDesktopTokens.of(testContext);
     expect(tokens.highContrast, isTrue);
     expect(tokens.reduceTransparency, isTrue);
-    expect(tokens.separator, const Color(0x6B3C3C43));
-    expect(tokens.selectedFill, const Color(0x3D007AFF));
-    expect(tokens.focusRing, tokens.accent);
+    expect(tokens.separator, const Color(0xFFA1A1AA));
+    expect(tokens.selectedFill, const Color(0xFFE4E4E7));
+    expect(tokens.focusRing, const Color(0xFF09090B));
     expect(DesktopThemeTokens.panelShadow(testContext), isEmpty);
   });
 
@@ -150,8 +151,37 @@ void main() {
 
     final tokens = StarsDesktopTokens.of(testContext);
     expect(tokens.highContrast, isTrue);
-    expect(tokens.separator, const Color(0x6BFFFFFF));
-    expect(tokens.selectedFill, const Color(0x610A84FF));
+    expect(tokens.separator, const Color(0xFF71717A));
+    expect(tokens.selectedFill, const Color(0xFF3F3F46));
+  });
+
+  test('Shad high contrast strengthens direct component boundaries', () {
+    final regular = buildStarsShadTheme(
+      brightness: Brightness.light,
+      fontSize: 16,
+    );
+    final highContrast = buildStarsShadTheme(
+      brightness: Brightness.light,
+      fontSize: 16,
+      highContrast: true,
+    );
+
+    expect(regular.colorScheme.border, const Color(0xFFE4E4E7));
+    expect(highContrast.colorScheme.border, const Color(0xFFA1A1AA));
+    expect(highContrast.colorScheme.input, const Color(0xFFA1A1AA));
+    expect(highContrast.colorScheme.ring, const Color(0xFF09090B));
+  });
+
+  test('mobile keeps the pre-migration Material palette', () {
+    final mobile = buildLegacyMobileTheme(
+      brightness: Brightness.light,
+      fontSize: 16,
+    );
+
+    expect(mobile.colorScheme.primary, const Color(0xFF007AFF));
+    expect(mobile.scaffoldBackgroundColor, const Color(0xFFF5F5F7));
+    expect(mobile.dividerTheme.thickness, 0);
+    expect(mobile.inputDecorationTheme.fillColor, const Color(0x1F787880));
   });
 
   test('content typography preserves the full 12 to 24 preference range', () {
@@ -395,12 +425,19 @@ void main() {
       expect(find.text('新建聊天'), findsOneWidget);
       expect(find.text('选择智能体'), findsOneWidget);
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-      expect(find.byType(StarsGlassSurface), findsOneWidget);
+      expect(find.byType(ShadDialog), findsOneWidget);
       expect(find.byType(DesktopInteractiveListItem), findsNWidgets(2));
       expect(find.byType(ListTile), findsNothing);
       expect(find.text('OpenAI · gpt-test'), findsOneWidget);
       expect(find.text('Anthropic · claude-test'), findsOneWidget);
-      expect(tester.getSize(find.byType(StarsGlassSurface)).width, 480);
+      expect(
+        tester
+            .getSize(
+              find.byKey(const ValueKey<String>('new-chat-dialog-content')),
+            )
+            .width,
+        480,
+      );
       expect(tester.takeException(), isNull);
     });
   });
@@ -421,19 +458,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final tokens = StarsDesktopTokens.dark();
-      final surface = tester.widget<Container>(
-        find
-            .descendant(
-              of: find.byType(StarsGlassSurface),
-              matching: find.byType(Container),
-            )
-            .first,
-      );
-      final decoration = surface.decoration! as BoxDecoration;
-
-      expect(decoration.color, tokens.raisedSurface);
-      expect(decoration.borderRadius, DesktopThemeTokens.containerRadius);
+      final shadTheme = ShadTheme.of(tester.element(find.byType(ShadDialog)));
+      expect(shadTheme.colorScheme.background, const Color(0xFF09090B));
+      expect(shadTheme.colorScheme.border, const Color(0xFF27272A));
       expect(find.text('没有可用的智能体'), findsOneWidget);
       expect(find.byIcon(Icons.smart_toy_outlined), findsOneWidget);
       expect(find.byType(ListTile), findsNothing);
@@ -447,32 +474,60 @@ void main() {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1280, 900);
     addTearDown(tester.view.reset);
+    Bot? submittedBot;
 
     await _withDesktopPlatform(() async {
       await tester.pumpWidget(
         _addBotDialogHarness(
           brightness: Brightness.light,
-          onBotAdded: (_) async {},
+          onBotAdded: (bot) async => submittedBot = bot,
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(Dialog), findsOneWidget);
-      expect(find.byType(StarsGlassSurface), findsOneWidget);
-      expect(find.byType(Form), findsOneWidget);
+      expect(find.byType(ShadDialog), findsOneWidget);
+      expect(find.byType(ShadForm), findsOneWidget);
       expect(find.byType(MenuAnchor), findsNWidgets(3));
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);
       expect(find.text('取消'), findsOneWidget);
       expect(
-        tester.getSize(find.byType(StarsGlassSurface)),
+        tester.getSize(
+          find.byKey(const ValueKey<String>('add-bot-dialog-content')),
+        ),
         const Size(840, 720),
       );
+
+      final providerField = find.byKey(
+        const ValueKey<String>('add-bot-provider'),
+      );
+      await tester.enterText(
+        find.descendant(of: providerField, matching: find.byType(EditableText)),
+        'Anthropic',
+      );
+      await tester.pumpAndSettle();
+
+      TextEditingController controllerFor(String key) {
+        return tester
+            .widget<EditableText>(
+              find.descendant(
+                of: find.byKey(ValueKey<String>(key)),
+                matching: find.byType(EditableText),
+              ),
+            )
+            .controller;
+      }
+
+      expect(
+        controllerFor('add-bot-base-url').text,
+        'https://api.anthropic.com/v1/',
+      );
+      expect(controllerFor('add-bot-api-type').text, Bot.apiTypeAnthropic);
 
       await tester.tap(find.byIcon(Icons.expand_more_rounded).first);
       await tester.pumpAndSettle();
 
-      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(ShadDialog), findsOneWidget);
       expect(find.byType(MenuItemButton), findsWidgets);
       expect(find.text('OpenAI'), findsWidgets);
 
@@ -481,8 +536,54 @@ void main() {
       await tester.tap(find.text('HuggingFace').last);
       await tester.pumpAndSettle();
 
-      expect(find.byType(Dialog), findsOneWidget);
+      expect(find.byType(ShadDialog), findsOneWidget);
       expect(find.byType(MenuAnchor), findsNWidgets(4));
+      expect(controllerFor('add-bot-sub-provider').text, 'HF-Inference');
+      expect(
+        controllerFor('add-bot-base-url').text,
+        'https://router.huggingface.co/hf-inference/',
+      );
+      expect(controllerFor('add-bot-api-type').text, Bot.apiTypeHuggingface);
+
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('add-bot-name')),
+          matching: find.byType(EditableText),
+        ),
+        'HF Researcher',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('add-bot-api-key')),
+          matching: find.byType(EditableText),
+        ),
+        'secret-key',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('add-bot-base-url')),
+          matching: find.byType(EditableText),
+        ),
+        '',
+      );
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pump();
+      expect(submittedBot, isNull);
+
+      const customHuggingFaceUrl = 'https://example.invalid/hf/';
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('add-bot-base-url')),
+          matching: find.byType(EditableText),
+        ),
+        customHuggingFaceUrl,
+      );
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pumpAndSettle();
+
+      expect(submittedBot?.provider, 'HuggingFace');
+      expect(submittedBot?.baseURL, customHuggingFaceUrl);
+      expect(submittedBot?.apiType, Bot.apiTypeHuggingface);
       expect(tester.takeException(), isNull);
     });
   });
@@ -510,23 +611,31 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        tester.getSize(find.byType(StarsGlassSurface)),
+        tester.getSize(
+          find.byKey(const ValueKey<String>('add-bot-dialog-content')),
+        ),
         const Size(768, 568),
       );
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
       expect(find.text('取消'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      final fields = find.byType(TextFormField);
-      expect(fields, findsNWidgets(3));
-      await tester.enterText(fields.at(0), 'Researcher');
-      await tester.enterText(fields.at(2), 'secret-key');
+      final fields = find.byType(ShadInputFormField);
+      expect(fields, findsNWidgets(6));
+      await tester.enterText(
+        find.descendant(of: fields.at(0), matching: find.byType(EditableText)),
+        'Researcher',
+      );
+      await tester.enterText(
+        find.descendant(of: fields.at(4), matching: find.byType(EditableText)),
+        'secret-key',
+      );
       await tester.tap(find.byIcon(Icons.add_rounded));
       await tester.pump();
 
       expect(submitCount, 1);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      await tester.tap(find.text('添加智能体').last);
+      await tester.tap(find.text('添加智能体').last, warnIfMissed: false);
       await tester.pump();
       expect(submitCount, 1);
 
@@ -551,19 +660,12 @@ Widget _newChatDialogHarness({
   required Brightness brightness,
   required Future<List<Bot>> botsFuture,
 }) {
-  return MaterialApp(
-    theme: buildAppTheme(brightness: brightness, fontSize: 16),
-    locale: const Locale('zh', 'CN'),
-    supportedLocales: supportedLocales,
-    localizationsDelegates: const [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      S.delegate,
-    ],
-    home: Scaffold(
-      body: NewChatDialog(botsFuture: botsFuture, onChatCreated: (_, _) {}),
-    ),
+  return _shadHarness(
+    brightness: brightness,
+    homeBuilder:
+        (context) => Scaffold(
+          body: NewChatDialog(botsFuture: botsFuture, onChatCreated: (_, _) {}),
+        ),
   );
 }
 
@@ -572,23 +674,13 @@ Widget _addBotDialogHarness({
   required Future<void> Function(Bot) onBotAdded,
   TextScaler textScaler = TextScaler.noScaling,
 }) {
-  return MaterialApp(
-    theme: buildAppTheme(brightness: brightness, fontSize: 16),
-    locale: const Locale('zh', 'CN'),
-    supportedLocales: supportedLocales,
-    localizationsDelegates: const [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      S.delegate,
-    ],
-    home: Builder(
-      builder:
-          (context) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: textScaler),
-            child: Scaffold(body: AddBotDialog(onBotAdded: onBotAdded)),
-          ),
-    ),
+  return _shadHarness(
+    brightness: brightness,
+    homeBuilder:
+        (context) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: Scaffold(body: AddBotDialog(onBotAdded: onBotAdded)),
+        ),
   );
 }
 
@@ -598,31 +690,64 @@ Widget _desktopHarness({
   VoidCallback? onCreateChat,
   VoidCallback? onSearchRequested,
 }) {
-  return MaterialApp(
-    theme: buildAppTheme(brightness: Brightness.light, fontSize: 16),
-    locale: const Locale('zh', 'CN'),
-    supportedLocales: supportedLocales,
-    localizationsDelegates: const [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      S.delegate,
-    ],
-    home: Scaffold(
-      body: DesktopLayout(
-        currentIndex: currentIndex,
-        onPageChanged: (_) {},
-        pages: const [
-          Center(child: Text('chat list')),
-          Center(child: Text('bot list')),
-          Center(child: Text('profile')),
-        ],
-        selectedBot: bot,
-        onCreateChat: onCreateChat,
-        onSearchRequested: onSearchRequested,
-        onBotUpdated: (_) async {},
-        onBotDeleted: () async {},
-      ),
+  return _shadHarness(
+    brightness: Brightness.light,
+    homeBuilder:
+        (context) => Scaffold(
+          body: DesktopLayout(
+            currentIndex: currentIndex,
+            onPageChanged: (_) {},
+            pages: const [
+              Center(child: Text('chat list')),
+              Center(child: Text('bot list')),
+              Center(child: Text('profile')),
+            ],
+            selectedBot: bot,
+            onCreateChat: onCreateChat,
+            onSearchRequested: onSearchRequested,
+            onBotUpdated: (_) async {},
+            onBotDeleted: () async {},
+          ),
+        ),
+  );
+}
+
+Widget _shadHarness({
+  required Brightness brightness,
+  required WidgetBuilder homeBuilder,
+}) {
+  final shadTheme = buildStarsShadTheme(
+    brightness: brightness,
+    fontSize: 16,
+  ).copyWith(
+    tooltipTheme: const ShadTooltipTheme(
+      waitDuration: Duration.zero,
+      showDuration: Duration.zero,
+      duration: Duration.zero,
+      reverseDuration: Duration.zero,
+      effects: [],
     ),
+  );
+  return ShadApp.custom(
+    themeMode: ThemeMode.light,
+    theme: shadTheme,
+    appBuilder:
+        (shadContext) => MaterialApp(
+          theme: buildShadMaterialBridgeTheme(
+            context: shadContext,
+            fontSize: 16,
+          ),
+          locale: const Locale('zh', 'CN'),
+          supportedLocales: supportedLocales,
+          localizationsDelegates: const [
+            GlobalShadLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            S.delegate,
+          ],
+          builder: (context, child) => ShadAppBuilder(child: child!),
+          home: Builder(builder: homeBuilder),
+        ),
   );
 }

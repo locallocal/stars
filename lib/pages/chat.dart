@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/services/message_service.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/services/chat_service.dart';
@@ -657,16 +658,27 @@ class ChatPageState extends State<ChatPage> {
           Positioned(
             right: isDesktop ? 20 : 12,
             bottom: _isTyping ? 60 : 12,
-            child: FilledButton.tonalIcon(
-              onPressed: _jumpToLatest,
-              icon: const Icon(Icons.arrow_downward_rounded, size: 16),
-              label: Text(S.of(context).jumpToLatest),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 32),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
+            child:
+                isDesktop
+                    ? ShadButton.secondary(
+                      size: ShadButtonSize.sm,
+                      onPressed: _jumpToLatest,
+                      leading: const Icon(
+                        Icons.arrow_downward_rounded,
+                        size: 16,
+                      ),
+                      child: Text(S.of(context).jumpToLatest),
+                    )
+                    : FilledButton.tonalIcon(
+                      onPressed: _jumpToLatest,
+                      icon: const Icon(Icons.arrow_downward_rounded, size: 16),
+                      label: Text(S.of(context).jumpToLatest),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 32),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
           ),
       ],
     );

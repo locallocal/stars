@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/utils/theme.dart';
@@ -40,6 +41,14 @@ class _ChatListItemState extends State<ChatListItem> {
         widget.bot.provider.isEmpty
             ? widget.lastMessage
             : '${widget.bot.provider} · ${widget.lastMessage}';
+    final timestamp = Text(widget.timestamp, style: metaStyle);
+    final timestampWithTooltip =
+        ShadTheme.maybeOf(context) == null
+            ? Tooltip(message: widget.timestamp, child: timestamp)
+            : ShadTooltip(
+              builder: (context) => Text(widget.timestamp),
+              child: timestamp,
+            );
 
     return DesktopInteractiveListItem(
       selected: widget.isSelected,
@@ -81,10 +90,7 @@ class _ChatListItemState extends State<ChatListItem> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Tooltip(
-                      message: widget.timestamp,
-                      child: Text(widget.timestamp, style: metaStyle),
-                    ),
+                    timestampWithTooltip,
                   ],
                 ),
                 const SizedBox(height: 4),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
-import 'package:stars/utils/theme.dart';
 
 class TypingIndicator extends StatelessWidget {
   final String botName;
@@ -15,36 +15,31 @@ class TypingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isDesktop) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: StarsDesktopTheme.statusCardBackground(context),
-          borderRadius: BorderRadius.circular(StarsDesktopTheme.cardRadius),
-          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                S.of(context).botIsTyping(botName),
-                style: TextStyle(
-                  color: StarsDesktopTheme.mutedText(context),
-                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+      final shadTheme = ShadTheme.of(context);
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: ShadCard(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: shadTheme.colorScheme.primary,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  S.of(context).botIsTyping(botName),
+                  style: shadTheme.textTheme.muted,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

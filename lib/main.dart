@@ -2,8 +2,9 @@ import 'dart:io' show Platform;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/services/profile_service.dart';
 import 'package:stars/services/bot_service.dart';
@@ -23,7 +24,7 @@ void main() {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     databaseFactory = databaseFactoryFfi;
   }
-  Intl.defaultLocale = 'zh';
+  intl.Intl.defaultLocale = 'zh';
   runApp(const StarsBootstrapApp());
 }
 
@@ -94,64 +95,118 @@ class StartupShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = buildAppTheme(brightness: Brightness.light, fontSize: 16);
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      home: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Builder(
-                builder:
-                    (context) => Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: Image.asset(
-                            'assets/icon/app_icon.png',
-                            width: 72,
-                            height: 72,
-                            cacheWidth: 144,
-                            cacheHeight: 144,
-                          ),
+    if (!isDesktopPlatform(context)) {
+      final theme = buildLegacyMobileTheme(
+        brightness: Brightness.light,
+        fontSize: 16,
+      );
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        home: _buildHome(theme),
+      );
+    }
+
+    return ShadApp.custom(
+      theme: buildStarsShadTheme(brightness: Brightness.light, fontSize: 16),
+      appBuilder: (context) {
+        final theme = buildShadMaterialBridgeTheme(
+          context: context,
+          fontSize: 16,
+        );
+        final highContrastTheme = buildShadMaterialBridgeTheme(
+          context: context,
+          fontSize: 16,
+          highContrast: true,
+          reduceTransparency: true,
+        );
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: theme,
+          highContrastTheme: highContrastTheme,
+          localizationsDelegates: const [
+            GlobalShadLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (context, child) {
+            final shadTheme = buildStarsShadTheme(
+              brightness: Theme.of(context).brightness,
+              fontSize: 16,
+              highContrast: MediaQuery.highContrastOf(context),
+            );
+            return ShadTheme(
+              data: shadTheme,
+              child: ShadAppBuilder(child: child!),
+            );
+          },
+          home: _buildHome(theme),
+        );
+      },
+    );
+  }
+
+  Widget _buildHome(ThemeData theme) {
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Builder(
+              builder:
+                  (context) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset(
+                          'assets/icon/app_icon.png',
+                          width: 72,
+                          height: 72,
+                          cacheWidth: 144,
+                          cacheHeight: 144,
                         ),
-                        const SizedBox(height: 16),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      if (details == null) ...[
+                        const SizedBox(height: 20),
+                        const CircularProgressIndicator(),
+                      ] else ...[
+                        const SizedBox(height: 12),
                         Text(
-                          title,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          message,
+                          details!,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        if (details == null) ...[
+                        if (onRetry != null) ...[
                           const SizedBox(height: 20),
-                          const CircularProgressIndicator(),
-                        ] else ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            details!,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          if (onRetry != null) ...[
-                            const SizedBox(height: 20),
+                          if (isDesktopPlatform(context))
+                            ShadButton(
+                              onPressed: onRetry,
+                              child: const Text('重试'),
+                            )
+                          else
                             FilledButton(
                               onPressed: onRetry,
                               child: const Text('重试'),
                             ),
-                          ],
                         ],
                       ],
-                    ),
-              ),
+                    ],
+                  ),
             ),
           ),
         ),
@@ -219,17 +274,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _setSystemUIOverlayStyle() {
+    final isDark = switch (_themeMode) {
+      ThemeMode.dark => true,
+      ThemeMode.light => false,
+      ThemeMode.system =>
+        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.dark,
+    };
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         systemNavigationBarColor:
-            _themeMode == ThemeMode.dark
-                ? Colors.grey.shade900
-                : Colors.grey.shade100,
-        statusBarIconBrightness:
-            _themeMode == ThemeMode.dark ? Brightness.light : Brightness.dark,
+            isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         systemNavigationBarIconBrightness:
-            _themeMode == ThemeMode.dark ? Brightness.light : Brightness.dark,
+            isDark ? Brightness.light : Brightness.dark,
       ),
     );
   }
@@ -237,48 +296,107 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     _setSystemUIOverlayStyle();
-    return MaterialApp(
-      title: 'Stars',
-      theme: buildAppTheme(brightness: Brightness.light, fontSize: _fontSize),
-      darkTheme: buildAppTheme(
-        brightness: Brightness.dark,
-        fontSize: _fontSize,
-      ),
-      highContrastTheme: buildAppTheme(
+    if (!isDesktopPlatform(context)) {
+      return MaterialApp(
+        title: 'Stars',
+        theme: buildLegacyMobileTheme(
+          brightness: Brightness.light,
+          fontSize: _fontSize,
+        ),
+        darkTheme: buildLegacyMobileTheme(
+          brightness: Brightness.dark,
+          fontSize: _fontSize,
+        ),
+        highContrastTheme: buildLegacyMobileTheme(
+          brightness: Brightness.light,
+          fontSize: _fontSize,
+          highContrast: true,
+          reduceTransparency: true,
+        ),
+        highContrastDarkTheme: buildLegacyMobileTheme(
+          brightness: Brightness.dark,
+          fontSize: _fontSize,
+          highContrast: true,
+          reduceTransparency: true,
+        ),
+        themeMode: _themeMode,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          S.delegate,
+        ],
+        supportedLocales: supportedLocales,
+        locale: _locale,
+        localeResolutionCallback: (locale, supportedLocales) {
+          for (var supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale?.languageCode) {
+              return supportedLocale;
+            }
+          }
+          return supportedLocales.first;
+        },
+        home: const MainPage(),
+      );
+    }
+
+    return ShadApp.custom(
+      themeMode: _themeMode,
+      theme: buildStarsShadTheme(
         brightness: Brightness.light,
         fontSize: _fontSize,
-        highContrast: true,
-        reduceTransparency: true,
       ),
-      highContrastDarkTheme: buildAppTheme(
+      darkTheme: buildStarsShadTheme(
         brightness: Brightness.dark,
         fontSize: _fontSize,
-        highContrast: true,
-        reduceTransparency: true,
       ),
-      themeMode: _themeMode,
-
-      // 国际化配置
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        S.delegate,
-      ],
-      supportedLocales: supportedLocales,
-      locale: _locale,
-      localeResolutionCallback: (locale, supportedLocales) {
-        // 如果设备语言在支持的语言列表中，则使用设备语言
-        for (var supportedLocale in supportedLocales) {
-          if (supportedLocale.languageCode == locale?.languageCode) {
-            return supportedLocale;
-          }
-        }
-        // 否则使用第一个支持的语言（简体中文）
-        return supportedLocales.first;
+      appBuilder: (context) {
+        final theme = buildShadMaterialBridgeTheme(
+          context: context,
+          fontSize: _fontSize,
+        );
+        final highContrastTheme = buildShadMaterialBridgeTheme(
+          context: context,
+          fontSize: _fontSize,
+          highContrast: true,
+          reduceTransparency: true,
+        );
+        return MaterialApp(
+          title: 'Stars',
+          theme: theme,
+          highContrastTheme: highContrastTheme,
+          themeMode: ThemeMode.light,
+          localizationsDelegates: const [
+            GlobalShadLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            S.delegate,
+          ],
+          supportedLocales: supportedLocales,
+          locale: _locale,
+          localeResolutionCallback: (locale, supportedLocales) {
+            for (var supportedLocale in supportedLocales) {
+              if (supportedLocale.languageCode == locale?.languageCode) {
+                return supportedLocale;
+              }
+            }
+            return supportedLocales.first;
+          },
+          builder: (context, child) {
+            final shadTheme = buildStarsShadTheme(
+              brightness: Theme.of(context).brightness,
+              fontSize: _fontSize,
+              highContrast: MediaQuery.highContrastOf(context),
+            );
+            return ShadTheme(
+              data: shadTheme,
+              child: ShadAppBuilder(child: child!),
+            );
+          },
+          home: const MainPage(),
+        );
       },
-
-      home: const MainPage(),
     );
   }
 }
