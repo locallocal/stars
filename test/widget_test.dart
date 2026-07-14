@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/model/model.dart';
+import 'package:stars/pages/chats/new_chat_dialog.dart';
 import 'package:stars/pages/desktop_layout.dart';
 import 'package:stars/utils/theme.dart';
 
@@ -342,6 +344,128 @@ void main() {
     expect(searchCount, 1);
     expect(find.text('Stars'), findsNothing);
   });
+
+  testWidgets('new chat uses the desktop dialog and interactive list style', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+    await _withDesktopPlatform(() async {
+      final bots = <Bot>[
+        Bot(
+          id: 'bot-1',
+          name: 'Researcher with a deliberately long display name',
+          avatar: '',
+          provider: 'OpenAI',
+          baseURL: 'https://example.invalid',
+          apiKey: '',
+          apiType: Bot.apiTypeOpenAI,
+          model: 'gpt-test',
+          systemPrompt: '',
+          createTimestamp: DateTime(2026),
+          modifyTimestamp: DateTime(2026),
+        ),
+        Bot(
+          id: 'bot-2',
+          name: 'Writer',
+          avatar: '',
+          provider: 'Anthropic',
+          baseURL: 'https://example.invalid',
+          apiKey: '',
+          apiType: Bot.apiTypeAnthropic,
+          model: 'claude-test',
+          systemPrompt: '',
+          createTimestamp: DateTime(2026),
+          modifyTimestamp: DateTime(2026),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _newChatDialogHarness(
+          brightness: Brightness.light,
+          botsFuture: Future<List<Bot>>.value(bots),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('新建聊天'), findsOneWidget);
+      expect(find.text('选择智能体'), findsOneWidget);
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      expect(find.byType(StarsGlassSurface), findsOneWidget);
+      expect(find.byType(DesktopInteractiveListItem), findsNWidgets(2));
+      expect(find.byType(ListTile), findsNothing);
+      expect(find.text('OpenAI · gpt-test'), findsOneWidget);
+      expect(find.text('Anthropic · claude-test'), findsOneWidget);
+      expect(tester.getSize(find.byType(StarsGlassSurface)).width, 480);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  testWidgets('new chat empty state uses the dark semantic dialog surface', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 600);
+    addTearDown(tester.view.reset);
+
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        _newChatDialogHarness(
+          brightness: Brightness.dark,
+          botsFuture: Future<List<Bot>>.value(const <Bot>[]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tokens = StarsDesktopTokens.dark();
+      final surface = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(StarsGlassSurface),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final decoration = surface.decoration! as BoxDecoration;
+
+      expect(decoration.color, tokens.raisedSurface);
+      expect(decoration.borderRadius, DesktopThemeTokens.containerRadius);
+      expect(find.text('没有可用的智能体'), findsOneWidget);
+      expect(find.byIcon(Icons.smart_toy_outlined), findsOneWidget);
+      expect(find.byType(ListTile), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  });
+}
+
+Future<void> _withDesktopPlatform(Future<void> Function() body) async {
+  debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+  try {
+    await body();
+  } finally {
+    debugDefaultTargetPlatformOverride = null;
+  }
+}
+
+Widget _newChatDialogHarness({
+  required Brightness brightness,
+  required Future<List<Bot>> botsFuture,
+}) {
+  return MaterialApp(
+    theme: buildAppTheme(brightness: brightness, fontSize: 16),
+    locale: const Locale('zh', 'CN'),
+    supportedLocales: supportedLocales,
+    localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+      S.delegate,
+    ],
+    home: Scaffold(
+      body: NewChatDialog(botsFuture: botsFuture, onChatCreated: (_, _) {}),
+    ),
+  );
 }
 
 Widget _desktopHarness({
