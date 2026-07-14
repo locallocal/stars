@@ -8,6 +8,40 @@ import 'package:stars/model/providers.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/pages/common/common.dart';
+import 'package:stars/utils/theme.dart';
+
+class AddBotDialog extends StatelessWidget {
+  const AddBotDialog({super.key, required this.onBotAdded});
+
+  final Future<void> Function(Bot) onBotAdded;
+
+  @override
+  Widget build(BuildContext context) {
+    final windowSize = MediaQuery.sizeOf(context);
+    final inset =
+        windowSize.width < 900 || windowSize.height < 760 ? 16.0 : 24.0;
+    final dialogWidth =
+        (windowSize.width - inset * 2).clamp(0.0, 840.0).toDouble();
+    final dialogHeight =
+        (windowSize.height - inset * 2).clamp(0.0, 720.0).toDouble();
+
+    return Dialog(
+      insetPadding: EdgeInsets.all(inset),
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      backgroundColor: Colors.transparent,
+      child: SizedBox(
+        width: dialogWidth,
+        height: dialogHeight,
+        child: StarsGlassSurface(
+          role: StarsGlassRole.popover,
+          child: AddBotPage(embedded: true, onBotAdded: onBotAdded),
+        ),
+      ),
+    );
+  }
+}
 
 class AddBotPage extends StatefulWidget {
   final Future<void> Function(Bot) onBotAdded;
@@ -24,6 +58,8 @@ class AddBotPage extends StatefulWidget {
 }
 
 class _AddBotPageState extends State<AddBotPage> {
+  final _desktopFormKey = GlobalKey<FormState>();
+  final _desktopScrollController = ScrollController();
   final nameController = TextEditingController();
   final providerController = TextEditingController(text: 'OpenAI');
   final subProviderController = TextEditingController(text: 'HF-Inference');
@@ -34,6 +70,7 @@ class _AddBotPageState extends State<AddBotPage> {
   final systemPromptController = TextEditingController();
 
   bool _isLoadingModels = false;
+  bool _isSubmitting = false;
   bool _isCustomProvider = false;
   bool _isPasswordVisible = false;
   File? avatarImage;
@@ -124,6 +161,7 @@ class _AddBotPageState extends State<AddBotPage> {
   @override
   void dispose() {
     // 释放控制器资源
+    _desktopScrollController.dispose();
     nameController.dispose();
     apiKeyController.dispose();
     baseURLController.dispose();
@@ -168,9 +206,16 @@ class _AddBotPageState extends State<AddBotPage> {
   }
 
   Future<void> _submitBot() async {
-    if (nameController.text.trim().isEmpty ||
-        apiKeyController.text.trim().isEmpty ||
-        baseURLController.text.trim().isEmpty) {
+    if (_isSubmitting) return;
+
+    final desktopFormValid =
+        !widget.embedded || (_desktopFormKey.currentState?.validate() ?? false);
+    if (!desktopFormValid) return;
+
+    if (!widget.embedded &&
+        (nameController.text.trim().isEmpty ||
+            apiKeyController.text.trim().isEmpty ||
+            baseURLController.text.trim().isEmpty)) {
       showWarningSnackBar(context, S.of(context).fillRequiredFields);
       return;
     }
@@ -195,9 +240,16 @@ class _AddBotPageState extends State<AddBotPage> {
       modifyTimestamp: DateTime.now(),
     );
 
-    await widget.onBotAdded(newBot);
-    if (!widget.embedded && mounted) {
-      navigator.pop();
+    setState(() => _isSubmitting = true);
+    try {
+      await widget.onBotAdded(newBot);
+      if (!widget.embedded && mounted) {
+        navigator.pop();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -206,7 +258,7 @@ class _AddBotPageState extends State<AddBotPage> {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
 
     if (widget.embedded) {
-      return _buildEmbeddedDesktop(context, fontSize);
+      return _buildEmbeddedDesktop(context);
     }
 
     return Scaffold(
@@ -305,80 +357,95 @@ class _AddBotPageState extends State<AddBotPage> {
               side: BorderSide.none,
             ),
           ),
-          onPressed: _submitBot,
-          child: Text(
-            S.of(context).addBot,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: fontSize,
-              color: Theme.of(context).colorScheme.surface,
-            ),
-          ),
+          onPressed: _isSubmitting ? null : _submitBot,
+          child:
+              _isSubmitting
+                  ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : Text(
+                    S.of(context).addBot,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSize,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                  ),
         ),
       ),
     );
   }
 
-  Widget _buildEmbeddedDesktop(BuildContext context, double? fontSize) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildEmbeddedDesktop(BuildContext context) {
     final isHuggingFace = providerController.text == 'HuggingFace';
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
+          _buildDesktopHeader(context),
+          Divider(
+            height: 1,
+            thickness: 0,
+            color: DesktopThemeTokens.divider(context),
+          ),
           Expanded(
             child: Scrollbar(
+              controller: _desktopScrollController,
               child: SingleChildScrollView(
+                controller: _desktopScrollController,
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 760),
-                    child: FocusTraversalGroup(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildDesktopHeader(context),
-                          const SizedBox(height: 24),
-                          _buildDesktopSection(
-                            context,
-                            S.of(context).basicInformation,
-                            [_buildDesktopNameInput()],
-                          ),
-                          const SizedBox(height: 24),
-                          _buildDesktopSection(
-                            context,
-                            S.of(context).providerInformation,
-                            [
-                              _buildDesktopFieldPair(
-                                _buildDesktopProviderInput(fontSize),
-                                isHuggingFace
-                                    ? _buildDesktopSubProviderInput(fontSize)
-                                    : _buildDesktopApiTypeSelector(fontSize),
-                              ),
-                              if (isHuggingFace)
+                    child: Form(
+                      key: _desktopFormKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: FocusTraversalGroup(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildDesktopSection(
+                              context,
+                              S.of(context).basicInformation,
+                              [_buildDesktopNameInput()],
+                            ),
+                            const SizedBox(height: 20),
+                            _buildDesktopSection(
+                              context,
+                              S.of(context).providerInformation,
+                              [
                                 _buildDesktopFieldPair(
-                                  _buildDesktopApiTypeSelector(fontSize),
-                                  _buildDesktopApiAddressInput(),
-                                )
-                              else
-                                _buildDesktopFieldPair(
-                                  _buildDesktopApiAddressInput(),
-                                  _buildDesktopApiKeyInput(),
+                                  _buildDesktopProviderInput(),
+                                  isHuggingFace
+                                      ? _buildDesktopSubProviderInput()
+                                      : _buildDesktopApiTypeSelector(),
                                 ),
-                              if (isHuggingFace) _buildDesktopApiKeyInput(),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          _buildDesktopSection(
-                            context,
-                            S.of(context).modelConfiguration,
-                            [
-                              _buildDesktopModelsInput(fontSize),
-                              _buildDesktopSystemPromptInput(),
-                            ],
-                          ),
-                        ],
+                                if (isHuggingFace)
+                                  _buildDesktopFieldPair(
+                                    _buildDesktopApiTypeSelector(),
+                                    _buildDesktopApiAddressInput(),
+                                  )
+                                else
+                                  _buildDesktopFieldPair(
+                                    _buildDesktopApiAddressInput(),
+                                    _buildDesktopApiKeyInput(),
+                                  ),
+                                if (isHuggingFace) _buildDesktopApiKeyInput(),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _buildDesktopSection(
+                              context,
+                              S.of(context).modelConfiguration,
+                              [
+                                _buildDesktopModelsInput(),
+                                _buildDesktopSystemPromptInput(),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -393,66 +460,99 @@ class _AddBotPageState extends State<AddBotPage> {
   }
 
   Widget _buildDesktopHeader(BuildContext context) {
-    final theme = Theme.of(context);
     final strings = S.of(context);
+    final tokens = StarsDesktopTokens.of(context);
 
-    return Row(
-      children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Tooltip(
-              message: strings.botAvatar,
-              excludeFromSemantics: true,
-              child: Semantics(
-                button: true,
-                label: strings.botAvatar,
-                child: InkWell(
-                  onTap: _pickImage,
-                  customBorder: const CircleBorder(),
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor:
-                        avatarImage == null
-                            ? getFrostedProviderColor(
-                              providerController.text,
-                              theme.colorScheme.primary,
-                            )
-                            : theme.colorScheme.primary,
-                    backgroundImage:
-                        avatarImage != null ? FileImage(avatarImage!) : null,
-                    child:
-                        avatarImage == null
-                            ? buildProviderLogo(
-                              context,
-                              '',
-                              providerController.text,
-                              32,
-                            )
-                            : null,
-                  ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 8, 10),
+      child: Row(
+        children: [
+          Tooltip(
+            message: strings.botAvatar,
+            excludeFromSemantics: true,
+            child: Semantics(
+              button: true,
+              label: strings.botAvatar,
+              child: InkWell(
+                onTap: _pickImage,
+                customBorder: const CircleBorder(),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor:
+                          avatarImage == null
+                              ? getFrostedProviderColor(
+                                providerController.text,
+                                tokens.accent,
+                              )
+                              : tokens.accent,
+                      backgroundImage:
+                          avatarImage != null ? FileImage(avatarImage!) : null,
+                      child:
+                          avatarImage == null
+                              ? buildProviderLogo(
+                                context,
+                                '',
+                                providerController.text,
+                                24,
+                              )
+                              : null,
+                    ),
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: tokens.raisedSurface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: tokens.separator, width: 0),
+                        ),
+                        child: Icon(
+                          Icons.edit_rounded,
+                          size: 11,
+                          color: tokens.secondaryText,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              strings.botAvatar,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 18),
-        Expanded(
-          child: Text(
-            strings.addBot,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  strings.addBot,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DesktopThemeTokens.pageTitleStyle(context),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  strings.botInformation,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DesktopThemeTokens.metaStyle(context),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          StarsToolbarButton(
+            tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+            onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ],
+      ),
     );
   }
 
@@ -464,18 +564,11 @@ class _AddBotPageState extends State<AddBotPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
-        const SizedBox(height: 14),
+        Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
+        const SizedBox(height: 12),
         for (var index = 0; index < children.length; index++) ...[
           children[index],
-          if (index != children.length - 1) const SizedBox(height: 14),
+          if (index != children.length - 1) const SizedBox(height: 12),
         ],
       ],
     );
@@ -484,10 +577,11 @@ class _AddBotPageState extends State<AddBotPage> {
   Widget _buildDesktopFieldPair(Widget first, Widget second) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 560) {
+        final scaledBody = MediaQuery.textScalerOf(context).scale(14);
+        if (constraints.maxWidth < 600 || scaledBody > 18) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [first, const SizedBox(height: 14), second],
+            children: [first, const SizedBox(height: 12), second],
           );
         }
 
@@ -495,7 +589,7 @@ class _AddBotPageState extends State<AddBotPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: first),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(child: second),
           ],
         );
@@ -504,12 +598,12 @@ class _AddBotPageState extends State<AddBotPage> {
   }
 
   Widget _buildDesktopFooter(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+        color: DesktopThemeTokens.raisedSurface(context),
+        border: Border(
+          top: BorderSide(color: DesktopThemeTokens.divider(context), width: 0),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -521,16 +615,26 @@ class _AddBotPageState extends State<AddBotPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  FilledButton(
-                    onPressed: _submitBot,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(96, 34),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(S.of(context).addBot),
+                  OutlinedButton(
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                    style: DesktopThemeTokens.secondaryButtonStyle(context),
+                    child: Text(S.of(context).cancel),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: _isSubmitting ? null : _submitBot,
+                    style: DesktopThemeTokens.primaryButtonStyle(context),
+                    icon:
+                        _isSubmitting
+                            ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Icon(Icons.add_rounded, size: 17),
+                    label: Text(S.of(context).addBot),
                   ),
                 ],
               ),
@@ -543,51 +647,57 @@ class _AddBotPageState extends State<AddBotPage> {
 
   InputDecoration _desktopInputDecoration({
     required String labelText,
+    required IconData icon,
     String? hintText,
     Widget? suffixIcon,
     bool multiline = false,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tokens = StarsDesktopTokens.of(context);
     final enabledBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: colorScheme.outlineVariant),
+      borderRadius: DesktopThemeTokens.controlRadius,
+      borderSide: BorderSide(color: tokens.separator, width: 0),
     );
     final disabledBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: DesktopThemeTokens.controlRadius,
       borderSide: BorderSide(
-        color: colorScheme.outlineVariant.withValues(alpha: 0.55),
+        color: tokens.separator.withValues(alpha: 0.55),
+        width: 0,
       ),
     );
 
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
-      floatingLabelBehavior: FloatingLabelBehavior.always,
       alignLabelWithHint: multiline,
       isDense: true,
       filled: true,
-      fillColor: colorScheme.surfaceContainerHighest,
+      fillColor: tokens.controlFill,
       contentPadding:
           multiline
-              ? const EdgeInsets.fromLTRB(12, 14, 12, 12)
-              : const EdgeInsets.fromLTRB(12, 10, 8, 10),
+              ? const EdgeInsets.fromLTRB(10, 12, 10, 12)
+              : const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      prefixIcon: Icon(icon, size: 17, color: tokens.secondaryText),
+      prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 44),
       border: enabledBorder,
       enabledBorder: enabledBorder,
       disabledBorder: disabledBorder,
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(
+          color: tokens.focusRing,
+          width: tokens.highContrast ? 2 : 1.5,
+        ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: colorScheme.error),
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(color: tokens.danger),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: colorScheme.error, width: 1.4),
+        borderRadius: DesktopThemeTokens.controlRadius,
+        borderSide: BorderSide(color: tokens.danger, width: 1.5),
       ),
       suffixIcon: suffixIcon,
-      suffixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
     );
   }
 
@@ -602,101 +712,206 @@ class _AddBotPageState extends State<AddBotPage> {
       icon: Icon(icon),
       iconSize: 16,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
     );
+  }
+
+  Widget _desktopMenuAnchor({
+    required List<String> options,
+    required String selectedValue,
+    required Widget Function(MenuController controller) fieldBuilder,
+    required ValueChanged<String> onSelected,
+    Widget Function(String value)? leadingBuilder,
+  }) {
+    final tokens = StarsDesktopTokens.of(context);
+    return MenuAnchor(
+      alignmentOffset: const Offset(0, 4),
+      style: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(tokens.raisedSurface),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        shadowColor: WidgetStatePropertyAll(
+          Colors.black.withValues(alpha: tokens.highContrast ? 0 : 0.18),
+        ),
+        elevation: WidgetStatePropertyAll(tokens.highContrast ? 0 : 6),
+        maximumSize: const WidgetStatePropertyAll(Size(420, 360)),
+        side: WidgetStatePropertyAll(
+          BorderSide(color: tokens.separator, width: 0),
+        ),
+        shape: const WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: DesktopThemeTokens.containerRadius,
+          ),
+        ),
+      ),
+      menuChildren: [
+        for (final option in options)
+          MenuItemButton(
+            leadingIcon: leadingBuilder?.call(option),
+            trailingIcon:
+                option == selectedValue
+                    ? Icon(Icons.check_rounded, size: 16, color: tokens.accent)
+                    : const SizedBox.square(dimension: 16),
+            onPressed: () => onSelected(option),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 180),
+              child: Text(option, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ),
+      ],
+      builder: (context, controller, child) => fieldBuilder(controller),
+    );
+  }
+
+  void _toggleMenu(MenuController controller) {
+    controller.isOpen ? controller.close() : controller.open();
   }
 
   Widget _buildDesktopNameInput() {
-    return TextField(
+    return TextFormField(
       controller: nameController,
       textInputAction: TextInputAction.next,
+      validator:
+          (value) =>
+              value == null || value.trim().isEmpty
+                  ? S.of(context).fillRequiredFields
+                  : null,
       decoration: _desktopInputDecoration(
         labelText: S.of(context).botName,
         hintText: S.of(context).enterBotName,
+        icon: Icons.auto_awesome_outlined,
       ),
     );
   }
 
-  Widget _buildDesktopProviderInput(double? fontSize) {
-    return TextField(
-      controller: providerController,
-      textInputAction: TextInputAction.next,
-      onChanged: (value) {
-        setState(() {
-          _isCustomProvider = !providersInfo.keys.contains(value);
-          providerModels = [];
-          selectedModelController.text = '';
-        });
+  Widget _buildDesktopProviderInput() {
+    return _desktopMenuAnchor(
+      options: providersInfo.keys.toList(growable: false),
+      selectedValue: providerController.text,
+      onSelected: _onProviderChanged,
+      leadingBuilder:
+          (provider) => buildProviderLogo(context, '', provider, 18),
+      fieldBuilder:
+          (menuController) => TextField(
+            controller: providerController,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) {
+              setState(() {
+                _isCustomProvider = !providersInfo.keys.contains(value);
+                providerModels = [];
+                selectedModelController.text = '';
+              });
+            },
+            decoration: _desktopInputDecoration(
+              labelText: S.of(context).provider,
+              hintText: S.of(context).selectProvider,
+              icon: Icons.business_outlined,
+              suffixIcon: _desktopIconButton(
+                tooltip: S.of(context).selectProvider,
+                icon: Icons.expand_more_rounded,
+                onPressed: () => _toggleMenu(menuController),
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildDesktopSubProviderInput() {
+    final subProviders =
+        providersInfo[providerController.text]?['sub_providers']
+            as Map<String, Map>;
+    return _desktopMenuAnchor(
+      options: subProviders.keys.toList(growable: false),
+      selectedValue: subProviderController.text,
+      onSelected: _onSubProviderChanged,
+      leadingBuilder:
+          (provider) => buildProviderLogo(context, '', provider, 18),
+      fieldBuilder:
+          (menuController) => TextField(
+            controller: subProviderController,
+            textInputAction: TextInputAction.next,
+            onChanged: (value) {
+              setState(() {
+                _isCustomProvider = !subProviders.keys.contains(value);
+                providerModels = [];
+                selectedModelController.text = '';
+              });
+            },
+            decoration: _desktopInputDecoration(
+              labelText: '${S.of(context).provider} (HuggingFace)',
+              hintText: S.of(context).selectProvider,
+              icon: Icons.hub_outlined,
+              suffixIcon: _desktopIconButton(
+                tooltip: S.of(context).selectProvider,
+                icon: Icons.expand_more_rounded,
+                onPressed: () => _toggleMenu(menuController),
+              ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildDesktopApiTypeSelector() {
+    return _desktopMenuAnchor(
+      options: Bot.getAllApiTypes(),
+      selectedValue: apiTypeController.text,
+      onSelected: (value) {
+        setState(() => apiTypeController.text = value);
       },
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).provider,
-        hintText: S.of(context).selectProvider,
-        suffixIcon: _desktopIconButton(
-          tooltip: S.of(context).selectProvider,
-          icon: Icons.expand_more_rounded,
-          onPressed: () => _showProvidersOptions(fontSize),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDesktopSubProviderInput(double? fontSize) {
-    return TextField(
-      controller: subProviderController,
-      textInputAction: TextInputAction.next,
-      onChanged: (value) {
-        setState(() {
-          _isCustomProvider = providersInfo.keys.contains(value);
-          providerModels = [];
-          selectedModelController.text = '';
-        });
-      },
-      decoration: _desktopInputDecoration(
-        labelText: '${S.of(context).provider} (HuggingFace)',
-        hintText: S.of(context).selectProvider,
-        suffixIcon: _desktopIconButton(
-          tooltip: S.of(context).selectProvider,
-          icon: Icons.expand_more_rounded,
-          onPressed: () => _showSubProvidersOptions(fontSize),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDesktopApiTypeSelector(double? fontSize) {
-    return TextField(
-      controller: apiTypeController,
-      enabled: _isCustomProvider,
-      textInputAction: TextInputAction.next,
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).apiType,
-        suffixIcon: _desktopIconButton(
-          tooltip: S.of(context).apiType,
-          icon: Icons.expand_more_rounded,
-          onPressed:
-              _isCustomProvider ? () => _showApiTypeOptions(fontSize) : null,
-        ),
-      ),
+      fieldBuilder:
+          (menuController) => TextField(
+            controller: apiTypeController,
+            enabled: _isCustomProvider,
+            textInputAction: TextInputAction.next,
+            decoration: _desktopInputDecoration(
+              labelText: S.of(context).apiType,
+              icon: Icons.category_outlined,
+              suffixIcon: _desktopIconButton(
+                tooltip: S.of(context).apiType,
+                icon: Icons.expand_more_rounded,
+                onPressed:
+                    _isCustomProvider
+                        ? () => _toggleMenu(menuController)
+                        : null,
+              ),
+            ),
+          ),
     );
   }
 
   Widget _buildDesktopApiAddressInput() {
-    return TextField(
+    return TextFormField(
       controller: baseURLController,
       textInputAction: TextInputAction.next,
-      decoration: _desktopInputDecoration(labelText: S.of(context).apiAddress),
+      validator:
+          (value) =>
+              value == null || value.trim().isEmpty
+                  ? S.of(context).enterApiAddress
+                  : null,
+      decoration: _desktopInputDecoration(
+        labelText: S.of(context).apiAddress,
+        icon: Icons.link_rounded,
+      ),
     );
   }
 
   Widget _buildDesktopApiKeyInput() {
-    return TextField(
+    return TextFormField(
       controller: apiKeyController,
       obscureText: !_isPasswordVisible,
       textInputAction: TextInputAction.next,
+      validator:
+          (value) =>
+              value == null || value.trim().isEmpty
+                  ? S.of(context).pleaseEnterApiKey
+                  : null,
       decoration: _desktopInputDecoration(
         labelText: S.of(context).apiKey,
+        icon: Icons.key_outlined,
         suffixIcon: _desktopIconButton(
-          tooltip: S.of(context).apiKey,
+          tooltip:
+              _isPasswordVisible
+                  ? S.of(context).hideApiKey
+                  : S.of(context).showApiKey,
           icon: _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
           onPressed: () {
             setState(() {
@@ -708,38 +923,47 @@ class _AddBotPageState extends State<AddBotPage> {
     );
   }
 
-  Widget _buildDesktopModelsInput(double? fontSize) {
-    final suffixIcon =
-        providerModels.isEmpty
-            ? _isLoadingModels
-                ? const SizedBox.square(
-                  dimension: 36,
-                  child: Center(
-                    child: SizedBox.square(
-                      dimension: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                )
-                : _desktopIconButton(
-                  tooltip: S.of(context).selectModel,
-                  icon: Icons.refresh_rounded,
-                  onPressed: _fetchModels,
-                )
-            : _desktopIconButton(
-              tooltip: S.of(context).selectModel,
-              icon: Icons.expand_more_rounded,
-              onPressed: () => _showModelsOptions(fontSize),
-            );
-
-    return TextField(
-      controller: selectedModelController,
-      textInputAction: TextInputAction.next,
-      decoration: _desktopInputDecoration(
-        labelText: S.of(context).model,
-        hintText: S.of(context).selectModel,
-        suffixIcon: suffixIcon,
-      ),
+  Widget _buildDesktopModelsInput() {
+    return _desktopMenuAnchor(
+      options: providerModels,
+      selectedValue: selectedModelController.text,
+      onSelected: (value) {
+        setState(() => selectedModelController.text = value);
+      },
+      fieldBuilder:
+          (menuController) => TextField(
+            controller: selectedModelController,
+            textInputAction: TextInputAction.next,
+            decoration: _desktopInputDecoration(
+              labelText: S.of(context).model,
+              hintText: S.of(context).selectModel,
+              icon: Icons.memory_outlined,
+              suffixIcon:
+                  providerModels.isEmpty
+                      ? _isLoadingModels
+                          ? const SizedBox.square(
+                            dimension: 44,
+                            child: Center(
+                              child: SizedBox.square(
+                                dimension: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          )
+                          : _desktopIconButton(
+                            tooltip: S.of(context).fetchModelList,
+                            icon: Icons.refresh_rounded,
+                            onPressed: _fetchModels,
+                          )
+                      : _desktopIconButton(
+                        tooltip: S.of(context).selectModel,
+                        icon: Icons.expand_more_rounded,
+                        onPressed: () => _toggleMenu(menuController),
+                      ),
+            ),
+          ),
     );
   }
 
@@ -752,6 +976,7 @@ class _AddBotPageState extends State<AddBotPage> {
       maxLines: 4,
       decoration: _desktopInputDecoration(
         labelText: S.of(context).systemPrompt,
+        icon: Icons.notes_rounded,
         multiline: true,
       ),
     );
