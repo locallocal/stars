@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/common.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/utils/theme.dart';
 
 class ImageAttachments extends StatelessWidget {
@@ -34,7 +35,7 @@ class ImageAttachments extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                '附件',
+                S.of(context).attachments,
                 style: TextStyle(
                   fontSize: fontSize - 1,
                   fontWeight: FontWeight.w600,
@@ -48,7 +49,9 @@ class ImageAttachments extends StatelessWidget {
               ),
             ),
             Text(
-              '${images.length + files.length} 项',
+              S
+                  .of(context)
+                  .itemCount((images.length + files.length).toString()),
               style: TextStyle(
                 fontSize: fontSize - 3,
                 color: StarsDesktopTheme.mutedText(context),
@@ -62,24 +65,16 @@ class ImageAttachments extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             if (desktopMode)
-              Semantics(
-                label: '清空附件',
-                child: ShadTooltip(
-                  builder: (context) => const Text('清空附件'),
-                  child: ShadIconButton.ghost(
-                    width: 32,
-                    height: 32,
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.close_rounded, size: 16),
-                    onPressed: onClearAll,
-                  ),
-                ),
+              StarsDesktopIconAction(
+                icon: LucideIcons.x,
+                label: S.of(context).clearAttachments,
+                onPressed: onClearAll,
               )
             else
               IconButton(
                 icon: buildCloseIcon(context),
                 onPressed: onClearAll,
-                tooltip: '清空附件',
+                tooltip: S.of(context).clearAttachments,
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
               ),
@@ -114,7 +109,7 @@ class ImageAttachments extends StatelessWidget {
                                   ? BoxDecoration(
                                     color: Theme.of(context).colorScheme.surface
                                         .withValues(alpha: 0.72),
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: StarsDesktopTheme.borderColor(
                                         context,
@@ -124,7 +119,7 @@ class ImageAttachments extends StatelessWidget {
                                   : null,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(
-                              desktopMode ? 12 : 8,
+                              desktopMode ? 6 : 8,
                             ),
                             child: Image.file(
                               images[index],
@@ -135,25 +130,15 @@ class ImageAttachments extends StatelessWidget {
                           ),
                         ),
                         Positioned(
-                          top: desktopMode ? 6 : 0,
-                          right: desktopMode ? 6 : 6,
+                          top: 0,
+                          right: desktopMode ? 0 : 6,
                           child:
                               desktopMode
-                                  ? Semantics(
-                                    label: '移除图片',
-                                    child: ShadTooltip(
-                                      builder: (context) => const Text('移除图片'),
-                                      child: ShadIconButton.ghost(
-                                        width: 24,
-                                        height: 24,
-                                        padding: EdgeInsets.zero,
-                                        icon: const Icon(
-                                          Icons.close_rounded,
-                                          size: 14,
-                                        ),
-                                        onPressed: () => onRemoveImage(index),
-                                      ),
-                                    ),
+                                  ? StarsDesktopIconAction(
+                                    icon: LucideIcons.x,
+                                    label: S.of(context).removeImageAttachment,
+                                    iconSize: 14,
+                                    onPressed: () => onRemoveImage(index),
                                   )
                                   : GestureDetector(
                                     onTap: () => onRemoveImage(index),
@@ -203,7 +188,7 @@ class ImageAttachments extends StatelessWidget {
                                     : Theme.of(context).colorScheme.primary
                                         .withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(
-                              desktopMode ? 16 : 8,
+                              desktopMode ? 8 : 8,
                             ),
                             border:
                                 desktopMode
@@ -218,7 +203,9 @@ class ImageAttachments extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.insert_drive_file_rounded,
+                                desktopMode
+                                    ? LucideIcons.file
+                                    : Icons.insert_drive_file_rounded,
                                 size: desktopMode ? 26 : 24,
                                 color:
                                     desktopMode
@@ -245,25 +232,15 @@ class ImageAttachments extends StatelessWidget {
                           ),
                         ),
                         Positioned(
-                          top: desktopMode ? 6 : 0,
-                          right: desktopMode ? 8 : 8,
+                          top: 0,
+                          right: desktopMode ? 0 : 8,
                           child:
                               desktopMode
-                                  ? Semantics(
-                                    label: '移除文件',
-                                    child: ShadTooltip(
-                                      builder: (context) => const Text('移除文件'),
-                                      child: ShadIconButton.ghost(
-                                        width: 24,
-                                        height: 24,
-                                        padding: EdgeInsets.zero,
-                                        icon: const Icon(
-                                          Icons.close_rounded,
-                                          size: 14,
-                                        ),
-                                        onPressed: () => onRemoveFile(index),
-                                      ),
-                                    ),
+                                  ? StarsDesktopIconAction(
+                                    icon: LucideIcons.x,
+                                    label: S.of(context).removeFileAttachment,
+                                    iconSize: 14,
+                                    onPressed: () => onRemoveFile(index),
                                   )
                                   : GestureDetector(
                                     onTap: () => onRemoveFile(index),

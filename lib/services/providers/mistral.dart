@@ -136,8 +136,8 @@ class Mistral extends Provider {
                   onResponse(content);
                 }
               }
-            } catch (e) {
-              print('Parse stream response failed: $e');
+            } catch (_) {
+              // Ignore a malformed stream line; later valid lines still apply.
             }
           }
         }

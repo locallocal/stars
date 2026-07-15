@@ -1243,7 +1243,7 @@ class StarsSearchField extends StatelessWidget {
                   leading: Padding(
                     padding: const EdgeInsetsDirectional.only(end: 8),
                     child: Icon(
-                      Icons.search_rounded,
+                      LucideIcons.search,
                       size: 16,
                       color: shadTheme.colorScheme.mutedForeground,
                     ),
@@ -1293,16 +1293,16 @@ class DesktopEmptyStateCard extends StatelessWidget {
         if (imageAsset != null) ...[
           Image.asset(
             imageAsset!,
-            width: 96,
-            height: 96,
-            cacheWidth: 192,
-            cacheHeight: 192,
+            width: 56,
+            height: 56,
+            cacheWidth: 112,
+            cacheHeight: 112,
             fit: BoxFit.contain,
             errorBuilder:
                 (context, error, stackTrace) =>
                     _EmptyStateIcon(icon: icon, tokens: tokens),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
         ] else ...[
           _EmptyStateIcon(icon: icon, tokens: tokens),
           const SizedBox(height: 16),
@@ -1329,14 +1329,11 @@ class DesktopEmptyStateCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
-          child:
-              shadTheme == null
-                  ? content
-                  : ShadCard(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(28),
-                    child: content,
-                  ),
+          child: Padding(
+            padding:
+                shadTheme == null ? EdgeInsets.zero : const EdgeInsets.all(8),
+            child: content,
+          ),
         ),
       ),
     );
@@ -1373,6 +1370,8 @@ class DesktopListPanel extends StatelessWidget {
   final Widget action;
   final Widget child;
   final FocusNode? searchFocusNode;
+  final TextEditingController? searchController;
+  final Widget? searchSuffix;
 
   const DesktopListPanel({
     super.key,
@@ -1383,6 +1382,8 @@ class DesktopListPanel extends StatelessWidget {
     required this.action,
     required this.child,
     this.searchFocusNode,
+    this.searchController,
+    this.searchSuffix,
   });
 
   @override
@@ -1426,8 +1427,10 @@ class DesktopListPanel extends StatelessWidget {
             const SizedBox(height: 12),
             StarsSearchField(
               hintText: searchHintText,
+              controller: searchController,
               focusNode: searchFocusNode,
               onChanged: onSearchChanged,
+              suffixIcon: searchSuffix,
             ),
             const SizedBox(height: 12),
             Expanded(child: child),

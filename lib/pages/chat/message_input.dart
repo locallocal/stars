@@ -1,5 +1,6 @@
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/services/providers/providers.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
@@ -10,9 +11,13 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
   final Provider provider;
-  final bool waitingBotMessage;
+  final bool requestInProgress;
+  final bool canCancel;
+  final bool isStopping;
   final bool hasPendingAttachments;
   final bool desktopMode;
+  final bool autofocus;
+  final int focusRequestToken;
   final Function() onSend;
   final Function() onCancelRequest;
   final Function() onCameraPressed;
@@ -26,9 +31,13 @@ class MessageInput extends StatefulWidget {
     super.key,
     required this.provider,
     required this.controller,
-    required this.waitingBotMessage,
+    required this.requestInProgress,
+    this.canCancel = false,
+    this.isStopping = false,
     this.hasPendingAttachments = false,
     this.desktopMode = false,
+    this.autofocus = false,
+    this.focusRequestToken = 0,
     required this.onCameraPressed,
     required this.onGalleryPressed,
     required this.onFilePressed,
@@ -50,6 +59,13 @@ class _MessageInputState extends State<MessageInput> {
   bool isWebSearchEnabled = false;
   bool isDeepThinkingEnabled = false;
   final FocusNode _focusNode = FocusNode();
+  final FocusNode _attachmentButtonFocusNode = FocusNode();
+  final ShadPopoverController _attachmentPopoverController =
+      ShadPopoverController();
+  final ShadPopoverController _imageOptionsPopoverController =
+      ShadPopoverController();
+  final ShadPopoverController _videoOptionsPopoverController =
+      ShadPopoverController();
   bool _hasFocus = false;
 
   @override
@@ -65,6 +81,12 @@ class _MessageInputState extends State<MessageInput> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (widget.autofocus) {
+        _focusNode.requestFocus();
+        Future<void>.delayed(const Duration(milliseconds: 320), () {
+          if (mounted) _focusNode.requestFocus();
+        });
+      }
       if (selectedImageRatio.isNotEmpty) {
         widget.onImageSizeSelected(selectedImageRatio);
       }
@@ -73,6 +95,9 @@ class _MessageInputState extends State<MessageInput> {
       }
     });
     _focusNode.addListener(_handleFocusChanged);
+    _attachmentPopoverController.addListener(_handlePopoverChanged);
+    _imageOptionsPopoverController.addListener(_handlePopoverChanged);
+    _videoOptionsPopoverController.addListener(_handlePopoverChanged);
   }
 
   @override
@@ -80,7 +105,27 @@ class _MessageInputState extends State<MessageInput> {
     _focusNode
       ..removeListener(_handleFocusChanged)
       ..dispose();
+    _attachmentButtonFocusNode.dispose();
+    _attachmentPopoverController
+      ..removeListener(_handlePopoverChanged)
+      ..dispose();
+    _imageOptionsPopoverController
+      ..removeListener(_handlePopoverChanged)
+      ..dispose();
+    _videoOptionsPopoverController
+      ..removeListener(_handlePopoverChanged)
+      ..dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant MessageInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusRequestToken != widget.focusRequestToken) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focusNode.requestFocus();
+      });
+    }
   }
 
   void _handleFocusChanged() {
@@ -89,6 +134,25 @@ class _MessageInputState extends State<MessageInput> {
         _hasFocus = _focusNode.hasFocus;
       });
     }
+  }
+
+  void _handlePopoverChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _togglePopover(ShadPopoverController target) {
+    for (final controller in [
+      _attachmentPopoverController,
+      _imageOptionsPopoverController,
+      _videoOptionsPopoverController,
+    ]) {
+      if (!identical(controller, target)) {
+        controller.hide();
+      }
+    }
+    target.toggle();
   }
 
   bool get _canSubmit =>
@@ -117,8 +181,8 @@ class _MessageInputState extends State<MessageInput> {
       return KeyEventResult.ignored;
     }
 
-    if (!widget.waitingBotMessage && _canSubmit) {
-      widget.onSend();
+    if (!widget.requestInProgress && _canSubmit) {
+      _submit();
     }
     return KeyEventResult.handled;
   }
@@ -136,11 +200,16 @@ class _MessageInputState extends State<MessageInput> {
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
     final isDesktop = _isDesktop || isDesktopOrTabletPlatform(context);
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final shadTheme = isDesktop ? ShadTheme.of(context) : null;
 
     return Column(
       children: [
         AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration:
+              isDesktop && disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
           margin: EdgeInsets.only(
             left: isDesktop ? 0 : 16,
             right: isDesktop ? 0 : 16,
@@ -155,91 +224,69 @@ class _MessageInputState extends State<MessageInput> {
           decoration: BoxDecoration(
             color:
                 isDesktop
-                    ? StarsDesktopTheme.panelBackground(context)
+                    ? shadTheme!.colorScheme.card
                     : Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isDesktop ? 12 : 16),
             border: Border.all(
               color:
                   _hasFocus && isDesktop
-                      ? Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.72)
+                      ? shadTheme!.colorScheme.ring
                       : isDesktop
-                      ? StarsDesktopTheme.borderColor(context)
+                      ? shadTheme!.colorScheme.border
                       : Colors.transparent,
-              width: _hasFocus && isDesktop ? 1.4 : 1,
+              width: 1,
             ),
-            boxShadow:
-                isDesktop
-                    ? [
-                      ...StarsDesktopTheme.panelShadow(context),
-                      if (_hasFocus)
-                        BoxShadow(
-                          color: Colors.transparent,
-                          blurRadius: 0,
-                          offset: const Offset(0, 8),
-                        ),
-                    ]
-                    : null,
           ),
           child: Column(
             children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: isDesktop ? 96 : double.infinity,
-                ),
-                child: Focus(
-                  canRequestFocus: false,
-                  skipTraversal: true,
-                  onKeyEvent: isDesktop ? _handleComposerKeyEvent : null,
-                  child:
-                      isDesktop
-                          ? ShadInput(
-                            controller: widget.controller,
-                            focusNode: _focusNode,
-                            placeholder: Text(S.of(context).messageHint),
-                            keyboardType: TextInputType.multiline,
-                            textInputAction: TextInputAction.newline,
-                            minLines: 1,
-                            maxLines: null,
-                            constraints: const BoxConstraints(
-                              minHeight: 44,
-                              maxHeight: 96,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            style: TextStyle(height: 1.45, fontSize: fontSize),
-                          )
-                          : TextField(
-                            controller: widget.controller,
-                            focusNode: _focusNode,
-                            keyboardType: TextInputType.multiline,
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: (_) {
-                              if (!_isComposing && _canSubmit) {
-                                widget.onSend();
-                              }
-                            },
-                            decoration: InputDecoration(
-                              hintText: S.of(context).messageHint,
-                              hintStyle: TextStyle(
-                                fontSize: fontSize,
-                                color: StarsDesktopTheme.subtleText(context),
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 0,
-                                vertical: 12,
-                              ),
-                            ),
-                            maxLines: 6,
-                            minLines: 3,
-                            textAlignVertical: TextAlignVertical.center,
-                            style: TextStyle(fontSize: fontSize),
+              Focus(
+                canRequestFocus: false,
+                skipTraversal: true,
+                onKeyEvent: isDesktop ? _handleComposerKeyEvent : null,
+                child:
+                    isDesktop
+                        ? StarsChatTextarea(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          placeholder: Text(S.of(context).messageHint),
+                          maxHeight:
+                              MediaQuery.sizeOf(context).height < 680
+                                  ? 120
+                                  : 160,
+                          style: shadTheme!.textTheme.p.copyWith(
+                            height: 1.45,
+                            fontSize: fontSize,
                           ),
-                ),
+                        )
+                        : TextField(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          keyboardType: TextInputType.multiline,
+                          textInputAction: TextInputAction.send,
+                          onSubmitted: (_) {
+                            if (!widget.requestInProgress &&
+                                !_isComposing &&
+                                _canSubmit) {
+                              _submit();
+                            }
+                          },
+                          decoration: InputDecoration(
+                            hintText: S.of(context).messageHint,
+                            hintStyle: TextStyle(
+                              fontSize: fontSize,
+                              color: StarsDesktopTheme.subtleText(context),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 12,
+                            ),
+                          ),
+                          maxLines: 6,
+                          minLines: 3,
+                          textAlignVertical: TextAlignVertical.center,
+                          style: TextStyle(fontSize: fontSize),
+                        ),
               ),
               SizedBox(height: isDesktop ? 6 : 12),
               ValueListenableBuilder<TextEditingValue>(
@@ -271,13 +318,13 @@ class _MessageInputState extends State<MessageInput> {
               if (isDesktop)
                 _buildInfoChip(
                   context,
-                  icon: Icons.tune_rounded,
+                  icon: LucideIcons.slidersHorizontal,
                   label: _modelSummary,
                 ),
               if (widget.provider.supportWebSearch())
                 _buildToggleChip(
                   context,
-                  icon: Icons.public,
+                  icon: isDesktop ? LucideIcons.globe : Icons.public,
                   label: S.of(context).webSearch,
                   active: isWebSearchEnabled,
                   onTap: () {
@@ -290,7 +337,10 @@ class _MessageInputState extends State<MessageInput> {
               if (widget.provider.supportDeepThinking())
                 _buildToggleChip(
                   context,
-                  icon: Icons.psychology_alt_rounded,
+                  icon:
+                      isDesktop
+                          ? LucideIcons.brain
+                          : Icons.psychology_alt_rounded,
                   label: S.of(context).deepThinking,
                   active: isDeepThinkingEnabled,
                   onTap: () {
@@ -305,12 +355,12 @@ class _MessageInputState extends State<MessageInput> {
                   ) &&
                   (widget.provider.getSupportImageStyles().isNotEmpty ||
                       widget.provider.getSupportedImageSizes().isNotEmpty))
-                _buildImageOptionsMenu(context),
+                _buildImageOptionsMenu(context, isDesktop),
               if (widget.provider.getOutputModalites().contains(
                     OutputModality.video,
                   ) &&
                   widget.provider.getSupportVideoRatios().isNotEmpty)
-                _buildVideoOptionsMenu(context),
+                _buildVideoOptionsMenu(context, isDesktop),
             ],
           ),
         ),
@@ -318,7 +368,7 @@ class _MessageInputState extends State<MessageInput> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_supportsAttachments) _buildAttachmentMenu(context),
+            if (_supportsAttachments) _buildAttachmentMenu(context, isDesktop),
             const SizedBox(width: 10),
             _buildPrimaryActionButton(context, isDesktop),
           ],
@@ -327,7 +377,61 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildAttachmentMenu(BuildContext context) {
+  Widget _buildAttachmentMenu(BuildContext context, bool isDesktop) {
+    if (isDesktop) {
+      final disableAnimations = MediaQuery.disableAnimationsOf(context);
+      return ShadPopover(
+        controller: _attachmentPopoverController,
+        effects: disableAnimations ? const [] : null,
+        reverseDuration: disableAnimations ? Duration.zero : null,
+        popover:
+            (context) => SizedBox(
+              width: 220,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.provider.getInputModalites().contains(
+                    InputModality.image,
+                  ))
+                    _buildDesktopPopoverItem(
+                      icon: LucideIcons.images,
+                      label: S.of(context).chooseFromGallery,
+                      onPressed: () {
+                        _attachmentPopoverController.hide();
+                        widget.onGalleryPressed();
+                      },
+                    ),
+                  if (widget.provider.getInputModalites().contains(
+                    InputModality.file,
+                  ))
+                    _buildDesktopPopoverItem(
+                      icon: LucideIcons.fileUp,
+                      label: S.of(context).uploadFile,
+                      onPressed: () {
+                        _attachmentPopoverController.hide();
+                        widget.onFilePressed();
+                      },
+                    ),
+                ],
+              ),
+            ),
+        child: _buildCircleActionButton(
+          context,
+          icon: LucideIcons.plus,
+          tooltip: S.of(context).addAttachment,
+          focusNode: _attachmentButtonFocusNode,
+          active:
+              _attachmentPopoverController.isOpen ||
+              widget.hasPendingAttachments,
+          onPressed: () => _togglePopover(_attachmentPopoverController),
+        ),
+      );
+    }
+
+    return _buildMobileAttachmentMenu(context);
+  }
+
+  Widget _buildMobileAttachmentMenu(BuildContext context) {
     final menuChildren = <Widget>[
       if (widget.provider.getInputModalites().contains(InputModality.image))
         MenuItemButton(
@@ -354,7 +458,7 @@ class _MessageInputState extends State<MessageInput> {
       builder: (context, controller, child) {
         return _buildCircleActionButton(
           context,
-          icon: const Icon(Icons.add_rounded, size: 18),
+          icon: Icons.add_rounded,
           tooltip: S.of(context).uploadFile,
           active: controller.isOpen || widget.hasPendingAttachments,
           onPressed: () {
@@ -369,9 +473,75 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildImageOptionsMenu(BuildContext context) {
+  Widget _buildImageOptionsMenu(BuildContext context, bool isDesktop) {
     final styles = widget.provider.getSupportImageStyles();
     final sizes = widget.provider.getSupportedImageSizes();
+
+    if (isDesktop) {
+      final disableAnimations = MediaQuery.disableAnimationsOf(context);
+      return ShadPopover(
+        controller: _imageOptionsPopoverController,
+        effects: disableAnimations ? const [] : null,
+        reverseDuration: disableAnimations ? Duration.zero : null,
+        popover:
+            (context) => SizedBox(
+              width: 240,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (styles.isNotEmpty) ...[
+                    _buildPopoverSectionLabel(
+                      context,
+                      S.of(context).imageStyle,
+                    ),
+                    const SizedBox(height: 4),
+                    for (final style in styles)
+                      _buildDesktopPopoverItem(
+                        icon: LucideIcons.brush,
+                        label: style,
+                        selected: selectedImageStyle == style,
+                        onPressed: () {
+                          setState(() {
+                            selectedImageStyle =
+                                selectedImageStyle == style ? '' : style;
+                          });
+                          widget.onImageStyleSelected(selectedImageStyle);
+                          _imageOptionsPopoverController.hide();
+                        },
+                      ),
+                  ],
+                  if (styles.isNotEmpty && sizes.isNotEmpty)
+                    const SizedBox(height: 8),
+                  if (sizes.isNotEmpty) ...[
+                    _buildPopoverSectionLabel(context, S.of(context).imageSize),
+                    const SizedBox(height: 4),
+                    for (final size in sizes)
+                      _buildDesktopPopoverItem(
+                        icon: LucideIcons.ratio,
+                        label: size,
+                        selected: selectedImageRatio == size,
+                        onPressed: () {
+                          setState(() {
+                            selectedImageRatio = size;
+                          });
+                          widget.onImageSizeSelected(size);
+                          _imageOptionsPopoverController.hide();
+                        },
+                      ),
+                  ],
+                ],
+              ),
+            ),
+        child: _buildActionChip(
+          context,
+          icon: LucideIcons.image,
+          label: _imageOptionsLabel(context),
+          active: _imageOptionsPopoverController.isOpen,
+          onTap: () => _togglePopover(_imageOptionsPopoverController),
+        ),
+      );
+    }
 
     return MenuAnchor(
       menuChildren: [
@@ -444,8 +614,47 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
-  Widget _buildVideoOptionsMenu(BuildContext context) {
+  Widget _buildVideoOptionsMenu(BuildContext context, bool isDesktop) {
     final ratios = widget.provider.getSupportVideoRatios();
+
+    if (isDesktop) {
+      final disableAnimations = MediaQuery.disableAnimationsOf(context);
+      return ShadPopover(
+        controller: _videoOptionsPopoverController,
+        effects: disableAnimations ? const [] : null,
+        reverseDuration: disableAnimations ? Duration.zero : null,
+        popover:
+            (context) => SizedBox(
+              width: 220,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final ratio in ratios)
+                    _buildDesktopPopoverItem(
+                      icon: LucideIcons.ratio,
+                      label: ratio,
+                      selected: selectedVideoRatio == ratio,
+                      onPressed: () {
+                        setState(() {
+                          selectedVideoRatio = ratio;
+                        });
+                        widget.onVideoRatioSelected(ratio);
+                        _videoOptionsPopoverController.hide();
+                      },
+                    ),
+                ],
+              ),
+            ),
+        child: _buildActionChip(
+          context,
+          icon: LucideIcons.video,
+          label: selectedVideoRatio,
+          active: _videoOptionsPopoverController.isOpen,
+          onTap: () => _togglePopover(_videoOptionsPopoverController),
+        ),
+      );
+    }
 
     return MenuAnchor(
       menuChildren:
@@ -484,16 +693,73 @@ class _MessageInputState extends State<MessageInput> {
     );
   }
 
+  String _imageOptionsLabel(BuildContext context) {
+    final parts = [
+      if (selectedImageStyle.isNotEmpty) selectedImageStyle,
+      if (selectedImageRatio.isNotEmpty) selectedImageRatio,
+    ];
+    return parts.isEmpty ? S.of(context).imageStyle : parts.join(' · ');
+  }
+
+  Widget _buildPopoverSectionLabel(BuildContext context, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Text(label, style: ShadTheme.of(context).textTheme.muted),
+    );
+  }
+
+  Widget _buildDesktopPopoverItem({
+    required IconData icon,
+    required String label,
+    bool selected = false,
+    required VoidCallback onPressed,
+  }) {
+    final leading = ExcludeSemantics(child: Icon(icon, size: 16));
+    final trailing =
+        selected
+            ? const ExcludeSemantics(child: Icon(LucideIcons.check, size: 16))
+            : null;
+    final child = SizedBox(
+      width: 148,
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    );
+    final button =
+        selected
+            ? ShadButton.secondary(
+              size: ShadButtonSize.sm,
+              width: 220,
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              mainAxisAlignment: MainAxisAlignment.start,
+              leading: leading,
+              trailing: trailing,
+              onPressed: onPressed,
+              child: child,
+            )
+            : ShadButton.ghost(
+              size: ShadButtonSize.sm,
+              width: 220,
+              height: 36,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              mainAxisAlignment: MainAxisAlignment.start,
+              leading: leading,
+              onPressed: onPressed,
+              child: child,
+            );
+    return Semantics(selected: selected, child: button);
+  }
+
   Widget _buildPrimaryActionButton(BuildContext context, bool isDesktop) {
-    final enabled = widget.waitingBotMessage || _canSubmit;
+    final enabled =
+        widget.requestInProgress
+            ? widget.canCancel && !widget.isStopping
+            : _canSubmit;
     final onPressed =
         enabled
-            ? (widget.waitingBotMessage
-                ? widget.onCancelRequest
-                : widget.onSend)
+            ? (widget.requestInProgress ? widget.onCancelRequest : _submit)
             : null;
     final backgroundColor =
-        widget.waitingBotMessage
+        widget.requestInProgress
             ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.92)
             : enabled
             ? Theme.of(context).colorScheme.primary
@@ -512,12 +778,18 @@ class _MessageInputState extends State<MessageInput> {
         ),
         child: IconButton(
           icon: Icon(
-            widget.waitingBotMessage ? Icons.stop_rounded : Icons.send_rounded,
+            widget.requestInProgress && widget.canCancel
+                ? Icons.stop_rounded
+                : widget.requestInProgress
+                ? Icons.hourglass_top_rounded
+                : Icons.send_rounded,
             color: foregroundColor,
           ),
           tooltip:
-              widget.waitingBotMessage
-                  ? S.of(context).pauseGeneration
+              widget.requestInProgress
+                  ? widget.canCancel
+                      ? S.of(context).pauseGeneration
+                      : S.of(context).generating
                   : S.of(context).send,
           onPressed: onPressed,
         ),
@@ -525,16 +797,27 @@ class _MessageInputState extends State<MessageInput> {
     }
 
     final label =
-        widget.waitingBotMessage ? S.of(context).stop : S.of(context).send;
+        widget.isStopping
+            ? S.of(context).stopping
+            : widget.requestInProgress && !widget.canCancel
+            ? S.of(context).generating
+            : widget.requestInProgress
+            ? S.of(context).stop
+            : S.of(context).send;
     final icon = Icon(
-      widget.waitingBotMessage ? Icons.stop_rounded : Icons.send_rounded,
+      widget.requestInProgress && widget.canCancel
+          ? LucideIcons.square
+          : widget.requestInProgress
+          ? LucideIcons.loaderCircle
+          : LucideIcons.send,
       size: 17,
     );
-    if (widget.waitingBotMessage) {
-      return ShadButton.destructive(
+    if (widget.requestInProgress) {
+      return ShadButton.secondary(
         size: ShadButtonSize.sm,
         width: 96,
         height: 36,
+        enabled: enabled,
         onPressed: onPressed,
         leading: icon,
         child: Text(label),
@@ -647,25 +930,20 @@ class _MessageInputState extends State<MessageInput> {
     required String label,
   }) {
     if (_isDesktop || isDesktopOrTabletPlatform(context)) {
-      return ShadCard(
+      final colorScheme = ShadTheme.of(context).colorScheme;
+      return ShadBadge.outline(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        foregroundColor: colorScheme.mutedForeground,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: ShadTheme.of(context).colorScheme.mutedForeground,
+            ExcludeSemantics(
+              child: Icon(icon, size: 16, color: colorScheme.mutedForeground),
             ),
             const SizedBox(width: 6),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 180),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: ShadTheme.of(context).textTheme.small,
-              ),
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -703,31 +981,21 @@ class _MessageInputState extends State<MessageInput> {
 
   Widget _buildCircleActionButton(
     BuildContext context, {
-    required Widget icon,
+    required IconData icon,
     required String tooltip,
+    FocusNode? focusNode,
     bool active = false,
     required VoidCallback onPressed,
   }) {
     if (_isDesktop || isDesktopOrTabletPlatform(context)) {
-      final button =
-          active
-              ? ShadIconButton.secondary(
-                icon: icon,
-                iconSize: 18,
-                width: 34,
-                height: 34,
-                onPressed: onPressed,
-              )
-              : ShadIconButton.outline(
-                icon: icon,
-                iconSize: 18,
-                width: 34,
-                height: 34,
-                onPressed: onPressed,
-              );
-      return Semantics(
+      final effectiveFocusNode = focusNode ?? _attachmentButtonFocusNode;
+      return StarsDesktopIconAction(
+        icon: icon,
         label: tooltip,
-        child: ShadTooltip(builder: (context) => Text(tooltip), child: button),
+        focusNode: effectiveFocusNode,
+        variant:
+            active ? ShadButtonVariant.secondary : ShadButtonVariant.outline,
+        onPressed: onPressed,
       );
     }
     return DecoratedBox(
@@ -757,12 +1025,168 @@ class _MessageInputState extends State<MessageInput> {
             active
                 ? Theme.of(context).colorScheme.primary
                 : StarsDesktopTheme.mutedText(context),
-        icon: icon,
+        icon: Icon(icon),
       ),
     );
+  }
+
+  void _submit() {
+    widget.onSend();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   bool get _supportsAttachments =>
       widget.provider.getInputModalites().contains(InputModality.image) ||
       widget.provider.getInputModalites().contains(InputModality.file);
+}
+
+/// A controlled auto-growing adapter for shadcn_ui 0.55's textarea.
+///
+/// In 0.55, [ShadTextarea.minHeight] and [ShadTextarea.maxHeight] describe the
+/// editable area rather than the complete decorated control. Measuring here
+/// keeps the visible control within the desktop composer's 44–120/160 contract.
+class StarsChatTextarea extends StatefulWidget {
+  const StarsChatTextarea({
+    super.key,
+    required this.controller,
+    required this.focusNode,
+    required this.placeholder,
+    required this.style,
+    required this.maxHeight,
+  }) : assert(maxHeight >= minHeight);
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final Widget placeholder;
+  final TextStyle style;
+  final double maxHeight;
+
+  static const double minHeight = 44;
+  static const double caretAllowance = 3;
+  static const EdgeInsets contentPadding = EdgeInsets.symmetric(
+    horizontal: 12,
+    vertical: 8,
+  );
+
+  @override
+  State<StarsChatTextarea> createState() => _StarsChatTextareaState();
+}
+
+class _StarsChatTextareaState extends State<StarsChatTextarea> {
+  late String _text;
+
+  @override
+  void initState() {
+    super.initState();
+    _text = widget.controller.text;
+    widget.controller.addListener(_handleTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant StarsChatTextarea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_handleTextChanged);
+      _text = widget.controller.text;
+      widget.controller.addListener(_handleTextChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleTextChanged);
+    super.dispose();
+  }
+
+  void _handleTextChanged() {
+    final text = widget.controller.text;
+    if (!mounted || text == _text) return;
+    setState(() => _text = text);
+  }
+
+  TextStyle _scaledStyle(BuildContext context) {
+    final fontSize = widget.style.fontSize;
+    if (fontSize == null) {
+      return widget.style;
+    }
+    return widget.style.copyWith(
+      fontSize: MediaQuery.textScalerOf(context).scale(fontSize),
+    );
+  }
+
+  double _measureHeight(
+    BuildContext context,
+    double maxWidth,
+    TextStyle style,
+  ) {
+    final horizontalPadding = StarsChatTextarea.contentPadding.horizontal;
+    final verticalPadding = StarsChatTextarea.contentPadding.vertical;
+    final availableWidth =
+        (maxWidth - horizontalPadding - StarsChatTextarea.caretAllowance)
+            .clamp(1.0, double.infinity)
+            .toDouble();
+    final painter = TextPainter(
+      text: TextSpan(
+        text: '${_text.isEmpty ? ' ' : _text}\u200B',
+        style: style,
+      ),
+      textDirection: Directionality.of(context),
+      locale: Localizations.maybeLocaleOf(context),
+    )..layout(maxWidth: availableWidth);
+    final measured = painter.height + verticalPadding;
+    return measured
+        .clamp(StarsChatTextarea.minHeight, widget.maxHeight)
+        .toDouble();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final style = _scaledStyle(context);
+        final maxWidth =
+            constraints.hasBoundedWidth
+                ? constraints.maxWidth
+                : MediaQuery.sizeOf(context).width;
+        final height = _measureHeight(context, maxWidth, style);
+        final editableHeight =
+            height - StarsChatTextarea.contentPadding.vertical;
+
+        return SizedBox(
+          height: height,
+          child: MediaQuery.withNoTextScaling(
+            child: ShadTextarea(
+              controller: widget.controller,
+              focusNode: widget.focusNode,
+              placeholder: widget.placeholder,
+              placeholderStyle: style.copyWith(
+                color: ShadTheme.of(context).colorScheme.mutedForeground,
+              ),
+              style: style,
+              padding: StarsChatTextarea.contentPadding,
+              decoration: ShadDecoration.none,
+              constraints: BoxConstraints.tightFor(height: height),
+              minHeight: editableHeight,
+              maxHeight: editableHeight,
+              resizable: false,
+              contextMenuBuilder:
+                  (context, editableTextState) => MediaQuery(
+                    data: mediaQuery,
+                    child: Builder(
+                      builder:
+                          (context) => ShadInputState.defaultContextMenuBuilder(
+                            context,
+                            editableTextState,
+                          ),
+                    ),
+                  ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

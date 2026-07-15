@@ -245,8 +245,8 @@ class Grok extends Provider {
               },
             });
           }
-        } catch (e) {
-          print('Process image $imagePath failed: $e');
+        } catch (_) {
+          // Skip an unreadable optional image and continue the request.
         }
       }
       return {'role': message.role, 'content': content};

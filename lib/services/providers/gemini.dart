@@ -12,6 +12,11 @@ class Gemini extends Provider {
 
   Gemini(super.bot);
 
+  // The current Gemini implementation uses a single http.post request and
+  // cannot abort it or acknowledge cancellation before the response arrives.
+  @override
+  bool get supportsCancellation => false;
+
   @override
   bool supportWebSearch() {
     return false;
@@ -210,8 +215,6 @@ class Gemini extends Provider {
     if (data['candidates'] != null && data['candidates'].isEmpty) {
       throw Exception('No response content found');
     }
-    print(data);
-
     for (final part in data['candidates'][0]['content']['parts']) {
       final text = part['text'];
       if (text != null && text.isNotEmpty) {

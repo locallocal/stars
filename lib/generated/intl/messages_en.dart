@@ -44,6 +44,36 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(error) => "Generate image failed: ${error}";
 
+  static String m14(count) => "${count} items";
+
+  static String m15(count) => "${count} files";
+
+  static String m16(error) => "Could not save image: ${error}";
+
+  static String m17(error) => "Could not share image: ${error}";
+
+  static String m18(duration) => "Duration ${duration}";
+
+  static String m19(count) => "${count} tool calls";
+
+  static String m20(count) => "${count} command runs";
+
+  static String m21(count) => "${count} file updates";
+
+  static String m22(duration) => "Thinking complete · ${duration}";
+
+  static String m23(error) => "Could not generate speech: ${error}";
+
+  static String m24(error) => "Could not generate music: ${error}";
+
+  static String m25(error) => "Could not generate video: ${error}";
+
+  static String m26(error) => "Could not create the chat: ${error}";
+
+  static String m27(error) => "Could not clear chat history: ${error}";
+
+  static String m28(error) => "Could not delete the chat: ${error}";
+
   static String m9(language) => "Language set to ${language}";
 
   static String m10(minutes) => "${minutes} minutes ago";
@@ -283,6 +313,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "stop": MessageLookupByLibrary.simpleMessage("Stop"),
+    "generating": MessageLookupByLibrary.simpleMessage("Generating…"),
+    "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
     "basicInformation": MessageLookupByLibrary.simpleMessage(
       "Basic Information",
     ),
@@ -302,7 +334,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Try a different search, or create a new item.",
     ),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search includes message content and bot names.",
+      "Search matches bot names and the latest message.",
     ),
     "newChatWorkspaceHint": MessageLookupByLibrary.simpleMessage(
       "A new chat opens directly in the workspace.",
@@ -313,6 +345,158 @@ class MessageLookup extends MessageLookupByLibrary {
     "newBotWorkspaceHint": MessageLookupByLibrary.simpleMessage(
       "New bots remain in the workspace for editing.",
     ),
+    "retry": MessageLookupByLibrary.simpleMessage("Retry"),
+    "unableToLoadChats": MessageLookupByLibrary.simpleMessage(
+      "Unable to load chats",
+    ),
+    "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
+    "unavailableBot": MessageLookupByLibrary.simpleMessage("Unavailable bot"),
+    "botUnavailableTitle": MessageLookupByLibrary.simpleMessage(
+      "This bot is unavailable",
+    ),
+    "orphanedChatGuidance": MessageLookupByLibrary.simpleMessage(
+      "Delete this orphaned chat or recreate the missing bot.",
+    ),
+    "activeRequestCannotStop": MessageLookupByLibrary.simpleMessage(
+      "The active request cannot be stopped",
+    ),
+    "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
+      "Wait for generation to finish.",
+    ),
+    "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(
+      "Wait for generation to finish before leaving this chat.",
+    ),
+    "activeRequestCannotCancel": MessageLookupByLibrary.simpleMessage(
+      "The active request cannot be cancelled. Wait for it to finish.",
+    ),
+    "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
+    "itemCount": m14,
+    "fileCount": m15,
+    "clearAttachments": MessageLookupByLibrary.simpleMessage(
+      "Clear attachments",
+    ),
+    "removeImageAttachment": MessageLookupByLibrary.simpleMessage(
+      "Remove image",
+    ),
+    "removeFileAttachment": MessageLookupByLibrary.simpleMessage("Remove file"),
+    "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
+    "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
+    "fileAttachment": MessageLookupByLibrary.simpleMessage("File attachment"),
+    "fileResult": MessageLookupByLibrary.simpleMessage("File result"),
+    "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
+    "referenceAudio": MessageLookupByLibrary.simpleMessage("Reference audio"),
+    "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
+    "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
+    "directPlayback": MessageLookupByLibrary.simpleMessage("Ready to play"),
+    "directPreview": MessageLookupByLibrary.simpleMessage("Ready to preview"),
+    "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
+      "Stopped · Partial response kept",
+    ),
+    "generationFailedPartial": MessageLookupByLibrary.simpleMessage(
+      "Generation failed · Partial response kept",
+    ),
+    "generationFailed": MessageLookupByLibrary.simpleMessage(
+      "Generation failed",
+    ),
+    "noContentReturned": MessageLookupByLibrary.simpleMessage(
+      "No content returned",
+    ),
+    "partialResponse": MessageLookupByLibrary.simpleMessage("Partial response"),
+    "statusCompleted": MessageLookupByLibrary.simpleMessage("Completed"),
+    "saveImage": MessageLookupByLibrary.simpleMessage("Save image"),
+    "shareImage": MessageLookupByLibrary.simpleMessage("Share image"),
+    "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not save to gallery",
+    ),
+    "imageSavedToGallery": MessageLookupByLibrary.simpleMessage(
+      "Image saved to gallery",
+    ),
+    "saveImageFailed": m16,
+    "shareImageFailed": m17,
+    "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
+      "Image from Stars",
+    ),
+    "processDuration": m18,
+    "processToolCount": m19,
+    "processCommandCount": m20,
+    "processFileCount": m21,
+    "executionStatus": MessageLookupByLibrary.simpleMessage("Execution status"),
+    "toolCalls": MessageLookupByLibrary.simpleMessage("Tool calls"),
+    "commandExecutions": MessageLookupByLibrary.simpleMessage(
+      "Command execution",
+    ),
+    "fileStatus": MessageLookupByLibrary.simpleMessage("File status"),
+    "includesDuration": MessageLookupByLibrary.simpleMessage(
+      "Includes duration",
+    ),
+    "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
+      "Structured process information",
+    ),
+    "statusGenerated": MessageLookupByLibrary.simpleMessage("Generated"),
+    "statusAttached": MessageLookupByLibrary.simpleMessage("Attached"),
+    "statusInProgress": MessageLookupByLibrary.simpleMessage("In progress"),
+    "statusRunning": MessageLookupByLibrary.simpleMessage("Running"),
+    "statusCancelled": MessageLookupByLibrary.simpleMessage("Cancelled"),
+    "statusFailed": MessageLookupByLibrary.simpleMessage("Failed"),
+    "statusRecorded": MessageLookupByLibrary.simpleMessage("Recorded"),
+    "reasoningCompleted": MessageLookupByLibrary.simpleMessage(
+      "Reasoning complete",
+    ),
+    "reasoningInterrupted": MessageLookupByLibrary.simpleMessage(
+      "Reasoning interrupted",
+    ),
+    "reasoningInProgress": MessageLookupByLibrary.simpleMessage(
+      "Reasoning in progress",
+    ),
+    "processInformation": MessageLookupByLibrary.simpleMessage(
+      "Process information",
+    ),
+    "fileTypeSpeech": MessageLookupByLibrary.simpleMessage("Speech"),
+    "fileTypeMusic": MessageLookupByLibrary.simpleMessage("Music"),
+    "fileTypeVideo": MessageLookupByLibrary.simpleMessage("Video"),
+    "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Thinking…"),
+    "thinkingCompleted": MessageLookupByLibrary.simpleMessage(
+      "Thinking complete",
+    ),
+    "thinkingCompletedWithDuration": m22,
+    "pleaseEnterSpeechDescription": MessageLookupByLibrary.simpleMessage(
+      "Enter a description for speech generation",
+    ),
+    "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
+    "generateSpeechFailed": m23,
+    "pleaseEnterMusicDescription": MessageLookupByLibrary.simpleMessage(
+      "Enter a description for music generation",
+    ),
+    "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
+    "generateMusicFailed": m24,
+    "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
+      "Enter a description for video generation",
+    ),
+    "videoGenerated": MessageLookupByLibrary.simpleMessage("Video generated"),
+    "generateVideoFailed": m25,
+    "linkOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "Unable to open this link.",
+    ),
+    "unableToLoadBots": MessageLookupByLibrary.simpleMessage(
+      "Unable to load bots",
+    ),
+    "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
+    "createChatFailed": m26,
+    "stopGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(
+      "Stop generation before leaving?",
+    ),
+    "stopGenerationBeforeLeavingDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "The partial response will be kept.",
+        ),
+    "stopAndContinue": MessageLookupByLibrary.simpleMessage(
+      "Stop and continue",
+    ),
+    "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
+      "Unable to load messages",
+    ),
+    "clearChatFailed": m27,
+    "deleteChatFailed": m28,
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
   };
 }

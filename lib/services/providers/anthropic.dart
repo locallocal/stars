@@ -107,7 +107,6 @@ class Anthropic extends Provider {
       });
 
       await for (final line in stream) {
-        print(line);
         if (line.contains('error')) {
           throw Exception('Anthropic API Error: $line');
         }

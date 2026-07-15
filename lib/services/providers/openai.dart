@@ -355,8 +355,8 @@ class OpenAI extends Provider {
               'image_url': {'url': 'data:image/jpeg;base64,$base64Image'},
             });
           }
-        } catch (e) {
-          print('Process image $imagePath failed: $e');
+        } catch (_) {
+          // Skip an unreadable optional image and continue the request.
         }
       }
       return {'role': message.role, 'content': content};

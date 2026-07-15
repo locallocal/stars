@@ -588,6 +588,14 @@
     "imageStyle": "图像风格",
     "imageSize": "图像尺寸",
     "stop": "停止",
+    "generating": "正在生成…",
+    "@generating": {
+        "description": "请求执行中且不可取消时的禁用主操作标签"
+    },
+    "stopping": "正在停止…",
+    "@stopping": {
+        "description": "等待取消确认时的禁用主操作标签"
+    },
     "basicInformation": "基本信息",
     "providerInformation": "提供商信息",
     "modelConfiguration": "模型配置",
@@ -596,8 +604,168 @@
     "hideApiKey": "隐藏 API 密钥",
     "noMatchingBots": "没有找到匹配的智能体",
     "tryDifferentSearch": "试试其他关键词，或直接新建。",
-    "chatSearchScope": "搜索会同时匹配消息内容和智能体名称。",
+    "chatSearchScope": "搜索会匹配智能体名称和最后一条消息。",
     "newChatWorkspaceHint": "新建聊天后会直接在工作区打开会话。",
     "botSearchScope": "搜索会按智能体名称过滤列表。",
-    "newBotWorkspaceHint": "新建智能体会留在工作区中继续编辑。"
+    "newBotWorkspaceHint": "新建智能体会留在工作区中继续编辑。",
+    "retry": "重试",
+    "unableToLoadChats": "无法加载聊天列表",
+    "clearSearch": "清除搜索",
+    "unavailableBot": "智能体不可用",
+    "botUnavailableTitle": "此智能体已不可用",
+    "orphanedChatGuidance": "删除这条孤立会话，或重新创建缺失的智能体。",
+    "activeRequestCannotStop": "当前请求无法停止",
+    "waitForGenerationToFinish": "请等待生成完成。",
+    "waitForGenerationBeforeLeaving": "请等待生成完成后再离开当前会话。",
+    "activeRequestCannotCancel": "当前请求无法取消，请等待生成完成。",
+    "attachments": "附件",
+    "itemCount": "{count} 项",
+    "@itemCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "fileCount": "{count} 个文件",
+    "@fileCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "clearAttachments": "清空附件",
+    "removeImageAttachment": "移除图片",
+    "removeFileAttachment": "移除文件",
+    "imageAttachment": "图片附件",
+    "imageResult": "图片结果",
+    "fileAttachment": "文件附件",
+    "fileResult": "文件结果",
+    "speechResult": "语音结果",
+    "referenceAudio": "参考音频",
+    "musicResult": "音乐结果",
+    "videoResult": "视频结果",
+    "directPlayback": "可直接播放",
+    "directPreview": "可直接预览",
+    "replyStoppedPartial": "已停止 · 保留部分回复",
+    "generationFailedPartial": "生成失败 · 保留部分回复",
+    "generationFailed": "生成失败",
+    "noContentReturned": "未返回内容",
+    "partialResponse": "部分回复",
+    "statusCompleted": "已完成",
+    "saveImage": "保存图片",
+    "shareImage": "分享图片",
+    "saveToGalleryFailed": "保存到相册失败",
+    "imageSavedToGallery": "图片已保存到相册",
+    "saveImageFailed": "保存图片失败：{error}",
+    "@saveImageFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "shareImageFailed": "分享图片失败：{error}",
+    "@shareImageFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "sharedImageFromStars": "来自 Stars 的图片",
+    "processDuration": "耗时 {duration}",
+    "@processDuration": {
+        "placeholders": {
+            "duration": {"type": "String"}
+        }
+    },
+    "processToolCount": "{count} 次工具调用",
+    "@processToolCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "processCommandCount": "{count} 次命令执行",
+    "@processCommandCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "processFileCount": "{count} 条文件状态",
+    "@processFileCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "executionStatus": "执行状态",
+    "toolCalls": "工具调用",
+    "commandExecutions": "命令执行",
+    "fileStatus": "文件状态",
+    "includesDuration": "包含耗时",
+    "structuredProcessInfo": "结构化过程信息",
+    "statusGenerated": "已生成",
+    "statusAttached": "已附加",
+    "statusInProgress": "进行中",
+    "statusRunning": "执行中",
+    "statusCancelled": "已取消",
+    "statusFailed": "失败",
+    "statusRecorded": "已记录",
+    "reasoningCompleted": "思考完成",
+    "reasoningInterrupted": "思考中断",
+    "reasoningInProgress": "思考中",
+    "processInformation": "过程信息",
+    "fileTypeSpeech": "语音",
+    "fileTypeMusic": "音乐",
+    "fileTypeVideo": "视频",
+    "thinkingInProgress": "正在思考…",
+    "thinkingCompleted": "思考完成",
+    "thinkingCompletedWithDuration": "思考完成 · {duration}",
+    "@thinkingCompletedWithDuration": {
+        "placeholders": {
+            "duration": {"type": "String"}
+        }
+    },
+    "pleaseEnterSpeechDescription": "请输入语音描述",
+    "speechGenerated": "语音已生成",
+    "generateSpeechFailed": "生成语音失败：{error}",
+    "@generateSpeechFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "pleaseEnterMusicDescription": "请输入音乐描述",
+    "musicGenerated": "音乐已生成",
+    "generateMusicFailed": "生成音乐失败：{error}",
+    "@generateMusicFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "pleaseEnterVideoDescription": "请输入视频描述",
+    "videoGenerated": "视频已生成",
+    "generateVideoFailed": "生成视频失败：{error}",
+    "@generateVideoFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "linkOpenFailed": "无法打开此链接。",
+    "unableToLoadBots": "无法加载智能体",
+    "creatingChat": "正在创建…",
+    "createChatFailed": "创建聊天失败：{error}",
+    "@createChatFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "stopGenerationBeforeLeaving": "离开前停止生成？",
+    "stopGenerationBeforeLeavingDescription": "已生成的部分回复会被保留。",
+    "stopAndContinue": "停止并继续",
+    "unableToLoadMessages": "无法加载消息",
+    "clearChatFailed": "清空聊天记录失败：{error}",
+    "@clearChatFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "deleteChatFailed": "删除会话失败：{error}",
+    "@deleteChatFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    }
 }

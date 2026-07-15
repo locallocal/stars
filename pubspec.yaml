@@ -63,6 +63,7 @@ dependencies:
   flutter_slidable: ^3.0.1
   sidebarx: ^0.17.1
   shadcn_ui: ^0.55.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

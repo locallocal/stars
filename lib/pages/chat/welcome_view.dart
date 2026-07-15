@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/common/logo.dart';
@@ -6,11 +9,19 @@ import 'package:stars/pages/common/logo.dart';
 class WelcomeView extends StatelessWidget {
   final Bot bot;
   final double? fontSize;
+  final bool isDesktop;
 
-  const WelcomeView({super.key, required this.bot, this.fontSize});
+  const WelcomeView({
+    super.key,
+    required this.bot,
+    this.fontSize,
+    this.isDesktop = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveFontSize = fontSize ?? 16;
+    final shadTheme = ShadTheme.maybeOf(context);
     return Center(
       child: SingleChildScrollView(
         child: Padding(
@@ -18,23 +29,38 @@ class WelcomeView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 128,
-                height: 128,
-                decoration: const BoxDecoration(shape: BoxShape.circle),
-                child:
-                    bot.avatar.isEmpty
-                        ? buildProviderLogo(context, '', bot.provider, 96)
-                        : null,
-              ),
-              const SizedBox(height: 24),
+              if (isDesktop && shadTheme != null)
+                ShadAvatar(
+                  bot.avatar.isEmpty ? null : File(bot.avatar),
+                  size: const Size.square(64),
+                  placeholder: buildProviderLogo(context, '', bot.provider, 30),
+                )
+              else
+                Container(
+                  width: 128,
+                  height: 128,
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child:
+                      bot.avatar.isEmpty
+                          ? buildProviderLogo(context, '', bot.provider, 96)
+                          : ClipOval(
+                            child: Image.file(
+                              File(bot.avatar),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                ),
+              SizedBox(height: isDesktop ? 20 : 24),
               Text(
                 bot.name,
-                style: TextStyle(
-                  fontSize: fontSize! + 2,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                style:
+                    isDesktop && shadTheme != null
+                        ? shadTheme.textTheme.h4
+                        : TextStyle(
+                          fontSize: effectiveFontSize + 2,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
               ),
               const SizedBox(height: 12),
               Padding(
@@ -43,7 +69,7 @@ class WelcomeView extends StatelessWidget {
                   S.of(context).botGreeting(bot.name),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: fontSize,
+                    fontSize: effectiveFontSize,
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withValues(alpha: 0.7),
@@ -59,11 +85,14 @@ class WelcomeView extends StatelessWidget {
                 child: Text(
                   S.of(context).startChatPrompt,
                   style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.7),
+                    color:
+                        isDesktop && shadTheme != null
+                            ? shadTheme.colorScheme.mutedForeground
+                            : Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
-                    fontSize: fontSize! - 2,
+                    fontSize: effectiveFontSize - 2,
                   ),
                 ),
               ),

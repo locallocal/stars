@@ -16,28 +16,24 @@ class TypingIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isDesktop) {
       final shadTheme = ShadTheme.of(context);
-      return Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: ShadCard(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      final label = S.of(context).botIsTyping(botName);
+      return Semantics(
+        liveRegion: true,
+        value: label,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(start: 4, top: 8),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: shadTheme.colorScheme.primary,
+              ExcludeSemantics(
+                child: Icon(
+                  LucideIcons.loaderCircle,
+                  size: 16,
+                  color: shadTheme.colorScheme.mutedForeground,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  S.of(context).botIsTyping(botName),
-                  style: shadTheme.textTheme.muted,
-                ),
-              ),
+              const SizedBox(width: 8),
+              Text(label, style: shadTheme.textTheme.muted),
             ],
           ),
         ),
