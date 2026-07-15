@@ -14,9 +14,11 @@ import 'package:stars/pages/bots.dart';
 import 'package:stars/pages/profile.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:stars/services/database_service.dart';
+import 'package:stars/services/chat_generation_controller.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/dot_curved_bottom_nav.dart';
 import 'package:stars/pages/desktop_layout.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
@@ -419,6 +421,8 @@ class _MainPageState extends State<MainPage> {
   Bot? _selectedChatBot;
   Bot? _selectedBot;
   int _selectedProfileSection = 0;
+  Future<bool>? _activeRunGuardFuture;
+  int _navigationIntent = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -457,8 +461,7 @@ class _MainPageState extends State<MainPage> {
                     _currentIndex = 2;
                   });
                 },
-                onCreateChat:
-                    () => _chatListKey.currentState?.openNewChatDialog(),
+                onCreateChat: _requestCreateChat,
                 onAddBot: () {
                   _botListKey.currentState?.openAddBotPage();
                 },
@@ -521,7 +524,9 @@ class _MainPageState extends State<MainPage> {
   }
 
   // 新增：处理聊天选择的回调
-  void _onChatSelected(String chatId, Bot bot) {
+  Future<void> _onChatSelected(String chatId, Bot bot) async {
+    if (_selectedChatId != chatId && !await _guardActiveChatRun()) return;
+    if (!mounted) return;
     setState(() {
       _selectedChatId = chatId;
       _selectedChatBot = bot;
@@ -529,7 +534,9 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void _onBotSelected(Bot bot) {
+  Future<void> _onBotSelected(Bot bot) async {
+    if (!await _guardActiveChatRun()) return;
+    if (!mounted) return;
     setState(() {
       _selectedBot = bot;
       _currentIndex = 1;
@@ -549,10 +556,90 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void _onPageChanged(int index) {
+  Future<void> _onPageChanged(int index) async {
+    if (index != 0 && !await _guardActiveChatRun()) return;
+    if (!mounted) return;
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  Future<void> _requestCreateChat() async {
+    if (!await _guardActiveChatRun()) return;
+    _chatListKey.currentState?.openNewChatDialog();
+  }
+
+  Future<bool> _guardActiveChatRun() async {
+    if (!isDesktopOrTabletPlatform(context)) return true;
+    final intent = ++_navigationIntent;
+    final pending = _activeRunGuardFuture;
+    final Future<bool> guard;
+    if (pending != null) {
+      guard = pending;
+    } else {
+      guard = _performActiveRunGuard();
+      _activeRunGuardFuture = guard;
+    }
+
+    final canContinue = await guard;
+    if (identical(_activeRunGuardFuture, guard)) {
+      _activeRunGuardFuture = null;
+    }
+    return canContinue && intent == _navigationIntent;
+  }
+
+  Future<bool> _performActiveRunGuard() async {
+    final registry = ChatGenerationRegistry.instance;
+    if (!registry.hasBlockingRun(_selectedChatId)) return true;
+
+    if (!registry.supportsCancellationForRun(_selectedChatId)) {
+      if (mounted) {
+        ShadSonner.of(context).show(
+          ShadToast.destructive(
+            title: Text(S.of(context).activeRequestCannotStop),
+            description: Text(S.of(context).waitForGenerationBeforeLeaving),
+          ),
+        );
+      }
+      return false;
+    }
+
+    final shouldStop = await showChatShadDialog<bool>(
+      context: context,
+      variant: ShadDialogVariant.alert,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      builder:
+          (dialogContext) => ShadDialog.alert(
+            title: Text(S.of(dialogContext).stopGenerationBeforeLeaving),
+            description: Text(
+              S.of(dialogContext).stopGenerationBeforeLeavingDescription,
+            ),
+            actions: [
+              ShadButton.outline(
+                autofocus: true,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(S.of(dialogContext).cancel),
+              ),
+              ShadButton.secondary(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                leading: const Icon(LucideIcons.square, size: 16),
+                child: Text(S.of(dialogContext).stopAndContinue),
+              ),
+            ],
+          ),
+    );
+    if (shouldStop != true || !mounted) return false;
+
+    final canContinue = await registry.stopForNavigation(_selectedChatId);
+    if (!canContinue && mounted) {
+      ShadSonner.of(context).show(
+        ShadToast.destructive(
+          title: Text(S.of(context).activeRequestCannotStop),
+          description: Text(S.of(context).waitForGenerationBeforeLeaving),
+        ),
+      );
+    }
+    return canContinue;
   }
 
   void _focusCurrentListSearch() {
@@ -582,6 +669,7 @@ class _MainPageState extends State<MainPage> {
       return;
     }
 
+    if (_selectedChatBot?.id == botId && !await _guardActiveChatRun()) return;
     await BotService.deleteBot(botId);
     if (!mounted) return;
     setState(() {

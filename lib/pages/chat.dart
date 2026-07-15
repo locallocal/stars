@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/services/message_service.dart';
+import 'package:stars/services/chat_generation_controller.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/services/chat_service.dart';
 import 'package:stars/services/providers/providers.dart';
@@ -12,6 +13,7 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/chat/attachments.dart';
 import 'package:stars/pages/common/common.dart';
 import 'package:stars/pages/chat/clear_chat_dialog.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/chat/message_input.dart';
 import 'package:stars/pages/chat/welcome_view.dart';
 import 'package:stars/pages/chat/message_list.dart';
@@ -32,21 +34,33 @@ class ChatPage extends StatefulWidget {
 
 class ChatPageState extends State<ChatPage> {
   static const double _followLatestThreshold = 96;
+  static final Set<String> _composerFocusRequests = <String>{};
   static final Map<String, String> _draftsByChat = <String, String>{};
   static final Map<String, List<File>> _draftImagesByChat =
       <String, List<File>>{};
   static final Map<String, List<File>> _draftFilesByChat =
       <String, List<File>>{};
+  static final Map<String, _PendingChatDraft> _pendingDraftsByChat =
+      <String, _PendingChatDraft>{};
 
-  late Provider _provider;
+  static void requestComposerFocus(String chatId) {
+    _composerFocusRequests.add(chatId);
+  }
+
+  late final ChatGenerationController _generationController;
+  Provider get _provider => _generationController.capabilityProvider;
   final String _currentUserId = 'me';
   late final TextEditingController _messageController;
+  late final bool _autofocusComposer;
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = true;
+  String? _historyError;
+  int _composerFocusToken = 0;
   bool _isTyping = false;
   bool _isStreaming = false;
   bool _isCancellable = false;
+  bool _isStopping = false;
   String _selectedImageSize = '1024x1024';
   String _selectedImageStype = '';
   String _selectedVideoRatio = '';
@@ -61,7 +75,8 @@ class ChatPageState extends State<ChatPage> {
   final List<MessageCommandExecution> _commandExecutions = [];
   bool _followLatest = true;
   bool _showJumpToLatest = false;
-  bool _providerNeedsRefresh = false;
+  String? _generationError;
+  String? _handledTerminalRunId;
   String? _pendingDraftText;
   List<File> _pendingDraftImages = const [];
   List<File> _pendingDraftFiles = const [];
@@ -69,6 +84,11 @@ class ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    _autofocusComposer = _composerFocusRequests.remove(widget.id);
+    final pendingDraft = _pendingDraftsByChat[widget.id];
+    _pendingDraftText = pendingDraft?.text;
+    _pendingDraftImages = pendingDraft?.images ?? const [];
+    _pendingDraftFiles = pendingDraft?.files ?? const [];
     _messageController = TextEditingController(
       text: _draftsByChat[widget.id] ?? '',
     )..addListener(_persistTextDraft);
@@ -76,59 +96,130 @@ class ChatPageState extends State<ChatPage> {
     _selectedFiles.addAll(_draftFilesByChat[widget.id] ?? const []);
     _scrollController.addListener(_handleScrollPositionChanged);
     _loadMessages();
-    _configureProvider(widget.bot);
-  }
-
-  void _configureProvider(Bot bot) {
-    _provider = Provider.create(bot);
-    _provider.setCallbacks(
-      onResponse: _handleStreamResponse,
-      onComplete: _handleStreamComplete,
-      onError: _handleStreamError,
-      onReasoningResponse: _handleReasoningResponse,
-      onToolCall: _handleToolCall,
-      onCommandExecution: _handleCommandExecution,
-    );
+    _generationController = ChatGenerationRegistry.instance.controllerFor(
+      widget.id,
+      widget.bot,
+    )..addListener(_handleGenerationChanged);
+    _handleGenerationChanged();
   }
 
   @override
   void didUpdateWidget(covariant ChatPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.bot != widget.bot) {
-      if (_isTyping) {
-        _providerNeedsRefresh = true;
-      } else {
-        _configureProvider(widget.bot);
-      }
+      _generationController.updateBot(widget.bot);
     }
   }
 
-  void _refreshProviderIfNeeded() {
-    if (!_providerNeedsRefresh) return;
-    _providerNeedsRefresh = false;
-    _configureProvider(widget.bot);
+  void _handleGenerationChanged() {
+    if (!mounted) return;
+    final snapshot = _generationController.snapshot;
+    final terminalMessage = snapshot.terminalMessage;
+    final isNewTerminal =
+        snapshot.lifecycle.isTerminal &&
+        snapshot.runId != null &&
+        _handledTerminalRunId != snapshot.runId;
+
+    if (isNewTerminal) {
+      _handledTerminalRunId = snapshot.runId;
+      if (!snapshot.userPersisted) {
+        _messages.removeWhere(
+          (message) =>
+              message.turnId == snapshot.turnId && message.runId.isEmpty,
+        );
+        _restorePendingDraft();
+      } else {
+        _clearPendingDraft();
+      }
+      if (terminalMessage != null &&
+          !_messages.any(
+            (message) => message.messageId == terminalMessage.messageId,
+          )) {
+        _messages.add(terminalMessage);
+      }
+      ChatService.notifyChatListChanged();
+    }
+
+    setState(() {
+      _isTyping = snapshot.lifecycle.isRunning;
+      _isStreaming =
+          snapshot.lifecycle.isRunning &&
+          (snapshot.streamingResponse.isNotEmpty ||
+              snapshot.reasoningResponse.isNotEmpty ||
+              snapshot.toolCalls.isNotEmpty ||
+              snapshot.commandExecutions.isNotEmpty);
+      _isCancellable = snapshot.canCancel;
+      _isStopping = snapshot.lifecycle == ChatRunLifecycle.stopping;
+      _streamingResponse = snapshot.streamingResponse;
+      _reasoningResponse = snapshot.reasoningResponse;
+      _toolCalls
+        ..clear()
+        ..addAll(snapshot.toolCalls);
+      _commandExecutions
+        ..clear()
+        ..addAll(snapshot.commandExecutions);
+      if (snapshot.error != null) {
+        _generationError = snapshot.error;
+      } else if (snapshot.lifecycle.isRunning ||
+          snapshot.lifecycle.isTerminal) {
+        _generationError = null;
+      }
+    });
+
+    if (isNewTerminal) {
+      _scheduleScrollToLatest(animate: true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _generationController.snapshot.lifecycle.isTerminal) {
+          _generationController.acknowledgeTerminal();
+        }
+      });
+    }
   }
 
   Future<void> _loadMessages() async {
     setState(() {
       _isLoading = true;
+      _historyError = null;
     });
 
-    final messages = await MessageService.getMessages(widget.id);
-    if (!mounted) return;
-    setState(() {
-      _messages = messages;
-      _isLoading = false;
-      _followLatest = true;
-      _showJumpToLatest = false;
-    });
+    try {
+      final messages = await MessageService.getMessages(widget.id);
+      if (!mounted) return;
+      setState(() {
+        _messages = _mergeLoadedMessages(messages);
+        _isLoading = false;
+        _followLatest = true;
+        _showJumpToLatest = false;
+      });
+      _scheduleScrollToLatest(force: true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _historyError = error.toString();
+      });
+    }
+  }
 
-    _scheduleScrollToLatest(force: true);
+  List<Message> _mergeLoadedMessages(List<Message> loaded) {
+    final merged = List<Message>.of(loaded);
+    final knownIds = <String>{
+      for (final message in loaded)
+        if (message.messageId.isNotEmpty) message.messageId,
+    };
+    for (final message in _messages) {
+      if (message.messageId.isNotEmpty && knownIds.add(message.messageId)) {
+        merged.add(message);
+      }
+    }
+    merged.sort((left, right) => left.timestamp.compareTo(right.timestamp));
+    return merged;
   }
 
   @override
   void dispose() {
     _persistAttachmentDrafts();
+    _generationController.removeListener(_handleGenerationChanged);
     _scrollController.removeListener(_handleScrollPositionChanged);
     _scrollController.dispose();
     _messageController
@@ -205,7 +296,7 @@ class ChatPageState extends State<ChatPage> {
   // 从相机获取图片
   Future<void> getAttachImageFromCamera() async {
     final image = await getImageFromCamera();
-    if (image != null) {
+    if (image != null && mounted) {
       setState(() {
         _selectedImages.add(image);
       });
@@ -215,7 +306,7 @@ class ChatPageState extends State<ChatPage> {
   // 从相册获取图片
   Future<void> getAttachImageFromGallery() async {
     final image = await getImageFromGallery();
-    if (image != null) {
+    if (image != null && mounted) {
       setState(() {
         _selectedImages.add(image);
       });
@@ -225,7 +316,7 @@ class ChatPageState extends State<ChatPage> {
   // 获取文件
   Future<void> getAttacheFile() async {
     final file = await pickFile();
-    if (file != null) {
+    if (file != null && mounted) {
       setState(() {
         _selectedFiles.add(file);
       });
@@ -235,6 +326,11 @@ class ChatPageState extends State<ChatPage> {
   Future<void> _sendMessage() async {
     if (_isTyping) {
       return;
+    }
+    if (_generationError != null) {
+      setState(() {
+        _generationError = null;
+      });
     }
     if (_provider.getOutputModalites().contains(OutputModality.image) &&
         _selectedImageSize.isNotEmpty) {
@@ -263,214 +359,137 @@ class ChatPageState extends State<ChatPage> {
     _pendingDraftText = messageText;
     _pendingDraftImages = List<File>.of(_selectedImages);
     _pendingDraftFiles = List<File>.of(_selectedFiles);
-    final imagePaths = await _getSelectedImagePaths();
-    final filePahts = await _getSelectedFilePaths();
-    final userMessage = Message(
-      chatId: widget.id,
-      botId: widget.bot.id,
-      senderId: _currentUserId,
-      content: messageText,
-      images: imagePaths,
-      files: filePahts,
-      processInfo: _buildProcessInfo(
-        imagePaths: imagePaths,
-        filePaths: filePahts,
-        fileStatus: 'attached',
-      ),
-      timestamp: DateTime.now(),
+    _pendingDraftsByChat[widget.id] = _PendingChatDraft(
+      text: messageText,
+      images: _pendingDraftImages,
+      files: _pendingDraftFiles,
     );
-
-    _startProcessTracking();
+    ChatGenerationRegistry.instance.setNonCancellableRunActive(widget.id, true);
     setState(() {
-      _messages.add(userMessage);
-      _messageController.clear();
       _isTyping = true;
-      _isStreaming = true;
-      _streamingResponse = '';
-      _isCancellable = true;
-      _selectedImages.clear();
-      _selectedFiles.clear();
-      _followLatest = true;
-      _showJumpToLatest = false;
+      _isStreaming = false;
+      _isCancellable = false;
+      _isStopping = false;
     });
 
-    await MessageService.addMessage(userMessage);
-    await ChatService.updateLastMessage(widget.id, messageText);
-    _scheduleScrollToLatest(force: true, animate: true);
-
+    String? optimisticMessageId;
     try {
-      final List<ChatMessage> chatMessages = [];
+      final imagePaths = await _getSelectedImagePaths();
+      final filePahts = await _getSelectedFilePaths();
+      if (!mounted) return;
+
+      final turnId = MessageService.createId('turn');
+      final userMessage = Message(
+        messageId: MessageService.createId('message'),
+        turnId: turnId,
+        chatId: widget.id,
+        botId: widget.bot.id,
+        senderId: _currentUserId,
+        content: messageText,
+        images: imagePaths,
+        files: filePahts,
+        processInfo: _buildProcessInfo(
+          imagePaths: imagePaths,
+          filePaths: filePahts,
+          fileStatus: 'attached',
+        ),
+        timestamp: DateTime.now(),
+      );
+      optimisticMessageId = userMessage.messageId;
+
+      setState(() {
+        _messages.add(userMessage);
+        _messageController.clear();
+        _generationError = null;
+        _streamingResponse = '';
+        _selectedImages.clear();
+        _selectedFiles.clear();
+        _followLatest = true;
+        _showJumpToLatest = false;
+      });
+
+      _scheduleScrollToLatest(force: true, animate: true);
+
+      final chatMessages = <ChatMessage>[];
       if (widget.bot.systemPrompt.isNotEmpty) {
         chatMessages.add(
-          ChatMessage(role: "system", content: widget.bot.systemPrompt),
+          ChatMessage(role: 'system', content: widget.bot.systemPrompt),
         );
       }
-
-      // merge consecutive user messages
-      String pendingUserMessage = "";
+      var pendingUserMessage = '';
       if (_messages.length > 1) {
-        int startIdx = _messages.length > 100 ? _messages.length - 100 : 0;
-        // find the first user message
-        for (int i = startIdx; i < _messages.length - 1; i++) {
-          final msg = _messages[i];
-          if (msg.senderId == _currentUserId) {
-            startIdx = i;
+        var startIndex = _messages.length > 100 ? _messages.length - 100 : 0;
+        for (var i = startIndex; i < _messages.length - 1; i++) {
+          if (_messages[i].senderId == _currentUserId) {
+            startIndex = i;
             break;
           }
         }
-
-        for (int i = startIdx; i < _messages.length - 1; i++) {
-          final msg = _messages[i];
-          final role = msg.senderId == _currentUserId ? 'user' : 'assistant';
-
-          // user message
-          if (role == "user") {
-            if (pendingUserMessage.isNotEmpty) {
-              pendingUserMessage += '\n${msg.content}';
-            } else {
-              pendingUserMessage = msg.content;
-            }
+        for (var i = startIndex; i < _messages.length - 1; i++) {
+          final message = _messages[i];
+          if (message.senderId == _currentUserId) {
+            pendingUserMessage =
+                pendingUserMessage.isEmpty
+                    ? message.content
+                    : '$pendingUserMessage\n${message.content}';
             continue;
           }
+          if (pendingUserMessage.isNotEmpty) {
+            chatMessages.add(
+              ChatMessage(role: 'user', content: pendingUserMessage),
+            );
+            pendingUserMessage = '';
+          }
           chatMessages.add(
-            ChatMessage(role: 'user', content: pendingUserMessage),
+            ChatMessage(role: 'assistant', content: message.content),
           );
-          pendingUserMessage = "";
-          // assistant message
-          chatMessages.add(ChatMessage(role: role, content: msg.content));
         }
       }
-
-      String lastUserMessage = messageText;
-      if (pendingUserMessage.isNotEmpty) {
-        lastUserMessage = '$messageText\n$pendingUserMessage';
-      }
+      final latestContent =
+          pendingUserMessage.isEmpty
+              ? messageText
+              : '$pendingUserMessage\n$messageText';
       chatMessages.add(
         ChatMessage(
-          role: "user",
-          content: lastUserMessage,
+          role: 'user',
+          content: latestContent,
           images: userMessage.images,
           files: userMessage.files,
         ),
       );
-      await _provider.generateText(chatMessages);
-    } catch (e) {
-      _resetProcessTracking();
-      if (mounted) {
-        setState(() {
-          _isTyping = false;
-          _isStreaming = false;
-          _isCancellable = false;
-          _restorePendingDraft();
-        });
-        _refreshProviderIfNeeded();
-        showSnackBar(context, S.of(context).responseError(e.toString()));
-      }
-    }
-  }
 
-  void _handleStreamError(String error) {
-    if (mounted) {
+      ChatGenerationRegistry.instance.setNonCancellableRunActive(
+        widget.id,
+        false,
+      );
+      await _generationController.startText(
+        userMessage: userMessage,
+        messages: chatMessages,
+      );
+    } catch (error) {
+      if (!mounted) return;
       setState(() {
-        _isTyping = false;
-        _isStreaming = false;
-        _isCancellable = false;
-        _reasoningResponse = '';
+        if (optimisticMessageId != null) {
+          _messages.removeWhere(
+            (message) => message.messageId == optimisticMessageId,
+          );
+        }
         _restorePendingDraft();
+        _generationError = error.toString();
       });
-      _resetProcessTracking();
-      _refreshProviderIfNeeded();
-      showSnackBar(context, S.of(context).responseError(error));
-    }
-  }
-
-  Future<void> _handleStreamComplete() async {
-    if (_streamingResponse.isEmpty) {
-      if (mounted) {
+    } finally {
+      ChatGenerationRegistry.instance.setNonCancellableRunActive(
+        widget.id,
+        false,
+      );
+      if (mounted && !_generationController.snapshot.lifecycle.isRunning) {
         setState(() {
           _isTyping = false;
-          _isStreaming = false;
           _isCancellable = false;
-          _reasoningResponse = '';
-          _restorePendingDraft();
+          _isStopping = false;
         });
-        _resetProcessTracking();
-        _refreshProviderIfNeeded();
-        showSnackBar(context, S.of(context).emptyResponseError);
       }
-      return;
     }
-    final botMessage = Message(
-      chatId: widget.id,
-      botId: widget.bot.id,
-      senderId: widget.bot.id,
-      content: _streamingResponse,
-      reasoning: _reasoningResponse,
-      processInfo: _buildProcessInfo(
-        durationMs: _stopProcessTracking(),
-        reasoningStatus:
-            _reasoningResponse.isNotEmpty
-                ? 'completed'
-                : (_provider.getDeepThinking() ? 'completed' : ''),
-        toolCalls: _toolCalls,
-        commandExecutions: _commandExecutions,
-      ),
-      timestamp: DateTime.now(),
-    );
-    await MessageService.addMessage(botMessage);
-    await ChatService.updateLastMessage(widget.id, botMessage.content);
-
-    if (mounted) {
-      setState(() {
-        _messages.add(botMessage);
-        _isTyping = false;
-        _isStreaming = false;
-        _streamingResponse = '';
-        _reasoningResponse = '';
-        _isCancellable = false;
-      });
-      _toolCalls.clear();
-      _commandExecutions.clear();
-      _clearPendingDraft();
-      _refreshProviderIfNeeded();
-    }
-    _scheduleScrollToLatest(animate: true);
-  }
-
-  void _handleStreamResponse(String text) {
-    if (mounted) {
-      setState(() {
-        _streamingResponse += text;
-      });
-      _scheduleScrollToLatest();
-    }
-  }
-
-  void _handleReasoningResponse(String reasoning) {
-    if (mounted) {
-      setState(() {
-        _reasoningResponse += reasoning;
-      });
-      _scheduleScrollToLatest();
-    }
-  }
-
-  void _handleToolCall(MessageToolCall toolCall) {
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _toolCalls.add(toolCall);
-    });
-  }
-
-  void _handleCommandExecution(MessageCommandExecution commandExecution) {
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _commandExecutions.add(commandExecution);
-    });
   }
 
   @override
@@ -505,10 +524,15 @@ class ChatPageState extends State<ChatPage> {
             children: [
               Expanded(child: _buildConversationBody(context, fontSize)),
               _buildAttachmentsBar(),
+              _buildGenerationAlert(isDesktop: false),
               MessageInput(
                 provider: _provider,
                 controller: _messageController,
-                waitingBotMessage: _isTyping && _isCancellable,
+                requestInProgress: _isTyping,
+                canCancel: _isCancellable,
+                isStopping: _isStopping,
+                autofocus: _autofocusComposer,
+                focusRequestToken: _composerFocusToken,
                 hasPendingAttachments:
                     _selectedFiles.isNotEmpty || _selectedImages.isNotEmpty,
                 onCameraPressed: getAttachImageFromCamera,
@@ -583,10 +607,15 @@ class ChatPageState extends State<ChatPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildAttachmentsBar(desktopMode: true),
+              _buildGenerationAlert(isDesktop: true),
               MessageInput(
                 provider: _provider,
                 controller: _messageController,
-                waitingBotMessage: _isTyping && _isCancellable,
+                requestInProgress: _isTyping,
+                canCancel: _isCancellable,
+                isStopping: _isStopping,
+                autofocus: _autofocusComposer,
+                focusRequestToken: _composerFocusToken,
                 hasPendingAttachments:
                     _selectedFiles.isNotEmpty || _selectedImages.isNotEmpty,
                 desktopMode: true,
@@ -624,12 +653,47 @@ class ChatPageState extends State<ChatPage> {
     bool isDesktop = false,
   }) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child:
+            isDesktop
+                ? const SizedBox(width: 120, child: ShadProgress())
+                : const CircularProgressIndicator(),
+      );
+    }
+    if (_historyError != null && _messages.isEmpty) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: ShadAlert.destructive(
+            icon: Icon(
+              isDesktop ? LucideIcons.circleAlert : Icons.error_outline,
+            ),
+            title: Text(S.of(context).unableToLoadMessages),
+            description: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_historyError!),
+                const SizedBox(height: 12),
+                ShadButton.outline(
+                  size: ShadButtonSize.sm,
+                  onPressed: _loadMessages,
+                  leading: const Icon(LucideIcons.refreshCw, size: 16),
+                  child: Text(S.of(context).retry),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     final conversation =
         _messages.isEmpty
-            ? WelcomeView(bot: widget.bot, fontSize: fontSize)
+            ? WelcomeView(
+              bot: widget.bot,
+              fontSize: fontSize,
+              isDesktop: isDesktop,
+            )
             : Column(
               children: [
                 MessageList(
@@ -643,7 +707,7 @@ class ChatPageState extends State<ChatPage> {
                   reasoningResponse: _reasoningResponse,
                   isDesktop: isDesktop,
                 ),
-                if (_isTyping)
+                if (_isTyping && !_isStreaming)
                   TypingIndicator(
                     botName: widget.bot.name,
                     isDesktop: isDesktop,
@@ -663,10 +727,7 @@ class ChatPageState extends State<ChatPage> {
                     ? ShadButton.secondary(
                       size: ShadButtonSize.sm,
                       onPressed: _jumpToLatest,
-                      leading: const Icon(
-                        Icons.arrow_downward_rounded,
-                        size: 16,
-                      ),
+                      leading: const Icon(LucideIcons.arrowDown, size: 16),
                       child: Text(S.of(context).jumpToLatest),
                     )
                     : FilledButton.tonalIcon(
@@ -711,67 +772,127 @@ class ChatPageState extends State<ChatPage> {
     );
   }
 
+  Widget _buildGenerationAlert({required bool isDesktop}) {
+    final error = _generationError;
+    if (error == null || error.isEmpty) return const SizedBox.shrink();
+
+    final closeLabel = MaterialLocalizations.of(context).closeButtonTooltip;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ShadAlert.destructive(
+        icon: const Icon(LucideIcons.circleAlert, size: 18),
+        description: Text(error),
+        trailing:
+            isDesktop
+                ? StarsDesktopIconAction(
+                  icon: LucideIcons.x,
+                  label: closeLabel,
+                  onPressed: _dismissGenerationError,
+                )
+                : IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: closeLabel,
+                  onPressed: _dismissGenerationError,
+                ),
+      ),
+    );
+  }
+
+  void _dismissGenerationError() {
+    setState(() {
+      _generationError = null;
+    });
+  }
+
   Future<void> requestClearChat() async {
     final shouldClear = await showClearChatDialog(context, widget.bot.name);
     if (!mounted) return;
     if (shouldClear) {
+      if (!await _confirmStopBeforeMutation()) return;
+      if (!mounted) return;
       await _clearChatMessages();
     }
   }
 
   Future<void> _clearChatMessages() async {
-    setState(() {
-      _messages = [];
-    });
-
-    await MessageService.deleteChatMessage(widget.id);
-    await ChatService.updateLastMessage(widget.id, '');
-    await _loadMessages();
+    try {
+      await ChatService.clearChatHistory(widget.id);
+      if (!mounted) return;
+      setState(() {
+        _messages = [];
+        _historyError = null;
+        _composerFocusToken += 1;
+      });
+      ChatService.notifyChatListChanged();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _generationError = S.of(context).clearChatFailed(error.toString());
+      });
+    }
   }
 
-  void _cancelRequest() {
-    if (!_isCancellable) return;
+  Future<bool> _confirmStopBeforeMutation() async {
+    final registry = ChatGenerationRegistry.instance;
+    if (!registry.hasBlockingRun(widget.id)) return true;
+    if (!registry.supportsCancellationForRun(widget.id)) {
+      setState(() {
+        _generationError = S.of(context).activeRequestCannotCancel;
+      });
+      return false;
+    }
 
-    setState(() {
-      _isTyping = false;
-      _isStreaming = false;
-      _isCancellable = false;
-      _provider.cancelRequest();
-      _clearPendingDraft();
-
-      if (_streamingResponse.isNotEmpty) {
-        final botMessage = Message(
-          chatId: widget.id,
-          botId: widget.bot.id,
-          senderId: widget.bot.id,
-          content: _streamingResponse,
-          reasoning: _reasoningResponse,
-          processInfo: _buildProcessInfo(
-            durationMs: _stopProcessTracking(),
-            reasoningStatus:
-                _reasoningResponse.isNotEmpty
-                    ? 'cancelled'
-                    : (_provider.getDeepThinking() ? 'cancelled' : ''),
-            toolCalls: _toolCalls,
-            commandExecutions: _commandExecutions,
+    final shouldStop = await showChatShadDialog<bool>(
+      context: context,
+      variant: ShadDialogVariant.alert,
+      builder:
+          (dialogContext) => ShadDialog.alert(
+            title: Text(S.of(dialogContext).stopGenerationBeforeLeaving),
+            description: Text(
+              S.of(dialogContext).stopGenerationBeforeLeavingDescription,
+            ),
+            actions: [
+              ShadButton.outline(
+                autofocus: true,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(S.of(dialogContext).cancel),
+              ),
+              ShadButton.secondary(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                leading: const Icon(LucideIcons.square, size: 16),
+                child: Text(S.of(dialogContext).stopAndContinue),
+              ),
+            ],
           ),
-          timestamp: DateTime.now(),
-        );
-        _messages.add(botMessage);
-        _streamingResponse = '';
-        _reasoningResponse = '';
+    );
+    if (shouldStop != true || !mounted) return false;
 
-        MessageService.addMessage(botMessage).then((_) {
-          ChatService.updateLastMessage(widget.id, botMessage.content);
-        });
-      }
-    });
-    _toolCalls.clear();
-    _commandExecutions.clear();
-    _resetProcessTracking();
-    _refreshProviderIfNeeded();
-    showSnackBar(context, S.of(context).replyCancelled);
+    final stopped = await registry.stopForNavigation(widget.id);
+    if (!stopped && mounted) {
+      setState(() {
+        _generationError = S.of(context).activeRequestCannotCancel;
+      });
+    }
+    return stopped;
   }
+
+  Future<void> _cancelRequest() async {
+    if (!_isCancellable) return;
+    final lifecycle = await _generationController.cancel();
+    if (!mounted) return;
+    if (lifecycle == ChatRunLifecycle.cancelled) {
+      if (isDesktopOrTabletPlatform(context)) {
+        ShadSonner.of(
+          context,
+        ).show(ShadToast(title: Text(S.of(context).replyCancelled)));
+      } else {
+        showSnackBar(context, S.of(context).replyCancelled);
+      }
+    }
+  }
+
+  Future<bool> stopActiveRunForNavigation() =>
+      ChatGenerationRegistry.instance.stopForNavigation(widget.id);
 
   void _restorePendingDraft() {
     final text = _pendingDraftText;
@@ -791,6 +912,7 @@ class ChatPageState extends State<ChatPage> {
   }
 
   void _clearPendingDraft() {
+    _pendingDraftsByChat.remove(widget.id);
     _pendingDraftText = null;
     _pendingDraftImages = const [];
     _pendingDraftFiles = const [];
@@ -844,24 +966,34 @@ class ChatPageState extends State<ChatPage> {
       showSnackBar(context, S.of(context).pleaseEnterImageDescription);
       return;
     }
-    setState(() {
-      _isTyping = true;
-      _isCancellable = false;
-    });
+    final chatId = widget.id;
+    final bot = widget.bot;
+    final runId = MessageService.createId('run');
+    final turnId = MessageService.createId('turn');
+    final originalImages = List<File>.of(_selectedImages);
+    final imageAttachmentDetail = S.of(context).imageAttachment;
+    final imageResultDetail = S.of(context).imageResult;
+    final generatedPreview = S.of(context).generatedImage;
+    var userPersisted = false;
+    _beginNonCancellableRun(chatId);
 
     try {
       _startProcessTracking();
       final imagePaths = await _getSelectedImagePaths();
-      // 创建系统消息记录生成的图片
+      if (!mounted) return;
       final userMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
+        messageId: '$runId:user',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
         senderId: _currentUserId,
         content: prompt,
         images: imagePaths,
         processInfo: _buildProcessInfo(
           imagePaths: imagePaths,
           fileStatus: 'attached',
+          imageDetail: imageAttachmentDetail,
         ),
         timestamp: DateTime.now(),
       );
@@ -870,13 +1002,15 @@ class ChatPageState extends State<ChatPage> {
         _selectedImages.clear();
         _messageController.clear();
       });
-      // 保存消息到数据库
-      await MessageService.addMessage(userMessage);
-      await ChatService.updateLastMessage(widget.id, userMessage.content);
+      await MessageService.upsertMessage(userMessage);
+      userPersisted = true;
+      try {
+        await ChatService.updateLastMessage(chatId, userMessage.content);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
+      }
 
-      // 调用模型生成图片
-      var imageDirPath = await getChatDirectoryPath(widget.id);
-      // 准备参数
+      final imageDirPath = await getChatDirectoryPath(chatId);
       final params = {
         'prompt': prompt,
         'size': _selectedImageSize,
@@ -884,68 +1018,101 @@ class ChatPageState extends State<ChatPage> {
         'referenceImages': imagePaths,
         'style': _selectedImageStype,
       };
-      // 使用compute在后台线程执行图片生成
       final imagePath = await compute(_generateImageInBackground, {
-        'bot': widget.bot,
+        'bot': bot,
         'params': params,
       });
 
       final botMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
-        senderId: widget.bot.id,
+        messageId: '$runId:assistant',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
+        senderId: bot.id,
         content: '',
         images: imagePath,
         processInfo: _buildProcessInfo(
           durationMs: _stopProcessTracking(),
           imagePaths: imagePath,
           fileStatus: 'created',
+          imageDetail: imageResultDetail,
         ),
+        terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(botMessage);
-      });
-      await MessageService.addMessage(botMessage);
-
-      if (mounted) {
-        await ChatService.updateLastMessage(
-          widget.id,
-          S.of(context).generatedImage,
-        );
+      final persistedBot = await MessageService.upsertMessage(botMessage);
+      try {
+        await ChatService.updateLastMessage(chatId, generatedPreview);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
       }
 
-      _scheduleScrollToLatest(animate: true);
+      if (mounted) {
+        setState(() {
+          _messages.add(persistedBot);
+        });
+        _scheduleScrollToLatest(animate: true);
+      }
     } catch (e) {
+      final failedMessage =
+          userPersisted
+              ? await _persistMediaFailure(
+                runId: runId,
+                turnId: turnId,
+                chatId: chatId,
+                botId: bot.id,
+                durationMs: _stopProcessTracking(),
+              )
+              : null;
       _resetProcessTracking();
       if (mounted) {
-        showSnackBar(context, S.of(context).generateImageFailed(e.toString()));
+        setState(() {
+          if (!userPersisted) {
+            _messages.removeWhere((message) => message.runId == runId);
+            if (_messageController.text.isEmpty) {
+              _messageController.text = prompt;
+            }
+            if (_selectedImages.isEmpty) {
+              _selectedImages.addAll(originalImages);
+            }
+          } else if (failedMessage != null &&
+              !_messages.any(
+                (message) => message.messageId == failedMessage.messageId,
+              )) {
+            _messages.add(failedMessage);
+          }
+          _generationError = S.of(context).generateImageFailed(e.toString());
+        });
       }
     } finally {
-      setState(() {
-        _isTyping = false;
-        _isCancellable = false;
-      });
+      _finishNonCancellableRun(chatId);
     }
   }
 
   Future<void> _generateSpeech() async {
     final prompt = _messageController.text.trim();
     if (prompt.isEmpty) {
-      showSnackBar(context, '请输入语音描述');
+      showSnackBar(context, S.of(context).pleaseEnterSpeechDescription);
       return;
     }
-    setState(() {
-      _isTyping = true;
-      _isCancellable = false;
-    });
+    final chatId = widget.id;
+    final bot = widget.bot;
+    final runId = MessageService.createId('run');
+    final turnId = MessageService.createId('turn');
+    final speechResultDetail = S.of(context).speechResult;
+    final generatedPreview = S.of(context).speechGenerated;
+    var userPersisted = false;
+    _beginNonCancellableRun(chatId);
 
     try {
       _startProcessTracking();
-      // 创建用户消息记录
       final userMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
+        messageId: '$runId:user',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
         senderId: _currentUserId,
         content: prompt,
         timestamp: DateTime.now(),
@@ -954,11 +1121,14 @@ class ChatPageState extends State<ChatPage> {
         _messages.add(userMessage);
         _messageController.clear();
       });
-      // 保存消息到数据库
-      await MessageService.addMessage(userMessage);
-      await ChatService.updateLastMessage(widget.id, userMessage.content);
+      await MessageService.upsertMessage(userMessage);
+      userPersisted = true;
+      try {
+        await ChatService.updateLastMessage(chatId, userMessage.content);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
+      }
 
-      // 获取语音类型列表
       List<String> voiceTypes = [];
       try {
         voiceTypes = _provider.getSupportVoicTypes();
@@ -966,89 +1136,124 @@ class ChatPageState extends State<ChatPage> {
         // 忽略不支持的方法调用
       }
 
-      // 使用默认语音类型或第一个可用的语音类型
       String voiceType = '';
       if (voiceTypes.isNotEmpty) {
         voiceType = voiceTypes.first;
       }
 
-      // 调用模型生成语音
-      var outputDirPath = await getChatDirectoryPath(widget.id);
+      final outputDirPath = await getChatDirectoryPath(chatId);
       final params = {
         'prompt': prompt,
         'dirPath': outputDirPath,
         'voiceType': voiceType,
       };
-      // 使用compute在后台线程执行语音的生成
       final audioPath = await compute(_generateSpeechInBackground, {
-        'bot': widget.bot,
+        'bot': bot,
         'params': params,
       });
-      // 创建机器人回复消息
       final botMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
-        senderId: widget.bot.id,
+        messageId: '$runId:assistant',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
+        senderId: bot.id,
         content: '',
         audio: audioPath,
         processInfo: _buildProcessInfo(
           durationMs: _stopProcessTracking(),
           audioPath: audioPath,
           fileStatus: 'created',
+          audioDetail: speechResultDetail,
         ),
+        terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(botMessage);
-      });
-      await MessageService.addMessage(botMessage);
+      final persistedBot = await MessageService.upsertMessage(botMessage);
+      try {
+        await ChatService.updateLastMessage(chatId, generatedPreview);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
+      }
 
       if (mounted) {
-        await ChatService.updateLastMessage(widget.id, '语音已生成');
+        setState(() {
+          _messages.add(persistedBot);
+        });
+        _scheduleScrollToLatest(animate: true);
       }
     } catch (e) {
+      final failedMessage =
+          userPersisted
+              ? await _persistMediaFailure(
+                runId: runId,
+                turnId: turnId,
+                chatId: chatId,
+                botId: bot.id,
+                durationMs: _stopProcessTracking(),
+              )
+              : null;
       _resetProcessTracking();
       if (mounted) {
-        showSnackBar(context, '生成语音失败：$e');
+        setState(() {
+          if (!userPersisted) {
+            _messages.removeWhere((message) => message.runId == runId);
+            if (_messageController.text.isEmpty) {
+              _messageController.text = prompt;
+            }
+          } else if (failedMessage != null &&
+              !_messages.any(
+                (message) => message.messageId == failedMessage.messageId,
+              )) {
+            _messages.add(failedMessage);
+          }
+          _generationError = S.of(context).generateSpeechFailed(e.toString());
+        });
       }
     } finally {
-      setState(() {
-        _isTyping = false;
-        _isCancellable = false;
-      });
+      _finishNonCancellableRun(chatId);
     }
   }
 
   Future<void> _generateMusic() async {
     final prompt = _messageController.text.trim();
     if (prompt.isEmpty) {
-      showSnackBar(context, '请输入音乐描述');
+      showSnackBar(context, S.of(context).pleaseEnterMusicDescription);
       return;
     }
-    setState(() {
-      _isTyping = true;
-      _isCancellable = false;
-    });
+    final chatId = widget.id;
+    final bot = widget.bot;
+    final runId = MessageService.createId('run');
+    final turnId = MessageService.createId('turn');
+    final originalFiles = List<File>.of(_selectedFiles);
+    final referenceAudioDetail = S.of(context).referenceAudio;
+    final musicResultDetail = S.of(context).musicResult;
+    final generatedPreview = S.of(context).musicGenerated;
+    var userPersisted = false;
+    _beginNonCancellableRun(chatId);
 
     try {
       _startProcessTracking();
-      // 获取文件列表的第一个文件作为音乐文件
       final filePahts = await _getSelectedFilePaths();
-      var referMusicPath = "";
+      if (!mounted) return;
+      var referMusicPath = '';
       if (filePahts.isNotEmpty) {
         referMusicPath = filePahts.first;
       }
 
-      // 创建用户消息记录
       final userMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
+        messageId: '$runId:user',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
         senderId: _currentUserId,
         content: prompt,
         music: referMusicPath,
         processInfo: _buildProcessInfo(
           musicPath: referMusicPath,
           fileStatus: 'attached',
+          musicDetail: referenceAudioDetail,
         ),
         timestamp: DateTime.now(),
       );
@@ -1057,81 +1262,125 @@ class ChatPageState extends State<ChatPage> {
         _messageController.clear();
         _selectedFiles.clear();
       });
-      // 保存消息到数据库
-      await MessageService.addMessage(userMessage);
-      await ChatService.updateLastMessage(widget.id, userMessage.content);
+      await MessageService.upsertMessage(userMessage);
+      userPersisted = true;
+      try {
+        await ChatService.updateLastMessage(chatId, userMessage.content);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
+      }
 
-      // 调用模型生成音乐
-      var musicDirPath = await getChatDirectoryPath(widget.id);
+      final musicDirPath = await getChatDirectoryPath(chatId);
       final params = {
         'prompt': prompt,
         'dirPath': musicDirPath,
         'referMusicPath': referMusicPath,
       };
       final musicPath = await compute(_generateMusicInBackground, {
-        'bot': widget.bot,
+        'bot': bot,
         'params': params,
       });
       final botMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
-        senderId: widget.bot.id,
+        messageId: '$runId:assistant',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
+        senderId: bot.id,
         content: '',
         audio: musicPath,
         processInfo: _buildProcessInfo(
           durationMs: _stopProcessTracking(),
           musicPath: musicPath,
           fileStatus: 'created',
+          musicDetail: musicResultDetail,
         ),
+        terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(botMessage);
-      });
-      await MessageService.addMessage(botMessage);
-
-      if (mounted) {
-        await ChatService.updateLastMessage(widget.id, '生成了音乐');
+      final persistedBot = await MessageService.upsertMessage(botMessage);
+      try {
+        await ChatService.updateLastMessage(chatId, generatedPreview);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
       }
 
-      _scheduleScrollToLatest(animate: true);
+      if (mounted) {
+        setState(() {
+          _messages.add(persistedBot);
+        });
+        _scheduleScrollToLatest(animate: true);
+      }
     } catch (e) {
+      final failedMessage =
+          userPersisted
+              ? await _persistMediaFailure(
+                runId: runId,
+                turnId: turnId,
+                chatId: chatId,
+                botId: bot.id,
+                durationMs: _stopProcessTracking(),
+              )
+              : null;
       _resetProcessTracking();
       if (mounted) {
-        showSnackBar(context, '生成音乐失败: ${e.toString()}');
+        setState(() {
+          if (!userPersisted) {
+            _messages.removeWhere((message) => message.runId == runId);
+            if (_messageController.text.isEmpty) {
+              _messageController.text = prompt;
+            }
+            if (_selectedFiles.isEmpty) {
+              _selectedFiles.addAll(originalFiles);
+            }
+          } else if (failedMessage != null &&
+              !_messages.any(
+                (message) => message.messageId == failedMessage.messageId,
+              )) {
+            _messages.add(failedMessage);
+          }
+          _generationError = S.of(context).generateMusicFailed(e.toString());
+        });
       }
     } finally {
-      setState(() {
-        _isTyping = false;
-        _isCancellable = false;
-      });
+      _finishNonCancellableRun(chatId);
     }
   }
 
   Future<void> _generateVideo() async {
     final prompt = _messageController.text.trim();
     if (prompt.isEmpty) {
-      showSnackBar(context, '请输入视频描述');
+      showSnackBar(context, S.of(context).pleaseEnterVideoDescription);
       return;
     }
-    setState(() {
-      _isTyping = true;
-      _isCancellable = false;
-    });
+    final chatId = widget.id;
+    final bot = widget.bot;
+    final runId = MessageService.createId('run');
+    final turnId = MessageService.createId('turn');
+    final originalImages = List<File>.of(_selectedImages);
+    final imageAttachmentDetail = S.of(context).imageAttachment;
+    final videoResultDetail = S.of(context).videoResult;
+    final generatedPreview = S.of(context).videoGenerated;
+    var userPersisted = false;
+    _beginNonCancellableRun(chatId);
 
     try {
       _startProcessTracking();
-      // 创建用户消息记录
       final imagePaths = await _getSelectedImagePaths();
+      if (!mounted) return;
       final userMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
+        messageId: '$runId:user',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
         senderId: _currentUserId,
         content: prompt,
         images: imagePaths,
         processInfo: _buildProcessInfo(
           imagePaths: imagePaths,
           fileStatus: 'attached',
+          imageDetail: imageAttachmentDetail,
         ),
         timestamp: DateTime.now(),
       );
@@ -1140,57 +1389,137 @@ class ChatPageState extends State<ChatPage> {
         _messageController.clear();
         _selectedImages.clear();
       });
-      // 保存消息到数据库
-      await MessageService.addMessage(userMessage);
-      await ChatService.updateLastMessage(widget.id, userMessage.content);
+      await MessageService.upsertMessage(userMessage);
+      userPersisted = true;
+      try {
+        await ChatService.updateLastMessage(chatId, userMessage.content);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
+      }
 
-      // 调用模型生成视频
-      var videoDirPath = await getChatDirectoryPath(widget.id);
-      // 准备参数
+      final videoDirPath = await getChatDirectoryPath(chatId);
       final params = {
         'prompt': prompt,
         'ratio': _selectedVideoRatio,
         'dirPath': videoDirPath,
         'referenceImage': imagePaths,
       };
-      // 使用compute在后台线程执行图片生成
       final videoPath = await compute(_generateVedioInBackground, {
-        'bot': widget.bot,
+        'bot': bot,
         'params': params,
       });
       final botMessage = Message(
-        chatId: widget.id,
-        botId: widget.bot.id,
-        senderId: widget.bot.id,
+        messageId: '$runId:assistant',
+        turnId: turnId,
+        runId: runId,
+        chatId: chatId,
+        botId: bot.id,
+        senderId: bot.id,
         content: '',
         video: videoPath,
         processInfo: _buildProcessInfo(
           durationMs: _stopProcessTracking(),
           videoPath: videoPath,
           fileStatus: 'created',
+          videoDetail: videoResultDetail,
         ),
+        terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.add(botMessage);
-      });
-      await MessageService.addMessage(botMessage);
-      if (mounted) {
-        await ChatService.updateLastMessage(widget.id, '生成了视频');
+      final persistedBot = await MessageService.upsertMessage(botMessage);
+      try {
+        await ChatService.updateLastMessage(chatId, generatedPreview);
+      } catch (error) {
+        debugPrint('Failed to update chat preview for $chatId: $error');
       }
 
-      _scheduleScrollToLatest(animate: true);
+      if (mounted) {
+        setState(() {
+          _messages.add(persistedBot);
+        });
+        _scheduleScrollToLatest(animate: true);
+      }
     } catch (e) {
+      final failedMessage =
+          userPersisted
+              ? await _persistMediaFailure(
+                runId: runId,
+                turnId: turnId,
+                chatId: chatId,
+                botId: bot.id,
+                durationMs: _stopProcessTracking(),
+              )
+              : null;
       _resetProcessTracking();
       if (mounted) {
-        showSnackBar(context, '生成视频失败: ${e.toString()}');
+        setState(() {
+          if (!userPersisted) {
+            _messages.removeWhere((message) => message.runId == runId);
+            if (_messageController.text.isEmpty) {
+              _messageController.text = prompt;
+            }
+            if (_selectedImages.isEmpty) {
+              _selectedImages.addAll(originalImages);
+            }
+          } else if (failedMessage != null &&
+              !_messages.any(
+                (message) => message.messageId == failedMessage.messageId,
+              )) {
+            _messages.add(failedMessage);
+          }
+          _generationError = S.of(context).generateVideoFailed(e.toString());
+        });
       }
     } finally {
-      setState(() {
-        _isTyping = false;
-        _isCancellable = false;
-      });
+      _finishNonCancellableRun(chatId);
     }
+  }
+
+  void _beginNonCancellableRun(String chatId) {
+    ChatGenerationRegistry.instance.setNonCancellableRunActive(chatId, true);
+    setState(() {
+      _isTyping = true;
+      _isCancellable = false;
+      _isStopping = false;
+    });
+  }
+
+  Future<Message?> _persistMediaFailure({
+    required String runId,
+    required String turnId,
+    required String chatId,
+    required String botId,
+    int? durationMs,
+  }) async {
+    try {
+      return await MessageService.upsertMessage(
+        Message(
+          messageId: '$runId:assistant',
+          turnId: turnId,
+          runId: runId,
+          chatId: chatId,
+          botId: botId,
+          senderId: botId,
+          content: '',
+          processInfo: MessageProcessInfo(durationMs: durationMs),
+          terminalOutcome: MessageTerminalOutcome.failed,
+          timestamp: DateTime.now(),
+        ),
+      );
+    } catch (error) {
+      debugPrint('Failed to persist media failure for $chatId: $error');
+      return null;
+    }
+  }
+
+  void _finishNonCancellableRun(String chatId) {
+    ChatGenerationRegistry.instance.setNonCancellableRunActive(chatId, false);
+    if (!mounted) return;
+    setState(() {
+      _isTyping = false;
+      _isCancellable = false;
+      _isStopping = false;
+    });
   }
 
   void _startProcessTracking() {
@@ -1240,6 +1569,11 @@ class ChatPageState extends State<ChatPage> {
     String musicPath = '',
     String videoPath = '',
     String fileStatus = '',
+    String? imageDetail,
+    String? fileDetail,
+    String? audioDetail,
+    String? musicDetail,
+    String? videoDetail,
   }) {
     final fileEdits = <MessageFileEdit>[
       ...imagePaths.map(
@@ -1247,7 +1581,11 @@ class ChatPageState extends State<ChatPage> {
           path: imagePath,
           type: 'image',
           status: fileStatus,
-          detail: fileStatus == 'attached' ? '图片附件' : '图片结果',
+          detail:
+              imageDetail ??
+              (fileStatus == 'attached'
+                  ? S.of(context).imageAttachment
+                  : S.of(context).imageResult),
         ),
       ),
       ...filePaths.map(
@@ -1255,7 +1593,11 @@ class ChatPageState extends State<ChatPage> {
           path: filePath,
           type: 'file',
           status: fileStatus,
-          detail: fileStatus == 'attached' ? '文件附件' : '文件结果',
+          detail:
+              fileDetail ??
+              (fileStatus == 'attached'
+                  ? S.of(context).fileAttachment
+                  : S.of(context).fileResult),
         ),
       ),
     ];
@@ -1266,7 +1608,7 @@ class ChatPageState extends State<ChatPage> {
           path: audioPath,
           type: 'audio',
           status: fileStatus,
-          detail: '语音结果',
+          detail: audioDetail ?? S.of(context).speechResult,
         ),
       );
     }
@@ -1276,7 +1618,11 @@ class ChatPageState extends State<ChatPage> {
           path: musicPath,
           type: 'music',
           status: fileStatus,
-          detail: fileStatus == 'attached' ? '参考音频' : '音乐结果',
+          detail:
+              musicDetail ??
+              (fileStatus == 'attached'
+                  ? S.of(context).referenceAudio
+                  : S.of(context).musicResult),
         ),
       );
     }
@@ -1286,7 +1632,7 @@ class ChatPageState extends State<ChatPage> {
           path: videoPath,
           type: 'video',
           status: fileStatus,
-          detail: '视频结果',
+          detail: videoDetail ?? S.of(context).videoResult,
         ),
       );
     }
@@ -1356,10 +1702,22 @@ class ChatPageState extends State<ChatPage> {
     final params = args['params'] as Map<String, dynamic>;
     final provider = Provider.create(bot);
 
-    return await provider.generateSpeech(
+    return await provider.generateMusic(
       params['prompt'],
       params['dirPath'],
       params['referMusicPath'],
     );
   }
+}
+
+class _PendingChatDraft {
+  const _PendingChatDraft({
+    required this.text,
+    required this.images,
+    required this.files,
+  });
+
+  final String text;
+  final List<File> images;
+  final List<File> files;
 }

@@ -40,6 +40,36 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m13(error) => "生成图片失败: ${error}";
 
+  static String m14(count) => "${count} 项";
+
+  static String m15(count) => "${count} 个文件";
+
+  static String m16(error) => "保存图片失败：${error}";
+
+  static String m17(error) => "分享图片失败：${error}";
+
+  static String m18(duration) => "耗时 ${duration}";
+
+  static String m19(count) => "${count} 次工具调用";
+
+  static String m20(count) => "${count} 次命令执行";
+
+  static String m21(count) => "${count} 条文件状态";
+
+  static String m22(duration) => "思考完成 · ${duration}";
+
+  static String m23(error) => "生成语音失败：${error}";
+
+  static String m24(error) => "生成音乐失败：${error}";
+
+  static String m25(error) => "生成视频失败：${error}";
+
+  static String m26(error) => "创建聊天失败：${error}";
+
+  static String m27(error) => "清空聊天记录失败：${error}";
+
+  static String m28(error) => "删除会话失败：${error}";
+
   static String m9(language) => "语言已设置为${language}";
 
   static String m10(minutes) => "${minutes}分钟前";
@@ -213,6 +243,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "imageStyle": MessageLookupByLibrary.simpleMessage("图像风格"),
     "imageSize": MessageLookupByLibrary.simpleMessage("图像尺寸"),
     "stop": MessageLookupByLibrary.simpleMessage("停止"),
+    "generating": MessageLookupByLibrary.simpleMessage("正在生成…"),
+    "stopping": MessageLookupByLibrary.simpleMessage("正在停止…"),
     "basicInformation": MessageLookupByLibrary.simpleMessage("基本信息"),
     "providerInformation": MessageLookupByLibrary.simpleMessage("提供商信息"),
     "modelConfiguration": MessageLookupByLibrary.simpleMessage("模型配置"),
@@ -224,7 +256,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "试试其他关键词，或直接新建。",
     ),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "搜索会同时匹配消息内容和智能体名称。",
+      "搜索会匹配智能体名称和最后一条消息。",
     ),
     "newChatWorkspaceHint": MessageLookupByLibrary.simpleMessage(
       "新建聊天后会直接在工作区打开会话。",
@@ -233,6 +265,112 @@ class MessageLookup extends MessageLookupByLibrary {
     "newBotWorkspaceHint": MessageLookupByLibrary.simpleMessage(
       "新建智能体会留在工作区中继续编辑。",
     ),
+    "retry": MessageLookupByLibrary.simpleMessage("重试"),
+    "unableToLoadChats": MessageLookupByLibrary.simpleMessage("无法加载聊天列表"),
+    "clearSearch": MessageLookupByLibrary.simpleMessage("清除搜索"),
+    "unavailableBot": MessageLookupByLibrary.simpleMessage("智能体不可用"),
+    "botUnavailableTitle": MessageLookupByLibrary.simpleMessage("此智能体已不可用"),
+    "orphanedChatGuidance": MessageLookupByLibrary.simpleMessage(
+      "删除这条孤立会话，或重新创建缺失的智能体。",
+    ),
+    "activeRequestCannotStop": MessageLookupByLibrary.simpleMessage("当前请求无法停止"),
+    "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
+      "请等待生成完成。",
+    ),
+    "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(
+      "请等待生成完成后再离开当前会话。",
+    ),
+    "activeRequestCannotCancel": MessageLookupByLibrary.simpleMessage(
+      "当前请求无法取消，请等待生成完成。",
+    ),
+    "attachments": MessageLookupByLibrary.simpleMessage("附件"),
+    "itemCount": m14,
+    "fileCount": m15,
+    "clearAttachments": MessageLookupByLibrary.simpleMessage("清空附件"),
+    "removeImageAttachment": MessageLookupByLibrary.simpleMessage("移除图片"),
+    "removeFileAttachment": MessageLookupByLibrary.simpleMessage("移除文件"),
+    "imageAttachment": MessageLookupByLibrary.simpleMessage("图片附件"),
+    "imageResult": MessageLookupByLibrary.simpleMessage("图片结果"),
+    "fileAttachment": MessageLookupByLibrary.simpleMessage("文件附件"),
+    "fileResult": MessageLookupByLibrary.simpleMessage("文件结果"),
+    "speechResult": MessageLookupByLibrary.simpleMessage("语音结果"),
+    "referenceAudio": MessageLookupByLibrary.simpleMessage("参考音频"),
+    "musicResult": MessageLookupByLibrary.simpleMessage("音乐结果"),
+    "videoResult": MessageLookupByLibrary.simpleMessage("视频结果"),
+    "directPlayback": MessageLookupByLibrary.simpleMessage("可直接播放"),
+    "directPreview": MessageLookupByLibrary.simpleMessage("可直接预览"),
+    "replyStoppedPartial": MessageLookupByLibrary.simpleMessage("已停止 · 保留部分回复"),
+    "generationFailedPartial": MessageLookupByLibrary.simpleMessage(
+      "生成失败 · 保留部分回复",
+    ),
+    "generationFailed": MessageLookupByLibrary.simpleMessage("生成失败"),
+    "noContentReturned": MessageLookupByLibrary.simpleMessage("未返回内容"),
+    "partialResponse": MessageLookupByLibrary.simpleMessage("部分回复"),
+    "statusCompleted": MessageLookupByLibrary.simpleMessage("已完成"),
+    "saveImage": MessageLookupByLibrary.simpleMessage("保存图片"),
+    "shareImage": MessageLookupByLibrary.simpleMessage("分享图片"),
+    "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage("保存到相册失败"),
+    "imageSavedToGallery": MessageLookupByLibrary.simpleMessage("图片已保存到相册"),
+    "saveImageFailed": m16,
+    "shareImageFailed": m17,
+    "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
+      "来自 Stars 的图片",
+    ),
+    "processDuration": m18,
+    "processToolCount": m19,
+    "processCommandCount": m20,
+    "processFileCount": m21,
+    "executionStatus": MessageLookupByLibrary.simpleMessage("执行状态"),
+    "toolCalls": MessageLookupByLibrary.simpleMessage("工具调用"),
+    "commandExecutions": MessageLookupByLibrary.simpleMessage("命令执行"),
+    "fileStatus": MessageLookupByLibrary.simpleMessage("文件状态"),
+    "includesDuration": MessageLookupByLibrary.simpleMessage("包含耗时"),
+    "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("结构化过程信息"),
+    "statusGenerated": MessageLookupByLibrary.simpleMessage("已生成"),
+    "statusAttached": MessageLookupByLibrary.simpleMessage("已附加"),
+    "statusInProgress": MessageLookupByLibrary.simpleMessage("进行中"),
+    "statusRunning": MessageLookupByLibrary.simpleMessage("执行中"),
+    "statusCancelled": MessageLookupByLibrary.simpleMessage("已取消"),
+    "statusFailed": MessageLookupByLibrary.simpleMessage("失败"),
+    "statusRecorded": MessageLookupByLibrary.simpleMessage("已记录"),
+    "reasoningCompleted": MessageLookupByLibrary.simpleMessage("思考完成"),
+    "reasoningInterrupted": MessageLookupByLibrary.simpleMessage("思考中断"),
+    "reasoningInProgress": MessageLookupByLibrary.simpleMessage("思考中"),
+    "processInformation": MessageLookupByLibrary.simpleMessage("过程信息"),
+    "fileTypeSpeech": MessageLookupByLibrary.simpleMessage("语音"),
+    "fileTypeMusic": MessageLookupByLibrary.simpleMessage("音乐"),
+    "fileTypeVideo": MessageLookupByLibrary.simpleMessage("视频"),
+    "thinkingInProgress": MessageLookupByLibrary.simpleMessage("正在思考…"),
+    "thinkingCompleted": MessageLookupByLibrary.simpleMessage("思考完成"),
+    "thinkingCompletedWithDuration": m22,
+    "pleaseEnterSpeechDescription": MessageLookupByLibrary.simpleMessage(
+      "请输入语音描述",
+    ),
+    "speechGenerated": MessageLookupByLibrary.simpleMessage("语音已生成"),
+    "generateSpeechFailed": m23,
+    "pleaseEnterMusicDescription": MessageLookupByLibrary.simpleMessage(
+      "请输入音乐描述",
+    ),
+    "musicGenerated": MessageLookupByLibrary.simpleMessage("音乐已生成"),
+    "generateMusicFailed": m24,
+    "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
+      "请输入视频描述",
+    ),
+    "videoGenerated": MessageLookupByLibrary.simpleMessage("视频已生成"),
+    "generateVideoFailed": m25,
+    "linkOpenFailed": MessageLookupByLibrary.simpleMessage("无法打开此链接。"),
+    "unableToLoadBots": MessageLookupByLibrary.simpleMessage("无法加载智能体"),
+    "creatingChat": MessageLookupByLibrary.simpleMessage("正在创建…"),
+    "createChatFailed": m26,
+    "stopGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(
+      "离开前停止生成？",
+    ),
+    "stopGenerationBeforeLeavingDescription":
+        MessageLookupByLibrary.simpleMessage("已生成的部分回复会被保留。"),
+    "stopAndContinue": MessageLookupByLibrary.simpleMessage("停止并继续"),
+    "unableToLoadMessages": MessageLookupByLibrary.simpleMessage("无法加载消息"),
+    "clearChatFailed": m27,
+    "deleteChatFailed": m28,
     "webSearch": MessageLookupByLibrary.simpleMessage("联网搜索"),
   };
 }

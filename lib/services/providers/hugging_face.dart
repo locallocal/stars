@@ -99,7 +99,7 @@ class HuggingFace extends Provider {
   Future<List<String>> listModels() async {
     final provider = _getSubProvider();
     final url =
-        'https://huggingface.co/api/models?inference_provider=${provider}';
+        'https://huggingface.co/api/models?inference_provider=$provider';
 
     try {
       final response = await http

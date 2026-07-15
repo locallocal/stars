@@ -303,7 +303,9 @@ void main() {
     expect(find.text('帮助'), findsNothing);
     expect(find.text('Stars'), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.view_sidebar_outlined));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('desktop-toolbar-sidebar')),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Stars'), findsOneWidget);
 
@@ -424,7 +426,7 @@ void main() {
 
       expect(find.text('新建聊天'), findsOneWidget);
       expect(find.text('选择智能体'), findsOneWidget);
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      expect(find.byIcon(LucideIcons.x), findsOneWidget);
       expect(find.byType(ShadDialog), findsOneWidget);
       expect(find.byType(DesktopInteractiveListItem), findsNWidgets(2));
       expect(find.byType(ListTile), findsNothing);
@@ -462,7 +464,7 @@ void main() {
       expect(shadTheme.colorScheme.background, const Color(0xFF09090B));
       expect(shadTheme.colorScheme.border, const Color(0xFF27272A));
       expect(find.text('没有可用的智能体'), findsOneWidget);
-      expect(find.byIcon(Icons.smart_toy_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.bot), findsOneWidget);
       expect(find.byType(ListTile), findsNothing);
       expect(tester.takeException(), isNull);
     });

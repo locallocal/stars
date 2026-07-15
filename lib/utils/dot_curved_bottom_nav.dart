@@ -52,7 +52,7 @@ class DotCurvedBottomNav extends StatefulWidget {
   final bool hideOnScroll;
 
   DotCurvedBottomNav({
-    Key? key,
+    super.key,
     required this.items,
     this.scrollController,
     this.hideOnScroll = false,
@@ -73,8 +73,7 @@ class DotCurvedBottomNav extends StatefulWidget {
          hideOnScroll ? scrollController != null : true,
          "You need to provide [scrollController] parameter to enable hide on scroll",
        ),
-       assert(borderRadius >= 0 && borderRadius <= 30),
-       super(key: key);
+       assert(borderRadius >= 0 && borderRadius <= 30);
 
   @override
   State<DotCurvedBottomNav> createState() => _DotCurvedBottomNavState();

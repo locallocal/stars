@@ -41,8 +41,6 @@ class Cohere extends Provider {
         'Authorization': 'bearer ${bot.apiKey}',
       },
     );
-    print('hhhhhhhhhhhhh');
-    print(response.body);
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes));
       final models =

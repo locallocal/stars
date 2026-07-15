@@ -1,739 +1,884 @@
-# Stars Flutter 桌面端 Apple 风格设计规范
+# Stars Flutter 桌面聊天页 Shadcn 设计规范
 
-> 状态：桌面端重设计基线
+> 状态：桌面聊天页目标基线
 >
-> 更新日期：2026-07-14
+> 更新日期：2026-07-16
 >
 > 适用平台：macOS、Windows、Linux
 >
-> 产品范围：聊天、智能体、我的/设置，以及与对话直接相关的上下文能力
+> 技术基线：Flutter + `shadcn_ui ^0.55.0`
 >
-> 文档关系：本文是当前桌面视觉与交互标准；`docs/specs/windows_linux_desktop_style_adjustment_spec.md` 仅保留为历史实现背景，发生冲突时以本文为准。
+> 适用范围：桌面聊天壳层、会话侧栏、对话工作区、Chat Composer、真实上下文 Inspector 与相关临时界面
+>
+> 文档优先级：本文覆盖原文件中的 Apple / Liquid Glass 设计叙事。与 `docs/specs/windows_linux_desktop_style_adjustment_spec.md` 冲突时，桌面聊天页以本文为准。
 
-本规范以 Apple 的桌面设计原则和当前 Liquid Glass 层级语义为灵感，定义 Stars 自有的桌面视觉与交互语言。目标不是逐像素复制 macOS 或某一款 Apple App，而是让 Stars 具备清晰、克制、直接、可适应的原生桌面秩序感。
+本文定义 Stars 桌面聊天页的 shadcn 视觉、布局、交互和 Flutter 落地标准。目标不是把每一块内容都包装成 Shad 组件，而是让主题、控件、状态和交互遵循同一套克制、清晰、可访问的桌面语言。
 
-Stars 是跨平台 Flutter AI 聊天助手，不是项目管理或代码任务工作台。本文只描述仓库已经具备或明确承接的业务：聊天、智能体配置、个人设置、Markdown 与媒体回复、附件、联网搜索、深度思考、生成参数、流式响应，以及当前智能体上下文。项目树、Git、Pull Request、后台进程等能力不属于本期规范。
+规范中的等级：
 
-## 1. 设计定位
+- **必须**：本次桌面聊天页重设计的验收要求。
+- **保持**：已有业务语义或平台行为，不得在视觉迁移中回归。
+- **可选**：有真实数据或能力支撑时才启用。
+- **暂不包含**：不得在界面中伪造入口、状态或数据。
+
+## 1. 设计结论
 
 ### 1.1 一句话目标
 
-Stars 桌面端是一款具有 macOS 原生秩序感的 AI 工作空间：侧边栏组织聊天与智能体，中央专注内容，检查器提供上下文，输入区随时可达。
+Stars 桌面聊天页是一块以阅读和输入为中心的 shadcn 工作区：Zinc 中性色建立层级，细边框和小圆角组织结构，真实状态通过一致组件表达，主操作始终清楚可达。
 
-### 1.2 Apple 风格在 Stars 中的含义
+### 1.2 设计原则
 
-- **内容优先**：界面服务于阅读、输入和配置；容器与装饰主动退后。
-- **清晰层级**：优先使用排版、间距、材质和分隔线建立层级，阴影只表达真实悬浮。
-- **熟悉行为**：菜单、窗口、焦点、快捷键和右键操作遵循所在桌面平台的习惯。
-- **直接操作**：选择、搜索、拖放、调整栏宽和上下文操作都应可预测，并尽量可撤销。
-- **渐进披露**：高频动作直接可见，低频动作进入菜单、popover 或 inspector。
-- **安静而有品牌感**：保留 Stars 图标与蓝色识别，但不让品牌色压过内容。
-- **完整适应**：亮色、暗色、高对比度、减少动态效果和减少透明度都是正式界面状态。
+- **内容先于容器**：助手回复是连续文档流；普通文本不套 `ShadCard`。
+- **语义先于色值**：颜色来自 `ShadThemeData.colorScheme`，业务 Widget 不复制十六进制色值。
+- **边框先于阴影**：常驻结构使用 `border` 与 `ShadSeparator`；只有 popover、sheet、dialog 等浮层使用克制阴影。
+- **小圆角、紧凑密度**：基础圆角为 `6`，结构卡片不超过 `8–12`；不使用大面积胶囊或巨型悬浮卡。
+- **一个操作层级**：每组最多一个 primary；destructive 只用于删除、清空等会移除数据的动作。
+- **桌面行为完整**：鼠标、键盘、右键、焦点、快捷键和 IME 都是一等交互。
+- **真实能力驱动**：附件、联网、深度思考和生成参数只按当前 Provider 能力显示。
+- **渐进迁移**：桌面树使用 Shad；Markdown、媒体、文件选择器及移动端可继续通过 Material bridge 工作。
 
-### 1.3 明确边界
+### 1.3 明确范围
 
-- 不绘制假的 macOS 红黄绿窗口按钮；Windows/Linux 保留各自的原生窗口装饰。
-- 不复制 Apple Logo、Finder 图标、系统设置页面或 Apple 专属文案。
-- 不把放大的 iOS 控件当作 macOS 控件；桌面端不使用移动端 `BottomNavigationBar`、全屏 `Drawer` 或大号 `FloatingActionButton`。
-- 不随应用打包 SF Pro、SF Mono 或 SF Symbols。仅在平台和授权允许时调用系统能力，其他平台使用合法的系统字体和项目图标。
-- 不承诺 Flutter 能像素级复刻原生 Liquid Glass。Stars 追求语义等价、视觉近似、稳定降级。
-- 对外可称“Apple-inspired”或“macOS 风格”，不称“Apple 原生复刻”。
+本文包含：
 
-## 2. 产品信息架构
+- 聊天状态下可见的统一工具栏与桌面壳层。
+- 会话搜索、新建、选择、打开和删除。
+- 消息历史、流式回复、推理/过程信息、Markdown 与媒体。
+- Chat Composer、附件、联网、深度思考、图像与视频参数。
+- 当前智能体的名称、Provider、模型 Inspector。
+- 与上述流程直接相关的 context menu、popover、sheet、dialog、toast 和 progress。
 
-### 2.1 一级入口
+本文不定义：
 
-桌面端只保留三个稳定入口：
+- 智能体编辑页和“我的/设置”页内部布局。
+- Android、iOS、Web 的主题与导航；这些平台保持现有 Material 实现。
+- 会话重命名、置顶、未读、分组、全文历史搜索或批量操作。
+- 消息编辑、重新生成、分支对话或聊天内切换模型。
+- 拖放上传、Git、项目、任务、端口、后台进程等当前不存在的能力。
+- 自绘窗口按钮、假 macOS 交通灯或 Flutter 内容区里的伪系统菜单栏。
 
-1. **聊天**：搜索、新建、选择和删除会话；详情区显示对话。
-2. **智能体**：搜索、添加、选择、编辑和删除智能体；可从智能体发起聊天。
-3. **我的**：个人信息、主题、语言、字号、帮助、反馈、关于、协议与隐私。
+## 2. 当前实现基线与迁移边界
 
-不要把不存在的“任务、项目、站点、插件、Pull Request”放入导航或验收标准。
+### 2.1 已有事实
 
-### 2.2 核心桌面流程
+- `pubspec.yaml` 已依赖 `shadcn_ui: ^0.55.0`，无需重复引入第二套 UI 库。
+- 桌面根树已经是 `ShadApp.custom → MaterialApp bridge → ShadTheme / ShadAppBuilder`。
+- Light / Dark 已使用 `ShadZincColorScheme.light()` 与 `ShadZincColorScheme.dark()`。
+- `ShadThemeData.radius` 当前为 `6`；用户内容字号支持 `12–24`。
+- `StarsDesktopTokens` 已从 Shad color scheme 派生；`DesktopThemeTokens` 是兼容门面。
+- 内容轴和输入轴上限均为 `920`；用户消息上限为 `552`。
+- 侧栏、Inspector、工具栏与分栏尺寸已有稳定 token。
 
-```text
-聊天：侧边栏选择/新建会话 → 中央阅读与继续对话 → 可选检查当前智能体
-智能体：侧边栏选择/添加智能体 → 中央查看或编辑配置 → 保存或发起聊天
-我的：侧边栏选择设置分区 → 中央编辑设置 → 修改立即反馈并持久化
-```
+### 2.2 本次目标迁移
 
-### 2.3 基础组件树
+- 本期桌面聊天范围内的全部功能图标统一使用 `LucideIcons`；Provider Logo 与媒体内容可以例外。
+- 多行 Composer 首选 `ShadTextarea`，而不是把 `ShadInput` 当作长期多行方案。
+- Material `MenuAnchor` / `MenuItemButton` 迁移为 `ShadPopover`、`ShadContextMenuRegion` 或相应 Shad 选择控件。
+- 手写分栏逐步收敛到 `ShadResizablePanelGroup` / `ShadResizablePanel`；行为不满足时使用带完整键盘能力的薄适配层。
+- 临时 Inspector 通过项目 `showChatShadSheet` 封装展示 `ShadSheet`；危险确认通过 `showChatShadDialog` 展示 `ShadDialog.alert`；短反馈使用 `ShadSonner`。
+- `StarsGlassSurface` 不再承担设计语义。聊天页必须使用不透明 Shad surface，不创建 `BackdropFilter`。
 
-```text
-StarsDesktopShell
-├── PlatformWindowChrome
-├── UnifiedWindowToolbar
-├── ResizableDesktopBody
-│   ├── DesktopSidebar
-│   │   ├── PrimaryNavigation
-│   │   ├── SidebarSearch
-│   │   ├── ChatList / BotList / ProfileNavigation
-│   │   └── ProfileFooter
-│   ├── DetailWorkspace
-│   │   ├── ConversationView + ChatComposer
-│   │   ├── BotEditor
-│   │   └── ProfileView
-│   └── ContextInspector（按需）
-└── DesktopOverlayHost
-    ├── Menu / ContextMenu / Popover
-    ├── Sheet / Dialog
-    └── Toast / Progress
-```
+### 2.3 兼容规则
 
-## 3. 窗口与平台壳层
+- Material bridge 继续服务 `MarkdownBody`、`ListView.builder`、媒体播放器、文件选择器和尚未迁移的移动端 Widget。
+- `StarsDesktopTokens` 只能从 `ShadThemeData` 派生颜色，不能形成与 Shad color scheme 并行的第二套真相。
+- `DesktopThemeTokens` 可以保留尺寸、间距和兼容方法；颜色最终应直接或间接读取 Shad 语义 token。
+- 文档描述的是目标基线。当前代码尚未迁移的组件必须列为实施项，不能被写成“已完成”。
 
-### 3.1 macOS
+## 3. 信息架构
 
-- 使用系统菜单栏承载“Stars、文件、编辑、视图、窗口、帮助”等命令，不在 Flutter 内容区再画一行“文件 / 编辑 / 视图 / 帮助”。
-- 标题栏与工具栏可形成统一视觉区域，但交通灯、窗口拖拽、全屏和双击标题栏行为仍由系统窗口层管理。
-- 工具栏 leading 内容必须避开交通灯安全区；按钮区域不可误判为窗口拖拽区。
-- 支持系统窗口缩放、最小化、全屏、活动/非活动窗口状态。窗口失焦时降低强调色和材质高光，但保留选择上下文。
-- 菜单栏、按钮和快捷键必须共享同一套 action 定义，不能出现菜单可用而页面按钮失效的情况。
-
-### 3.2 Windows 与 Linux
-
-- 保留 Windows 标题栏按钮和 Linux 窗口管理器装饰，不伪造 macOS 交通灯或全局菜单栏。
-- 内容层沿用 Stars 的 Apple-inspired 排版、间距和材质层级；系统级窗口行为仍服从所在平台。
-- 快捷键显示 `Ctrl`，不显示 `⌘`；设置、菜单和文件选择器优先使用平台可理解的行为。
-
-### 3.3 当前实现边界
-
-仓库当前没有 `macos_ui`、`window_manager` 或等价的原生材质/标题栏集成依赖。因此：
-
-- **必须可交付的基线**：使用原生窗口装饰 + Flutter 内部的实色语义表面。
-- **可选的 macOS 增强**：通过 Runner 原生改造或经评估的桌面插件接入统一标题栏、系统材质和窗口状态。
-- 未完成原生接入前，不用 `BackdropFilter` 假装实现窗口后方壁纸模糊，也不使用截图作为背景。
-
-## 4. 自适应桌面骨架
-
-### 4.1 标准结构
+### 3.1 标准桌面结构
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│ 原生标题栏 / 统一工具栏：侧栏、上下文标题、搜索、检查器、主要动作       │
-├──────────────────┬───────────────────────────────────┬───────────────────┤
-│ Desktop Sidebar  │ Detail Workspace                  │ Inspector         │
-│                  │                                   │ （按需显示）      │
-│ 聊天 / 智能体    │ 对话 / 智能体编辑 / 设置          │ 当前智能体与环境  │
-│ 搜索与列表       │                                   │                   │
-│                  │       Anchored Chat Composer      │                   │
-│ 我的             │                                   │                   │
-└──────────────────┴───────────────────────────────────┴───────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│ Toolbar  [侧栏]  当前智能体 / Provider · Model       [搜索][Inspector][更多] │
+├──────────────────┬───────────────────────────────────┬─────────────────────┤
+│ Chat Sidebar     │ Conversation Workspace            │ Context Inspector   │
+│                  │                                   │ 宽屏、按需           │
+│ 导航              │ Message Feed                      │                     │
+│ 搜索 + 新建       │                                   │ Name                │
+│ 会话列表          │             回到最新               │ Provider            │
+│                  │ Chat Composer                     │ Model               │
+│ 账户入口          │                                   │                     │
+└──────────────────┴───────────────────────────────────┴─────────────────────┘
 ```
 
-侧边栏和 docked inspector 是窗口结构的一部分，使用分隔线连接；不要把它们做成四周留白、20px 以上圆角的大型悬浮卡片。
+### 3.2 紧凑桌面结构
 
-### 4.2 推荐尺寸
+```text
+┌───────────────────────────────────────────────┐
+│ [侧栏] 当前智能体             [新建][更多]     │
+├───────────────────────────────────────────────┤
+│ Message Feed                                  │
+│                                               │
+│                                  回到最新      │
+│ Chat Composer                                 │
+└───────────────────────────────────────────────┘
 
-以下均为 Flutter logical pixels，是 Stars 的目标 token，不宣称为 Apple 官方尺寸：
+侧栏：左侧 ShadSheet
+Inspector：右侧 ShadSheet；不得与侧栏同时打开
+```
 
-| 区域 | 默认值 | 可调范围/约束 |
+### 3.3 Flutter 组件树
+
+```text
+DesktopChatShell
+├── UnifiedChatToolbar
+├── ResponsiveChatBody
+│   └── ShadResizablePanelGroup
+│       ├── ChatSidebar
+│       │   ├── PrimaryNavigation
+│       │   ├── ChatSearch
+│       │   ├── NewChatAction
+│       │   └── ChatList
+│       ├── ConversationWorkspace
+│       │   ├── MessageFeed
+│       │   ├── JumpToLatest
+│       │   └── ChatComposer
+│       └── ContextInspector（宽屏、按需）
+└── DesktopOverlayHost（项目封装）
+    ├── showChatShadSheet → showShadSheet + ShadSheet
+    ├── ShadPopover / ShadContextMenuRegion
+    ├── showChatShadDialog → showShadDialog + ShadDialog
+    └── ShadSonner
+```
+
+壳层只保留一个统一工具栏。`ChatPage` 在嵌入桌面壳层时不得再绘制第二个 AppBar。
+
+## 4. 响应式与可调分栏
+
+### 4.1 自定义 Shad breakpoints
+
+Stars 不直接照搬 shadcn_ui 默认 Web 断点。桌面聊天页把现有 `800/960/1200/1500` 阈值与新增 `1800` 超宽档放入仅包裹 `DesktopChatShell` 的局部 `ShadThemeData.breakpoints`；不得改写应用根 theme 的 breakpoints，以免影响范围外的 Bot、设置、Dialog 与 Sonner 响应式行为。
+
+| Breakpoint | 起点 | 布局 |
 | --- | ---: | --- |
-| 推荐窗口 | `1280 × 800` | 最低可用目标 `800 × 600` |
-| 统一工具栏视觉高度 | `50` | `48–54`；系统标题栏安全区另算 |
-| 侧边栏 | `300` | `240–360`，可拖动并记忆 |
-| Docked inspector | `320` | `280–380`，可拖动并记忆 |
-| 详情区最小宽度 | `560` | 不足时先隐藏 inspector，再收起侧边栏 |
-| 内容布局上限 | `920` | 代码、媒体和宽表格可使用 |
-| 正文阅读宽度 | `760–820` | 在 `920` 内容轴内对齐 |
-| Composer | 与内容轴一致 | 默认约 `56–64` 高；最大 `180` 后内部滚动 |
-| 分栏拖拽命中区 | `6` | 视觉分隔线仅一物理像素 |
+| `tn` | `0` | `0–799`：单工作区；侧栏为左 Sheet；Inspector 不可 dock |
+| `sm` | `800` | `800–959`：工作区优先；侧栏与 Inspector 均为 Sheet，互斥显示 |
+| `md` | `960` | `960–1199`：侧栏 docked，宽 `260–280`；Inspector 为右 Sheet |
+| `lg` | `1200` | `1200–1499`：侧栏 docked、可调；Inspector 为右侧 overlay / Sheet |
+| `xl` | `1500` | `1500–1799`：Inspector 可按需 docked |
+| `xxl` | `1800` | `>=1800`：保持三栏能力，内容轴继续限宽，不随窗口无限扩张 |
 
-### 4.3 响应式规则
+`DesktopChatShell` 占满窗口时可用 `ShadResponsiveBuilder` 或 `context.breakpoint` 表达大区间；`0.55.0` 两者读取 MediaQuery 宽度，不代表任意子树的剩余空间。嵌套区域必须用 `LayoutBuilder`，并以 `chatTheme.breakpoints.fromWidth(constraints.maxWidth)` 计算局部 breakpoint。不得用操作系统名称、物理屏幕尺寸或设备类型代替实际可用约束。
 
-- `>= 1500`：侧边栏、详情区同时显示；用户打开 inspector 时以 docked 形式显示。
-- `1200–1499`：侧边栏与详情区常驻；inspector 由工具栏按钮打开为 trailing overlay。
-- `960–1199`：侧边栏可缩到 `260–280`；inspector 默认关闭并以 overlay 呈现。
-- `800–959`：主详情优先；侧边栏使用临时覆盖层，打开后点击遮罩或按 `Esc` 关闭。
-- `< 800`：进入单栏紧凑桌面模式，使用工具栏返回/切换层级；仍不显示移动端底部导航。
-- 高度 `< 680` 时优先压缩上下留白、限制 Composer 展开高度，不隐藏发送、停止和附件入口。
+### 4.2 核心尺寸
 
-### 4.4 状态记忆
+| Token | 默认值 | 约束 |
+| --- | ---: | --- |
+| 最低完整功能窗口 | `800 × 600` | 单工作区流程必须可完成 |
+| Toolbar | `50` | 单一工具栏 |
+| Sidebar | `300` | `240–360`；`960–1199` 限为 `260–280` |
+| Inspector | `320` | `280–380` |
+| Workspace 最小宽度 | `560` | 不足时先关闭 Inspector，再把 Sidebar 改为 Sheet |
+| Message / Composer 内容轴 | `920` | 水平居中 |
+| 用户消息最大宽度 | `552` | 窄窗时不超过可用轴的 `88%` |
+| 分栏命中区 | `6` | 可见分隔线 `1` 或 hairline |
+| 控件视觉高度 | `32–36` | 透明命中区至少 `44 × 44` |
 
-应持久化或在会话内保存：
+### 4.3 分栏行为
 
-- 窗口尺寸、位置与全屏状态。
-- 侧边栏和 inspector 的宽度、显隐与折叠状态。
-- 聊天列表、智能体列表、对话和 inspector 的独立滚动位置。
-- 当前一级入口、选中会话/智能体、未发送输入和输入焦点上下文。
+- `md` 及以上使用水平 `ShadResizablePanelGroup`，Panel id 必须稳定。
+- Shad panel 的比例尺寸由 `目标像素宽度 / 当前 group 可用宽度` 计算，再按像素最小/最大值反算并 clamp。
+- Sidebar 与 Inspector 各自保留最近一次会话内宽度；应用重启后的持久化是可选增强，不属于本期完成声明。
+- 穿越断点时不丢失最近一次 docked 宽度；返回宽屏后恢复并再次 clamp。
+- resize handle 支持鼠标拖动、双击恢复默认、方向键 `8px` 步进、`Shift + 方向键` `24px` 步进和可见 focus ring。
+- 高度 `<680` 时缩小上下留白、把 Composer 文本区最大高度降至 `120`；发送、停止与附件入口不能被隐藏。
+- `tn <800` 是窗口被异常缩窄时的韧性兜底，不是完整功能尺寸；必须无异常、无横向 overflow 且可继续聊天，但 Inspector 可隐藏。`800 × 600` 起才执行完整功能与 `200%` 文字验收。
 
-恢复状态时必须 clamp 到当前屏幕与最小宽度范围，不能把窗口恢复到不可见屏幕。
+### 4.4 Overlay 规则
 
-## 5. 层级与材质
+- `tn/sm` 的 Sidebar 与 Inspector 不得同时打开。
+- Sheet 打开后焦点进入面板，`Esc` 关闭，关闭后回到触发按钮。
+- Sidebar Sheet 从左侧进入；Inspector Sheet 从右侧进入，桌面模式 `draggable: false`。
+- Sheet 宽度统一为 `min(targetWidth, viewportWidth - 32)`；Sidebar target 为 `300`，Inspector target 为 `320`，任何宽度都不能溢出 viewport。
+- 从 overlay 断点进入 docked 断点时，先关闭 route，再按原显隐意图渲染 docked panel；从 docked 进入 overlay 时不自动弹出 Sheet，只保留工具栏入口与最近宽度。
+- 遮罩可点击关闭，但不能成为唯一关闭方式。
 
-### 5.1 四层模型
+## 5. Shad 视觉系统
 
-1. **Content Layer**：对话正文、列表内容、表单、代码、媒体和实际文本输入；以不透明表面保证可读性。
-2. **Structural Layer**：docked sidebar、docked inspector、固定分隔线；使用实色或极轻的系统材质。
-3. **Glass Control Layer**：统一工具栏、浮动控件组、overlay inspector、Composer 外壳；在能力可靠时可使用 regular glass。
-4. **Transient Layer**：menu、popover、sheet、dialog、拖拽预览；具有更明确的边界和层级。
+### 5.1 Theme 基线
 
-Liquid Glass 在 Stars 中是“导航与控制层材质”，不是全局磨砂皮肤。内容层不得使用玻璃背景。
+应用根 theme 继续负责 Zinc Light/Dark、High Contrast、文字与 radius。聊天页只从根 theme `copyWith` 局部布局和结构覆盖：
 
-### 5.2 材质规则
+```dart
+Widget buildStarsChatThemeScope(BuildContext context, Widget child) {
+  final baseTheme = ShadTheme.of(context);
+  final chatTheme = baseTheme.copyWith(
+    breakpoints: ShadBreakpoints(
+      tn: 0,
+      sm: 800,
+      md: 960,
+      lg: 1200,
+      xl: 1500,
+      xxl: 1800,
+    ),
+    cardTheme: baseTheme.cardTheme.copyWith(
+      shadows: const [],
+    ),
+    resizableTheme: baseTheme.resizableTheme.copyWith(
+      dividerSize: 5,
+      dividerThickness: 1,
+      resetOnDoubleTap: true,
+      showHandle: false,
+    ),
+  );
 
-- 首屏最多保留 1–2 个常驻 glass 区域；同一像素不得叠加两层 blur。
-- 同一控件组只模糊一次。工具栏内每个按钮、侧边栏每一行不能各自创建 `BackdropFilter`。
-- Docked inspector 使用稳定的不透明表面；只有临时覆盖状态才允许材质、圆角和阴影。
-- Composer 外壳可使用轻材质，但多行文本区必须有高不透明或完全不透明底色。
-- 代码块、表格、消息、媒体、设置分组和智能体配置区不是 glass。
-- 透明效果无法保证对比度或性能时，直接使用实色 fallback，不增加更强 blur。
-- 开启减少透明度、高对比度或窗口失焦时，材质自动提高不透明度并增强分隔线。
-- 禁止全窗 blur、彩色玻璃、光斑、霓虹、渐变描边、流体 shader 和“果冻”形变。
+  return ShadTheme(data: chatTheme, child: child);
+}
+```
 
-### 5.3 阴影
+该片段保留根 theme 已计算的 Zinc、High Contrast 与 text theme；`cardTheme.shadows` 覆盖库默认 Card 阴影。`0.55.0` 的 pointer 宽度为 `dividerSize + dividerThickness`，所以使用 `5 + 1 = 6px` 对齐本文命中区，并隐藏会放大命中区的 handle icon。应用根部继续使用现有 `ShadApp.custom` 和 Material bridge，不重建第二套 App。`showShadDialog/showShadSheet` 不会自动捕获该局部 `ShadTheme`，所以聊天自有 route 必须通过项目 wrapper 在 builder 内重新包裹捕获的 `chatTheme`；范围外页面继续读取根 theme。
 
-- 常驻结构栏不用阴影，只用 hairline separator。
-- 仅 popover、menu、dialog、拖拽物、临时 inspector 等真正悬浮层使用一层柔和阴影。
-- 暗色模式主要通过表面明度表达层级，不依赖黑色重阴影。
+### 5.2 语义颜色
 
-## 6. 语义颜色
-
-颜色必须通过主题语义访问。下表为 Flutter 无法获取系统动态色时的回退值；macOS 原生增强应优先读取系统外观和用户 accent。
-
-| Token | Light fallback | Dark fallback | 用途 |
-| --- | --- | --- | --- |
-| `windowBackground` | `#F5F5F7` | `#1C1C1E` | 窗口底色 |
-| `contentBackground` | `#FFFFFF` | `#18181A` | 对话、表单主画布 |
-| `sidebarOpaque` | `#F0F0F2` | `#242426` | 侧边栏实色回退 |
-| `raisedSurface` | `#FFFFFF` | `#2C2C2E` | popover、menu、dialog |
-| `controlFill` | `rgba(120,120,128,.12)` | `rgba(255,255,255,.08)` | 中性控件与输入底 |
-| `hoverFill` | `rgba(0,0,0,.05)` | `rgba(255,255,255,.07)` | hover |
-| `pressedFill` | `rgba(0,0,0,.09)` | `rgba(255,255,255,.11)` | pressed |
-| `selectedFill` | `accent @ 12%` | `accent @ 22%` | 选中行 |
-| `separator` | `rgba(60,60,67,.18)` | `rgba(255,255,255,.14)` | hairline |
-| `primaryText` | `#1D1D1F` | `#F5F5F7` | 标题与正文 |
-| `secondaryText` | `#6E6E73` | `#AEAEB2` | 描述与次级信息 |
-| `tertiaryText` | `#8E8E93` | `#8E8E93` | placeholder 与弱元信息 |
-| `accent` | `#007AFF` | `#0A84FF` | 焦点、链接、主操作 |
-| `success` | `#248A3D` | `#30D158` | 成功 |
-| `warning` | `#C93400` | `#FF9F0A` | 警告 |
-| `danger` | `#D70015` | `#FF453A` | 错误与删除 |
+| Shad token | 聊天页用途 |
+| --- | --- |
+| `background / foreground` | 窗口、对话画布与主文本 |
+| `card / cardForeground` | 附件、媒体、结构化过程区 |
+| `popover / popoverForeground` | Popover、Context Menu、Select |
+| `primary / primaryForeground` | 每组唯一的主操作，例如发送、新建聊天 |
+| `secondary / secondaryForeground` | 次级按钮、静态能力摘要 |
+| `muted / mutedForeground` | 元信息、代码背景、弱提示 |
+| `accent / accentForeground` | hover、选中会话、轻量用户消息 |
+| `destructive / destructiveForeground` | 删除、清空和真实错误 |
+| `border` | Panel、Card、Message、Popover 的结构边界 |
+| `input` | Search 与 Composer 输入边界 |
+| `ring` | 键盘焦点与高对比度焦点 |
 
 规则：
 
-- 系统 accent 优先于固定蓝色；fallback 蓝与 Stars 品牌兼容。
-- Stars 深海军蓝与星芒色主要保留在应用图标、品牌入口和少量品牌时刻，不作为大面积界面背景。
-- 同一操作组最多一个 accent 填充主按钮。
-- 选中、成功、失败和警告必须同时有形状、图标或文字，不得只靠颜色表达。
-- 状态色不用于长段正文；危险色只用于破坏性动作和真实错误。
-- 正文对比度目标至少 `4.5:1`；大号或粗体文字至少 `3:1`。高对比度状态还需增强边界与焦点环。
+- 业务 Widget 不直接使用 Apple 蓝或自定义“品牌蓝”作为通用交互色。
+- Stars 品牌色主要保留在应用图标和必要品牌资源中。
+- 成功、警告可通过 `ShadZincColorScheme.light/dark(custom: {...})` 扩展，并从 `colorScheme.custom` 读取；也可暂由现有 `StarsDesktopTokens` 兼容，不能覆盖 Shad 核心 token。
+- 选中会话使用 `accent`，不是 primary 实心按钮。
+- 链接必须具有下划线或明确 hover/focus 变化，不能只靠颜色。
+- Light、Dark 与 High Contrast 分别校验；状态不得只依赖红、绿或明暗。
 
-## 7. 排版、图标与密度
+### 5.3 表面、边框与阴影
 
-### 7.1 字体
+- Window、Sidebar、Workspace 和 docked Inspector 使用不透明表面。
+- 常驻 Panel 之间使用 `ShadSeparator` 或 `border`，不使用阴影。
+- 普通助手文本没有 Card、边框或独立背景。
+- `ShadCard` 只用于真正成组的附件、媒体、代码外围信息或过程详情。
+- User message 使用 `accent` surface + `border`；不得使用渐变、发光或透明模糊。
+- Popover、Context Menu、Sheet、Dialog 与 Sonner 可使用库默认阴影；聊天内 `ShadCard` 通过局部 theme 固定为无阴影。
+- 聊天子树中禁止 `BackdropFilter`、全窗 blur、渐变描边和装饰性玻璃层。
 
-- macOS 默认使用系统字体，不硬编码 `SF Pro`；中文自然回退到平台中文系统字体。
-- Windows 使用平台系统字体，如 Segoe UI 与 Microsoft YaHei UI。
-- Linux 使用平台可用的 Noto Sans、Ubuntu 或系统 sans-serif。
-- 等宽字体按平台回退到系统等宽字体；不得随应用打包受限的 Apple 字体。
-- 用户已提供 `12–24` 字号设置。UI chrome 可有限缩放，聊天正文和编辑内容必须完整响应字号变化。
+### 5.4 排版
 
-建议层级：
+优先使用 `ShadTextTheme` 的语义样式；默认 Geist 负责拉丁文字，中文与其他文字继续使用平台 sans-serif fallback。不得随应用打包受限系统字体。
 
-| 层级 | 字号 | 字重 | 行高 |
-| --- | ---: | ---: | ---: |
-| 详情标题 | `17` | `600` | `1.30` |
-| 工具栏/窗口标题 | `13–15` | `500–600` | `1.35` |
-| 聊天正文 | `14–16` | `400` | `1.55–1.65` |
-| 列表与控件 | `13–14` | `400–500` | `1.35–1.45` |
-| 分区标题 | `12` | `600` | `1.35` |
-| 元信息 | `11–12` | `400` | `1.40` |
-| 代码 | `13–14` | `400` | `1.50` |
+| 场景 | Shad 样式 | 目标 |
+| --- | --- | --- |
+| Toolbar 标题 | `h4 / large` | `15–17px / 600`，单行省略 |
+| 消息正文 | `p` | 用户设置 `12–24px`，行高 `1.55–1.65` |
+| 列表标题 | `small` 定制 | `13–14px / 500–600` |
+| 元信息 | `muted` | `12–13px`，行高 `1.4` |
+| 按钮与标签 | `small` | `12–14px / 500` |
+| 代码 | 等宽 fallback | 从消息正文派生为约 `0.9em`，行高 `1.5`，继续响应系统文字缩放 |
 
-不使用营销式超大标题、负字距或全大写导航。单一区域通常不超过两种字重。
+UI chrome 可在可读范围内 clamp；消息正文、Markdown、代码和 Composer 必须完整响应用户字号。`200%` 指相对于用户当前选择字号继续缩放；布局可折叠或增高，但不能裁切内容。单一区域通常只使用 regular 与 semibold 两种字重。
 
-### 7.2 图标
+### 5.5 图标
 
-- 统一使用一套细节、端点和视觉重量一致的线性图标；目标视觉尺寸 `16–18`。
-- 允许提供方 Logo 保留品牌色，其余功能图标默认使用语义前景色。
-- macOS 可在授权和技术条件允许时映射系统 symbol；Windows/Linux 必须有等义 fallback。
-- 不混用粗重 Material 图标、Cupertino 图标和自绘图标，也不使用机器人头像代表所有智能体。
-- 图标按钮必须同时提供 tooltip 与无障碍名称；含义不明确时直接使用短文本。
+- 本期桌面聊天范围内的全部功能图标迁移到 `LucideIcons`，目标 glyph `16–18`。
+- Provider Logo、用户上传头像和媒体品牌资源可以保留原样。
+- 不在同一操作组混用 `Icons.*`、Cupertino Icons 与 Lucide。
+- 图标按钮同时提供 `ShadTooltip` 与 `Semantics.label`；Tooltip 与 Shad Button 共享同一个 `FocusNode`，才能在键盘 focus 时显示。Tooltip 不能替代无障碍名称。
+- 装饰性图标从语义树中排除。
 
-### 7.3 间距和圆角
+### 5.6 间距、圆角和密度
 
-基础间距采用 `4px` 网格：`4 / 8 / 12 / 16 / 20 / 24 / 32`，紧凑控件内部允许 `6 / 10`。
+间距使用 `4px` 网格：`4 / 8 / 12 / 16 / 20 / 24 / 32`。
 
 | Token | 值 | 用途 |
 | --- | ---: | --- |
-| `radiusInline` | `4–5` | 行内代码、小标签 |
-| `radiusControl` | `7–8` | 按钮、输入框、选中行 |
-| `radiusContainer` | `10–12` | 状态块、menu、popover |
-| `radiusComposer` | `14–16` | Composer 外壳 |
-| `radiusWindow` | 系统管理 | 不由内容层模拟 |
+| `radius-sm` | `4` | 行内代码、小状态 |
+| `radius-md` | `6` | Button、Input、列表选中行 |
+| `radius-lg` | `8` | Card、Popover、Context Menu |
+| `radius-xl` | `12` | Composer、Sheet 浮层 |
+| `control-h` | `32–36` | 常规桌面控件 |
+| `row-h` | `52–60` | 两行会话项 |
+| `toolbar-hit` | `44` | 图标按钮命中区 |
 
-胶囊只用于分段控件、过滤标签和圆形/胶囊强动作；普通列表行、设置分组和每个按钮不应全部胶囊化。
+普通按钮不做胶囊；圆形按钮仅用于图标本身确有圆形语义的场景。
 
-### 7.4 控件密度
+桌面 chrome 与 Composer 辅助操作显式使用 `ShadButtonSize.sm`，避免 `0.55.0` regular `40px` 默认值突破紧凑规格。`ShadIconButton` 放入 `44 × 44` 外层命中盒，视觉按钮 `32–36`；会话头像显式使用 `ShadAvatar(size: Size.square(32))`。
 
-- 标准控件视觉高度 `28–32`，重点操作 `32–36`。
-- 列表行默认 `36–44`，包含两行文字时 `48–56`。
-- 图标 glyph 为 `16–18`，可见按钮为 `28–32`；通过透明内边距把自定义按钮命中区扩展到目标 `44 × 44`，同时避免相邻命中区重叠。
-- 紧凑不等于拥挤。文字放大或本地化变长时，控件允许增高和换行，不得裁切关键文案。
+## 6. 统一工具栏
 
-## 8. 统一工具栏
-
-工具栏是窗口级控制层，不再叠加一条自绘菜单栏和一条页面 AppBar。
-
-推荐结构：
+### 6.1 结构
 
 ```text
-[侧栏] [返回/前进]   [当前聊天或页面标题 · 模型摘要]   [搜索] [检查器] [页面动作]
+[Sidebar] [Bot Avatar] [Bot Name] [Provider · Model]
+                                      [Search] [Inspector] [More]
 ```
+
+- 高 `50`，背景使用 `card` 或 `background`，底部一条 `ShadSeparator`。
+- 标题左对齐并与当前会话 Bot 绑定；Provider / Model 使用 muted text 或 `ShadBadge.outline`，不使用 Card。
+- `tn/sm` 时显示“新建聊天”快捷入口，因为 Sidebar 不常驻。
+- Search、Inspector、More 使用 `ShadIconButton.ghost` + `ShadTooltip`。
+- 当前选中的 Inspector 按钮使用 secondary variant，不能只换图标颜色。
+- 清空会话进入 More，并使用 `showChatShadDialog` + `ShadDialog.alert` 确认；不在工具栏常驻 destructive 按钮。
+- 空白区域是否作为窗口拖拽区由宿主平台决定，不由聊天 Widget 假设。
+
+### 6.2 状态
+
+所有按钮具备 default、hover、pressed、focused、selected、disabled。视觉尺寸固定，状态切换不得推动标题或改变工具栏高度。
+
+## 7. 会话侧栏
+
+### 7.1 结构
+
+从上到下：
+
+1. Stars 品牌、聊天/智能体一级入口。
+2. “聊天”分区标题与 `ShadButton` 新建动作。
+3. `ShadInput` 搜索。
+4. 会话列表。
+5. `ShadSeparator` 与账户/设置入口。
+
+搜索范围保持当前数据能力：Bot 名和会话最后一条消息。不得写成“全文搜索”。
+
+### 7.2 会话行
+
+- 高 `52–60`，水平 padding `8–10`，圆角 `6`。
+- 左侧使用 `ShadAvatar` 或 Provider Logo，建议 `32`。
+- 第一行：Bot 名 + 时间；第二行：`Provider · 最后一条消息`。
+- 标题、摘要与时间均单行省略；完整时间可在 Tooltip 中展示。
+- default 为透明；hover 使用 `accent`；selected 使用稳定 `accent` 并设置 `Semantics.selected`。
+- 键盘焦点使用 `ring`，不能用 selected 冒充 focus。
+- 更多按钮在 hover / focus-within 时增强；键盘用户始终可到达。
+
+### 7.3 列表交互
+
+- 方向键移动当前项，`Enter` 打开。
+- 右键由 `ShadContextMenuRegion` 打开；`Shift+F10` 和菜单键通过项目 `StarsContextMenu` 适配器中的 `Shortcuts/Actions` 打开同一动作集合，并锚定当前焦点行。
+- 当前动作只包含“打开”和“删除”；不展示重命名、置顶或批量操作。
+- 删除使用 `ShadDialog.alert`，明确 Bot/会话对象；默认焦点放在“取消”。
+- 删除选中项后保持现有行为：选中合理相邻项；无相邻项则显示未选择空状态。
+- 右键菜单不能破坏工作区已有文本选择。
+
+### 7.4 列表状态
+
+必须区分：
+
+- 初次 loading。
+- 正常列表。
+- 没有会话。
+- 搜索无结果。
+- 删除中。
+- 删除失败并可重试。
+- 列表加载失败并可重试。
+- Bot 已删除或配置失效的孤儿会话；明确标记“智能体不可用”，只提供安全删除或修复引导。
+
+“没有会话”和“搜索无结果”使用不同文案与动作。空状态可使用小型 `ShadCard`，但不得用大插画占据整个侧栏。
+
+### 7.5 新建、清空与删除流程
+
+- 新建聊天必须覆盖 Bot loading、无可用 Bot、Bot 加载失败、创建中、创建失败和成功，创建中禁止重复提交。
+- 新建成功后选中新会话、更新列表并把焦点送入 Composer；失败时保留用户选择并可重试。
+- 清空历史与删除当前会话都使用 `showChatShadDialog` + `ShadDialog.alert`。
+- 当前存在可取消请求时，先确认并等待停止终态，再执行清空或删除；不可取消媒体生成期间禁止该动作并说明原因。
+- 清空成功后保留当前 Bot，进入空会话状态并聚焦 Composer；失败时保留原消息。
+- 删除成功后选择相邻会话；失败时保留当前选择与消息。
+
+## 8. 对话工作区
+
+### 8.1 阅读轴
+
+- Workspace 是连续 `background` 画布，不放进外围大 Card。
+- 内容轴最大 `920`，居中；长正文建议占 `760–840`。
+- 左右 padding：宽屏 `28`，紧凑 `16`；顶部 `24`，Composer 上方保留实际高度与 `16` 间距。
+- 代码、表格和媒体可使用完整 `920`；正文不随超宽窗口拉长。
+- 消息历史继续使用惰性 `ListView.builder`；本期不虚构分页能力。
+
+### 8.2 消息类型
+
+#### 用户消息
+
+- 右对齐。
+- 最大宽 `552`；复杂附件或长代码可放宽到内容轴。
+- 使用 `accent / accentForeground`、`border`、圆角 `8`、padding `12–16`。
+- 文本可选择；附件在正文下方稳定排列。
+
+#### 助手消息
+
+- 左对齐，普通 Markdown 直接进入文档流。
+- 不为每条普通回复重复头像或 Card。
+- 仅在智能体发生变化或空会话欢迎区显示 `ShadAvatar`、名称与 Provider。
+- Markdown 必须支持选择、标题、列表、引用、链接、代码、表格和已有媒体类型。
+
+#### 结构化消息
+
+- 图片、文件、音频、音乐、视频和真实过程信息可使用 `ShadCard`。
+- Card 内部按“标题 / 元信息 / 内容 / 恢复动作”组织，不嵌套多层 Card。
+- 加载、可用、失败、不可播放必须占用稳定布局并提供恢复动作。
+
+### 8.3 Markdown、代码和媒体
+
+- 行内代码使用 `muted` 背景、`radius-sm` 和等宽字体。
+- 代码块使用不透明 `muted` 表面与 `border`，头部显示语言和复制按钮。
+- 复制使用 `ShadIconButton.ghost`；成功通过 `ShadSonner` 简短反馈。
+- Markdown 链接可 Tab 聚焦并由 `Enter` 激活；`http/https` 通过统一 `ExternalLinkAction` 交给默认浏览器，`mailto` 仅在平台 handler 可用时启用。
+- `javascript/data/file` 与未知 scheme 不自动打开，只允许复制；打开失败使用 Sonner 说明并保留“复制链接”动作。
+- 图片保持比例；预览使用 `ShadDialog`，已有保存、分享、关闭能力继续保留。
+- 文件项显示文件名、类型和状态；语义树不朗读完整本地路径。
+- 音频/视频控制继续使用现有播放器，但外壳颜色和边框必须读取 Shad token。
+
+### 8.4 推理与过程信息
+
+- 推理内容使用 `ShadAccordion`，流式时标题为“正在思考”，完成后为“思考完成 · 用时”。
+- 完成后默认折叠；用户手动展开状态在当前消息生命周期内保持。
+- `MessageProcessInfo` 有真实数据时才显示耗时、工具调用、命令执行和文件状态。
+- 摘要状态使用 `ShadBadge.secondary / outline / destructive`；不能把“本地”“就绪”等静态占位当事实。
+- 普通过程行保持平面，只有一组内容需要边界时才使用一个 Card。
+- 流式 token 不逐字触发屏幕阅读器；只播报开始、完成、失败和取消。
+
+### 8.5 消息操作
+
+- 现有复制能力在桌面端提供 hover / focus-within 操作栏与右键入口。
+- 操作栏至少包含复制；只有真实 service action 存在时才增加其他按钮。
+- 不展示尚未实现的编辑、重新生成、分支或切换模型。
+- hover 才出现的操作必须可通过 Tab、`Shift+F10` 或菜单键到达。
+
+### 8.6 滚动与流式
+
+- 当距底部不超过 `96` 时保持自动跟随。
+- 用户向上滚动超过阈值后，流式输出不得抢回底部。
+- 此时显示 `ShadButton.secondary`“回到最新”，位置在 Composer 上方，不能遮挡消息或输入。
+- 点击后跳到底部并恢复自动跟随；按钮可键盘聚焦。
+- 活动请求期间执行确定的切换规则：可取消的文本生成先确认停止，停止成功后再切换；不可取消的媒体生成阻止切换并说明原因。
+- 请求始终绑定发起时的 chat id；即使发生异常回调，也不得把响应写入新会话。
+
+### 8.7 历史加载状态
+
+- 首次加载使用占位或不确定进度，并保持 Message Feed 尺寸稳定。
+- 必须区分 loading、success-empty、success-content、error-retry。
+- 加载失败使用 `ShadAlert.destructive` 和“重试”，不能退化为永久 spinner。
+- 重新加载时保留当前会话上下文，不把历史错误误报为发送失败。
+
+## 9. 空状态
+
+必须区分三个场景：
+
+1. **未选择会话**：Stars 图标 `48–56`、简短说明、一个“新建聊天”primary。
+2. **已选择但没有消息**：`ShadAvatar`、Bot 名、简短 greeting；新建成功时焦点进入 Composer，选择已有空会话时保留列表焦点。
+3. **会话搜索无结果**：搜索图标、当前搜索范围说明、清空搜索 secondary。
+
+空状态使用 `background` 上的紧凑内容组；不使用 `128px` 头像、大插画或四周留白的巨型 Card。
+
+## 10. Chat Composer
+
+### 10.1 结构
+
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│ ShadTextarea：输入消息…                                          │
+│                                                                  │
+│ [Provider · Model] [联网] [深思] [图像/视频参数]  [附件] [发送/停止] │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+- 最大宽 `920`，与消息轴对齐。
+- 外壳使用 `card`、`border`、`radius-xl 12`，不使用常驻阴影。
+- 文本区最小 `44`、最大 `160`；高度 `<680` 时最大 `120`，超出后内部滚动。
+- 底部工具栏可换行，但发送/停止始终位于右侧固定操作区。
+- 工具过宽时，低频生成参数收入“更多能力” `ShadPopover`，不能挤掉主操作。
+
+### 10.2 输入组件
+
+- 首选 `ShadTextarea(resizable: false, minHeight: 44, maxHeight: compactHeight ? 120 : 160)`，显式覆盖 `0.55.0` 的 `80/500` 默认值，并由内容驱动高度。
+- 若 `0.55.0` 在自动增高、输入法或光标滚动上无法满足契约，可暂时保留多行 `ShadInput` 适配器；行为契约优先。
+- placeholder 只做提示，不承担状态或错误说明。
+- focus 使用 `ring`；不使用发光描边。
+
+### 10.3 能力控件
+
+控件必须严格按 Provider 能力出现：
+
+- 相机、图库/图片和文件附件；入口还必须满足当前桌面平台支持条件。
+- 联网搜索。
+- 深度思考。
+- 图像风格与尺寸。
+- 视频比例。
 
 规则：
 
-- 标题始终来自当前上下文：聊天名、智能体名或设置分区；不显示营销副标题。
-- 会话标题旁可显示提供方/模型弱摘要，完整信息进入 inspector 或菜单。
-- 新建聊天、添加智能体等主要动作随当前入口变化，不同时展示多个蓝色按钮。
-- 清空会话等低频或危险操作进入更多菜单；执行前明确对象与后果。
-- 工具栏按钮使用一致的 `16–18` 图标、hover、pressed、focus、disabled 和 tooltip。
-- 一组相邻图标共享一个控制表面；不要让每个图标都成为独立玻璃胶囊。
-- 空白拖拽区只在原生窗口集成完成后启用，并必须排除所有交互控件。
+- Provider / Model 是只读摘要，使用 muted text 或 `ShadBadge.outline`；当前产品不提供聊天内模型切换。
+- 联网与深度思考使用 `ShadButton.outline` / `secondary` 表达关闭与开启，而不是无标签图标。
+- 图像与视频参数使用 `ShadPopover`；有限互斥选项可在 Popover 内使用 `ShadSelect`。
+- 附件入口使用 `ShadIconButton.outline` + Tooltip + Semantics。
+- Provider 能力变化后隐藏不支持的控件，并清理或明确提示已失效参数。
 
-## 9. 侧边栏与列表
+### 10.4 发送与停止
 
-### 9.1 结构
+- 发送使用 `ShadButton`；停止使用带 `LucideIcons.square` 与文字的 `ShadButton.secondary`，因为部分回复会被保留，不把停止伪装成数据删除。
+- 两者固定在同一位置、同一 `96 × 36` 尺寸，状态切换不引发布局跳动。
+- 输入为空且无附件时发送 disabled。
+- 只有可取消的文本流式请求显示“停止”；不可取消的图片、音频、音乐或视频生成显示明确 progress，不能提供无效停止按钮。
+- “正在停止”时按钮保持原位、disabled，并防止重复点击。
 
-侧边栏从上到下为：
+### 10.5 键盘与 IME
 
-1. Stars 品牌入口与全局搜索/快速切换入口。
-2. 一级导航：聊天、智能体。
-3. 当前入口的标题、搜索和新建/添加动作。
-4. 会话列表、智能体列表或“我的”设置导航。
-5. 固定在底部的个人资料入口。
+- 只有无修饰键的 `Enter` 发送。
+- `Shift/Alt/Ctrl/Meta + Enter` 交给文本输入处理，其中 `Shift+Enter` 明确为换行。
+- IME composing 有效时 `Enter` 只能提交候选词，不发送消息。
+- 发送成功后 Composer 保持焦点。
+- `Esc` 不清空草稿，也不静默停止生成。
 
-### 9.2 视觉
+### 10.6 附件
 
-- 整栏只使用一个材质或一个实色 surface；内部不堆卡片。
-- 分区标题使用弱化 `12px / 600`，中文不强制大写或增加字距。
-- 单行列表高 `36–44`，水平内边距 `8–12`，图标与文字间距 `8–10`。
-- 选中行使用轻 accent 混合底与 `7–8` 圆角；非活动窗口降低 accent，但仍保留选中形状。
-- hover 只改变轻背景；pressed 再加深一级，状态变化不能改变尺寸。
-- 标题单行省略，时间、未读点、提供方或更多按钮保持尾部对齐。
-- 更多按钮可在 hover/focus 时增强，但键盘用户必须始终能够到达。
-- 列表滚动条遵循平台习惯，不强制常驻粗滚动条。
+- 相机、图库/图片、文件三路动作保留独立语义，不合并成含糊的“上传”；只显示 Provider 与平台共同支持的动作。
+- 附件状态包含 picking、cancelled、ready、permission-denied、missing、read-error、copy-error、type/size/count-rejected、provider-rejected、unsupported、removed。
+- 用户取消系统文件选择器不是错误。
+- 预览位于 Composer 上方或外壳顶部，具有文件名、类型、状态和可键盘到达的移除按钮。
+- 上传或读取进度使用 `ShadProgress`；只有底层提供真实字节进度时才显示百分比，否则使用 indeterminate，禁止伪造进度。
+- 权限、文件读取、类型/大小/数量和 Provider 拒绝分别给出可恢复说明；失败使用内联错误，不只发瞬时 toast。
+- 当前不定义拖放上传入口。
 
-### 9.3 行为
+### 10.7 错误恢复与草稿
 
-- 搜索实时过滤但不改变搜索框位置；清空搜索后恢复原选择与滚动位置。
-- 方向键移动选择，`Enter` 打开，`Shift`/`Cmd` 多选仅在未来真正支持批量操作后启用。
-- 右键菜单只放与当前行相关的高频动作；删除放在末尾并标记危险。
-- 上下文菜单中的命令也必须能从主菜单、工具栏或详情页找到，不能成为唯一入口。
-- 删除会话或智能体后，选择应移动到合理的相邻项，详情区不能停留在已删除对象上。
+- 每个 chat id 的内存草稿继续独立保存；跨应用重启持久化为可选增强。
+- 发送失败时只保留一份可恢复内容：
+  - 用户消息尚未持久化：保留 Composer 草稿与附件。
+  - 用户消息已经持久化：在失败回合提供重试，不再把同一内容回填 Composer。
+- 不得同时留下已持久化用户消息和同内容草稿，避免重试生成重复消息。
+- 活动文本请求切换会话时，使用 `showChatShadDialog` + `ShadDialog.alert` 确认“停止生成并切换”，安全默认是留在当前会话；停止确认成功后才导航。
+- 当前不可取消的媒体生成期间阻止切换，并以内联说明或 Sonner 告知原因；未来若引入后台任务管理，再另行放开。
+- 无论 UI 是否仍挂载，请求结果只能写入发起时的 chat id，禁止静默串线。
 
-## 10. 对话工作区
+## 11. 生成状态模型
 
-### 10.1 阅读轴
-
-- 对话区是连续不透明画布，不放进四周留白的大卡片。
-- 内容布局最大宽度 `920`；长段正文建议限制在 `760–820`，代码、表格和媒体可扩展到完整内容轴。
-- 顶部和底部留白必须考虑工具栏与 Composer，最后一条消息不能被输入区遮挡。
-- 用户主动向上滚动后，流式输出不得强制抢回底部；显示“回到最新”入口。
-
-### 10.2 消息
-
-用户消息：
-
-- 右对齐或沿阅读轴右侧对齐，使用中性 control fill 或轻 accent fill。
-- 最大宽度约为内容轴 `60–68%`，圆角 `12–14`，内边距 `8–12`。
-- 长文本、Markdown、代码或复杂附件可放宽，不为维持气泡造型牺牲可读性。
-
-智能体回复：
-
-- 左对齐，以无外层气泡的文档流呈现；不要把所有回复统一称为“Stars 输出”。
-- 默认不重复展示头像；确需区分多智能体时，仅在上下文变化处显示名称或提供方标识。
-- 支持可选择的 Markdown、标题、列表、引用、链接、代码、表格和媒体结果。
-- 链接使用 accent，但必须保留可识别的 hover/focus 状态，不能只靠颜色。
-
-### 10.3 推理、工具与过程信息
-
-- 推理内容默认折叠为 disclosure group，标题客观描述状态，如“思考完成”“正在处理”。
-- 耗时、工具调用、命令执行和文件状态属于消息内的过程区，不扩展成虚构的项目/Git 工作台。
-- 过程行使用平面分组、细分隔与弱元信息；失败时提供“重试”或“查看详情”等可恢复动作。
-- 流式中使用稳定的文本光标或进度状态，不用循环发光和夸张波纹。
-
-### 10.4 代码与媒体
-
-- 行内代码使用稳定不透明底色和 `4–5` 圆角。
-- 代码块提供语言、复制和必要的横向滚动；浅色/暗色均需独立校验对比度。
-- 图片、音频、音乐、视频和文件附件在内容轴内展示，保持原始比例并提供明确加载/失败状态。
-- 媒体控件遵循平台行为；不可播放时显示文件信息与恢复动作，而不是空白区域。
-
-### 10.5 空、加载与错误
-
-- 未选择会话时使用小型 Stars 图标、简短说明和一个“新建聊天”主动作。
-- 加载历史记录使用内联 spinner 或轻量占位，不让详情布局跳动。
-- 错误信息说明发生了什么和下一步能做什么；不要使用“你的智能伙伴走神了”等拟人化文案。
-
-## 11. Chat Composer
-
-Composer 是附着在内容区底部的主操作，不再固定为高度 `112–124` 的巨大悬浮卡。
-
-### 11.1 结构
+请求生命周期状态必须互斥：
 
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ 输入消息…                                                    │
-│ [附件] [能力/参数] [联网] [深度思考]      [模型摘要] [停止/发送] │
-└──────────────────────────────────────────────────────────────┘
+idle
+  → submitting / connecting
+  → active
+  → completed
+  ↘ stopping → cancelled
+  ↘ failed / empty-response
 ```
 
-能力项按当前 provider 实际能力显示，包括：
+| 生命周期状态 | UI 表达 |
+| --- | --- |
+| `idle` | Composer 可输入；满足条件时发送可用 |
+| `submitting/connecting` | 稳定的内联 progress；不同时显示 typing 和 streaming |
+| `active` | 根据真实活动标志显示推理、工具或正文流；可取消时显示停止 |
+| `stopping` | 原位“正在停止…”，防重复操作 |
+| `completed` | 结束 progress，播报完成 |
+| `cancelled` | 以 `hasPartialContent` 标志决定是否保留部分回复；有内容时标记“已停止”，无内容时不创建空消息 |
+| `failed` | `ShadAlert.destructive` + 可恢复动作 |
+| `empty-response` | 明确说明未收到内容并允许重试 |
 
-- 相机、图片和文件附件。
-- 联网搜索、深度思考。
-- 图像尺寸与风格、视频比例等生成参数。
-- 当前模型/提供方摘要。
-- 发送、生成中停止。
+`active` 内的活动是正交标志，不强行互斥：
 
-不要加入当前产品不存在的“权限、Git 环境、任务模式”等控件。
+- `reasoningActive`：推理内容仍在追加。
+- `toolingActive`：存在正在执行的真实工具/命令/文件活动。
+- `contentStreaming`：正文或媒体元信息正在返回。
 
-### 11.2 视觉
+Provider 可以同时回调推理、过程与正文；消息区分别承载真实内容，但顶部只显示一个稳定的生命周期 indicator，避免多套 spinner 竞争。
 
-- 默认一至两行，约 `56–64` 高；随输入增长，达到 `180` 后文本区内部滚动。
-- 外壳圆角 `14–16`；文本区使用不透明或高不透明底，不再套第二层粗边框。
-- 底部距内容区 `12–16`，宽度与内容轴一致；可轻微悬浮，但只使用一层阴影。
-- 发送/停止是唯一强操作。发送使用 accent，停止使用清晰的形状变化，不仅更换颜色。
-- focus 使用可见的系统 accent ring，不使用发光描边。
-- 附件预览在 Composer 上方或内部稳定展开，移除按钮始终可见且可键盘到达。
+补充失败规则：
 
-### 11.3 行为
+- 流式中途失败时保留已有部分回复，标记“生成中断”，并把重试动作绑定到该回合。
+- 停止失败或超时后显示内联错误；若请求仍活跃，恢复可停止状态，不能假装已经取消。
+- 数据库持久化失败与 Provider 生成失败分开表达；内容仍在内存时提供“重试保存”或明确恢复路径。
 
-- 默认 `Enter` 发送，`Shift+Enter` 换行；若未来提供偏好设置，菜单与 tooltip 必须同步展示当前规则。
-- 输入为空且无附件时发送按钮 disabled；生成中同一位置变为停止，不能导致布局跳动。
-- `Esc` 优先关闭参数 popover，再取消当前临时状态；不得无提示清空输入。
-- 模型、联网、深度思考和生成参数使用 menu/popover，展开时不推挤整个对话布局。
-- 发送失败保留文字与附件，并提供重试；发送成功后及时清理已提交附件。
-- 输入法组合阶段不得误发送，中文、日文和韩文 IME 必须专项测试。
+### 11.1 请求身份、终态与所有权
 
-## 12. 智能体与设置页面
+- 每轮生成创建稳定 `runId`，并与发起时的 `chatId` 一起进入所有 callback、状态事件和持久化命令。
+- 每个 turn 和消息还必须有稳定 `turnId/messageId`；推荐以 `runId + role` 派生助手消息唯一键，用户消息在发送 intent 创建时即分配 id。
+- 所有事件由单一 reducer 校验 `chatId + runId == activeRun`；旧请求迟到的 token、error 或 complete 直接忽略，不能污染同一会话的新一轮生成。
+- completed、cancelled、failed、empty-response 是带类型的终态，处理必须幂等；禁止通过 `"Request cancelled"` 等错误字符串推断取消。
+- SQLite 增加 message 唯一键并做版本化 migration / backfill；用户消息与助手终态在事务中 insert-or-update。没有唯一约束时不得把 `ConflictAlgorithm.replace` 当作幂等保障。
+- “重试保存”、迟到 complete 和终态重放必须 upsert 同一 `messageId`，不能重复插入消息。
+- 终态内容完成持久化、状态播报和必要错误处理后，Composer 生命周期回到 `idle`；消息本身保留对应终态标签。
+- 生成 owner 必须提升到不会随 `ChatPage` 重建而丢失的 chat-scoped controller / service。`ChatPage` 只订阅状态并派发 intent，不能独自拥有 Provider callback 生命周期。
+- 会卸载或替换当前 `ChatPage` 的行为——切换会话、进入智能体/设置、新建、删除、清空和应用可控制的关闭/退出——都经过同一 run guard。操作系统强制终止只做 best effort；意外卸载时 owner 仍只向原 chat id 持久化。
 
-### 12.1 智能体列表与编辑
+### 11.2 Provider 取消契约
 
-- 列表项展示头像/提供方 Logo、名称和模型摘要，保持平面 source list 风格。
-- “添加智能体”是当前页面的主要动作；编辑页内“保存”是唯一 primary。
-- 名称、提供方、API 类型、地址、密钥、模型和系统提示词按语义分组，不把每个字段做成独立卡片。
-- 密钥默认隐藏，显示/复制必须是明确动作；错误紧邻字段并说明修复方式。
-- provider 或 API 类型改变导致字段变化时，保持焦点可预测，不丢弃已输入数据。
-- 删除智能体明确显示对象名称和影响；默认焦点不能落在破坏性按钮。
+- Provider 必须显式暴露当前 run 的 `supportsCancellation`；不能用 `supportStreamResponse()` 代替取消能力。
+- 当前同步 `void cancelRequest()` 不足以支撑 `stopping`。目标契约必须返回可等待结果或发出带类型 terminal event，使 UI 能区分 cancelled、failed 与 timeout。
+- `stopping` 在收到 cancelled 终态后才算成功；超时后按“请求仍可能活跃”处理，并继续依靠 `runId` 过滤迟到事件。
+- 在该契约完成前，停止成功/失败、停止后导航及其验收不得标记为已实现。
 
-### 12.2 我的/设置
+## 12. Inspector 与临时界面
 
-- 使用侧边导航 + 连续设置画布，内容宽度建议 `680–760`。
-- 分组依次为个人信息、外观与语言、帮助与支持、关于与法律信息。
-- 主题选项明确为“跟随系统 / 浅色 / 深色”；即时预览但必须持久化。
-- 字号设置展示当前值和实际文字预览，支持键盘微调并提供恢复默认。
-- Switch 只用于立即生效的持久布尔设置；单选用 radio/segmented control，多选用 checkbox。
-- avatar、语言和危险账户动作遵循所在平台的 dialog/sheet 习惯。
+### 12.1 Context Inspector
 
-## 13. Context Inspector
+- 只显示当前真实字段：Bot 名称、Provider、Model。
+- `xl` 及以上可 docked；更窄时使用右侧 `ShadSheet`。
+- docked 形式使用 `background/card` + 左侧 `ShadSeparator`，无圆角与阴影。
+- Sheet 形式最大宽 `380`，有标题、关闭按钮和独立滚动。
+- 没有当前 Bot 时 Inspector 入口 disabled 或隐藏。
 
-Inspector 只描述有真实数据来源的上下文：
+### 12.2 Popover 与 Context Menu
 
-- 当前可直接展示智能体名称、提供方和模型。
-- “本地桌面”“就绪”等当前静态占位文案不等于真实环境状态；接入明确的数据源前不得把它们呈现为事实。
-- 本地环境、会话参数和能力状态只在真实接入后加入，并分别提供加载、未知和错误状态。
+- 附件与能力参数使用锚定 `ShadPopover`。
+- 会话和消息上下文动作使用项目 `StarsContextMenu` 适配器：pointer 分支组合 `ShadContextMenuRegion`，keyboard 分支用 `Shortcuts/Actions` 与受控 `ShadContextMenu(controller:, anchor:, items:)` 锚定焦点 Widget。`0.55.0` 的 Region 本身不提供 `Shift+F10` / Menu 键能力；plain `ShadPopover` 也不能直接承载依赖 `ShadContextMenuState` 的 `ShadContextMenuItem`。
+- 菜单支持方向键、`Enter`、`Esc`；关闭后焦点回到触发器。
+- 触发控件若不是 Shad Button，必须确保 hover detector 与 focus 行为完整。
+- Context Menu 最多三个逻辑组；destructive 项位于末尾。
 
-规则：
+### 12.3 Dialog、Sheet 与 Sonner
 
-- 宽屏为贴边 split inspector，用 hairline 与详情区分隔；不加外边距、巨型圆角或永久阴影。
-- 中等窗口为 trailing overlay，宽 `300–360`，此时才使用 `10–12` 圆角、材质和轻阴影。
-- 面板可关闭、可调宽、独立滚动，并恢复上次宽度与滚动位置。
-- 分区使用 disclosure group；属性名左对齐，值右对齐或在下一行完整显示。
-- 工具栏按钮、`Esc` 和“视图”菜单都能控制显隐。
-- 当前未实现的 Git、文件变更、提交推送、端口和后台进程不得作为默认内容；未来接入后另行扩展。
+- 危险确认：`showChatShadDialog` + `ShadDialog.alert`。
+- 图片预览或需要更丰富内容的阻塞流程：`showChatShadDialog` + `ShadDialog`。
+- 侧栏和 Inspector：`showChatShadSheet` + `ShadSheet`。
+- 复制成功等短暂反馈：`ShadSonner` + `ShadToast`。
+- 必须处理的错误保留在列表、消息或 Composer 内；Sonner 不能成为唯一错误载体。
+- `showChatShadDialog/showChatShadSheet` 捕获当前 `chatTheme`，在 route builder 内重新包裹 `ShadTheme`，并传本地化 `barrierLabel`。
+- Dialog / Sheet 统一传自定义 `closeIcon`：`44 × 44` 命中区、Lucide 图标、共享 FocusNode 的 Tooltip 与 `Semantics.label`，不直接使用库默认 `20 × 20` 无标签关闭按钮。
 
-## 14. 控件与临时界面
+## 13. 键盘、焦点与快捷键
 
-### 14.1 按钮
-
-- `Primary`：accent 填充，每个操作组最多一个。
-- `Secondary`：中性 fill 或轻边框。
-- `Borderless`：工具栏与列表行内动作。
-- `Destructive`：危险色，仅用于明确破坏性动作。
-- 所有自定义按钮必须有 default、hover、pressed、focus、disabled 和 loading；状态变化不改变尺寸。
-
-### 14.2 输入与选择控件
-
-- 搜索框和标准输入框高 `28–32`，圆角 `7–8`，中性 fill + 清晰 focus ring，无常驻阴影。
-- placeholder 不能代替 label；校验错误紧邻字段。
-- Segmented control 只用于 `2–5` 个互斥视图或模式，不代替一级导航。
-- Checkbox、radio 和 switch 的语义必须正确，不为追求“苹果感”全部换成 switch。
-
-### 14.3 Menu、popover、dialog 与 sheet
-
-- 轻量选择使用锚定触发器的 menu/popover；阻塞且属于当前窗口的流程使用 dialog 或 sheet。
-- Menu 支持方向键、`Enter`、`Esc`；命令名左对齐，主菜单快捷键右对齐。
-- Context menu 保持简短，最多约三个逻辑分组；不显示冗余快捷键。
-- 打开新窗口或需要后续输入的 macOS 按钮文案可使用省略号语义，但必须与其他平台文案规则一致。
-- 危险确认明确对象、后果与不可逆性；取消是安全默认。
-
-### 14.4 反馈
-
-- 短暂成功使用非阻塞 toast；需要用户处理的错误保留在相关区域。
-- 超过短暂等待时显示确定或不确定进度；可取消操作提供停止入口。
-- loading、错误、空状态和正常内容占用兼容的布局范围，避免界面跳动。
-
-## 15. 桌面交互与快捷键
-
-### 15.1 通用规则
-
-- `Tab` 顺序与视觉顺序一致；`Shift+Tab` 反向移动。
-- `Enter`/`Space` 激活控件，方向键遍历菜单、列表和分段控件，`Esc` 关闭最上层临时界面。
-- 所有鼠标 hover 动作都必须有键盘等价入口。
-- 文本、代码、路径、模型名和错误详情应可选择与复制。
-- 滚动区域不抢夺未指向它的滚轮事件；popover 打开时焦点被正确约束，关闭后回到触发器。
-
-### 15.2 建议快捷键
-
-| 命令 | macOS | Windows/Linux |
+| 命令 | macOS | Windows / Linux |
 | --- | --- | --- |
 | 新建聊天 | `⌘N` | `Ctrl+N` |
-| 搜索当前列表 | `⌘F` | `Ctrl+F` |
-| 快速切换 | `⌘K` | `Ctrl+K` |
-| 显示/隐藏侧边栏 | `⌃⌘S` | `Ctrl+B` |
-| 显示/隐藏 inspector | `⌘⌥I` | `Ctrl+Alt+I` |
+| 聚焦会话搜索 | `⌘F` | `Ctrl+F` |
+| 搜索别名 | `⌘K` | `Ctrl+K` |
+| 显示/隐藏侧栏 | `⌃⌘S` | `Ctrl+B` |
+| 显示/隐藏 Inspector | `⌘⌥I` | `Ctrl+Alt+I` |
 | 设置 | `⌘,` | `Ctrl+,` |
-| 关闭临时界面 | `Esc` | `Esc` |
 | 发送 | `Enter` | `Enter` |
-| 输入换行 | `Shift+Enter` | `Shift+Enter` |
+| 换行 | `Shift+Enter` | `Shift+Enter` |
+| 上下文菜单 | `Shift+F10` / Menu | `Shift+F10` / Menu |
+| 关闭最上层临时界面 | `Esc` | `Esc` |
 
-快捷键实施前必须检查平台冲突。菜单、tooltip、命令面板与 `Shortcuts/Actions` 使用同一来源，禁止在多个 Widget 中各自硬编码。
+`Ctrl/Cmd+K` 当前只是搜索别名，不得在文案中称为尚未实现的“命令面板”或“快速切换器”。
 
-## 16. 动效
+### 13.1 Esc 优先级
 
-| 场景 | 建议时长 |
+1. IME 候选与输入法自身状态优先。
+2. 其余应用自有 overlay 严格按实际 overlay 栈 LIFO 关闭最上层，不按组件类型猜测层级。
+3. 没有 overlay 且焦点位于非空会话搜索框时，第一次 `Esc` 清空搜索并保持焦点。
+4. 其他情况下由页面忽略或交给宿主窗口。
+
+`Esc` 不清空 Composer 草稿、不删除附件、不停止生成。系统文件选择器、平台分享面板等系统 overlay 服从平台自身规则。
+
+### 13.2 焦点规则
+
+- Tab 顺序与视觉顺序一致，`Shift+Tab` 反向。
+- 新建会话完成后把焦点移到 Composer；切换已有会话时列表焦点保持，便于连续浏览。
+- Dialog、Sheet、Popover 关闭后焦点回到原触发器。
+- hover-only 操作在 focus-within 时可见。
+- 所有可点击图标具有至少 `44 × 44` 命中区。
+- resizer、回到最新、删除确认和媒体操作必须可纯键盘完成。
+
+快捷键、工具栏、Context Menu 与 Tooltip 应共享同一套 `Actions/Intents`，禁止在多个 Widget 中分别硬编码业务动作。
+
+## 14. 无障碍与本地化
+
+### 14.1 语义
+
+- 图标按钮提供 Tooltip 和 `Semantics.label`，并按控件类型暴露 enabled、selected、expanded 等可用状态；生成中通过可理解的 `Semantics.value` / 状态标签与 `liveRegion` 播报。
+- 会话行语义包含 Bot 名、摘要、时间和 selected。
+- 项目 wrapper 必须在 `ShadAccordion` 标题外补 `Semantics(expanded: ...)`；`0.55.0` 组件本身不自动提供该语义。过程状态同时使用文字与图标。
+- 流式 token 不逐字播报，只播报状态迁移。
+- 装饰图标、重复头像与视觉分隔从语义树排除。
+- 媒体和附件使用可理解描述，不朗读本地完整路径、API Key 或敏感数据。
+
+### 14.2 视觉
+
+- 正文对比度目标 `>=4.5:1`，大号或粗体文字 `>=3:1`。
+- focus ring 在 Light、Dark 与 High Contrast 下都可见。
+- 状态不能只依靠颜色；必须同时有图标、形状或文字。
+- 内容字号 `200%` 时关键文字不裁切，Composer 内滚且主操作仍可见。
+
+### 14.3 本地化
+
+- 所有新增或现有硬编码的桌面聊天可见文案进入 ARB。
+- `message_list.dart`、`chat.dart` 中的硬编码中文属于明确迁移项。
+- 中文、英文及现有语言都要测试长 Bot 名、长模型名、时间、复数与错误文案。
+- 使用 `EdgeInsetsDirectional` 与方向无关的布局语义，避免未来 RTL 被硬编码 left/right 阻塞。
+
+## 15. 动效与性能
+
+### 15.1 动效
+
+| 场景 | 时长 |
 | --- | ---: |
 | hover / pressed | `80–120ms` |
-| menu / popover | `120–180ms` |
-| 侧边栏与 inspector 显隐 | `160–220ms` |
-| dialog / sheet | `180–240ms` |
+| Popover / Context Menu | `120–160ms` |
+| Sheet / Sidebar | `200–250ms` |
+| 状态淡化 | `120–180ms` |
 
-- 进入优先 `easeOutCubic`，退出优先 `easeInCubic`；位移控制在 `4–8px` 并配合淡入淡出。
-- 禁止弹跳、大幅缩放、持续脉冲、液态拉伸、blur radius 动画和装饰性循环动画。
-- 流式文字本身就是进度反馈，不再叠加吸引注意力的动画。
-- `Reduce Motion` 或 Flutter `disableAnimations` 开启时移除位移与尺寸动画，使用即时切换或极短淡化。
-- 动效结束后焦点、语义树和可点击区域必须处于最终状态，不能只改变视觉。
+- 优先使用 Shad 组件默认动效；上表是自定义动效的目标范围，其中 Sheet 接受 `0.55.0` 默认 enter `250ms` / exit `200ms`，不重复覆盖。
+- 禁止弹跳、持续脉冲、流体形变、blur 动画和装饰性循环动画。
+- `MediaQuery.disableAnimations` 为 true 时移除非必要位移与尺寸动画。
+- 流式文本本身就是进度，不叠加逐 token 动画。
 
-## 17. 无障碍与本地化
+### 15.2 性能
 
-### 17.1 视觉与输入
+- 消息与会话列表使用惰性构建。
+- 复杂 Markdown、图片和媒体按需使用 `RepaintBoundary`，避免整个列表重绘。
+- Popover、Sheet 和 Dialog 关闭后及时 dispose controller / focus node。
+- 不在每条消息、每个按钮或每个列表行创建昂贵合成层。
+- 性能验收使用 Flutter profile mode：`1280 × 800`、500 条消息、模拟 `20 token/s`，持续滚动、resize 与 Composer 增高 30 秒；记录参考机器和 Flutter 版本，预热后 missed-frame 比例目标 `<1%`，且无 `>100ms` 的 UI 卡死。
+- 本期历史数据仍一次性从 SQLite 加载；不要在文档中声称已分页。
 
-- 正文对比度目标 `>= 4.5:1`，大号/粗体文字 `>= 3:1`；亮色和暗色分别测试。
-- 高对比度模式增强 separator、focus ring 和 selected，不仅提高文字亮度。
-- 不依赖红/绿区分状态；同时使用图标、形状和文本。
-- 支持键盘完成新建聊天、搜索、选择、发送、停止、编辑智能体和修改设置。
-- 图标按钮使用 `Semantics.label` 与 tooltip；装饰图标从语义树中排除。
-- 状态变化用可理解的 live region 播报，避免逐 token 重复朗读流式内容。
+## 16. Shad 组件映射
 
-### 17.2 文字与布局
+| 区域 | 目标组件 | 使用约束 |
+| --- | --- | --- |
+| 应用主题 | `ShadApp.custom`、`ShadThemeData`、`ShadZincColorScheme` | 保留 Material bridge 与 `ShadAppBuilder` |
+| 响应式 | `ShadBreakpoints`、`ShadResponsiveBuilder` | 全窗用 MediaQuery breakpoint；子树用 `LayoutBuilder + fromWidth` |
+| 分栏 | `ShadResizablePanelGroup`、`ShadResizablePanel` | 补键盘、像素 clamp 与 controller 同步适配 |
+| 分隔 | `ShadSeparator` | 常驻结构不用阴影 |
+| 搜索 | `ShadInput` | 仅搜索 Bot 名与最后消息 |
+| Composer | `ShadTextarea` | 显式 `resizable: false`、`minHeight: 44`、`maxHeight: 120/160`；行为不满足时允许适配 |
+| 主次操作 | `ShadButton` variants | 桌面 chrome 使用 `ShadButtonSize.sm`；每组最多一个 primary |
+| 图标操作 | `ShadIconButton` + `ShadTooltip` | `44 × 44` 外层命中盒；共享 FocusNode 与 Semantics |
+| 头像 | `ShadAvatar` | 会话行显式 `size: Size.square(32)`；Provider Logo 可用现有资源 |
+| 状态摘要 | `ShadBadge` | 仅真实状态 |
+| 附件/媒体/结构区 | `ShadCard` | 局部 theme 无阴影；不用于普通助手文本 |
+| 推理详情 | `ShadAccordion` | 完成后默认折叠 |
+| 参数与能力 | `ShadPopover`、可选 `ShadSelect` | 不推挤对话布局 |
+| 右键菜单 | `StarsContextMenu` → `ShadContextMenuRegion` / 受控 `ShadContextMenu` / `ShadContextMenuItem` | 项目适配 `Shift+F10`、Menu 键、锚点与焦点恢复 |
+| Sidebar / Inspector overlay | `showChatShadSheet` → `showShadSheet` + `ShadSheet` | 捕获局部 theme；桌面 `draggable: false` |
+| 危险确认 | `showChatShadDialog` → `showShadDialog` + `ShadDialog.alert` | 捕获局部 theme；安全默认焦点 |
+| 图片预览 | `showChatShadDialog` → `showShadDialog` + `ShadDialog` | 保存、分享、关闭 |
+| 内联错误 | `ShadAlert.destructive` | 带恢复动作 |
+| 上传/连接进度 | `ShadProgress` | 确定/不确定按真实进度 |
+| 短反馈 | `ShadSonner`、`ShadToast` | 不承载必须处理的错误 |
+| 图标 | `LucideIcons` | Provider Logo 例外 |
 
-- 支持至少 `200%` 的内容文字放大目标；允许控件增高、换行与分栏折叠，禁止裁切。
-- 中文、英文和其他已支持语言都要测试长标题、复数、日期和模型名。
-- 所有新增桌面文案进入 ARB，不在 Widget 中新增硬编码中文。
-- placeholder 只是提示，不承担字段名称；错误文案必须说明如何恢复。
+## 17. Flutter 文件映射与实施规则
 
-### 17.3 系统状态
+### 17.1 当前入口
 
-- 亮色、暗色、系统主题切换时不闪白、不丢输入。
-- 减少透明度时完全移除 blur，改用 `sidebarOpaque`/`raisedSurface`，同时保持尺寸和层级。
-- 高对比度可直接走不透明表面。
-- 窗口 active/inactive、Retina/非 Retina、Windows `100%/125%/150%` 缩放都要校验。
-
-## 18. Flutter 落地规范
-
-### 18.1 现有代码映射
-
-| 规范区域 | 当前入口 |
+| 区域 | 文件 |
 | --- | --- |
-| 应用与桌面挂载 | `lib/main.dart` |
-| 窗口内桌面布局 | `lib/pages/desktop_layout.dart` |
-| 主题与桌面组件 | `lib/utils/theme.dart` |
-| 聊天/智能体列表 | `lib/pages/chats.dart`、`lib/pages/bots.dart` |
-| 对话工作区 | `lib/pages/chat.dart` |
+| 桌面根主题与挂载 | `lib/main.dart` |
+| Shad theme、语义 token、尺寸 | `lib/utils/theme.dart` |
+| 桌面工具栏、侧栏、Inspector、分栏 | `lib/pages/desktop_layout.dart` |
+| 会话列表 | `lib/pages/chats.dart` |
+| 会话行与右键动作 | `lib/pages/chats/chat_item.dart`、`lib/pages/chats/chat_list_builder.dart` |
+| 对话状态与滚动 | `lib/pages/chat.dart` |
 | Composer | `lib/pages/chat/message_input.dart` |
 | 消息与过程信息 | `lib/pages/chat/message_list.dart` |
-| 智能体编辑 | `lib/pages/add_bot.dart`、`lib/pages/edit_bot.dart` |
-| 我的/设置 | `lib/pages/profile.dart` |
+| 空会话欢迎区 | `lib/pages/chat/welcome_view.dart` |
+| 新建与清空 | `lib/pages/chats/new_chat_dialog.dart`、`lib/pages/chat/clear_chat_dialog.dart` |
+| 附件选择与预览 | `lib/pages/common/attachment.dart`、`lib/pages/chat/attachments.dart` |
+| Typing 与媒体 | `lib/pages/chat/typing_indicator.dart`、`lib/pages/chat/audio_player_widget.dart`、`lib/pages/chat/video_player_widget.dart` |
+| Provider 状态与取消契约 | `lib/services/providers/providers.dart` 及各 Provider 实现 |
+| 会话/消息加载与持久化 | `lib/services/chat_service.dart`、`lib/services/message_service.dart`、`lib/services/database_service.dart` |
+| Chat、Message、过程数据模型 | `lib/model/model.dart` |
 | 本地化 | `lib/l10n/` |
+| Widget tests | `test/widget_test.dart` 及新增 chat tests |
 
-### 18.2 Token 架构
+### 17.2 架构规则
 
-继续以 `lib/utils/theme.dart` 为视觉入口，并逐步把 `DesktopThemeTokens` 迁移为语义化 `ThemeExtension`。业务 Widget 中不得散落裸颜色、半径、阴影和动画时长。
+- Zinc、High Contrast、文字等根主题只在 `buildStarsShadTheme` 定义一次；项目 `StarsChatThemeScope` 只用根 theme `copyWith` 局部 breakpoints、Card shadow 和 Resizable 参数。
+- `StarsDesktopTokens` 作为 Material 兼容层时必须从当前 Shad theme 派生。
+- 尺寸 token 集中管理；业务 Widget 不散落 `16` 圆角、Zinc 色值或动画时长。
+- `ShadAppBuilder` 必须包住桌面内容，保证 Tooltip、Popover、Sheet 与 Toast 的 overlay 正常。
+- 项目 `showChatShadDialog/showChatShadSheet` 负责 route 内重包局部 theme、本地化 barrier label 和可访问关闭按钮。
+- 项目 `StarsContextMenu` 负责右键与键盘打开同一动作集合；不能假设 `ShadContextMenuRegion` 内建键盘触发。
+- desktop / mobile 分支保持明确；桌面迁移不得改变移动端主题、底部导航与输入行为。
+- `ScrollController`、`FocusNode`、`ShadPopoverController` 等由拥有者创建并 dispose。
+- Provider 能力判断只来自 Provider API，不在 UI 里复制 provider 名称白名单。
+- 新增 chat-scoped generation controller，统一管理 `chatId/runId`、typed terminal event、取消能力、callback reducer 与持久化；`ChatPageState` 不再是唯一 owner。
+- `ShadResizablePanel` 的比例只在注册时进入 controller；窗口宽度改变后，适配层必须保存像素宽度、重新 clamp，并显式同步或重建 `ShadResizableController`，不能只更新 Widget 的 `minSize/maxSize/defaultSize`。
 
-```dart
-@immutable
-class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
-  const StarsDesktopTokens({
-    required this.windowBackground,
-    required this.contentBackground,
-    required this.sidebarSurface,
-    required this.primaryText,
-    required this.separator,
-    required this.accent,
-    required this.reduceTransparency,
-    required this.highContrast,
-  });
+### 17.3 实施顺序
 
-  final Color windowBackground;
-  final Color contentBackground;
-  final Color sidebarSurface;
-  final Color primaryText;
-  final Color separator;
-  final Color accent;
-  final bool reduceTransparency;
-  final bool highContrast;
+1. **主题收口**：自定义 breakpoints，确认 Zinc、radius、文字和语义 token。
+2. **图标与基础控件**：桌面聊天范围迁移到 Lucide、Shad Button/Input/Tooltip/Semantics。
+3. **壳层与分栏**：单工具栏、响应式 Sidebar/Inspector、Resizable 键盘能力。
+4. **消息流**：普通助手文档流、用户消息、结构化 Card、消息操作。
+5. **Composer**：Textarea、Popover、附件、生命周期状态与正交活动状态、错误恢复。
+6. **临时层与反馈**：Context Menu、Dialog、Sheet、Sonner、Progress。
+7. **本地化、无障碍与测试**：移除硬编码文案并覆盖边界状态。
 
-  // copyWith / lerp 省略
-}
-```
+## 18. 验收标准
 
-材质必须集中到一个 primitive：
+### 18.1 布局矩阵
 
-```dart
-enum StarsGlassRole {
-  toolbar,
-  sidebar,
-  composer,
-  popover,
-  overlayInspector,
-}
+必须覆盖：
 
-class StarsGlassSurface extends StatelessWidget {
-  const StarsGlassSurface({
-    super.key,
-    required this.role,
-    required this.child,
-  });
+| 尺寸 | 预期 |
+| --- | --- |
+| `799 × 600` | 仅做 `tn` 韧性与断点 smoke：无异常、无横向 overflow、仍可聊天 |
+| `800 × 600` | 单工作区；Sidebar/Inspector 为 Sheet；所有核心动作可达 |
+| `960 × 680` | Sidebar docked `260–280`；Inspector 为 Sheet |
+| `1280 × 800` | Sidebar 默认宽；消息轴与 Composer 对齐 |
+| `1500 × 900` | Inspector 可 docked；详情仍满足 `560` 最小宽度 |
+| `1920 × 1080` | 内容轴不无限拉宽，三栏稳定 |
 
-  final StarsGlassRole role;
-  final Widget child;
-}
-```
+额外覆盖精确边界：`799/800`、`959/960`、`1199/1200`、`1499/1500`。交叉场景至少包括：高度 `<680`、`800 × 600 + 200%` 文字、Dark + High Contrast、长英文 + `960` 宽、Windows `125%/150%`、非整数 DPR 与 `disableAnimations=true`。
 
-`StarsGlassSurface` 统一解析 brightness、high contrast、reduce transparency、window active、hover 和 pressed。实色状态必须完全不构建 `BackdropFilter`，不能只把 sigma 设为零。
+### 18.2 功能与状态
 
-### 18.3 组件与平台能力
+1. 未选择会话、空会话和搜索无结果有不同界面。
+2. 搜索只承诺 Bot 名与最后消息，清空后恢复列表。
+3. 新建聊天、清空历史和删除会话的 loading、失败、防重复、成功焦点与相邻选择规则完整。
+4. Bot 被删除或配置失效的孤儿会话有明确状态和安全恢复动作。
+5. Provider 能力控件准确显示；不支持的入口不存在。
+6. `Enter`、修饰键换行、IME composing、disabled send 全部正确。
+7. 发送/停止同位同尺寸；`supportsCancellation` 不成立时不显示假停止按钮。
+8. 生命周期状态互斥；推理、工具与正文流作为正交活动可并存，界面不显示竞争 indicator。
+9. 中途失败、停止失败/超时和持久化失败保留真实内容，重试不会生成重复用户消息。
+10. 用户上滚后流式不抢回底部；“回到最新”恢复跟随。
+11. 切会话、切一级入口、清空、删除和应用可控制的关闭/退出都经过统一 run guard。
+12. `chatId + runId` 过滤迟到事件；`turnId/messageId`、数据库唯一键、事务 upsert 与 typed terminal outcome 共同保证幂等，响应不会串会话、串轮次或重复落库。
+13. Markdown 链接的键盘激活、scheme 白名单、复制和打开失败状态通过测试。
 
-- 不直接使用整套 Cupertino Widget 冒充 macOS；建立 `StarsToolbarButton`、`StarsSidebarRow`、`StarsSearchField`、`StarsPopover` 等桌面 primitive。
-- macOS 菜单能力允许时使用 `PlatformMenuBar`；窗口标题栏和交通灯交给原生层。
-- 使用 `LayoutBuilder` 和约束驱动响应式；不要用设备名称代替实际可用宽度。
-- 侧边栏、列表、对话和 inspector 使用独立 `ScrollController`。
-- 使用 `Shortcuts`、`Actions`、`FocusTraversalGroup` 统一菜单、按钮和快捷键行为。
-- 使用 `Semantics`、`MergeSemantics` 和 `ExcludeSemantics` 准确表达 label、value、selected、expanded 与状态变化。
-- Menu/context menu 使用项目统一封装或 `MenuAnchor`，避免各页面出现不同键盘行为。
-- hairline 可使用 `BorderSide(width: 0)`；必须在不同 DPR 下做截图校验。
-- 现有 `DesktopListPanel`、`DesktopInteractiveListItem` 和 `DesktopEmptyStateCard` 可保留职责，但应按本文 token 重做视觉。
+### 18.3 视觉与组件
 
-### 18.4 性能边界
+14. Light、Dark 与 High Contrast 均使用 Shad 语义 token。
+15. 桌面聊天范围内全部功能图标统一为 Lucide，Provider Logo 除外。
+16. 普通助手文本外层没有 `ShadCard`。
+17. Model 摘要、typing indicator、普通过程行不被卡片化。
+18. 常驻结构与聊天 Card 无阴影，聊天子树无 `BackdropFilter`。
+19. 所有应用自有 overlay 都能以 `Esc` 关闭并恢复焦点；系统文件选择器和分享面板遵循平台规则。
+20. 发送、停止、删除和错误状态不只靠颜色区分。
 
-- `BackdropFilter` 必须被 `ClipRect`/`ClipRRect` 紧密裁剪，只用于有限的导航或临时控制区域。
-- 禁止包住整窗、整个滚动列表或每一个 row/button；同组控件只建立一个合成层。
-- 滚动列表使用惰性构建；媒体和复杂消息按需使用 `RepaintBoundary`。
-- resize、滚动、流式输出和 Composer 输入同时发生时仍需保持稳定帧率。
-- 无法稳定实现原生材质时使用实色 fallback，这属于正确实现，不是降级失败。
+### 18.4 键盘、无障碍与本地化
 
-### 18.5 测试同步
+21. 纯键盘可完成搜索、新建/选择/删除会话、发送、停止、附件和参数选择。
+22. 会话 Context Menu 可由右键、`Shift+F10` 和菜单键打开。
+23. 分栏可拖动、双击复位、方向键调整。
+24. Semantics 覆盖会话 selected、Accordion expanded、生成状态 value/live region 和图标名称。
+25. 正文放大至 `200%` 时不裁切，主操作仍可达。
+26. 所有可见桌面聊天文案进入 ARB，中文和最长英文文案无 overflow。
 
-当前 `test/widget_test.dart` 锁定了旧的 `340` 侧栏、`380` inspector、`42` 菜单栏以及旧浅色 token。实现本文目标值时必须同步更新测试，并补充暗色、响应式、键盘和可访问性测试，不能让文档和代码各自维护一套真相。
+### 18.5 性能与回归
+
+27. `flutter analyze` 与 `flutter test` 通过。
+28. 新增 ChatPage、MessageInput、MessageList 的 Widget tests。
+29. 至少以 fake Provider 覆盖完整生成状态、取消契约和迟到 callback，并测试消息表 migration/backfill 与重复终态 upsert。
+30. 性能场景按 `15.2` 的 profile-mode 基线记录并达标。
+31. macOS、Windows、Linux 的原生窗口行为不回归。
+32. Android、iOS 与 Web 的现有 Material 主题和导航不受本次桌面迁移影响。
 
 ## 19. Do / Don't
 
 ### Do
 
-- 使用原生窗口装饰、统一工具栏、可调分栏和连续内容画布。
-- 以真实的聊天、智能体和我的流程组织界面。
-- 使用系统字体、语义色、用户 accent、hairline 和清晰焦点。
-- 让用户消息轻量，让智能体回复像可阅读、可选择的文档。
-- 让 Composer 紧凑自增长，并保留真实 provider 能力。
-- 让 docked inspector 成为结构栏，只在 overlay 状态增加材质和阴影。
-- 完整支持键盘、右键、tooltip、亮暗主题、高对比度、减少动态和减少透明度。
+- 使用 Zinc 语义色、细边框、小圆角和明确 focus ring。
+- 让助手回复保持文档流，只把真正成组的内容放进 Card。
+- 使用 Shad Button、Textarea、Popover、Context Menu、Sheet、Dialog 与 Sonner 表达对应语义。
+- 保留 Provider 能力判断、IME、安全错误恢复和滚动跟随规则。
+- 用 Lucide 统一桌面功能图标。
+- 把聊天响应式阈值集中进局部 `ShadBreakpoints`。
 
 ### Don't
 
-- 不伪造交通灯、Apple 商标、系统资产或 macOS 全局菜单。
-- 不把 iOS 控件放大后当作桌面设计。
-- 不把 Stars 写成不存在的项目/Git/任务工作台。
-- 不使用卡片套卡片、全窗玻璃、blur 套 blur、彩色渐变玻璃或永久重阴影。
-- 不滥用 `20px+` 圆角、胶囊按钮和大面积 accent。
-- 不在内容、代码、表格和实际文本输入下使用透明玻璃。
-- 不让流式自动滚动抢走用户阅读位置。
-- 不在 Windows/Linux 显示 `⌘` 或假的 macOS 窗口行为。
+- 不继续使用 Apple / Liquid Glass、模糊材质或玻璃 primitive 作为聊天页设计基础。
+- 不为展示“shadcn”而把每条消息、每个状态和每个控件都卡片化。
+- 不混用 Material Menu、Material Icons、Cupertino Icons 与 Shad 控件。
+- 不用渐变、发光、厚阴影、大胶囊和过度动画制造层级。
+- 不把 Provider / Model 摘要伪装成可切换控件。
+- 不声称支持全文搜索、重命名、重新生成、拖放、分页或持久化栏宽。
+- 不让瞬时 toast 代替可恢复错误。
+- 不因桌面重设计改变移动端。
 
-## 20. 验收标准
+## 20. 最终风格一句话
 
-### 20.1 产品与结构
-
-1. 一级入口只呈现聊天、智能体、我的；没有虚构项目/任务/Git 导航。
-2. 选择聊天显示对话，选择智能体显示编辑，选择设置分区显示相应内容。
-3. 新建/删除聊天、添加/编辑/删除智能体、修改主题/语言/字号的既有流程可用。
-4. Inspector 只显示真实上下文；docked 与 overlay 两种状态行为正确。
-5. Composer 完整保留附件、联网、深度思考、生成参数、发送和停止能力。
-
-### 20.2 视觉与平台
-
-6. macOS 没有 Flutter 自绘菜单行或假交通灯；Windows/Linux 没有 macOS 窗口按钮。
-7. 内容层稳定不透明；常驻 glass 不超过 1–2 个区域，任一像素没有双层 blur。
-8. 侧边栏、详情和 docked inspector 通过材质/明度与 hairline 建立层级，没有大型悬浮卡片堆叠。
-9. Light、Dark、High Contrast、Reduce Transparency 下信息层级与可读性完整。
-10. 窗口失焦仍能识别当前选择，重新激活不丢输入与焦点上下文。
-
-### 20.3 布局矩阵
-
-必须覆盖：
-
-- `800 × 600`：单栏紧凑桌面流程可完成。
-- `960 × 680`：侧边栏可用，inspector 为 overlay。
-- `1280 × 800`：侧边栏 + 详情稳定，无重叠。
-- `1440 × 900`：完整阅读轴与 overlay inspector 正常。
-- `1920 × 1080`：可 dock inspector，正文不无限拉宽。
-- macOS Retina 与非 Retina；Windows `100% / 125% / 150%`；主流 Linux 桌面缩放。
-
-### 20.4 交互与无障碍
-
-11. 纯键盘可以完成新建聊天、搜索、选择、发送/停止、编辑智能体和修改设置。
-12. hover、pressed、focus、selected、disabled、loading 状态可辨且不引发布局跳动。
-13. VoiceOver/屏幕阅读顺序与视觉顺序一致；图标按钮名称明确，状态不重复播报。
-14. 内容文字放大至 `200%` 时关键文字不裁切，布局按规则折叠。
-15. 正文对比度、焦点、错误与状态表达达到本规范要求，并且不只依赖颜色。
-16. 中文/英文长文案、IME 组合输入、复制选择与快捷键均无回归。
-
-### 20.5 性能
-
-17. 滚动长会话、流式输出、展开 Composer 和 resize 同时发生时没有明显掉帧。
-18. Reduce Transparency 或实色 fallback 下不创建无意义的 blur 合成层。
-19. Composer 不遮挡最后一条消息，流式输出不强制打断用户向上阅读。
-
-## 21. 实施优先级
-
-1. **信息架构纠偏**：文档、文案和组件命名统一为聊天 / 智能体 / 我的。
-2. **语义 Token**：先落地 Light/Dark、surface、text、accent、separator、focus、radius 与 motion。
-3. **桌面壳层**：移除内容区假菜单，重做统一工具栏、侧边栏和 inspector 结构。
-4. **核心工作区**：重做对话阅读轴、消息、过程信息和紧凑自增长 Composer。
-5. **表单与设置**：统一智能体编辑、Profile 设置、dialog、popover 和错误状态。
-6. **输入与无障碍**：补齐快捷键、焦点、语义、本地化和系统可访问性状态。
-7. **macOS 原生增强**：在基线稳定后再评估标题栏、系统材质和窗口状态桥接。
-
-## 22. 设计依据
-
-本文参考 Apple 官方 Human Interface Guidelines，并将其转译为 Stars 的跨平台 Flutter 约束：
-
-- [Designing for macOS](https://developer.apple.com/design/human-interface-guidelines/designing-for-macos/)
-- [Windows（Apple HIG 的窗口规范）](https://developer.apple.com/design/human-interface-guidelines/windows)
-- [Sidebars](https://developer.apple.com/design/human-interface-guidelines/sidebars)
-- [Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars)
-- [Materials](https://developer.apple.com/design/human-interface-guidelines/materials)
-- [Typography](https://developer.apple.com/design/human-interface-guidelines/typography)
-- [Color](https://developer.apple.com/design/human-interface-guidelines/color)
-- [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility/)
-- [Context menus](https://developer.apple.com/design/human-interface-guidelines/context-menus)
-
-本文中的像素值、断点、组件名和 fallback 色值是 Stars 的项目决策，不是 Apple 官方规格。
-
-## 23. 最终风格一句话
-
-Stars 借鉴 Apple 设计的秩序与 Liquid Glass 的层级语义，而不复制表面效果：内容始终稳定清晰，只有导航、控制和临时层在需要时呈现轻盈材质。
+Stars 桌面聊天页以 shadcn 的方式保持安静而精确：中性表面承载内容，边框与间距建立秩序，组件只在语义需要时出现，所有真实状态都能被看见、理解并操作。

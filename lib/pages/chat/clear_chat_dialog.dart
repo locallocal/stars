@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/utils/utils.dart';
 
 /// 显示清除聊天历史对话框
 Future<bool> showClearChatDialog(BuildContext context, String botName) async {
   if (isDesktopOrTabletPlatform(context)) {
-    final result = await showShadDialog<bool>(
+    final result = await showChatShadDialog<bool>(
       context: context,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       variant: ShadDialogVariant.alert,
@@ -16,6 +17,7 @@ Future<bool> showClearChatDialog(BuildContext context, String botName) async {
             description: Text(S.of(dialogContext).confirmClearChat(botName)),
             actions: [
               ShadButton.outline(
+                autofocus: true,
                 onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: Text(S.of(dialogContext).cancel),
               ),

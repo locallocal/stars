@@ -6,8 +6,7 @@ import 'package:chewie/chewie.dart';
 class VideoPlayerWidget extends StatefulWidget {
   final String videoFilePath;
 
-  const VideoPlayerWidget({Key? key, required this.videoFilePath})
-    : super(key: key);
+  const VideoPlayerWidget({super.key, required this.videoFilePath});
 
   @override
   State<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
@@ -56,7 +55,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       setState(() {
         _hasError = true;
       });
-      print('视频播放器初始化失败: $e');
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/pages/common/new_chat.dart';
 import 'package:stars/services/bot_service.dart';
@@ -30,6 +31,9 @@ class NewChatDialog extends StatefulWidget {
 class _NewChatDialogState extends State<NewChatDialog> {
   late Future<List<Bot>> _botsFuture;
   final ScrollController _desktopScrollController = ScrollController();
+  bool _creating = false;
+  String? _creatingBotId;
+  String? _creationError;
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.botsFuture != widget.botsFuture) {
       _botsFuture = widget.botsFuture ?? BotService.getBots();
+      _creationError = null;
     }
   }
 
@@ -125,18 +130,10 @@ class _NewChatDialogState extends State<NewChatDialog> {
             ),
           ),
           const SizedBox(width: 8),
-          Semantics(
+          StarsDesktopIconAction(
+            icon: LucideIcons.x,
             label: closeLabel,
-            child: ShadTooltip(
-              builder: (context) => Text(closeLabel),
-              child: ShadIconButton.ghost(
-                width: DesktopThemeTokens.iconButtonSize,
-                height: DesktopThemeTokens.iconButtonSize,
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.close_rounded, size: 18),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
+            onPressed: () => Navigator.of(context).pop(),
           ),
         ],
       ),
@@ -150,8 +147,12 @@ class _NewChatDialogState extends State<NewChatDialog> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 220,
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: SizedBox(width: 120, child: ShadProgress())),
           );
+        }
+
+        if (snapshot.hasError) {
+          return _buildDesktopLoadError(context, snapshot.error);
         }
 
         final bots = snapshot.data ?? const <Bot>[];
@@ -165,15 +166,12 @@ class _NewChatDialogState extends State<NewChatDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: tokens.selectedFill,
-                        borderRadius: DesktopThemeTokens.containerRadius,
-                      ),
-                      child: Icon(
-                        Icons.smart_toy_outlined,
+                    ShadAvatar(
+                      null,
+                      size: const Size.square(40),
+                      backgroundColor: tokens.selectedFill,
+                      placeholder: Icon(
+                        LucideIcons.bot,
                         size: 18,
                         color: tokens.accent,
                       ),
@@ -201,13 +199,26 @@ class _NewChatDialogState extends State<NewChatDialog> {
               controller: _desktopScrollController,
               shrinkWrap: true,
               padding: const EdgeInsets.all(8),
-              itemCount: bots.length,
+              itemCount: bots.length + (_creationError == null ? 0 : 1),
               separatorBuilder: (context, index) => const SizedBox(height: 2),
               itemBuilder: (context, index) {
-                final bot = bots[index];
+                if (_creationError != null && index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(2, 2, 2, 8),
+                    child: ShadAlert.destructive(
+                      icon: const Icon(LucideIcons.circleAlert, size: 18),
+                      title: Text(_creationError!),
+                    ),
+                  );
+                }
+
+                final botIndex = index - (_creationError == null ? 0 : 1);
+                final bot = bots[botIndex];
                 return _DesktopBotChoice(
                   key: ValueKey<String>(bot.id),
                   bot: bot,
+                  enabled: !_creating,
+                  creating: _creatingBotId == bot.id,
                   onTap: () => _createChat(bot),
                 );
               },
@@ -216,6 +227,41 @@ class _NewChatDialogState extends State<NewChatDialog> {
         );
       },
     );
+  }
+
+  Widget _buildDesktopLoadError(BuildContext context, Object? error) {
+    return SizedBox(
+      height: 220,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: ShadAlert.destructive(
+            icon: const Icon(LucideIcons.circleAlert),
+            title: Text(S.of(context).unableToLoadBots),
+            description: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(error?.toString() ?? ''),
+                const SizedBox(height: 12),
+                ShadButton.outline(
+                  size: ShadButtonSize.sm,
+                  onPressed: _retryLoadBots,
+                  leading: const Icon(LucideIcons.refreshCw, size: 16),
+                  child: Text(S.of(context).retry),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _retryLoadBots() {
+    setState(() {
+      _creationError = null;
+      _botsFuture = BotService.getBots();
+    });
   }
 
   Widget _buildMobileDialog(BuildContext context) {
@@ -272,7 +318,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text('${bot.provider}-${bot.model}'),
-                          onTap: () => _createChat(bot),
+                          onTap: _creating ? null : () => _createChat(bot),
                         );
                       },
                     );
@@ -288,8 +334,35 @@ class _NewChatDialogState extends State<NewChatDialog> {
   }
 
   Future<void> _createChat(Bot bot) async {
-    final chat = await createNewChat(bot);
+    if (_creating) return;
+
+    setState(() {
+      _creating = true;
+      _creatingBotId = bot.id;
+      _creationError = null;
+    });
+
+    late final Chat chat;
+    try {
+      chat = await createNewChat(bot);
+    } catch (error) {
+      if (!mounted) return;
+      final message = S.of(context).createChatFailed(error.toString());
+      setState(() {
+        _creating = false;
+        _creatingBotId = null;
+        _creationError = message;
+      });
+      if (!isDesktopOrTabletPlatform(context)) {
+        ScaffoldMessenger.maybeOf(
+          context,
+        )?.showSnackBar(SnackBar(content: Text(message)));
+      }
+      return;
+    }
+
     if (!mounted) return;
+    ChatPageState.requestComposerFocus(chat.id);
     final navigator = Navigator.of(context);
     final isDesktop = isDesktopOrTabletPlatform(context);
 
@@ -313,10 +386,18 @@ class _NewChatDialogState extends State<NewChatDialog> {
 }
 
 class _DesktopBotChoice extends StatelessWidget {
-  const _DesktopBotChoice({super.key, required this.bot, required this.onTap});
+  const _DesktopBotChoice({
+    super.key,
+    required this.bot,
+    required this.onTap,
+    required this.enabled,
+    required this.creating,
+  });
 
   final Bot bot;
   final VoidCallback onTap;
+  final bool enabled;
+  final bool creating;
 
   @override
   Widget build(BuildContext context) {
@@ -325,46 +406,88 @@ class _DesktopBotChoice extends StatelessWidget {
       bot.model.trim(),
     ].where((value) => value.isNotEmpty).join(' · ');
 
-    return DesktopInteractiveListItem(
-      selected: false,
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
-        children: [
-          _BotAvatar(bot: bot, radius: 20),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+    return Semantics(
+      enabled: enabled,
+      child: IgnorePointer(
+        ignoring: !enabled,
+        child: Opacity(
+          opacity: enabled || creating ? 1 : 0.55,
+          child: DesktopInteractiveListItem(
+            selected: false,
+            onTap: onTap,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
               children: [
-                Text(
-                  bot.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DesktopThemeTokens.bodyStyle(
-                    context,
-                  )?.copyWith(fontWeight: FontWeight.w600),
+                ShadAvatar(
+                  bot.avatar.isEmpty ? null : File(bot.avatar),
+                  size: const Size.square(40),
+                  backgroundColor:
+                      bot.avatar.isEmpty
+                          ? getFrostedProviderColor(
+                            bot.provider,
+                            Theme.of(context).colorScheme.primary,
+                          )
+                          : Theme.of(context).colorScheme.primary,
+                  placeholder: buildProviderLogo(context, '', bot.provider, 20),
                 ),
-                if (metadata.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    metadata,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DesktopThemeTokens.metaStyle(context),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        bot.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DesktopThemeTokens.bodyStyle(
+                          context,
+                        )?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      if (metadata.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          metadata,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DesktopThemeTokens.metaStyle(context),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(width: 8),
+                if (creating)
+                  SizedBox(
+                    width: 88,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          S.of(context).creatingChat,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DesktopThemeTokens.metaStyle(context),
+                        ),
+                        const SizedBox(height: 5),
+                        ShadProgress(
+                          minHeight: 3,
+                          semanticsLabel: S.of(context).creatingChat,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Icon(
+                    LucideIcons.chevronRight,
+                    size: 18,
+                    color: DesktopThemeTokens.softText(context),
+                  ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(
-            Icons.chevron_right_rounded,
-            size: 18,
-            color: DesktopThemeTokens.softText(context),
-          ),
-        ],
+        ),
       ),
     );
   }

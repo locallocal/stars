@@ -75,6 +75,29 @@ typedef ToolCallCallback = void Function(MessageToolCall toolCall);
 typedef CommandExecutionCallback =
     void Function(MessageCommandExecution commandExecution);
 
+enum ProviderTerminalType { completed, cancelled, failed }
+
+class ProviderTerminalEvent {
+  const ProviderTerminalEvent({required this.type, this.error});
+
+  final ProviderTerminalType type;
+  final String? error;
+}
+
+typedef ProviderTerminalCallback = void Function(ProviderTerminalEvent event);
+
+enum ProviderCancellationStatus { requested, alreadyRequested, unsupported }
+
+class ProviderCancellationResult {
+  const ProviderCancellationResult(this.status);
+
+  final ProviderCancellationStatus status;
+
+  bool get accepted =>
+      status == ProviderCancellationStatus.requested ||
+      status == ProviderCancellationStatus.alreadyRequested;
+}
+
 // 聊天模型抽象类
 abstract class Provider {
   final Bot bot;
@@ -90,12 +113,21 @@ abstract class Provider {
   CommandExecutionCallback? onCommandExecution;
   Function? onComplete;
   Function(String)? onError;
+  ProviderTerminalCallback? onTerminal;
+  ProviderTerminalType? _emittedTerminal;
 
   Provider(this.bot);
 
   bool supportStreamResponse() {
     return true;
   }
+
+  /// Whether this provider can acknowledge cancellation for a text run.
+  ///
+  /// Providers that cannot observe [isCancelled] during text generation must
+  /// override this with `false`. Non-text generation is treated as
+  /// non-cancellable by the chat controller regardless of this value.
+  bool get supportsCancellation => true;
 
   bool supportWebSearch() {
     return false;
@@ -113,6 +145,8 @@ abstract class Provider {
     webSearch = enabled;
   }
 
+  bool getWebSearch() => webSearch;
+
   void setDeepThinking(bool enabled) {
     deepThinking = enabled;
   }
@@ -128,13 +162,35 @@ abstract class Provider {
     CommandExecutionCallback? onCommandExecution,
     Function? onComplete,
     Function(String)? onError,
+    ProviderTerminalCallback? onTerminal,
   }) {
     this.onResponse = onResponse;
     this.onReasoningResponse = onReasoningResponse;
     this.onToolCall = onToolCall;
     this.onCommandExecution = onCommandExecution;
-    this.onComplete = onComplete;
-    this.onError = onError;
+    this.onTerminal = onTerminal;
+    this.onComplete = () {
+      final type =
+          isCancelled
+              ? ProviderTerminalType.cancelled
+              : ProviderTerminalType.completed;
+      _emitTerminalOnce(ProviderTerminalEvent(type: type));
+      onComplete?.call();
+    };
+    this.onError = (String error) {
+      final type =
+          isCancelled
+              ? ProviderTerminalType.cancelled
+              : ProviderTerminalType.failed;
+      _emitTerminalOnce(ProviderTerminalEvent(type: type, error: error));
+      onError?.call(error);
+    };
+  }
+
+  void _emitTerminalOnce(ProviderTerminalEvent event) {
+    if (_emittedTerminal != null) return;
+    _emittedTerminal = event.type;
+    onTerminal?.call(event);
   }
 
   void emitToolCall(MessageToolCall toolCall) {
@@ -222,14 +278,31 @@ abstract class Provider {
   }
 
   // 取消当前请求
-  void cancelRequest() {
+  Future<ProviderCancellationResult> cancelRequest() async {
+    if (!supportsCancellation) {
+      return const ProviderCancellationResult(
+        ProviderCancellationStatus.unsupported,
+      );
+    }
+    if (isCancelled) {
+      return const ProviderCancellationResult(
+        ProviderCancellationStatus.alreadyRequested,
+      );
+    }
     isCancelled = true;
-    cancelController?.add(true);
+    final controller = cancelController;
+    if (controller != null && !controller.isClosed) {
+      controller.add(true);
+    }
+    return const ProviderCancellationResult(
+      ProviderCancellationStatus.requested,
+    );
   }
 
   // 重置取消状态
   void resetCancelState() {
     isCancelled = false;
+    _emittedTerminal = null;
     cancelController = StreamController<bool>();
   }
 

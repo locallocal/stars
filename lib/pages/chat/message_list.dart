@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat/audio_player_widget.dart';
+import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/chat/video_player_widget.dart';
 import 'package:stars/pages/common/common.dart';
 import 'package:stars/utils/theme.dart';
@@ -12,6 +15,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MessageList extends StatelessWidget {
   final List<Message> messages;
@@ -51,42 +55,66 @@ class MessageList extends StatelessWidget {
         ),
         itemBuilder: (context, index) {
           if (isStreaming && index == messages.length) {
-            return _buildMessageRow(
-              context,
-              bubble: _MessageBubble(
-                isCurrentUser: false,
-                isDesktop: isDesktop,
-                reasoning: deepThinking == true ? reasoningResponse ?? '' : '',
-                processInfo: streamingProcessInfo,
-                content: streamingResponse,
+            return RepaintBoundary(
+              key: const ValueKey<String>('streaming-message'),
+              child: _buildMessageRow(
+                context,
+                bubble: _MessageBubble(
+                  isCurrentUser: false,
+                  isDesktop: isDesktop,
+                  isStreaming: true,
+                  reasoning:
+                      deepThinking == true ? reasoningResponse ?? '' : '',
+                  processInfo: streamingProcessInfo,
+                  content: streamingResponse,
+                ),
               ),
             );
           }
 
           final message = messages[index];
           final isMe = message.senderId == currentUserId;
-          return _buildMessageRow(
-            context,
+          final bubble = _MessageBubble(
             isCurrentUser: isMe,
-            bubble: GestureDetector(
-              onLongPress:
-                  message.content.isEmpty
-                      ? null
-                      : () {
-                        Clipboard.setData(ClipboardData(text: message.content));
-                      },
-              child: _MessageBubble(
-                isCurrentUser: isMe,
-                isDesktop: isDesktop,
-                reasoning: message.reasoning,
-                processInfo: message.processInfo,
-                content: message.content,
-                images: message.images,
-                files: message.files,
-                audio: message.audio,
-                music: message.music,
-                video: message.video,
-              ),
+            isDesktop: isDesktop,
+            reasoning: message.reasoning,
+            processInfo: message.processInfo,
+            content: message.content,
+            images: message.images,
+            files: message.files,
+            audio: message.audio,
+            music: message.music,
+            video: message.video,
+            terminalOutcome: message.terminalOutcome,
+            hasPartialContent: message.hasPartialContent,
+          );
+          return RepaintBoundary(
+            key: ValueKey<String>(
+              message.messageId.isEmpty
+                  ? 'legacy-${message.timestamp.microsecondsSinceEpoch}-$index'
+                  : message.messageId,
+            ),
+            child: _buildMessageRow(
+              context,
+              isCurrentUser: isMe,
+              bubble:
+                  isDesktop
+                      ? _DesktopMessageActions(
+                        content: message.content,
+                        isCurrentUser: isMe,
+                        child: bubble,
+                      )
+                      : GestureDetector(
+                        onLongPress:
+                            message.content.isEmpty
+                                ? null
+                                : () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: message.content),
+                                  );
+                                },
+                        child: bubble,
+                      ),
             ),
           );
         },
@@ -116,7 +144,7 @@ class MessageList extends StatelessWidget {
                     isDesktop
                         ? (isCurrentUser
                             ? StarsDesktopTheme.messageBubbleMaxWidth
-                            : StarsDesktopTheme.contentMaxWidth - 48)
+                            : StarsDesktopTheme.contentMaxWidth)
                         : MediaQuery.of(context).size.width * 0.8,
               ),
               child: bubble,
@@ -128,9 +156,124 @@ class MessageList extends StatelessWidget {
   }
 }
 
+class _DesktopMessageActions extends StatefulWidget {
+  const _DesktopMessageActions({
+    required this.content,
+    required this.isCurrentUser,
+    required this.child,
+  });
+
+  final String content;
+  final bool isCurrentUser;
+  final Widget child;
+
+  @override
+  State<_DesktopMessageActions> createState() => _DesktopMessageActionsState();
+}
+
+class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
+  final FocusNode _focusNode = FocusNode(debugLabel: 'desktop-message');
+  bool _hovered = false;
+
+  bool get _canCopy => widget.content.isNotEmpty;
+  bool get _showActions => _canCopy && (_hovered || _focusNode.hasFocus);
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChanged);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _copyMessage() async {
+    if (!_canCopy) return;
+    await Clipboard.setData(ClipboardData(text: widget.content));
+    if (!mounted) return;
+    ShadSonner.maybeOf(context)?.show(
+      ShadToast(
+        title: Text(S.of(context).messageCopied),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final copyLabel = MaterialLocalizations.of(context).copyButtonLabel;
+    final actions = <Widget>[
+      ShadContextMenuItem(
+        leading: const Icon(LucideIcons.copy, size: 16),
+        onPressed: _copyMessage,
+        child: Text(copyLabel),
+      ),
+    ];
+
+    return StarsContextMenu(
+      focusNode: _focusNode,
+      enabled: _canCopy,
+      items: actions,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Column(
+          crossAxisAlignment:
+              widget.isCurrentUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            widget.child,
+            if (_canCopy)
+              SizedBox(
+                height: 26,
+                child: OverflowBox(
+                  alignment:
+                      widget.isCurrentUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                  minHeight: 44,
+                  maxHeight: 44,
+                  child: AnimatedOpacity(
+                    opacity: _showActions ? 1 : 0,
+                    duration:
+                        MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 100),
+                    child: ExcludeFocus(
+                      excluding: !_showActions,
+                      child: IgnorePointer(
+                        ignoring: !_showActions,
+                        child: StarsDesktopIconAction(
+                          icon: LucideIcons.copy,
+                          label: copyLabel,
+                          onPressed: _copyMessage,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MessageBubble extends StatelessWidget {
   final bool isCurrentUser;
   final bool isDesktop;
+  final bool isStreaming;
   final String reasoning;
   final MessageProcessInfo processInfo;
   final String content;
@@ -139,10 +282,13 @@ class _MessageBubble extends StatelessWidget {
   final String audio;
   final String music;
   final String video;
+  final MessageTerminalOutcome? terminalOutcome;
+  final bool hasPartialContent;
 
   const _MessageBubble({
     required this.isCurrentUser,
     required this.isDesktop,
+    this.isStreaming = false,
     required this.reasoning,
     this.processInfo = const MessageProcessInfo(),
     required this.content,
@@ -151,20 +297,14 @@ class _MessageBubble extends StatelessWidget {
     this.audio = '',
     this.music = '',
     this.video = '',
+    this.terminalOutcome,
+    this.hasPartialContent = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
-    final hasStructuredSections =
-        reasoning.isNotEmpty ||
-        processInfo.hasData ||
-        images.isNotEmpty ||
-        files.isNotEmpty ||
-        audio.isNotEmpty ||
-        music.isNotEmpty ||
-        video.isNotEmpty;
-    final useBubbleShell = !isDesktop || isCurrentUser || hasStructuredSections;
+    final useBubbleShell = !isDesktop || isCurrentUser;
     final backgroundColor =
         isCurrentUser
             ? StarsDesktopTheme.userBubble(context)
@@ -183,7 +323,12 @@ class _MessageBubble extends StatelessWidget {
                       ? 14
                       : 0,
             ),
-            child: ReasoningSection(reasoning: reasoning, isDesktop: isDesktop),
+            child: ReasoningSection(
+              reasoning: reasoning,
+              isDesktop: isDesktop,
+              isStreaming: isStreaming,
+              durationMs: processInfo.durationMs,
+            ),
           ),
         if (processInfo.hasData)
           Padding(
@@ -200,6 +345,9 @@ class _MessageBubble extends StatelessWidget {
           MarkdownBody(
             data: content,
             selectable: true,
+            onTapLink:
+                (text, href, title) =>
+                    unawaited(_openMarkdownLink(context, href)),
             styleSheet: _buildMarkdownStyleSheet(context, fontSize),
           ),
         if (images.isNotEmpty)
@@ -207,9 +355,12 @@ class _MessageBubble extends StatelessWidget {
             padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
             child: _StatusCardSection(
               isDesktop: isDesktop,
-              icon: Icons.image_outlined,
-              title: isCurrentUser ? '图片附件' : '图片结果',
-              subtitle: '${images.length} 项',
+              icon: isDesktop ? LucideIcons.image : Icons.image_outlined,
+              title:
+                  isCurrentUser
+                      ? S.of(context).imageAttachment
+                      : S.of(context).imageResult,
+              subtitle: S.of(context).itemCount(images.length.toString()),
               child: Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -229,9 +380,13 @@ class _MessageBubble extends StatelessWidget {
             ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
-              icon: Icons.attach_file_rounded,
-              title: isCurrentUser ? '文件附件' : '文件结果',
-              subtitle: '${files.length} 个文件',
+              icon:
+                  isDesktop ? LucideIcons.paperclip : Icons.attach_file_rounded,
+              title:
+                  isCurrentUser
+                      ? S.of(context).fileAttachment
+                      : S.of(context).fileResult,
+              subtitle: S.of(context).fileCount(files.length.toString()),
               child: Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -253,9 +408,10 @@ class _MessageBubble extends StatelessWidget {
             padding: EdgeInsets.only(top: _hasMediaAbove ? 12 : 0),
             child: _StatusCardSection(
               isDesktop: isDesktop,
-              icon: Icons.graphic_eq_rounded,
-              title: '语音结果',
-              subtitle: '可直接播放',
+              icon:
+                  isDesktop ? LucideIcons.audioLines : Icons.graphic_eq_rounded,
+              title: S.of(context).speechResult,
+              subtitle: S.of(context).directPlayback,
               child: AudioPlayerWidget(audioFilePath: audio),
             ),
           ),
@@ -266,9 +422,9 @@ class _MessageBubble extends StatelessWidget {
             ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
-              icon: Icons.music_note_rounded,
-              title: '音乐结果',
-              subtitle: '可直接播放',
+              icon: isDesktop ? LucideIcons.music : Icons.music_note_rounded,
+              title: S.of(context).musicResult,
+              subtitle: S.of(context).directPlayback,
               child: AudioPlayerWidget(audioFilePath: music),
             ),
           ),
@@ -282,10 +438,30 @@ class _MessageBubble extends StatelessWidget {
             ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
-              icon: Icons.video_camera_back_outlined,
-              title: '视频结果',
-              subtitle: '可直接预览',
+              icon:
+                  isDesktop
+                      ? LucideIcons.video
+                      : Icons.video_camera_back_outlined,
+              title: S.of(context).videoResult,
+              subtitle: S.of(context).directPreview,
               child: VideoPlayerWidget(videoFilePath: video),
+            ),
+          ),
+        if (terminalOutcome != null &&
+            (terminalOutcome != MessageTerminalOutcome.completed ||
+                hasPartialContent))
+          Padding(
+            padding: EdgeInsets.only(
+              top:
+                  content.isNotEmpty ||
+                          _hasStructuredMedia ||
+                          processInfo.hasData
+                      ? 10
+                      : 0,
+            ),
+            child: _MessageTerminalStatus(
+              outcome: terminalOutcome!,
+              hasPartialContent: hasPartialContent,
             ),
           ),
       ],
@@ -338,7 +514,7 @@ class _MessageBubble extends StatelessWidget {
         _showImageDialog(context, imagePath);
       },
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isDesktop ? 8 : 12),
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: isDesktop ? 220 : 150,
@@ -351,11 +527,11 @@ class _MessageBubble extends StatelessWidget {
               return Container(
                 width: 96,
                 height: 96,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: StarsDesktopTheme.elevatedSurface(context),
                 child: Center(
                   child: Icon(
-                    Icons.broken_image,
-                    color: Theme.of(context).colorScheme.onSurface,
+                    isDesktop ? LucideIcons.imageOff : Icons.broken_image,
+                    color: StarsDesktopTheme.mutedText(context),
                   ),
                 ),
               );
@@ -381,14 +557,14 @@ class _MessageBubble extends StatelessWidget {
             isCurrentUser
                 ? Colors.white.withValues(alpha: 0.28)
                 : Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(isDesktop ? 8 : 14),
         border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.insert_drive_file_rounded,
+            isDesktop ? LucideIcons.file : Icons.insert_drive_file_rounded,
             size: 24,
             color: StarsDesktopTheme.mutedText(context),
           ),
@@ -420,6 +596,11 @@ class _MessageBubble extends StatelessWidget {
         backgroundColor: StarsDesktopTheme.elevatedSurface(context),
         fontSize: fontSize - 1,
       ),
+      a: TextStyle(
+        color: Theme.of(context).colorScheme.primary,
+        decoration: TextDecoration.underline,
+        decorationColor: Theme.of(context).colorScheme.primary,
+      ),
       h1: TextStyle(
         color: Theme.of(context).colorScheme.onSurface,
         fontSize: fontSize + 6,
@@ -441,13 +622,76 @@ class _MessageBubble extends StatelessWidget {
       ),
       codeblockDecoration: BoxDecoration(
         color: StarsDesktopTheme.elevatedSurface(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(isDesktop ? 8 : 14),
         border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       blockSpacing: 10,
       listBullet: TextStyle(
         color: StarsDesktopTheme.mutedText(context),
         fontSize: fontSize,
+      ),
+    );
+  }
+}
+
+class _MessageTerminalStatus extends StatelessWidget {
+  const _MessageTerminalStatus({
+    required this.outcome,
+    required this.hasPartialContent,
+  });
+
+  final MessageTerminalOutcome outcome;
+  final bool hasPartialContent;
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, label, variant) = switch (outcome) {
+      MessageTerminalOutcome.cancelled => (
+        LucideIcons.square,
+        hasPartialContent
+            ? S.of(context).replyStoppedPartial
+            : S.of(context).replyCancelled,
+        ShadBadgeVariant.outline,
+      ),
+      MessageTerminalOutcome.failed => (
+        LucideIcons.triangleAlert,
+        hasPartialContent
+            ? S.of(context).generationFailedPartial
+            : S.of(context).generationFailed,
+        ShadBadgeVariant.destructive,
+      ),
+      MessageTerminalOutcome.emptyResponse => (
+        LucideIcons.circleSlash,
+        S.of(context).noContentReturned,
+        ShadBadgeVariant.outline,
+      ),
+      MessageTerminalOutcome.completed => (
+        LucideIcons.check,
+        hasPartialContent
+            ? S.of(context).partialResponse
+            : S.of(context).statusCompleted,
+        ShadBadgeVariant.secondary,
+      ),
+    };
+
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: ShadBadge.raw(
+          variant: variant,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14),
+              const SizedBox(width: 6),
+              Text(label),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -483,7 +727,7 @@ class _StatusCardSection extends StatelessWidget {
                 color: Theme.of(
                   context,
                 ).colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(isDesktop ? 6 : 10),
               ),
               child: Icon(
                 icon,
@@ -499,7 +743,7 @@ class _StatusCardSection extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize:
                           (Theme.of(context).textTheme.bodyLarge?.fontSize ??
                               14) -
@@ -555,6 +799,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
   final isDesktop = isDesktopPlatform(context);
 
   Future<void> saveImage(BuildContext dialogContext) async {
+    final strings = S.of(dialogContext);
     try {
       final file = File(imagePath);
       final fileName = imagePath.split(Platform.pathSeparator).last;
@@ -565,7 +810,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
           albumName: 'Stars',
         );
         if (result != true) {
-          throw Exception('保存到相册失败');
+          throw Exception(strings.saveToGalleryFailed);
         }
         if (!dialogContext.mounted) return;
         showDialog<void>(
@@ -574,8 +819,8 @@ void _showImageDialog(BuildContext context, String imagePath) {
           builder:
               (context) => AlertDialog(
                 backgroundColor: Colors.black.withValues(alpha: 0.7),
-                content: const Text(
-                  '图片已保存到相册',
+                content: Text(
+                  strings.imageSavedToGallery,
                   style: TextStyle(color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
@@ -590,7 +835,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
       }
 
       final result = await FilePicker.platform.saveFile(
-        dialogTitle: '保存图片',
+        dialogTitle: strings.saveImage,
         fileName: fileName,
         type: FileType.image,
         allowedExtensions: ['png', 'jpg', 'jpeg'],
@@ -600,17 +845,22 @@ void _showImageDialog(BuildContext context, String imagePath) {
       }
     } catch (error) {
       if (dialogContext.mounted) {
-        showSnackBar(dialogContext, '保存失败: $error');
+        showSnackBar(dialogContext, strings.saveImageFailed(error.toString()));
       }
     }
   }
 
   Future<void> shareImage(BuildContext dialogContext) async {
     try {
-      await Share.shareXFiles([XFile(imagePath)], text: '来自 Stars 的图片');
+      await Share.shareXFiles([
+        XFile(imagePath),
+      ], text: S.of(dialogContext).sharedImageFromStars);
     } catch (error) {
       if (dialogContext.mounted) {
-        showSnackBar(dialogContext, '分享失败: $error');
+        showSnackBar(
+          dialogContext,
+          S.of(dialogContext).shareImageFailed(error.toString()),
+        );
       }
     }
   }
@@ -631,20 +881,11 @@ void _showImageDialog(BuildContext context, String imagePath) {
       );
     }
 
-    return Semantics(
-      button: true,
+    return StarsDesktopIconAction(
+      icon: icon,
       label: tooltip,
-      child: ShadTooltip(
-        builder: (context) => Text(tooltip),
-        child: ShadIconButton.secondary(
-          width: 36,
-          height: 36,
-          padding: EdgeInsets.zero,
-          iconSize: 18,
-          onPressed: onPressed,
-          icon: Icon(icon),
-        ),
-      ),
+      variant: ShadButtonVariant.secondary,
+      onPressed: onPressed,
     );
   }
 
@@ -669,15 +910,15 @@ void _showImageDialog(BuildContext context, String imagePath) {
             children: [
               actionButton(
                 dialogContext: dialogContext,
-                tooltip: '保存图片',
-                icon: Icons.save_alt_rounded,
+                tooltip: S.of(dialogContext).saveImage,
+                icon: isDesktop ? LucideIcons.download : Icons.save_alt_rounded,
                 onPressed: () => saveImage(dialogContext),
               ),
               const SizedBox(width: 8),
               actionButton(
                 dialogContext: dialogContext,
-                tooltip: '分享图片',
-                icon: Icons.share_rounded,
+                tooltip: S.of(dialogContext).shareImage,
+                icon: isDesktop ? LucideIcons.share2 : Icons.share_rounded,
                 onPressed: () => shareImage(dialogContext),
               ),
               const SizedBox(width: 8),
@@ -685,7 +926,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
                 dialogContext: dialogContext,
                 tooltip:
                     MaterialLocalizations.of(dialogContext).closeButtonTooltip,
-                icon: Icons.close_rounded,
+                icon: isDesktop ? LucideIcons.x : Icons.close_rounded,
                 onPressed: () => Navigator.of(dialogContext).pop(),
               ),
             ],
@@ -699,7 +940,7 @@ void _showImageDialog(BuildContext context, String imagePath) {
     final windowSize = MediaQuery.sizeOf(context);
     final width = (windowSize.width - 32).clamp(0.0, 960.0).toDouble();
     final height = (windowSize.height - 32).clamp(0.0, 720.0).toDouble();
-    showShadDialog<void>(
+    showChatShadDialog<void>(
       context: context,
       builder:
           (dialogContext) => ShadDialog(
@@ -722,11 +963,15 @@ void _showImageDialog(BuildContext context, String imagePath) {
 class ReasoningSection extends StatefulWidget {
   final String reasoning;
   final bool isDesktop;
+  final bool isStreaming;
+  final int? durationMs;
 
   const ReasoningSection({
     super.key,
     required this.reasoning,
     this.isDesktop = false,
+    this.isStreaming = false,
+    this.durationMs,
   });
 
   @override
@@ -747,13 +992,14 @@ class ProcessInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = S.of(context);
     final summaryChips = <Widget>[];
 
     if (!hasReasoningContent && processInfo.reasoningStatus.isNotEmpty) {
       summaryChips.add(
         _ProcessChip(
-          icon: Icons.psychology_alt_rounded,
-          label: _reasoningStatusLabel(processInfo.reasoningStatus),
+          icon: LucideIcons.brain,
+          label: _reasoningStatusLabel(strings, processInfo.reasoningStatus),
         ),
       );
     }
@@ -761,8 +1007,10 @@ class ProcessInfoSection extends StatelessWidget {
     if (processInfo.durationMs != null) {
       summaryChips.add(
         _ProcessChip(
-          icon: Icons.timelapse_rounded,
-          label: '耗时 ${_formatDuration(processInfo.durationMs!)}',
+          icon: LucideIcons.clock3,
+          label: strings.processDuration(
+            _formatDuration(processInfo.durationMs!),
+          ),
         ),
       );
     }
@@ -770,8 +1018,10 @@ class ProcessInfoSection extends StatelessWidget {
     if (processInfo.toolCalls.isNotEmpty) {
       summaryChips.add(
         _ProcessChip(
-          icon: Icons.build_outlined,
-          label: '工具 ${processInfo.toolCalls.length}',
+          icon: LucideIcons.wrench,
+          label: strings.processToolCount(
+            processInfo.toolCalls.length.toString(),
+          ),
         ),
       );
     }
@@ -779,8 +1029,10 @@ class ProcessInfoSection extends StatelessWidget {
     if (processInfo.commandExecutions.isNotEmpty) {
       summaryChips.add(
         _ProcessChip(
-          icon: Icons.terminal_rounded,
-          label: '命令 ${processInfo.commandExecutions.length}',
+          icon: LucideIcons.terminal,
+          label: strings.processCommandCount(
+            processInfo.commandExecutions.length.toString(),
+          ),
         ),
       );
     }
@@ -788,17 +1040,20 @@ class ProcessInfoSection extends StatelessWidget {
     if (processInfo.fileEdits.isNotEmpty) {
       summaryChips.add(
         _ProcessChip(
-          icon: Icons.edit_note_rounded,
-          label: '文件 ${processInfo.fileEdits.length}',
+          icon: LucideIcons.filePenLine,
+          label: strings.processFileCount(
+            processInfo.fileEdits.length.toString(),
+          ),
         ),
       );
     }
 
     return _StatusCardSection(
       isDesktop: isDesktop,
-      icon: Icons.auto_awesome_motion_rounded,
-      title: '执行状态',
-      subtitle: _buildSubtitle(),
+      icon:
+          isDesktop ? LucideIcons.sparkles : Icons.auto_awesome_motion_rounded,
+      title: strings.executionStatus,
+      subtitle: _buildSubtitle(strings),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -807,15 +1062,17 @@ class ProcessInfoSection extends StatelessWidget {
           if (processInfo.toolCalls.isNotEmpty) ...[
             SizedBox(height: summaryChips.isNotEmpty ? 12 : 0),
             _ProcessListCard<MessageToolCall>(
-              title: '工具调用',
-              icon: Icons.build_outlined,
+              title: strings.toolCalls,
+              icon: LucideIcons.wrench,
               items: processInfo.toolCalls,
               titleBuilder: (item) => item.name,
               subtitleBuilder:
                   (item) => _joinMeta([
                     if (item.detail.isNotEmpty) item.detail,
                     if (item.durationMs != null)
-                      '耗时 ${_formatDuration(item.durationMs!)}',
+                      strings.processDuration(
+                        _formatDuration(item.durationMs!),
+                      ),
                   ]),
               statusBuilder: (item) => item.status,
             ),
@@ -823,15 +1080,17 @@ class ProcessInfoSection extends StatelessWidget {
           if (processInfo.commandExecutions.isNotEmpty) ...[
             SizedBox(height: summaryChips.isNotEmpty ? 12 : 0),
             _ProcessListCard<MessageCommandExecution>(
-              title: '命令执行',
-              icon: Icons.terminal_rounded,
+              title: strings.commandExecutions,
+              icon: LucideIcons.terminal,
               items: processInfo.commandExecutions,
               titleBuilder: (item) => item.command,
               subtitleBuilder:
                   (item) => _joinMeta([
                     if (item.detail.isNotEmpty) item.detail,
                     if (item.durationMs != null)
-                      '耗时 ${_formatDuration(item.durationMs!)}',
+                      strings.processDuration(
+                        _formatDuration(item.durationMs!),
+                      ),
                   ]),
               statusBuilder: (item) => item.status,
             ),
@@ -839,15 +1098,16 @@ class ProcessInfoSection extends StatelessWidget {
           if (processInfo.fileEdits.isNotEmpty) ...[
             SizedBox(height: summaryChips.isNotEmpty ? 12 : 0),
             _ProcessListCard<MessageFileEdit>(
-              title: '文件状态',
-              icon: Icons.description_outlined,
+              title: strings.fileStatus,
+              icon: LucideIcons.fileText,
               items: processInfo.fileEdits,
               titleBuilder:
                   (item) => item.path.split(Platform.pathSeparator).last,
               subtitleBuilder:
                   (item) => _joinMeta([
                     if (item.detail.isNotEmpty) item.detail,
-                    if (item.type.isNotEmpty) _fileTypeLabel(item.type),
+                    if (item.type.isNotEmpty)
+                      _fileTypeLabel(strings, item.type),
                   ]),
               statusBuilder: (item) => item.status,
             ),
@@ -857,21 +1117,29 @@ class ProcessInfoSection extends StatelessWidget {
     );
   }
 
-  String _buildSubtitle() {
+  String _buildSubtitle(S strings) {
     final parts = <String>[];
     if (processInfo.durationMs != null) {
-      parts.add('包含耗时');
+      parts.add(strings.includesDuration);
     }
     if (processInfo.toolCalls.isNotEmpty) {
-      parts.add('${processInfo.toolCalls.length} 次工具调用');
+      parts.add(
+        strings.processToolCount(processInfo.toolCalls.length.toString()),
+      );
     }
     if (processInfo.commandExecutions.isNotEmpty) {
-      parts.add('${processInfo.commandExecutions.length} 次命令执行');
+      parts.add(
+        strings.processCommandCount(
+          processInfo.commandExecutions.length.toString(),
+        ),
+      );
     }
     if (processInfo.fileEdits.isNotEmpty) {
-      parts.add('${processInfo.fileEdits.length} 条文件状态');
+      parts.add(
+        strings.processFileCount(processInfo.fileEdits.length.toString()),
+      );
     }
-    return parts.isEmpty ? '结构化过程信息' : parts.join(' · ');
+    return parts.isEmpty ? strings.structuredProcessInfo : parts.join(' · ');
   }
 }
 
@@ -883,13 +1151,9 @@ class _ProcessChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return ShadBadge.outline(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -932,7 +1196,7 @@ class _ProcessListCard<T> extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
@@ -942,7 +1206,7 @@ class _ProcessListCard<T> extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: StarsDesktopTheme.mutedText(context)),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 10),
@@ -998,104 +1262,71 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = status.isEmpty ? 'unknown' : status;
-    final colors = _statusColors(context, normalized);
+    final variant = switch (normalized) {
+      'completed' || 'created' || 'attached' => ShadBadgeVariant.secondary,
+      'failed' || 'error' => ShadBadgeVariant.destructive,
+      _ => ShadBadgeVariant.outline,
+    };
 
-    return Container(
+    return ShadBadge.raw(
+      variant: variant,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: colors.$1,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.$2),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       child: Text(
-        _statusLabel(normalized),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: colors.$3,
-        ),
+        _statusLabel(S.of(context), normalized),
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
-
-  (Color, Color, Color) _statusColors(BuildContext context, String status) {
-    final colorScheme = Theme.of(context).colorScheme;
-    switch (status) {
-      case 'completed':
-      case 'created':
-      case 'attached':
-        return (
-          colorScheme.primary.withValues(alpha: 0.10),
-          colorScheme.primary.withValues(alpha: 0.18),
-          colorScheme.primary,
-        );
-      case 'streaming':
-      case 'running':
-        return (
-          Colors.orange.withValues(alpha: 0.12),
-          Colors.orange.withValues(alpha: 0.2),
-          Colors.orange.shade800,
-        );
-      case 'cancelled':
-        return (
-          Colors.grey.withValues(alpha: 0.14),
-          Colors.grey.withValues(alpha: 0.2),
-          Colors.grey.shade800,
-        );
-      default:
-        return (
-          StarsDesktopTheme.elevatedSurface(context),
-          StarsDesktopTheme.borderColor(context),
-          StarsDesktopTheme.mutedText(context),
-        );
-    }
-  }
 }
 
-String _statusLabel(String status) {
+String _statusLabel(S strings, String status) {
   switch (status) {
     case 'completed':
-      return '已完成';
+      return strings.statusCompleted;
     case 'created':
-      return '已生成';
+      return strings.statusGenerated;
     case 'attached':
-      return '已附加';
+      return strings.statusAttached;
     case 'streaming':
-      return '进行中';
+      return strings.statusInProgress;
     case 'running':
-      return '执行中';
+      return strings.statusRunning;
     case 'cancelled':
-      return '已取消';
+      return strings.statusCancelled;
+    case 'failed':
+    case 'error':
+      return strings.statusFailed;
     default:
-      return '已记录';
+      return strings.statusRecorded;
   }
 }
 
-String _reasoningStatusLabel(String status) {
+String _reasoningStatusLabel(S strings, String status) {
   switch (status) {
     case 'completed':
-      return '思考完成';
+      return strings.reasoningCompleted;
     case 'cancelled':
-      return '思考中断';
+      return strings.reasoningInterrupted;
     case 'streaming':
-      return '思考中';
+      return strings.reasoningInProgress;
     default:
-      return '过程信息';
+      return strings.processInformation;
   }
 }
 
-String _fileTypeLabel(String type) {
+String _fileTypeLabel(S strings, String type) {
   switch (type) {
     case 'image':
-      return '图片';
+      return strings.uploadImage;
     case 'audio':
-      return '语音';
+      return strings.fileTypeSpeech;
     case 'music':
-      return '音乐';
+      return strings.fileTypeMusic;
     case 'video':
-      return '视频';
+      return strings.fileTypeVideo;
     default:
-      return '文件';
+      return strings.uploadFile;
   }
 }
 
@@ -1113,36 +1344,129 @@ String _formatDuration(int durationMs) {
 }
 
 class _ReasoningSectionState extends State<ReasoningSection> {
-  late bool isExpanded;
+  static const _itemValue = 'reasoning';
+
+  late bool _mobileExpanded;
+  late final ShadAccordionController<String> _desktopController;
 
   @override
   void initState() {
     super.initState();
-    isExpanded = !widget.isDesktop;
+    _mobileExpanded = true;
+    _desktopController = ShadAccordionController<String>(
+      widget.isDesktop && widget.isStreaming ? _itemValue : null,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant ReasoningSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.isDesktop || oldWidget.isStreaming == widget.isStreaming) {
+      return;
+    }
+    final isOpen = _desktopController.value.contains(_itemValue);
+    if (widget.isStreaming != isOpen) {
+      _desktopController.toggle(_itemValue);
+    }
+  }
+
+  @override
+  void dispose() {
+    _desktopController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
+    final strings = S.of(context);
+
+    if (widget.isDesktop) {
+      final disableAnimations = MediaQuery.disableAnimationsOf(context);
+      final title =
+          widget.isStreaming
+              ? strings.thinkingInProgress
+              : widget.durationMs == null
+              ? strings.thinkingCompleted
+              : strings.thinkingCompletedWithDuration(
+                _formatDuration(widget.durationMs!),
+              );
+
+      return ShadCard(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        backgroundColor: StarsDesktopTheme.statusCardBackground(context),
+        radius: BorderRadius.circular(StarsDesktopTheme.cardRadius),
+        border: ShadBorder.all(color: StarsDesktopTheme.borderColor(context)),
+        child: ShadAccordion<String>(
+          controller: _desktopController,
+          maintainState: true,
+          children: [
+            ShadAccordionItem<String>(
+              value: _itemValue,
+              separator: const SizedBox.shrink(),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              duration:
+                  disableAnimations
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+              underlineTitleOnHover: false,
+              iconData: LucideIcons.chevronDown,
+              title: ListenableBuilder(
+                listenable: _desktopController,
+                builder:
+                    (context, child) => Semantics(
+                      expanded: _desktopController.value.contains(_itemValue),
+                      child: child,
+                    ),
+                child: Row(
+                  children: [
+                    ExcludeSemantics(
+                      child: Icon(
+                        widget.isStreaming
+                            ? LucideIcons.loaderCircle
+                            : LucideIcons.brain,
+                        size: 16,
+                        color: StarsDesktopTheme.mutedText(context),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: fontSize - 1,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildReasoningMarkdown(context, fontSize),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
         color: StarsDesktopTheme.statusCardBackground(context),
-        borderRadius: BorderRadius.circular(
-          widget.isDesktop ? StarsDesktopTheme.cardRadius : 14,
-        ),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: StarsDesktopTheme.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            borderRadius: BorderRadius.circular(
-              widget.isDesktop ? StarsDesktopTheme.cardRadius : 14,
-            ),
+            borderRadius: BorderRadius.circular(14),
             onTap: () {
               setState(() {
-                isExpanded = !isExpanded;
+                _mobileExpanded = !_mobileExpanded;
               });
             },
             child: Padding(
@@ -1170,7 +1494,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '过程信息',
+                          strings.processInformation,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: fontSize - 1,
@@ -1179,7 +1503,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '深度思考',
+                          strings.deepThinking,
                           style: TextStyle(
                             fontSize: fontSize - 3,
                             color: StarsDesktopTheme.mutedText(context),
@@ -1190,7 +1514,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                   ),
                   AnimatedRotation(
                     duration: const Duration(milliseconds: 180),
-                    turns: isExpanded ? 0 : 0.5,
+                    turns: _mobileExpanded ? 0 : 0.5,
                     child: Icon(
                       Icons.keyboard_arrow_up_rounded,
                       color: StarsDesktopTheme.mutedText(context),
@@ -1200,7 +1524,7 @@ class _ReasoningSectionState extends State<ReasoningSection> {
               ),
             ),
           ),
-          if (isExpanded)
+          if (_mobileExpanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: Container(
@@ -1212,36 +1536,84 @@ class _ReasoningSectionState extends State<ReasoningSection> {
                   ).colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: MarkdownBody(
-                  data: widget.reasoning,
-                  selectable: true,
-                  styleSheet: MarkdownStyleSheet(
-                    p: TextStyle(
-                      color: StarsDesktopTheme.mutedText(context),
-                      fontSize: fontSize - 1,
-                      height: 1.5,
-                    ),
-                    code: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      backgroundColor: StarsDesktopTheme.elevatedSurface(
-                        context,
-                      ),
-                      fontSize: fontSize - 2,
-                    ),
-                    codeblockDecoration: BoxDecoration(
-                      color: StarsDesktopTheme.elevatedSurface(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: StarsDesktopTheme.borderColor(context),
-                      ),
-                    ),
-                    blockSpacing: 8,
-                  ),
-                ),
+                child: _buildReasoningMarkdown(context, fontSize),
               ),
             ),
         ],
       ),
     );
   }
+
+  Widget _buildReasoningMarkdown(BuildContext context, double fontSize) {
+    return MarkdownBody(
+      data: widget.reasoning,
+      selectable: true,
+      onTapLink:
+          (text, href, title) => unawaited(_openMarkdownLink(context, href)),
+      styleSheet: MarkdownStyleSheet(
+        p: TextStyle(
+          color: StarsDesktopTheme.mutedText(context),
+          fontSize: fontSize - 1,
+          height: 1.5,
+        ),
+        code: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          backgroundColor: StarsDesktopTheme.elevatedSurface(context),
+          fontSize: fontSize - 2,
+        ),
+        a: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          decoration: TextDecoration.underline,
+          decorationColor: Theme.of(context).colorScheme.primary,
+        ),
+        codeblockDecoration: BoxDecoration(
+          color: StarsDesktopTheme.elevatedSurface(context),
+          borderRadius: BorderRadius.circular(widget.isDesktop ? 8 : 12),
+          border: Border.all(color: StarsDesktopTheme.borderColor(context)),
+        ),
+        blockSpacing: 8,
+      ),
+    );
+  }
+}
+
+Future<void> _openMarkdownLink(BuildContext context, String? href) async {
+  if (href == null || href.trim().isEmpty) return;
+  final normalized = href.trim();
+  final uri = Uri.tryParse(normalized);
+  final isWebLink =
+      uri != null &&
+      (uri.scheme == 'http' || uri.scheme == 'https') &&
+      uri.host.isNotEmpty;
+  final isHandledMailLink =
+      uri != null && uri.scheme == 'mailto' && await canLaunchUrl(uri);
+
+  if (uri != null && (isWebLink || isHandledMailLink)) {
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (launched) return;
+    } catch (_) {
+      // The same recoverable toast is used for handler and launch failures.
+    }
+  }
+  if (!context.mounted) return;
+
+  final sonner = ShadSonner.maybeOf(context);
+  if (sonner == null) {
+    showSnackBar(context, S.of(context).linkOpenFailed);
+    return;
+  }
+  sonner.show(
+    ShadToast.destructive(
+      title: Text(S.of(context).linkOpenFailed),
+      action: ShadButton.outline(
+        size: ShadButtonSize.sm,
+        onPressed: () async {
+          await Clipboard.setData(ClipboardData(text: normalized));
+        },
+        leading: const Icon(LucideIcons.copy, size: 16),
+        child: Text(MaterialLocalizations.of(context).copyButtonLabel),
+      ),
+    ),
+  );
 }

@@ -588,6 +588,14 @@
     "imageStyle": "Image Style",
     "imageSize": "Image Size",
     "stop": "Stop",
+    "generating": "Generating…",
+    "@generating": {
+        "description": "Disabled primary action label while a request is running and cannot be cancelled"
+    },
+    "stopping": "Stopping…",
+    "@stopping": {
+        "description": "Disabled primary action label while cancellation is being confirmed"
+    },
     "basicInformation": "Basic Information",
     "providerInformation": "Provider Information",
     "modelConfiguration": "Model Configuration",
@@ -596,8 +604,168 @@
     "hideApiKey": "Hide API Key",
     "noMatchingBots": "No matching bots found",
     "tryDifferentSearch": "Try a different search, or create a new item.",
-    "chatSearchScope": "Search includes message content and bot names.",
+    "chatSearchScope": "Search matches bot names and the latest message.",
     "newChatWorkspaceHint": "A new chat opens directly in the workspace.",
     "botSearchScope": "Search filters the list by bot name.",
-    "newBotWorkspaceHint": "New bots remain in the workspace for editing."
+    "newBotWorkspaceHint": "New bots remain in the workspace for editing.",
+    "retry": "Retry",
+    "unableToLoadChats": "Unable to load chats",
+    "clearSearch": "Clear search",
+    "unavailableBot": "Unavailable bot",
+    "botUnavailableTitle": "This bot is unavailable",
+    "orphanedChatGuidance": "Delete this orphaned chat or recreate the missing bot.",
+    "activeRequestCannotStop": "The active request cannot be stopped",
+    "waitForGenerationToFinish": "Wait for generation to finish.",
+    "waitForGenerationBeforeLeaving": "Wait for generation to finish before leaving this chat.",
+    "activeRequestCannotCancel": "The active request cannot be cancelled. Wait for it to finish.",
+    "attachments": "Attachments",
+    "itemCount": "{count} items",
+    "@itemCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "fileCount": "{count} files",
+    "@fileCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "clearAttachments": "Clear attachments",
+    "removeImageAttachment": "Remove image",
+    "removeFileAttachment": "Remove file",
+    "imageAttachment": "Image attachment",
+    "imageResult": "Image result",
+    "fileAttachment": "File attachment",
+    "fileResult": "File result",
+    "speechResult": "Speech result",
+    "referenceAudio": "Reference audio",
+    "musicResult": "Music result",
+    "videoResult": "Video result",
+    "directPlayback": "Ready to play",
+    "directPreview": "Ready to preview",
+    "replyStoppedPartial": "Stopped · Partial response kept",
+    "generationFailedPartial": "Generation failed · Partial response kept",
+    "generationFailed": "Generation failed",
+    "noContentReturned": "No content returned",
+    "partialResponse": "Partial response",
+    "statusCompleted": "Completed",
+    "saveImage": "Save image",
+    "shareImage": "Share image",
+    "saveToGalleryFailed": "Could not save to gallery",
+    "imageSavedToGallery": "Image saved to gallery",
+    "saveImageFailed": "Could not save image: {error}",
+    "@saveImageFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "shareImageFailed": "Could not share image: {error}",
+    "@shareImageFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "sharedImageFromStars": "Image from Stars",
+    "processDuration": "Duration {duration}",
+    "@processDuration": {
+        "placeholders": {
+            "duration": {"type": "String"}
+        }
+    },
+    "processToolCount": "{count} tool calls",
+    "@processToolCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "processCommandCount": "{count} command runs",
+    "@processCommandCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "processFileCount": "{count} file updates",
+    "@processFileCount": {
+        "placeholders": {
+            "count": {"type": "String"}
+        }
+    },
+    "executionStatus": "Execution status",
+    "toolCalls": "Tool calls",
+    "commandExecutions": "Command execution",
+    "fileStatus": "File status",
+    "includesDuration": "Includes duration",
+    "structuredProcessInfo": "Structured process information",
+    "statusGenerated": "Generated",
+    "statusAttached": "Attached",
+    "statusInProgress": "In progress",
+    "statusRunning": "Running",
+    "statusCancelled": "Cancelled",
+    "statusFailed": "Failed",
+    "statusRecorded": "Recorded",
+    "reasoningCompleted": "Reasoning complete",
+    "reasoningInterrupted": "Reasoning interrupted",
+    "reasoningInProgress": "Reasoning in progress",
+    "processInformation": "Process information",
+    "fileTypeSpeech": "Speech",
+    "fileTypeMusic": "Music",
+    "fileTypeVideo": "Video",
+    "thinkingInProgress": "Thinking…",
+    "thinkingCompleted": "Thinking complete",
+    "thinkingCompletedWithDuration": "Thinking complete · {duration}",
+    "@thinkingCompletedWithDuration": {
+        "placeholders": {
+            "duration": {"type": "String"}
+        }
+    },
+    "pleaseEnterSpeechDescription": "Enter a description for speech generation",
+    "speechGenerated": "Speech generated",
+    "generateSpeechFailed": "Could not generate speech: {error}",
+    "@generateSpeechFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "pleaseEnterMusicDescription": "Enter a description for music generation",
+    "musicGenerated": "Music generated",
+    "generateMusicFailed": "Could not generate music: {error}",
+    "@generateMusicFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "pleaseEnterVideoDescription": "Enter a description for video generation",
+    "videoGenerated": "Video generated",
+    "generateVideoFailed": "Could not generate video: {error}",
+    "@generateVideoFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "linkOpenFailed": "Unable to open this link.",
+    "unableToLoadBots": "Unable to load bots",
+    "creatingChat": "Creating…",
+    "createChatFailed": "Could not create the chat: {error}",
+    "@createChatFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "stopGenerationBeforeLeaving": "Stop generation before leaving?",
+    "stopGenerationBeforeLeavingDescription": "The partial response will be kept.",
+    "stopAndContinue": "Stop and continue",
+    "unableToLoadMessages": "Unable to load messages",
+    "clearChatFailed": "Could not clear chat history: {error}",
+    "@clearChatFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    },
+    "deleteChatFailed": "Could not delete the chat: {error}",
+    "@deleteChatFailed": {
+        "placeholders": {
+            "error": {"type": "String"}
+        }
+    }
 }

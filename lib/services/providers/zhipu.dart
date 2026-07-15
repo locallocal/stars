@@ -262,7 +262,6 @@ class Zhipu extends Provider {
             }
           } catch (e) {
             // 忽略解析错误
-            print('Parse response failed: $e');
           }
         }
       }

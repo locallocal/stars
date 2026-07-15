@@ -420,7 +420,26 @@ class MessageProcessInfo {
   }
 }
 
+enum MessageTerminalOutcome {
+  completed,
+  cancelled,
+  failed,
+  emptyResponse;
+
+  static MessageTerminalOutcome? fromStorage(Object? value) {
+    final raw = value?.toString();
+    if (raw == null || raw.isEmpty) return null;
+    for (final outcome in values) {
+      if (outcome.name == raw) return outcome;
+    }
+    return null;
+  }
+}
+
 class Message {
+  final String messageId;
+  final String turnId;
+  final String runId;
   final String chatId;
   final String botId;
   final String senderId;
@@ -432,9 +451,14 @@ class Message {
   final String audio;
   final String music;
   final String video;
+  final MessageTerminalOutcome? terminalOutcome;
+  final bool hasPartialContent;
   final DateTime timestamp;
 
   const Message({
+    this.messageId = '',
+    this.turnId = '',
+    this.runId = '',
     required this.chatId,
     required this.botId,
     required this.senderId,
@@ -446,6 +470,8 @@ class Message {
     this.audio = '',
     this.music = '',
     this.video = '',
+    this.terminalOutcome,
+    this.hasPartialContent = false,
     required this.timestamp,
   });
 
@@ -481,6 +507,9 @@ class Message {
     }
 
     return Message(
+      messageId: (map['message_id'] ?? '').toString(),
+      turnId: (map['turn_id'] ?? '').toString(),
+      runId: (map['run_id'] ?? '').toString(),
       chatId: map['chat_id'] as String,
       botId: map['bot_id'] as String,
       senderId: map['sender_id'] as String,
@@ -492,12 +521,65 @@ class Message {
       audio: (map['audio'] ?? '') as String,
       music: (map['music'] ?? '') as String,
       video: (map['video'] ?? '') as String,
+      terminalOutcome: MessageTerminalOutcome.fromStorage(
+        map['terminal_state'],
+      ),
+      hasPartialContent: switch (map['has_partial_content']) {
+        final int value => value != 0,
+        final bool value => value,
+        _ => false,
+      },
       timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int),
+    );
+  }
+
+  Message copyWith({
+    String? messageId,
+    String? turnId,
+    String? runId,
+    String? chatId,
+    String? botId,
+    String? senderId,
+    String? content,
+    String? reasoning,
+    MessageProcessInfo? processInfo,
+    List<String>? images,
+    List<String>? files,
+    String? audio,
+    String? music,
+    String? video,
+    MessageTerminalOutcome? terminalOutcome,
+    bool clearTerminalOutcome = false,
+    bool? hasPartialContent,
+    DateTime? timestamp,
+  }) {
+    return Message(
+      messageId: messageId ?? this.messageId,
+      turnId: turnId ?? this.turnId,
+      runId: runId ?? this.runId,
+      chatId: chatId ?? this.chatId,
+      botId: botId ?? this.botId,
+      senderId: senderId ?? this.senderId,
+      content: content ?? this.content,
+      reasoning: reasoning ?? this.reasoning,
+      processInfo: processInfo ?? this.processInfo,
+      images: images ?? this.images,
+      files: files ?? this.files,
+      audio: audio ?? this.audio,
+      music: music ?? this.music,
+      video: video ?? this.video,
+      terminalOutcome:
+          clearTerminalOutcome ? null : terminalOutcome ?? this.terminalOutcome,
+      hasPartialContent: hasPartialContent ?? this.hasPartialContent,
+      timestamp: timestamp ?? this.timestamp,
     );
   }
 
   Map<String, Object> toMap() {
     return {
+      'message_id': messageId,
+      'turn_id': turnId,
+      'run_id': runId,
       'chat_id': chatId,
       'bot_id': botId,
       'sender_id': senderId,
@@ -509,6 +591,8 @@ class Message {
       'audio': audio,
       'music': music,
       'video': video,
+      'terminal_state': terminalOutcome?.name ?? '',
+      'has_partial_content': hasPartialContent ? 1 : 0,
       'timestamp': timestamp.millisecondsSinceEpoch,
     };
   }

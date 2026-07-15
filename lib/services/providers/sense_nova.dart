@@ -196,8 +196,8 @@ class SenseNova extends Provider {
             final base64Image = base64Encode(bytes);
             content.add({'type': 'image_base64', 'image_base64': base64Image});
           }
-        } catch (e) {
-          print('Process images failed: $e');
+        } catch (_) {
+          // Skip unreadable optional images and continue the request.
         }
       }
       return {'role': message.role, 'content': content};

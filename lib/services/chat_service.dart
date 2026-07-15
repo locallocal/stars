@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:stars/services/message_service.dart';
 import 'package:stars/services/database_service.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/utils/utils.dart';
@@ -74,12 +74,23 @@ class ChatService {
   }
 
   static Future<void> deleteChat(String id) async {
-    await MessageService.deleteChatMessage(id);
-
     final db = await DatabaseService.database;
-    await db.delete('chats', where: 'id = ?', whereArgs: [id]);
-    await deleteChatDirectory(id);
+    await db.transaction((transaction) async {
+      await transaction.delete(
+        'messages',
+        where: 'chat_id = ?',
+        whereArgs: [id],
+      );
+      await transaction.delete('chats', where: 'id = ?', whereArgs: [id]);
+    });
     _chats.removeWhere((chat) => chat.id == id);
+    try {
+      await deleteChatDirectory(id);
+    } catch (error) {
+      // The database is authoritative. A stale cache directory can be cleaned
+      // on a later maintenance pass without resurrecting the deleted chat.
+      debugPrint('Failed to delete chat directory for $id: $error');
+    }
   }
 
   static Future<void> updateLastMessage(String id, String lastMessage) async {
@@ -109,6 +120,42 @@ class ChatService {
         },
         where: 'id = ?',
         whereArgs: [id],
+      );
+    }
+  }
+
+  /// Clears a conversation and its preview atomically.
+  static Future<void> clearChatHistory(String id) async {
+    final db = await DatabaseService.database;
+    final timestamp = DateTime.now();
+    await db.transaction((transaction) async {
+      await transaction.delete(
+        'messages',
+        where: 'chat_id = ?',
+        whereArgs: [id],
+      );
+      await transaction.update(
+        'chats',
+        {
+          'last_message': '',
+          'last_message_timestamp': timestamp.millisecondsSinceEpoch,
+          'modify_timestamp': timestamp.millisecondsSinceEpoch,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    });
+
+    final index = _chats.indexWhere((chat) => chat.id == id);
+    if (index != -1) {
+      final chat = _chats[index];
+      _chats[index] = Chat(
+        id: chat.id,
+        botId: chat.botId,
+        lastMessage: '',
+        lastMessageTimestamp: timestamp,
+        createTimestamp: chat.createTimestamp,
+        modifyTimestamp: timestamp,
       );
     }
   }

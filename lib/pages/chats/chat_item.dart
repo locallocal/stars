@@ -31,12 +31,13 @@ class _ChatListItemState extends State<ChatListItem> {
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 16;
-    final titleStyle = DesktopThemeTokens.bodyStyle(
-      context,
-    )?.copyWith(fontWeight: FontWeight.w700, fontSize: fontSize);
+    final titleStyle = DesktopThemeTokens.bodyStyle(context)?.copyWith(
+      fontWeight: FontWeight.w600,
+      fontSize: (fontSize - 2).clamp(13, 14),
+    );
     final metaStyle = DesktopThemeTokens.metaStyle(
       context,
-    )?.copyWith(fontSize: fontSize - 2);
+    )?.copyWith(fontSize: (fontSize - 3).clamp(12, 13));
     final subtitle =
         widget.bot.provider.isEmpty
             ? widget.lastMessage
@@ -53,10 +54,12 @@ class _ChatListItemState extends State<ChatListItem> {
     return DesktopInteractiveListItem(
       selected: widget.isSelected,
       onTap: widget.onTap,
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 10, 8, 10),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
+          ShadAvatar(
+            widget.bot.avatar.isEmpty ? null : File(widget.bot.avatar),
+            size: const Size.square(32),
             backgroundColor:
                 widget.bot.avatar.isEmpty
                     ? getFrostedProviderColor(
@@ -64,16 +67,14 @@ class _ChatListItemState extends State<ChatListItem> {
                       Theme.of(context).colorScheme.primary,
                     )
                     : Theme.of(context).colorScheme.primary,
-            backgroundImage:
-                widget.bot.avatar.isNotEmpty
-                    ? FileImage(File(widget.bot.avatar))
-                    : null,
-            child:
-                widget.bot.avatar.isEmpty
-                    ? buildProviderLogo(context, '', widget.bot.provider, 20)
-                    : null,
+            placeholder: buildProviderLogo(
+              context,
+              '',
+              widget.bot.provider,
+              16,
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

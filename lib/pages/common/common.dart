@@ -63,8 +63,7 @@ Widget buildSectionContainer(
         ),
         ...children
             .expand((child) => [child, const SizedBox(height: 4)])
-            .take(children.length * 2 - 1)
-            .toList(),
+            .take(children.length * 2 - 1),
       ],
     ),
   );
