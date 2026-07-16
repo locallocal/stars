@@ -233,6 +233,35 @@ class ContactsPageState extends State<ContactsPage> {
 
   Widget _buildBotsList(bool isDesktop) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
+    if (isDesktop) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return GridView.builder(
+            padding: const EdgeInsets.only(top: 4, bottom: 16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 1.65,
+            ),
+            itemCount: filteredBots.length,
+            itemBuilder: (context, index) {
+              final bot = filteredBots[index];
+              return _DesktopBotCard(
+                bot: bot,
+                subtitle:
+                    bot.model.isEmpty
+                        ? bot.provider
+                        : '${bot.provider} · ${bot.model}',
+                onOpen: () => _editBot(bot),
+                onStartChat: () => _startChat(bot),
+                onDelete: () => _deleteBot(bot),
+              );
+            },
+          );
+        },
+      );
+    }
     return ListView.separated(
       padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: filteredBots.length,
@@ -574,6 +603,127 @@ class ContactsPageState extends State<ContactsPage> {
                 _loadBots();
               },
             ),
+      ),
+    );
+  }
+}
+
+class _DesktopBotCard extends StatefulWidget {
+  const _DesktopBotCard({
+    required this.bot,
+    required this.subtitle,
+    required this.onOpen,
+    required this.onStartChat,
+    required this.onDelete,
+  });
+
+  final Bot bot;
+  final String subtitle;
+  final VoidCallback onOpen;
+  final VoidCallback onStartChat;
+  final VoidCallback onDelete;
+
+  @override
+  State<_DesktopBotCard> createState() => _DesktopBotCardState();
+}
+
+class _DesktopBotCardState extends State<_DesktopBotCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final muted = theme.colorScheme.mutedForeground;
+    return Semantics(
+      button: true,
+      label: widget.bot.name,
+      hint: S.of(context).selectBot,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: MenuAnchor(
+          menuChildren: [
+            MenuItemButton(
+              leadingIcon: const Icon(LucideIcons.messageCircle, size: 16),
+              onPressed: widget.onStartChat,
+              child: Text(S.of(context).startChatting),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(LucideIcons.trash2, size: 16),
+              onPressed: widget.onDelete,
+              child: Text(S.of(context).delete),
+            ),
+          ],
+          builder:
+              (context, controller, child) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: widget.onOpen,
+                onSecondaryTapDown: (details) {
+                  controller.open(position: details.localPosition);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  transform:
+                      _hovered
+                          ? (Matrix4.identity()..translateByDouble(0, -2, 0, 1))
+                          : Matrix4.identity(),
+                  child: ShadCard(
+                    padding: const EdgeInsets.all(18),
+                    backgroundColor: _hovered ? theme.colorScheme.accent : null,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: getFrostedProviderColor(
+                                widget.bot.provider,
+                                Theme.of(context).colorScheme.primary,
+                              ),
+                              backgroundImage:
+                                  widget.bot.avatar.isNotEmpty
+                                      ? FileImage(File(widget.bot.avatar))
+                                      : null,
+                              child:
+                                  widget.bot.avatar.isEmpty
+                                      ? buildProviderLogo(
+                                        context,
+                                        '',
+                                        widget.bot.provider,
+                                        22,
+                                      )
+                                      : null,
+                            ),
+                            const Spacer(),
+                            Icon(
+                              LucideIcons.arrowUpRight,
+                              size: 17,
+                              color: muted,
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Text(
+                          widget.bot.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.h4,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          widget.subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.muted,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+        ),
       ),
     );
   }

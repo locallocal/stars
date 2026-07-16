@@ -16,11 +16,13 @@ class ChatListPage extends StatefulWidget {
   final String? selectedChatId;
   final Function(String chatId, Bot bot) onChatSelected;
   final VoidCallback? onSelectionCleared;
+  final bool sidebarMode;
   const ChatListPage({
     super.key,
     this.selectedChatId,
     required this.onChatSelected,
     this.onSelectionCleared,
+    this.sidebarMode = false,
   });
 
   @override
@@ -190,14 +192,17 @@ class ChatListPageState extends State<ChatListPage> {
         searchController: _searchController,
         searchFocusNode: _searchFocusNode,
         onSearchChanged: _filterChats,
-        action: ShadButton(
-          size: ShadButtonSize.sm,
-          onPressed: _openNewChatDialog,
-          height: DesktopThemeTokens.controlHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          leading: const Icon(LucideIcons.plus, size: 16),
-          child: Text(S.of(context).newChat),
-        ),
+        action:
+            widget.sidebarMode
+                ? const SizedBox.shrink()
+                : ShadButton(
+                  size: ShadButtonSize.sm,
+                  onPressed: _openNewChatDialog,
+                  height: DesktopThemeTokens.controlHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  leading: const Icon(LucideIcons.plus, size: 16),
+                  child: Text(S.of(context).newChat),
+                ),
         child: body,
       ),
     );
