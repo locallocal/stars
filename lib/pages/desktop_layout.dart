@@ -209,107 +209,127 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           child: ColoredBox(
             color: DesktopThemeTokens.shellBackground(context),
             child: SafeArea(
-              child: Column(
+              child: Stack(
                 children: [
-                  _UnifiedDesktopToolbar(
-                    currentIndex: widget.currentIndex,
-                    bot: _activeBot,
-                    sidebarVisible:
-                        overlaySidebar
-                            ? isChat
-                                ? _activeChatOverlay == _ChatOverlay.sidebar
-                                : _compactSidebarOpen
-                            : _sidebarVisible,
-                    inspectorVisible:
-                        dockInspector ||
-                        (isChat
-                            ? _activeChatOverlay == _ChatOverlay.inspector
-                            : overlayInspector),
-                    inspectorAvailable: inspectorAvailable,
-                    compact: isChat && overlaySidebar,
-                    isChat: isChat,
-                    onToggleSidebar:
-                        () => _toggleSidebar(
-                          context,
-                          overlay: overlaySidebar,
-                          useChatSheet: isChat,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (showSidebar) ...[
+                        SizedBox(
+                          width: sidebarWidth,
+                          child: _buildSidebar(
+                            context,
+                            onToggleSidebar:
+                                () => _toggleSidebar(
+                                  context,
+                                  overlay: overlaySidebar,
+                                  useChatSheet: isChat,
+                                ),
+                          ),
                         ),
-                    onToggleInspector:
-                        inspectorAvailable
-                            ? () => _toggleInspector(
-                              context,
-                              useChatSheet: isChat && width < 1500,
-                            )
-                            : null,
-                    onCreateChat: widget.onCreateChat,
-                    onOpenSettings: () => _selectPage(2),
-                    onSearchRequested:
-                        widget.currentIndex == 2
-                            ? null
-                            : () => _requestSearch(
-                              context,
-                              isChat: isChat,
-                              overlaySidebar: overlaySidebar,
-                            ),
-                    onClearChat:
-                        widget.currentIndex == 0 &&
-                                widget.selectedChatId != null
-                            ? _requestClearChat
-                            : null,
-                  ),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                        _DesktopResizeHandle(
+                          label: S.of(context).showSidebar,
+                          value: sidebarWidth,
+                          onResize:
+                              (delta) => _resizeSidebar(
+                                delta,
+                                availableWidth: width,
+                                dockInspector: dockInspector,
+                                inspectorWidth: inspectorWidth,
+                              ),
+                          onReset: () => _resetSidebarWidth(width),
+                        ),
+                      ],
+                      Expanded(
+                        child: Column(
                           children: [
-                            if (showSidebar) ...[
-                              SizedBox(
-                                width: sidebarWidth,
-                                child: _buildSidebar(context),
-                              ),
-                              _DesktopResizeHandle(
-                                label: S.of(context).showSidebar,
-                                value: sidebarWidth,
-                                onResize:
-                                    (delta) => _resizeSidebar(
-                                      delta,
-                                      availableWidth: width,
-                                      dockInspector: dockInspector,
-                                      inspectorWidth: inspectorWidth,
+                            _UnifiedDesktopToolbar(
+                              currentIndex: widget.currentIndex,
+                              bot: _activeBot,
+                              sidebarVisible:
+                                  overlaySidebar
+                                      ? isChat
+                                          ? _activeChatOverlay ==
+                                              _ChatOverlay.sidebar
+                                          : _compactSidebarOpen
+                                      : _sidebarVisible,
+                              inspectorVisible:
+                                  dockInspector ||
+                                  (isChat
+                                      ? _activeChatOverlay ==
+                                          _ChatOverlay.inspector
+                                      : overlayInspector),
+                              inspectorAvailable: inspectorAvailable,
+                              compact: isChat && overlaySidebar,
+                              isChat: isChat,
+                              onToggleSidebar:
+                                  () => _toggleSidebar(
+                                    context,
+                                    overlay: overlaySidebar,
+                                    useChatSheet: isChat,
+                                  ),
+                              onToggleInspector:
+                                  inspectorAvailable
+                                      ? () => _toggleInspector(
+                                        context,
+                                        useChatSheet: isChat && width < 1500,
+                                      )
+                                      : null,
+                              onCreateChat: widget.onCreateChat,
+                              onOpenSettings: () => _selectPage(2),
+                              onSearchRequested:
+                                  widget.currentIndex == 2
+                                      ? null
+                                      : () => _requestSearch(
+                                        context,
+                                        isChat: isChat,
+                                        overlaySidebar: overlaySidebar,
+                                      ),
+                              onClearChat:
+                                  widget.currentIndex == 0 &&
+                                          widget.selectedChatId != null
+                                      ? _requestClearChat
+                                      : null,
+                            ),
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(child: _buildWorkspace(context)),
+                                  if (dockInspector) ...[
+                                    _DesktopResizeHandle(
+                                      label: S.of(context).showInspector,
+                                      value: inspectorWidth,
+                                      reversed: true,
+                                      onResize:
+                                          (delta) => _resizeInspector(
+                                            delta,
+                                            availableWidth: width,
+                                            sidebarWidth:
+                                                showSidebar ? sidebarWidth : 0,
+                                          ),
+                                      onReset: _resetInspectorWidth,
                                     ),
-                                onReset: () => _resetSidebarWidth(width),
-                              ),
-                            ],
-                            Expanded(child: _buildWorkspace(context)),
-                            if (dockInspector) ...[
-                              _DesktopResizeHandle(
-                                label: S.of(context).showInspector,
-                                value: inspectorWidth,
-                                reversed: true,
-                                onResize:
-                                    (delta) => _resizeInspector(
-                                      delta,
-                                      availableWidth: width,
-                                      sidebarWidth:
-                                          showSidebar ? sidebarWidth : 0,
+                                    SizedBox(
+                                      width: inspectorWidth,
+                                      child: _buildInspector(
+                                        context,
+                                        overlay: false,
+                                      ),
                                     ),
-                                onReset: _resetInspectorWidth,
+                                  ],
+                                ],
                               ),
-                              SizedBox(
-                                width: inspectorWidth,
-                                child: _buildInspector(context, overlay: false),
-                              ),
-                            ],
+                            ),
                           ],
                         ),
-                        if (!isChat && overlaySidebar && _compactSidebarOpen)
-                          _buildSidebarOverlay(context, width),
-                        if (!isChat && overlayInspector)
-                          _buildInspectorOverlay(context, width),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                  if (!isChat && overlaySidebar && _compactSidebarOpen)
+                    _buildSidebarOverlay(context, width),
+                  if (!isChat && overlayInspector)
+                    _buildInspectorOverlay(context, width),
                 ],
               ),
             ),
@@ -750,7 +770,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     setState(() => _inspectorWidth = DesktopThemeTokens.inspectorWidth);
   }
 
-  Widget _buildSidebar(BuildContext context) {
+  Widget _buildSidebar(BuildContext context, {VoidCallback? onToggleSidebar}) {
     return DecoratedBox(
       decoration: DesktopThemeTokens.sidebarDecoration(context),
       child: Column(
@@ -778,6 +798,14 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                     ),
                   ),
                 ),
+                if (onToggleSidebar != null)
+                  StarsDesktopIconAction(
+                    label: S.of(context).hideSidebar,
+                    onPressed: onToggleSidebar,
+                    selected: true,
+                    variant: ShadButtonVariant.ghost,
+                    icon: LucideIcons.panelLeftClose,
+                  ),
               ],
             ),
           ),
@@ -1118,7 +1146,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (isChat)
+          if (isChat && !sidebarVisible)
             StarsDesktopIconAction(
               key: const ValueKey<String>('desktop-toolbar-sidebar'),
               label:
@@ -1136,7 +1164,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                       ? LucideIcons.panelLeftClose
                       : LucideIcons.panelLeftOpen,
             )
-          else
+          else if (!isChat && !sidebarVisible)
             _DesktopToolbarIconAction(
               key: const ValueKey<String>('desktop-toolbar-sidebar'),
               tooltip:
@@ -1146,7 +1174,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
               onPressed: onToggleSidebar,
               icon: const Icon(Icons.view_sidebar_outlined, size: 17),
             ),
-          const SizedBox(width: 8),
+          if (!sidebarVisible) const SizedBox(width: 8),
           if (isChat && activeBot != null) ...[
             ShadAvatar(
               activeBot.avatar.isEmpty ? null : File(activeBot.avatar),
