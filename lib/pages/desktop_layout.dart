@@ -276,7 +276,6 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                       )
                                       : null,
                               onCreateChat: widget.onCreateChat,
-                              onOpenSettings: () => _selectPage(2),
                               onSearchRequested:
                                   widget.currentIndex == 2
                                       ? null
@@ -1096,7 +1095,6 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   final VoidCallback onToggleSidebar;
   final VoidCallback? onToggleInspector;
   final VoidCallback? onCreateChat;
-  final VoidCallback onOpenSettings;
   final VoidCallback? onSearchRequested;
   final VoidCallback? onClearChat;
 
@@ -1111,7 +1109,6 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     required this.onToggleSidebar,
     required this.onToggleInspector,
     required this.onCreateChat,
-    required this.onOpenSettings,
     required this.onSearchRequested,
     required this.onClearChat,
   });
@@ -1273,18 +1270,6 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                                 inspectorVisible
                                     ? Icons.vertical_split_rounded
                                     : Icons.vertical_split_outlined,
-                                size: 17,
-                              ),
-                            ),
-                          if (currentIndex != 2)
-                            _DesktopToolbarIconAction(
-                              key: const ValueKey<String>(
-                                'desktop-toolbar-settings',
-                              ),
-                              tooltip: S.of(context).settings,
-                              onPressed: onOpenSettings,
-                              icon: const Icon(
-                                Icons.settings_outlined,
                                 size: 17,
                               ),
                             ),
