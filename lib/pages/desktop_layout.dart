@@ -1491,29 +1491,32 @@ class _SidebarDestination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = ShadTheme.of(context).colorScheme;
     return Semantics(
       button: true,
       selected: selected,
       label: label,
-      child: DesktopInteractiveListItem(
-        selected: selected,
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Row(
-          children: [
-            Icon(icon, size: 17),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ShadButton.raw(
+          variant:
+              selected ? ShadButtonVariant.secondary : ShadButtonVariant.ghost,
+          size: ShadButtonSize.sm,
+          expands: true,
+          backgroundColor: selected ? scheme.accent : null,
+          foregroundColor: selected ? scheme.accentForeground : null,
+          mainAxisAlignment: MainAxisAlignment.center,
+          onPressed: onTap,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          leading: Icon(icon, size: 17),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
-          ],
+          ),
         ),
       ),
     );
