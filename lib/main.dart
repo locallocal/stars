@@ -430,6 +430,7 @@ class _MainPageState extends State<MainPage> {
     final pages = [
       ChatListPage(
         key: _chatListKey,
+        sidebarMode: isDesktopOrTablet,
         selectedChatId: _selectedChatId,
         onChatSelected: _onChatSelected,
         onSelectionCleared: _clearSelectedChat,
@@ -561,6 +562,11 @@ class _MainPageState extends State<MainPage> {
     if (!mounted) return;
     setState(() {
       _currentIndex = index;
+      if (index == 1) {
+        // Opening the Agents destination always returns to the collection;
+        // selecting a card then drills into its detail page.
+        _selectedBot = null;
+      }
     });
   }
 

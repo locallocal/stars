@@ -785,22 +785,19 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Column(
               children: [
-                _SidebarDestination(
-                  label: S.of(context).chats,
-                  icon:
-                      widget.currentIndex == 0
-                          ? LucideIcons.messageCircle
-                          : Icons.chat_bubble_outline_rounded,
-                  selected: widget.currentIndex == 0,
-                  onTap: () => _selectPage(0),
+                SizedBox(
+                  width: double.infinity,
+                  child: ShadButton(
+                    size: ShadButtonSize.sm,
+                    onPressed: widget.onCreateChat,
+                    leading: const Icon(LucideIcons.squarePen, size: 16),
+                    child: Text(S.of(context).newChat),
+                  ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
                 _SidebarDestination(
                   label: S.of(context).Bots,
-                  icon:
-                      widget.currentIndex == 0
-                          ? LucideIcons.bot
-                          : Icons.auto_awesome_outlined,
+                  icon: LucideIcons.bot,
                   selected: widget.currentIndex == 1,
                   onTap: () => _selectPage(1),
                 ),
@@ -810,14 +807,10 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           const SizedBox(height: 8),
           const ShadSeparator.horizontal(),
           Expanded(
-            child: IndexedStack(
-              index: widget.currentIndex,
-              children: [
-                widget.pages[0],
-                widget.pages[1],
-                _buildProfileRail(context),
-              ],
-            ),
+            // The conversation list remains the stable navigation context.
+            // Agents and settings are rendered in the workspace instead of
+            // replacing the sidebar's lower section.
+            child: widget.pages[0],
           ),
           const ShadSeparator.horizontal(),
           Padding(
@@ -882,7 +875,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
         index: widget.currentIndex,
         children: [
           _buildChatDetail(context),
-          _buildBotDetail(context),
+          widget.selectedBot == null
+              ? widget.pages[1]
+              : _buildBotDetail(context),
           widget.pages[2],
         ],
       ),
@@ -935,47 +930,6 @@ class _DesktopLayoutState extends State<DesktopLayout> {
       title: S.of(context).Bots,
       description: S.of(context).selectBot,
       imageAsset: 'assets/icon/app_icon.png',
-    );
-  }
-
-  Widget _buildProfileRail(BuildContext context) {
-    final items = <({IconData icon, String title})>[
-      (
-        icon: Icons.badge_outlined,
-        title: S.of(context).desktopPersonalInformation,
-      ),
-      (
-        icon: Icons.palette_outlined,
-        title: S.of(context).desktopAppearanceAndLanguage,
-      ),
-      (
-        icon: Icons.help_outline_rounded,
-        title: S.of(context).desktopHelpAndSupport,
-      ),
-      (
-        icon: Icons.info_outline_rounded,
-        title: S.of(context).desktopAboutAndLegal,
-      ),
-    ];
-    return ListView(
-      key: const PageStorageKey<String>('desktop-profile-navigation'),
-      padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
-      children: [
-        _RailLabel(S.of(context).settings),
-        for (final entry in items.indexed)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: _ProfileRailSection(
-              icon: entry.$2.icon,
-              title: entry.$2.title,
-              selected: widget.selectedProfileSection == entry.$1,
-              onTap: () {
-                widget.onProfileSectionChanged?.call(entry.$1);
-                if (widget.currentIndex != 2) _selectPage(2);
-              },
-            ),
-          ),
-      ],
     );
   }
 
@@ -1674,61 +1628,10 @@ class _AccountButton extends StatelessWidget {
           const SizedBox(width: 9),
           Expanded(child: Text(S.of(context).profile)),
           Icon(
-            useLucideIcon
-                ? LucideIcons.chevronRight
-                : Icons.chevron_right_rounded,
+            useLucideIcon ? LucideIcons.settings : Icons.settings_outlined,
             size: 17,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ProfileRailSection extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ProfileRailSection({
-    required this.icon,
-    required this.title,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DesktopInteractiveListItem(
-      selected: selected,
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      child: Row(
-        children: [
-          Icon(icon, size: 17),
-          const SizedBox(width: 9),
-          Expanded(child: Text(title)),
-        ],
-      ),
-    );
-  }
-}
-
-class _RailLabel extends StatelessWidget {
-  final String text;
-
-  const _RailLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 2, 8, 7),
-      child: Text(
-        text,
-        style: DesktopThemeTokens.metaStyle(
-          context,
-        )?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }
