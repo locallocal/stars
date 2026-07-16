@@ -1144,55 +1144,52 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
           ),
         ),
       ),
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          if (isChat && !sidebarVisible)
-            StarsDesktopIconAction(
-              key: const ValueKey<String>('desktop-toolbar-sidebar'),
-              label:
-                  sidebarVisible
-                      ? S.of(context).hideSidebar
-                      : S.of(context).showSidebar,
-              onPressed: onToggleSidebar,
-              selected: sidebarVisible,
-              variant:
-                  sidebarVisible
-                      ? ShadButtonVariant.secondary
-                      : ShadButtonVariant.ghost,
-              icon:
-                  sidebarVisible
-                      ? LucideIcons.panelLeftClose
-                      : LucideIcons.panelLeftOpen,
-            )
-          else if (!isChat && !sidebarVisible)
-            _DesktopToolbarIconAction(
-              key: const ValueKey<String>('desktop-toolbar-sidebar'),
-              tooltip:
-                  sidebarVisible
-                      ? S.of(context).hideSidebar
-                      : S.of(context).showSidebar,
-              onPressed: onToggleSidebar,
-              icon: const Icon(Icons.view_sidebar_outlined, size: 17),
-            ),
-          if (!sidebarVisible) const SizedBox(width: 8),
-          if (isChat && activeBot != null) ...[
-            ShadAvatar(
-              activeBot.avatar.isEmpty ? null : File(activeBot.avatar),
-              size: const Size.square(28),
-              placeholder: buildProviderLogo(
-                context,
-                '',
-                activeBot.provider,
-                14,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
+          Align(
+            alignment: Alignment.centerLeft,
+            child:
+                !sidebarVisible
+                    ? isChat
+                        ? StarsDesktopIconAction(
+                          key: const ValueKey<String>(
+                            'desktop-toolbar-sidebar',
+                          ),
+                          label: S.of(context).showSidebar,
+                          onPressed: onToggleSidebar,
+                          icon: LucideIcons.panelLeftOpen,
+                        )
+                        : _DesktopToolbarIconAction(
+                          key: const ValueKey<String>(
+                            'desktop-toolbar-sidebar',
+                          ),
+                          tooltip: S.of(context).showSidebar,
+                          onPressed: onToggleSidebar,
+                          icon: const Icon(
+                            Icons.view_sidebar_outlined,
+                            size: 17,
+                          ),
+                        )
+                    : const SizedBox.shrink(),
+          ),
+          Center(
             child: Row(
-              mainAxisAlignment:
-                  isChat ? MainAxisAlignment.start : MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                if (isChat && activeBot != null) ...[
+                  ShadAvatar(
+                    activeBot.avatar.isEmpty ? null : File(activeBot.avatar),
+                    size: const Size.square(28),
+                    placeholder: buildProviderLogo(
+                      context,
+                      '',
+                      activeBot.provider,
+                      14,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Flexible(
                   child: Text(
                     title,
@@ -1215,190 +1212,87 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          if (isChat)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (compact && onCreateChat != null)
-                  StarsDesktopIconAction(
-                    key: const ValueKey<String>('desktop-toolbar-new-chat'),
-                    label: S.of(context).newChat,
-                    onPressed: onCreateChat,
-                    icon: LucideIcons.plus,
-                  ),
-                if (onSearchRequested != null)
-                  StarsDesktopIconAction(
-                    key: const ValueKey<String>('desktop-toolbar-search'),
-                    label: MaterialLocalizations.of(context).searchFieldLabel,
-                    onPressed: onSearchRequested,
-                    icon: LucideIcons.search,
-                  ),
-                if (inspectorAvailable)
-                  StarsDesktopIconAction(
-                    key: const ValueKey<String>('desktop-toolbar-inspector'),
-                    label:
-                        inspectorVisible
-                            ? S.of(context).hideInspector
-                            : S.of(context).showInspector,
-                    onPressed: onToggleInspector,
-                    selected: inspectorVisible,
-                    variant:
-                        inspectorVisible
-                            ? ShadButtonVariant.secondary
-                            : ShadButtonVariant.ghost,
-                    icon:
-                        inspectorVisible
-                            ? LucideIcons.panelRightClose
-                            : LucideIcons.panelRightOpen,
-                  ),
-                _ChatToolbarMoreMenu(
-                  key: const ValueKey<String>('desktop-toolbar-more'),
-                  onClearChat: onClearChat,
-                  onOpenSettings: onOpenSettings,
-                ),
-              ],
-            )
-          else
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: DesktopThemeTokens.controlFill(context),
-                borderRadius: DesktopThemeTokens.controlRadius,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (onSearchRequested != null)
-                    _DesktopToolbarIconAction(
-                      key: const ValueKey<String>('desktop-toolbar-search'),
-                      tooltip:
-                          MaterialLocalizations.of(context).searchFieldLabel,
-                      onPressed: onSearchRequested,
-                      icon: const Icon(Icons.search_rounded, size: 17),
-                    ),
-                  if (inspectorAvailable)
-                    _DesktopToolbarIconAction(
-                      key: const ValueKey<String>('desktop-toolbar-inspector'),
-                      tooltip:
-                          inspectorVisible
-                              ? S.of(context).hideInspector
-                              : S.of(context).showInspector,
-                      onPressed: onToggleInspector,
-                      selected: inspectorVisible,
-                      icon: Icon(
-                        inspectorVisible
-                            ? Icons.vertical_split_rounded
-                            : Icons.vertical_split_outlined,
-                        size: 17,
+          Align(
+            alignment: Alignment.centerRight,
+            child:
+                isChat
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (compact && onCreateChat != null)
+                          StarsDesktopIconAction(
+                            key: const ValueKey<String>(
+                              'desktop-toolbar-new-chat',
+                            ),
+                            label: S.of(context).newChat,
+                            onPressed: onCreateChat,
+                            icon: LucideIcons.plus,
+                          ),
+                        if (inspectorAvailable)
+                          StarsDesktopIconAction(
+                            key: const ValueKey<String>(
+                              'desktop-toolbar-inspector',
+                            ),
+                            label:
+                                inspectorVisible
+                                    ? S.of(context).hideInspector
+                                    : S.of(context).showInspector,
+                            onPressed: onToggleInspector,
+                            selected: inspectorVisible,
+                            variant:
+                                inspectorVisible
+                                    ? ShadButtonVariant.secondary
+                                    : ShadButtonVariant.ghost,
+                            icon:
+                                inspectorVisible
+                                    ? LucideIcons.panelRightClose
+                                    : LucideIcons.panelRightOpen,
+                          ),
+                      ],
+                    )
+                    : DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: DesktopThemeTokens.controlFill(context),
+                        borderRadius: DesktopThemeTokens.controlRadius,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (inspectorAvailable)
+                            _DesktopToolbarIconAction(
+                              key: const ValueKey<String>(
+                                'desktop-toolbar-inspector',
+                              ),
+                              tooltip:
+                                  inspectorVisible
+                                      ? S.of(context).hideInspector
+                                      : S.of(context).showInspector,
+                              onPressed: onToggleInspector,
+                              selected: inspectorVisible,
+                              icon: Icon(
+                                inspectorVisible
+                                    ? Icons.vertical_split_rounded
+                                    : Icons.vertical_split_outlined,
+                                size: 17,
+                              ),
+                            ),
+                          if (currentIndex != 2)
+                            _DesktopToolbarIconAction(
+                              key: const ValueKey<String>(
+                                'desktop-toolbar-settings',
+                              ),
+                              tooltip: S.of(context).settings,
+                              onPressed: onOpenSettings,
+                              icon: const Icon(
+                                Icons.settings_outlined,
+                                size: 17,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  if (currentIndex != 2)
-                    _DesktopToolbarIconAction(
-                      key: const ValueKey<String>('desktop-toolbar-settings'),
-                      tooltip: S.of(context).settings,
-                      onPressed: onOpenSettings,
-                      icon: const Icon(Icons.settings_outlined, size: 17),
-                    ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChatToolbarMoreMenu extends StatefulWidget {
-  final VoidCallback? onClearChat;
-  final VoidCallback onOpenSettings;
-
-  const _ChatToolbarMoreMenu({
-    super.key,
-    required this.onClearChat,
-    required this.onOpenSettings,
-  });
-
-  @override
-  State<_ChatToolbarMoreMenu> createState() => _ChatToolbarMoreMenuState();
-}
-
-class _ChatToolbarMoreMenuState extends State<_ChatToolbarMoreMenu> {
-  final ShadPopoverController _controller = ShadPopoverController();
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.addListener(_handleControllerChanged);
-  }
-
-  @override
-  void dispose() {
-    _controller
-      ..removeListener(_handleControllerChanged)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _handleControllerChanged() {
-    if (mounted) setState(() {});
-  }
-
-  void _invoke(VoidCallback action) {
-    _controller.hide();
-    action();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = ShadTheme.of(context).colorScheme;
-    return ShadPopover(
-      controller: _controller,
-      padding: const EdgeInsets.all(4),
-      anchor: const ShadAnchorAuto(offset: Offset(0, 4)),
-      popover:
-          (context) => SizedBox(
-            width: 220,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (widget.onClearChat != null) ...[
-                  ShadButton.ghost(
-                    height: 36,
-                    expands: true,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    foregroundColor: scheme.destructive,
-                    leading: const Icon(LucideIcons.trash2, size: 16),
-                    onPressed: () => _invoke(widget.onClearChat!),
-                    child: Text(S.of(context).clearChatHistory),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
-                    child: ShadSeparator.horizontal(),
-                  ),
-                ],
-                ShadButton.ghost(
-                  height: 36,
-                  expands: true,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  leading: const Icon(LucideIcons.settings, size: 16),
-                  onPressed: () => _invoke(widget.onOpenSettings),
-                  child: Text(S.of(context).settings),
-                ),
-              ],
-            ),
           ),
-      child: StarsDesktopIconAction(
-        label: MaterialLocalizations.of(context).moreButtonTooltip,
-        onPressed: _controller.toggle,
-        selected: _controller.isOpen,
-        variant:
-            _controller.isOpen
-                ? ShadButtonVariant.secondary
-                : ShadButtonVariant.ghost,
-        icon: LucideIcons.ellipsis,
+        ],
       ),
     );
   }
