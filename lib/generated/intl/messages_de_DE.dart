@@ -95,7 +95,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Klicken Sie auf + in der oberen rechten Ecke, um einen Bot hinzuzufügen",
     ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
-      "Klicken Sie auf + in der oberen rechten Ecke, um einen Chat zu starten",
+      "Klicken Sie auf Neuer Chat, um eine Unterhaltung zu erstellen",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Bestätigen"),
     "confirmClearChat": m6,

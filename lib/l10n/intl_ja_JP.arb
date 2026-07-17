@@ -210,7 +210,7 @@
     "@noChats": {
         "description": "まだチャットがありません"
     },
-    "clickToStartChat": "右上の+をクリックしてチャットを開始",
+    "clickToStartChat": "新しいチャットをクリックして会話を作成",
     "@clickToStartChat": {
         "description": "チャットを開始するためのクリックプロンプト"
     },

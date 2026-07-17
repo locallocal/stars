@@ -186,7 +186,7 @@ class ChatListPageState extends State<ChatListPage> {
         return KeyEventResult.ignored;
       },
       child: DesktopListPanel(
-        title: S.of(context).chats,
+        title: '',
         description: '',
         searchHintText: S.of(context).searchChats,
         searchController: _searchController,
@@ -312,21 +312,17 @@ class ChatListPageState extends State<ChatListPage> {
             searchQuery.isNotEmpty
                 ? S.of(context).chatSearchScope
                 : S.of(context).newChatWorkspaceHint,
-        action: ShadButton(
-          size: ShadButtonSize.sm,
-          onPressed: searchQuery.isNotEmpty ? _clearSearch : _openNewChatDialog,
-          height: DesktopThemeTokens.controlHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          leading: Icon(
-            searchQuery.isNotEmpty ? LucideIcons.x : LucideIcons.plus,
-            size: 16,
-          ),
-          child: Text(
-            searchQuery.isNotEmpty
-                ? S.of(context).clearSearch
-                : S.of(context).newChat,
-          ),
-        ),
+        action:
+            searchQuery.isEmpty
+                ? null
+                : ShadButton(
+                  size: ShadButtonSize.sm,
+                  onPressed: _clearSearch,
+                  height: DesktopThemeTokens.controlHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  leading: const Icon(LucideIcons.x, size: 16),
+                  child: Text(S.of(context).clearSearch),
+                ),
       );
     }
 

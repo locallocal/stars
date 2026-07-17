@@ -535,10 +535,10 @@ class S {
     );
   }
 
-  /// `Click + in the top right to start a chat`
+  /// `Click New Chat to create a conversation`
   String get clickToStartChat {
     return Intl.message(
-      'Click + in the top right to start a chat',
+      'Click New Chat to create a conversation',
       name: 'clickToStartChat',
       desc: 'Click to start chat prompt',
       args: [],
@@ -1210,9 +1210,9 @@ class S {
     );
   }
 
-  /// `Search chats`
+  /// `Search conversations`
   String get searchChats {
-    return Intl.message('Search chats', name: 'searchChats', args: []);
+    return Intl.message('Search conversations', name: 'searchChats', args: []);
   }
 
   /// `Search bots`

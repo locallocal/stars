@@ -210,7 +210,7 @@
     "@noChats": {
         "description": "還沒有聊天記錄"
     },
-    "clickToStartChat": "點擊右上角 + 開始聊天",
+    "clickToStartChat": "點擊新建聊天建立會話",
     "@clickToStartChat": {
         "description": "點擊開始聊天提示"
     },

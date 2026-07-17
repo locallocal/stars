@@ -92,7 +92,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "बॉट जोड़ने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
     ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
-      "चैट शुरू करने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
+      "बातचीत बनाने के लिए नई चैट पर क्लिक करें",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("पुष्टि करें"),
     "confirmClearChat": m6,

@@ -1402,12 +1402,13 @@ class DesktopListPanel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: DesktopThemeTokens.sectionTitleStyle(context),
-                      ),
+                      if (title.isNotEmpty)
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: DesktopThemeTokens.sectionTitleStyle(context),
+                        ),
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(

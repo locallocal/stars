@@ -94,7 +94,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Нажмите + в правом верхнем углу, чтобы добавить бота",
     ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
-      "Нажмите + в правом верхнем углу, чтобы начать чат",
+      "Нажмите «Новый чат», чтобы создать беседу",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "confirmClearChat": m6,

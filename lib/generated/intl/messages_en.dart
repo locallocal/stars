@@ -128,7 +128,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Click + in the top right to create a new bot",
     ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
-      "Click + in the top right to start a chat",
+      "Click New Chat to create a conversation",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "confirmClearChat": m6,
@@ -276,7 +276,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "uploadImage": MessageLookupByLibrary.simpleMessage("Image"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("User Agreement"),
     "version": MessageLookupByLibrary.simpleMessage("Version 1.0.0"),
-    "searchChats": MessageLookupByLibrary.simpleMessage("Search chats"),
+    "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
     "searchBots": MessageLookupByLibrary.simpleMessage("Search bots"),
     "noMatchingChats": MessageLookupByLibrary.simpleMessage(
       "No matching chats found",

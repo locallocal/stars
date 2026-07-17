@@ -287,6 +287,28 @@ void main() {
     expect(find.byType(Card), findsNothing);
   });
 
+  testWidgets('desktop home empty state has no duplicate new chat action', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_desktopHarness(onCreateChat: () {}));
+    await tester.pumpAndSettle();
+
+    final emptyState = find.byType(DesktopEmptyStateCard);
+    expect(emptyState, findsOneWidget);
+    expect(
+      find.descendant(of: emptyState, matching: find.text('点击新建聊天创建会话')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: emptyState, matching: find.byType(ShadButton)),
+      findsNothing,
+    );
+  });
+
   testWidgets('desktop shell uses one toolbar and overlays sidebar at 800px', (
     tester,
   ) async {

@@ -77,7 +77,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "clearChat": MessageLookupByLibrary.simpleMessage("清空聊天"),
     "clearChatHistory": MessageLookupByLibrary.simpleMessage("清空聊天記錄"),
     "clickToCreateBot": MessageLookupByLibrary.simpleMessage("點擊右上角 + 添加智能體"),
-    "clickToStartChat": MessageLookupByLibrary.simpleMessage("點擊右上角 + 開始聊天"),
+    "clickToStartChat": MessageLookupByLibrary.simpleMessage("點擊新建聊天建立會話"),
     "confirm": MessageLookupByLibrary.simpleMessage("確定"),
     "confirmClearChat": m6,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("確認刪除"),
