@@ -701,6 +701,8 @@ class DesktopThemeTokens {
   static const double controlHeight = 32;
   static const double iconButtonSize = 32;
   static const double listItemMinHeight = 44;
+  static const double formContentMaxWidth = 720;
+  static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);
   static const double panelRadiusValue = 8;
   static const double itemRadiusValue = 6;
   static const double workspaceRadiusValue = 0;
@@ -1372,6 +1374,8 @@ class DesktopListPanel extends StatelessWidget {
   final FocusNode? searchFocusNode;
   final TextEditingController? searchController;
   final Widget? searchSuffix;
+  final double? contentMaxWidth;
+  final EdgeInsetsGeometry padding;
 
   const DesktopListPanel({
     super.key,
@@ -1384,59 +1388,71 @@ class DesktopListPanel extends StatelessWidget {
     this.searchFocusNode,
     this.searchController,
     this.searchSuffix,
+    this.contentMaxWidth,
+    this.padding = DesktopThemeTokens.panelPadding,
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = StarsDesktopTokens.of(context);
+    final content = Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (title.isNotEmpty)
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: DesktopThemeTokens.sectionTitleStyle(context),
+                    ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: DesktopThemeTokens.metaStyle(context),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            action,
+          ],
+        ),
+        const SizedBox(height: 12),
+        StarsSearchField(
+          hintText: searchHintText,
+          controller: searchController,
+          focusNode: searchFocusNode,
+          onChanged: onSearchChanged,
+          suffixIcon: searchSuffix,
+        ),
+        const SizedBox(height: 12),
+        Expanded(child: child),
+      ],
+    );
     return ColoredBox(
       color: tokens.sidebarOpaque,
       child: Padding(
-        padding: DesktopThemeTokens.panelPadding,
-        child: Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (title.isNotEmpty)
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: DesktopThemeTokens.sectionTitleStyle(context),
-                        ),
-                      if (description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: DesktopThemeTokens.metaStyle(context),
-                        ),
-                      ],
-                    ],
+        padding: padding,
+        child:
+            contentMaxWidth == null
+                ? content
+                : Center(
+                  child: SizedBox(
+                    width: contentMaxWidth,
+                    height: double.infinity,
+                    child: content,
                   ),
                 ),
-                const SizedBox(width: 8),
-                action,
-              ],
-            ),
-            const SizedBox(height: 12),
-            StarsSearchField(
-              hintText: searchHintText,
-              controller: searchController,
-              focusNode: searchFocusNode,
-              onChanged: onSearchChanged,
-              suffixIcon: searchSuffix,
-            ),
-            const SizedBox(height: 12),
-            Expanded(child: child),
-          ],
-        ),
       ),
     );
   }

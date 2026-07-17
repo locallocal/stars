@@ -60,6 +60,11 @@ void main() {
     expect(DesktopThemeTokens.inspectorWidth, 320);
     expect(DesktopThemeTokens.toolbarHeight, 50);
     expect(DesktopThemeTokens.menuBarHeight, 50);
+    expect(DesktopThemeTokens.formContentMaxWidth, 720);
+    expect(
+      DesktopThemeTokens.formPagePadding,
+      const EdgeInsets.fromLTRB(32, 28, 32, 48),
+    );
   });
 
   testWidgets('desktop theme exposes the documented dark fallback tokens', (
@@ -265,6 +270,39 @@ void main() {
 
     await tester.enterText(find.byType(TextField), '模型');
     expect(query, '模型');
+  });
+
+  testWidgets('desktop list panel can match the settings content width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(brightness: Brightness.light, fontSize: 16),
+        home: Scaffold(
+          body: SizedBox(
+            width: 1000,
+            height: 700,
+            child: DesktopListPanel(
+              title: '',
+              description: '',
+              searchHintText: '搜索智能体',
+              onSearchChanged: (_) {},
+              action: const Text('添加智能体'),
+              contentMaxWidth: DesktopThemeTokens.formContentMaxWidth,
+              padding: DesktopThemeTokens.formPagePadding,
+              child: const Text('智能体内容'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(StarsSearchField)).width,
+      DesktopThemeTokens.formContentMaxWidth,
+    );
+    expect(find.text('添加智能体'), findsOneWidget);
+    expect(find.text('智能体内容'), findsOneWidget);
   });
 
   testWidgets('desktop empty state renders without a card shell', (

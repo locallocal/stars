@@ -317,10 +317,12 @@ class _ProfilePageState extends State<ProfilePage> {
     return ColoredBox(
       color: DesktopThemeTokens.workspaceSurface(context),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(32, 28, 32, 48),
+        padding: DesktopThemeTokens.formPagePadding,
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
+            constraints: const BoxConstraints(
+              maxWidth: DesktopThemeTokens.formContentMaxWidth,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
