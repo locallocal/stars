@@ -89,6 +89,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     return Scaffold(
+      key:
+          widget.embedded
+              ? const ValueKey<String>('desktop-bot-detail-scaffold')
+              : null,
       backgroundColor:
           widget.embedded ? DesktopThemeTokens.workspaceSurface(context) : null,
       appBar:
@@ -250,7 +254,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 children: [
                   const ShadSeparator.horizontal(),
                   ColoredBox(
-                    color: ShadTheme.of(context).colorScheme.background,
+                    key: const ValueKey<String>(
+                      'desktop-bot-save-bar-background',
+                    ),
+                    color: DesktopThemeTokens.workspaceSurface(context),
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
                       child: Row(

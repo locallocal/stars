@@ -230,6 +230,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                         _DesktopResizeHandle(
                           label: S.of(context).showSidebar,
                           value: sidebarWidth,
+                          showIdleDivider: false,
                           onResize:
                               (delta) => _resizeSidebar(
                                 delta,
@@ -1342,6 +1343,7 @@ class _DesktopResizeHandle extends StatefulWidget {
   final ValueChanged<double> onResize;
   final VoidCallback onReset;
   final bool reversed;
+  final bool showIdleDivider;
 
   const _DesktopResizeHandle({
     required this.label,
@@ -1349,6 +1351,7 @@ class _DesktopResizeHandle extends StatefulWidget {
     required this.onResize,
     required this.onReset,
     this.reversed = false,
+    this.showIdleDivider = true,
   });
 
   @override
@@ -1429,7 +1432,9 @@ class _DesktopResizeHandleState extends State<_DesktopResizeHandle> {
                               ? scheme.ring
                               : _hovered
                               ? scheme.foreground.withValues(alpha: 0.35)
-                              : scheme.border,
+                              : widget.showIdleDivider
+                              ? scheme.border
+                              : Colors.transparent,
                       child: SizedBox(width: _focused ? 3 : 1),
                     ),
                   ),
