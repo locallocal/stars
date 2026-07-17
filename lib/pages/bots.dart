@@ -212,6 +212,8 @@ class ContactsPageState extends State<ContactsPage> {
       searchHintText: S.of(context).searchBots,
       searchFocusNode: _searchFocusNode,
       onSearchChanged: _filterBots,
+      contentMaxWidth: DesktopThemeTokens.formContentMaxWidth,
+      padding: DesktopThemeTokens.formPagePadding,
       action: ShadButton(
         size: ShadButtonSize.sm,
         onPressed: _openAddBotPage,

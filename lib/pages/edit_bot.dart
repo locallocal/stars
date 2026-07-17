@@ -111,14 +111,18 @@ class _EditAIBotPageState extends State<EditBotPage> {
               ),
       body: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: widget.embedded ? 760 : 800),
+          constraints: BoxConstraints(
+            maxWidth:
+                widget.embedded
+                    ? DesktopThemeTokens.formContentMaxWidth +
+                        DesktopThemeTokens.formPagePadding.horizontal
+                    : 800,
+          ),
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              widget.embedded ? 28 : 16,
-              widget.embedded ? 24 : 16,
-              widget.embedded ? 28 : 16,
-              widget.embedded ? 32 : 16,
-            ),
+            padding:
+                widget.embedded
+                    ? DesktopThemeTokens.formPagePadding
+                    : const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
