@@ -94,7 +94,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Clique em + no canto superior direito para adicionar um bot",
     ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
-      "Clique em + no canto superior direito para iniciar uma conversa",
+      "Clique em Nova conversa para criar uma conversa",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirmar"),
     "confirmClearChat": m6,

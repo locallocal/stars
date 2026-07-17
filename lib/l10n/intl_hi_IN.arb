@@ -210,7 +210,7 @@
     "@noChats": {
         "description": "अभी तक कोई चैट नहीं"
     },
-    "clickToStartChat": "चैट शुरू करने के लिए ऊपरी दाएं कोने में + पर क्लिक करें",
+    "clickToStartChat": "बातचीत बनाने के लिए नई चैट पर क्लिक करें",
     "@clickToStartChat": {
         "description": "चैट शुरू करने के लिए संकेत"
     },

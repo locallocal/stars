@@ -930,15 +930,6 @@ class _DesktopLayoutState extends State<DesktopLayout> {
       title: S.of(context).chats,
       description: S.of(context).clickToStartChat,
       imageAsset: 'assets/icon/app_icon.png',
-      action:
-          widget.onCreateChat == null
-              ? null
-              : ShadButton(
-                size: ShadButtonSize.sm,
-                onPressed: widget.onCreateChat,
-                leading: const Icon(LucideIcons.plus, size: 16),
-                child: Text(S.of(context).newChat),
-              ),
     );
   }
 

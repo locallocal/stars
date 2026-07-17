@@ -218,7 +218,7 @@
     "@noChats": {
         "description": "No chats yet"
     },
-    "clickToStartChat": "Click + in the top right to start a chat",
+    "clickToStartChat": "Click New Chat to create a conversation",
     "@clickToStartChat": {
         "description": "Click to start chat prompt"
     },
@@ -562,7 +562,7 @@
     "@noMatchingChats": {
         "description": "Message when no matching chats are found"
     },
-    "searchChats": "Search chats",
+    "searchChats": "Search conversations",
     "@searchChats": {
       "description": "Hint text for chat search field"
     },

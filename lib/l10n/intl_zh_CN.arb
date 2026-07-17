@@ -218,7 +218,7 @@
     "@noChats": {
         "description": "还没有聊天记录"
     },
-    "clickToStartChat": "点击右上角 + 开始聊天",
+    "clickToStartChat": "点击新建聊天创建会话",
     "@clickToStartChat": {
         "description": "点击开始聊天提示"
     },
@@ -562,9 +562,9 @@
     "@noMatchingChats": {
         "description": "没有找到匹配的聊天的提示"
     },
-    "searchChats": "搜索聊天记录",
+    "searchChats": "搜索会话",
     "@searchChats": {
-      "description": "搜索聊天记录的输入提示"
+      "description": "搜索会话的输入提示"
     },
     "searchBots": "搜索智能体",
     "@searchBots": {

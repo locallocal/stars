@@ -84,7 +84,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "오른쪽 상단의 +를 클릭하여 봇 추가",
     ),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage(
-      "오른쪽 상단의 +를 클릭하여 채팅 시작",
+      "새 채팅을 클릭하여 대화를 만드세요",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("확인"),
     "confirmClearChat": m6,

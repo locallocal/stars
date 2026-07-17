@@ -210,7 +210,7 @@
     "@noChats": {
         "description": "Noch keine Chats"
     },
-    "clickToStartChat": "Klicken Sie auf + in der oberen rechten Ecke, um einen Chat zu starten",
+    "clickToStartChat": "Klicken Sie auf Neuer Chat, um eine Unterhaltung zu erstellen",
     "@clickToStartChat": {
         "description": "Klicken Sie, um Chat-Aufforderung zu starten"
     },

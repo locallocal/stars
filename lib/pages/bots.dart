@@ -207,14 +207,17 @@ class ContactsPageState extends State<ContactsPage> {
     }
 
     return DesktopListPanel(
-      title: S.of(context).Bots,
+      title: '',
       description: '',
       searchHintText: S.of(context).searchBots,
       searchFocusNode: _searchFocusNode,
       onSearchChanged: _filterBots,
       action: ShadButton(
+        size: ShadButtonSize.sm,
         onPressed: _openAddBotPage,
-        leading: const Icon(Icons.add_circle_outline_rounded, size: 17),
+        height: DesktopThemeTokens.controlHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        leading: const Icon(LucideIcons.plus, size: 16),
         child: Text(S.of(context).addBot),
       ),
       child: body,
@@ -511,11 +514,6 @@ class ContactsPageState extends State<ContactsPage> {
             searchQuery.isNotEmpty
                 ? S.of(context).botSearchScope
                 : S.of(context).newBotWorkspaceHint,
-        action: ShadButton(
-          onPressed: _openAddBotPage,
-          leading: const Icon(Icons.add_circle_outline, size: 17),
-          child: Text(S.of(context).addBot),
-        ),
       );
     }
 
