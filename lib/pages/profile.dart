@@ -552,9 +552,11 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               if (value != null) ...[
                 const SizedBox(width: 16),
-                Flexible(
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
                   child: Text(
                     value,
+                    textAlign: TextAlign.end,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DesktopThemeTokens.metaStyle(context),

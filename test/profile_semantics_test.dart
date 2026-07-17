@@ -34,6 +34,51 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     }
   });
+
+  testWidgets('theme and help chevrons share the trailing edge', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await tester.pumpWidget(_profileHarness());
+      await tester.pumpAndSettle();
+
+      final currentTheme = find.text('浅色模式');
+      final themeButton = find.ancestor(
+        of: currentTheme,
+        matching: find.byType(ShadButton),
+      );
+      final helpButton = find.ancestor(
+        of: find.text('帮助与反馈'),
+        matching: find.byType(ShadButton),
+      );
+      final themeChevron = find.descendant(
+        of: themeButton,
+        matching: find.byIcon(Icons.chevron_right_rounded),
+      );
+      final helpChevron = find.descendant(
+        of: helpButton,
+        matching: find.byIcon(Icons.chevron_right_rounded),
+      );
+
+      expect(themeButton, findsOneWidget);
+      expect(helpButton, findsOneWidget);
+      expect(themeChevron, findsOneWidget);
+      expect(helpChevron, findsOneWidget);
+      expect(
+        (tester.getRect(themeChevron).right - tester.getRect(helpChevron).right)
+            .abs(),
+        lessThanOrEqualTo(1),
+      );
+      expect(
+        tester.getRect(currentTheme).right,
+        lessThan(tester.getRect(themeChevron).left),
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
 }
 
 Widget _profileHarness() {
