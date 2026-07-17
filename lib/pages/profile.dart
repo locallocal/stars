@@ -14,9 +14,16 @@ import 'package:stars/pages/feedback_page.dart';
 import 'package:stars/utils/theme.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, this.selectedSection = 0});
+  const ProfilePage({
+    super.key,
+    this.selectedSection = 0,
+    this.initialProfile,
+    this.onProfileSaved,
+  });
 
   final int selectedSection;
+  final Profile? initialProfile;
+  final Future<void> Function(Profile profile)? onProfileSaved;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -29,7 +36,6 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
   String _language = 'zh_CN'; // 语言设置
-  late final ShadSliderController _desktopFontSizeController;
   final List<GlobalKey> _desktopSectionKeys = List<GlobalKey>.generate(
     4,
     (_) => GlobalKey(),
@@ -71,16 +77,16 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _desktopFontSizeController = ShadSliderController(
-      initialValue: _defaultFontSize,
-    );
-    _loadProfileInfo();
-  }
-
-  @override
-  void dispose() {
-    _desktopFontSizeController.dispose();
-    super.dispose();
+    final initialProfile = widget.initialProfile;
+    if (initialProfile == null) {
+      _loadProfileInfo();
+    } else {
+      _profile = initialProfile;
+      _themeMode = intToThemeMode(initialProfile.themeMode);
+      _language = initialProfile.language;
+      _isLoading = false;
+      _scheduleSelectedSectionScroll();
+    }
   }
 
   @override
@@ -104,7 +110,6 @@ class _ProfilePageState extends State<ProfilePage> {
       _profile = loadedProfile;
       _themeMode = intToThemeMode(loadedProfile.themeMode);
       _language = loadedProfile.language; // 加载语言设置
-      _desktopFontSizeController.value = loadedProfile.fontSize;
       _isLoading = false;
     });
     _scheduleSelectedSectionScroll();
@@ -170,7 +175,12 @@ class _ProfilePageState extends State<ProfilePage> {
       createTimestamp: _profile!.createTimestamp,
       modifyTimestamp: DateTime.now(),
     );
-    await ProfileService.updateProfile(profile);
+    final onProfileSaved = widget.onProfileSaved;
+    if (onProfileSaved == null) {
+      await ProfileService.updateProfile(profile);
+    } else {
+      await onProfileSaved(profile);
+    }
     _profile = profile; // 更新本地缓存
   }
 
@@ -506,6 +516,8 @@ class _ProfilePageState extends State<ProfilePage> {
       value: value ?? subtitle,
       child: ShadButton.ghost(
         width: double.infinity,
+        height: 0,
+        expands: true,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         mainAxisAlignment: MainAxisAlignment.start,
         onPressed: onTap,
@@ -597,19 +609,20 @@ class _ProfilePageState extends State<ProfilePage> {
               ShadButton.ghost(
                 enabled: !isDefault,
                 size: ShadButtonSize.sm,
-                onPressed: () => _updateFontSize(_defaultFontSize),
+                onPressed: () => _commitFontSize(_defaultFontSize),
                 leading: const Icon(Icons.restart_alt_rounded, size: 16),
                 child: Text(S.of(context).resetToDefault),
               ),
             ],
           ),
-          ShadSlider(
-            controller: _desktopFontSizeController,
+          Slider(
+            value: _fontSize,
             min: 12,
             max: 24,
             divisions: 12,
             label: _fontSize.round().toString(),
-            onChanged: _updateFontSize,
+            onChanged: _previewFontSize,
+            onChangeEnd: _commitFontSize,
             semanticFormatterCallback:
                 (value) => '${value.round()} ${S.of(context).fontSizeSettings}',
           ),
@@ -673,11 +686,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _updateFontSize(double value) {
+  void _previewFontSize(double value) {
     if (_profile == null || (_fontSize - value).abs() < 0.01) return;
 
     setState(() {
-      _desktopFontSizeController.value = value;
       _profile = Profile(
         name: _name,
         avatar: _avatar,
@@ -688,7 +700,11 @@ class _ProfilePageState extends State<ProfilePage> {
         modifyTimestamp: DateTime.now(),
       );
     });
-    _saveProfile();
+  }
+
+  Future<void> _commitFontSize(double value) async {
+    _previewFontSize(value);
+    await _saveProfile();
   }
 
   Widget _buildFontSizeSlider(BuildContext context) {
@@ -702,7 +718,8 @@ class _ProfilePageState extends State<ProfilePage> {
         context,
       ).colorScheme.onSurface.withValues(alpha: 0.3),
       label: _fontSize.round().toString(),
-      onChanged: _updateFontSize,
+      onChanged: _previewFontSize,
+      onChangeEnd: _commitFontSize,
     );
 
     if (isDesktopPlatform(context)) {
