@@ -214,6 +214,7 @@ class ContactsPageState extends State<ContactsPage> {
       onSearchChanged: _filterBots,
       contentMaxWidth: DesktopThemeTokens.formContentMaxWidth,
       padding: DesktopThemeTokens.formPagePadding,
+      backgroundColor: DesktopThemeTokens.workspaceSurface(context),
       action: ShadButton(
         size: ShadButtonSize.sm,
         onPressed: _openAddBotPage,

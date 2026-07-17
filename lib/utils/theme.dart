@@ -153,7 +153,7 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
     final tokens = StarsDesktopTokens(
       windowBackground: colors.background,
       contentBackground: colors.background,
-      sidebarOpaque: isDark ? colors.card : const Color(0xFFFAFAFA),
+      sidebarOpaque: isDark ? const Color(0xFF18181B) : const Color(0xFFFAFAFA),
       raisedSurface: colors.card,
       controlFill: colors.secondary,
       hoverFill: colors.accent,
@@ -845,10 +845,8 @@ class DesktopThemeTokens {
   static BorderSide panelBorder(BuildContext context) =>
       BorderSide(color: outline(context));
 
-  static BoxDecoration sidebarDecoration(BuildContext context) => BoxDecoration(
-    color: sidebarSurface(context),
-    border: Border(right: BorderSide(color: outline(context))),
-  );
+  static BoxDecoration sidebarDecoration(BuildContext context) =>
+      BoxDecoration(color: sidebarSurface(context));
 
   static BoxDecoration panelDecoration(
     BuildContext context, {
@@ -1376,6 +1374,7 @@ class DesktopListPanel extends StatelessWidget {
   final Widget? searchSuffix;
   final double? contentMaxWidth;
   final EdgeInsetsGeometry padding;
+  final Color? backgroundColor;
 
   const DesktopListPanel({
     super.key,
@@ -1390,6 +1389,7 @@ class DesktopListPanel extends StatelessWidget {
     this.searchSuffix,
     this.contentMaxWidth,
     this.padding = DesktopThemeTokens.panelPadding,
+    this.backgroundColor,
   });
 
   @override
@@ -1440,7 +1440,7 @@ class DesktopListPanel extends StatelessWidget {
       ],
     );
     return ColoredBox(
-      color: tokens.sidebarOpaque,
+      color: backgroundColor ?? tokens.sidebarOpaque,
       child: Padding(
         padding: padding,
         child:

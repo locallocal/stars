@@ -60,6 +60,7 @@ void main() {
     expect(DesktopThemeTokens.inspectorWidth, 320);
     expect(DesktopThemeTokens.toolbarHeight, 50);
     expect(DesktopThemeTokens.menuBarHeight, 50);
+    expect(DesktopThemeTokens.sidebarDecoration(testContext).border, isNull);
     expect(DesktopThemeTokens.formContentMaxWidth, 720);
     expect(
       DesktopThemeTokens.formPagePadding,
@@ -101,6 +102,28 @@ void main() {
     expect(tokens.success, const Color(0xFF22C55E));
     expect(tokens.warning, const Color(0xFFF59E0B));
     expect(tokens.danger, const Color(0xFFEF4444));
+  });
+
+  testWidgets('Shad dark theme keeps the sidebar lighter than the workspace', (
+    tester,
+  ) async {
+    late BuildContext testContext;
+
+    await tester.pumpWidget(
+      _shadHarness(
+        brightness: Brightness.dark,
+        homeBuilder: (context) {
+          testContext = context;
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final tokens = StarsDesktopTokens.of(testContext);
+    expect(tokens.contentBackground, const Color(0xFF09090B));
+    expect(tokens.sidebarOpaque, const Color(0xFF18181B));
+    expect(tokens.sidebarOpaque, isNot(tokens.contentBackground));
   });
 
   testWidgets('high contrast strengthens semantic boundaries and selection', (
@@ -275,28 +298,44 @@ void main() {
   testWidgets('desktop list panel can match the settings content width', (
     tester,
   ) async {
+    late Color workspaceColor;
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(brightness: Brightness.light, fontSize: 16),
-        home: Scaffold(
-          body: SizedBox(
-            width: 1000,
-            height: 700,
-            child: DesktopListPanel(
-              title: '',
-              description: '',
-              searchHintText: '搜索智能体',
-              onSearchChanged: (_) {},
-              action: const Text('添加智能体'),
-              contentMaxWidth: DesktopThemeTokens.formContentMaxWidth,
-              padding: DesktopThemeTokens.formPagePadding,
-              child: const Text('智能体内容'),
-            ),
-          ),
+        home: Builder(
+          builder: (context) {
+            workspaceColor = DesktopThemeTokens.workspaceSurface(context);
+            return Scaffold(
+              body: SizedBox(
+                width: 1000,
+                height: 700,
+                child: DesktopListPanel(
+                  title: '',
+                  description: '',
+                  searchHintText: '搜索智能体',
+                  onSearchChanged: (_) {},
+                  action: const Text('添加智能体'),
+                  contentMaxWidth: DesktopThemeTokens.formContentMaxWidth,
+                  padding: DesktopThemeTokens.formPagePadding,
+                  backgroundColor: workspaceColor,
+                  child: const Text('智能体内容'),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
 
+    final panelBackground = tester.widget<ColoredBox>(
+      find
+          .descendant(
+            of: find.byType(DesktopListPanel),
+            matching: find.byType(ColoredBox),
+          )
+          .first,
+    );
+    expect(panelBackground.color, workspaceColor);
     expect(
       tester.getSize(find.byType(StarsSearchField)).width,
       DesktopThemeTokens.formContentMaxWidth,
@@ -396,6 +435,20 @@ void main() {
 
     await tester.pumpWidget(_desktopHarness(currentIndex: 1, bot: bot));
     await tester.pumpAndSettle();
+
+    final detailScaffold = tester.widget<Scaffold>(
+      find.byKey(const ValueKey<String>('desktop-bot-detail-scaffold')),
+    );
+    final saveBarBackground = tester.widget<ColoredBox>(
+      find.byKey(const ValueKey<String>('desktop-bot-save-bar-background')),
+    );
+    final detailContext = tester.element(
+      find.byKey(const ValueKey<String>('desktop-bot-detail-scaffold')),
+    );
+    final workspaceColor = DesktopThemeTokens.workspaceSurface(detailContext);
+    expect(detailScaffold.backgroundColor, workspaceColor);
+    expect(saveBarBackground.color, workspaceColor);
+
     await tester.tap(find.byIcon(Icons.vertical_split_outlined));
     await tester.pumpAndSettle();
 
