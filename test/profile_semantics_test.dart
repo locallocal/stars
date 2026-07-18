@@ -25,6 +25,8 @@ void main() {
       final slider = find.byType(Slider);
       expect(slider, findsOneWidget);
 
+      await tester.ensureVisible(slider);
+      await tester.pumpAndSettle();
       await tester.drag(slider, const Offset(160, 0));
       await tester.pump();
 
@@ -35,7 +37,7 @@ void main() {
     }
   });
 
-  testWidgets('theme and help chevrons share the trailing edge', (
+  testWidgets('theme and language rows share the desktop setting layout', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
@@ -48,25 +50,39 @@ void main() {
         of: currentTheme,
         matching: find.byType(ShadButton),
       );
-      final helpButton = find.ancestor(
-        of: find.text('帮助与反馈'),
+      final currentLanguage = find.text('简体中文');
+      final languageButton = find.ancestor(
+        of: currentLanguage,
         matching: find.byType(ShadButton),
       );
       final themeChevron = find.descendant(
         of: themeButton,
         matching: find.byIcon(Icons.chevron_right_rounded),
       );
-      final helpChevron = find.descendant(
-        of: helpButton,
+      final languageChevron = find.descendant(
+        of: languageButton,
         matching: find.byIcon(Icons.chevron_right_rounded),
       );
 
       expect(themeButton, findsOneWidget);
-      expect(helpButton, findsOneWidget);
+      expect(languageButton, findsOneWidget);
       expect(themeChevron, findsOneWidget);
-      expect(helpChevron, findsOneWidget);
+      expect(languageChevron, findsOneWidget);
+      expect(tester.getSize(themeButton), tester.getSize(languageButton));
       expect(
-        (tester.getRect(themeChevron).right - tester.getRect(helpChevron).right)
+        (tester.getRect(themeButton).left - tester.getRect(languageButton).left)
+            .abs(),
+        lessThanOrEqualTo(1),
+      );
+      expect(
+        (tester.getRect(themeButton).right -
+                tester.getRect(languageButton).right)
+            .abs(),
+        lessThanOrEqualTo(1),
+      );
+      expect(
+        (tester.getRect(themeChevron).right -
+                tester.getRect(languageChevron).right)
             .abs(),
         lessThanOrEqualTo(1),
       );
@@ -74,6 +90,177 @@ void main() {
         tester.getRect(currentTheme).right,
         lessThan(tester.getRect(themeChevron).left),
       );
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('desktop theme row opens provider-style option dialog', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await tester.pumpWidget(_profileHarness());
+      await tester.pumpAndSettle();
+
+      final currentTheme = find.text('浅色模式');
+      final themeButton = find.ancestor(
+        of: currentTheme,
+        matching: find.byType(ShadButton),
+      );
+      final options = find.byKey(
+        const ValueKey<String>('profile-theme-options'),
+      );
+      final systemOption = find.byKey(
+        const ValueKey<String>('profile-theme-option-system'),
+      );
+      final lightOption = find.byKey(
+        const ValueKey<String>('profile-theme-option-light'),
+      );
+      final darkOption = find.byKey(
+        const ValueKey<String>('profile-theme-option-dark'),
+      );
+
+      expect(find.byType(ShadSelect<ThemeMode>), findsNothing);
+      expect(find.byType(ShadDialog), findsNothing);
+      expect(options, findsNothing);
+
+      await tester.tap(themeButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShadDialog), findsOneWidget);
+      expect(options, findsOneWidget);
+      expect(systemOption, findsOneWidget);
+      expect(lightOption, findsOneWidget);
+      expect(darkOption, findsOneWidget);
+      final optionsContainer = tester.widget<Container>(options);
+      expect((optionsContainer.decoration! as BoxDecoration).border, isNull);
+      expect(
+        find.descendant(of: options, matching: find.byType(MenuItemButton)),
+        findsNWidgets(3),
+      );
+
+      final optionsRect = tester.getRect(options);
+      for (final option in [systemOption, lightOption, darkOption]) {
+        final optionRect = tester.getRect(option);
+        expect(optionRect.left, closeTo(optionsRect.left, 1));
+        expect(optionRect.right, closeTo(optionsRect.right, 1));
+      }
+
+      expect(
+        find.descendant(
+          of: lightOption,
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: systemOption,
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: systemOption,
+          matching: find.byIcon(Icons.brightness_6_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .getRect(
+              find.descendant(
+                of: lightOption,
+                matching: find.byIcon(Icons.check_rounded),
+              ),
+            )
+            .left,
+        greaterThan(tester.getRect(find.text('浅色模式').last).right),
+      );
+
+      await tester.tap(darkOption);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShadDialog), findsNothing);
+      expect(find.text('深色模式'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('desktop language dialog matches the theme option style', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await tester.pumpWidget(_profileHarness());
+      await tester.pumpAndSettle();
+
+      final currentLanguage = find.text('简体中文');
+      final languageButton = find.ancestor(
+        of: currentLanguage,
+        matching: find.byType(ShadButton),
+      );
+      final options = find.byKey(
+        const ValueKey<String>('profile-language-options'),
+      );
+      final chineseOption = find.byKey(
+        const ValueKey<String>('profile-language-option-zh_CN'),
+      );
+      final englishOption = find.byKey(
+        const ValueKey<String>('profile-language-option-en_US'),
+      );
+
+      expect(find.byType(ShadDialog), findsNothing);
+      expect(options, findsNothing);
+
+      await tester.tap(languageButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShadDialog), findsOneWidget);
+      expect(find.byType(ShadRadioGroup<String>), findsNothing);
+      expect(options, findsOneWidget);
+      expect(chineseOption, findsOneWidget);
+      expect(englishOption, findsOneWidget);
+      expect(tester.getRect(options).width, closeTo(380, 1));
+
+      final optionsContainer = tester.widget<Container>(options);
+      expect((optionsContainer.decoration! as BoxDecoration).border, isNull);
+      expect(
+        find.descendant(of: options, matching: find.byType(MenuItemButton)),
+        findsNWidgets(12),
+      );
+      expect(
+        find.descendant(
+          of: chineseOption,
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: englishOption,
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNothing,
+      );
+
+      final optionsRect = tester.getRect(options);
+      for (final option in [chineseOption, englishOption]) {
+        final optionRect = tester.getRect(option);
+        expect(optionRect.left, closeTo(optionsRect.left, 1));
+        expect(optionRect.right, closeTo(optionsRect.right, 1));
+      }
+
+      await tester.tap(englishOption);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShadDialog), findsNothing);
+      expect(find.text('English'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

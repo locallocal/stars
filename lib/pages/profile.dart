@@ -750,6 +750,26 @@ class _ProfilePageState extends State<ProfilePage> {
     return S.of(context).darkMode;
   }
 
+  List<({String title, ThemeMode mode, IconData icon})> _themeChoices(
+    BuildContext context,
+  ) => [
+    (
+      title: S.of(context).followSystem,
+      mode: ThemeMode.system,
+      icon: Icons.brightness_6_rounded,
+    ),
+    (
+      title: S.of(context).lightMode,
+      mode: ThemeMode.light,
+      icon: Icons.brightness_5_rounded,
+    ),
+    (
+      title: S.of(context).darkMode,
+      mode: ThemeMode.dark,
+      icon: Icons.brightness_2_rounded,
+    ),
+  ];
+
   ImageProvider _buildAvatarImageProvider() {
     if (_avatar.isNotEmpty) {
       return FileImage(File(_avatar));
@@ -905,61 +925,73 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // 显示主题选项
   void _showThemeOptions() {
-    final themes = [
-      {
-        'title': Text(S.of(context).followSystem),
-        'mode': ThemeMode.system,
-        'icon': Icons.brightness_6_rounded,
-      },
-      {
-        'title': Text(S.of(context).lightMode),
-        'mode': ThemeMode.light,
-        'icon': Icons.brightness_5_rounded,
-      },
-      {
-        'title': Text(S.of(context).darkMode),
-        'mode': ThemeMode.dark,
-        'icon': Icons.brightness_2_rounded,
-      },
-    ];
+    final themes = _themeChoices(context);
     if (isDesktopPlatform(context)) {
       showShadDialog<void>(
         context: context,
-        builder:
-            (dialogContext) => ShadDialog(
-              title: Text(S.of(dialogContext).selectTheme),
-              description: Text(
-                S.of(dialogContext).desktopSavedImmediatelyDescription,
-              ),
-              child: SizedBox(
-                width: 380,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: ShadRadioGroup<ThemeMode>(
-                    initialValue: _themeMode,
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _themeMode = value);
-                      _saveProfile();
-                      ProfileService.notifyThemeChanged(_themeMode);
-                      Navigator.pop(dialogContext);
-                    },
-                    items: themes.map(
-                      (theme) => ShadRadio<ThemeMode>(
-                        value: theme['mode'] as ThemeMode,
-                        label: Row(
-                          children: [
-                            Icon(theme['icon'] as IconData, size: 18),
-                            const SizedBox(width: 10),
-                            theme['title'] as Text,
-                          ],
+        builder: (dialogContext) {
+          final tokens = StarsDesktopTokens.of(dialogContext);
+          return ShadDialog(
+            title: Text(S.of(dialogContext).selectTheme),
+            description: Text(
+              S.of(dialogContext).desktopSavedImmediatelyDescription,
+            ),
+            child: SizedBox(
+              width: 380,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Container(
+                  key: const ValueKey<String>('profile-theme-options'),
+                  width: double.infinity,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: tokens.raisedSurface,
+                    borderRadius: DesktopThemeTokens.containerRadius,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final theme in themes)
+                        MenuItemButton(
+                          key: ValueKey<String>(
+                            'profile-theme-option-${theme.mode.name}',
+                          ),
+                          leadingIcon: Icon(
+                            theme.icon,
+                            size: 18,
+                            color: tokens.secondaryText,
+                          ),
+                          trailingIcon:
+                              theme.mode == _themeMode
+                                  ? Icon(
+                                    Icons.check_rounded,
+                                    size: 16,
+                                    color: tokens.accent,
+                                  )
+                                  : const SizedBox.square(dimension: 16),
+                          onPressed: () {
+                            setState(() => _themeMode = theme.mode);
+                            _saveProfile();
+                            ProfileService.notifyThemeChanged(_themeMode);
+                            Navigator.pop(dialogContext);
+                          },
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minWidth: 180),
+                            child: Text(
+                              theme.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
+          );
+        },
       );
       return;
     }
@@ -1006,14 +1038,14 @@ class _ProfilePageState extends State<ProfilePage> {
                               (theme) => RadioListTile<ThemeMode>(
                                 title: Row(
                                   children: [
-                                    Icon(theme['icon'] as IconData),
+                                    Icon(theme.icon),
                                     const SizedBox(width: 12),
-                                    theme['title'] as Text,
+                                    Text(theme.title),
                                   ],
                                 ),
                                 activeColor:
                                     Theme.of(context).colorScheme.onSurface,
-                                value: theme['mode'] as ThemeMode,
+                                value: theme.mode,
                               ),
                             ),
                             SizedBox(height: 24),
@@ -1309,36 +1341,67 @@ class _ProfilePageState extends State<ProfilePage> {
     if (isDesktopPlatform(context)) {
       showShadDialog<void>(
         context: context,
-        builder:
-            (dialogContext) => ShadDialog(
-              title: Text(S.of(dialogContext).selectLanguage),
-              description: Text(
-                S.of(dialogContext).desktopSavedImmediatelyDescription,
-              ),
-              child: SizedBox(
-                width: 400,
-                height: 440,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: ShadRadioGroup<String>(
-                    initialValue: _language,
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _language = value);
-                      _saveProfile();
-                      ProfileService.notifyLanguageChanged(_language);
-                      Navigator.pop(dialogContext);
-                    },
-                    items: languages.map(
-                      (language) => ShadRadio<String>(
-                        value: language.code,
-                        label: Text(language.name),
-                      ),
+        builder: (dialogContext) {
+          final tokens = StarsDesktopTokens.of(dialogContext);
+          return ShadDialog(
+            title: Text(S.of(dialogContext).selectLanguage),
+            description: Text(
+              S.of(dialogContext).desktopSavedImmediatelyDescription,
+            ),
+            child: SizedBox(
+              width: 380,
+              height: 440,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Container(
+                  key: const ValueKey<String>('profile-language-options'),
+                  width: double.infinity,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: tokens.raisedSurface,
+                    borderRadius: DesktopThemeTokens.containerRadius,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final language in languages)
+                          MenuItemButton(
+                            key: ValueKey<String>(
+                              'profile-language-option-${language.code}',
+                            ),
+                            trailingIcon:
+                                language.code == _language
+                                    ? Icon(
+                                      Icons.check_rounded,
+                                      size: 16,
+                                      color: tokens.accent,
+                                    )
+                                    : const SizedBox.square(dimension: 16),
+                            onPressed: () {
+                              setState(() => _language = language.code);
+                              _saveProfile();
+                              ProfileService.notifyLanguageChanged(_language);
+                              Navigator.pop(dialogContext);
+                            },
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minWidth: 180),
+                              child: Text(
+                                language.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
+          );
+        },
       );
       return;
     }
