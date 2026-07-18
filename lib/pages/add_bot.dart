@@ -62,6 +62,19 @@ class AddBotPage extends StatefulWidget {
 }
 
 class _AddBotPageState extends State<AddBotPage> {
+  static const double _desktopFieldWidth = 640;
+  static const double _desktopDropdownButtonSize = 30;
+  static const double _desktopProviderMenuWidth = 256;
+  static const double _desktopSectionPadding = 20;
+  static const double _desktopSectionBorderWidth = 1;
+  static const double _desktopFormWidth =
+      _desktopFieldWidth +
+      _desktopSectionPadding * 2 +
+      _desktopSectionBorderWidth * 2;
+  static const BoxConstraints _desktopInputConstraints = BoxConstraints(
+    minHeight: 48,
+  );
+
   final _desktopFormKey = GlobalKey<ShadFormState>();
   final _desktopScrollController = ScrollController();
   final nameController = TextEditingController();
@@ -443,7 +456,9 @@ class _AddBotPageState extends State<AddBotPage> {
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
+                    constraints: const BoxConstraints(
+                      maxWidth: _desktopFormWidth,
+                    ),
                     child: ShadForm(
                       key: _desktopFormKey,
                       autovalidateMode:
@@ -456,30 +471,25 @@ class _AddBotPageState extends State<AddBotPage> {
                               context,
                               S.of(context).basicInformation,
                               [_buildDesktopNameInput()],
+                              sectionKey: const ValueKey<String>(
+                                'add-bot-basic-section',
+                              ),
                             ),
                             const SizedBox(height: 20),
                             _buildDesktopSection(
                               context,
                               S.of(context).providerInformation,
                               [
-                                _buildDesktopFieldPair(
-                                  _buildDesktopProviderInput(),
-                                  isHuggingFace
-                                      ? _buildDesktopSubProviderInput()
-                                      : _buildDesktopApiTypeSelector(),
-                                ),
+                                _buildDesktopProviderInput(),
                                 if (isHuggingFace)
-                                  _buildDesktopFieldPair(
-                                    _buildDesktopApiTypeSelector(),
-                                    _buildDesktopApiAddressInput(),
-                                  )
-                                else
-                                  _buildDesktopFieldPair(
-                                    _buildDesktopApiAddressInput(),
-                                    _buildDesktopApiKeyInput(),
-                                  ),
-                                if (isHuggingFace) _buildDesktopApiKeyInput(),
+                                  _buildDesktopSubProviderInput(),
+                                _buildDesktopApiTypeSelector(),
+                                _buildDesktopApiAddressInput(),
+                                _buildDesktopApiKeyInput(),
                               ],
+                              sectionKey: const ValueKey<String>(
+                                'add-bot-provider-section',
+                              ),
                             ),
                             const SizedBox(height: 20),
                             _buildDesktopSection(
@@ -489,6 +499,9 @@ class _AddBotPageState extends State<AddBotPage> {
                                 _buildDesktopModelsInput(),
                                 _buildDesktopSystemPromptInput(),
                               ],
+                              sectionKey: const ValueKey<String>(
+                                'add-bot-model-section',
+                              ),
                             ),
                           ],
                         ),
@@ -615,41 +628,33 @@ class _AddBotPageState extends State<AddBotPage> {
   Widget _buildDesktopSection(
     BuildContext context,
     String title,
-    List<Widget> children,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
-        const SizedBox(height: 12),
-        for (var index = 0; index < children.length; index++) ...[
-          children[index],
-          if (index != children.length - 1) const SizedBox(height: 12),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDesktopFieldPair(Widget first, Widget second) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final scaledBody = MediaQuery.textScalerOf(context).scale(14);
-        if (constraints.maxWidth < 600 || scaledBody > 18) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [first, const SizedBox(height: 12), second],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    List<Widget> children, {
+    required Key sectionKey,
+  }) {
+    final tokens = StarsDesktopTokens.of(context);
+    return ShadCard(
+      key: sectionKey,
+      width: double.infinity,
+      padding: const EdgeInsets.all(_desktopSectionPadding),
+      backgroundColor: tokens.raisedSurface,
+      border: ShadBorder.all(
+        color: tokens.separator,
+        width: _desktopSectionBorderWidth,
+      ),
+      columnCrossAxisAlignment: CrossAxisAlignment.stretch,
+      title: Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: first),
-            const SizedBox(width: 12),
-            Expanded(child: second),
+            for (var index = 0; index < children.length; index++) ...[
+              children[index],
+              if (index != children.length - 1) const SizedBox(height: 12),
+            ],
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -667,7 +672,9 @@ class _AddBotPageState extends State<AddBotPage> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 760),
+                  constraints: const BoxConstraints(
+                    maxWidth: _desktopFormWidth,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -719,10 +726,18 @@ class _AddBotPageState extends State<AddBotPage> {
         onPressed: onPressed,
         icon: Icon(icon),
         iconSize: 16,
-        width: 30,
-        height: 30,
+        width: _desktopDropdownButtonSize,
+        height: _desktopDropdownButtonSize,
         padding: EdgeInsets.zero,
       ),
+    );
+  }
+
+  Widget _desktopInputLeading(IconData icon) {
+    return SizedBox(
+      width: 17,
+      height: 30,
+      child: Center(child: Icon(icon, size: 17)),
     );
   }
 
@@ -732,10 +747,16 @@ class _AddBotPageState extends State<AddBotPage> {
     required Widget Function(MenuController controller) fieldBuilder,
     required ValueChanged<String> onSelected,
     Widget Function(String value)? leadingBuilder,
+    double? menuWidth,
+    bool alignEnd = false,
   }) {
+    assert(!alignEnd || menuWidth != null);
     final tokens = StarsDesktopTokens.of(context);
     return MenuAnchor(
-      alignmentOffset: const Offset(0, 4),
+      alignmentOffset: Offset(
+        alignEnd ? _desktopDropdownButtonSize - menuWidth! : 0,
+        4,
+      ),
       style: MenuStyle(
         backgroundColor: WidgetStatePropertyAll(tokens.raisedSurface),
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
@@ -743,7 +764,11 @@ class _AddBotPageState extends State<AddBotPage> {
           Colors.black.withValues(alpha: tokens.highContrast ? 0 : 0.18),
         ),
         elevation: WidgetStatePropertyAll(tokens.highContrast ? 0 : 6),
-        maximumSize: const WidgetStatePropertyAll(Size(420, 360)),
+        minimumSize:
+            menuWidth == null
+                ? null
+                : WidgetStatePropertyAll(Size(menuWidth, 0)),
+        maximumSize: WidgetStatePropertyAll(Size(menuWidth ?? 420, 360)),
         side: WidgetStatePropertyAll(
           BorderSide(color: tokens.separator, width: 0),
         ),
@@ -784,7 +809,8 @@ class _AddBotPageState extends State<AddBotPage> {
       textInputAction: TextInputAction.next,
       label: Text(S.of(context).botName),
       placeholder: Text(S.of(context).enterBotName),
-      leading: const Icon(Icons.auto_awesome_outlined, size: 17),
+      leading: _desktopInputLeading(Icons.auto_awesome_outlined),
+      constraints: _desktopInputConstraints,
       validator:
           (value) =>
               value.trim().isEmpty ? S.of(context).fillRequiredFields : null,
@@ -792,28 +818,31 @@ class _AddBotPageState extends State<AddBotPage> {
   }
 
   Widget _buildDesktopProviderInput() {
-    return _desktopMenuAnchor(
-      options: providersInfo.keys.toList(growable: false),
-      selectedValue: providerController.text,
-      onSelected: _onProviderChanged,
-      leadingBuilder:
-          (provider) => buildProviderLogo(context, '', provider, 18),
-      fieldBuilder:
-          (menuController) => ShadInputFormField(
-            key: const ValueKey<String>('add-bot-provider'),
-            id: 'provider',
-            controller: providerController,
-            textInputAction: TextInputAction.next,
-            label: Text(S.of(context).provider),
-            placeholder: Text(S.of(context).selectProvider),
-            leading: const Icon(Icons.business_outlined, size: 17),
-            onChanged: _handleProviderTextChanged,
-            trailing: _desktopIconButton(
+    return ShadInputFormField(
+      key: const ValueKey<String>('add-bot-provider'),
+      id: 'provider',
+      controller: providerController,
+      textInputAction: TextInputAction.next,
+      label: Text(S.of(context).provider),
+      placeholder: Text(S.of(context).selectProvider),
+      leading: _desktopInputLeading(Icons.business_outlined),
+      constraints: _desktopInputConstraints,
+      onChanged: _handleProviderTextChanged,
+      trailing: _desktopMenuAnchor(
+        options: providersInfo.keys.toList(growable: false),
+        selectedValue: providerController.text,
+        onSelected: _onProviderChanged,
+        menuWidth: _desktopProviderMenuWidth,
+        alignEnd: true,
+        leadingBuilder:
+            (provider) => buildProviderLogo(context, '', provider, 18),
+        fieldBuilder:
+            (menuController) => _desktopIconButton(
               tooltip: S.of(context).selectProvider,
               icon: Icons.expand_more_rounded,
               onPressed: () => _toggleMenu(menuController),
             ),
-          ),
+      ),
     );
   }
 
@@ -835,7 +864,8 @@ class _AddBotPageState extends State<AddBotPage> {
             textInputAction: TextInputAction.next,
             label: Text('${S.of(context).provider} (HuggingFace)'),
             placeholder: Text(S.of(context).selectProvider),
-            leading: const Icon(Icons.hub_outlined, size: 17),
+            leading: _desktopInputLeading(Icons.hub_outlined),
+            constraints: _desktopInputConstraints,
             onChanged: _handleSubProviderTextChanged,
             trailing: _desktopIconButton(
               tooltip: S.of(context).selectProvider,
@@ -861,7 +891,8 @@ class _AddBotPageState extends State<AddBotPage> {
             enabled: _isCustomProvider,
             textInputAction: TextInputAction.next,
             label: Text(S.of(context).apiType),
-            leading: const Icon(Icons.category_outlined, size: 17),
+            leading: _desktopInputLeading(Icons.category_outlined),
+            constraints: _desktopInputConstraints,
             trailing: _desktopIconButton(
               tooltip: S.of(context).apiType,
               icon: Icons.expand_more_rounded,
@@ -879,7 +910,8 @@ class _AddBotPageState extends State<AddBotPage> {
       controller: baseURLController,
       textInputAction: TextInputAction.next,
       label: Text(S.of(context).apiAddress),
-      leading: const Icon(Icons.link_rounded, size: 17),
+      leading: _desktopInputLeading(Icons.link_rounded),
+      constraints: _desktopInputConstraints,
       validator:
           (value) =>
               value.trim().isEmpty ? S.of(context).enterApiAddress : null,
@@ -894,7 +926,8 @@ class _AddBotPageState extends State<AddBotPage> {
       obscureText: !_isPasswordVisible,
       textInputAction: TextInputAction.next,
       label: Text(S.of(context).apiKey),
-      leading: const Icon(Icons.key_outlined, size: 17),
+      leading: _desktopInputLeading(Icons.key_outlined),
+      constraints: _desktopInputConstraints,
       validator:
           (value) =>
               value.trim().isEmpty ? S.of(context).pleaseEnterApiKey : null,
@@ -928,7 +961,8 @@ class _AddBotPageState extends State<AddBotPage> {
             textInputAction: TextInputAction.next,
             label: Text(S.of(context).model),
             placeholder: Text(S.of(context).selectModel),
-            leading: const Icon(Icons.memory_outlined, size: 17),
+            leading: _desktopInputLeading(Icons.memory_outlined),
+            constraints: _desktopInputConstraints,
             trailing:
                 providerModels.isEmpty
                     ? _isLoadingModels
@@ -963,7 +997,7 @@ class _AddBotPageState extends State<AddBotPage> {
       label: Text(S.of(context).systemPrompt),
       leading: const Icon(Icons.notes_rounded, size: 17),
       minHeight: 96,
-      maxHeight: 144,
+      maxHeight: 96,
       resizable: false,
     );
   }
