@@ -641,10 +641,106 @@ void main() {
         ),
         const Size(840, 720),
       );
+      expect(find.text('基本信息'), findsOneWidget);
+      expect(find.text('提供商信息'), findsOneWidget);
+      expect(find.text('模型配置'), findsOneWidget);
+      expect(find.byType(ShadCard), findsNWidgets(3));
+
+      final basicSection = find.byKey(
+        const ValueKey<String>('add-bot-basic-section'),
+      );
+      final providerSection = find.byKey(
+        const ValueKey<String>('add-bot-provider-section'),
+      );
+      final modelSection = find.byKey(
+        const ValueKey<String>('add-bot-model-section'),
+      );
+      expect(
+        find.descendant(
+          of: basicSection,
+          matching: find.byKey(const ValueKey<String>('add-bot-name')),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: providerSection,
+          matching: find.byKey(const ValueKey<String>('add-bot-provider')),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: modelSection,
+          matching: find.byKey(const ValueKey<String>('add-bot-model')),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.getRect(basicSection).bottom,
+        lessThan(tester.getRect(providerSection).top),
+      );
+      expect(
+        tester.getRect(providerSection).bottom,
+        lessThan(tester.getRect(modelSection).top),
+      );
+
+      Size inputSize(String key) {
+        return tester.getSize(
+          find.descendant(
+            of: find.byKey(ValueKey<String>(key)),
+            matching: find.byType(ShadInput),
+          ),
+        );
+      }
+
+      final singleLineInputSizes = [
+        inputSize('add-bot-name'),
+        inputSize('add-bot-provider'),
+        inputSize('add-bot-api-type'),
+        inputSize('add-bot-base-url'),
+        inputSize('add-bot-api-key'),
+        inputSize('add-bot-model'),
+      ];
+      expect(singleLineInputSizes.map((size) => size.width).toSet(), {640.0});
+      expect(singleLineInputSizes.map((size) => size.height).toSet(), {48.0});
+
+      final nameField = find.byKey(const ValueKey<String>('add-bot-name'));
+      await tester.enterText(
+        find.descendant(of: nameField, matching: find.byType(EditableText)),
+        'Researcher',
+      );
+      await tester.pump();
+      final nameInputRect = tester.getRect(
+        find.descendant(of: nameField, matching: find.byType(ShadInput)),
+      );
+      final nameTextRect = tester.getRect(
+        find.descendant(of: nameField, matching: find.byType(EditableText)),
+      );
+      expect(nameTextRect.center.dy, closeTo(nameInputRect.center.dy, 0.5));
+
+      final systemPromptSize = tester.getSize(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('add-bot-system-prompt')),
+          matching: find.byType(ShadTextarea),
+        ),
+      );
+      expect(systemPromptSize, const Size(640, 114));
 
       final providerField = find.byKey(
         const ValueKey<String>('add-bot-provider'),
       );
+      final providerMenuAnchor = find.descendant(
+        of: providerField,
+        matching: find.byType(MenuAnchor),
+      );
+      expect(providerMenuAnchor, findsOneWidget);
+
+      final providerDropdownIcon = find.descendant(
+        of: providerMenuAnchor,
+        matching: find.byIcon(Icons.expand_more_rounded),
+      );
+      final providerDropdownIconRect = tester.getRect(providerDropdownIcon);
       await tester.enterText(
         find.descendant(of: providerField, matching: find.byType(EditableText)),
         'Anthropic',
@@ -674,6 +770,37 @@ void main() {
       expect(find.byType(ShadDialog), findsOneWidget);
       expect(find.byType(MenuItemButton), findsWidgets);
       expect(find.text('OpenAI'), findsWidgets);
+      final openAIOption = find.ancestor(
+        of: find.text('OpenAI'),
+        matching: find.byType(MenuItemButton),
+      );
+      final openAIOptionRect = tester.getRect(openAIOption);
+      expect(
+        openAIOptionRect.top,
+        greaterThan(providerDropdownIconRect.bottom),
+      );
+      expect(
+        openAIOptionRect.right,
+        closeTo(providerDropdownIconRect.right, 1),
+      );
+      final anthropicOption = find.ancestor(
+        of: find.text('Anthropic'),
+        matching: find.byType(MenuItemButton),
+      );
+      expect(
+        find.descendant(
+          of: anthropicOption,
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: anthropicOption,
+          matching: find.byIcon(Icons.circle),
+        ),
+        findsNothing,
+      );
 
       await tester.ensureVisible(find.text('HuggingFace').last);
       await tester.pumpAndSettle();
