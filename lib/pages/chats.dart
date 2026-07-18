@@ -192,6 +192,7 @@ class ChatListPageState extends State<ChatListPage> {
         searchController: _searchController,
         searchFocusNode: _searchFocusNode,
         onSearchChanged: _filterChats,
+        showHeader: !widget.sidebarMode,
         action:
             widget.sidebarMode
                 ? const SizedBox.shrink()
