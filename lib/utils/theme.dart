@@ -1375,6 +1375,7 @@ class DesktopListPanel extends StatelessWidget {
   final double? contentMaxWidth;
   final EdgeInsetsGeometry padding;
   final Color? backgroundColor;
+  final bool showHeader;
 
   const DesktopListPanel({
     super.key,
@@ -1390,6 +1391,7 @@ class DesktopListPanel extends StatelessWidget {
     this.contentMaxWidth,
     this.padding = DesktopThemeTokens.panelPadding,
     this.backgroundColor,
+    this.showHeader = true,
   });
 
   @override
@@ -1397,37 +1399,39 @@ class DesktopListPanel extends StatelessWidget {
     final tokens = StarsDesktopTokens.of(context);
     final content = Column(
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (title.isNotEmpty)
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: DesktopThemeTokens.sectionTitleStyle(context),
-                    ),
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: DesktopThemeTokens.metaStyle(context),
-                    ),
+        if (showHeader) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (title.isNotEmpty)
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DesktopThemeTokens.sectionTitleStyle(context),
+                      ),
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: DesktopThemeTokens.metaStyle(context),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            action,
-          ],
-        ),
-        const SizedBox(height: 12),
+              const SizedBox(width: 8),
+              action,
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
         StarsSearchField(
           hintText: searchHintText,
           controller: searchController,

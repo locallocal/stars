@@ -344,6 +344,35 @@ void main() {
     expect(find.text('智能体内容'), findsOneWidget);
   });
 
+  testWidgets('desktop list panel can place search directly below padding', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(brightness: Brightness.light, fontSize: 16),
+        home: Scaffold(
+          body: SizedBox(
+            width: DesktopThemeTokens.sidebarWidth,
+            height: 700,
+            child: DesktopListPanel(
+              title: '',
+              description: '',
+              searchHintText: '搜索会话',
+              onSearchChanged: (_) {},
+              showHeader: false,
+              action: const SizedBox.shrink(),
+              child: const Text('会话内容'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final panelTop = tester.getTopLeft(find.byType(DesktopListPanel)).dy;
+    final searchTop = tester.getTopLeft(find.byType(StarsSearchField)).dy;
+    expect(searchTop - panelTop, DesktopThemeTokens.panelPadding.top);
+  });
+
   testWidgets('desktop empty state renders without a card shell', (
     tester,
   ) async {
