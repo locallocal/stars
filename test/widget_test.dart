@@ -400,19 +400,22 @@ void main() {
     tester.view.physicalSize = const Size(1440, 900);
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_desktopHarness(onCreateChat: () {}));
-    await tester.pumpAndSettle();
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(_desktopHarness(onCreateChat: () {}));
+      await tester.pumpAndSettle();
 
-    final emptyState = find.byType(DesktopEmptyStateCard);
-    expect(emptyState, findsOneWidget);
-    expect(
-      find.descendant(of: emptyState, matching: find.text('点击新建聊天创建会话')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: emptyState, matching: find.byType(ShadButton)),
-      findsNothing,
-    );
+      final emptyState = find.byType(DesktopEmptyStateCard);
+      expect(emptyState, findsOneWidget);
+      expect(
+        find.descendant(of: emptyState, matching: find.text('点击新建会话创建会话')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('聊天'), findsNothing);
+      expect(
+        find.descendant(of: emptyState, matching: find.byType(ShadButton)),
+        findsNothing,
+      );
+    });
   });
 
   testWidgets('desktop shell uses one toolbar and overlays sidebar at 800px', (
@@ -566,7 +569,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('新建聊天'), findsOneWidget);
+      expect(find.text('新建会话'), findsOneWidget);
       expect(find.text('选择智能体'), findsOneWidget);
       expect(find.byIcon(LucideIcons.x), findsOneWidget);
       expect(find.byType(ShadDialog), findsOneWidget);

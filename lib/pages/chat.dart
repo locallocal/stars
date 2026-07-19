@@ -512,7 +512,10 @@ class ChatPageState extends State<ChatPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.cleaning_services_rounded, size: 24),
-            tooltip: S.of(context).clearChatHistory,
+            tooltip: desktopConversationText(
+              context,
+              S.of(context).clearChatHistory,
+            ),
             onPressed: requestClearChat,
           ),
         ],
@@ -827,7 +830,10 @@ class ChatPageState extends State<ChatPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _generationError = S.of(context).clearChatFailed(error.toString());
+        _generationError = desktopConversationText(
+          context,
+          S.of(context).clearChatFailed(error.toString()),
+        );
       });
     }
   }

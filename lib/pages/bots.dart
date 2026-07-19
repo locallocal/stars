@@ -145,7 +145,12 @@ class ContactsPageState extends State<ContactsPage> {
       builder:
           (context) => ShadDialog.alert(
             title: Text(S.of(context).confirmDelete),
-            description: Text(S.of(context).confirmDeleteBot(bot.name)),
+            description: Text(
+              desktopConversationText(
+                context,
+                S.of(context).confirmDeleteBot(bot.name),
+              ),
+            ),
             actions: [
               ShadButton.outline(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -284,7 +289,9 @@ class ContactsPageState extends State<ContactsPage> {
                   size: 17,
                 ),
                 onPressed: () => _startChat(bot),
-                child: Text(S.of(context).startChatting),
+                child: Text(
+                  desktopConversationText(context, S.of(context).startChatting),
+                ),
               ),
               MenuItemButton(
                 leadingIcon: const Icon(Icons.edit_outlined, size: 17),
@@ -419,7 +426,12 @@ class ContactsPageState extends State<ContactsPage> {
                             ),
                           ),
                         ),
-                        content: Text(S.of(context).confirmDeleteBot(bot.name)),
+                        content: Text(
+                          desktopConversationText(
+                            context,
+                            S.of(context).confirmDeleteBot(bot.name),
+                          ),
+                        ),
                         actions: <Widget>[
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(false),
@@ -648,7 +660,9 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
             MenuItemButton(
               leadingIcon: const Icon(LucideIcons.messageCircle, size: 16),
               onPressed: widget.onStartChat,
-              child: Text(S.of(context).startChatting),
+              child: Text(
+                desktopConversationText(context, S.of(context).startChatting),
+              ),
             ),
             MenuItemButton(
               leadingIcon: const Icon(LucideIcons.trash2, size: 16),

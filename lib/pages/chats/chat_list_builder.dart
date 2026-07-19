@@ -90,9 +90,17 @@ class ChatListBuilder extends StatelessWidget {
                     variant: ShadDialogVariant.alert,
                     builder:
                         (dialogContext) => ShadDialog.alert(
-                          title: Text(S.of(dialogContext).deleteChat),
+                          title: Text(
+                            desktopConversationText(
+                              dialogContext,
+                              S.of(dialogContext).deleteChat,
+                            ),
+                          ),
                           description: Text(
-                            S.of(dialogContext).confirmDeleteChat(bot.name),
+                            desktopConversationText(
+                              dialogContext,
+                              S.of(dialogContext).confirmDeleteChat(bot.name),
+                            ),
                           ),
                           actions: [
                             ShadButton.outline(
@@ -250,7 +258,10 @@ class ChatListBuilder extends StatelessWidget {
             isSelected: isDesktop && selectedChatId == chat.id,
             lastMessage:
                 chat.lastMessage.isEmpty
-                    ? S.of(context).startChatting
+                    ? desktopConversationText(
+                      context,
+                      S.of(context).startChatting,
+                    )
                     : chat.lastMessage.length > 25
                     ? '${chat.lastMessage.substring(0, 25)}...'
                     : chat.lastMessage,
@@ -266,7 +277,9 @@ class ChatListBuilder extends StatelessWidget {
               leading: const Icon(LucideIcons.messageCircle, size: 16),
               enabled: !isOrphaned,
               onPressed: openChat,
-              child: Text(S.of(context).startChatting),
+              child: Text(
+                desktopConversationText(context, S.of(context).startChatting),
+              ),
             ),
             const ShadSeparator.horizontal(
               margin: EdgeInsets.symmetric(vertical: 4),
@@ -385,7 +398,12 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
                   onPressed: () => _invoke(widget.onOpen),
                   mainAxisAlignment: MainAxisAlignment.start,
                   leading: const Icon(LucideIcons.messageCircle, size: 16),
-                  child: Text(S.of(context).startChatting),
+                  child: Text(
+                    desktopConversationText(
+                      context,
+                      S.of(context).startChatting,
+                    ),
+                  ),
                 ),
                 ShadButton.raw(
                   variant: ShadButtonVariant.ghost,

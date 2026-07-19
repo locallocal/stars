@@ -13,8 +13,18 @@ Future<bool> showClearChatDialog(BuildContext context, String botName) async {
       variant: ShadDialogVariant.alert,
       builder:
           (dialogContext) => ShadDialog.alert(
-            title: Text(S.of(dialogContext).clearChatHistory),
-            description: Text(S.of(dialogContext).confirmClearChat(botName)),
+            title: Text(
+              desktopConversationText(
+                dialogContext,
+                S.of(dialogContext).clearChatHistory,
+              ),
+            ),
+            description: Text(
+              desktopConversationText(
+                dialogContext,
+                S.of(dialogContext).confirmClearChat(botName),
+              ),
+            ),
             actions: [
               ShadButton.outline(
                 autofocus: true,

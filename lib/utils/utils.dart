@@ -80,3 +80,18 @@ bool isDesktopOrTabletPlatform(BuildContext context) {
   // 兼容既有调用方，但桌面工作台样式现在只对 Windows/Linux/macOS 生效。
   return isDesktopPlatform(context);
 }
+
+/// Uses conversation terminology for Chinese copy in the desktop workspace.
+///
+/// Mobile keeps its existing chat terminology, while non-Chinese locales are
+/// returned unchanged.
+String desktopConversationText(BuildContext context, String text) {
+  if (!isDesktopPlatform(context)) return text;
+
+  final locale = Localizations.localeOf(context);
+  if (locale.languageCode != 'zh') return text;
+
+  final useTraditionalChinese =
+      locale.scriptCode == 'Hant' || locale.countryCode == 'TW';
+  return text.replaceAll('聊天', useTraditionalChinese ? '會話' : '会话');
+}

@@ -11,6 +11,7 @@ import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/pages/edit_bot.dart';
 import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 enum _ChatOverlay { sidebar, inspector }
@@ -819,7 +820,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                     size: ShadButtonSize.sm,
                     onPressed: widget.onCreateChat,
                     leading: const Icon(LucideIcons.squarePen, size: 16),
-                    child: Text(S.of(context).newChat),
+                    child: Text(
+                      desktopConversationText(context, S.of(context).newChat),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -928,8 +931,11 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     }
     return DesktopEmptyStateCard(
       icon: LucideIcons.messageCircle,
-      title: S.of(context).chats,
-      description: S.of(context).clickToStartChat,
+      title: desktopConversationText(context, S.of(context).chats),
+      description: desktopConversationText(
+        context,
+        S.of(context).clickToStartChat,
+      ),
       imageAsset: 'assets/icon/app_icon.png',
     );
   }
@@ -1109,7 +1115,9 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeBot = bot;
     final title = switch (currentIndex) {
-      0 => activeBot?.name ?? S.of(context).chats,
+      0 =>
+        activeBot?.name ??
+            desktopConversationText(context, S.of(context).chats),
       1 => activeBot?.name ?? S.of(context).Bots,
       _ => S.of(context).profile,
     };
@@ -1213,7 +1221,10 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             key: const ValueKey<String>(
                               'desktop-toolbar-new-chat',
                             ),
-                            label: S.of(context).newChat,
+                            label: desktopConversationText(
+                              context,
+                              S.of(context).newChat,
+                            ),
                             onPressed: onCreateChat,
                             icon: LucideIcons.plus,
                           ),

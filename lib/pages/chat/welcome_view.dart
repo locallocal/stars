@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/common/logo.dart';
+import 'package:stars/utils/utils.dart';
 
 class WelcomeView extends StatelessWidget {
   final Bot bot;
@@ -83,7 +84,10 @@ class WelcomeView extends StatelessWidget {
                   vertical: 8,
                 ),
                 child: Text(
-                  S.of(context).startChatPrompt,
+                  desktopConversationText(
+                    context,
+                    S.of(context).startChatPrompt,
+                  ),
                   style: TextStyle(
                     color:
                         isDesktop && shadTheme != null

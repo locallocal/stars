@@ -644,7 +644,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  S.of(context).appDescription,
+                  desktopConversationText(
+                    context,
+                    S.of(context).appDescription,
+                  ),
                   style: TextStyle(
                     color: DesktopThemeTokens.text(context),
                     fontSize: _fontSize,
@@ -1169,7 +1172,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       const StarsLogo(size: 60),
                       const SizedBox(height: 20),
                       Text(
-                        S.of(dialogContext).appTitle,
+                        desktopConversationText(
+                          dialogContext,
+                          S.of(dialogContext).appTitle,
+                        ),
                         style: ShadTheme.of(dialogContext).textTheme.h4,
                         textAlign: TextAlign.center,
                       ),
@@ -1180,7 +1186,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        S.of(dialogContext).appDescription,
+                        desktopConversationText(
+                          dialogContext,
+                          S.of(dialogContext).appDescription,
+                        ),
                         textAlign: TextAlign.start,
                       ),
                       const SizedBox(height: 16),
@@ -1236,7 +1245,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const StarsLogo(size: 60),
                 const SizedBox(height: 24),
                 Text(
-                  S.of(context).appTitle,
+                  desktopConversationText(context, S.of(context).appTitle),
                   style: TextStyle(
                     fontSize: _fontSize,
                     fontWeight: FontWeight.bold,
@@ -1251,7 +1260,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  S.of(context).appDescription,
+                  desktopConversationText(
+                    context,
+                    S.of(context).appDescription,
+                  ),
                   style: TextStyle(fontSize: _fontSize),
                   textAlign: TextAlign.start,
                 ),
