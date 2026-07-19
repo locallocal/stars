@@ -202,7 +202,9 @@ class ChatListPageState extends State<ChatListPage> {
                   height: DesktopThemeTokens.controlHeight,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   leading: const Icon(LucideIcons.plus, size: 16),
-                  child: Text(S.of(context).newChat),
+                  child: Text(
+                    desktopConversationText(context, S.of(context).newChat),
+                  ),
                 ),
         child: body,
       ),
@@ -230,7 +232,9 @@ class ChatListPageState extends State<ChatListPage> {
         constraints: const BoxConstraints(maxWidth: 280),
         child: ShadAlert.destructive(
           icon: const Icon(LucideIcons.circleAlert),
-          title: Text(S.of(context).unableToLoadChats),
+          title: Text(
+            desktopConversationText(context, S.of(context).unableToLoadChats),
+          ),
           description: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -301,18 +305,26 @@ class ChatListPageState extends State<ChatListPage> {
                 : LucideIcons.messageCircle,
         imageAsset:
             searchQuery.isEmpty ? 'assets/images/profile/no_chats.png' : null,
-        title:
-            searchQuery.isNotEmpty
-                ? S.of(context).noMatchingChats
-                : S.of(context).noChats,
+        title: desktopConversationText(
+          context,
+          searchQuery.isNotEmpty
+              ? S.of(context).noMatchingChats
+              : S.of(context).noChats,
+        ),
         description:
             searchQuery.isNotEmpty
                 ? S.of(context).tryDifferentSearch
-                : S.of(context).clickToStartChat,
+                : desktopConversationText(
+                  context,
+                  S.of(context).clickToStartChat,
+                ),
         supportingText:
             searchQuery.isNotEmpty
                 ? S.of(context).chatSearchScope
-                : S.of(context).newChatWorkspaceHint,
+                : desktopConversationText(
+                  context,
+                  S.of(context).newChatWorkspaceHint,
+                ),
         action:
             searchQuery.isEmpty
                 ? null

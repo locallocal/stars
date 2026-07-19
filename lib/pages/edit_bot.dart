@@ -8,6 +8,7 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/pages/common/common.dart';
 import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 
 class EditBotPage extends StatefulWidget {
   final Bot bot;
@@ -476,7 +477,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
                     (context) => ShadDialog.alert(
                       title: Text(S.of(context).deleteBot),
                       description: Text(
-                        S.of(context).confirmDeleteBot(widget.bot.name),
+                        desktopConversationText(
+                          context,
+                          S.of(context).confirmDeleteBot(widget.bot.name),
+                        ),
                       ),
                       actions: [
                         ShadButton.outline(
@@ -504,7 +508,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
                         ),
                       ),
                       content: Text(
-                        S.of(context).confirmDeleteBot(widget.bot.name),
+                        desktopConversationText(
+                          context,
+                          S.of(context).confirmDeleteBot(widget.bot.name),
+                        ),
                       ),
                       actions: [
                         TextButton(

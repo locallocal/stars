@@ -114,7 +114,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  S.of(context).newChat,
+                  desktopConversationText(context, S.of(context).newChat),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DesktopThemeTokens.toolbarTitleStyle(context),
@@ -347,7 +347,10 @@ class _NewChatDialogState extends State<NewChatDialog> {
       chat = await createNewChat(bot);
     } catch (error) {
       if (!mounted) return;
-      final message = S.of(context).createChatFailed(error.toString());
+      final message = desktopConversationText(
+        context,
+        S.of(context).createChatFailed(error.toString()),
+      );
       setState(() {
         _creating = false;
         _creatingBotId = null;
