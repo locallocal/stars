@@ -4,11 +4,17 @@ import 'package:http/http.dart' as http;
 import 'package:stars/model/model.dart';
 import 'package:stars/services/providers/providers.dart';
 
+typedef AiHubMixRequestSender =
+    Future<http.StreamedResponse> Function(http.BaseRequest request);
+
 class AiHubMix extends Provider {
   static const String defaultApiModelsUrl = 'https://aihubmix.com/v1/models';
   static const String defaultApiChatUrl =
       'https://aihubmix.com/v1/chat/completions';
-  AiHubMix(super.bot);
+  AiHubMix(super.bot, {AiHubMixRequestSender? requestSender})
+    : _requestSender = requestSender ?? ((request) => request.send());
+
+  final AiHubMixRequestSender _requestSender;
 
   @override
   bool supportWebSearch() {
@@ -106,7 +112,7 @@ class AiHubMix extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await _requestSender(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -128,21 +134,33 @@ class AiHubMix extends Provider {
 
           try {
             final data = jsonDecode(jsonStr);
+            final choices = data is Map ? data['choices'] : null;
+            if (choices is! List) {
+              throw const FormatException('Missing choices in stream event');
+            }
+            // OpenAI-compatible APIs can emit a final usage-only event whose
+            // choices array is intentionally empty. It contains no model text
+            // and must not be treated as a decode failure.
+            if (choices.isEmpty) continue;
+
+            final choice = choices.first;
+            final delta = choice is Map ? choice['delta'] : null;
+            if (delta is! Map) continue;
+
             if (supportDeepThinking()) {
-              final reasonContent =
-                  data['choices'][0]['delta']['reasoning_content'] ?? '';
+              final reasonContent = delta['reasoning_content'] ?? '';
               if (deepThinking &&
                   reasonContent.isNotEmpty &&
                   onReasoningResponse != null) {
                 onReasoningResponse!(reasonContent);
               }
             }
-            final delta = data['choices'][0]['delta']['content'] ?? '';
-            if (delta.isNotEmpty) {
-              onResponse(delta);
+            final content = delta['content'] ?? '';
+            if (content.isNotEmpty) {
+              onResponse(content);
             }
           } catch (e) {
-            onError!('Decode result failed: $line, ${e.toString()}');
+            onError?.call('Decode result failed: $line, ${e.toString()}');
           }
         }
       }
@@ -181,7 +199,7 @@ class AiHubMix extends Provider {
             "modalities": ["text", "image"],
           });
 
-    final response = await request.send();
+    final response = await _requestSender(request);
     if (isCancelled) {
       if (onError != null) {
         onError!('Request cancelled');

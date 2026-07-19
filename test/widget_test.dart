@@ -61,7 +61,7 @@ void main() {
     expect(DesktopThemeTokens.toolbarHeight, 50);
     expect(DesktopThemeTokens.menuBarHeight, 50);
     expect(DesktopThemeTokens.sidebarDecoration(testContext).border, isNull);
-    expect(DesktopThemeTokens.formContentMaxWidth, 720);
+    expect(DesktopThemeTokens.formContentMaxWidth, 920);
     expect(
       DesktopThemeTokens.formPagePadding,
       const EdgeInsets.fromLTRB(32, 28, 32, 48),
@@ -298,6 +298,10 @@ void main() {
   testWidgets('desktop list panel can match the settings content width', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 700);
+    addTearDown(tester.view.reset);
+
     late Color workspaceColor;
     await tester.pumpWidget(
       MaterialApp(
@@ -412,9 +416,32 @@ void main() {
       );
       expect(find.textContaining('聊天'), findsNothing);
       expect(
+        find.byKey(const ValueKey<String>('desktop-toolbar-clear-chat')),
+        findsNothing,
+      );
+      expect(
         find.descendant(of: emptyState, matching: find.byType(ShadButton)),
         findsNothing,
       );
+    });
+  });
+
+  testWidgets('desktop selected chat exposes clear action in the toolbar', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(_desktopHarness(selectedChatId: 'chat-1'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('desktop-toolbar-clear-chat')),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('清空会话记录'), findsOneWidget);
     });
   });
 
@@ -480,6 +507,30 @@ void main() {
     final workspaceColor = DesktopThemeTokens.workspaceSurface(detailContext);
     expect(detailScaffold.backgroundColor, workspaceColor);
     expect(saveBarBackground.color, workspaceColor);
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey<String>('desktop-bot-detail-content')),
+          )
+          .width,
+      DesktopThemeTokens.formContentMaxWidth +
+          DesktopThemeTokens.formPagePadding.horizontal,
+    );
+    expect(
+      tester
+          .getSize(
+            find
+                .descendant(
+                  of: find.byKey(
+                    const ValueKey<String>('desktop-bot-detail-content'),
+                  ),
+                  matching: find.byType(ShadInput),
+                )
+                .first,
+          )
+          .width,
+      DesktopThemeTokens.formContentMaxWidth,
+    );
 
     await tester.tap(find.byIcon(Icons.vertical_split_outlined));
     await tester.pumpAndSettle();
@@ -961,6 +1012,7 @@ Widget _addBotDialogHarness({
 Widget _desktopHarness({
   int currentIndex = 0,
   Bot? bot,
+  String? selectedChatId,
   VoidCallback? onCreateChat,
   VoidCallback? onSearchRequested,
 }) {
@@ -976,6 +1028,7 @@ Widget _desktopHarness({
               Center(child: Text('bot list')),
               Center(child: Text('profile')),
             ],
+            selectedChatId: selectedChatId,
             selectedBot: bot,
             onCreateChat: onCreateChat,
             onSearchRequested: onSearchRequested,

@@ -116,6 +116,10 @@ class _EditAIBotPageState extends State<EditBotPage> {
               ),
       body: Center(
         child: ConstrainedBox(
+          key:
+              widget.embedded
+                  ? const ValueKey<String>('desktop-bot-detail-content')
+                  : null,
           constraints: BoxConstraints(
             maxWidth:
                 widget.embedded

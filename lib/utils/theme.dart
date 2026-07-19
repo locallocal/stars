@@ -701,7 +701,7 @@ class DesktopThemeTokens {
   static const double controlHeight = 32;
   static const double iconButtonSize = 32;
   static const double listItemMinHeight = 44;
-  static const double formContentMaxWidth = 720;
+  static const double formContentMaxWidth = 920;
   static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);
   static const double panelRadiusValue = 8;
   static const double itemRadiusValue = 6;

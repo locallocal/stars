@@ -1228,6 +1228,18 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             onPressed: onCreateChat,
                             icon: LucideIcons.plus,
                           ),
+                        if (onClearChat != null)
+                          StarsDesktopIconAction(
+                            key: const ValueKey<String>(
+                              'desktop-toolbar-clear-chat',
+                            ),
+                            label: desktopConversationText(
+                              context,
+                              S.of(context).clearChatHistory,
+                            ),
+                            onPressed: onClearChat,
+                            icon: LucideIcons.eraser,
+                          ),
                         if (inspectorAvailable)
                           StarsDesktopIconAction(
                             key: const ValueKey<String>(
