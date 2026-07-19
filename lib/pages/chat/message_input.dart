@@ -187,15 +187,6 @@ class _MessageInputState extends State<MessageInput> {
     return KeyEventResult.handled;
   }
 
-  String get _modelSummary {
-    final provider = widget.provider.bot.provider.trim();
-    final model = widget.provider.bot.model.trim();
-    if (provider.isEmpty) {
-      return model;
-    }
-    return '$provider · $model';
-  }
-
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
@@ -315,12 +306,6 @@ class _MessageInputState extends State<MessageInput> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              if (isDesktop)
-                _buildInfoChip(
-                  context,
-                  icon: LucideIcons.slidersHorizontal,
-                  label: _modelSummary,
-                ),
               if (widget.provider.supportWebSearch())
                 _buildToggleChip(
                   context,
@@ -920,61 +905,6 @@ class _MessageInputState extends State<MessageInput> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-  }) {
-    if (_isDesktop || isDesktopOrTabletPlatform(context)) {
-      final colorScheme = ShadTheme.of(context).colorScheme;
-      return ShadBadge.outline(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        foregroundColor: colorScheme.mutedForeground,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ExcludeSemantics(
-              child: Icon(icon, size: 16, color: colorScheme.mutedForeground),
-            ),
-            const SizedBox(width: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 180),
-              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-          ],
-        ),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: StarsDesktopTheme.elevatedSurface(context),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: StarsDesktopTheme.borderColor(context)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: StarsDesktopTheme.mutedText(context)),
-          const SizedBox(width: 6),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -12,6 +12,16 @@ import 'package:stars/utils/theme.dart';
 
 void main() {
   group('desktop MessageInput', () {
+    testWidgets('does not show provider or model metadata', (tester) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+
+      await _pumpMessageInput(tester, controller: controller);
+
+      expect(find.text('test · test-model'), findsNothing);
+      expect(find.text('test-model'), findsNothing);
+    });
+
     testWidgets('empty input keeps send disabled', (tester) async {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
