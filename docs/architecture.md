@@ -19,12 +19,18 @@ View -> ViewModel -> Use Case（按需） -> Repository contract
   `lib/data/services/ai`。
 - `lib/data/repositories`：缓存、映射、事务协调和变更通知的单一数据源。
 - `lib/ui/core/dependency_injection`：唯一的生产依赖组合入口与 `AppScope`。
+- `lib/ui/core/widgets`：跨功能复用且不访问数据源的展示与交互组件。
 - `lib/ui/features/*/view_models`：不可变 UI 状态和用户命令。
-- `lib/pages`：迁移期间保留的 View 文件位置；不得直接访问数据库或静态数据 Service。
+- `lib/ui/features/*/views`：按功能组织的页面与私有组件，只负责渲染、布局、焦点、
+  动画、路由和弹窗。
 
 旧 `lib/services` 已完成迁移并删除：静态 CRUD 入口由 Repository 取代，数据库服务改为
 实例依赖，AI Provider 通过 `AiProviderRepository` 暴露领域契约，聊天生成状态由
 `ChatGenerationViewModel` 管理。生产页面使用 `AppDependencies.production()` 组合的依赖。
+
+旧 `lib/pages` 也已完成迁移并删除。应用入口 `main.dart` 只负责平台初始化和启动；应用
+壳、功能页面与组件全部位于 UI 分层目录。相机、相册和文件选择通过
+`AttachmentRepository` 注入 ViewModel，View 不直接调用选择器插件。
 
 ## 功能开发顺序
 
