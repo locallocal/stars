@@ -1,17 +1,24 @@
 import 'package:stars/data/repositories/ai_provider_repository_impl.dart';
+import 'package:stars/data/repositories/attachment_repository_impl.dart';
 import 'package:stars/data/repositories/feedback_repository_impl.dart';
+import 'package:stars/data/repositories/legal_document_repository_impl.dart';
 import 'package:stars/data/repositories/sqlite_bot_repository.dart';
 import 'package:stars/data/repositories/sqlite_chat_repository.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/data/repositories/sqlite_profile_repository.dart';
 import 'package:stars/data/services/feedback_service.dart';
+import 'package:stars/data/services/attachment_picker_service.dart';
+import 'package:stars/data/services/asset_text_service.dart';
 import 'package:stars/data/services/database_service.dart';
 import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/models/legal_document.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/feedback_repository.dart';
+import 'package:stars/domain/repositories/legal_document_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/repositories/profile_repository.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -25,6 +32,7 @@ import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
 import 'package:stars/ui/features/chats/view_models/new_chat_view_model.dart';
 import 'package:stars/ui/features/feedback/view_models/feedback_view_model.dart';
 import 'package:stars/ui/features/profile/view_models/profile_view_model.dart';
+import 'package:stars/ui/features/profile/view_models/legal_document_view_model.dart';
 
 /// Application composition root. Production implementations are assembled in
 /// one place; views only receive repositories through their ViewModels.
@@ -36,6 +44,8 @@ class AppDependencies {
     required this.profileRepository,
     required this.feedbackRepository,
     required this.aiProviderRepository,
+    required this.attachmentRepository,
+    required this.legalDocumentRepository,
     required this.createChat,
     required this.generationRegistry,
   });
@@ -60,6 +70,12 @@ class AppDependencies {
       service: const FeedbackService(),
     );
     const aiProviderRepository = AiProviderRepositoryImpl();
+    final attachmentRepository = AttachmentRepositoryImpl(
+      service: AttachmentPickerService(),
+    );
+    const legalDocumentRepository = LegalDocumentRepositoryImpl(
+      service: AssetTextService(),
+    );
     return AppDependencies(
       botRepository: botRepository,
       chatRepository: chatRepository,
@@ -67,6 +83,8 @@ class AppDependencies {
       profileRepository: profileRepository,
       feedbackRepository: feedbackRepository,
       aiProviderRepository: aiProviderRepository,
+      attachmentRepository: attachmentRepository,
+      legalDocumentRepository: legalDocumentRepository,
       createChat: CreateChat(chatRepository: chatRepository),
       generationRegistry: ChatGenerationRegistry(
         messagePersister: messageRepository.upsertMessage,
@@ -83,6 +101,8 @@ class AppDependencies {
   final ProfileRepository profileRepository;
   final FeedbackRepository feedbackRepository;
   final AiProviderRepository aiProviderRepository;
+  final AttachmentRepository attachmentRepository;
+  final LegalDocumentRepository legalDocumentRepository;
   final CreateChat createChat;
   final ChatGenerationRegistry generationRegistry;
 
@@ -106,10 +126,16 @@ class AppDependencies {
     botRepository: botRepository,
     createChat: createChat,
     aiProviderRepository: aiProviderRepository,
+    attachmentRepository: attachmentRepository,
   );
 
-  ProfileViewModel createProfileViewModel() =>
-      ProfileViewModel(profileRepository: profileRepository);
+  ProfileViewModel createProfileViewModel() => ProfileViewModel(
+    profileRepository: profileRepository,
+    attachmentRepository: attachmentRepository,
+  );
+
+  LegalDocumentViewModel createLegalDocumentViewModel(LegalDocumentType type) =>
+      LegalDocumentViewModel(type: type, repository: legalDocumentRepository);
 
   FeedbackViewModel createFeedbackViewModel() =>
       FeedbackViewModel(feedbackRepository: feedbackRepository);
@@ -123,6 +149,7 @@ class AppDependencies {
     messageRepository: messageRepository,
     chatRepository: chatRepository,
     aiProviderRepository: aiProviderRepository,
+    attachmentRepository: attachmentRepository,
     generationRegistry: generationRegistry,
   );
 }

@@ -2,15 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/profile_repository.dart';
 
 class ProfileViewModel extends ChangeNotifier {
-  ProfileViewModel({required ProfileRepository profileRepository})
-    : _profileRepository = profileRepository {
+  ProfileViewModel({
+    required ProfileRepository profileRepository,
+    required AttachmentRepository attachmentRepository,
+  }) : _profileRepository = profileRepository,
+       _attachmentRepository = attachmentRepository {
     _subscription = _profileRepository.changes.listen(_applyProfile);
   }
 
   final ProfileRepository _profileRepository;
+  final AttachmentRepository _attachmentRepository;
   late final StreamSubscription<Profile> _subscription;
   Profile? _profile;
   Object? _error;
@@ -38,6 +43,8 @@ class ProfileViewModel extends ChangeNotifier {
     await _profileRepository.updateProfile(profile);
     _applyProfile(profile);
   }
+
+  Future<String?> pickAvatar() => _attachmentRepository.selectImage();
 
   void _applyProfile(Profile profile, {bool notify = true}) {
     _profile = profile;

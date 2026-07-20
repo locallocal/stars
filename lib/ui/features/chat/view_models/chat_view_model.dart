@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -12,10 +13,12 @@ class ChatViewModel extends ChangeNotifier {
     required MessageRepository messageRepository,
     required ChatRepository chatRepository,
     required AiProviderRepository aiProviderRepository,
+    required AttachmentRepository attachmentRepository,
     required ChatGenerationRegistry generationRegistry,
   }) : _messageRepository = messageRepository,
        _chatRepository = chatRepository,
        _aiProviderRepository = aiProviderRepository,
+       _attachmentRepository = attachmentRepository,
        generationRegistry = generationRegistry,
        generationViewModel = generationRegistry.viewModelFor(chatId, bot);
 
@@ -24,6 +27,7 @@ class ChatViewModel extends ChangeNotifier {
   final MessageRepository _messageRepository;
   final ChatRepository _chatRepository;
   final AiProviderRepository _aiProviderRepository;
+  final AttachmentRepository _attachmentRepository;
   final ChatGenerationRegistry generationRegistry;
   final ChatGenerationViewModel generationViewModel;
 
@@ -58,6 +62,12 @@ class ChatViewModel extends ChangeNotifier {
       _chatRepository.updateLastMessage(chatId, content);
 
   Future<void> clearHistory() => _chatRepository.clearHistory(chatId);
+
+  Future<String?> captureImage() => _attachmentRepository.captureImage();
+
+  Future<String?> selectImage() => _attachmentRepository.selectImage();
+
+  Future<String?> selectFile() => _attachmentRepository.selectFile();
 
   Future<List<String>> generateImage({
     required String prompt,
