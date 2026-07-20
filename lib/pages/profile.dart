@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:stars/services/profile_service.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/l10n/app_localizations.dart';
@@ -11,6 +10,8 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/user_agreement.dart';
 import 'package:stars/pages/privacy_policy.dart';
 import 'package:stars/pages/feedback_page.dart';
+import 'package:stars/ui/core/dependency_injection/app_scope.dart';
+import 'package:stars/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:stars/utils/theme.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -19,11 +20,13 @@ class ProfilePage extends StatefulWidget {
     this.selectedSection = 0,
     this.initialProfile,
     this.onProfileSaved,
+    this.viewModel,
   });
 
   final int selectedSection;
   final Profile? initialProfile;
   final Future<void> Function(Profile profile)? onProfileSaved;
+  final ProfileViewModel? viewModel;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -36,6 +39,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
   String _language = 'zh_CN'; // 语言设置
+  ProfileViewModel? _resolvedViewModel;
+  bool _loadStarted = false;
   final List<GlobalKey> _desktopSectionKeys = List<GlobalKey>.generate(
     4,
     (_) => GlobalKey(),
@@ -79,7 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     final initialProfile = widget.initialProfile;
     if (initialProfile == null) {
-      _loadProfileInfo();
+      if (widget.viewModel != null) _loadProfileInfo();
     } else {
       _profile = initialProfile;
       _themeMode = intToThemeMode(initialProfile.themeMode);
@@ -87,6 +92,20 @@ class _ProfilePageState extends State<ProfilePage> {
       _isLoading = false;
       _scheduleSelectedSectionScroll();
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_profile != null || _loadStarted) return;
+    _resolvedViewModel ??= AppScope.of(context).createProfileViewModel();
+    _loadProfileInfo();
+  }
+
+  @override
+  void dispose() {
+    _resolvedViewModel?.dispose();
+    super.dispose();
   }
 
   @override
@@ -98,13 +117,21 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadProfileInfo() async {
+    if (_loadStarted) return;
+    _loadStarted = true;
     setState(() {
       _isLoading = true;
     });
 
-    final loadedProfile = await ProfileService.getProfile();
+    final viewModel = widget.viewModel ?? _resolvedViewModel!;
+    if (viewModel.profile == null) await viewModel.load();
+    final loadedProfile = viewModel.profile;
 
     if (!mounted) return;
+    if (loadedProfile == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
     setState(() {
       _profile = loadedProfile;
@@ -176,10 +203,10 @@ class _ProfilePageState extends State<ProfilePage> {
       modifyTimestamp: DateTime.now(),
     );
     final onProfileSaved = widget.onProfileSaved;
-    if (onProfileSaved == null) {
-      await ProfileService.updateProfile(profile);
-    } else {
+    if (onProfileSaved != null) {
       await onProfileSaved(profile);
+    } else {
+      await (widget.viewModel ?? _resolvedViewModel!).save(profile);
     }
     _profile = profile; // 更新本地缓存
   }
@@ -976,7 +1003,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           onPressed: () {
                             setState(() => _themeMode = theme.mode);
                             _saveProfile();
-                            ProfileService.notifyThemeChanged(_themeMode);
                             Navigator.pop(dialogContext);
                           },
                           child: ConstrainedBox(
@@ -1030,7 +1056,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           _themeMode = value;
                         });
                         _saveProfile();
-                        ProfileService.notifyThemeChanged(_themeMode);
                         Navigator.pop(context);
                       },
                       child: SingleChildScrollView(
@@ -1394,7 +1419,6 @@ class _ProfilePageState extends State<ProfilePage> {
                             onPressed: () {
                               setState(() => _language = language.code);
                               _saveProfile();
-                              ProfileService.notifyLanguageChanged(_language);
                               Navigator.pop(dialogContext);
                             },
                             child: ConstrainedBox(
@@ -1449,7 +1473,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           _language = value;
                         });
                         _saveProfile();
-                        ProfileService.notifyLanguageChanged(_language);
                         Navigator.pop(context);
                       },
                       child: SingleChildScrollView(

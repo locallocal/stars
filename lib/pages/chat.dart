@@ -3,10 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:stars/services/message_service.dart';
 import 'package:stars/services/chat_generation_controller.dart';
 import 'package:stars/model/model.dart';
-import 'package:stars/services/chat_service.dart';
 import 'package:stars/services/providers/providers.dart';
 import 'package:stars/pages/common/attachment.dart';
 import 'package:stars/generated/l10n.dart';
@@ -18,6 +16,8 @@ import 'package:stars/pages/chat/message_input.dart';
 import 'package:stars/pages/chat/welcome_view.dart';
 import 'package:stars/pages/chat/message_list.dart';
 import 'package:stars/pages/chat/typing_indicator.dart';
+import 'package:stars/ui/core/dependency_injection/app_scope.dart';
+import 'package:stars/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 
@@ -48,6 +48,8 @@ class ChatPageState extends State<ChatPage> {
   }
 
   late final ChatGenerationController _generationController;
+  late final ChatViewModel _chatViewModel;
+  bool _dependenciesInitialized = false;
   Provider get _provider => _generationController.capabilityProvider;
   final String _currentUserId = 'me';
   late final TextEditingController _messageController;
@@ -95,18 +97,27 @@ class ChatPageState extends State<ChatPage> {
     _selectedImages.addAll(_draftImagesByChat[widget.id] ?? const []);
     _selectedFiles.addAll(_draftFilesByChat[widget.id] ?? const []);
     _scrollController.addListener(_handleScrollPositionChanged);
-    _loadMessages();
-    _generationController = ChatGenerationRegistry.instance.controllerFor(
-      widget.id,
-      widget.bot,
-    )..addListener(_handleGenerationChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_dependenciesInitialized) return;
+    _dependenciesInitialized = true;
+    _chatViewModel = AppScope.of(
+      context,
+    ).createChatViewModel(widget.id, widget.bot);
+    _generationController =
+        _chatViewModel.generationController
+          ..addListener(_handleGenerationChanged);
     _handleGenerationChanged();
+    _loadMessages();
   }
 
   @override
   void didUpdateWidget(covariant ChatPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.bot != widget.bot) {
+    if (_dependenciesInitialized && oldWidget.bot != widget.bot) {
       _generationController.updateBot(widget.bot);
     }
   }
@@ -137,7 +148,7 @@ class ChatPageState extends State<ChatPage> {
           )) {
         _messages.add(terminalMessage);
       }
-      ChatService.notifyChatListChanged();
+      _chatViewModel.notifyChatListChanged();
     }
 
     setState(() {
@@ -183,7 +194,10 @@ class ChatPageState extends State<ChatPage> {
     });
 
     try {
-      final messages = await MessageService.getMessages(widget.id);
+      await _chatViewModel.loadMessages();
+      final messages = _chatViewModel.messages;
+      final historyError = _chatViewModel.historyError;
+      if (historyError != null) throw historyError;
       if (!mounted) return;
       setState(() {
         _messages = _mergeLoadedMessages(messages);
@@ -219,7 +233,10 @@ class ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     _persistAttachmentDrafts();
-    _generationController.removeListener(_handleGenerationChanged);
+    if (_dependenciesInitialized) {
+      _generationController.removeListener(_handleGenerationChanged);
+      _chatViewModel.dispose();
+    }
     _scrollController.removeListener(_handleScrollPositionChanged);
     _scrollController.dispose();
     _messageController
@@ -364,7 +381,10 @@ class ChatPageState extends State<ChatPage> {
       images: _pendingDraftImages,
       files: _pendingDraftFiles,
     );
-    ChatGenerationRegistry.instance.setNonCancellableRunActive(widget.id, true);
+    _chatViewModel.generationRegistry.setNonCancellableRunActive(
+      widget.id,
+      true,
+    );
     setState(() {
       _isTyping = true;
       _isStreaming = false;
@@ -378,9 +398,9 @@ class ChatPageState extends State<ChatPage> {
       final filePahts = await _getSelectedFilePaths();
       if (!mounted) return;
 
-      final turnId = MessageService.createId('turn');
+      final turnId = _chatViewModel.createId('turn');
       final userMessage = Message(
-        messageId: MessageService.createId('message'),
+        messageId: _chatViewModel.createId('message'),
         turnId: turnId,
         chatId: widget.id,
         botId: widget.bot.id,
@@ -458,7 +478,7 @@ class ChatPageState extends State<ChatPage> {
         ),
       );
 
-      ChatGenerationRegistry.instance.setNonCancellableRunActive(
+      _chatViewModel.generationRegistry.setNonCancellableRunActive(
         widget.id,
         false,
       );
@@ -478,7 +498,7 @@ class ChatPageState extends State<ChatPage> {
         _generationError = error.toString();
       });
     } finally {
-      ChatGenerationRegistry.instance.setNonCancellableRunActive(
+      _chatViewModel.generationRegistry.setNonCancellableRunActive(
         widget.id,
         false,
       );
@@ -819,14 +839,14 @@ class ChatPageState extends State<ChatPage> {
 
   Future<void> _clearChatMessages() async {
     try {
-      await ChatService.clearChatHistory(widget.id);
+      await _chatViewModel.clearHistory();
       if (!mounted) return;
       setState(() {
         _messages = [];
         _historyError = null;
         _composerFocusToken += 1;
       });
-      ChatService.notifyChatListChanged();
+      _chatViewModel.notifyChatListChanged();
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -839,7 +859,7 @@ class ChatPageState extends State<ChatPage> {
   }
 
   Future<bool> _confirmStopBeforeMutation() async {
-    final registry = ChatGenerationRegistry.instance;
+    final registry = _chatViewModel.generationRegistry;
     if (!registry.hasBlockingRun(widget.id)) return true;
     if (!registry.supportsCancellationForRun(widget.id)) {
       setState(() {
@@ -898,7 +918,7 @@ class ChatPageState extends State<ChatPage> {
   }
 
   Future<bool> stopActiveRunForNavigation() =>
-      ChatGenerationRegistry.instance.stopForNavigation(widget.id);
+      _chatViewModel.generationRegistry.stopForNavigation(widget.id);
 
   void _restorePendingDraft() {
     final text = _pendingDraftText;
@@ -974,8 +994,8 @@ class ChatPageState extends State<ChatPage> {
     }
     final chatId = widget.id;
     final bot = widget.bot;
-    final runId = MessageService.createId('run');
-    final turnId = MessageService.createId('turn');
+    final runId = _chatViewModel.createId('run');
+    final turnId = _chatViewModel.createId('turn');
     final originalImages = List<File>.of(_selectedImages);
     final imageAttachmentDetail = S.of(context).imageAttachment;
     final imageResultDetail = S.of(context).imageResult;
@@ -1008,10 +1028,10 @@ class ChatPageState extends State<ChatPage> {
         _selectedImages.clear();
         _messageController.clear();
       });
-      await MessageService.upsertMessage(userMessage);
+      await _chatViewModel.upsertMessage(userMessage);
       userPersisted = true;
       try {
-        await ChatService.updateLastMessage(chatId, userMessage.content);
+        await _chatViewModel.updateLastMessage(userMessage.content);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1047,9 +1067,9 @@ class ChatPageState extends State<ChatPage> {
         terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      final persistedBot = await MessageService.upsertMessage(botMessage);
+      final persistedBot = await _chatViewModel.upsertMessage(botMessage);
       try {
-        await ChatService.updateLastMessage(chatId, generatedPreview);
+        await _chatViewModel.updateLastMessage(generatedPreview);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1104,8 +1124,8 @@ class ChatPageState extends State<ChatPage> {
     }
     final chatId = widget.id;
     final bot = widget.bot;
-    final runId = MessageService.createId('run');
-    final turnId = MessageService.createId('turn');
+    final runId = _chatViewModel.createId('run');
+    final turnId = _chatViewModel.createId('turn');
     final speechResultDetail = S.of(context).speechResult;
     final generatedPreview = S.of(context).speechGenerated;
     var userPersisted = false;
@@ -1127,10 +1147,10 @@ class ChatPageState extends State<ChatPage> {
         _messages.add(userMessage);
         _messageController.clear();
       });
-      await MessageService.upsertMessage(userMessage);
+      await _chatViewModel.upsertMessage(userMessage);
       userPersisted = true;
       try {
-        await ChatService.updateLastMessage(chatId, userMessage.content);
+        await _chatViewModel.updateLastMessage(userMessage.content);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1175,9 +1195,9 @@ class ChatPageState extends State<ChatPage> {
         terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      final persistedBot = await MessageService.upsertMessage(botMessage);
+      final persistedBot = await _chatViewModel.upsertMessage(botMessage);
       try {
-        await ChatService.updateLastMessage(chatId, generatedPreview);
+        await _chatViewModel.updateLastMessage(generatedPreview);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1229,8 +1249,8 @@ class ChatPageState extends State<ChatPage> {
     }
     final chatId = widget.id;
     final bot = widget.bot;
-    final runId = MessageService.createId('run');
-    final turnId = MessageService.createId('turn');
+    final runId = _chatViewModel.createId('run');
+    final turnId = _chatViewModel.createId('turn');
     final originalFiles = List<File>.of(_selectedFiles);
     final referenceAudioDetail = S.of(context).referenceAudio;
     final musicResultDetail = S.of(context).musicResult;
@@ -1268,10 +1288,10 @@ class ChatPageState extends State<ChatPage> {
         _messageController.clear();
         _selectedFiles.clear();
       });
-      await MessageService.upsertMessage(userMessage);
+      await _chatViewModel.upsertMessage(userMessage);
       userPersisted = true;
       try {
-        await ChatService.updateLastMessage(chatId, userMessage.content);
+        await _chatViewModel.updateLastMessage(userMessage.content);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1304,9 +1324,9 @@ class ChatPageState extends State<ChatPage> {
         terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      final persistedBot = await MessageService.upsertMessage(botMessage);
+      final persistedBot = await _chatViewModel.upsertMessage(botMessage);
       try {
-        await ChatService.updateLastMessage(chatId, generatedPreview);
+        await _chatViewModel.updateLastMessage(generatedPreview);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1361,8 +1381,8 @@ class ChatPageState extends State<ChatPage> {
     }
     final chatId = widget.id;
     final bot = widget.bot;
-    final runId = MessageService.createId('run');
-    final turnId = MessageService.createId('turn');
+    final runId = _chatViewModel.createId('run');
+    final turnId = _chatViewModel.createId('turn');
     final originalImages = List<File>.of(_selectedImages);
     final imageAttachmentDetail = S.of(context).imageAttachment;
     final videoResultDetail = S.of(context).videoResult;
@@ -1395,10 +1415,10 @@ class ChatPageState extends State<ChatPage> {
         _messageController.clear();
         _selectedImages.clear();
       });
-      await MessageService.upsertMessage(userMessage);
+      await _chatViewModel.upsertMessage(userMessage);
       userPersisted = true;
       try {
-        await ChatService.updateLastMessage(chatId, userMessage.content);
+        await _chatViewModel.updateLastMessage(userMessage.content);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1432,9 +1452,9 @@ class ChatPageState extends State<ChatPage> {
         terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: DateTime.now(),
       );
-      final persistedBot = await MessageService.upsertMessage(botMessage);
+      final persistedBot = await _chatViewModel.upsertMessage(botMessage);
       try {
-        await ChatService.updateLastMessage(chatId, generatedPreview);
+        await _chatViewModel.updateLastMessage(generatedPreview);
       } catch (error) {
         debugPrint('Failed to update chat preview for $chatId: $error');
       }
@@ -1482,7 +1502,7 @@ class ChatPageState extends State<ChatPage> {
   }
 
   void _beginNonCancellableRun(String chatId) {
-    ChatGenerationRegistry.instance.setNonCancellableRunActive(chatId, true);
+    _chatViewModel.generationRegistry.setNonCancellableRunActive(chatId, true);
     setState(() {
       _isTyping = true;
       _isCancellable = false;
@@ -1498,7 +1518,7 @@ class ChatPageState extends State<ChatPage> {
     int? durationMs,
   }) async {
     try {
-      return await MessageService.upsertMessage(
+      return await _chatViewModel.upsertMessage(
         Message(
           messageId: '$runId:assistant',
           turnId: turnId,
@@ -1519,7 +1539,7 @@ class ChatPageState extends State<ChatPage> {
   }
 
   void _finishNonCancellableRun(String chatId) {
-    ChatGenerationRegistry.instance.setNonCancellableRunActive(chatId, false);
+    _chatViewModel.generationRegistry.setNonCancellableRunActive(chatId, false);
     if (!mounted) return;
     setState(() {
       _isTyping = false;

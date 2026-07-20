@@ -5,7 +5,6 @@ import 'package:stars/pages/chat.dart';
 import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/chats/chat_item.dart';
 import 'package:stars/pages/common/common.dart';
-import 'package:stars/services/chat_service.dart';
 import 'package:stars/services/chat_generation_controller.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/utils.dart';
@@ -19,6 +18,8 @@ class ChatListBuilder extends StatelessWidget {
   final String? selectedChatId;
   final Function onChatDeleted;
   final Function(String chatId, Bot bot) onChatSelected;
+  final Future<void> Function(String chatId) onDeleteChat;
+  final ChatGenerationRegistry generationRegistry;
 
   const ChatListBuilder({
     super.key,
@@ -27,6 +28,8 @@ class ChatListBuilder extends StatelessWidget {
     this.selectedChatId,
     required this.onChatDeleted,
     required this.onChatSelected,
+    required this.onDeleteChat,
+    required this.generationRegistry,
   });
 
   @override
@@ -82,7 +85,7 @@ class ChatListBuilder extends StatelessWidget {
         }
 
         Future<void> deleteChat() async {
-          final registry = ChatGenerationRegistry.instance;
+          final registry = generationRegistry;
           final confirm =
               isDesktop
                   ? await showChatShadDialog<bool>(
@@ -225,7 +228,7 @@ class ChatListBuilder extends StatelessWidget {
               return;
             }
 
-            await ChatService.deleteChat(chat.id);
+            await onDeleteChat(chat.id);
           } catch (error) {
             if (!context.mounted) return;
             final message = S.of(context).deleteChatFailed(error.toString());
@@ -248,7 +251,7 @@ class ChatListBuilder extends StatelessWidget {
           }
 
           if (!context.mounted) return;
-          ChatGenerationRegistry.instance.remove(chat.id);
+          generationRegistry.remove(chat.id);
           onChatDeleted(chat.id);
         }
 

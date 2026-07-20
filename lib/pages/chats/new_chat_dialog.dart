@@ -8,21 +8,24 @@ import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat.dart';
 import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/common/logo.dart';
-import 'package:stars/pages/common/new_chat.dart';
-import 'package:stars/services/bot_service.dart';
-import 'package:stars/services/chat_service.dart';
+import 'package:stars/ui/features/chats/view_models/new_chat_view_model.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 
 class NewChatDialog extends StatefulWidget {
   final void Function(String chatId, Bot bot)? onChatCreated;
   final Future<List<Bot>>? botsFuture;
+  final NewChatViewModel? viewModel;
 
   const NewChatDialog({
     super.key,
     required this.onChatCreated,
     this.botsFuture,
-  });
+    this.viewModel,
+  }) : assert(
+         botsFuture != null || viewModel != null,
+         'Provide a NewChatViewModel or a botsFuture.',
+       );
 
   @override
   State<NewChatDialog> createState() => _NewChatDialogState();
@@ -38,14 +41,14 @@ class _NewChatDialogState extends State<NewChatDialog> {
   @override
   void initState() {
     super.initState();
-    _botsFuture = widget.botsFuture ?? BotService.getBots();
+    _botsFuture = widget.botsFuture ?? widget.viewModel!.loadBots();
   }
 
   @override
   void didUpdateWidget(covariant NewChatDialog oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.botsFuture != widget.botsFuture) {
-      _botsFuture = widget.botsFuture ?? BotService.getBots();
+      _botsFuture = widget.botsFuture ?? widget.viewModel!.loadBots();
       _creationError = null;
     }
   }
@@ -260,7 +263,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
   void _retryLoadBots() {
     setState(() {
       _creationError = null;
-      _botsFuture = BotService.getBots();
+      _botsFuture = widget.viewModel?.loadBots() ?? widget.botsFuture!;
     });
   }
 
@@ -344,7 +347,11 @@ class _NewChatDialogState extends State<NewChatDialog> {
 
     late final Chat chat;
     try {
-      chat = await createNewChat(bot);
+      final viewModel = widget.viewModel;
+      if (viewModel == null) {
+        throw StateError('Chat creation requires a NewChatViewModel.');
+      }
+      chat = await viewModel.create(bot);
     } catch (error) {
       if (!mounted) return;
       final message = desktopConversationText(
@@ -376,15 +383,9 @@ class _NewChatDialogState extends State<NewChatDialog> {
       return;
     }
 
-    navigator
-        .push(
-          MaterialPageRoute(
-            builder: (context) => ChatPage(id: chat.id, bot: bot),
-          ),
-        )
-        .then((_) {
-          ChatService.notifyChatListChanged();
-        });
+    navigator.push(
+      MaterialPageRoute(builder: (context) => ChatPage(id: chat.id, bot: bot)),
+    );
   }
 }
 
