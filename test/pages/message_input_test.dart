@@ -7,7 +7,8 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat/message_input.dart';
-import 'package:stars/services/providers/providers.dart';
+import 'package:stars/domain/models/ai_models.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
@@ -242,7 +243,7 @@ void _noop() {}
 
 void _ignoreString(String _) {}
 
-class _FakeProvider extends Provider {
+class _FakeProvider extends AiProvider {
   _FakeProvider(super.bot);
 
   @override

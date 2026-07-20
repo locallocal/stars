@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:stars/services/chat_generation_controller.dart';
+import 'package:stars/domain/models/ai_models.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/model/model.dart';
-import 'package:stars/services/providers/providers.dart';
 import 'package:stars/pages/common/attachment.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/chat/attachments.dart';
@@ -47,10 +47,10 @@ class ChatPageState extends State<ChatPage> {
     _composerFocusRequests.add(chatId);
   }
 
-  late final ChatGenerationController _generationController;
+  late final ChatGenerationViewModel _generationViewModel;
   late final ChatViewModel _chatViewModel;
   bool _dependenciesInitialized = false;
-  Provider get _provider => _generationController.capabilityProvider;
+  AiProvider get _provider => _generationViewModel.capabilityProvider;
   final String _currentUserId = 'me';
   late final TextEditingController _messageController;
   late final bool _autofocusComposer;
@@ -107,8 +107,8 @@ class ChatPageState extends State<ChatPage> {
     _chatViewModel = AppScope.of(
       context,
     ).createChatViewModel(widget.id, widget.bot);
-    _generationController =
-        _chatViewModel.generationController
+    _generationViewModel =
+        _chatViewModel.generationViewModel
           ..addListener(_handleGenerationChanged);
     _handleGenerationChanged();
     _loadMessages();
@@ -118,13 +118,13 @@ class ChatPageState extends State<ChatPage> {
   void didUpdateWidget(covariant ChatPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_dependenciesInitialized && oldWidget.bot != widget.bot) {
-      _generationController.updateBot(widget.bot);
+      _generationViewModel.updateBot(widget.bot);
     }
   }
 
   void _handleGenerationChanged() {
     if (!mounted) return;
-    final snapshot = _generationController.snapshot;
+    final snapshot = _generationViewModel.snapshot;
     final terminalMessage = snapshot.terminalMessage;
     final isNewTerminal =
         snapshot.lifecycle.isTerminal &&
@@ -180,8 +180,8 @@ class ChatPageState extends State<ChatPage> {
     if (isNewTerminal) {
       _scheduleScrollToLatest(animate: true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _generationController.snapshot.lifecycle.isTerminal) {
-          _generationController.acknowledgeTerminal();
+        if (mounted && _generationViewModel.snapshot.lifecycle.isTerminal) {
+          _generationViewModel.acknowledgeTerminal();
         }
       });
     }
@@ -234,7 +234,7 @@ class ChatPageState extends State<ChatPage> {
   void dispose() {
     _persistAttachmentDrafts();
     if (_dependenciesInitialized) {
-      _generationController.removeListener(_handleGenerationChanged);
+      _generationViewModel.removeListener(_handleGenerationChanged);
       _chatViewModel.dispose();
     }
     _scrollController.removeListener(_handleScrollPositionChanged);
@@ -482,7 +482,7 @@ class ChatPageState extends State<ChatPage> {
         widget.id,
         false,
       );
-      await _generationController.startText(
+      await _generationViewModel.startText(
         userMessage: userMessage,
         messages: chatMessages,
       );
@@ -502,7 +502,7 @@ class ChatPageState extends State<ChatPage> {
         widget.id,
         false,
       );
-      if (mounted && !_generationController.snapshot.lifecycle.isRunning) {
+      if (mounted && !_generationViewModel.snapshot.lifecycle.isRunning) {
         setState(() {
           _isTyping = false;
           _isCancellable = false;
@@ -904,7 +904,7 @@ class ChatPageState extends State<ChatPage> {
 
   Future<void> _cancelRequest() async {
     if (!_isCancellable) return;
-    final lifecycle = await _generationController.cancel();
+    final lifecycle = await _generationViewModel.cancel();
     if (!mounted) return;
     if (lifecycle == ChatRunLifecycle.cancelled) {
       if (isDesktopOrTabletPlatform(context)) {
@@ -1037,17 +1037,13 @@ class ChatPageState extends State<ChatPage> {
       }
 
       final imageDirPath = await getChatDirectoryPath(chatId);
-      final params = {
-        'prompt': prompt,
-        'size': _selectedImageSize,
-        'dirPath': imageDirPath,
-        'referenceImages': imagePaths,
-        'style': _selectedImageStype,
-      };
-      final imagePath = await compute(_generateImageInBackground, {
-        'bot': bot,
-        'params': params,
-      });
+      final imagePath = await _chatViewModel.generateImage(
+        prompt: prompt,
+        size: _selectedImageSize,
+        outputDirectory: imageDirPath,
+        referenceImages: imagePaths,
+        style: _selectedImageStype,
+      );
 
       final botMessage = Message(
         messageId: '$runId:assistant',
@@ -1168,15 +1164,11 @@ class ChatPageState extends State<ChatPage> {
       }
 
       final outputDirPath = await getChatDirectoryPath(chatId);
-      final params = {
-        'prompt': prompt,
-        'dirPath': outputDirPath,
-        'voiceType': voiceType,
-      };
-      final audioPath = await compute(_generateSpeechInBackground, {
-        'bot': bot,
-        'params': params,
-      });
+      final audioPath = await _chatViewModel.generateSpeech(
+        prompt: prompt,
+        voiceType: voiceType,
+        outputDirectory: outputDirPath,
+      );
       final botMessage = Message(
         messageId: '$runId:assistant',
         turnId: turnId,
@@ -1297,15 +1289,11 @@ class ChatPageState extends State<ChatPage> {
       }
 
       final musicDirPath = await getChatDirectoryPath(chatId);
-      final params = {
-        'prompt': prompt,
-        'dirPath': musicDirPath,
-        'referMusicPath': referMusicPath,
-      };
-      final musicPath = await compute(_generateMusicInBackground, {
-        'bot': bot,
-        'params': params,
-      });
+      final musicPath = await _chatViewModel.generateMusic(
+        prompt: prompt,
+        outputDirectory: musicDirPath,
+        referenceMusic: referMusicPath,
+      );
       final botMessage = Message(
         messageId: '$runId:assistant',
         turnId: turnId,
@@ -1424,16 +1412,12 @@ class ChatPageState extends State<ChatPage> {
       }
 
       final videoDirPath = await getChatDirectoryPath(chatId);
-      final params = {
-        'prompt': prompt,
-        'ratio': _selectedVideoRatio,
-        'dirPath': videoDirPath,
-        'referenceImage': imagePaths,
-      };
-      final videoPath = await compute(_generateVedioInBackground, {
-        'bot': bot,
-        'params': params,
-      });
+      final videoPath = await _chatViewModel.generateVideo(
+        prompt: prompt,
+        ratio: _selectedVideoRatio,
+        outputDirectory: videoDirPath,
+        referenceImages: imagePaths,
+      );
       final botMessage = Message(
         messageId: '$runId:assistant',
         turnId: turnId,
@@ -1669,69 +1653,6 @@ class ChatPageState extends State<ChatPage> {
       toolCalls: List<MessageToolCall>.from(toolCalls),
       commandExecutions: List<MessageCommandExecution>.from(commandExecutions),
       fileEdits: fileEdits,
-    );
-  }
-
-  // 在后台线程中执行图片生成的静态方法
-  static Future<List<String>> _generateImageInBackground(
-    Map<String, dynamic> args,
-  ) async {
-    final bot = args['bot'] as Bot;
-    final params = args['params'] as Map<String, dynamic>;
-    final provider = Provider.create(bot);
-
-    return await provider.generateImage(
-      params['prompt'],
-      params['size'],
-      params['dirPath'],
-      referenceImages: params['referenceImages'],
-      style: params['style'],
-    );
-  }
-
-  // 在后台线程中执行视频生成的静态方法
-  static Future<String> _generateVedioInBackground(
-    Map<String, dynamic> args,
-  ) async {
-    final bot = args['bot'] as Bot;
-    final params = args['params'] as Map<String, dynamic>;
-    final provider = Provider.create(bot);
-
-    return await provider.generateVideo(
-      params['prompt'],
-      params['ratio'],
-      params['dirPath'],
-      params['referenceImage'],
-    );
-  }
-
-  // 在后台线程中执行语音生成的静态方法
-  static Future<String> _generateSpeechInBackground(
-    Map<String, dynamic> args,
-  ) async {
-    final bot = args['bot'] as Bot;
-    final params = args['params'] as Map<String, dynamic>;
-    final provider = Provider.create(bot);
-
-    return await provider.generateSpeech(
-      params['prompt'],
-      params['voiceType'],
-      params['dirPath'],
-    );
-  }
-
-  // 在后台线程中执行语音生成的静态方法
-  static Future<String> _generateMusicInBackground(
-    Map<String, dynamic> args,
-  ) async {
-    final bot = args['bot'] as Bot;
-    final params = args['params'] as Map<String, dynamic>;
-    final provider = Provider.create(bot);
-
-    return await provider.generateMusic(
-      params['prompt'],
-      params['dirPath'],
-      params['referMusicPath'],
     );
   }
 }

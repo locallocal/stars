@@ -5,8 +5,8 @@ import 'package:stars/data/repositories/sqlite_bot_repository.dart';
 import 'package:stars/data/repositories/sqlite_chat_repository.dart';
 import 'package:stars/data/repositories/sqlite_profile_repository.dart';
 import 'package:stars/data/services/local_database_service.dart';
+import 'package:stars/data/services/database_service.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/services/database_service.dart';
 
 void main() {
   sqfliteFfiInit();

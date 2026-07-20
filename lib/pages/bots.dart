@@ -546,6 +546,7 @@ class ContactsPageState extends State<ContactsPage> {
         barrierDismissible: false,
         builder:
             (dialogContext) => AddBotDialog(
+              modelLoader: widget.viewModel.listModels,
               onBotAdded: (newBot) async {
                 await widget.viewModel.addBot(newBot);
                 if (dialogContext.mounted) {
@@ -562,6 +563,7 @@ class ContactsPageState extends State<ContactsPage> {
       MaterialPageRoute(
         builder:
             (context) => AddBotPage(
+              modelLoader: widget.viewModel.listModels,
               onBotAdded: (newBot) async {
                 await widget.viewModel.addBot(newBot);
               },

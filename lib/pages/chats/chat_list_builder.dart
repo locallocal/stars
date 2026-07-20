@@ -5,7 +5,7 @@ import 'package:stars/pages/chat.dart';
 import 'package:stars/pages/chat/desktop_chat_primitives.dart';
 import 'package:stars/pages/chats/chat_item.dart';
 import 'package:stars/pages/common/common.dart';
-import 'package:stars/services/chat_generation_controller.dart';
+import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:stars/utils/time.dart';

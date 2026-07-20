@@ -15,14 +15,16 @@ View -> ViewModel -> Use Case（按需） -> Repository contract
 - `lib/domain/repositories`：UI/业务层依赖的数据契约。
 - `lib/domain/use_cases`：跨步骤或可复用业务规则，例如创建会话。
 - `lib/data/models`：数据库/API 原始记录与领域模型之间的映射。
-- `lib/data/services`：SQLite、HTTP、平台插件等外部系统边界。
+- `lib/data/services`：SQLite、HTTP、平台插件等外部系统边界；AI 厂商适配器统一位于
+  `lib/data/services/ai`。
 - `lib/data/repositories`：缓存、映射、事务协调和变更通知的单一数据源。
 - `lib/ui/core/dependency_injection`：唯一的生产依赖组合入口与 `AppScope`。
 - `lib/ui/features/*/view_models`：不可变 UI 状态和用户命令。
 - `lib/pages`：迁移期间保留的 View 文件位置；不得直接访问数据库或静态数据 Service。
 
-`lib/services` 中的旧静态数据 Service 仅保留给兼容代码和旧测试。生产页面使用
-`AppDependencies.production()` 创建的 Repository；新增代码不得继续依赖这些静态入口。
+旧 `lib/services` 已完成迁移并删除：静态 CRUD 入口由 Repository 取代，数据库服务改为
+实例依赖，AI Provider 通过 `AiProviderRepository` 暴露领域契约，聊天生成状态由
+`ChatGenerationViewModel` 管理。生产页面使用 `AppDependencies.production()` 组合的依赖。
 
 ## 功能开发顺序
 
@@ -37,8 +39,11 @@ View -> ViewModel -> Use Case（按需） -> Repository contract
 ## 强制约束
 
 - View 不导入 `sqflite`、HTTP 客户端或旧静态数据 Service。
+- 除 `AppDependencies` 组合根外，View 与 ViewModel 不导入 Data 层实现。
 - Repository 向上只暴露领域模型，不暴露数据库记录。
 - ViewModel 对列表状态使用不可变快照，异步异常转换为可呈现状态。
 - 删除/更新操作先完成持久化，再发布变更通知。
 - Data、Domain、UI 新分层目录启用 `strict-casts`、`strict-inference` 和
   `strict-raw-types`。
+- AI 厂商适配器当前保留项目通用 lint；其上层领域契约与 Repository 实现继续使用严格
+  分析。新增厂商响应解析优先定义 DTO，避免扩展动态 Map 边界。

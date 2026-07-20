@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
 
@@ -9,13 +10,16 @@ class BotListViewModel extends ChangeNotifier {
   BotListViewModel({
     required BotRepository botRepository,
     required CreateChat createChat,
+    required AiProviderRepository aiProviderRepository,
   }) : _botRepository = botRepository,
-       _createChat = createChat {
+       _createChat = createChat,
+       _aiProviderRepository = aiProviderRepository {
     _subscription = _botRepository.changes.listen(_applyBots);
   }
 
   final BotRepository _botRepository;
   final CreateChat _createChat;
+  final AiProviderRepository _aiProviderRepository;
   late final StreamSubscription<List<Bot>> _subscription;
 
   List<Bot> _bots = const [];
@@ -58,6 +62,9 @@ class BotListViewModel extends ChangeNotifier {
   }
 
   Future<Chat> startChat(Bot bot) => _createChat(bot);
+
+  Future<List<String>> listModels(Bot bot) =>
+      _aiProviderRepository.listModels(bot);
 
   Future<void> addBot(Bot bot) => _botRepository.addBot(bot);
 
