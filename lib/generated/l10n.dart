@@ -1,6 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -28,10 +29,9 @@ class S {
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<S> load(Locale locale) {
-    final name =
-        (locale.countryCode?.isEmpty ?? false)
-            ? locale.languageCode
-            : locale.toString();
+    final name = (locale.countryCode?.isEmpty ?? false)
+        ? locale.languageCode
+        : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -605,10 +605,10 @@ class S {
     );
   }
 
-  /// `Select Provider:`
+  /// `Select Provider`
   String get selectProvider {
     return Intl.message(
-      'Select Provider:',
+      'Select Provider',
       name: 'selectProvider',
       desc: 'Label for selecting AI service provider',
       args: [],
@@ -625,20 +625,20 @@ class S {
     );
   }
 
-  /// `API Type:`
+  /// `API Type`
   String get apiType {
     return Intl.message(
-      'API Type:',
+      'API Type',
       name: 'apiType',
       desc: 'Label for API type selection',
       args: [],
     );
   }
 
-  /// `API Address:`
+  /// `API Address`
   String get apiAddress {
     return Intl.message(
-      'API Address:',
+      'API Address',
       name: 'apiAddress',
       desc: 'Label for API address input',
       args: [],
@@ -835,10 +835,10 @@ class S {
     );
   }
 
-  /// `Failed to get response: ${error}`
+  /// `Failed to get response: {error}`
   String responseError(String error) {
     return Intl.message(
-      'Failed to get response: \$$error',
+      'Failed to get response: $error',
       name: 'responseError',
       desc: 'Failed to get response',
       args: [error],
@@ -1210,21 +1210,32 @@ class S {
     );
   }
 
-  /// `Search conversations`
-  String get searchChats {
-    return Intl.message('Search conversations', name: 'searchChats', args: []);
-  }
-
-  /// `Search bots`
-  String get searchBots {
-    return Intl.message('Search bots', name: 'searchBots', args: []);
-  }
-
   /// `No matching chats found`
   String get noMatchingChats {
     return Intl.message(
       'No matching chats found',
       name: 'noMatchingChats',
+      desc: 'Message when no matching chats are found',
+      args: [],
+    );
+  }
+
+  /// `Search conversations`
+  String get searchChats {
+    return Intl.message(
+      'Search conversations',
+      name: 'searchChats',
+      desc: 'Hint text for chat search field',
+      args: [],
+    );
+  }
+
+  /// `Search bots`
+  String get searchBots {
+    return Intl.message(
+      'Search bots',
+      name: 'searchBots',
+      desc: 'Hint text for bot search field',
       args: [],
     );
   }
@@ -1234,6 +1245,7 @@ class S {
     return Intl.message(
       'Personal Information',
       name: 'desktopPersonalInformation',
+      desc: '',
       args: [],
     );
   }
@@ -1243,6 +1255,7 @@ class S {
     return Intl.message(
       'Appearance & Language',
       name: 'desktopAppearanceAndLanguage',
+      desc: '',
       args: [],
     );
   }
@@ -1252,6 +1265,7 @@ class S {
     return Intl.message(
       'Help & Support',
       name: 'desktopHelpAndSupport',
+      desc: '',
       args: [],
     );
   }
@@ -1261,6 +1275,7 @@ class S {
     return Intl.message(
       'About & Legal',
       name: 'desktopAboutAndLegal',
+      desc: '',
       args: [],
     );
   }
@@ -1270,6 +1285,7 @@ class S {
     return Intl.message(
       'Manage your profile, appearance, language, and app support.',
       name: 'desktopSettingsDescription',
+      desc: '',
       args: [],
     );
   }
@@ -1279,6 +1295,7 @@ class S {
     return Intl.message(
       'Change your avatar and display name.',
       name: 'desktopEditProfileDescription',
+      desc: '',
       args: [],
     );
   }
@@ -1288,63 +1305,104 @@ class S {
     return Intl.message(
       'Changes take effect immediately and are saved locally.',
       name: 'desktopSavedImmediatelyDescription',
+      desc: '',
       args: [],
     );
   }
 
   /// `Change avatar`
   String get changeAvatar {
-    return Intl.message('Change avatar', name: 'changeAvatar', args: []);
+    return Intl.message(
+      'Change avatar',
+      name: 'changeAvatar',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Reset to Default`
   String get resetToDefault {
-    return Intl.message('Reset to Default', name: 'resetToDefault', args: []);
+    return Intl.message(
+      'Reset to Default',
+      name: 'resetToDefault',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Hide Sidebar`
   String get hideSidebar {
-    return Intl.message('Hide Sidebar', name: 'hideSidebar', args: []);
+    return Intl.message(
+      'Hide Sidebar',
+      name: 'hideSidebar',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Show Sidebar`
   String get showSidebar {
-    return Intl.message('Show Sidebar', name: 'showSidebar', args: []);
+    return Intl.message(
+      'Show Sidebar',
+      name: 'showSidebar',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Hide Bot Info`
   String get hideInspector {
-    return Intl.message('Hide Bot Info', name: 'hideInspector', args: []);
+    return Intl.message(
+      'Hide Bot Info',
+      name: 'hideInspector',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Show Bot Info`
   String get showInspector {
-    return Intl.message('Show Bot Info', name: 'showInspector', args: []);
+    return Intl.message(
+      'Show Bot Info',
+      name: 'showInspector',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Bot Information`
   String get botInformation {
-    return Intl.message('Bot Information', name: 'botInformation', args: []);
+    return Intl.message(
+      'Bot Information',
+      name: 'botInformation',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Jump to Latest`
   String get jumpToLatest {
-    return Intl.message('Jump to Latest', name: 'jumpToLatest', args: []);
+    return Intl.message(
+      'Jump to Latest',
+      name: 'jumpToLatest',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Image Style`
   String get imageStyle {
-    return Intl.message('Image Style', name: 'imageStyle', args: []);
+    return Intl.message('Image Style', name: 'imageStyle', desc: '', args: []);
   }
 
   /// `Image Size`
   String get imageSize {
-    return Intl.message('Image Size', name: 'imageSize', args: []);
+    return Intl.message('Image Size', name: 'imageSize', desc: '', args: []);
   }
 
   /// `Stop`
   String get stop {
-    return Intl.message('Stop', name: 'stop', args: []);
+    return Intl.message('Stop', name: 'stop', desc: '', args: []);
   }
 
   /// `Generating…`
@@ -1352,8 +1410,7 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc:
-          'Disabled primary action label while a request is running and cannot be cancelled',
+      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -1374,6 +1431,7 @@ class S {
     return Intl.message(
       'Basic Information',
       name: 'basicInformation',
+      desc: '',
       args: [],
     );
   }
@@ -1383,6 +1441,7 @@ class S {
     return Intl.message(
       'Provider Information',
       name: 'providerInformation',
+      desc: '',
       args: [],
     );
   }
@@ -1392,23 +1451,24 @@ class S {
     return Intl.message(
       'Model Configuration',
       name: 'modelConfiguration',
+      desc: '',
       args: [],
     );
   }
 
   /// `Copy API Key`
   String get copyApiKey {
-    return Intl.message('Copy API Key', name: 'copyApiKey', args: []);
+    return Intl.message('Copy API Key', name: 'copyApiKey', desc: '', args: []);
   }
 
   /// `Show API Key`
   String get showApiKey {
-    return Intl.message('Show API Key', name: 'showApiKey', args: []);
+    return Intl.message('Show API Key', name: 'showApiKey', desc: '', args: []);
   }
 
   /// `Hide API Key`
   String get hideApiKey {
-    return Intl.message('Hide API Key', name: 'hideApiKey', args: []);
+    return Intl.message('Hide API Key', name: 'hideApiKey', desc: '', args: []);
   }
 
   /// `No matching bots found`
@@ -1416,6 +1476,7 @@ class S {
     return Intl.message(
       'No matching bots found',
       name: 'noMatchingBots',
+      desc: '',
       args: [],
     );
   }
@@ -1425,6 +1486,7 @@ class S {
     return Intl.message(
       'Try a different search, or create a new item.',
       name: 'tryDifferentSearch',
+      desc: '',
       args: [],
     );
   }
@@ -1434,6 +1496,7 @@ class S {
     return Intl.message(
       'Search matches bot names and the latest message.',
       name: 'chatSearchScope',
+      desc: '',
       args: [],
     );
   }
@@ -1443,6 +1506,7 @@ class S {
     return Intl.message(
       'A new chat opens directly in the workspace.',
       name: 'newChatWorkspaceHint',
+      desc: '',
       args: [],
     );
   }
@@ -1452,6 +1516,7 @@ class S {
     return Intl.message(
       'Search filters the list by bot name.',
       name: 'botSearchScope',
+      desc: '',
       args: [],
     );
   }
@@ -1461,362 +1526,785 @@ class S {
     return Intl.message(
       'New bots remain in the workspace for editing.',
       name: 'newBotWorkspaceHint',
+      desc: '',
       args: [],
     );
   }
 
-  String get retry => Intl.message('Retry', name: 'retry', args: []);
-
-  String get unableToLoadChats =>
-      Intl.message('Unable to load chats', name: 'unableToLoadChats', args: []);
-
-  String get clearSearch =>
-      Intl.message('Clear search', name: 'clearSearch', args: []);
-
-  String get unavailableBot =>
-      Intl.message('Unavailable bot', name: 'unavailableBot', args: []);
-
-  String get botUnavailableTitle => Intl.message(
-    'This bot is unavailable',
-    name: 'botUnavailableTitle',
-    args: [],
-  );
-
-  String get orphanedChatGuidance => Intl.message(
-    'Delete this orphaned chat or recreate the missing bot.',
-    name: 'orphanedChatGuidance',
-    args: [],
-  );
-
-  String get activeRequestCannotStop => Intl.message(
-    'The active request cannot be stopped',
-    name: 'activeRequestCannotStop',
-    args: [],
-  );
-
-  String get waitForGenerationToFinish => Intl.message(
-    'Wait for generation to finish.',
-    name: 'waitForGenerationToFinish',
-    args: [],
-  );
-
-  String get waitForGenerationBeforeLeaving => Intl.message(
-    'Wait for generation to finish before leaving this chat.',
-    name: 'waitForGenerationBeforeLeaving',
-    args: [],
-  );
-
-  String get activeRequestCannotCancel => Intl.message(
-    'The active request cannot be cancelled. Wait for it to finish.',
-    name: 'activeRequestCannotCancel',
-    args: [],
-  );
-
-  String get attachments =>
-      Intl.message('Attachments', name: 'attachments', args: []);
-
-  String itemCount(String count) =>
-      Intl.message('$count items', name: 'itemCount', args: [count]);
-
-  String fileCount(String count) =>
-      Intl.message('$count files', name: 'fileCount', args: [count]);
-
-  String get clearAttachments =>
-      Intl.message('Clear attachments', name: 'clearAttachments', args: []);
-
-  String get removeImageAttachment =>
-      Intl.message('Remove image', name: 'removeImageAttachment', args: []);
-
-  String get removeFileAttachment =>
-      Intl.message('Remove file', name: 'removeFileAttachment', args: []);
-
-  String get imageAttachment =>
-      Intl.message('Image attachment', name: 'imageAttachment', args: []);
-
-  String get imageResult =>
-      Intl.message('Image result', name: 'imageResult', args: []);
-
-  String get fileAttachment =>
-      Intl.message('File attachment', name: 'fileAttachment', args: []);
-
-  String get fileResult =>
-      Intl.message('File result', name: 'fileResult', args: []);
-
-  String get speechResult =>
-      Intl.message('Speech result', name: 'speechResult', args: []);
-
-  String get referenceAudio =>
-      Intl.message('Reference audio', name: 'referenceAudio', args: []);
-
-  String get musicResult =>
-      Intl.message('Music result', name: 'musicResult', args: []);
-
-  String get videoResult =>
-      Intl.message('Video result', name: 'videoResult', args: []);
-
-  String get directPlayback =>
-      Intl.message('Ready to play', name: 'directPlayback', args: []);
-
-  String get directPreview =>
-      Intl.message('Ready to preview', name: 'directPreview', args: []);
-
-  String get replyStoppedPartial => Intl.message(
-    'Stopped · Partial response kept',
-    name: 'replyStoppedPartial',
-    args: [],
-  );
-
-  String get generationFailedPartial => Intl.message(
-    'Generation failed · Partial response kept',
-    name: 'generationFailedPartial',
-    args: [],
-  );
-
-  String get generationFailed =>
-      Intl.message('Generation failed', name: 'generationFailed', args: []);
-
-  String get noContentReturned =>
-      Intl.message('No content returned', name: 'noContentReturned', args: []);
-
-  String get partialResponse =>
-      Intl.message('Partial response', name: 'partialResponse', args: []);
-
-  String get statusCompleted =>
-      Intl.message('Completed', name: 'statusCompleted', args: []);
-
-  String get saveImage =>
-      Intl.message('Save image', name: 'saveImage', args: []);
-
-  String get shareImage =>
-      Intl.message('Share image', name: 'shareImage', args: []);
-
-  String get saveToGalleryFailed => Intl.message(
-    'Could not save to gallery',
-    name: 'saveToGalleryFailed',
-    args: [],
-  );
-
-  String get imageSavedToGallery => Intl.message(
-    'Image saved to gallery',
-    name: 'imageSavedToGallery',
-    args: [],
-  );
-
-  String saveImageFailed(String error) => Intl.message(
-    'Could not save image: $error',
-    name: 'saveImageFailed',
-    args: [error],
-  );
-
-  String shareImageFailed(String error) => Intl.message(
-    'Could not share image: $error',
-    name: 'shareImageFailed',
-    args: [error],
-  );
-
-  String get sharedImageFromStars =>
-      Intl.message('Image from Stars', name: 'sharedImageFromStars', args: []);
-
-  String processDuration(String duration) => Intl.message(
-    'Duration $duration',
-    name: 'processDuration',
-    args: [duration],
-  );
-
-  String processToolCount(String count) => Intl.message(
-    '$count tool calls',
-    name: 'processToolCount',
-    args: [count],
-  );
-
-  String processCommandCount(String count) => Intl.message(
-    '$count command runs',
-    name: 'processCommandCount',
-    args: [count],
-  );
-
-  String processFileCount(String count) => Intl.message(
-    '$count file updates',
-    name: 'processFileCount',
-    args: [count],
-  );
-
-  String get executionStatus =>
-      Intl.message('Execution status', name: 'executionStatus', args: []);
-
-  String get toolCalls =>
-      Intl.message('Tool calls', name: 'toolCalls', args: []);
-
-  String get commandExecutions =>
-      Intl.message('Command execution', name: 'commandExecutions', args: []);
-
-  String get fileStatus =>
-      Intl.message('File status', name: 'fileStatus', args: []);
-
-  String get includesDuration =>
-      Intl.message('Includes duration', name: 'includesDuration', args: []);
-
-  String get structuredProcessInfo => Intl.message(
-    'Structured process information',
-    name: 'structuredProcessInfo',
-    args: [],
-  );
-
-  String get statusGenerated =>
-      Intl.message('Generated', name: 'statusGenerated', args: []);
-
-  String get statusAttached =>
-      Intl.message('Attached', name: 'statusAttached', args: []);
-
-  String get statusInProgress =>
-      Intl.message('In progress', name: 'statusInProgress', args: []);
-
-  String get statusRunning =>
-      Intl.message('Running', name: 'statusRunning', args: []);
-
-  String get statusCancelled =>
-      Intl.message('Cancelled', name: 'statusCancelled', args: []);
-
-  String get statusFailed =>
-      Intl.message('Failed', name: 'statusFailed', args: []);
-
-  String get statusRecorded =>
-      Intl.message('Recorded', name: 'statusRecorded', args: []);
-
-  String get reasoningCompleted =>
-      Intl.message('Reasoning complete', name: 'reasoningCompleted', args: []);
-
-  String get reasoningInterrupted => Intl.message(
-    'Reasoning interrupted',
-    name: 'reasoningInterrupted',
-    args: [],
-  );
-
-  String get reasoningInProgress => Intl.message(
-    'Reasoning in progress',
-    name: 'reasoningInProgress',
-    args: [],
-  );
-
-  String get processInformation =>
-      Intl.message('Process information', name: 'processInformation', args: []);
-
-  String get fileTypeSpeech =>
-      Intl.message('Speech', name: 'fileTypeSpeech', args: []);
-
-  String get fileTypeMusic =>
-      Intl.message('Music', name: 'fileTypeMusic', args: []);
-
-  String get fileTypeVideo =>
-      Intl.message('Video', name: 'fileTypeVideo', args: []);
-
-  String get thinkingInProgress =>
-      Intl.message('Thinking…', name: 'thinkingInProgress', args: []);
-
-  String get thinkingCompleted =>
-      Intl.message('Thinking complete', name: 'thinkingCompleted', args: []);
-
-  String thinkingCompletedWithDuration(String duration) => Intl.message(
-    'Thinking complete · $duration',
-    name: 'thinkingCompletedWithDuration',
-    args: [duration],
-  );
-
-  String get pleaseEnterSpeechDescription => Intl.message(
-    'Enter a description for speech generation',
-    name: 'pleaseEnterSpeechDescription',
-    args: [],
-  );
-
-  String get speechGenerated =>
-      Intl.message('Speech generated', name: 'speechGenerated', args: []);
-
-  String generateSpeechFailed(String error) => Intl.message(
-    'Could not generate speech: $error',
-    name: 'generateSpeechFailed',
-    args: [error],
-  );
-
-  String get pleaseEnterMusicDescription => Intl.message(
-    'Enter a description for music generation',
-    name: 'pleaseEnterMusicDescription',
-    args: [],
-  );
-
-  String get musicGenerated =>
-      Intl.message('Music generated', name: 'musicGenerated', args: []);
-
-  String generateMusicFailed(String error) => Intl.message(
-    'Could not generate music: $error',
-    name: 'generateMusicFailed',
-    args: [error],
-  );
-
-  String get pleaseEnterVideoDescription => Intl.message(
-    'Enter a description for video generation',
-    name: 'pleaseEnterVideoDescription',
-    args: [],
-  );
-
-  String get videoGenerated =>
-      Intl.message('Video generated', name: 'videoGenerated', args: []);
-
-  String generateVideoFailed(String error) => Intl.message(
-    'Could not generate video: $error',
-    name: 'generateVideoFailed',
-    args: [error],
-  );
-
-  String get linkOpenFailed => Intl.message(
-    'Unable to open this link.',
-    name: 'linkOpenFailed',
-    args: [],
-  );
-
-  String get unableToLoadBots =>
-      Intl.message('Unable to load bots', name: 'unableToLoadBots', args: []);
-
-  String get creatingChat =>
-      Intl.message('Creating…', name: 'creatingChat', args: []);
-
-  String createChatFailed(String error) => Intl.message(
-    'Could not create the chat: $error',
-    name: 'createChatFailed',
-    args: [error],
-  );
-
-  String get stopGenerationBeforeLeaving => Intl.message(
-    'Stop generation before leaving?',
-    name: 'stopGenerationBeforeLeaving',
-    args: [],
-  );
-
-  String get stopGenerationBeforeLeavingDescription => Intl.message(
-    'The partial response will be kept.',
-    name: 'stopGenerationBeforeLeavingDescription',
-    args: [],
-  );
-
-  String get stopAndContinue =>
-      Intl.message('Stop and continue', name: 'stopAndContinue', args: []);
-
-  String get unableToLoadMessages => Intl.message(
-    'Unable to load messages',
-    name: 'unableToLoadMessages',
-    args: [],
-  );
-
-  String clearChatFailed(String error) => Intl.message(
-    'Could not clear chat history: $error',
-    name: 'clearChatFailed',
-    args: [error],
-  );
-
-  String deleteChatFailed(String error) => Intl.message(
-    'Could not delete the chat: $error',
-    name: 'deleteChatFailed',
-    args: [error],
-  );
+  /// `Retry`
+  String get retry {
+    return Intl.message('Retry', name: 'retry', desc: '', args: []);
+  }
+
+  /// `Unable to load chats`
+  String get unableToLoadChats {
+    return Intl.message(
+      'Unable to load chats',
+      name: 'unableToLoadChats',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear search`
+  String get clearSearch {
+    return Intl.message(
+      'Clear search',
+      name: 'clearSearch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unavailable bot`
+  String get unavailableBot {
+    return Intl.message(
+      'Unavailable bot',
+      name: 'unavailableBot',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This bot is unavailable`
+  String get botUnavailableTitle {
+    return Intl.message(
+      'This bot is unavailable',
+      name: 'botUnavailableTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete this orphaned chat or recreate the missing bot.`
+  String get orphanedChatGuidance {
+    return Intl.message(
+      'Delete this orphaned chat or recreate the missing bot.',
+      name: 'orphanedChatGuidance',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The active request cannot be stopped`
+  String get activeRequestCannotStop {
+    return Intl.message(
+      'The active request cannot be stopped',
+      name: 'activeRequestCannotStop',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wait for generation to finish.`
+  String get waitForGenerationToFinish {
+    return Intl.message(
+      'Wait for generation to finish.',
+      name: 'waitForGenerationToFinish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Wait for generation to finish before leaving this chat.`
+  String get waitForGenerationBeforeLeaving {
+    return Intl.message(
+      'Wait for generation to finish before leaving this chat.',
+      name: 'waitForGenerationBeforeLeaving',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The active request cannot be cancelled. Wait for it to finish.`
+  String get activeRequestCannotCancel {
+    return Intl.message(
+      'The active request cannot be cancelled. Wait for it to finish.',
+      name: 'activeRequestCannotCancel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Attachments`
+  String get attachments {
+    return Intl.message('Attachments', name: 'attachments', desc: '', args: []);
+  }
+
+  /// `{count} items`
+  String itemCount(String count) {
+    return Intl.message(
+      '$count items',
+      name: 'itemCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} files`
+  String fileCount(String count) {
+    return Intl.message(
+      '$count files',
+      name: 'fileCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Clear attachments`
+  String get clearAttachments {
+    return Intl.message(
+      'Clear attachments',
+      name: 'clearAttachments',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove image`
+  String get removeImageAttachment {
+    return Intl.message(
+      'Remove image',
+      name: 'removeImageAttachment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove file`
+  String get removeFileAttachment {
+    return Intl.message(
+      'Remove file',
+      name: 'removeFileAttachment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Image attachment`
+  String get imageAttachment {
+    return Intl.message(
+      'Image attachment',
+      name: 'imageAttachment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Image result`
+  String get imageResult {
+    return Intl.message(
+      'Image result',
+      name: 'imageResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `File attachment`
+  String get fileAttachment {
+    return Intl.message(
+      'File attachment',
+      name: 'fileAttachment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `File result`
+  String get fileResult {
+    return Intl.message('File result', name: 'fileResult', desc: '', args: []);
+  }
+
+  /// `Speech result`
+  String get speechResult {
+    return Intl.message(
+      'Speech result',
+      name: 'speechResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reference audio`
+  String get referenceAudio {
+    return Intl.message(
+      'Reference audio',
+      name: 'referenceAudio',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Music result`
+  String get musicResult {
+    return Intl.message(
+      'Music result',
+      name: 'musicResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Video result`
+  String get videoResult {
+    return Intl.message(
+      'Video result',
+      name: 'videoResult',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready to play`
+  String get directPlayback {
+    return Intl.message(
+      'Ready to play',
+      name: 'directPlayback',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Ready to preview`
+  String get directPreview {
+    return Intl.message(
+      'Ready to preview',
+      name: 'directPreview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stopped · Partial response kept`
+  String get replyStoppedPartial {
+    return Intl.message(
+      'Stopped · Partial response kept',
+      name: 'replyStoppedPartial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Generation failed · Partial response kept`
+  String get generationFailedPartial {
+    return Intl.message(
+      'Generation failed · Partial response kept',
+      name: 'generationFailedPartial',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Generation failed`
+  String get generationFailed {
+    return Intl.message(
+      'Generation failed',
+      name: 'generationFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No content returned`
+  String get noContentReturned {
+    return Intl.message(
+      'No content returned',
+      name: 'noContentReturned',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Partial response`
+  String get partialResponse {
+    return Intl.message(
+      'Partial response',
+      name: 'partialResponse',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Completed`
+  String get statusCompleted {
+    return Intl.message(
+      'Completed',
+      name: 'statusCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save image`
+  String get saveImage {
+    return Intl.message('Save image', name: 'saveImage', desc: '', args: []);
+  }
+
+  /// `Share image`
+  String get shareImage {
+    return Intl.message('Share image', name: 'shareImage', desc: '', args: []);
+  }
+
+  /// `Could not save to gallery`
+  String get saveToGalleryFailed {
+    return Intl.message(
+      'Could not save to gallery',
+      name: 'saveToGalleryFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Image saved to gallery`
+  String get imageSavedToGallery {
+    return Intl.message(
+      'Image saved to gallery',
+      name: 'imageSavedToGallery',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not save image: {error}`
+  String saveImageFailed(String error) {
+    return Intl.message(
+      'Could not save image: $error',
+      name: 'saveImageFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Could not share image: {error}`
+  String shareImageFailed(String error) {
+    return Intl.message(
+      'Could not share image: $error',
+      name: 'shareImageFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Image from Stars`
+  String get sharedImageFromStars {
+    return Intl.message(
+      'Image from Stars',
+      name: 'sharedImageFromStars',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Duration {duration}`
+  String processDuration(String duration) {
+    return Intl.message(
+      'Duration $duration',
+      name: 'processDuration',
+      desc: '',
+      args: [duration],
+    );
+  }
+
+  /// `{count} tool calls`
+  String processToolCount(String count) {
+    return Intl.message(
+      '$count tool calls',
+      name: 'processToolCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} command runs`
+  String processCommandCount(String count) {
+    return Intl.message(
+      '$count command runs',
+      name: 'processCommandCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} file updates`
+  String processFileCount(String count) {
+    return Intl.message(
+      '$count file updates',
+      name: 'processFileCount',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `Execution status`
+  String get executionStatus {
+    return Intl.message(
+      'Execution status',
+      name: 'executionStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tool calls`
+  String get toolCalls {
+    return Intl.message('Tool calls', name: 'toolCalls', desc: '', args: []);
+  }
+
+  /// `Command execution`
+  String get commandExecutions {
+    return Intl.message(
+      'Command execution',
+      name: 'commandExecutions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `File status`
+  String get fileStatus {
+    return Intl.message('File status', name: 'fileStatus', desc: '', args: []);
+  }
+
+  /// `Includes duration`
+  String get includesDuration {
+    return Intl.message(
+      'Includes duration',
+      name: 'includesDuration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Structured process information`
+  String get structuredProcessInfo {
+    return Intl.message(
+      'Structured process information',
+      name: 'structuredProcessInfo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Generated`
+  String get statusGenerated {
+    return Intl.message(
+      'Generated',
+      name: 'statusGenerated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Attached`
+  String get statusAttached {
+    return Intl.message('Attached', name: 'statusAttached', desc: '', args: []);
+  }
+
+  /// `In progress`
+  String get statusInProgress {
+    return Intl.message(
+      'In progress',
+      name: 'statusInProgress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Running`
+  String get statusRunning {
+    return Intl.message('Running', name: 'statusRunning', desc: '', args: []);
+  }
+
+  /// `Cancelled`
+  String get statusCancelled {
+    return Intl.message(
+      'Cancelled',
+      name: 'statusCancelled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed`
+  String get statusFailed {
+    return Intl.message('Failed', name: 'statusFailed', desc: '', args: []);
+  }
+
+  /// `Recorded`
+  String get statusRecorded {
+    return Intl.message('Recorded', name: 'statusRecorded', desc: '', args: []);
+  }
+
+  /// `Reasoning complete`
+  String get reasoningCompleted {
+    return Intl.message(
+      'Reasoning complete',
+      name: 'reasoningCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reasoning interrupted`
+  String get reasoningInterrupted {
+    return Intl.message(
+      'Reasoning interrupted',
+      name: 'reasoningInterrupted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reasoning in progress`
+  String get reasoningInProgress {
+    return Intl.message(
+      'Reasoning in progress',
+      name: 'reasoningInProgress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Process information`
+  String get processInformation {
+    return Intl.message(
+      'Process information',
+      name: 'processInformation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Speech`
+  String get fileTypeSpeech {
+    return Intl.message('Speech', name: 'fileTypeSpeech', desc: '', args: []);
+  }
+
+  /// `Music`
+  String get fileTypeMusic {
+    return Intl.message('Music', name: 'fileTypeMusic', desc: '', args: []);
+  }
+
+  /// `Video`
+  String get fileTypeVideo {
+    return Intl.message('Video', name: 'fileTypeVideo', desc: '', args: []);
+  }
+
+  /// `Thinking…`
+  String get thinkingInProgress {
+    return Intl.message(
+      'Thinking…',
+      name: 'thinkingInProgress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Thinking complete`
+  String get thinkingCompleted {
+    return Intl.message(
+      'Thinking complete',
+      name: 'thinkingCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Thinking complete · {duration}`
+  String thinkingCompletedWithDuration(String duration) {
+    return Intl.message(
+      'Thinking complete · $duration',
+      name: 'thinkingCompletedWithDuration',
+      desc: '',
+      args: [duration],
+    );
+  }
+
+  /// `Enter a description for speech generation`
+  String get pleaseEnterSpeechDescription {
+    return Intl.message(
+      'Enter a description for speech generation',
+      name: 'pleaseEnterSpeechDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Speech generated`
+  String get speechGenerated {
+    return Intl.message(
+      'Speech generated',
+      name: 'speechGenerated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not generate speech: {error}`
+  String generateSpeechFailed(String error) {
+    return Intl.message(
+      'Could not generate speech: $error',
+      name: 'generateSpeechFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Enter a description for music generation`
+  String get pleaseEnterMusicDescription {
+    return Intl.message(
+      'Enter a description for music generation',
+      name: 'pleaseEnterMusicDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Music generated`
+  String get musicGenerated {
+    return Intl.message(
+      'Music generated',
+      name: 'musicGenerated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not generate music: {error}`
+  String generateMusicFailed(String error) {
+    return Intl.message(
+      'Could not generate music: $error',
+      name: 'generateMusicFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Enter a description for video generation`
+  String get pleaseEnterVideoDescription {
+    return Intl.message(
+      'Enter a description for video generation',
+      name: 'pleaseEnterVideoDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Video generated`
+  String get videoGenerated {
+    return Intl.message(
+      'Video generated',
+      name: 'videoGenerated',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not generate video: {error}`
+  String generateVideoFailed(String error) {
+    return Intl.message(
+      'Could not generate video: $error',
+      name: 'generateVideoFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Unable to open this link.`
+  String get linkOpenFailed {
+    return Intl.message(
+      'Unable to open this link.',
+      name: 'linkOpenFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unable to load bots`
+  String get unableToLoadBots {
+    return Intl.message(
+      'Unable to load bots',
+      name: 'unableToLoadBots',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Creating…`
+  String get creatingChat {
+    return Intl.message('Creating…', name: 'creatingChat', desc: '', args: []);
+  }
+
+  /// `Could not create the chat: {error}`
+  String createChatFailed(String error) {
+    return Intl.message(
+      'Could not create the chat: $error',
+      name: 'createChatFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Stop generation before leaving?`
+  String get stopGenerationBeforeLeaving {
+    return Intl.message(
+      'Stop generation before leaving?',
+      name: 'stopGenerationBeforeLeaving',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The partial response will be kept.`
+  String get stopGenerationBeforeLeavingDescription {
+    return Intl.message(
+      'The partial response will be kept.',
+      name: 'stopGenerationBeforeLeavingDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stop and continue`
+  String get stopAndContinue {
+    return Intl.message(
+      'Stop and continue',
+      name: 'stopAndContinue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unable to load messages`
+  String get unableToLoadMessages {
+    return Intl.message(
+      'Unable to load messages',
+      name: 'unableToLoadMessages',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not clear chat history: {error}`
+  String clearChatFailed(String error) {
+    return Intl.message(
+      'Could not clear chat history: $error',
+      name: 'clearChatFailed',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Could not delete the chat: {error}`
+  String deleteChatFailed(String error) {
+    return Intl.message(
+      'Could not delete the chat: $error',
+      name: 'deleteChatFailed',
+      desc: '',
+      args: [error],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

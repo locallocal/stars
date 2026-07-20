@@ -48,7 +48,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(count) => "Se han recuperado ${count} modelos con éxito";
 
-  static String m12(error) => "Error al obtener respuesta: \$${error}";
+  static String m12(error) => "Error al obtener respuesta: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{

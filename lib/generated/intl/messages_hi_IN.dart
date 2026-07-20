@@ -48,7 +48,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(count) => "सफलतापूर्वक ${count} मॉडल प्राप्त किए गए";
 
-  static String m12(error) => "उत्तर प्राप्त करने में विफल: \$${error}";
+  static String m12(error) => "उत्तर प्राप्त करने में विफल: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{

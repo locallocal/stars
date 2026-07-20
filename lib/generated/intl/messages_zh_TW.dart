@@ -44,7 +44,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(count) => "成功獲取 ${count} 個模型";
 
-  static String m12(error) => "獲取回覆失敗: \$${error}";
+  static String m12(error) => "獲取回覆失敗: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{

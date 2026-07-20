@@ -48,7 +48,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(count) => "${count}개의 모델을 성공적으로 검색했습니다";
 
-  static String m12(error) => "응답을 가져오지 못했습니다: \$${error}";
+  static String m12(error) => "응답을 가져오지 못했습니다: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{

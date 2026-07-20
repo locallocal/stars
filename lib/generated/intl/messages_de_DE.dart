@@ -48,8 +48,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m11(count) => "Erfolgreich ${count} Modelle abgerufen";
 
-  static String m12(error) =>
-      "Antwort konnte nicht abgerufen werden: \$${error}";
+  static String m12(error) => "Antwort konnte nicht abgerufen werden: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
