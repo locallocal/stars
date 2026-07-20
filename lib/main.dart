@@ -5,20 +5,24 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stars/domain/models/models.dart';
+import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
-import 'package:stars/services/profile_service.dart';
-import 'package:stars/services/bot_service.dart';
-import 'package:stars/model/model.dart';
 import 'package:stars/pages/chats.dart';
 import 'package:stars/pages/bots.dart';
 import 'package:stars/pages/profile.dart';
 import 'package:stars/utils/utils.dart';
-import 'package:stars/services/database_service.dart';
-import 'package:stars/services/chat_generation_controller.dart';
-import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/dot_curved_bottom_nav.dart';
 import 'package:stars/pages/desktop_layout.dart';
 import 'package:stars/pages/chat/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/dependency_injection/app_dependencies.dart';
+import 'package:stars/ui/core/dependency_injection/app_scope.dart';
+import 'package:stars/ui/features/app/view_models/app_view_model.dart';
+import 'package:stars/ui/features/app/view_models/main_shell_view_model.dart';
+import 'package:stars/ui/features/app/view_models/startup_view_model.dart';
+import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
+import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
+import 'package:stars/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
@@ -27,55 +31,57 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   }
   intl.Intl.defaultLocale = 'zh';
-  runApp(const StarsBootstrapApp());
+  runApp(StarsBootstrapApp(dependencies: AppDependencies.production()));
 }
 
 class StarsBootstrapApp extends StatefulWidget {
-  const StarsBootstrapApp({super.key});
+  const StarsBootstrapApp({super.key, this.dependencies});
+
+  final AppDependencies? dependencies;
 
   @override
   State<StarsBootstrapApp> createState() => _StarsBootstrapAppState();
 }
 
 class _StarsBootstrapAppState extends State<StarsBootstrapApp> {
-  late Future<Profile> _bootstrapFuture;
+  late final AppDependencies _dependencies;
+  late final StartupViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _bootstrapFuture = _bootstrap();
-  }
-
-  Future<Profile> _bootstrap() async {
-    await DatabaseService.initDatabase();
-    return ProfileService.getProfile();
-  }
-
-  void _retryBootstrap() {
-    setState(() {
-      _bootstrapFuture = _bootstrap();
-    });
+    _dependencies = widget.dependencies ?? AppDependencies.production();
+    _viewModel = _dependencies.createStartupViewModel()..load();
   }
 
   @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  void _retryBootstrap() => _viewModel.load();
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Profile>(
-      future: _bootstrapFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        if (_viewModel.isLoading) {
           return const StartupShell(title: 'Stars', message: '正在启动...');
         }
 
-        if (snapshot.hasError || !snapshot.hasData) {
+        final profile = _viewModel.profile;
+        if (_viewModel.hasError || profile == null) {
           return StartupShell(
             title: 'Stars',
             message: '启动失败，请重试',
-            details: snapshot.error?.toString(),
+            details: _viewModel.error?.toString(),
             onRetry: _retryBootstrap,
           );
         }
 
-        return MyApp(initialProfile: snapshot.data!);
+        return MyApp(dependencies: _dependencies, initialProfile: profile);
       },
     );
   }
@@ -219,64 +225,35 @@ class StartupShell extends StatelessWidget {
 
 class MyApp extends StatefulWidget {
   final Profile initialProfile;
+  final AppDependencies dependencies;
 
-  const MyApp({super.key, required this.initialProfile});
+  const MyApp({
+    super.key,
+    required this.initialProfile,
+    required this.dependencies,
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
-  Locale _locale = const Locale('zh', 'CN');
-  double _fontSize = 16.0;
+  late final AppViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _applyProfile(widget.initialProfile);
-
-    ProfileService.themeStream.listen((ThemeMode themeMode) {
-      setState(() {
-        _themeMode = themeMode;
-        _setSystemUIOverlayStyle();
-      });
-    });
-
-    ProfileService.languageStream.listen((String language) {
-      setState(() {
-        final parts = language.split('_');
-        if (parts.length == 2) {
-          _locale = Locale(parts[0], parts[1]);
-          S.load(_locale);
-        }
-      });
-    });
-
-    ProfileService.fontSizeStream.listen((double fontSize) {
-      setState(() {
-        _fontSize = fontSize;
-      });
-    });
+    _viewModel = widget.dependencies.createAppViewModel(widget.initialProfile);
   }
 
-  void _applyProfile(Profile profile) {
-    setState(() {
-      _themeMode = intToThemeMode(profile.themeMode);
-      _fontSize = profile.fontSize;
-
-      if (profile.language.isNotEmpty) {
-        final parts = profile.language.split('_');
-        if (parts.length == 2) {
-          _locale = Locale(parts[0], parts[1]);
-          S.load(_locale);
-        }
-      }
-    });
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
   }
 
   void _setSystemUIOverlayStyle() {
-    final isDark = switch (_themeMode) {
+    final isDark = switch (_viewModel.themeMode) {
       ThemeMode.dark => true,
       ThemeMode.light => false,
       ThemeMode.system =>
@@ -297,69 +274,84 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    _setSystemUIOverlayStyle();
-    if (!isDesktopPlatform(context)) {
-      return MaterialApp(
-        title: 'Stars',
-        theme: buildLegacyMobileTheme(
-          brightness: Brightness.light,
-          fontSize: _fontSize,
-        ),
-        darkTheme: buildLegacyMobileTheme(
-          brightness: Brightness.dark,
-          fontSize: _fontSize,
-        ),
-        highContrastTheme: buildLegacyMobileTheme(
-          brightness: Brightness.light,
-          fontSize: _fontSize,
-          highContrast: true,
-          reduceTransparency: true,
-        ),
-        highContrastDarkTheme: buildLegacyMobileTheme(
-          brightness: Brightness.dark,
-          fontSize: _fontSize,
-          highContrast: true,
-          reduceTransparency: true,
-        ),
-        themeMode: _themeMode,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          S.delegate,
-        ],
-        supportedLocales: supportedLocales,
-        locale: _locale,
-        localeResolutionCallback: (locale, supportedLocales) {
-          for (var supportedLocale in supportedLocales) {
-            if (supportedLocale.languageCode == locale?.languageCode) {
-              return supportedLocale;
-            }
-          }
-          return supportedLocales.first;
-        },
-        home: const MainPage(),
-      );
-    }
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) {
+        _setSystemUIOverlayStyle();
+        return AppScope(
+          dependencies: widget.dependencies,
+          child:
+              !isDesktopPlatform(context)
+                  ? _buildMobileApp()
+                  : _buildDesktopApp(),
+        );
+      },
+    );
+  }
 
+  Widget _buildMobileApp() {
+    return MaterialApp(
+      title: 'Stars',
+      theme: buildLegacyMobileTheme(
+        brightness: Brightness.light,
+        fontSize: _viewModel.fontSize,
+      ),
+      darkTheme: buildLegacyMobileTheme(
+        brightness: Brightness.dark,
+        fontSize: _viewModel.fontSize,
+      ),
+      highContrastTheme: buildLegacyMobileTheme(
+        brightness: Brightness.light,
+        fontSize: _viewModel.fontSize,
+        highContrast: true,
+        reduceTransparency: true,
+      ),
+      highContrastDarkTheme: buildLegacyMobileTheme(
+        brightness: Brightness.dark,
+        fontSize: _viewModel.fontSize,
+        highContrast: true,
+        reduceTransparency: true,
+      ),
+      themeMode: _viewModel.themeMode,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        S.delegate,
+      ],
+      supportedLocales: supportedLocales,
+      locale: _viewModel.locale,
+      localeResolutionCallback: (locale, supportedLocales) {
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode) {
+            return supportedLocale;
+          }
+        }
+        return supportedLocales.first;
+      },
+      home: const MainPage(),
+    );
+  }
+
+  Widget _buildDesktopApp() {
     return ShadApp.custom(
-      themeMode: _themeMode,
+      themeMode: _viewModel.themeMode,
       theme: buildStarsShadTheme(
         brightness: Brightness.light,
-        fontSize: _fontSize,
+        fontSize: _viewModel.fontSize,
       ),
       darkTheme: buildStarsShadTheme(
         brightness: Brightness.dark,
-        fontSize: _fontSize,
+        fontSize: _viewModel.fontSize,
       ),
       appBuilder: (context) {
         final theme = buildShadMaterialBridgeTheme(
           context: context,
-          fontSize: _fontSize,
+          fontSize: _viewModel.fontSize,
         );
         final highContrastTheme = buildShadMaterialBridgeTheme(
           context: context,
-          fontSize: _fontSize,
+          fontSize: _viewModel.fontSize,
           highContrast: true,
           reduceTransparency: true,
         );
@@ -376,7 +368,7 @@ class _MyAppState extends State<MyApp> {
             S.delegate,
           ],
           supportedLocales: supportedLocales,
-          locale: _locale,
+          locale: _viewModel.locale,
           localeResolutionCallback: (locale, supportedLocales) {
             for (var supportedLocale in supportedLocales) {
               if (supportedLocale.languageCode == locale?.languageCode) {
@@ -388,7 +380,7 @@ class _MyAppState extends State<MyApp> {
           builder: (context, child) {
             final shadTheme = buildStarsShadTheme(
               brightness: Theme.of(context).brightness,
-              fontSize: _fontSize,
+              fontSize: _viewModel.fontSize,
               highContrast: MediaQuery.highContrastOf(context),
             );
             return ShadTheme(
@@ -411,57 +403,89 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _currentIndex = 0;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ChatListPageState> _chatListKey =
       GlobalKey<ChatListPageState>();
   final GlobalKey<ContactsPageState> _botListKey =
       GlobalKey<ContactsPageState>();
-  String? _selectedChatId;
-  Bot? _selectedChatBot;
-  Bot? _selectedBot;
-  int _selectedProfileSection = 0;
+  late final AppDependencies _dependencies;
+  late final MainShellViewModel _viewModel;
+  late final ChatListViewModel _chatListViewModel;
+  late final BotListViewModel _botListViewModel;
+  late final ProfileViewModel _profileViewModel;
+  bool _initialized = false;
   Future<bool>? _activeRunGuardFuture;
   int _navigationIntent = 0;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
+    _dependencies = AppScope.of(context);
+    _viewModel = _dependencies.createMainShellViewModel();
+    _chatListViewModel = _dependencies.createChatListViewModel()..load();
+    _botListViewModel = _dependencies.createBotListViewModel()..load();
+    _profileViewModel = _dependencies.createProfileViewModel()..load();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    if (_initialized) {
+      _viewModel.dispose();
+      _chatListViewModel.dispose();
+      _botListViewModel.dispose();
+      _profileViewModel.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final isDesktopOrTablet = isDesktopOrTabletPlatform(context);
-    final pages = [
+    final pages = <Widget>[
       ChatListPage(
         key: _chatListKey,
+        viewModel: _chatListViewModel,
         sidebarMode: isDesktopOrTablet,
-        selectedChatId: _selectedChatId,
+        selectedChatId: _viewModel.selectedChatId,
         onChatSelected: _onChatSelected,
-        onSelectionCleared: _clearSelectedChat,
+        onSelectionCleared: _viewModel.clearSelectedChat,
       ),
       ContactsPage(
         key: _botListKey,
-        selectedBotId: _selectedBot?.id,
+        viewModel: _botListViewModel,
+        selectedBotId: _viewModel.selectedBot?.id,
         onBotSelected: _onBotSelected,
         onChatCreated: _onChatSelected,
-        onSelectionCleared: _clearSelectedBot,
+        onSelectionCleared: _viewModel.clearSelectedBot,
       ),
-      ProfilePage(selectedSection: _selectedProfileSection),
+      ProfilePage(
+        viewModel: _profileViewModel,
+        selectedSection: _viewModel.selectedProfileSection,
+      ),
     ];
 
     return Scaffold(
       body:
           isDesktopOrTablet
               ? DesktopLayout(
-                currentIndex: _currentIndex,
+                currentIndex: _viewModel.currentIndex,
                 onPageChanged: _onPageChanged,
                 pages: pages,
-                selectedChatId: _selectedChatId,
-                selectedChatBot: _selectedChatBot,
-                selectedBot: _selectedBot,
-                selectedProfileSection: _selectedProfileSection,
-                onProfileSectionChanged: (section) {
-                  setState(() {
-                    _selectedProfileSection = section;
-                    _currentIndex = 2;
-                  });
-                },
+                selectedChatId: _viewModel.selectedChatId,
+                selectedChatBot: _viewModel.selectedChatBot,
+                selectedBot: _viewModel.selectedBot,
+                selectedProfileSection: _viewModel.selectedProfileSection,
+                onProfileSectionChanged: _viewModel.selectProfileSection,
                 onCreateChat: _requestCreateChat,
                 onAddBot: () {
                   _botListKey.currentState?.openAddBotPage();
@@ -470,7 +494,7 @@ class _MainPageState extends State<MainPage> {
                 onBotUpdated: _onBotUpdated,
                 onBotDeleted: _onBotDeleted,
               )
-              : IndexedStack(index: _currentIndex, children: pages),
+              : IndexedStack(index: _viewModel.currentIndex, children: pages),
       bottomNavigationBar:
           isDesktopOrTablet
               ? null
@@ -487,35 +511,33 @@ class _MainPageState extends State<MainPage> {
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 animationDuration: const Duration(milliseconds: 200), // 缩短动画时间
                 animationCurve: Curves.easeInOut, // 使用更平滑的动画曲线
-                selectedIndex: _currentIndex,
+                selectedIndex: _viewModel.currentIndex,
                 borderRadius: 24,
                 height: 70,
                 onTap: (index) {
                   // 添加震动反馈
                   HapticFeedback.lightImpact();
-                  setState(() {
-                    _currentIndex = index;
-                  });
+                  _viewModel.selectPage(index);
                 },
                 items: [
                   Icon(
                     Icons.wechat_rounded,
                     color:
-                        _currentIndex == 0
+                        _viewModel.currentIndex == 0
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurface,
                   ),
                   Icon(
                     Icons.smart_toy_rounded,
                     color:
-                        _currentIndex == 1
+                        _viewModel.currentIndex == 1
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurface,
                   ),
                   Icon(
                     Icons.person_rounded,
                     color:
-                        _currentIndex == 2
+                        _viewModel.currentIndex == 2
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(context).colorScheme.onSurface,
                   ),
@@ -526,48 +548,23 @@ class _MainPageState extends State<MainPage> {
 
   // 新增：处理聊天选择的回调
   Future<void> _onChatSelected(String chatId, Bot bot) async {
-    if (_selectedChatId != chatId && !await _guardActiveChatRun()) return;
+    if (_viewModel.selectedChatId != chatId && !await _guardActiveChatRun()) {
+      return;
+    }
     if (!mounted) return;
-    setState(() {
-      _selectedChatId = chatId;
-      _selectedChatBot = bot;
-      _currentIndex = 0;
-    });
+    _viewModel.selectChat(chatId, bot);
   }
 
   Future<void> _onBotSelected(Bot bot) async {
     if (!await _guardActiveChatRun()) return;
     if (!mounted) return;
-    setState(() {
-      _selectedBot = bot;
-      _currentIndex = 1;
-    });
-  }
-
-  void _clearSelectedChat() {
-    setState(() {
-      _selectedChatId = null;
-      _selectedChatBot = null;
-    });
-  }
-
-  void _clearSelectedBot() {
-    setState(() {
-      _selectedBot = null;
-    });
+    _viewModel.selectBot(bot);
   }
 
   Future<void> _onPageChanged(int index) async {
     if (index != 0 && !await _guardActiveChatRun()) return;
     if (!mounted) return;
-    setState(() {
-      _currentIndex = index;
-      if (index == 1) {
-        // Opening the Agents destination always returns to the collection;
-        // selecting a card then drills into its detail page.
-        _selectedBot = null;
-      }
-    });
+    _viewModel.selectPage(index);
   }
 
   Future<void> _requestCreateChat() async {
@@ -595,10 +592,10 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<bool> _performActiveRunGuard() async {
-    final registry = ChatGenerationRegistry.instance;
-    if (!registry.hasBlockingRun(_selectedChatId)) return true;
+    final registry = _dependencies.generationRegistry;
+    if (!registry.hasBlockingRun(_viewModel.selectedChatId)) return true;
 
-    if (!registry.supportsCancellationForRun(_selectedChatId)) {
+    if (!registry.supportsCancellationForRun(_viewModel.selectedChatId)) {
       if (mounted) {
         ShadSonner.of(context).show(
           ShadToast.destructive(
@@ -636,7 +633,9 @@ class _MainPageState extends State<MainPage> {
     );
     if (shouldStop != true || !mounted) return false;
 
-    final canContinue = await registry.stopForNavigation(_selectedChatId);
+    final canContinue = await registry.stopForNavigation(
+      _viewModel.selectedChatId,
+    );
     if (!canContinue && mounted) {
       ShadSonner.of(context).show(
         ShadToast.destructive(
@@ -649,41 +648,23 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _focusCurrentListSearch() {
-    if (_currentIndex == 0) {
+    if (_viewModel.currentIndex == 0) {
       _chatListKey.currentState?.focusSearch();
-    } else if (_currentIndex == 1) {
+    } else if (_viewModel.currentIndex == 1) {
       _botListKey.currentState?.focusSearch();
     }
   }
 
-  Future<void> _onBotUpdated(Bot bot) async {
-    await BotService.updateBot(bot);
-    if (!mounted) return;
-    setState(() {
-      if (_selectedBot?.id == bot.id) {
-        _selectedBot = bot;
-      }
-      if (_selectedChatBot?.id == bot.id) {
-        _selectedChatBot = bot;
-      }
-    });
-  }
+  Future<void> _onBotUpdated(Bot bot) => _viewModel.updateBot(bot);
 
   Future<void> _onBotDeleted() async {
-    final botId = _selectedBot?.id;
-    if (botId == null) {
+    final botId = _viewModel.selectedBot?.id;
+    if (botId == null) return;
+
+    if (_viewModel.selectedChatBot?.id == botId &&
+        !await _guardActiveChatRun()) {
       return;
     }
-
-    if (_selectedChatBot?.id == botId && !await _guardActiveChatRun()) return;
-    await BotService.deleteBot(botId);
-    if (!mounted) return;
-    setState(() {
-      if (_selectedChatBot?.id == botId) {
-        _selectedChatId = null;
-        _selectedChatBot = null;
-      }
-      _selectedBot = null;
-    });
+    await _viewModel.deleteSelectedBot();
   }
 }

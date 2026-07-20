@@ -110,6 +110,7 @@ typedef MessagePersister = Future<Message> Function(Message message);
 typedef LastMessageUpdater =
     Future<void> Function(String chatId, String content);
 typedef ProviderFactory = Provider Function(Bot bot);
+typedef MessageIdFactory = String Function(String prefix);
 
 /// Owns one chat's text generation independently from any [StatefulWidget].
 ///
@@ -123,10 +124,12 @@ class ChatGenerationController extends ChangeNotifier {
     ProviderFactory providerFactory = Provider.create,
     MessagePersister messagePersister = MessageService.upsertMessage,
     LastMessageUpdater lastMessageUpdater = ChatService.updateLastMessage,
+    MessageIdFactory messageIdFactory = MessageService.createId,
   }) : _bot = bot,
        _providerFactory = providerFactory,
        _messagePersister = messagePersister,
        _lastMessageUpdater = lastMessageUpdater,
+       _messageIdFactory = messageIdFactory,
        _capabilityProvider = providerFactory(bot),
        _snapshot = ChatGenerationSnapshot(chatId: chatId);
 
@@ -134,6 +137,7 @@ class ChatGenerationController extends ChangeNotifier {
   final ProviderFactory _providerFactory;
   final MessagePersister _messagePersister;
   final LastMessageUpdater _lastMessageUpdater;
+  final MessageIdFactory _messageIdFactory;
 
   Bot _bot;
   Bot? _pendingBot;
@@ -164,10 +168,10 @@ class ChatGenerationController extends ChangeNotifier {
   }) async {
     if (hasBlockingRun) return false;
 
-    final runId = MessageService.createId('run');
+    final runId = _messageIdFactory('run');
     final turnId =
         userMessage.turnId.isEmpty
-            ? MessageService.createId('turn')
+            ? _messageIdFactory('turn')
             : userMessage.turnId;
     final identifiedUser = userMessage.copyWith(
       messageId:
@@ -544,17 +548,32 @@ class ChatGenerationController extends ChangeNotifier {
 }
 
 class ChatGenerationRegistry {
-  ChatGenerationRegistry._();
+  ChatGenerationRegistry({
+    MessagePersister messagePersister = MessageService.upsertMessage,
+    LastMessageUpdater lastMessageUpdater = ChatService.updateLastMessage,
+    MessageIdFactory messageIdFactory = MessageService.createId,
+  }) : _messagePersister = messagePersister,
+       _lastMessageUpdater = lastMessageUpdater,
+       _messageIdFactory = messageIdFactory;
 
-  static final ChatGenerationRegistry instance = ChatGenerationRegistry._();
+  static final ChatGenerationRegistry instance = ChatGenerationRegistry();
 
   final Map<String, ChatGenerationController> _controllers = {};
   final Set<String> _nonCancellableRuns = {};
+  final MessagePersister _messagePersister;
+  final LastMessageUpdater _lastMessageUpdater;
+  final MessageIdFactory _messageIdFactory;
 
   ChatGenerationController controllerFor(String chatId, Bot bot) {
     final controller = _controllers.putIfAbsent(
       chatId,
-      () => ChatGenerationController(chatId: chatId, bot: bot),
+      () => ChatGenerationController(
+        chatId: chatId,
+        bot: bot,
+        messagePersister: _messagePersister,
+        lastMessageUpdater: _lastMessageUpdater,
+        messageIdFactory: _messageIdFactory,
+      ),
     );
     controller.updateBot(bot);
     return controller;

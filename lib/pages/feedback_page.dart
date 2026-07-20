@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/common.dart';
-import 'package:stars/services/api_service.dart';
+import 'package:stars/ui/core/dependency_injection/app_scope.dart';
+import 'package:stars/ui/features/feedback/view_models/feedback_view_model.dart';
 import 'package:stars/utils/utils.dart';
 
 class FeedbackPage extends StatefulWidget {
-  const FeedbackPage({super.key});
+  const FeedbackPage({super.key, this.viewModel});
+
+  final FeedbackViewModel? viewModel;
 
   @override
   State<FeedbackPage> createState() => _FeedbackPageState();
@@ -15,12 +18,25 @@ class FeedbackPage extends StatefulWidget {
 class _FeedbackPageState extends State<FeedbackPage> {
   final TextEditingController feedbackController = TextEditingController();
   final TextEditingController contactController = TextEditingController();
-  bool _isSubmitting = false;
+  FeedbackViewModel? _resolvedViewModel;
+
+  FeedbackViewModel get _viewModel => widget.viewModel ?? _resolvedViewModel!;
+  bool get _isSubmitting => _viewModel.isSubmitting;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _resolvedViewModel ??=
+        widget.viewModel == null
+            ? AppScope.of(context).createFeedbackViewModel()
+            : null;
+  }
 
   @override
   void dispose() {
     feedbackController.dispose();
     contactController.dispose();
+    _resolvedViewModel?.dispose();
     super.dispose();
   }
 
@@ -28,24 +44,11 @@ class _FeedbackPageState extends State<FeedbackPage> {
     if (feedbackController.text.trim().isEmpty || _isSubmitting) {
       return;
     }
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      // 调用API服务发送反馈
-      await ApiService.submitFeedback(
-        content: feedbackController.text.trim(),
-        contact: contactController.text.trim(),
-      );
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-      });
-    }
+    final succeeded = await _viewModel.submit(
+      content: feedbackController.text,
+      contact: contactController.text,
+    );
+    if (succeeded && mounted) Navigator.pop(context);
   }
 
   Future<void> _handleSubmit() async {
@@ -61,6 +64,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     if (isDesktopPlatform(context)) {
       return _buildDesktopPage(context);
     }

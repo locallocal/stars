@@ -1,14 +1,13 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
-import 'package:stars/services/bot_service.dart';
-import 'package:stars/services/chat_service.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/chats/new_chat_dialog.dart';
 import 'package:stars/pages/chats/chat_list_builder.dart';
 import 'package:stars/pages/chat/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/dependency_injection/app_scope.dart';
+import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 
@@ -17,8 +16,10 @@ class ChatListPage extends StatefulWidget {
   final Function(String chatId, Bot bot) onChatSelected;
   final VoidCallback? onSelectionCleared;
   final bool sidebarMode;
+  final ChatListViewModel viewModel;
   const ChatListPage({
     super.key,
+    required this.viewModel,
     this.selectedChatId,
     required this.onChatSelected,
     this.onSelectionCleared,
@@ -30,35 +31,18 @@ class ChatListPage extends StatefulWidget {
 }
 
 class ChatListPageState extends State<ChatListPage> {
-  List<Chat> chatList = [];
-  List<Chat> filteredChatList = [];
-  List<Bot> bots = [];
-  bool isLoading = true;
-  String? loadError;
-  String searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  late StreamSubscription _chatListSubscription;
-  late StreamSubscription _botListSubscription;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadChatList();
-
-    // 添加监听器，当聊天列表变化时重新加载
-    _chatListSubscription = ChatService.chatListChanged.listen((_) {
-      _loadChatList();
-    });
-    _botListSubscription = BotService.botListChanged.listen((_) {
-      _loadChatList();
-    });
-  }
+  List<Chat> get chatList => widget.viewModel.chats;
+  List<Chat> get filteredChatList => widget.viewModel.filteredChats;
+  List<Bot> get bots => widget.viewModel.bots;
+  bool get isLoading => widget.viewModel.isLoading;
+  String? get loadError => widget.viewModel.error?.toString();
+  String get searchQuery => widget.viewModel.query;
 
   @override
   void dispose() {
-    _chatListSubscription.cancel();
-    _botListSubscription.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -68,70 +52,9 @@ class ChatListPageState extends State<ChatListPage> {
 
   void openNewChatDialog() => _openNewChatDialog();
 
-  Future<void> _loadChatList() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-        loadError = null;
-      });
-    }
-    try {
-      final loadedChats = await ChatService.getChatList();
-      final loadedBots = await BotService.getBots();
-      if (!mounted) return;
-      setState(() {
-        chatList = loadedChats;
-        bots = loadedBots;
-        isLoading = false;
-        _applyFilter(searchQuery);
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-        loadError = error.toString();
-      });
-    }
-  }
+  Future<void> _loadChatList() => widget.viewModel.load();
 
-  void _filterChats(String query) {
-    setState(() {
-      searchQuery = query;
-      _applyFilter(query);
-    });
-  }
-
-  void _applyFilter(String query) {
-    if (query.isEmpty) {
-      filteredChatList = chatList;
-    } else {
-      filteredChatList =
-          chatList.where((chat) {
-            final bot = bots.firstWhere(
-              (bot) => bot.id == chat.botId,
-              orElse:
-                  () => Bot(
-                    id: '',
-                    name: '',
-                    avatar: '',
-                    provider: '',
-                    baseURL: '',
-                    apiKey: '',
-                    apiType: '',
-                    systemPrompt: '',
-                    model: '',
-                    createTimestamp: DateTime.now(),
-                    modifyTimestamp: DateTime.now(),
-                  ),
-            );
-
-            return chat.lastMessage.toLowerCase().contains(
-                  query.toLowerCase(),
-                ) ||
-                bot.name.toLowerCase().contains(query.toLowerCase());
-          }).toList();
-    }
-  }
+  void _filterChats(String query) => widget.viewModel.search(query);
 
   void _clearSearch() {
     _searchController.clear();
@@ -141,6 +64,13 @@ class ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.viewModel,
+      builder: (context, _) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     final isDesktop = isDesktopOrTabletPlatform(context);
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     final body =
@@ -262,21 +192,22 @@ class ChatListPageState extends State<ChatListPage> {
       chatList: filteredChatList,
       bots: bots,
       selectedChatId: widget.selectedChatId,
+      generationRegistry: AppScope.of(context).generationRegistry,
+      onDeleteChat: widget.viewModel.deleteChat,
       onChatDeleted: (String id) {
         if (id.isNotEmpty) {
           final wasSelected = widget.selectedChatId == id;
           final deletedIndex = chatList.indexWhere((chat) => chat.id == id);
-          setState(() {
-            chatList.removeWhere((chat) => chat.id == id);
-            filteredChatList.removeWhere((chat) => chat.id == id);
-          });
+          final remainingChats = chatList
+              .where((chat) => chat.id != id)
+              .toList(growable: false);
           if (wasSelected) {
-            if (chatList.isEmpty) {
+            if (remainingChats.isEmpty) {
               widget.onSelectionCleared?.call();
             } else {
               final adjacentIndex =
-                  deletedIndex.clamp(0, chatList.length - 1).toInt();
-              final adjacentChat = chatList[adjacentIndex];
+                  deletedIndex.clamp(0, remainingChats.length - 1).toInt();
+              final adjacentChat = remainingChats[adjacentIndex];
               final adjacentBot = bots.cast<Bot?>().firstWhere(
                 (bot) => bot?.id == adjacentChat.botId,
                 orElse: () => null,
@@ -406,6 +337,7 @@ class ChatListPageState extends State<ChatListPage> {
   void _openNewChatDialog() {
     if (!mounted) return;
     Widget dialogBuilder(BuildContext dialogContext) => NewChatDialog(
+      viewModel: AppScope.of(context).createNewChatViewModel(),
       onChatCreated: (chatId, bot) {
         _loadChatList();
         widget.onChatSelected(chatId, bot);

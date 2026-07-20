@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -6,13 +5,11 @@ import 'package:stars/model/model.dart';
 import 'package:stars/pages/add_bot.dart';
 import 'package:stars/pages/chat.dart';
 import 'package:stars/pages/edit_bot.dart';
-import 'package:stars/services/bot_service.dart';
-import 'package:stars/services/chat_service.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/logo.dart';
 import 'package:stars/utils/time.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:stars/pages/common/new_chat.dart';
+import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:stars/utils/theme.dart';
 
@@ -21,9 +18,11 @@ class ContactsPage extends StatefulWidget {
   final Function(Bot bot) onBotSelected;
   final void Function(String chatId, Bot bot)? onChatCreated;
   final VoidCallback? onSelectionCleared;
+  final BotListViewModel viewModel;
 
   const ContactsPage({
     super.key,
+    required this.viewModel,
     this.selectedBotId,
     required this.onBotSelected,
     this.onChatCreated,
@@ -35,25 +34,15 @@ class ContactsPage extends StatefulWidget {
 }
 
 class ContactsPageState extends State<ContactsPage> {
-  List<Bot> contacts = [];
-  List<Bot> filteredBots = [];
-  String searchQuery = '';
-  bool isLoading = true;
   final FocusNode _searchFocusNode = FocusNode();
-  StreamSubscription? _botListSubscription;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadBots();
-    _botListSubscription = BotService.botListChanged.listen((_) {
-      _loadBots();
-    });
-  }
+  List<Bot> get contacts => widget.viewModel.bots;
+  List<Bot> get filteredBots => widget.viewModel.filteredBots;
+  String get searchQuery => widget.viewModel.query;
+  bool get isLoading => widget.viewModel.isLoading;
 
   @override
   void dispose() {
-    _botListSubscription?.cancel();
     _searchFocusNode.dispose();
     super.dispose();
   }
@@ -62,41 +51,11 @@ class ContactsPageState extends State<ContactsPage> {
 
   Future<void> openAddBotPage() => _openAddBotPage();
 
-  // 加载联系人数据
-  Future<void> _loadBots() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    final loadedBots = await BotService.getBots();
-    if (!mounted) return;
-    setState(() {
-      contacts = loadedBots;
-      filteredBots = List.from(contacts);
-      isLoading = false;
-    });
-  }
-
   // 过滤联系人列表
-  void _filterBots(String query) {
-    setState(() {
-      searchQuery = query;
-      if (query.isEmpty) {
-        filteredBots = List.from(contacts);
-      } else {
-        filteredBots =
-            contacts
-                .where(
-                  (contact) =>
-                      contact.name.toLowerCase().contains(query.toLowerCase()),
-                )
-                .toList();
-      }
-    });
-  }
+  void _filterBots(String query) => widget.viewModel.search(query);
 
   Future<void> _startChat(Bot bot) async {
-    final chat = await createNewChat(bot);
+    final chat = await widget.viewModel.startChat(bot);
     if (!mounted) return;
 
     if (isDesktopOrTabletPlatform(context)) {
@@ -108,7 +67,6 @@ class ContactsPageState extends State<ContactsPage> {
       context,
       MaterialPageRoute(builder: (context) => ChatPage(id: chat.id, bot: bot)),
     );
-    ChatService.notifyChatListChanged();
   }
 
   void _editBot(Bot bot) {
@@ -124,12 +82,10 @@ class ContactsPageState extends State<ContactsPage> {
             (context) => EditBotPage(
               bot: bot,
               onBotUpdated: (updatedBot) async {
-                await BotService.updateBot(updatedBot);
-                _loadBots();
+                await widget.viewModel.updateBot(updatedBot);
               },
               onBotDeleted: () async {
-                await BotService.deleteBot(bot.id);
-                _loadBots();
+                await widget.viewModel.deleteBot(bot.id);
               },
             ),
       ),
@@ -165,25 +121,31 @@ class ContactsPageState extends State<ContactsPage> {
     );
 
     if (confirm != true || !mounted) return;
-    await BotService.deleteBot(bot.id);
+    await widget.viewModel.deleteBot(bot.id);
     if (!mounted) return;
-    setState(() {
-      filteredBots.removeWhere((item) => item.id == bot.id);
-      contacts.removeWhere((item) => item.id == bot.id);
-    });
+    final remainingBots = contacts
+        .where((item) => item.id != bot.id)
+        .toList(growable: false);
     if (wasSelected) {
-      if (contacts.isEmpty) {
+      if (remainingBots.isEmpty) {
         widget.onSelectionCleared?.call();
       } else {
         final adjacentIndex =
-            deletedIndex.clamp(0, contacts.length - 1).toInt();
-        widget.onBotSelected(contacts[adjacentIndex]);
+            deletedIndex.clamp(0, remainingBots.length - 1).toInt();
+        widget.onBotSelected(remainingBots[adjacentIndex]);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.viewModel,
+      builder: (context, _) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     final isDesktop = isDesktopOrTabletPlatform(context);
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize;
     final body = isLoading ? _buildLoadingState() : _buildBody(isDesktop);
@@ -356,7 +318,7 @@ class ContactsPageState extends State<ContactsPage> {
             children: [
               CustomSlidableAction(
                 onPressed: (context) async {
-                  final chat = await createNewChat(bot);
+                  final chat = await widget.viewModel.startChat(bot);
                   if (!context.mounted) return;
                   if (isDesktopOrTabletPlatform(context)) {
                     widget.onChatCreated?.call(chat.id, bot);
@@ -367,9 +329,7 @@ class ContactsPageState extends State<ContactsPage> {
                     MaterialPageRoute(
                       builder: (context) => ChatPage(id: chat.id, bot: bot),
                     ),
-                  ).then((_) {
-                    ChatService.notifyChatListChanged();
-                  });
+                  );
                 },
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -393,12 +353,10 @@ class ContactsPageState extends State<ContactsPage> {
                           (context) => EditBotPage(
                             bot: bot,
                             onBotUpdated: (updatedBot) async {
-                              await BotService.updateBot(updatedBot);
-                              _loadBots();
+                              await widget.viewModel.updateBot(updatedBot);
                             },
                             onBotDeleted: () async {
-                              await BotService.deleteBot(bot.id);
-                              _loadBots();
+                              await widget.viewModel.deleteBot(bot.id);
                             },
                           ),
                     ),
@@ -457,11 +415,7 @@ class ContactsPageState extends State<ContactsPage> {
                   );
 
                   if (confirm == true) {
-                    await BotService.deleteBot(bot.id);
-                    setState(() {
-                      filteredBots.removeAt(index);
-                      contacts.removeWhere((contact) => contact.id == bot.id);
-                    });
+                    await widget.viewModel.deleteBot(bot.id);
                   }
                 },
                 backgroundColor: Theme.of(context).colorScheme.error,
@@ -490,12 +444,10 @@ class ContactsPageState extends State<ContactsPage> {
                       (context) => EditBotPage(
                         bot: bot,
                         onBotUpdated: (updatedBot) async {
-                          await BotService.updateBot(updatedBot);
-                          _loadBots();
+                          await widget.viewModel.updateBot(updatedBot);
                         },
                         onBotDeleted: () async {
-                          await BotService.deleteBot(bot.id);
-                          _loadBots();
+                          await widget.viewModel.deleteBot(bot.id);
                         },
                       ),
                 ),
@@ -595,8 +547,7 @@ class ContactsPageState extends State<ContactsPage> {
         builder:
             (dialogContext) => AddBotDialog(
               onBotAdded: (newBot) async {
-                await BotService.addBot(newBot);
-                _loadBots();
+                await widget.viewModel.addBot(newBot);
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
                 }
@@ -612,8 +563,7 @@ class ContactsPageState extends State<ContactsPage> {
         builder:
             (context) => AddBotPage(
               onBotAdded: (newBot) async {
-                await BotService.addBot(newBot);
-                _loadBots();
+                await widget.viewModel.addBot(newBot);
               },
             ),
       ),
