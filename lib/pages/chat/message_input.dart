@@ -1,7 +1,7 @@
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/pages/chat/desktop_chat_primitives.dart';
-import 'package:stars/services/providers/providers.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +10,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
-  final Provider provider;
+  final AiProvider provider;
   final bool requestInProgress;
   final bool canCancel;
   final bool isStopping;

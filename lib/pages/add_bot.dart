@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/model/model.dart';
-import 'package:stars/services/providers/providers.dart';
 import 'package:stars/model/providers.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/pages/common/logo.dart';
@@ -12,9 +11,10 @@ import 'package:stars/pages/common/common.dart';
 import 'package:stars/utils/theme.dart';
 
 class AddBotDialog extends StatelessWidget {
-  const AddBotDialog({super.key, required this.onBotAdded});
+  const AddBotDialog({super.key, required this.onBotAdded, this.modelLoader});
 
   final Future<void> Function(Bot) onBotAdded;
+  final Future<List<String>> Function(Bot)? modelLoader;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,11 @@ class AddBotDialog extends StatelessWidget {
         key: const ValueKey<String>('add-bot-dialog-content'),
         width: dialogWidth,
         height: dialogHeight,
-        child: AddBotPage(embedded: true, onBotAdded: onBotAdded),
+        child: AddBotPage(
+          embedded: true,
+          onBotAdded: onBotAdded,
+          modelLoader: modelLoader,
+        ),
       ),
     );
   }
@@ -49,11 +53,13 @@ class AddBotDialog extends StatelessWidget {
 
 class AddBotPage extends StatefulWidget {
   final Future<void> Function(Bot) onBotAdded;
+  final Future<List<String>> Function(Bot)? modelLoader;
   final bool embedded;
 
   const AddBotPage({
     super.key,
     required this.onBotAdded,
+    this.modelLoader,
     this.embedded = false,
   });
 
@@ -138,9 +144,11 @@ class _AddBotPageState extends State<AddBotPage> {
         modifyTimestamp: DateTime.now(),
       );
 
-      // 创建ChatModel并获取模型列表
-      final provider = Provider.create(tempBot);
-      final models = await provider.listModels();
+      final modelLoader = widget.modelLoader;
+      if (modelLoader == null) {
+        throw StateError('No AI provider model loader was injected.');
+      }
+      final models = await modelLoader(tempBot);
       if (models.isNotEmpty && mounted) {
         setState(() {
           providerModels = models;

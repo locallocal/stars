@@ -1,0 +1,6 @@
+include: ../../../../analysis_options.yaml
+
+# Vendor payloads are decoded from heterogeneous JSON/SSE schemas. Keep the
+# project lint set here while the adapters incrementally replace dynamic maps
+# with provider-specific DTOs. Domain contracts and repository implementations
+# remain under the strict Data/Domain analyzer configuration.
