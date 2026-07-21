@@ -1,5 +1,7 @@
 # Stars
 
+[English](README.md) | [简体中文](docs/README_zh-CN.md)
+
 Stars is a cross-platform AI chat client built with Flutter. It provides a
 responsive experience for desktop and mobile devices, connects to a broad range
 of AI providers, and keeps bots, conversations, messages, and preferences in a
