@@ -11,6 +11,9 @@ import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/ui/features/app/views/desktop_layout.dart';
 import 'package:stars/ui/features/bots/views/add_bot.dart';
+import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
+import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/ui/features/chats/views/chat_list_builder.dart';
 import 'package:stars/ui/features/chats/views/new_chat_dialog.dart';
 import 'package:stars/utils/theme.dart';
 
@@ -62,6 +65,14 @@ void main() {
     expect(DesktopThemeTokens.menuBarHeight, 50);
     expect(DesktopThemeTokens.sidebarDecoration(testContext).border, isNull);
     expect(DesktopThemeTokens.formContentMaxWidth, 920);
+    expect(
+      StarsDesktopTheme.contentMaxWidth,
+      DesktopThemeTokens.formContentMaxWidth,
+    );
+    expect(
+      StarsDesktopTheme.inputMaxWidth,
+      DesktopThemeTokens.formContentMaxWidth,
+    );
     expect(
       DesktopThemeTokens.formPagePadding,
       const EdgeInsets.fromLTRB(32, 28, 32, 48),
@@ -375,6 +386,143 @@ void main() {
     final panelTop = tester.getTopLeft(find.byType(DesktopListPanel)).dy;
     final searchTop = tester.getTopLeft(find.byType(StarsSearchField)).dy;
     expect(searchTop - panelTop, DesktopThemeTokens.panelPadding.top);
+  });
+
+  testWidgets('desktop message content uses its full available page width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 600);
+    addTearDown(tester.view.reset);
+
+    final scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+
+    await tester.pumpWidget(
+      _shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: SizedBox(
+                width: 736,
+                height: 500,
+                child: Column(
+                  children: [
+                    MessageList(
+                      messages: [
+                        Message(
+                          messageId: 'message-1',
+                          chatId: 'chat-1',
+                          botId: 'bot-1',
+                          senderId: 'bot-1',
+                          content: '桌面会话内容',
+                          timestamp: DateTime(2026),
+                        ),
+                      ],
+                      scrollController: scrollController,
+                      isStreaming: false,
+                      streamingResponse: '',
+                      currentUserId: 'me',
+                      isDesktop: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey<String>('desktop-message-viewport')),
+          )
+          .width,
+      736,
+    );
+  });
+
+  testWidgets('chat row menu does not show a row focus ring on pointer use', (
+    tester,
+  ) async {
+    await _withDesktopPlatform(() async {
+      var openCount = 0;
+      final registry = ChatGenerationRegistry(
+        messagePersister: (message) async => message,
+        lastMessageUpdater: (_, _) async {},
+        providerFactory: (_) => throw StateError('Provider is not expected'),
+      );
+      addTearDown(registry.clear);
+      final timestamp = DateTime(2026);
+      final bot = Bot(
+        id: 'bot-1',
+        name: '测试智能体',
+        avatar: '',
+        provider: 'OpenAI',
+        baseURL: '',
+        apiKey: '',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: '',
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+      final chat = Chat(
+        id: 'chat-1',
+        botId: bot.id,
+        lastMessage: '测试会话',
+        lastMessageTimestamp: timestamp,
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+
+      await tester.pumpWidget(
+        _shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: SizedBox(
+                  width: 320,
+                  height: 240,
+                  child: ChatListBuilder(
+                    chatList: [chat],
+                    bots: [bot],
+                    generationRegistry: registry,
+                    onChatDeleted: (_) {},
+                    onDeleteChat: (_) async {},
+                    onChatSelected: (_, _) => openCount += 1,
+                  ),
+                ),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+
+      final row = find.byType(DesktopInteractiveListItem);
+      final rowButton = tester.widget<ShadButton>(
+        find.descendant(of: row, matching: find.byType(ShadButton)).first,
+      );
+      final rowContainer = tester.widget<AnimatedContainer>(
+        find.descendant(of: row, matching: find.byType(AnimatedContainer)),
+      );
+      final rowDecoration = rowContainer.decoration! as BoxDecoration;
+      final rowBorder = rowDecoration.border! as Border;
+      expect(rowButton.decoration?.disableSecondaryBorder, isTrue);
+      expect(rowBorder.top.width, 0);
+
+      await tester.tap(find.byIcon(LucideIcons.messageCircle));
+      await tester.pumpAndSettle();
+
+      expect(openCount, 1);
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        isNot('chat-row-actions'),
+      );
+    });
   });
 
   testWidgets('desktop empty state renders without a card shell', (

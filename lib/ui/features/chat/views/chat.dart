@@ -598,11 +598,28 @@ class ChatPageState extends State<ChatPage> {
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
-                child: _buildConversationBody(
-                  context,
-                  fontSize,
-                  isDesktop: true,
+                padding: EdgeInsets.fromLTRB(
+                  DesktopThemeTokens.formPagePadding.left,
+                  24,
+                  DesktopThemeTokens.formPagePadding.right,
+                  0,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: StarsDesktopTheme.contentMaxWidth,
+                    ),
+                    child: SizedBox(
+                      key: const ValueKey<String>('desktop-chat-content'),
+                      width: double.infinity,
+                      height: double.infinity,
+                      child: _buildConversationBody(
+                        context,
+                        fontSize,
+                        isDesktop: true,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -616,7 +633,12 @@ class ChatPageState extends State<ChatPage> {
   Widget _buildDesktopInputSection(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 18),
+      padding: EdgeInsets.fromLTRB(
+        DesktopThemeTokens.formPagePadding.left,
+        8,
+        DesktopThemeTokens.formPagePadding.right,
+        18,
+      ),
       decoration: BoxDecoration(
         color: StarsDesktopTheme.panelBackground(context),
       ),

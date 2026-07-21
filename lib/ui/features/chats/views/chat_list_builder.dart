@@ -379,7 +379,13 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
     _controller.hide();
     action();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _focusNode.requestFocus();
+      if (!mounted) return;
+      if (FocusManager.instance.highlightMode ==
+          FocusHighlightMode.traditional) {
+        _focusNode.requestFocus();
+      } else {
+        _focusNode.unfocus();
+      }
     });
   }
 

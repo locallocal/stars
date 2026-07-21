@@ -701,7 +701,8 @@ class DesktopThemeTokens {
   static const double controlHeight = 32;
   static const double iconButtonSize = 32;
   static const double listItemMinHeight = 44;
-  static const double formContentMaxWidth = 920;
+  static const double contentMaxWidth = 920;
+  static const double formContentMaxWidth = contentMaxWidth;
   static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);
   static const double panelRadiusValue = 8;
   static const double itemRadiusValue = 6;
@@ -1483,19 +1484,51 @@ class DesktopInteractiveListItem extends StatefulWidget {
 
 class _DesktopInteractiveListItemState
     extends State<DesktopInteractiveListItem> {
+  final FocusNode _shadFocusNode = FocusNode(
+    debugLabel: 'DesktopInteractiveListItem',
+  );
   bool _hovered = false;
   bool _focused = false;
   bool _pressed = false;
 
   @override
+  void dispose() {
+    _shadFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleShadFocusChange(bool focused) {
+    final showFocusRing =
+        focused &&
+        _shadFocusNode.hasPrimaryFocus &&
+        FocusManager.instance.highlightMode == FocusHighlightMode.traditional;
+    if (_focused != showFocusRing) {
+      setState(() => _focused = showFocusRing);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final disableAnimations =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (ShadTheme.maybeOf(context) != null) {
       return Semantics(
         button: true,
         selected: widget.selected,
-        child: ConstrainedBox(
+        child: AnimatedContainer(
+          duration:
+              disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 100),
+          curve: Curves.easeOutCubic,
           constraints: const BoxConstraints(
             minHeight: DesktopThemeTokens.listItemMinHeight,
+          ),
+          decoration: DesktopThemeTokens.listItemDecoration(
+            context,
+            selected: false,
+            hovered: false,
+            focused: _focused,
           ),
           child: SizedBox(
             width: double.infinity,
@@ -1507,6 +1540,9 @@ class _DesktopInteractiveListItemState
               expands: true,
               height: 0,
               padding: widget.padding,
+              focusNode: _shadFocusNode,
+              onFocusChange: _handleShadFocusChange,
+              decoration: const ShadDecoration(disableSecondaryBorder: true),
               mainAxisAlignment: MainAxisAlignment.start,
               onPressed: widget.onTap,
               child: widget.child,
@@ -1515,8 +1551,6 @@ class _DesktopInteractiveListItemState
         ),
       );
     }
-    final disableAnimations =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Semantics(
       button: true,
       selected: widget.selected,
@@ -1586,9 +1620,9 @@ class StarsDesktopTheme {
   static double get bubbleRadius => DesktopThemeTokens.bubbleRadiusValue;
   static double get workspacePadding =>
       DesktopThemeTokens.workspacePadding.left;
-  static const double contentMaxWidth = 920;
+  static const double contentMaxWidth = DesktopThemeTokens.contentMaxWidth;
   static const double messageBubbleMaxWidth = 552;
-  static const double inputMaxWidth = 920;
+  static const double inputMaxWidth = contentMaxWidth;
 
   static Color workspaceBackground(BuildContext context) {
     return DesktopThemeTokens.workspaceSurface(context);

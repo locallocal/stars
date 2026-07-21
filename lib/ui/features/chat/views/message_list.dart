@@ -48,9 +48,9 @@ class MessageList extends StatelessWidget {
         controller: scrollController,
         itemCount: messages.length + (isStreaming ? 1 : 0),
         padding: EdgeInsets.fromLTRB(
-          isDesktop ? 18 : 0,
+          0,
           isDesktop ? 12 : 8,
-          isDesktop ? 18 : 0,
+          0,
           isDesktop ? 36 : 8,
         ),
         itemBuilder: (context, index) {
@@ -134,6 +134,10 @@ class MessageList extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: isDesktop ? 10 : 4),
       child: Center(
         child: ConstrainedBox(
+          key:
+              isDesktop
+                  ? const ValueKey<String>('desktop-message-viewport')
+                  : null,
           constraints: BoxConstraints(maxWidth: viewportMaxWidth),
           child: Align(
             alignment:
