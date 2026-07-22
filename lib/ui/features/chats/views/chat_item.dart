@@ -28,6 +28,13 @@ class ChatListItem extends StatefulWidget {
 }
 
 class _ChatListItemState extends State<ChatListItem> {
+  bool _trailingHovered = false;
+
+  void _setTrailingHovered(bool hovered) {
+    if (_trailingHovered == hovered) return;
+    setState(() => _trailingHovered = hovered);
+  }
+
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 16;
@@ -56,6 +63,7 @@ class _ChatListItemState extends State<ChatListItem> {
 
     return DesktopInteractiveListItem(
       selected: widget.isSelected,
+      suppressHoverBackground: _trailingHovered,
       onTap: widget.onTap,
       padding: const EdgeInsetsDirectional.fromSTEB(8, 10, 8, 10),
       child: Row(
@@ -114,7 +122,11 @@ class _ChatListItemState extends State<ChatListItem> {
           ),
           if (widget.trailing != null) ...[
             const SizedBox(width: 6),
-            widget.trailing!,
+            MouseRegion(
+              onEnter: (_) => _setTrailingHovered(true),
+              onExit: (_) => _setTrailingHovered(false),
+              child: widget.trailing!,
+            ),
           ],
         ],
       ),

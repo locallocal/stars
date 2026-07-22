@@ -1481,6 +1481,7 @@ class DesktopListPanel extends StatelessWidget {
 
 class DesktopInteractiveListItem extends StatefulWidget {
   final bool selected;
+  final bool suppressHoverBackground;
   final VoidCallback onTap;
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -1488,6 +1489,7 @@ class DesktopInteractiveListItem extends StatefulWidget {
   const DesktopInteractiveListItem({
     super.key,
     required this.selected,
+    this.suppressHoverBackground = false,
     required this.onTap,
     required this.child,
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1559,7 +1561,12 @@ class _DesktopInteractiveListItemState
               expands: true,
               height: 0,
               backgroundColor: widget.selected ? selectedBackground : null,
-              hoverBackgroundColor: widget.selected ? selectedBackground : null,
+              hoverBackgroundColor:
+                  widget.selected
+                      ? selectedBackground
+                      : widget.suppressHoverBackground
+                      ? Colors.transparent
+                      : null,
               pressedBackgroundColor:
                   widget.selected ? selectedBackground : null,
               foregroundColor: widget.selected ? Colors.white : null,
@@ -1592,7 +1599,7 @@ class _DesktopInteractiveListItemState
         decoration: DesktopThemeTokens.listItemDecoration(
           context,
           selected: widget.selected,
-          hovered: _hovered,
+          hovered: _hovered && !widget.suppressHoverBackground,
           pressed: _pressed,
           focused: _focused,
         ),
