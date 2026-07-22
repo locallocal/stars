@@ -37,6 +37,23 @@ void main() {
       final sendButton = find.widgetWithText(ShadButton, '发送');
       expect(sendButton, findsOneWidget);
       final button = tester.widget<ShadButton>(sendButton);
+      final sendButtonContext = tester.element(sendButton);
+      expect(
+        button.backgroundColor,
+        DesktopThemeTokens.primaryActionColor(sendButtonContext),
+      );
+      expect(
+        DesktopThemeTokens.inactivePrimaryActionColor(sendButtonContext),
+        button.backgroundColor?.withValues(alpha: 0.5),
+      );
+      expect(
+        tester
+            .widgetList<Opacity>(
+              find.descendant(of: sendButton, matching: find.byType(Opacity)),
+            )
+            .any((widget) => widget.opacity == 0.5),
+        isTrue,
+      );
       expect(button.enabled, isFalse);
       expect(button.onPressed, isNull);
 

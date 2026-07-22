@@ -1498,7 +1498,9 @@ class _SidebarDestination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = ShadTheme.of(context).colorScheme;
+    final selectedBackground = DesktopThemeTokens.inactivePrimaryActionColor(
+      context,
+    );
     return Semantics(
       button: true,
       selected: selected,
@@ -1507,23 +1509,17 @@ class _SidebarDestination extends StatelessWidget {
         width: double.infinity,
         child: ShadButton.raw(
           variant:
-              selected ? ShadButtonVariant.secondary : ShadButtonVariant.ghost,
+              selected ? ShadButtonVariant.primary : ShadButtonVariant.ghost,
           size: ShadButtonSize.sm,
-          expands: true,
-          backgroundColor: selected ? scheme.accent : null,
-          foregroundColor: selected ? scheme.accentForeground : null,
-          mainAxisAlignment: MainAxisAlignment.center,
+          backgroundColor: selected ? selectedBackground : null,
+          hoverBackgroundColor: selected ? selectedBackground : null,
+          pressedBackgroundColor: selected ? selectedBackground : null,
+          foregroundColor: selected ? Colors.white : null,
+          hoverForegroundColor: selected ? Colors.white : null,
+          pressedForegroundColor: selected ? Colors.white : null,
           onPressed: onTap,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          leading: Icon(icon, size: 17),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            ),
-          ),
+          leading: Icon(icon, size: 16),
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
       ),
     );
