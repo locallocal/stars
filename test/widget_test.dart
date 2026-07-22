@@ -488,6 +488,7 @@ void main() {
                   child: ChatListBuilder(
                     chatList: [chat],
                     bots: [bot],
+                    selectedChatId: chat.id,
                     generationRegistry: registry,
                     onChatDeleted: (_) {},
                     onDeleteChat: (_) async {},
@@ -506,6 +507,7 @@ void main() {
       final rowButton = tester.widget<ShadButton>(
         find.descendant(of: row, matching: find.byType(ShadButton)).first,
       );
+      final rowContext = tester.element(row);
       final rowContainer = tester.widget<AnimatedContainer>(
         find.descendant(of: row, matching: find.byType(AnimatedContainer)),
       );
@@ -513,6 +515,27 @@ void main() {
       final rowBorder = rowDecoration.border! as Border;
       expect(rowButton.decoration?.disableSecondaryBorder, isTrue);
       expect(rowBorder.top.width, 0);
+      expect(rowButton.variant, ShadButtonVariant.primary);
+      expect(
+        rowButton.backgroundColor,
+        DesktopThemeTokens.inactivePrimaryActionColor(rowContext),
+      );
+      expect(rowButton.hoverBackgroundColor, rowButton.backgroundColor);
+      expect(rowButton.pressedBackgroundColor, rowButton.backgroundColor);
+      expect(rowButton.foregroundColor, Colors.white);
+      expect(rowButton.hoverForegroundColor, Colors.white);
+      expect(rowButton.pressedForegroundColor, Colors.white);
+      expect(
+        tester.widget<Text>(find.text(bot.name)).style?.color,
+        Colors.white,
+      );
+      expect(
+        tester
+            .widget<Text>(find.textContaining(chat.lastMessage).first)
+            .style
+            ?.color,
+        Colors.white,
+      );
 
       await tester.tap(find.byIcon(LucideIcons.messageCircle));
       await tester.pumpAndSettle();
@@ -591,6 +614,73 @@ void main() {
       );
       expect(find.bySemanticsLabel('清空会话记录'), findsOneWidget);
     });
+  });
+
+  testWidgets('desktop sidebar selections match the empty composer action', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+
+    for (final selectedPage in [1, 2]) {
+      await tester.pumpWidget(_desktopHarness(currentIndex: selectedPage));
+      await tester.pumpAndSettle();
+
+      final label = selectedPage == 1 ? '智能体' : '我的';
+      final selectedButtonFinder =
+          find
+              .ancestor(of: find.text(label), matching: find.byType(ShadButton))
+              .first;
+      final selectedButton = tester.widget<ShadButton>(selectedButtonFinder);
+      final selectedButtonContext = tester.element(selectedButtonFinder);
+
+      expect(selectedButton.variant, ShadButtonVariant.primary);
+      expect(
+        selectedButton.backgroundColor,
+        DesktopThemeTokens.inactivePrimaryActionColor(selectedButtonContext),
+      );
+      expect(
+        selectedButton.hoverBackgroundColor,
+        selectedButton.backgroundColor,
+      );
+      expect(
+        selectedButton.pressedBackgroundColor,
+        selectedButton.backgroundColor,
+      );
+      expect(selectedButton.foregroundColor, Colors.white);
+      expect(selectedButton.hoverForegroundColor, Colors.white);
+      expect(selectedButton.pressedForegroundColor, Colors.white);
+
+      final textFinder = find.text(label).first;
+      final text = tester.widget<Text>(textFinder);
+      final inheritedTextStyle =
+          DefaultTextStyle.of(tester.element(textFinder)).style;
+      expect(inheritedTextStyle.merge(text.style).color, Colors.white);
+
+      if (selectedPage == 1) {
+        final newChatButton = tester.widget<ShadButton>(
+          find
+              .ancestor(
+                of: find.byIcon(LucideIcons.squarePen),
+                matching: find.byType(ShadButton),
+              )
+              .first,
+        );
+        final agentIcon = selectedButton.leading! as Icon;
+        final newChatIcon = newChatButton.leading! as Icon;
+
+        expect(selectedButton.size, newChatButton.size);
+        expect(selectedButton.expands, newChatButton.expands);
+        expect(
+          selectedButton.mainAxisAlignment,
+          newChatButton.mainAxisAlignment,
+        );
+        expect(selectedButton.padding, newChatButton.padding);
+        expect(selectedButton.gap, newChatButton.gap);
+        expect(agentIcon.size, newChatIcon.size);
+      }
+    }
   });
 
   testWidgets('desktop shell uses one toolbar and overlays sidebar at 800px', (

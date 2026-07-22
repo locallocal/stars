@@ -31,13 +31,16 @@ class _ChatListItemState extends State<ChatListItem> {
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 16;
+    final selectedTextColor = widget.isSelected ? Colors.white : null;
     final titleStyle = DesktopThemeTokens.bodyStyle(context)?.copyWith(
       fontWeight: FontWeight.w600,
       fontSize: (fontSize - 2).clamp(13, 14),
+      color: selectedTextColor,
     );
-    final metaStyle = DesktopThemeTokens.metaStyle(
-      context,
-    )?.copyWith(fontSize: (fontSize - 3).clamp(12, 13));
+    final metaStyle = DesktopThemeTokens.metaStyle(context)?.copyWith(
+      fontSize: (fontSize - 3).clamp(12, 13),
+      color: selectedTextColor,
+    );
     final subtitle =
         widget.bot.provider.isEmpty
             ? widget.lastMessage
@@ -100,7 +103,10 @@ class _ChatListItemState extends State<ChatListItem> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: metaStyle?.copyWith(
-                    color: DesktopThemeTokens.mutedText(context),
+                    color:
+                        widget.isSelected
+                            ? Colors.white
+                            : DesktopThemeTokens.mutedText(context),
                   ),
                 ),
               ],

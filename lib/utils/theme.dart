@@ -777,6 +777,22 @@ class DesktopThemeTokens {
   static Color selectedFill(BuildContext context) =>
       tokens(context).selectedFill;
 
+  /// Shared color for primary actions and active navigation backgrounds.
+  ///
+  /// Desktop primary buttons are rendered by Shad, while a few compatibility
+  /// widgets still read Material's color scheme. Prefer the Shad value when it
+  /// is available so both surfaces resolve to the send button's background.
+  static Color primaryActionColor(BuildContext context) =>
+      ShadTheme.maybeOf(context)?.colorScheme.primary ??
+      Theme.of(context).colorScheme.primary;
+
+  /// Visual background of a disabled desktop primary [ShadButton].
+  ///
+  /// Shad renders disabled buttons at 50% opacity. Active navigation buttons
+  /// use this semi-transparent color directly because they remain interactive.
+  static Color inactivePrimaryActionColor(BuildContext context) =>
+      primaryActionColor(context).withValues(alpha: 0.5);
+
   static Color success(BuildContext context) => tokens(context).success;
 
   static Color warning(BuildContext context) => tokens(context).warning;
@@ -1512,6 +1528,9 @@ class _DesktopInteractiveListItemState
     final disableAnimations =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (ShadTheme.maybeOf(context) != null) {
+      final selectedBackground = DesktopThemeTokens.inactivePrimaryActionColor(
+        context,
+      );
       return Semantics(
         button: true,
         selected: widget.selected,
@@ -1535,10 +1554,17 @@ class _DesktopInteractiveListItemState
             child: ShadButton.raw(
               variant:
                   widget.selected
-                      ? ShadButtonVariant.secondary
+                      ? ShadButtonVariant.primary
                       : ShadButtonVariant.ghost,
               expands: true,
               height: 0,
+              backgroundColor: widget.selected ? selectedBackground : null,
+              hoverBackgroundColor: widget.selected ? selectedBackground : null,
+              pressedBackgroundColor:
+                  widget.selected ? selectedBackground : null,
+              foregroundColor: widget.selected ? Colors.white : null,
+              hoverForegroundColor: widget.selected ? Colors.white : null,
+              pressedForegroundColor: widget.selected ? Colors.white : null,
               padding: widget.padding,
               focusNode: _shadFocusNode,
               onFocusChange: _handleShadFocusChange,

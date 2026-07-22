@@ -745,10 +745,14 @@ class _MessageInputState extends State<MessageInput> {
             : null;
     final backgroundColor =
         widget.requestInProgress
-            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.92)
+            ? DesktopThemeTokens.primaryActionColor(
+              context,
+            ).withValues(alpha: 0.92)
             : enabled
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.primary.withValues(alpha: 0.18);
+            ? DesktopThemeTokens.primaryActionColor(context)
+            : DesktopThemeTokens.primaryActionColor(
+              context,
+            ).withValues(alpha: 0.18);
     final foregroundColor =
         enabled
             ? Theme.of(context).colorScheme.onPrimary
@@ -812,6 +816,7 @@ class _MessageInputState extends State<MessageInput> {
       size: ShadButtonSize.sm,
       width: 96,
       height: 36,
+      backgroundColor: DesktopThemeTokens.primaryActionColor(context),
       enabled: enabled,
       onPressed: onPressed,
       leading: icon,

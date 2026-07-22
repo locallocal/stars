@@ -729,12 +729,15 @@ class _BotListItem extends StatefulWidget {
 class _BotListItemState extends State<_BotListItem> {
   @override
   Widget build(BuildContext context) {
-    final titleStyle = DesktopThemeTokens.bodyStyle(
-      context,
-    )?.copyWith(fontWeight: FontWeight.w700, fontSize: widget.fontSize);
+    final selectedTextColor = widget.isSelected ? Colors.white : null;
+    final titleStyle = DesktopThemeTokens.bodyStyle(context)?.copyWith(
+      fontWeight: FontWeight.w700,
+      fontSize: widget.fontSize,
+      color: selectedTextColor,
+    );
     final metaStyle = DesktopThemeTokens.metaStyle(
       context,
-    )?.copyWith(fontSize: widget.fontSize - 2);
+    )?.copyWith(fontSize: widget.fontSize - 2, color: selectedTextColor);
 
     return DesktopInteractiveListItem(
       selected: widget.isSelected,
@@ -785,7 +788,10 @@ class _BotListItemState extends State<_BotListItem> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: metaStyle?.copyWith(
-                    color: DesktopThemeTokens.mutedText(context),
+                    color:
+                        widget.isSelected
+                            ? Colors.white
+                            : DesktopThemeTokens.mutedText(context),
                   ),
                 ),
               ],
