@@ -80,6 +80,62 @@ void main() {
       expect(sendCalls, 1);
     });
 
+    testWidgets('web search mirrors empty and ready send button styles', (
+      tester,
+    ) async {
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
+      final provider = _FakeProvider(_bot, supportsWebSearch: true);
+
+      await _pumpMessageInput(
+        tester,
+        controller: controller,
+        provider: provider,
+      );
+
+      ShadButton button(String label) =>
+          tester.widget<ShadButton>(find.widgetWithText(ShadButton, label));
+
+      Opacity webSearchOpacity() => tester.widget<Opacity>(
+        find
+            .ancestor(
+              of: find.widgetWithText(ShadButton, '联网搜索'),
+              matching: find.byType(Opacity),
+            )
+            .first,
+      );
+
+      var sendButton = button('发送');
+      var webSearchButton = button('联网搜索');
+      expect(sendButton.enabled, isFalse);
+      expect(webSearchButton.variant, ShadButtonVariant.primary);
+      expect(webSearchButton.backgroundColor, sendButton.backgroundColor);
+      expect(webSearchButton.hoverBackgroundColor, sendButton.backgroundColor);
+      expect(
+        webSearchButton.pressedBackgroundColor,
+        sendButton.backgroundColor,
+      );
+      expect(webSearchOpacity().opacity, 0.5);
+      expect(
+        tester.getSize(find.widgetWithText(ShadButton, '联网搜索')).height,
+        36,
+      );
+
+      await tester.tap(find.widgetWithText(ShadButton, '联网搜索'));
+      await tester.pump();
+      await _focusAndEnterText(tester, 'Hello');
+
+      sendButton = button('发送');
+      webSearchButton = button('联网搜索');
+      expect(provider.getWebSearch(), isTrue);
+      expect(sendButton.enabled, isTrue);
+      expect(webSearchButton.variant, sendButton.variant);
+      expect(webSearchButton.backgroundColor, sendButton.backgroundColor);
+      expect(webSearchButton.foregroundColor, sendButton.foregroundColor);
+      expect(webSearchButton.hoverBackgroundColor, isNull);
+      expect(webSearchOpacity().opacity, 1);
+    });
+
     testWidgets('Shift+Enter does not send', (tester) async {
       final controller = TextEditingController();
       addTearDown(controller.dispose);
@@ -174,6 +230,7 @@ Future<void> _pumpMessageInput(
   required TextEditingController controller,
   bool requestInProgress = false,
   bool canCancel = false,
+  AiProvider? provider,
   VoidCallback? onSend,
   VoidCallback? onCancel,
 }) async {
@@ -223,7 +280,7 @@ Future<void> _pumpMessageInput(
                         child: SizedBox(
                           width: 700,
                           child: MessageInput(
-                            provider: _FakeProvider(_bot),
+                            provider: provider ?? _FakeProvider(_bot),
                             controller: controller,
                             requestInProgress: requestInProgress,
                             canCancel: canCancel,
@@ -261,7 +318,12 @@ void _noop() {}
 void _ignoreString(String _) {}
 
 class _FakeProvider extends AiProvider {
-  _FakeProvider(super.bot);
+  _FakeProvider(super.bot, {this.supportsWebSearch = false});
+
+  final bool supportsWebSearch;
+
+  @override
+  bool supportWebSearch() => supportsWebSearch;
 
   @override
   Future<void> generateText(List<ChatMessage> messages) async {}

@@ -312,6 +312,7 @@ class _MessageInputState extends State<MessageInput> {
                   icon: isDesktop ? LucideIcons.globe : Icons.public,
                   label: S.of(context).webSearch,
                   active: isWebSearchEnabled,
+                  matchPrimaryActionStyle: true,
                   onTap: () {
                     setState(() {
                       isWebSearchEnabled = !isWebSearchEnabled;
@@ -829,6 +830,7 @@ class _MessageInputState extends State<MessageInput> {
     required IconData icon,
     required String label,
     required bool active,
+    bool matchPrimaryActionStyle = false,
     required VoidCallback onTap,
   }) {
     return _buildActionChip(
@@ -836,6 +838,7 @@ class _MessageInputState extends State<MessageInput> {
       icon: icon,
       label: label,
       active: active,
+      matchPrimaryActionStyle: matchPrimaryActionStyle,
       onTap: onTap,
     );
   }
@@ -845,10 +848,61 @@ class _MessageInputState extends State<MessageInput> {
     required IconData icon,
     required String label,
     required bool active,
+    bool matchPrimaryActionStyle = false,
     required VoidCallback onTap,
   }) {
-    if (_isDesktop || isDesktopOrTabletPlatform(context)) {
+    final useDesktopStyle = _isDesktop || isDesktopOrTabletPlatform(context);
+    if (matchPrimaryActionStyle && !useDesktopStyle) {
+      final scheme = Theme.of(context).colorScheme;
+      final backgroundColor =
+          active ? scheme.primary : scheme.primary.withValues(alpha: 0.18);
+      final foregroundColor =
+          active ? scheme.onPrimary : scheme.onSurface.withValues(alpha: 0.35);
+      return Semantics(
+        button: true,
+        selected: active,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: foregroundColor),
+                const SizedBox(width: 8),
+                Text(label, style: TextStyle(color: foregroundColor)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    if (useDesktopStyle) {
       final iconWidget = Icon(icon, size: 16);
+      if (matchPrimaryActionStyle) {
+        final primaryColor = DesktopThemeTokens.primaryActionColor(context);
+        final button = ShadButton.raw(
+          variant: ShadButtonVariant.primary,
+          size: ShadButtonSize.sm,
+          height: 36,
+          backgroundColor: primaryColor,
+          hoverBackgroundColor: active ? null : primaryColor,
+          pressedBackgroundColor: active ? null : primaryColor,
+          leading: iconWidget,
+          onPressed: onTap,
+          child: Text(label),
+        );
+        return Semantics(
+          selected: active,
+          child: Opacity(opacity: active ? 1 : 0.5, child: button),
+        );
+      }
       return active
           ? ShadButton.secondary(
             size: ShadButtonSize.sm,

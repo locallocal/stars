@@ -431,6 +431,7 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
         label: MaterialLocalizations.of(context).showMenuTooltip,
         focusNode: _focusNode,
         onPressed: _controller.toggle,
+        hoverBackgroundColor: Colors.transparent,
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,6 +14,7 @@ import 'package:stars/ui/features/app/views/desktop_layout.dart';
 import 'package:stars/ui/features/bots/views/add_bot.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/ui/features/chats/views/chat_item.dart';
 import 'package:stars/ui/features/chats/views/chat_list_builder.dart';
 import 'package:stars/ui/features/chats/views/new_chat_dialog.dart';
 import 'package:stars/utils/theme.dart';
@@ -513,8 +515,17 @@ void main() {
       );
       final rowDecoration = rowContainer.decoration! as BoxDecoration;
       final rowBorder = rowDecoration.border! as Border;
+      final menuButton = tester.widget<ShadIconButton>(
+        find
+            .ancestor(
+              of: find.byIcon(LucideIcons.ellipsis),
+              matching: find.byType(ShadIconButton),
+            )
+            .first,
+      );
       expect(rowButton.decoration?.disableSecondaryBorder, isTrue);
       expect(rowBorder.top.width, 0);
+      expect(menuButton.hoverBackgroundColor, Colors.transparent);
       expect(rowButton.variant, ShadButtonVariant.primary);
       expect(
         rowButton.backgroundColor,
@@ -546,6 +557,74 @@ void main() {
         isNot('chat-row-actions'),
       );
     });
+  });
+
+  testWidgets('chat row menu hover keeps the row background unchanged', (
+    tester,
+  ) async {
+    final timestamp = DateTime(2026);
+    final bot = Bot(
+      id: 'bot-1',
+      name: '测试智能体',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: '',
+      apiKey: '',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: '',
+      createTimestamp: timestamp,
+      modifyTimestamp: timestamp,
+    );
+
+    await tester.pumpWidget(
+      _shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: SizedBox(
+                width: 320,
+                child: ChatListItem(
+                  bot: bot,
+                  lastMessage: '测试会话',
+                  timestamp: '刚刚',
+                  onTap: () {},
+                  trailing: const SizedBox.square(
+                    key: ValueKey<String>('chat-row-menu-target'),
+                    dimension: 44,
+                  ),
+                ),
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    ShadButton rowButton() => tester.widget<ShadButton>(
+      find.descendant(
+        of: find.byType(DesktopInteractiveListItem),
+        matching: find.byType(ShadButton),
+      ),
+    );
+
+    expect(rowButton().hoverBackgroundColor, isNull);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('chat-row-menu-target')),
+      ),
+    );
+    await tester.pump();
+
+    expect(rowButton().hoverBackgroundColor, Colors.transparent);
+
+    await mouse.moveTo(tester.getCenter(find.text(bot.name)));
+    await tester.pump();
+
+    expect(rowButton().hoverBackgroundColor, isNull);
   });
 
   testWidgets('desktop empty state renders without a card shell', (
