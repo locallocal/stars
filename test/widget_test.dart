@@ -1224,6 +1224,19 @@ void main() {
       final modelSection = find.byKey(
         const ValueKey<String>('add-bot-model-section'),
       );
+      for (final (section, title) in [
+        (basicSection, '基本信息'),
+        (providerSection, '提供商信息'),
+        (modelSection, '模型配置'),
+      ]) {
+        final titleText = tester.widget<Text>(
+          find.descendant(of: section, matching: find.text(title)),
+        );
+        expect(
+          titleText.style?.fontSize,
+          DesktopThemeTokens.botFormSectionTitleFontSize,
+        );
+      }
       expect(
         find.descendant(
           of: basicSection,
