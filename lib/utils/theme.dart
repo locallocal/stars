@@ -703,6 +703,11 @@ class DesktopThemeTokens {
   static const double listItemMinHeight = 44;
   static const double contentMaxWidth = 920;
   static const double formContentMaxWidth = contentMaxWidth;
+  static const double addBotFormFieldWidth = 640;
+  static const double botFormFieldHeight = 48;
+  static const double botFormSectionPadding = 20;
+  static const double botFormSectionBorderWidth = 1;
+  static const double botFormSectionTitleFontSize = 16;
   static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);
   static const double panelRadiusValue = 8;
   static const double itemRadiusValue = 6;

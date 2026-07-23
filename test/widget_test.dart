@@ -19,6 +19,7 @@ import 'package:stars/ui/features/app/views/desktop_layout.dart';
 import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
 import 'package:stars/ui/features/bots/views/add_bot.dart';
 import 'package:stars/ui/features/bots/views/bots.dart';
+import 'package:stars/ui/features/bots/views/edit_bot.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
@@ -74,6 +75,11 @@ void main() {
     expect(DesktopThemeTokens.menuBarHeight, 50);
     expect(DesktopThemeTokens.sidebarDecoration(testContext).border, isNull);
     expect(DesktopThemeTokens.formContentMaxWidth, 920);
+    expect(DesktopThemeTokens.addBotFormFieldWidth, 640);
+    expect(DesktopThemeTokens.botFormFieldHeight, 48);
+    expect(DesktopThemeTokens.botFormSectionPadding, 20);
+    expect(DesktopThemeTokens.botFormSectionBorderWidth, 1);
+    expect(DesktopThemeTokens.botFormSectionTitleFontSize, 16);
     expect(
       StarsDesktopTheme.contentMaxWidth,
       DesktopThemeTokens.formContentMaxWidth,
@@ -844,7 +850,7 @@ void main() {
     expect(find.text('Stars'), findsNothing);
   });
 
-  testWidgets('inspector only exposes real selected bot context', (
+  testWidgets('desktop bot detail omits the redundant inspector action', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -877,6 +883,12 @@ void main() {
       find.byKey(const ValueKey<String>('desktop-bot-detail-scaffold')),
     );
     final workspaceColor = DesktopThemeTokens.workspaceSurface(detailContext);
+    final raisedSurface = StarsDesktopTokens.of(detailContext).raisedSurface;
+    final expectedFieldWidth =
+        DesktopThemeTokens.formContentMaxWidth -
+        (DesktopThemeTokens.botFormSectionPadding +
+                DesktopThemeTokens.botFormSectionBorderWidth) *
+            2;
     expect(detailScaffold.backgroundColor, workspaceColor);
     expect(saveBarBackground.color, workspaceColor);
     expect(
@@ -887,6 +899,45 @@ void main() {
           .width,
       DesktopThemeTokens.formContentMaxWidth +
           DesktopThemeTokens.formPagePadding.horizontal,
+    );
+    final basicSection = find.byKey(
+      const ValueKey<String>('desktop-bot-basic-section'),
+    );
+    final providerSection = find.byKey(
+      const ValueKey<String>('desktop-bot-provider-section'),
+    );
+    final modelSection = find.byKey(
+      const ValueKey<String>('desktop-bot-model-section'),
+    );
+    expect(find.byType(ShadCard), findsNWidgets(3));
+    for (final section in [basicSection, providerSection, modelSection]) {
+      expect(section, findsOneWidget);
+      expect(
+        tester.getSize(section).width,
+        DesktopThemeTokens.formContentMaxWidth,
+      );
+      expect(tester.widget<ShadCard>(section).backgroundColor, raisedSurface);
+    }
+    for (final (section, title) in [
+      (basicSection, '基本信息'),
+      (providerSection, '提供商信息'),
+      (modelSection, '模型配置'),
+    ]) {
+      final titleText = tester.widget<Text>(
+        find.descendant(of: section, matching: find.text(title)),
+      );
+      expect(
+        titleText.style?.fontSize,
+        DesktopThemeTokens.botFormSectionTitleFontSize,
+      );
+    }
+    expect(
+      tester.getRect(basicSection).bottom,
+      lessThan(tester.getRect(providerSection).top),
+    );
+    expect(
+      tester.getRect(providerSection).bottom,
+      lessThan(tester.getRect(modelSection).top),
     );
     expect(
       tester
@@ -901,22 +952,114 @@ void main() {
                 .first,
           )
           .width,
-      DesktopThemeTokens.formContentMaxWidth,
+      expectedFieldWidth,
     );
 
-    await tester.tap(find.byIcon(Icons.vertical_split_outlined));
+    expect(
+      find.byKey(const ValueKey<String>('desktop-toolbar-inspector')),
+      findsNothing,
+    );
+    expect(find.byIcon(Icons.vertical_split_outlined), findsNothing);
+  });
+
+  testWidgets('desktop bot provider settings are read-only and preserved', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+
+    final bot = Bot(
+      id: 'bot-1',
+      name: 'Researcher',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: 'https://example.invalid',
+      apiKey: 'secret',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: 'Be helpful',
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+    Bot? updatedBot;
+
+    await tester.pumpWidget(
+      _shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: EditBotPage(
+                bot: bot,
+                embedded: true,
+                onBotUpdated: (updated) async => updatedBot = updated,
+                onBotDeleted: () async {},
+              ),
+            ),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('本地桌面'), findsNothing);
-    expect(find.text('就绪'), findsNothing);
-    expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-    expect(find.text('Researcher'), findsWidgets);
-    expect(find.text('OpenAI'), findsWidgets);
-    expect(find.text('gpt-test'), findsWidgets);
+    final expectedFieldWidth =
+        DesktopThemeTokens.formContentMaxWidth -
+        (DesktopThemeTokens.botFormSectionPadding +
+                DesktopThemeTokens.botFormSectionBorderWidth) *
+            2;
+    const readOnlyFieldKeys = [
+      'desktop-bot-provider',
+      'desktop-bot-api-type',
+      'desktop-bot-base-url',
+      'desktop-bot-api-key',
+      'desktop-bot-model',
+    ];
+    for (final key in readOnlyFieldKeys) {
+      final inputFinder = find.byKey(ValueKey<String>(key));
+      final input = tester.widget<ShadInput>(inputFinder);
+      expect(input.readOnly, isTrue, reason: '$key should be read-only');
+      expect(tester.getSize(inputFinder).width, expectedFieldWidth);
+      expect(
+        tester.getSize(inputFinder).height,
+        DesktopThemeTokens.botFormFieldHeight,
+      );
+      final editableText = find.descendant(
+        of: inputFinder,
+        matching: find.byType(EditableText),
+      );
+      expect(
+        tester.getRect(editableText).center.dy,
+        closeTo(tester.getRect(inputFinder).center.dy, 0.5),
+      );
+      input.controller!.text = 'changed';
+    }
+    final nameInput = find.byKey(const ValueKey<String>('desktop-bot-name'));
+    expect(tester.widget<ShadInput>(nameInput).readOnly, isFalse);
+    expect(tester.getSize(nameInput).width, expectedFieldWidth);
+    expect(
+      tester.getSize(nameInput).height,
+      DesktopThemeTokens.botFormFieldHeight,
+    );
+    final nameEditableText = find.descendant(
+      of: nameInput,
+      matching: find.byType(EditableText),
+    );
+    expect(
+      tester.getRect(nameEditableText).center.dy,
+      closeTo(tester.getRect(nameInput).center.dy, 0.5),
+    );
+    final systemPrompt = find.byType(ShadTextarea);
+    final systemPromptWidget = tester.widget<ShadTextarea>(systemPrompt);
+    expect(systemPromptWidget.readOnly, false);
+    expect(systemPromptWidget.alignment, isNull);
+    expect(tester.getSize(systemPrompt).width, expectedFieldWidth);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.tap(find.byKey(const ValueKey<String>('desktop-bot-save')));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.close_rounded), findsNothing);
+
+    expect(updatedBot?.provider, bot.provider);
+    expect(updatedBot?.apiType, bot.apiType);
+    expect(updatedBot?.baseURL, bot.baseURL);
+    expect(updatedBot?.apiKey, bot.apiKey);
+    expect(updatedBot?.model, bot.model);
   });
 
   testWidgets('desktop command shortcuts share the shell actions', (
@@ -1128,8 +1271,12 @@ void main() {
         inputSize('add-bot-api-key'),
         inputSize('add-bot-model'),
       ];
-      expect(singleLineInputSizes.map((size) => size.width).toSet(), {640.0});
-      expect(singleLineInputSizes.map((size) => size.height).toSet(), {48.0});
+      expect(singleLineInputSizes.map((size) => size.width).toSet(), {
+        DesktopThemeTokens.addBotFormFieldWidth,
+      });
+      expect(singleLineInputSizes.map((size) => size.height).toSet(), {
+        DesktopThemeTokens.botFormFieldHeight,
+      });
 
       final nameField = find.byKey(const ValueKey<String>('add-bot-name'));
       await tester.enterText(
@@ -1151,7 +1298,10 @@ void main() {
           matching: find.byType(ShadTextarea),
         ),
       );
-      expect(systemPromptSize, const Size(640, 114));
+      expect(
+        systemPromptSize,
+        const Size(DesktopThemeTokens.addBotFormFieldWidth, 114),
+      );
 
       final providerField = find.byKey(
         const ValueKey<String>('add-bot-provider'),

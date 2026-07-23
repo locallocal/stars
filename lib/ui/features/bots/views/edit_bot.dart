@@ -228,25 +228,44 @@ class _EditAIBotPageState extends State<EditBotPage> {
                 ],
 
                 // 基本信息分组
-                _buildFormSection(context, S.of(context).basicInformation, [
-                  _buildNameInput(fontSize),
-                ]),
-                const SizedBox(height: 16),
+                _buildFormSection(
+                  context,
+                  S.of(context).basicInformation,
+                  [_buildNameInput(fontSize)],
+                  sectionKey: const ValueKey<String>(
+                    'desktop-bot-basic-section',
+                  ),
+                ),
+                SizedBox(height: widget.embedded ? 20 : 16),
 
                 // API提供商分组
-                _buildFormSection(context, S.of(context).providerInformation, [
-                  _buildProviderInput(fontSize),
-                  _buildApiTypeInput(fontSize),
-                  _buildApiAddressInput(fontSize),
-                  _buildApiKeyInput(fontSize),
-                ]),
-                const SizedBox(height: 16),
+                _buildFormSection(
+                  context,
+                  S.of(context).providerInformation,
+                  [
+                    _buildProviderInput(fontSize),
+                    _buildApiTypeInput(fontSize),
+                    _buildApiAddressInput(fontSize),
+                    _buildApiKeyInput(fontSize),
+                  ],
+                  sectionKey: const ValueKey<String>(
+                    'desktop-bot-provider-section',
+                  ),
+                ),
+                SizedBox(height: widget.embedded ? 20 : 16),
 
                 // API提供商分组
-                _buildFormSection(context, S.of(context).modelConfiguration, [
-                  _buildModelsInput(fontSize),
-                  _buildSystemPromptInput(fontSize),
-                ]),
+                _buildFormSection(
+                  context,
+                  S.of(context).modelConfiguration,
+                  [
+                    _buildModelsInput(fontSize),
+                    _buildSystemPromptInput(fontSize),
+                  ],
+                  sectionKey: const ValueKey<String>(
+                    'desktop-bot-model-section',
+                  ),
+                ),
               ],
             ),
           ),
@@ -269,6 +288,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           ShadButton(
+                            key: const ValueKey<String>('desktop-bot-save'),
                             enabled: !_isSaving && !_isDeleting,
                             onPressed:
                                 _isSaving || _isDeleting ? null : _saveBot,
@@ -317,26 +337,41 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildFormSection(
     BuildContext context,
     String title,
-    List<Widget> children,
-  ) {
+    List<Widget> children, {
+    Key? sectionKey,
+  }) {
     if (!widget.embedded) {
       return buildSectionContainer(context, title, children);
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: DesktopThemeTokens.sectionTitleStyle(
-            context,
-          )?.copyWith(fontSize: 12),
+    final tokens = StarsDesktopTokens.of(context);
+    return ShadCard(
+      key: sectionKey,
+      width: double.infinity,
+      padding: const EdgeInsets.all(DesktopThemeTokens.botFormSectionPadding),
+      backgroundColor: tokens.raisedSurface,
+      border: ShadBorder.all(
+        color: tokens.separator,
+        width: DesktopThemeTokens.botFormSectionBorderWidth,
+      ),
+      columnCrossAxisAlignment: CrossAxisAlignment.stretch,
+      title: Text(
+        title,
+        style: DesktopThemeTokens.sectionTitleStyle(
+          context,
+        )?.copyWith(fontSize: DesktopThemeTokens.botFormSectionTitleFontSize),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var index = 0; index < children.length; index++) ...[
+              children[index],
+              if (index != children.length - 1) const SizedBox(height: 12),
+            ],
+          ],
         ),
-        const SizedBox(height: 12),
-        for (final child in children) ...[
-          child,
-          if (child != children.last) const SizedBox(height: 12),
-        ],
-      ],
+      ),
     );
   }
 
@@ -351,11 +386,20 @@ class _EditAIBotPageState extends State<EditBotPage> {
       id: widget.bot.id,
       name: nameController.text.trim(),
       avatar: avatarImage?.path ?? widget.bot.avatar,
-      provider: providerController.text.trim(),
-      baseURL: baseURLController.text.trim(),
-      apiKey: apiKeyController.text.trim(),
-      apiType: apiTypeController.text.trim(),
-      model: selectedModelController.text.trim(),
+      provider:
+          widget.embedded
+              ? widget.bot.provider
+              : providerController.text.trim(),
+      baseURL:
+          widget.embedded ? widget.bot.baseURL : baseURLController.text.trim(),
+      apiKey:
+          widget.embedded ? widget.bot.apiKey : apiKeyController.text.trim(),
+      apiType:
+          widget.embedded ? widget.bot.apiType : apiTypeController.text.trim(),
+      model:
+          widget.embedded
+              ? widget.bot.model
+              : selectedModelController.text.trim(),
       systemPrompt: systemPromptController.text.trim(),
       parameters: widget.bot.parameters,
       createTimestamp: widget.bot.createTimestamp,
@@ -376,12 +420,14 @@ class _EditAIBotPageState extends State<EditBotPage> {
   }
 
   Widget _buildDesktopInput({
+    Key? key,
     required String label,
     required IconData icon,
     required TextEditingController controller,
     Widget? trailing,
     String? placeholder,
     bool obscureText = false,
+    bool readOnly = false,
     ValueChanged<String>? onChanged,
   }) {
     final shadTheme = ShadTheme.of(context);
@@ -390,14 +436,29 @@ class _EditAIBotPageState extends State<EditBotPage> {
       children: [
         Text(label, style: shadTheme.textTheme.small),
         const SizedBox(height: 6),
-        ShadInput(
-          controller: controller,
-          placeholder: placeholder == null ? null : Text(placeholder),
-          leading: Icon(icon, size: 17),
-          trailing: trailing,
-          obscureText: obscureText,
-          textInputAction: TextInputAction.next,
-          onChanged: onChanged,
+        SizedBox(
+          width: double.infinity,
+          child: ShadInput(
+            key: key,
+            controller: controller,
+            placeholder: placeholder == null ? null : Text(placeholder),
+            leading: SizedBox(
+              width: 17,
+              height: 30,
+              child: Center(child: Icon(icon, size: 17)),
+            ),
+            trailing: trailing,
+            obscureText: obscureText,
+            readOnly: readOnly,
+            alignment: Alignment.centerLeft,
+            placeholderAlignment: Alignment.centerLeft,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            constraints: const BoxConstraints(
+              minHeight: DesktopThemeTokens.botFormFieldHeight,
+            ),
+            textInputAction: TextInputAction.next,
+            onChanged: onChanged,
+          ),
         ),
       ],
     );
@@ -415,12 +476,15 @@ class _EditAIBotPageState extends State<EditBotPage> {
       children: [
         Text(label, style: shadTheme.textTheme.small),
         const SizedBox(height: 6),
-        ShadTextarea(
-          controller: controller,
-          placeholder: placeholder == null ? null : Text(placeholder),
-          leading: Icon(icon, size: 17),
-          minHeight: 112,
-          maxHeight: 220,
+        SizedBox(
+          width: double.infinity,
+          child: ShadTextarea(
+            controller: controller,
+            placeholder: placeholder == null ? null : Text(placeholder),
+            leading: Icon(icon, size: 17),
+            minHeight: 112,
+            maxHeight: 220,
+          ),
         ),
       ],
     );
@@ -587,6 +651,7 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildNameInput(double? fontSize) {
     if (widget.embedded) {
       return _buildDesktopInput(
+        key: const ValueKey<String>('desktop-bot-name'),
         label: S.of(context).botName,
         icon: Icons.auto_awesome_outlined,
         controller: nameController,
@@ -606,10 +671,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildProviderInput(double? fontSize) {
     if (widget.embedded) {
       return _buildDesktopInput(
+        key: const ValueKey<String>('desktop-bot-provider'),
         label: S.of(context).provider,
         icon: Icons.business_outlined,
         controller: providerController,
-        onChanged: (value) => setState(() => selectedProvider = value),
+        readOnly: true,
       );
     }
     return TextField(
@@ -625,9 +691,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildApiTypeInput(double? fontSize) {
     if (widget.embedded) {
       return _buildDesktopInput(
+        key: const ValueKey<String>('desktop-bot-api-type'),
         label: S.of(context).apiType,
         icon: Icons.category_outlined,
         controller: apiTypeController,
+        readOnly: true,
       );
     }
     return TextField(
@@ -642,9 +710,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildApiAddressInput(double? fontSize) {
     if (widget.embedded) {
       return _buildDesktopInput(
+        key: const ValueKey<String>('desktop-bot-base-url'),
         label: S.of(context).apiAddress,
         icon: Icons.link_rounded,
         controller: baseURLController,
+        readOnly: true,
       );
     }
     return TextField(
@@ -659,10 +729,12 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildApiKeyInput(double? fontSize) {
     if (widget.embedded) {
       return _buildDesktopInput(
+        key: const ValueKey<String>('desktop-bot-api-key'),
         label: S.of(context).apiKey,
         icon: Icons.key_outlined,
         controller: apiKeyController,
         obscureText: !_isPasswordVisible,
+        readOnly: true,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -740,9 +812,11 @@ class _EditAIBotPageState extends State<EditBotPage> {
   Widget _buildModelsInput(double? fontSize) {
     if (widget.embedded) {
       return _buildDesktopInput(
+        key: const ValueKey<String>('desktop-bot-model'),
         label: S.of(context).model,
         icon: Icons.memory_outlined,
         controller: selectedModelController,
+        readOnly: true,
       );
     }
     return TextField(

@@ -166,7 +166,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               DesktopThemeTokens.sidebarMaxWidth,
             );
     final inspectorAvailable =
-        width >= 800 && widget.currentIndex != 2 && _activeBot != null;
+        width >= 800 && widget.currentIndex == 0 && _activeBot != null;
     final inspectorShouldDock =
         width >= 1500 && _inspectorOpen && inspectorAvailable;
     final dockInspector =
