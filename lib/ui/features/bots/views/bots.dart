@@ -218,7 +218,7 @@ class ContactsPageState extends State<ContactsPage> {
               crossAxisCount: 2,
               crossAxisSpacing: 14,
               mainAxisSpacing: 14,
-              childAspectRatio: 1.65,
+              mainAxisExtent: 180,
             ),
             itemCount: filteredBots.length,
             itemBuilder: (context, index) {
@@ -605,7 +605,6 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final muted = theme.colorScheme.mutedForeground;
     return Semantics(
       button: true,
       label: widget.bot.name,
@@ -643,40 +642,31 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                           ? (Matrix4.identity()..translateByDouble(0, -2, 0, 1))
                           : Matrix4.identity(),
                   child: ShadCard(
+                    key: ValueKey<String>('desktop-bot-card-${widget.bot.id}'),
                     padding: const EdgeInsets.all(18),
                     backgroundColor: _hovered ? theme.colorScheme.accent : null,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: getFrostedProviderColor(
-                                widget.bot.provider,
-                                Theme.of(context).colorScheme.primary,
-                              ),
-                              backgroundImage:
-                                  widget.bot.avatar.isNotEmpty
-                                      ? FileImage(File(widget.bot.avatar))
-                                      : null,
-                              child:
-                                  widget.bot.avatar.isEmpty
-                                      ? buildProviderLogo(
-                                        context,
-                                        '',
-                                        widget.bot.provider,
-                                        22,
-                                      )
-                                      : null,
-                            ),
-                            const Spacer(),
-                            Icon(
-                              LucideIcons.arrowUpRight,
-                              size: 17,
-                              color: muted,
-                            ),
-                          ],
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: getFrostedProviderColor(
+                            widget.bot.provider,
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                          backgroundImage:
+                              widget.bot.avatar.isNotEmpty
+                                  ? FileImage(File(widget.bot.avatar))
+                                  : null,
+                          child:
+                              widget.bot.avatar.isEmpty
+                                  ? buildProviderLogo(
+                                    context,
+                                    '',
+                                    widget.bot.provider,
+                                    22,
+                                  )
+                                  : null,
                         ),
                         const Spacer(),
                         Text(

@@ -7,11 +7,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/repositories/attachment_repository.dart';
+import 'package:stars/domain/repositories/bot_repository.dart';
+import 'package:stars/domain/repositories/chat_repository.dart';
+import 'package:stars/domain/use_cases/create_chat.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/model/model.dart';
 import 'package:stars/ui/features/app/views/desktop_layout.dart';
+import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
 import 'package:stars/ui/features/bots/views/add_bot.dart';
+import 'package:stars/ui/features/bots/views/bots.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
@@ -388,6 +395,54 @@ void main() {
     final panelTop = tester.getTopLeft(find.byType(DesktopListPanel)).dy;
     final searchTop = tester.getTopLeft(find.byType(StarsSearchField)).dy;
     expect(searchTop - panelTop, DesktopThemeTokens.panelPadding.top);
+  });
+
+  testWidgets('desktop bot cards use a compact height without corner arrows', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 800);
+    addTearDown(tester.view.reset);
+
+    final bot = Bot(
+      id: 'bot-1',
+      name: '测试智能体',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: '',
+      apiKey: '',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: '',
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+    final viewModel = BotListViewModel(
+      botRepository: _BotCardTestBotRepository([bot]),
+      createChat: CreateChat(chatRepository: _BotCardTestChatRepository()),
+      aiProviderRepository: _UnusedAiProviderRepository(),
+      attachmentRepository: _UnusedAttachmentRepository(),
+    );
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        _shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: ContactsPage(viewModel: viewModel, onBotSelected: (_) {}),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final card = find.byKey(const ValueKey<String>('desktop-bot-card-bot-1'));
+      expect(card, findsOneWidget);
+      expect(tester.getSize(card).height, 180);
+      expect(find.byIcon(LucideIcons.arrowUpRight), findsNothing);
+    });
   });
 
   testWidgets('desktop message content uses its full available page width', (
@@ -1394,4 +1449,69 @@ Widget _shadHarness({
           home: Builder(builder: homeBuilder),
         ),
   );
+}
+
+class _BotCardTestBotRepository implements BotRepository {
+  _BotCardTestBotRepository(this.bots);
+
+  final List<Bot> bots;
+
+  @override
+  Stream<List<Bot>> get changes => const Stream<List<Bot>>.empty();
+
+  @override
+  Future<void> addBot(Bot bot) async {}
+
+  @override
+  Future<void> deleteBot(String id) async {}
+
+  @override
+  Future<Bot?> getBot(String id) async => null;
+
+  @override
+  Future<List<Bot>> getBots({bool forceRefresh = false}) async => bots;
+
+  @override
+  Future<void> updateBot(Bot bot) async {}
+}
+
+class _BotCardTestChatRepository implements ChatRepository {
+  @override
+  Stream<List<Chat>> get changes => const Stream<List<Chat>>.empty();
+
+  @override
+  Future<void> addChat(Chat chat) async {}
+
+  @override
+  Future<void> clearHistory(String id) async {}
+
+  @override
+  Future<void> deleteChat(String id) async {}
+
+  @override
+  Future<void> deleteChatsForBot(String botId) async {}
+
+  @override
+  Future<Chat?> getChat(String id) async => null;
+
+  @override
+  Future<List<Chat>> getChats({bool forceRefresh = false}) async => const [];
+
+  @override
+  void invalidate() {}
+
+  @override
+  Future<void> updateLastMessage(String id, String content) async {}
+}
+
+class _UnusedAiProviderRepository implements AiProviderRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('AI provider is not used by this test.');
+}
+
+class _UnusedAttachmentRepository implements AttachmentRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('Attachment picker is not used by this test.');
 }
