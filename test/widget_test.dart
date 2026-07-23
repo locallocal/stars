@@ -26,6 +26,7 @@ import 'package:stars/ui/features/chats/views/chat_item.dart';
 import 'package:stars/ui/features/chats/views/chat_list_builder.dart';
 import 'package:stars/ui/features/chats/views/new_chat_dialog.dart';
 import 'package:stars/utils/theme.dart';
+import 'package:stars/utils/utils.dart';
 
 void main() {
   testWidgets('desktop theme exposes the documented light fallback tokens', (
@@ -448,6 +449,111 @@ void main() {
       expect(card, findsOneWidget);
       expect(tester.getSize(card).height, 180);
       expect(find.byIcon(LucideIcons.arrowUpRight), findsNothing);
+    });
+  });
+
+  testWidgets('desktop bot card menu exposes edit and delete actions', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 800);
+    addTearDown(tester.view.reset);
+
+    final bot = Bot(
+      id: 'bot-menu',
+      name: '菜单智能体',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: '',
+      apiKey: '',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: '',
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+    final botRepository = _BotCardTestBotRepository([bot]);
+    final viewModel = BotListViewModel(
+      botRepository: botRepository,
+      createChat: CreateChat(chatRepository: _BotCardTestChatRepository()),
+      aiProviderRepository: _UnusedAiProviderRepository(),
+      attachmentRepository: _UnusedAttachmentRepository(),
+    );
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+
+    Bot? selectedBot;
+    await _withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        _shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: ContactsPage(
+                  viewModel: viewModel,
+                  onBotSelected: (bot) => selectedBot = bot,
+                ),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final card = find.byKey(
+        const ValueKey<String>('desktop-bot-card-bot-menu'),
+      );
+      final menuButton = find.byKey(
+        const ValueKey<String>('desktop-bot-menu-button-bot-menu'),
+      );
+      expect(card, findsOneWidget);
+      expect(menuButton, findsOneWidget);
+      expect(
+        tester.getCenter(menuButton).dx,
+        greaterThan(tester.getCenter(card).dx),
+      );
+      expect(
+        tester.getCenter(menuButton).dy,
+        greaterThan(tester.getCenter(card).dy),
+      );
+
+      await tester.tap(menuButton);
+      await tester.pumpAndSettle();
+
+      final actionMenu = find.byKey(
+        const ValueKey<String>('desktop-bot-action-menu-bot-menu'),
+      );
+      final pageContext = tester.element(find.byType(ContactsPage));
+      expect(selectedBot, isNull);
+      expect(actionMenu, findsOneWidget);
+      expect(
+        tester.getRect(actionMenu).right,
+        closeTo(tester.getRect(menuButton).right, 1),
+      );
+      expect(
+        find.text(
+          desktopConversationText(pageContext, S.of(pageContext).startChatting),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('编辑智能体'), findsOneWidget);
+      expect(find.text('删除智能体'), findsOneWidget);
+      expect(
+        find.descendant(of: actionMenu, matching: find.byType(ShadButton)),
+        findsNWidgets(3),
+      );
+
+      await tester.tap(find.text('编辑智能体'));
+      await tester.pumpAndSettle();
+      expect(selectedBot?.id, bot.id);
+
+      await tester.tap(menuButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('删除智能体'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShadDialog), findsOneWidget);
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+      expect(botRepository.deletedBotId, bot.id);
     });
   });
 
@@ -1618,6 +1724,7 @@ class _BotCardTestBotRepository implements BotRepository {
   _BotCardTestBotRepository(this.bots);
 
   final List<Bot> bots;
+  String? deletedBotId;
 
   @override
   Stream<List<Bot>> get changes => const Stream<List<Bot>>.empty();
@@ -1626,7 +1733,9 @@ class _BotCardTestBotRepository implements BotRepository {
   Future<void> addBot(Bot bot) async {}
 
   @override
-  Future<void> deleteBot(String id) async {}
+  Future<void> deleteBot(String id) async {
+    deletedBotId = id;
+  }
 
   @override
   Future<Bot?> getBot(String id) async => null;
