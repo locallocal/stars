@@ -96,6 +96,34 @@ void main() {
     }
   });
 
+  testWidgets('desktop section titles match bot detail title size', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await tester.pumpWidget(_profileHarness());
+      await tester.pumpAndSettle();
+
+      final profileContext = tester.element(find.byType(ProfilePage));
+      final sectionTitles = [
+        S.of(profileContext).desktopPersonalInformation,
+        S.of(profileContext).desktopAppearanceAndLanguage,
+        S.of(profileContext).desktopHelpAndSupport,
+        S.of(profileContext).desktopAboutAndLegal,
+      ];
+
+      for (final title in sectionTitles) {
+        final titleText = tester.widget<Text>(find.text(title));
+        expect(
+          titleText.style?.fontSize,
+          DesktopThemeTokens.botFormSectionTitleFontSize,
+        );
+      }
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('desktop theme row opens provider-style option dialog', (
     tester,
   ) async {

@@ -461,7 +461,12 @@ class _ProfilePageState extends State<ProfilePage> {
       child: ShadCard(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
-        title: Text(title),
+        title: Text(
+          title,
+          style: DesktopThemeTokens.sectionTitleStyle(
+            context,
+          )?.copyWith(fontSize: DesktopThemeTokens.botFormSectionTitleFontSize),
+        ),
         description: description == null ? null : Text(description),
         child: Padding(
           padding: const EdgeInsets.only(top: 12),

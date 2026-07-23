@@ -660,7 +660,12 @@ class _AddBotPageState extends State<AddBotPage> {
         width: _desktopSectionBorderWidth,
       ),
       columnCrossAxisAlignment: CrossAxisAlignment.stretch,
-      title: Text(title, style: DesktopThemeTokens.sectionTitleStyle(context)),
+      title: Text(
+        title,
+        style: DesktopThemeTokens.sectionTitleStyle(
+          context,
+        )?.copyWith(fontSize: DesktopThemeTokens.botFormSectionTitleFontSize),
+      ),
       child: Padding(
         padding: const EdgeInsets.only(top: 16),
         child: Column(
