@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
+import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/core/widgets/logo.dart';
 import 'package:stars/ui/features/bots/views/add_bot.dart';
 import 'package:stars/ui/features/bots/views/edit_bot.dart';
@@ -600,7 +601,106 @@ class _DesktopBotCard extends StatefulWidget {
 }
 
 class _DesktopBotCardState extends State<_DesktopBotCard> {
+  static const double _menuContentWidth = 184;
+  static const EdgeInsets _menuPadding = EdgeInsets.symmetric(
+    horizontal: 12,
+    vertical: 6,
+  );
+
+  final ShadPopoverController _menuController = ShadPopoverController();
+  final FocusNode _menuFocusNode = FocusNode(
+    debugLabel: 'desktop-bot-card-actions',
+  );
   bool _hovered = false;
+
+  @override
+  void dispose() {
+    _menuController.dispose();
+    _menuFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _invokeMenuAction(VoidCallback action) {
+    _menuController.hide();
+    action();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (FocusManager.instance.highlightMode ==
+          FocusHighlightMode.traditional) {
+        _menuFocusNode.requestFocus();
+      } else {
+        _menuFocusNode.unfocus();
+      }
+    });
+  }
+
+  Widget _buildActionMenu(BuildContext context) {
+    final colors = ShadTheme.of(context).colorScheme;
+    return ShadPopover(
+      controller: _menuController,
+      anchor: const ShadAnchorAuto(
+        offset: Offset(0, 4),
+        followerAnchor: AlignmentDirectional.topStart,
+        targetAnchor: AlignmentDirectional.bottomEnd,
+        fallback: ShadAnchorAuto(
+          offset: Offset(0, -4),
+          followerAnchor: AlignmentDirectional.bottomStart,
+          targetAnchor: AlignmentDirectional.topEnd,
+        ),
+      ),
+      padding: EdgeInsets.zero,
+      popover:
+          (context) => SizedBox(
+            key: ValueKey<String>('desktop-bot-action-menu-${widget.bot.id}'),
+            width: _menuContentWidth + _menuPadding.horizontal,
+            child: Padding(
+              padding: _menuPadding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ShadButton.ghost(
+                    size: ShadButtonSize.sm,
+                    onPressed: () => _invokeMenuAction(widget.onStartChat),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(LucideIcons.messageCircle, size: 16),
+                    child: Text(
+                      desktopConversationText(
+                        context,
+                        S.of(context).startChatting,
+                      ),
+                    ),
+                  ),
+                  ShadButton.ghost(
+                    size: ShadButtonSize.sm,
+                    onPressed: () => _invokeMenuAction(widget.onOpen),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(Icons.edit_outlined, size: 16),
+                    child: Text(S.of(context).editBot),
+                  ),
+                  ShadButton.raw(
+                    variant: ShadButtonVariant.ghost,
+                    size: ShadButtonSize.sm,
+                    foregroundColor: colors.destructive,
+                    onPressed: () => _invokeMenuAction(widget.onDelete),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(LucideIcons.trash2, size: 16),
+                    child: Text(S.of(context).deleteBot),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      child: StarsDesktopIconAction(
+        key: ValueKey<String>('desktop-bot-menu-button-${widget.bot.id}'),
+        icon: LucideIcons.ellipsis,
+        label: MaterialLocalizations.of(context).showMenuTooltip,
+        focusNode: _menuFocusNode,
+        onPressed: _menuController.toggle,
+        hoverBackgroundColor: Colors.transparent,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -623,9 +723,19 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
               ),
             ),
             MenuItemButton(
+              leadingIcon: const Icon(Icons.edit_outlined, size: 16),
+              onPressed: widget.onOpen,
+              child: Text(S.of(context).editBot),
+            ),
+            MenuItemButton(
               leadingIcon: const Icon(LucideIcons.trash2, size: 16),
               onPressed: widget.onDelete,
-              child: Text(S.of(context).delete),
+              style: ButtonStyle(
+                foregroundColor: WidgetStatePropertyAll(
+                  DesktopThemeTokens.error(context),
+                ),
+              ),
+              child: Text(S.of(context).deleteBot),
             ),
           ],
           builder:
@@ -676,11 +786,20 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                           style: theme.textTheme.h4,
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          widget.subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.muted,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.subtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.muted,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildActionMenu(context),
+                          ],
                         ),
                       ],
                     ),
