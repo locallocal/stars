@@ -495,5 +495,8 @@
     "noModelsRetrieved": "未獲取到任何模型",
     "@noModelsRetrieved": {
         "description": "未獲取到模型的提示訊息"
-    }
+    },
+    "desktopGeneral": "一般",
+    "chatExecutionStatus": "對話執行狀態",
+    "showExecutionStatusDescription": "在對話內容中顯示執行狀態。"
 }

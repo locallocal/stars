@@ -735,6 +735,42 @@ void main() {
     );
   });
 
+  testWidgets('message execution status can be hidden by preference', (
+    tester,
+  ) async {
+    final scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+
+    await tester.pumpWidget(
+      _shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: Column(
+                children: [
+                  MessageList(
+                    messages: const [],
+                    scrollController: scrollController,
+                    isStreaming: true,
+                    streamingResponse: '回复信息',
+                    streamingProcessInfo: const MessageProcessInfo(
+                      durationMs: 1200,
+                    ),
+                    currentUserId: 'user',
+                    isDesktop: true,
+                    showExecutionStatus: false,
+                  ),
+                ],
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('回复信息'), findsOneWidget);
+    expect(find.text('执行状态'), findsNothing);
+  });
+
   testWidgets('chat row menu does not show a row focus ring on pointer use', (
     tester,
   ) async {

@@ -90,19 +90,23 @@ void main() {
       addTearDown(subscription.cancel);
 
       final profile = await repository.getProfile();
+      expect(profile.showExecutionStatus, isTrue);
       final updated = Profile(
         name: 'Earthwind',
         avatar: profile.avatar,
         fontSize: 18,
         themeMode: 2,
         language: 'en_US',
+        showExecutionStatus: false,
         createTimestamp: profile.createTimestamp,
         modifyTimestamp: DateTime(2026, 7, 21),
       );
       await repository.updateProfile(updated);
       await Future<void>.delayed(Duration.zero);
 
-      expect((await database.query('profile')), hasLength(1));
+      final rows = await database.query('profile');
+      expect(rows, hasLength(1));
+      expect(rows.single['show_execution_status'], 0);
       expect(await repository.getProfile(), same(updated));
       expect(changes, [updated]);
     },

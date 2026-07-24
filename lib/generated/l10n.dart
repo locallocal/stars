@@ -29,9 +29,10 @@ class S {
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<S> load(Locale locale) {
-    final name = (locale.countryCode?.isEmpty ?? false)
-        ? locale.languageCode
-        : locale.toString();
+    final name =
+        (locale.countryCode?.isEmpty ?? false)
+            ? locale.languageCode
+            : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -1260,6 +1261,11 @@ class S {
     );
   }
 
+  /// `General`
+  String get desktopGeneral {
+    return Intl.message('General', name: 'desktopGeneral', desc: '', args: []);
+  }
+
   /// `Help & Support`
   String get desktopHelpAndSupport {
     return Intl.message(
@@ -1305,6 +1311,26 @@ class S {
     return Intl.message(
       'Changes take effect immediately and are saved locally.',
       name: 'desktopSavedImmediatelyDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Chat execution status`
+  String get chatExecutionStatus {
+    return Intl.message(
+      'Chat execution status',
+      name: 'chatExecutionStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show execution details in conversation messages.`
+  String get showExecutionStatusDescription {
+    return Intl.message(
+      'Show execution details in conversation messages.',
+      name: 'showExecutionStatusDescription',
       desc: '',
       args: [],
     );
@@ -1410,7 +1436,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }

@@ -32,6 +32,7 @@ class SqliteProfileRepository implements ProfileRepository {
         fontSize: 16,
         themeMode: 0,
         language: 'zh_CN',
+        showExecutionStatus: true,
         createTimestamp: now,
         modifyTimestamp: now,
       );

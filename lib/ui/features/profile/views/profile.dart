@@ -43,7 +43,7 @@ class _ProfilePageState extends State<ProfilePage> {
   ProfileViewModel? _resolvedViewModel;
   bool _loadStarted = false;
   final List<GlobalKey> _desktopSectionKeys = List<GlobalKey>.generate(
-    4,
+    5,
     (_) => GlobalKey(),
   );
 
@@ -79,6 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String get _avatar => _profile?.avatar ?? "";
   // 获取字体大小
   double get _fontSize => _profile?.fontSize ?? 16.0;
+  bool get _showExecutionStatus => _profile?.showExecutionStatus ?? true;
 
   @override
   void initState() {
@@ -183,6 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
             fontSize: _fontSize,
             language: _language,
             themeMode: themeModeToInt(_themeMode),
+            showExecutionStatus: _showExecutionStatus,
             createTimestamp: _profile!.createTimestamp,
             modifyTimestamp: DateTime.now(),
           );
@@ -202,6 +204,7 @@ class _ProfilePageState extends State<ProfilePage> {
       fontSize: _fontSize,
       themeMode: themeModeToInt(_themeMode),
       language: _language, // 添加语言设置
+      showExecutionStatus: _showExecutionStatus,
       createTimestamp: _profile!.createTimestamp,
       modifyTimestamp: DateTime.now(),
     );
@@ -403,6 +406,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 _buildDesktopSettingsSection(
                   context,
                   sectionKey: _desktopSectionKeys[2],
+                  title: S.of(context).desktopGeneral,
+                  description: S.of(context).desktopSavedImmediatelyDescription,
+                  children: [_buildDesktopExecutionStatusControl(context)],
+                ),
+                const SizedBox(height: 32),
+                _buildDesktopSettingsSection(
+                  context,
+                  sectionKey: _desktopSectionKeys[3],
                   title: S.of(context).desktopHelpAndSupport,
                   children: [
                     _buildDesktopSettingRow(
@@ -417,7 +428,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 32),
                 _buildDesktopSettingsSection(
                   context,
-                  sectionKey: _desktopSectionKeys[3],
+                  sectionKey: _desktopSectionKeys[4],
                   title: S.of(context).desktopAboutAndLegal,
                   children: [
                     _buildDesktopSettingRow(
@@ -697,6 +708,51 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildDesktopExecutionStatusControl(BuildContext context) {
+    return MergeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 24,
+              child: Icon(
+                LucideIcons.activity,
+                size: 18,
+                color: DesktopThemeTokens.mutedText(context),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    S.of(context).chatExecutionStatus,
+                    style: DesktopThemeTokens.bodyStyle(context),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    S.of(context).showExecutionStatusDescription,
+                    style: DesktopThemeTokens.metaStyle(context),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            ShadSwitch(
+              key: const ValueKey<String>(
+                'profile-show-execution-status-switch',
+              ),
+              value: _showExecutionStatus,
+              onChanged: _updateShowExecutionStatus,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSettingsSection(
     BuildContext context, {
     required String title,
@@ -738,6 +794,7 @@ class _ProfilePageState extends State<ProfilePage> {
         fontSize: value,
         themeMode: themeModeToInt(_themeMode),
         language: _language,
+        showExecutionStatus: _showExecutionStatus,
         createTimestamp: _profile!.createTimestamp,
         modifyTimestamp: DateTime.now(),
       );
@@ -746,6 +803,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _commitFontSize(double value) async {
     _previewFontSize(value);
+    await _saveProfile();
+  }
+
+  Future<void> _updateShowExecutionStatus(bool value) async {
+    if (_profile == null || _showExecutionStatus == value) return;
+    setState(() {
+      _profile = Profile(
+        name: _name,
+        avatar: _avatar,
+        fontSize: _fontSize,
+        themeMode: themeModeToInt(_themeMode),
+        language: _language,
+        showExecutionStatus: value,
+        createTimestamp: _profile!.createTimestamp,
+        modifyTimestamp: DateTime.now(),
+      );
+    });
     await _saveProfile();
   }
 
@@ -855,6 +929,7 @@ class _ProfilePageState extends State<ProfilePage> {
           fontSize: _fontSize,
           themeMode: themeModeToInt(_themeMode),
           language: _language,
+          showExecutionStatus: _showExecutionStatus,
           createTimestamp: _profile!.createTimestamp,
           modifyTimestamp: DateTime.now(),
         );
@@ -1161,6 +1236,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             fontSize: tempFontSize,
                             language: _language,
                             themeMode: themeModeToInt(_themeMode),
+                            showExecutionStatus: _showExecutionStatus,
                             createTimestamp: _profile!.createTimestamp,
                             modifyTimestamp: DateTime.now(),
                           );

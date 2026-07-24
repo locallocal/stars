@@ -121,6 +121,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "搜索会匹配智能体名称和最后一条消息。",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
+    "chatExecutionStatus": MessageLookupByLibrary.simpleMessage("会话执行状态"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("相册"),
     "clear": MessageLookupByLibrary.simpleMessage("清理"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage("清空附件"),
@@ -158,6 +159,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "desktopEditProfileDescription": MessageLookupByLibrary.simpleMessage(
       "修改头像与展示名称。",
     ),
+    "desktopGeneral": MessageLookupByLibrary.simpleMessage("通用"),
     "desktopHelpAndSupport": MessageLookupByLibrary.simpleMessage("帮助与支持"),
     "desktopPersonalInformation": MessageLookupByLibrary.simpleMessage("个人信息"),
     "desktopSavedImmediatelyDescription": MessageLookupByLibrary.simpleMessage(
@@ -318,6 +320,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("显示 API 密钥"),
     "showInspector": MessageLookupByLibrary.simpleMessage("显示智能体信息"),
+    "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "在会话内容中显示执行状态。",
+    ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("显示侧栏"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("语音已生成"),
     "speechResult": MessageLookupByLibrary.simpleMessage("语音结果"),

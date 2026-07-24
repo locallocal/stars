@@ -18,7 +18,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 3;
+  static const int databaseVersion = 4;
 
   // 获取数据库实例
   Future<Database> get database async {
@@ -122,6 +122,7 @@ class DatabaseService {
             font_size DOUBLE,
             theme_mode INTEGER,
             language TEXT,
+            show_execution_status INTEGER NOT NULL DEFAULT 1,
             create_timestamp INTEGER,
             modify_timestamp INTEGER
           );
@@ -170,6 +171,14 @@ class DatabaseService {
       await db.execute(
         'CREATE UNIQUE INDEX IF NOT EXISTS messages_message_id_unique '
         'ON messages(message_id)',
+      );
+    }
+    if (oldVersion < 4) {
+      await _addColumnIfMissing(
+        db,
+        'profile',
+        'show_execution_status',
+        'INTEGER NOT NULL DEFAULT 1',
       );
     }
   }

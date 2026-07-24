@@ -139,6 +139,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Search matches bot names and the latest message.",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Chats"),
+    "chatExecutionStatus": MessageLookupByLibrary.simpleMessage(
+      "Chat execution status",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Clear"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -192,6 +195,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "desktopEditProfileDescription": MessageLookupByLibrary.simpleMessage(
       "Change your avatar and display name.",
     ),
+    "desktopGeneral": MessageLookupByLibrary.simpleMessage("General"),
     "desktopHelpAndSupport": MessageLookupByLibrary.simpleMessage(
       "Help & Support",
     ),
@@ -422,6 +426,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("Show API Key"),
     "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
+    "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Show execution details in conversation messages.",
+    ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),

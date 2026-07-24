@@ -16,6 +16,7 @@ class ChatListBuilder extends StatelessWidget {
   final List<Chat> chatList;
   final List<Bot> bots;
   final String? selectedChatId;
+  final bool showExecutionStatus;
   final ValueChanged<String> onChatDeleted;
   final void Function(String chatId, Bot bot) onChatSelected;
   final Future<void> Function(String chatId) onDeleteChat;
@@ -26,6 +27,7 @@ class ChatListBuilder extends StatelessWidget {
     required this.chatList,
     required this.bots,
     this.selectedChatId,
+    this.showExecutionStatus = true,
     required this.onChatDeleted,
     required this.onChatSelected,
     required this.onDeleteChat,
@@ -76,7 +78,12 @@ class ChatListBuilder extends StatelessWidget {
           final navigation = Navigator.push(
             context,
             MaterialPageRoute<void>(
-              builder: (context) => ChatPage(id: chat.id, bot: bot),
+              builder:
+                  (context) => ChatPage(
+                    id: chat.id,
+                    bot: bot,
+                    showExecutionStatus: showExecutionStatus,
+                  ),
             ),
           );
           if (refreshAfterClose) {

@@ -16,6 +16,7 @@ class ChatListPage extends StatefulWidget {
   final void Function(String chatId, Bot bot) onChatSelected;
   final VoidCallback? onSelectionCleared;
   final bool sidebarMode;
+  final bool showExecutionStatus;
   final ChatListViewModel viewModel;
   const ChatListPage({
     super.key,
@@ -24,6 +25,7 @@ class ChatListPage extends StatefulWidget {
     required this.onChatSelected,
     this.onSelectionCleared,
     this.sidebarMode = false,
+    this.showExecutionStatus = true,
   });
 
   @override
@@ -192,6 +194,7 @@ class ChatListPageState extends State<ChatListPage> {
       chatList: filteredChatList,
       bots: bots,
       selectedChatId: widget.selectedChatId,
+      showExecutionStatus: widget.showExecutionStatus,
       generationRegistry: AppScope.of(context).generationRegistry,
       onDeleteChat: widget.viewModel.deleteChat,
       onChatDeleted: (String id) {

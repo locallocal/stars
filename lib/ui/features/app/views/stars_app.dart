@@ -317,7 +317,7 @@ class _MyAppState extends State<MyApp> {
         }
         return supportedLocales.first;
       },
-      home: const MainPage(),
+      home: MainPage(showExecutionStatus: _viewModel.showExecutionStatus),
     );
   }
 
@@ -376,7 +376,7 @@ class _MyAppState extends State<MyApp> {
               child: ShadAppBuilder(child: child!),
             );
           },
-          home: const MainPage(),
+          home: MainPage(showExecutionStatus: _viewModel.showExecutionStatus),
         );
       },
     );
@@ -384,7 +384,9 @@ class _MyAppState extends State<MyApp> {
 }
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  const MainPage({super.key, this.showExecutionStatus = true});
+
+  final bool showExecutionStatus;
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -443,6 +445,7 @@ class _MainPageState extends State<MainPage> {
       ChatListPage(
         key: _chatListKey,
         viewModel: _chatListViewModel,
+        showExecutionStatus: widget.showExecutionStatus,
         sidebarMode: isDesktopOrTablet,
         selectedChatId: _viewModel.selectedChatId,
         onChatSelected: _onChatSelected,
@@ -473,6 +476,7 @@ class _MainPageState extends State<MainPage> {
                 selectedChatId: _viewModel.selectedChatId,
                 selectedChatBot: _viewModel.selectedChatBot,
                 selectedBot: _viewModel.selectedBot,
+                showExecutionStatus: widget.showExecutionStatus,
                 selectedProfileSection: _viewModel.selectedProfileSection,
                 onProfileSectionChanged: _viewModel.selectProfileSection,
                 onCreateChat: _requestCreateChat,

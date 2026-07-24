@@ -27,6 +27,7 @@ class DesktopLayout extends StatefulWidget {
   final String? selectedChatId;
   final Bot? selectedChatBot;
   final Bot? selectedBot;
+  final bool showExecutionStatus;
   final int selectedProfileSection;
   final ValueChanged<int>? onProfileSectionChanged;
   final VoidCallback? onCreateChat;
@@ -44,6 +45,7 @@ class DesktopLayout extends StatefulWidget {
     this.selectedChatId,
     this.selectedChatBot,
     this.selectedBot,
+    this.showExecutionStatus = true,
     this.selectedProfileSection = 0,
     this.onProfileSectionChanged,
     this.onCreateChat,
@@ -930,6 +932,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
         key: _chatPageKey,
         id: widget.selectedChatId!,
         bot: widget.selectedChatBot!,
+        showExecutionStatus: widget.showExecutionStatus,
       );
     }
     return DesktopEmptyStateCard(
