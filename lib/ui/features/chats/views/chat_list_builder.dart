@@ -107,7 +107,6 @@ class ChatListBuilder extends StatelessWidget {
                           ),
                           actions: [
                             ShadButton.outline(
-                              autofocus: true,
                               onPressed:
                                   () => Navigator.pop(dialogContext, false),
                               child: Text(S.of(dialogContext).cancel),
