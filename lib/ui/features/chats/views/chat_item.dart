@@ -96,6 +96,7 @@ class _ChatListItemState extends State<ChatListItem> {
                     Expanded(
                       child: Text(
                         widget.bot.name,
+                        textAlign: TextAlign.left,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: titleStyle,
