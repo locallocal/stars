@@ -767,6 +767,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(tester.widget<Text>(find.text(bot.name)).textAlign, TextAlign.left);
+
     ShadButton rowButton() => tester.widget<ShadButton>(
       find.descendant(
         of: find.byType(DesktopInteractiveListItem),
