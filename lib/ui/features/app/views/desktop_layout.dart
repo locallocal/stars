@@ -820,6 +820,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                   width: double.infinity,
                   child: ShadButton(
                     size: ShadButtonSize.sm,
+                    height: DesktopThemeTokens.botFormFieldHeight,
                     onPressed: widget.onCreateChat,
                     leading: const Icon(LucideIcons.squarePen, size: 16),
                     child: Text(
@@ -1511,6 +1512,7 @@ class _SidebarDestination extends StatelessWidget {
           variant:
               selected ? ShadButtonVariant.primary : ShadButtonVariant.ghost,
           size: ShadButtonSize.sm,
+          height: DesktopThemeTokens.botFormFieldHeight,
           backgroundColor: selected ? selectedBackground : null,
           hoverBackgroundColor: selected ? selectedBackground : null,
           pressedBackgroundColor: selected ? selectedBackground : null,
@@ -1541,6 +1543,7 @@ class _AccountButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return DesktopInteractiveListItem(
       selected: selected,
+      minHeight: DesktopThemeTokens.botFormFieldHeight,
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       child: Row(

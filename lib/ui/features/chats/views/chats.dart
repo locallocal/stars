@@ -129,7 +129,7 @@ class ChatListPageState extends State<ChatListPage> {
                 : ShadButton(
                   size: ShadButtonSize.sm,
                   onPressed: _openNewChatDialog,
-                  height: DesktopThemeTokens.controlHeight,
+                  height: DesktopThemeTokens.botFormFieldHeight,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   leading: const Icon(LucideIcons.plus, size: 16),
                   child: Text(
