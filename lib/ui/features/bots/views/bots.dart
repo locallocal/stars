@@ -189,7 +189,7 @@ class ContactsPageState extends State<ContactsPage> {
       action: ShadButton(
         size: ShadButtonSize.sm,
         onPressed: _openAddBotPage,
-        height: DesktopThemeTokens.controlHeight,
+        height: DesktopThemeTokens.botFormFieldHeight,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         leading: const Icon(LucideIcons.plus, size: 16),
         child: Text(S.of(context).addBot),

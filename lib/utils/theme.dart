@@ -1235,7 +1235,9 @@ class StarsSearchField extends StatelessWidget {
       enabled: enabled,
       label: semanticLabel ?? hintText,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 32),
+        constraints: const BoxConstraints(
+          minHeight: DesktopThemeTokens.botFormFieldHeight,
+        ),
         child:
             shadTheme == null
                 ? TextField(
@@ -1244,6 +1246,7 @@ class StarsSearchField extends StatelessWidget {
                   enabled: enabled,
                   autofocus: autofocus,
                   textInputAction: TextInputAction.search,
+                  textAlignVertical: TextAlignVertical.center,
                   onChanged: onChanged,
                   onSubmitted: onSubmitted,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -1264,14 +1267,22 @@ class StarsSearchField extends StatelessWidget {
                   placeholder: Text(hintText),
                   leading: Padding(
                     padding: const EdgeInsetsDirectional.only(end: 8),
-                    child: Icon(
-                      LucideIcons.search,
-                      size: 16,
-                      color: shadTheme.colorScheme.mutedForeground,
+                    child: SizedBox(
+                      width: 16,
+                      height: 30,
+                      child: Icon(
+                        LucideIcons.search,
+                        size: 16,
+                        color: shadTheme.colorScheme.mutedForeground,
+                      ),
                     ),
                   ),
                   trailing: suffixIcon,
-                  constraints: const BoxConstraints(minHeight: 36),
+                  alignment: Alignment.centerLeft,
+                  placeholderAlignment: Alignment.centerLeft,
+                  constraints: const BoxConstraints(
+                    minHeight: DesktopThemeTokens.botFormFieldHeight,
+                  ),
                 ),
       ),
     );
@@ -1490,6 +1501,7 @@ class DesktopInteractiveListItem extends StatefulWidget {
   final VoidCallback onTap;
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final double minHeight;
 
   const DesktopInteractiveListItem({
     super.key,
@@ -1498,6 +1510,7 @@ class DesktopInteractiveListItem extends StatefulWidget {
     required this.onTap,
     required this.child,
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    this.minHeight = DesktopThemeTokens.listItemMinHeight,
   });
 
   @override
@@ -1547,9 +1560,7 @@ class _DesktopInteractiveListItemState
                   ? Duration.zero
                   : const Duration(milliseconds: 100),
           curve: Curves.easeOutCubic,
-          constraints: const BoxConstraints(
-            minHeight: DesktopThemeTokens.listItemMinHeight,
-          ),
+          constraints: BoxConstraints(minHeight: widget.minHeight),
           decoration: DesktopThemeTokens.listItemDecoration(
             context,
             selected: false,
@@ -1598,9 +1609,7 @@ class _DesktopInteractiveListItemState
                 ? Duration.zero
                 : const Duration(milliseconds: 100),
         curve: Curves.easeOutCubic,
-        constraints: const BoxConstraints(
-          minHeight: DesktopThemeTokens.listItemMinHeight,
-        ),
+        constraints: BoxConstraints(minHeight: widget.minHeight),
         decoration: DesktopThemeTokens.listItemDecoration(
           context,
           selected: widget.selected,

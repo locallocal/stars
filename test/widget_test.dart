@@ -317,9 +317,80 @@ void main() {
     expect(find.text('会话内容'), findsOneWidget);
     expect(find.byType(StarsSearchField), findsOneWidget);
     expect(find.byType(Card), findsNothing);
+    expect(
+      tester.getSize(find.byType(StarsSearchField)).height,
+      DesktopThemeTokens.botFormFieldHeight,
+    );
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).textAlignVertical,
+      TextAlignVertical.center,
+    );
 
     await tester.enterText(find.byType(TextField), '模型');
     expect(query, '模型');
+  });
+
+  testWidgets('desktop search fields match bot form height and center text', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: SizedBox(
+                width: DesktopThemeTokens.sidebarWidth,
+                child: Column(
+                  children: [
+                    StarsSearchField(
+                      key: const ValueKey<String>('chat-search-field'),
+                      hintText: '搜索会话',
+                      onChanged: (_) {},
+                    ),
+                    const SizedBox(height: 12),
+                    StarsSearchField(
+                      key: const ValueKey<String>('bot-search-field'),
+                      hintText: '搜索智能体',
+                      onChanged: (_) {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (final key in const ['chat-search-field', 'bot-search-field']) {
+      final field = find.byKey(ValueKey<String>(key));
+      final input = find.descendant(
+        of: field,
+        matching: find.byType(ShadInput),
+      );
+      final shadInput = tester.widget<ShadInput>(input);
+      expect(
+        tester.getSize(field).height,
+        DesktopThemeTokens.botFormFieldHeight,
+      );
+      expect(shadInput.alignment, Alignment.centerLeft);
+      expect(shadInput.placeholderAlignment, Alignment.centerLeft);
+      expect(
+        tester
+            .getRect(find.descendant(of: field, matching: find.byType(Text)))
+            .center
+            .dy,
+        closeTo(tester.getRect(input).center.dy, 0.5),
+      );
+      expect(
+        tester
+            .getRect(
+              find.descendant(of: field, matching: find.byType(EditableText)),
+            )
+            .center
+            .dy,
+        closeTo(tester.getRect(input).center.dy, 0.5),
+      );
+    }
   });
 
   testWidgets('desktop list panel can match the settings content width', (
@@ -449,6 +520,17 @@ void main() {
       expect(card, findsOneWidget);
       expect(tester.getSize(card).height, 180);
       expect(find.byIcon(LucideIcons.arrowUpRight), findsNothing);
+      final addBotButton =
+          find
+              .ancestor(
+                of: find.text('添加智能体'),
+                matching: find.byType(ShadButton),
+              )
+              .first;
+      expect(
+        tester.getSize(addBotButton).height,
+        tester.getSize(find.byType(StarsSearchField)).height,
+      );
     });
   });
 
@@ -905,19 +987,27 @@ void main() {
       final inheritedTextStyle =
           DefaultTextStyle.of(tester.element(textFinder)).style;
       expect(inheritedTextStyle.merge(text.style).color, Colors.white);
+      expect(
+        tester.getSize(selectedButtonFinder).height,
+        DesktopThemeTokens.botFormFieldHeight,
+      );
 
       if (selectedPage == 1) {
-        final newChatButton = tester.widget<ShadButton>(
-          find
-              .ancestor(
-                of: find.byIcon(LucideIcons.squarePen),
-                matching: find.byType(ShadButton),
-              )
-              .first,
-        );
+        final newChatButtonFinder =
+            find
+                .ancestor(
+                  of: find.byIcon(LucideIcons.squarePen),
+                  matching: find.byType(ShadButton),
+                )
+                .first;
+        final newChatButton = tester.widget<ShadButton>(newChatButtonFinder);
         final agentIcon = selectedButton.leading! as Icon;
         final newChatIcon = newChatButton.leading! as Icon;
 
+        expect(
+          tester.getSize(newChatButtonFinder).height,
+          DesktopThemeTokens.botFormFieldHeight,
+        );
         expect(selectedButton.size, newChatButton.size);
         expect(selectedButton.expands, newChatButton.expands);
         expect(
