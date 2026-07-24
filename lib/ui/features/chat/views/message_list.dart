@@ -334,17 +334,6 @@ class _MessageBubble extends StatelessWidget {
               durationMs: processInfo.durationMs,
             ),
           ),
-        if (processInfo.hasData)
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: content.isNotEmpty || _hasStructuredMedia ? 14 : 0,
-            ),
-            child: ProcessInfoSection(
-              processInfo: processInfo,
-              isDesktop: isDesktop,
-              hasReasoningContent: reasoning.isNotEmpty,
-            ),
-          ),
         if (content.isNotEmpty)
           MarkdownBody(
             data: content,
@@ -354,9 +343,20 @@ class _MessageBubble extends StatelessWidget {
                     unawaited(_openMarkdownLink(context, href)),
             styleSheet: _buildMarkdownStyleSheet(context, fontSize),
           ),
-        if (images.isNotEmpty)
+        if (processInfo.hasData)
           Padding(
             padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
+            child: ProcessInfoSection(
+              processInfo: processInfo,
+              isDesktop: isDesktop,
+              hasReasoningContent: reasoning.isNotEmpty,
+            ),
+          ),
+        if (images.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(
+              top: content.isNotEmpty || processInfo.hasData ? 14 : 0,
+            ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
               icon: isDesktop ? LucideIcons.image : Icons.image_outlined,
@@ -380,7 +380,10 @@ class _MessageBubble extends StatelessWidget {
         if (files.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(
-              top: (content.isNotEmpty || images.isNotEmpty) ? 12 : 0,
+              top:
+                  content.isNotEmpty || processInfo.hasData || images.isNotEmpty
+                      ? 12
+                      : 0,
             ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
@@ -503,7 +506,10 @@ class _MessageBubble extends StatelessWidget {
   }
 
   bool get _hasMediaAbove =>
-      content.isNotEmpty || images.isNotEmpty || files.isNotEmpty;
+      content.isNotEmpty ||
+      processInfo.hasData ||
+      images.isNotEmpty ||
+      files.isNotEmpty;
 
   bool get _hasStructuredMedia =>
       images.isNotEmpty ||
