@@ -808,6 +808,83 @@ void main() {
     });
   });
 
+  testWidgets('desktop delete chat cancel matches delete bot styling', (
+    tester,
+  ) async {
+    await _withDesktopPlatform(() async {
+      var deleteCount = 0;
+      final registry = ChatGenerationRegistry(
+        messagePersister: (message) async => message,
+        lastMessageUpdater: (_, _) async {},
+        providerFactory: (_) => throw StateError('Provider is not expected'),
+      );
+      addTearDown(registry.clear);
+      final timestamp = DateTime(2026);
+      final bot = Bot(
+        id: 'bot-delete',
+        name: '待删除智能体',
+        avatar: '',
+        provider: 'OpenAI',
+        baseURL: '',
+        apiKey: '',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: '',
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+      final chat = Chat(
+        id: 'chat-delete',
+        botId: bot.id,
+        lastMessage: '待删除会话',
+        lastMessageTimestamp: timestamp,
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+
+      await tester.pumpWidget(
+        _shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: SizedBox(
+                  width: 320,
+                  height: 240,
+                  child: ChatListBuilder(
+                    chatList: [chat],
+                    bots: [bot],
+                    generationRegistry: registry,
+                    onChatDeleted: (_) {},
+                    onDeleteChat: (_) async => deleteCount += 1,
+                    onChatSelected: (_, _) {},
+                  ),
+                ),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(LucideIcons.trash2));
+      await tester.pumpAndSettle();
+
+      final cancelButtonFinder =
+          find
+              .ancestor(of: find.text('取消'), matching: find.byType(ShadButton))
+              .first;
+      final cancelButton = tester.widget<ShadButton>(cancelButtonFinder);
+      expect(cancelButton.variant, ShadButtonVariant.outline);
+      expect(cancelButton.autofocus, isFalse);
+
+      await tester.tap(cancelButtonFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.text('取消'), findsNothing);
+      expect(deleteCount, 0);
+    });
+  });
+
   testWidgets('chat row menu hover keeps the row background unchanged', (
     tester,
   ) async {
