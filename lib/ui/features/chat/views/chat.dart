@@ -24,8 +24,14 @@ import 'package:stars/utils/utils.dart';
 class ChatPage extends StatefulWidget {
   final Bot bot;
   final String id;
+  final bool showExecutionStatus;
 
-  const ChatPage({super.key, required this.id, required this.bot});
+  const ChatPage({
+    super.key,
+    required this.id,
+    required this.bot,
+    this.showExecutionStatus = true,
+  });
 
   @override
   ChatPageState createState() => ChatPageState();
@@ -750,6 +756,7 @@ class ChatPageState extends State<ChatPage> {
                   deepThinking: _provider.getDeepThinking(),
                   reasoningResponse: _reasoningResponse,
                   isDesktop: isDesktop,
+                  showExecutionStatus: widget.showExecutionStatus,
                 ),
                 if (_isTyping && !_isStreaming)
                   TypingIndicator(

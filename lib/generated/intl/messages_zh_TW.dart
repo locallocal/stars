@@ -73,6 +73,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatDeleted": m5,
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("聊天記錄已清空"),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
+    "chatExecutionStatus": MessageLookupByLibrary.simpleMessage("對話執行狀態"),
     "clear": MessageLookupByLibrary.simpleMessage("清空"),
     "clearChat": MessageLookupByLibrary.simpleMessage("清空聊天"),
     "clearChatHistory": MessageLookupByLibrary.simpleMessage("清空聊天記錄"),
@@ -93,6 +94,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("刪除"),
     "deleteBot": MessageLookupByLibrary.simpleMessage("刪除智能體"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("刪除聊天"),
+    "desktopGeneral": MessageLookupByLibrary.simpleMessage("一般"),
     "editBot": MessageLookupByLibrary.simpleMessage("編輯機器人"),
     "editName": MessageLookupByLibrary.simpleMessage("修改名稱"),
     "emptyResponseError": MessageLookupByLibrary.simpleMessage(
@@ -156,6 +158,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "selectTheme": MessageLookupByLibrary.simpleMessage("選擇主題"),
     "send": MessageLookupByLibrary.simpleMessage("發送"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
+    "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "在對話內容中顯示執行狀態。",
+    ),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage("在下方輸入框中發送訊息開始聊天"),
     "startChatting": MessageLookupByLibrary.simpleMessage("開始聊天吧"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反饋"),

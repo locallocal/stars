@@ -651,6 +651,7 @@ class Profile {
   final double fontSize;
   final int themeMode;
   final String language;
+  final bool showExecutionStatus;
   final DateTime createTimestamp;
   final DateTime modifyTimestamp;
 
@@ -660,6 +661,7 @@ class Profile {
     required this.fontSize,
     required this.themeMode,
     required this.language,
+    this.showExecutionStatus = true,
     required this.createTimestamp,
     required this.modifyTimestamp,
   });
@@ -667,6 +669,7 @@ class Profile {
   factory Profile.fromMap(Map<String, dynamic> map) {
     final fontSizeValue = map['font_size'];
     final themeModeValue = map['theme_mode'];
+    final showExecutionStatusValue = map['show_execution_status'];
     final createTimestampValue = map['create_timestamp'];
     final modifyTimestampValue = map['modify_timestamp'];
 
@@ -682,6 +685,12 @@ class Profile {
               ? themeModeValue.toInt()
               : int.tryParse(themeModeValue?.toString() ?? '') ?? 0,
       language: map['language']?.toString() ?? 'zh_CN',
+      showExecutionStatus: switch (showExecutionStatusValue) {
+        bool value => value,
+        num value => value != 0,
+        String value => value != '0' && value.toLowerCase() != 'false',
+        _ => true,
+      },
       createTimestamp: DateTime.fromMillisecondsSinceEpoch(
         createTimestampValue is num
             ? createTimestampValue.toInt()
@@ -702,6 +711,7 @@ class Profile {
       'font_size': fontSize,
       'theme_mode': themeMode,
       'language': language,
+      'show_execution_status': showExecutionStatus ? 1 : 0,
       'create_timestamp': createTimestamp.millisecondsSinceEpoch,
       'modify_timestamp': modifyTimestamp.millisecondsSinceEpoch,
     };

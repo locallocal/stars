@@ -27,6 +27,7 @@ class MessageList extends StatelessWidget {
   final bool? deepThinking;
   final String? reasoningResponse;
   final bool isDesktop;
+  final bool showExecutionStatus;
 
   const MessageList({
     super.key,
@@ -39,6 +40,7 @@ class MessageList extends StatelessWidget {
     this.deepThinking = false,
     this.reasoningResponse = '',
     this.isDesktop = false,
+    this.showExecutionStatus = true,
   });
 
   @override
@@ -66,6 +68,7 @@ class MessageList extends StatelessWidget {
                   reasoning:
                       deepThinking == true ? reasoningResponse ?? '' : '',
                   processInfo: streamingProcessInfo,
+                  showExecutionStatus: showExecutionStatus,
                   content: streamingResponse,
                 ),
               ),
@@ -79,6 +82,7 @@ class MessageList extends StatelessWidget {
             isDesktop: isDesktop,
             reasoning: message.reasoning,
             processInfo: message.processInfo,
+            showExecutionStatus: showExecutionStatus,
             content: message.content,
             images: message.images,
             files: message.files,
@@ -280,6 +284,7 @@ class _MessageBubble extends StatelessWidget {
   final bool isStreaming;
   final String reasoning;
   final MessageProcessInfo processInfo;
+  final bool showExecutionStatus;
   final String content;
   final List<String> images;
   final List<String> files;
@@ -295,6 +300,7 @@ class _MessageBubble extends StatelessWidget {
     this.isStreaming = false,
     required this.reasoning,
     this.processInfo = const MessageProcessInfo(),
+    this.showExecutionStatus = true,
     required this.content,
     this.images = const [],
     this.files = const [],
@@ -321,9 +327,7 @@ class _MessageBubble extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(
               bottom:
-                  content.isNotEmpty ||
-                          processInfo.hasData ||
-                          _hasStructuredMedia
+                  content.isNotEmpty || _showProcessInfo || _hasStructuredMedia
                       ? 14
                       : 0,
             ),
@@ -343,7 +347,7 @@ class _MessageBubble extends StatelessWidget {
                     unawaited(_openMarkdownLink(context, href)),
             styleSheet: _buildMarkdownStyleSheet(context, fontSize),
           ),
-        if (processInfo.hasData)
+        if (_showProcessInfo)
           Padding(
             padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
             child: ProcessInfoSection(
@@ -355,7 +359,7 @@ class _MessageBubble extends StatelessWidget {
         if (images.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(
-              top: content.isNotEmpty || processInfo.hasData ? 14 : 0,
+              top: content.isNotEmpty || _showProcessInfo ? 14 : 0,
             ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
@@ -381,7 +385,7 @@ class _MessageBubble extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(
               top:
-                  content.isNotEmpty || processInfo.hasData || images.isNotEmpty
+                  content.isNotEmpty || _showProcessInfo || images.isNotEmpty
                       ? 12
                       : 0,
             ),
@@ -460,9 +464,7 @@ class _MessageBubble extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(
               top:
-                  content.isNotEmpty ||
-                          _hasStructuredMedia ||
-                          processInfo.hasData
+                  content.isNotEmpty || _hasStructuredMedia || _showProcessInfo
                       ? 10
                       : 0,
             ),
@@ -507,9 +509,11 @@ class _MessageBubble extends StatelessWidget {
 
   bool get _hasMediaAbove =>
       content.isNotEmpty ||
-      processInfo.hasData ||
+      _showProcessInfo ||
       images.isNotEmpty ||
       files.isNotEmpty;
+
+  bool get _showProcessInfo => showExecutionStatus && processInfo.hasData;
 
   bool get _hasStructuredMedia =>
       images.isNotEmpty ||

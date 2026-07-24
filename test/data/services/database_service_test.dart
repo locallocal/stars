@@ -24,6 +24,8 @@ void main() {
       expect(rows.map((row) => row['run_id']), everyElement(''));
       expect(rows.map((row) => row['terminal_state']), everyElement(''));
       expect(rows.map((row) => row['has_partial_content']), everyElement(0));
+      final profiles = await database.query('profile');
+      expect(profiles.single['show_execution_status'], 1);
 
       final indexes = await database.rawQuery('PRAGMA index_list(messages)');
       final identityIndex = indexes.singleWhere(
@@ -79,6 +81,26 @@ Future<Database> _openMigratedV2Database() async {
       timestamp INTEGER
     )
   ''');
+  await database.execute('''
+    CREATE TABLE profile (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      avatar TEXT,
+      font_size DOUBLE,
+      theme_mode INTEGER,
+      language TEXT,
+      create_timestamp INTEGER,
+      modify_timestamp INTEGER
+    )
+  ''');
+  await database.insert('profile', <String, Object?>{
+    'name': 'Legacy User',
+    'font_size': 16,
+    'theme_mode': 0,
+    'language': 'zh_CN',
+    'create_timestamp': 0,
+    'modify_timestamp': 0,
+  });
   await database.insert('messages', <String, Object?>{
     'chat_id': 'chat-1',
     'content': 'legacy user message',

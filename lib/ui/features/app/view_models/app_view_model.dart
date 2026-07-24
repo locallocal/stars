@@ -20,14 +20,17 @@ class AppViewModel extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   Locale _locale = const Locale('zh', 'CN');
   double _fontSize = 16;
+  bool _showExecutionStatus = true;
 
   ThemeMode get themeMode => _themeMode;
   Locale get locale => _locale;
   double get fontSize => _fontSize;
+  bool get showExecutionStatus => _showExecutionStatus;
 
   void _applyProfile(Profile profile, {bool notify = true}) {
     _themeMode = intToThemeMode(profile.themeMode);
     _fontSize = profile.fontSize;
+    _showExecutionStatus = profile.showExecutionStatus;
     final parts = profile.language.split('_');
     if (parts.length == 2) _locale = Locale(parts[0], parts[1]);
     if (notify) notifyListeners();

@@ -108,6 +108,7 @@ void main() {
       final sectionTitles = [
         S.of(profileContext).desktopPersonalInformation,
         S.of(profileContext).desktopAppearanceAndLanguage,
+        S.of(profileContext).desktopGeneral,
         S.of(profileContext).desktopHelpAndSupport,
         S.of(profileContext).desktopAboutAndLegal,
       ];
@@ -119,6 +120,43 @@ void main() {
           DesktopThemeTokens.botFormSectionTitleFontSize,
         );
       }
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('desktop general setting persists execution status visibility', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    Profile? savedProfile;
+    try {
+      await tester.pumpWidget(
+        _profileHarness(
+          onProfileSaved: (profile) async => savedProfile = profile,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final generalSection = find.text('通用');
+      final switchFinder = find.byKey(
+        const ValueKey<String>('profile-show-execution-status-switch'),
+      );
+      expect(generalSection, findsOneWidget);
+      expect(switchFinder, findsOneWidget);
+      expect(tester.widget<ShadSwitch>(switchFinder).value, isTrue);
+      expect(
+        tester.getTopLeft(generalSection).dy,
+        greaterThan(tester.getTopLeft(find.text('外观与语言')).dy),
+      );
+
+      await tester.ensureVisible(switchFinder);
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<ShadSwitch>(switchFinder).value, isFalse);
+      expect(savedProfile?.showExecutionStatus, isFalse);
+      expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
@@ -296,7 +334,9 @@ void main() {
   });
 }
 
-Widget _profileHarness() {
+Widget _profileHarness({
+  Future<void> Function(Profile profile)? onProfileSaved,
+}) {
   final shadTheme = buildStarsShadTheme(
     brightness: Brightness.light,
     fontSize: 16,
@@ -329,10 +369,11 @@ Widget _profileHarness() {
                 fontSize: 16,
                 themeMode: 1,
                 language: 'zh_CN',
+                showExecutionStatus: true,
                 createTimestamp: DateTime(2026),
                 modifyTimestamp: DateTime(2026),
               ),
-              onProfileSaved: (_) async {},
+              onProfileSaved: onProfileSaved ?? (_) async {},
             ),
           ),
         ),
