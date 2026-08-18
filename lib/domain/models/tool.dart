@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:stars/domain/models/mcp_installer.dart';
+import 'package:stars/domain/models/skill_installer.dart';
+
 part 'tool_json_schema_validator.dart';
 
 enum ToolSource { builtIn, mcp, skillScript }
@@ -197,6 +200,20 @@ final class DefaultToolPolicy implements ToolPolicy {
         context.approvalExemptToolNames.contains(definition.name)) {
       return const ToolPolicyDecision.allow(
         reason: 'conversation_history_read_only_exempt',
+      );
+    }
+    const inventoryTools = {
+      ...skillInventoryToolNames,
+      ...mcpInventoryToolNames,
+    };
+    if (definition.source == ToolSource.builtIn &&
+        definition.riskLevel == ToolRiskLevel.readOnly &&
+        definition.capabilities.length == 1 &&
+        definition.capabilities.contains(ToolCapability.localRead) &&
+        inventoryTools.contains(definition.name) &&
+        context.approvalExemptToolNames.contains(definition.name)) {
+      return const ToolPolicyDecision.allow(
+        reason: 'application_inventory_read_only_exempt',
       );
     }
     if (definition.source == ToolSource.skillScript) {

@@ -103,6 +103,36 @@ void main() {
     expect(result.requestedToolNames, {'calculate'});
   });
 
+  test('does not send empty assistant history entries to providers', () async {
+    final compose = ComposeChatTurn(
+      skillRepository: _FakeSkillRepository(const {}),
+      bindingRepository: _FakeBindingRepository(const []),
+      starsSystemPromptProvider: _testStarsSystemPrompt,
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: [
+        _message(senderId: 'user-1', content: 'Failed question'),
+        _message(senderId: 'bot-1', content: ''),
+      ],
+      userMessage: _message(senderId: 'user-1', content: 'Retry question'),
+      currentUserId: 'user-1',
+    );
+
+    expect(result.messages.map((message) => message.role), ['system', 'user']);
+    expect(result.messages.last.content, 'Failed question\nRetry question');
+    expect(
+      result.messages.every(
+        (message) =>
+            message.content.trim().isNotEmpty ||
+            message.images.isNotEmpty ||
+            message.files.isNotEmpty,
+      ),
+      isTrue,
+    );
+  });
+
   test(
     'auto activation uses structured tools and injects requested references',
     () async {
@@ -313,7 +343,7 @@ void main() {
       );
 
       expect(result.requestedToolNames, skillInstallerToolNames);
-      expect(result.approvalExemptToolNames, isEmpty);
+      expect(result.approvalExemptToolNames, skillInventoryToolNames);
       expect(result.activatedSkills.single.id, skillInstallerSkillId);
       expect(
         result.messages.first.content,
@@ -344,7 +374,7 @@ void main() {
     );
 
     expect(result.requestedToolNames, mcpInstallerToolNames);
-    expect(result.approvalExemptToolNames, isEmpty);
+    expect(result.approvalExemptToolNames, mcpInventoryToolNames);
     expect(result.activatedSkills.single.id, mcpInstallerSkillId);
     expect(
       result.messages.first.content,

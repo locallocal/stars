@@ -367,6 +367,8 @@ final class ComposeChatTurn {
           ...conversationHistoryToolNames,
       },
       approvalExemptToolNames: {
+        if (systemSkillInstallerSkill != null) ...skillInventoryToolNames,
+        if (systemMcpInstallerSkill != null) ...mcpInventoryToolNames,
         ...mcpTools.approvalExemptNames,
         if (preparedContext?.report.historyLookupAvailable ?? false)
           ...conversationHistoryToolNames,
@@ -461,6 +463,7 @@ ${resource.content.trim()}
                 : '$pendingUserMessage\n${message.content}';
         continue;
       }
+      if (!_hasComposableAssistantContent(message)) continue;
       if (pendingUserMessage.isNotEmpty) {
         messages.add(ChatMessage(role: 'user', content: pendingUserMessage));
         pendingUserMessage = '';
@@ -482,6 +485,11 @@ ${resource.content.trim()}
     );
     return messages;
   }
+
+  bool _hasComposableAssistantContent(Message message) =>
+      message.content.trim().isNotEmpty ||
+      message.images.isNotEmpty ||
+      message.files.isNotEmpty;
 
   int _estimateTokens(String source) => (source.runes.length + 3) ~/ 4;
 
