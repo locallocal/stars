@@ -22,6 +22,8 @@ based on Keep a Changelog, and the project uses semantic versioning.
   application has replaced the old shared `Documents/app.db` file.
 - Fixed Bot creation with bundled system Skills by allowing their bindings and
   conversation pins without creating editable installation records.
+- Moved compact Add Bot error alerts above the footer action surface so they
+  remain visually separate and cannot resize the footer actions.
 - Relicensed Stars from the MIT License to the GNU Affero General Public
   License v3.0 only (`AGPL-3.0-only`).
 - Unified the application identifier as `io.github.locallocal.stars` on all

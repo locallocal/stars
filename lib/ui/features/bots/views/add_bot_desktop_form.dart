@@ -254,8 +254,33 @@ extension _AddBotDesktopForm on _AddBotPageState {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (_errorMessage case final error?)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 10),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: _AddBotPageState._desktopFormWidth,
+                ),
+                child: SizedBox(
+                  key: const ValueKey<String>('add-bot-error-region'),
+                  width: double.infinity,
+                  child: StarsInlineErrorAlert(
+                    error: error,
+                    isDesktop: true,
+                    onDismiss: _dismissError,
+                    alertKey: const ValueKey<String>('add-bot-error-alert'),
+                    messageKey: const ValueKey<String>('add-bot-error-message'),
+                    dismissKey: const ValueKey<String>('dismiss-add-bot-error'),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            ),
+          ),
         const ShadSeparator.horizontal(),
         ColoredBox(
+          key: const ValueKey<String>('add-bot-footer-surface'),
           color: shadTheme.colorScheme.background,
           child: SafeArea(
             top: false,
@@ -266,58 +291,42 @@ extension _AddBotDesktopForm on _AddBotPageState {
                   constraints: const BoxConstraints(
                     maxWidth: _AddBotPageState._desktopFormWidth,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (_errorMessage case final error?)
-                        StarsInlineErrorAlert(
-                          error: error,
-                          isDesktop: true,
-                          onDismiss: _dismissError,
-                          alertKey: const ValueKey<String>(
-                            'add-bot-error-alert',
-                          ),
-                          messageKey: const ValueKey<String>(
-                            'add-bot-error-message',
-                          ),
-                          dismissKey: const ValueKey<String>(
-                            'dismiss-add-bot-error',
-                          ),
+                  child: SizedBox(
+                    key: const ValueKey<String>('add-bot-footer-actions'),
+                    width: double.infinity,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ShadButton.outline(
+                          enabled: !_isSubmitting,
+                          onPressed:
+                              _isSubmitting
+                                  ? null
+                                  : () => Navigator.of(context).pop(),
+                          child: Text(S.of(context).cancel),
                         ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ShadButton.outline(
-                            enabled: !_isSubmitting,
-                            onPressed:
-                                _isSubmitting
-                                    ? null
-                                    : () => Navigator.of(context).pop(),
-                            child: Text(S.of(context).cancel),
-                          ),
-                          const SizedBox(width: 8),
-                          ShadButton(
-                            key: const ValueKey<String>('add-bot-submit'),
-                            enabled: !_isSubmitting,
-                            onPressed: _isSubmitting ? null : _submitBot,
-                            leading:
-                                _isSubmitting
-                                    ? SizedBox.square(
-                                      dimension: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color:
-                                            shadTheme
-                                                .colorScheme
-                                                .primaryForeground,
-                                      ),
-                                    )
-                                    : const Icon(LucideIcons.plus, size: 17),
-                            child: Text(S.of(context).addBot),
-                          ),
-                        ],
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        ShadButton(
+                          key: const ValueKey<String>('add-bot-submit'),
+                          enabled: !_isSubmitting,
+                          onPressed: _isSubmitting ? null : _submitBot,
+                          leading:
+                              _isSubmitting
+                                  ? SizedBox.square(
+                                    dimension: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color:
+                                          shadTheme
+                                              .colorScheme
+                                              .primaryForeground,
+                                    ),
+                                  )
+                                  : const Icon(LucideIcons.plus, size: 17),
+                          child: Text(S.of(context).addBot),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
