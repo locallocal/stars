@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -648,20 +647,33 @@ void main() {
         ),
         'secret-key',
       );
+      final submit = find.byKey(const ValueKey<String>('add-bot-submit'));
+      final actions = find.byKey(
+        const ValueKey<String>('add-bot-footer-actions'),
+      );
+      final footerSurface = find.byKey(
+        const ValueKey<String>('add-bot-footer-surface'),
+      );
+      final submitRectBeforeError = tester.getRect(submit);
+      final actionsRectBeforeError = tester.getRect(actions);
+      final footerRectBeforeError = tester.getRect(footerSurface);
       final fetchModels = find.byIcon(LucideIcons.refreshCw);
       await tester.ensureVisible(fetchModels);
       await tester.tap(fetchModels);
       await tester.pumpAndSettle();
 
       final alert = find.byKey(const ValueKey<String>('add-bot-error-alert'));
+      final errorRegion = find.byKey(
+        const ValueKey<String>('add-bot-error-region'),
+      );
       final message = find.byKey(
         const ValueKey<String>('add-bot-error-message'),
       );
       final dismiss = find.byKey(
         const ValueKey<String>('dismiss-add-bot-error'),
       );
-      final submit = find.byKey(const ValueKey<String>('add-bot-submit'));
       expect(alert, findsOneWidget);
+      expect(errorRegion, findsOneWidget);
       expect(find.text('加载内容时出错，请稍后再试。'), findsOneWidget);
       expect(find.textContaining('模型服务不可用'), findsNothing);
       expect(find.byType(SnackBar), findsNothing);
@@ -685,6 +697,22 @@ void main() {
       expect(
         tester.getRect(alert).bottom,
         lessThan(tester.getRect(submit).top),
+      );
+      final expectedErrorWidth =
+          StarsDesktopThemeSpec.addBotFormFieldWidth +
+          (StarsDesktopThemeSpec.botFormSectionPadding +
+                  StarsDesktopThemeSpec.botFormSectionBorderWidth) *
+              2;
+      expect(tester.getSize(errorRegion).width, expectedErrorWidth);
+      expect(tester.getSize(alert).width, expectedErrorWidth);
+      expect(tester.getRect(actions), actionsRectBeforeError);
+      expect(tester.getRect(submit), submitRectBeforeError);
+      expect(tester.getRect(footerSurface), footerRectBeforeError);
+      expect(tester.getSize(actions).width, expectedErrorWidth);
+      expect(find.descendant(of: footerSurface, matching: alert), findsNothing);
+      expect(
+        tester.getRect(errorRegion).bottom,
+        lessThan(tester.getRect(footerSurface).top),
       );
 
       await tester.tap(dismiss);
