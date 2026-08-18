@@ -22,6 +22,8 @@ based on Keep a Changelog, and the project uses semantic versioning.
   application has replaced the old shared `Documents/app.db` file.
 - Fixed Bot creation with bundled system Skills by allowing their bindings and
   conversation pins without creating editable installation records.
+- Fixed system Skill runs by exempting Stars' read-only Skill/MCP inventory
+  queries from approval and omitting empty failed responses from model history.
 - Moved compact Add Bot error alerts above the footer action surface so they
   remain visually separate and cannot resize the footer actions.
 - Relicensed Stars from the MIT License to the GNU Affero General Public

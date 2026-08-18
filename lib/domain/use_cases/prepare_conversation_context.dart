@@ -339,7 +339,9 @@ final class PrepareConversationContext {
     for (final id in order) {
       final messages = groups[id]!;
       final hasAssistant = messages.any(
-        (message) => message.senderId != currentUserId,
+        (message) =>
+            message.senderId != currentUserId &&
+            _hasComposableAssistantContent(message),
       );
       final hasUser = messages.any(
         (message) => message.senderId == currentUserId,
@@ -351,13 +353,23 @@ final class PrepareConversationContext {
             message.terminalOutcome == null,
       );
       if (!hasUser || !hasAssistant || hasActiveAssistant) continue;
+      final composableMessages = [
+        for (final message in messages)
+          if (message.senderId == currentUserId ||
+              _hasComposableAssistantContent(message))
+            message,
+      ];
       final chatMessages = _turnsToMessages([
-        ConversationTurn(id: id, messages: messages, estimatedTokens: 0),
+        ConversationTurn(
+          id: id,
+          messages: composableMessages,
+          estimatedTokens: 0,
+        ),
       ], currentUserId);
       turns.add(
         ConversationTurn(
           id: id,
-          messages: messages,
+          messages: composableMessages,
           estimatedTokens: await _tokenEstimator.estimateMessages(
             profile,
             chatMessages,
@@ -367,6 +379,11 @@ final class PrepareConversationContext {
     }
     return turns;
   }
+
+  bool _hasComposableAssistantContent(Message message) =>
+      message.content.trim().isNotEmpty ||
+      message.images.isNotEmpty ||
+      message.files.isNotEmpty;
 
   List<ChatMessage> _turnsToMessages(
     List<ConversationTurn> turns,

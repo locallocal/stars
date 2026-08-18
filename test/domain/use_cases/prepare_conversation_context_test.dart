@@ -94,6 +94,39 @@ void main() {
     },
   );
 
+  test('omits failed turns whose assistant response is empty', () async {
+    final useCase = PrepareConversationContext(
+      memoryRepository: _MemoryRepository(),
+      aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+    );
+
+    final result = await useCase(
+      bot: _bot(),
+      systemPrompt: '',
+      history: [
+        _message(0, true, 'failed question'),
+        _message(0, false, '', terminalOutcome: MessageTerminalOutcome.failed),
+      ],
+      userMessage: _current('retry question'),
+      currentUserId: 'user_1',
+      providerSupportsHistoryLookup: true,
+    );
+
+    expect(result.report.includedTurnIds, isNot(contains('turn_0')));
+    expect(result.messages.map((message) => message.content), [
+      'retry question',
+    ]);
+    expect(
+      result.messages.every(
+        (message) =>
+            message.content.trim().isNotEmpty ||
+            message.images.isNotEmpty ||
+            message.files.isNotEmpty,
+      ),
+      isTrue,
+    );
+  });
+
   test(
     'does not expose history lookup when its system Skill is disabled',
     () async {
@@ -170,14 +203,19 @@ void main() {
   });
 }
 
-Message _message(int turn, bool user, String content) => Message(
+Message _message(
+  int turn,
+  bool user,
+  String content, {
+  MessageTerminalOutcome terminalOutcome = MessageTerminalOutcome.completed,
+}) => Message(
   messageId: 'message_${turn}_${user ? 'u' : 'a'}',
   turnId: 'turn_$turn',
   chatId: 'chat_1',
   botId: 'bot_1',
   senderId: user ? 'user_1' : 'bot_1',
   content: content,
-  terminalOutcome: user ? null : MessageTerminalOutcome.completed,
+  terminalOutcome: user ? null : terminalOutcome,
   timestamp: DateTime(2026, 8, 1).add(Duration(minutes: turn)),
 );
 

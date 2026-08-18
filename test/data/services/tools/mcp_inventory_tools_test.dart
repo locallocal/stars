@@ -86,7 +86,7 @@ void main() {
     expect(enabledTool['requires_approval'], isFalse);
   });
 
-  test('read-only MCP inventory tools require local-read approval', () {
+  test('read-only MCP inventory tools require an exact approval exemption', () {
     for (final tool in tools.values) {
       final call = ToolCallRequest(
         callId: 'policy-${tool.definition.name}',
@@ -104,6 +104,20 @@ void main() {
       );
       expect(decision.outcome, ToolPolicyOutcome.requireApproval);
       expect(decision.reason, 'local_read_requires_approval');
+
+      final exemptDecision = const DefaultToolPolicy().evaluate(
+        tool.definition,
+        call,
+        ToolPolicyContext(
+          runId: 'run-1',
+          chatId: 'chat-current',
+          botId: 'bot-1',
+          requestedToolNames: mcpInventoryToolNames,
+          approvalExemptToolNames: mcpInventoryToolNames,
+        ),
+      );
+      expect(exemptDecision.outcome, ToolPolicyOutcome.allow);
+      expect(exemptDecision.reason, 'application_inventory_read_only_exempt');
     }
   });
 }
