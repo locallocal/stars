@@ -719,20 +719,21 @@ abstract interface class ConversationHistoryRepository {
 
 ## 11. Markdown 文件与 SQLite 元数据设计
 
-当前 v17 Schema 直接包含三张会话记忆表和历史回查复合索引，不在 `messages` 上增加摘要字段，
+当前 v18 Schema 直接包含三张会话记忆表和历史回查复合索引，不在 `messages` 上增加摘要字段，
 也不把摘要正文或供应商返回的原始结构化 JSON 写入数据库。应用不提供旧版本数据库升级路径。
 
 ### 11.1 摘要文件布局
 
-沿用应用当前的 `getApplicationDocumentsDirectory()` 和会话目录约定：
+沿用应用当前的 `getApplicationDocumentsDirectory()` 和 Stars 专属会话目录约定：
 
 ```text
 <ApplicationDocumentsDirectory>/
-  app.db
-  chats/
-    <chatId>/
-      summaries/
-        <summaryId>.md
+  Stars/
+    app.db
+    chats/
+      <chatId>/
+        summaries/
+          <summaryId>.md
 ```
 
 “按会话 ID 保存”是指每个会话拥有独立的 `chats/<chatId>/summaries` 目录。文件名使用不可变的
@@ -883,8 +884,8 @@ Repository 在单会话锁内协调，不能只删数据库记录后以日志忽
 3. 事务成功后递归删除待删除目录；若物理删除暂时失败，保留该待删除目录作为可重试任务，
    并在应用启动时继续清理，不恢复已清空或已删除的数据。
 
-所有步骤必须幂等。全新 v17 数据库中的会话在下一次发送或用户手动重建时懒生成摘要；
-低于 v17 的历史数据库会在打开阶段连同关联会话目录删除并重建，不进入历史数据兼容流程。
+所有步骤必须幂等。全新 v18 数据库中的会话在下一次发送或用户手动重建时懒生成摘要；
+低于 v18 的历史数据库会在打开阶段连同关联会话目录删除并重建，不进入历史数据兼容流程。
 
 ### 11.7 历史回查索引与生命周期
 
@@ -1055,8 +1056,8 @@ Memory 管理页支持：
 
 ### 17.3 Repository / Database
 
-- 全新 v17 Schema 创建完整的 Memory 表和索引，v17 数据库经完整性检查后重开；
-- 低于 v17 的数据库会删除原文件及关联会话目录并创建完整的 v17 Schema，不迁移原始记录；
+- 全新 v18 Schema 创建完整的 Memory 表和索引，v18 数据库经完整性检查后重开；
+- 低于 v18 的数据库会删除原文件及关联会话目录并创建完整的 v18 Schema，不迁移原始记录；
 - 摘要元数据、Memory 和墓碑往返序列化，数据库中不出现摘要正文；
 - Markdown 按 `chatId/summaryId` 写入正确目录，使用 UTF-8，且能原子替换临时文件；
 - 文件缺失、SHA-256 不匹配、非法 ID 和路径穿越会被拒绝；
@@ -1104,7 +1105,7 @@ Memory 管理页支持：
 
 ### Phase 1：滚动摘要 MVP
 
-- 在当前 v17 Schema 中启用会话记忆存储；
+- 在当前 v18 Schema 中启用会话记忆存储；
 - 实现按会话隔离的 Markdown 摘要存储、SQLite 元数据、CAS 提交和单会话协调器；
 - 接入 `system:conversation-history`、两个只读 Tool 和当前会话范围的历史查询 Repository；
 - 接入软/硬阈值；

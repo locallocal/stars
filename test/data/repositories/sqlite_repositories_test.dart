@@ -515,6 +515,26 @@ void main() {
     expect(await bindingRepository.getForBot(bot.id), isEmpty);
   });
 
+  test('creates a Bot with a bundled system Skill binding', () async {
+    final bot = _bot();
+    final timestamp = DateTime(2026, 8, 18);
+    final binding = BotSkillBinding(
+      botId: bot.id,
+      skillId: 'system:shell-command',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    );
+
+    await botRepository.addBotWithSkillBindings(bot, [binding]);
+
+    expect(await botRepository.getBot(bot.id), isNotNull);
+    final restored = await bindingRepository.getForBot(bot.id);
+    expect(restored, hasLength(1));
+    expect(restored.single.botId, binding.botId);
+    expect(restored.single.skillId, binding.skillId);
+    expect(await localDatabase.loadSkill(binding.skillId), isEmpty);
+  });
+
   test('Bot and Skill bindings roll back as one transaction', () async {
     final bot = _bot();
     await database.execute('''

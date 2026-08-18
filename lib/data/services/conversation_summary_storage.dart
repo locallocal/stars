@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
+import 'package:stars/data/services/application_data_directory.dart';
 import 'package:stars/domain/models/conversation_memory.dart';
 
 typedef SummaryDocumentsDirectoryProvider = Future<Directory> Function();
@@ -66,7 +66,7 @@ final class ConversationSummaryStorage {
   ConversationSummaryStorage({
     SummaryDocumentsDirectoryProvider? documentsDirectoryProvider,
   }) : _documentsDirectoryProvider =
-           documentsDirectoryProvider ?? getApplicationDocumentsDirectory;
+           documentsDirectoryProvider ?? getStarsApplicationDocumentsDirectory;
 
   final SummaryDocumentsDirectoryProvider _documentsDirectoryProvider;
 

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
+import 'package:stars/data/services/application_data_directory.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
@@ -15,7 +15,7 @@ class AttachmentRepositoryImpl implements ConversationAssetRepository {
     AttachmentDocumentsDirectoryProvider? documentsDirectoryProvider,
   }) : _service = service,
        _documentsDirectoryProvider =
-           documentsDirectoryProvider ?? getApplicationDocumentsDirectory;
+           documentsDirectoryProvider ?? getStarsApplicationDocumentsDirectory;
 
   final AttachmentPickerService _service;
   final AttachmentDocumentsDirectoryProvider _documentsDirectoryProvider;
