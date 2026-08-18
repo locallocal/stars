@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:stars/data/services/application_data_directory.dart';
 
 // 自定义函数将 int 转换为 ThemeMode
 ThemeMode intToThemeMode(int value) {
@@ -33,7 +33,7 @@ int themeModeToInt(ThemeMode value) {
 
 // 创建聊天文件夹
 Future<void> createChatDirectory(String chatId) async {
-  final appDir = await getApplicationDocumentsDirectory();
+  final appDir = await getStarsApplicationDocumentsDirectory();
   final chatDir = Directory(path.join(appDir.path, 'chats', chatId));
   if (!await chatDir.exists()) {
     await chatDir.create(recursive: true);
@@ -57,7 +57,7 @@ Future<bool> deleteChatDirectory(String chatId) async {
 }
 
 Future<String> getChatDirectoryPath(String chatId) async {
-  final appDir = await getApplicationDocumentsDirectory();
+  final appDir = await getStarsApplicationDocumentsDirectory();
   return path.join(appDir.path, 'chats', chatId);
 }
 

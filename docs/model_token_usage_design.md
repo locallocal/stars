@@ -37,7 +37,7 @@ Stars 需要记录智能体调用文本模型时由供应商返回的 Token 用�
 
 ### 3.1 SQLite 变更
 
-当前 v17 Schema 的 `messages` 表直接包含：
+当前 v18 Schema 的 `messages` 表直接包含：
 
 ```sql
 token_model TEXT NOT NULL DEFAULT '',

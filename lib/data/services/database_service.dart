@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:stars/data/services/application_data_directory.dart';
 import 'package:stars/domain/models/app_failure.dart';
+
+part 'database_schema_verifier.dart';
 
 typedef ApplicationDocumentsDirectoryProvider = Future<Directory> Function();
 
@@ -22,7 +25,7 @@ class DatabaseService {
   Future<Database>? _openingDatabase;
   // This is the only supported schema generation. Every other version is
   // deleted before the database is opened.
-  static const int databaseVersion = 17;
+  static const int databaseVersion = 18;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -51,11 +54,16 @@ class DatabaseService {
   }
 
   Future<Database> _openDatabase() async {
-    final Directory appDocDir = await _applicationDocumentsDirectoryProvider();
-    await appDocDir.create(recursive: true);
-    final path = join(appDocDir.path, _databaseFileName);
+    final documents = await _applicationDocumentsDirectoryProvider();
+    await documents.create(recursive: true);
+    final root = Directory(
+      join(documents.path, starsApplicationDataDirectoryName),
+    );
+    await _migrateLegacyData(documents, root);
+    await root.create(recursive: true);
+    final path = join(root.path, _databaseFileName);
 
-    await _prepareCurrentDatabase(appDocDir, path);
+    await _prepareCurrentDatabase(root, path);
     final database = await openDatabase(
       path,
       version: databaseVersion,
@@ -64,6 +72,7 @@ class DatabaseService {
     );
     try {
       await _verifyIntegrity(database);
+      await _verifyCurrentDatabaseSchema(database);
       return database;
     } on Object {
       await database.close();
@@ -73,6 +82,72 @@ class DatabaseService {
 
   static Future<void> configure(Database database) async {
     await database.execute('PRAGMA foreign_keys = ON');
+  }
+
+  static Future<void> _migrateLegacyData(
+    Directory legacyRoot,
+    Directory destination,
+  ) async {
+    if (await destination.exists()) return;
+
+    final source = await _findLegacyDataSource(legacyRoot);
+    if (source == null) return;
+
+    final staging = Directory(
+      join(
+        legacyRoot.path,
+        '.stars_data_staging_${DateTime.now().microsecondsSinceEpoch}',
+      ),
+    );
+    try {
+      await staging.create(recursive: true);
+      final stagedDatabase = await source.database.copy(
+        join(staging.path, _databaseFileName),
+      );
+      if (await source.chats.exists()) {
+        await _copyDirectory(
+          source.chats,
+          Directory(join(staging.path, 'chats')),
+        );
+      }
+      await _verifyDatabaseFile(stagedDatabase.path);
+      await staging.rename(destination.path);
+    } on Object catch (error) {
+      if (await staging.exists()) await staging.delete(recursive: true);
+      throw AppFailure.storage('database_recovery_failed', cause: error);
+    }
+  }
+
+  static Future<_LegacyDataSource?> _findLegacyDataSource(
+    Directory root,
+  ) async {
+    final database = File(join(root.path, _databaseFileName));
+    if (await _isCurrentDatabaseValid(database)) {
+      return _LegacyDataSource(
+        database: database,
+        chats: Directory(join(root.path, 'chats')),
+      );
+    }
+
+    for (final name in <String>[_currentBackupName, _previousBackupName]) {
+      final backup = Directory(join(root.path, name));
+      if (!await _isCurrentBackupValid(backup)) continue;
+      return _LegacyDataSource(
+        database: File(join(backup.path, _databaseFileName)),
+        chats: Directory(join(backup.path, 'chats')),
+      );
+    }
+    return null;
+  }
+
+  static Future<bool> _isCurrentDatabaseValid(File database) async {
+    if (!await database.exists()) return false;
+    try {
+      await _verifyDatabaseFile(database.path);
+      return true;
+    } on Object {
+      return false;
+    }
   }
 
   static Future<void> _prepareCurrentDatabase(
@@ -141,6 +216,7 @@ class DatabaseService {
         throw const FormatException('Backup schema version is not current.');
       }
       await _verifyIntegrity(database);
+      await _verifyCurrentDatabaseSchema(database);
     } finally {
       await database.close();
     }
@@ -434,14 +510,15 @@ class DatabaseService {
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         PRIMARY KEY (bot_id, skill_id),
-        FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE,
-        FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+        -- Bundled system Skills intentionally have no row in skills.
+        FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE
       )
     ''');
     await db.execute(
       'CREATE INDEX bot_skill_bindings_skill_id_index '
       'ON bot_skill_bindings(skill_id)',
     );
+    await _createBotSkillReferenceValidationTriggers(db);
     await db.execute('''
       CREATE TABLE skill_activations (
         id TEXT PRIMARY KEY,
@@ -543,14 +620,15 @@ class DatabaseService {
         skill_id TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         PRIMARY KEY (chat_id, skill_id),
-        FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
-        FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+        -- Bundled system Skills intentionally have no row in skills.
+        FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
       )
     ''');
     await db.execute(
       'CREATE INDEX conversation_skill_pins_skill_id_index '
       'ON conversation_skill_pins(skill_id)',
     );
+    await _createConversationSkillReferenceValidationTriggers(db);
   }
 
   static Future<void> _createConversationMemorySchema(
@@ -672,4 +750,11 @@ class DatabaseService {
       'ON mcp_tools(server_id)',
     );
   }
+}
+
+final class _LegacyDataSource {
+  const _LegacyDataSource({required this.database, required this.chats});
+
+  final File database;
+  final Directory chats;
 }

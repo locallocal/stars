@@ -937,7 +937,7 @@ Stars 若支持一键添加本地 Server，必须在启动前显示完整命令�
   `McpToolAdapter`、动态 Tool Registry 和系统安全凭据存储；访问令牌不进入 SQLite、
   Skill 文件、模型上下文、调用结果或错误日志；
 - MCP Server 使用互斥的 Streamable HTTP/stdio 配置模型，协议协商结果只存在于活动会话；
-  Server 状态与 Tool Catalog 通过单一事务原子替换。当前 v17 Schema 直接创建最新 MCP 表，
+  Server 状态与 Tool Catalog 通过单一事务原子替换。当前 v18 Schema 直接创建最新 MCP 表，
   应用不提供旧数据库升级或旧字段解析回退；
 - 已实现远程端点安全策略：仅 HTTPS，禁止 URI 用户信息，阻止 localhost、私网、
   链路本地、保留地址及 DNS 解析到非公网地址的主机；

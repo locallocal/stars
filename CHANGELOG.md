@@ -16,6 +16,12 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Isolated databases, conversation files, and recovery snapshots under the
+  app-specific `Documents/Stars` directory. On first launch, Stars now migrates
+  a valid legacy database or recovers its own validated backup when another
+  application has replaced the old shared `Documents/app.db` file.
+- Fixed Bot creation with bundled system Skills by allowing their bindings and
+  conversation pins without creating editable installation records.
 - Relicensed Stars from the MIT License to the GNU Affero General Public
   License v3.0 only (`AGPL-3.0-only`).
 - Unified the application identifier as `io.github.locallocal.stars` on all
