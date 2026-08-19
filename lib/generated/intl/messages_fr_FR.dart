@@ -167,10 +167,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Les résumés automatiques peuvent être inexacts. Le message actuel est toujours prioritaire.",
     ),
     "backToDailyUsage": MessageLookupByLibrary.simpleMessage(
-      "Back to daily usage",
+      "Retour à l’utilisation quotidienne",
     ),
     "basicInformation": MessageLookupByLibrary.simpleMessage(
-      "Basic Information",
+      "Informations générales",
     ),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Avatar du Bot"),
@@ -183,7 +183,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "botName": MessageLookupByLibrary.simpleMessage("Nom du Bot"),
     "botSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search filters the list by bot name.",
+      "La recherche filtre la liste par nom de bot.",
     ),
     "botSkills": MessageLookupByLibrary.simpleMessage("Compétences"),
     "botSkillsDescription": MessageLookupByLibrary.simpleMessage(
@@ -195,7 +195,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "botUpdated": m4,
     "cancel": MessageLookupByLibrary.simpleMessage("Annuler"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("Modifier l’avatar"),
-    "changesSaved": MessageLookupByLibrary.simpleMessage("Saved"),
+    "changesSaved": MessageLookupByLibrary.simpleMessage("Enregistré"),
     "chatDeleted": m5,
     "chatExecutionStatus": MessageLookupByLibrary.simpleMessage(
       "État d’exécution du chat",
@@ -225,7 +225,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clickDayForHourlyUsage": MessageLookupByLibrary.simpleMessage(
-      "Select a day to view hourly usage",
+      "Sélectionnez un jour pour afficher l’utilisation horaire",
     ),
     "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
       "Cliquez sur + en haut à droite pour ajouter un bot",
@@ -269,20 +269,22 @@ class MessageLookup extends MessageLookupByLibrary {
       "Résumé de la conversation",
     ),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
-      "Token share by conversation",
+      "Répartition des jetons par conversation",
     ),
-    "copyApiKey": MessageLookupByLibrary.simpleMessage("Copy API Key"),
+    "copyApiKey": MessageLookupByLibrary.simpleMessage("Copier la clé API"),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
     "copyright": m12,
     "createChatFailed": m13,
     "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
-    "creationTime": MessageLookupByLibrary.simpleMessage("Creation Time"),
+    "creationTime": MessageLookupByLibrary.simpleMessage("Date de création"),
     "customProvider": MessageLookupByLibrary.simpleMessage(
       "Fournisseur personnalisé...",
     ),
-    "dailyTokenUsage": MessageLookupByLibrary.simpleMessage("Daily usage"),
+    "dailyTokenUsage": MessageLookupByLibrary.simpleMessage(
+      "Utilisation quotidienne",
+    ),
     "darkMode": MessageLookupByLibrary.simpleMessage("Mode Sombre"),
     "databaseDowngradeNotSupported": MessageLookupByLibrary.simpleMessage(
       "Cette base de données a été créée par une version plus récente de Stars. Mettez l’application à jour avant de l’ouvrir.",
@@ -448,11 +450,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage(
       "Aide et Commentaires",
     ),
-    "hideApiKey": MessageLookupByLibrary.simpleMessage("Hide API Key"),
+    "hideApiKey": MessageLookupByLibrary.simpleMessage("Masquer la clé API"),
     "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("Accueil"),
-    "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("Hourly usage"),
+    "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
+      "Utilisation horaire",
+    ),
     "idle": MessageLookupByLibrary.simpleMessage("Inactif"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -620,26 +624,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageSkills": MessageLookupByLibrary.simpleMessage("Compétences"),
     "minutesAgo": m27,
     "modalityAudio": MessageLookupByLibrary.simpleMessage("Audio"),
-    "modalityFile": MessageLookupByLibrary.simpleMessage("File"),
+    "modalityFile": MessageLookupByLibrary.simpleMessage("Fichier"),
     "modalityImage": MessageLookupByLibrary.simpleMessage("Image"),
     "modalityMulti": MessageLookupByLibrary.simpleMessage("Multimodal"),
-    "modalityMusic": MessageLookupByLibrary.simpleMessage("Music"),
-    "modalityRealtime": MessageLookupByLibrary.simpleMessage("Realtime"),
-    "modalitySpeech": MessageLookupByLibrary.simpleMessage("Speech"),
-    "modalityText": MessageLookupByLibrary.simpleMessage("Text"),
-    "modalityVideo": MessageLookupByLibrary.simpleMessage("Video"),
+    "modalityMusic": MessageLookupByLibrary.simpleMessage("Musique"),
+    "modalityRealtime": MessageLookupByLibrary.simpleMessage("Temps réel"),
+    "modalitySpeech": MessageLookupByLibrary.simpleMessage("Parole"),
+    "modalityText": MessageLookupByLibrary.simpleMessage("Texte"),
+    "modalityVideo": MessageLookupByLibrary.simpleMessage("Vidéo"),
     "model": MessageLookupByLibrary.simpleMessage("Modèle"),
     "modelConfiguration": MessageLookupByLibrary.simpleMessage(
-      "Model Configuration",
+      "Configuration du modèle",
     ),
     "modelContextWindow": MessageLookupByLibrary.simpleMessage(
-      "Model Context Size",
+      "Taille du contexte du modèle",
     ),
-    "modelInputModalities": MessageLookupByLibrary.simpleMessage("Input"),
-    "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Output"),
+    "modelInputModalities": MessageLookupByLibrary.simpleMessage("Entrée"),
+    "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Sortie"),
     "modelsRetrievedSuccess": m28,
     "modificationTime": MessageLookupByLibrary.simpleMessage(
-      "Modification Time",
+      "Date de modification",
     ),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
     "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
@@ -674,7 +678,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Aucun résumé de la conversation n’est encore disponible.",
     ),
     "noMatchingBots": MessageLookupByLibrary.simpleMessage(
-      "No matching bots found",
+      "Aucun bot correspondant trouvé",
     ),
     "noMatchingChats": MessageLookupByLibrary.simpleMessage(
       "No matching chats found",
@@ -705,9 +709,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Importez un dossier Agent Skills ou un fichier ZIP contenant SKILL.md.",
     ),
     "noTokenUsageRecorded": MessageLookupByLibrary.simpleMessage(
-      "No token usage recorded",
+      "Aucune utilisation de jetons enregistrée",
     ),
-    "notSupported": MessageLookupByLibrary.simpleMessage("Not supported"),
+    "notSupported": MessageLookupByLibrary.simpleMessage("Non pris en charge"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage(
       "Pas assez d’ancien contexte à compresser",
     ),
@@ -764,7 +768,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "provider": MessageLookupByLibrary.simpleMessage("Fournisseur"),
     "providerInformation": MessageLookupByLibrary.simpleMessage(
-      "Provider Information",
+      "Informations du fournisseur",
     ),
     "reasoningCompleted": MessageLookupByLibrary.simpleMessage(
       "Raisonnement terminé",
@@ -822,8 +826,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage(
       "Could not save to gallery",
     ),
-    "savingChanges": MessageLookupByLibrary.simpleMessage("Saving..."),
-    "searchBots": MessageLookupByLibrary.simpleMessage("Search bots"),
+    "savingChanges": MessageLookupByLibrary.simpleMessage("Enregistrement..."),
+    "searchBots": MessageLookupByLibrary.simpleMessage("Rechercher des bots"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
@@ -855,7 +859,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
       "Image from Stars",
     ),
-    "showApiKey": MessageLookupByLibrary.simpleMessage("Show API Key"),
+    "showApiKey": MessageLookupByLibrary.simpleMessage("Afficher la clé API"),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Afficher les détails d’exécution dans les messages de conversation.",
     ),
@@ -1004,9 +1008,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Soumettre les Commentaires",
     ),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("Messages résumés"),
-    "supported": MessageLookupByLibrary.simpleMessage("Supported"),
-    "supportsMcp": MessageLookupByLibrary.simpleMessage("Supports MCP"),
-    "supportsSkills": MessageLookupByLibrary.simpleMessage("Supports Skills"),
+    "supported": MessageLookupByLibrary.simpleMessage("Pris en charge"),
+    "supportsMcp": MessageLookupByLibrary.simpleMessage("Prend en charge MCP"),
+    "supportsSkills": MessageLookupByLibrary.simpleMessage(
+      "Prend en charge les Skills",
+    ),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("Invite Système"),
     "takePhoto": MessageLookupByLibrary.simpleMessage("Camera"),
     "testSkill": MessageLookupByLibrary.simpleMessage("Tester"),
@@ -1032,8 +1038,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage(
       "Réflexion en cours…",
     ),
-    "tokenUsage": MessageLookupByLibrary.simpleMessage("Token usage"),
-    "tokens": MessageLookupByLibrary.simpleMessage("tokens"),
+    "tokenUsage": MessageLookupByLibrary.simpleMessage(
+      "Utilisation des jetons",
+    ),
+    "tokens": MessageLookupByLibrary.simpleMessage("jetons"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage(
       "Autorisé une fois",
     ),
@@ -1047,9 +1055,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage(
       "Script de compétence",
     ),
-    "totalTokens": MessageLookupByLibrary.simpleMessage("Total tokens"),
+    "totalTokens": MessageLookupByLibrary.simpleMessage("Total des jetons"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
-      "Try a different search, or create a new item.",
+      "Essayez une autre recherche ou créez un nouvel élément.",
     ),
     "typing": MessageLookupByLibrary.simpleMessage("En train d\'écrire..."),
     "unableToLoadBots": MessageLookupByLibrary.simpleMessage(
@@ -1061,7 +1069,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
     ),
-    "unavailableBot": MessageLookupByLibrary.simpleMessage("Unavailable bot"),
+    "unavailableBot": MessageLookupByLibrary.simpleMessage("Bot indisponible"),
     "uninstall": MessageLookupByLibrary.simpleMessage("Désinstaller"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage(
       "Désinstaller la compétence",
