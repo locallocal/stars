@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/built_in_model_catalog.dart';
+import 'package:stars/data/services/image_media_type.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
@@ -410,30 +411,7 @@ abstract class Provider extends AiProvider {
   }
 
   String getImageMediaType(List<int> bytes) {
-    if (bytes.length >= 3) {
-      if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
-        return 'image/jpeg';
-      }
-      if (bytes.length >= 4 &&
-          bytes[0] == 0x89 &&
-          bytes[1] == 0x50 &&
-          bytes[2] == 0x4E &&
-          bytes[3] == 0x47) {
-        return 'image/png';
-      }
-      if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
-        return 'image/gif';
-      }
-      if (bytes[0] == 0x42 && bytes[1] == 0x4D) return 'image/bmp';
-      if (bytes.length >= 4 &&
-          bytes[0] == 0x52 &&
-          bytes[1] == 0x49 &&
-          bytes[2] == 0x46 &&
-          bytes[3] == 0x46) {
-        return 'image/webp';
-      }
-    }
-    return 'application/octet-stream';
+    return detectImageMediaType(bytes) ?? 'application/octet-stream';
   }
 
   String transformRatio(int width, int height) {

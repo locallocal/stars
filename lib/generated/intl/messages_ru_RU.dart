@@ -147,10 +147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Системный промпт",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -1028,6 +1027,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "uninstall": MessageLookupByLibrary.simpleMessage("Удалить"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("Удалить навык"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("Открепить"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "Формат изображения не поддерживается. Выберите изображение JPEG, PNG, GIF, BMP или WebP.",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("Загрузить файл"),
     "uploadImage": MessageLookupByLibrary.simpleMessage(
       "Загрузить изображение",

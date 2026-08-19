@@ -878,6 +878,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "uninstall": MessageLookupByLibrary.simpleMessage("제거"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("스킬 제거"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("고정 해제"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "지원하지 않는 이미지 형식입니다. JPEG, PNG, GIF, BMP 또는 WebP 이미지를 선택하세요.",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("파일 업로드"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("이미지 업로드"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("사용자 동의"),

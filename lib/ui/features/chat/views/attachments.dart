@@ -129,6 +129,14 @@ class ImageAttachments extends StatelessWidget {
                               height: desktopMode ? 92 : 90,
                               width: desktopMode ? 74 : 60,
                               fit: BoxFit.cover,
+                              errorBuilder:
+                                  (context, _, _) => SizedBox(
+                                    height: desktopMode ? 92 : 90,
+                                    width: desktopMode ? 74 : 60,
+                                    child: const Icon(
+                                      Icons.broken_image_outlined,
+                                    ),
+                                  ),
                             ),
                           ),
                         ),

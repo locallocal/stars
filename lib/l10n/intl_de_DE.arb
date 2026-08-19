@@ -790,6 +790,7 @@
     "clearAttachments": "Clear attachments",
     "removeImageAttachment": "Remove image",
     "removeFileAttachment": "Remove file",
+    "unsupportedImageFormat": "Nicht unterstütztes Bildformat. Wählen Sie ein JPEG-, PNG-, GIF-, BMP- oder WebP-Bild.",
     "imageAttachment": "Image attachment",
     "imageResult": "Image result",
     "fileAttachment": "File attachment",

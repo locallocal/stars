@@ -147,10 +147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt système",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Géré par Stars et ajouté à chaque requête au modèle. Les identifiants de l’agent et de la conversation en cours sont ajoutés à l’exécution et ne sont pas modifiables.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Géré par Stars et ajouté à chaque requête au modèle. Les identifiants de l’agent et de la conversation en cours sont ajoutés à l’exécution et ne sont pas modifiables.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -1068,6 +1067,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Désinstaller la compétence",
     ),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("Désépingler"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "Format d’image non pris en charge. Choisissez une image JPEG, PNG, GIF, BMP ou WebP.",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("Importer un fichier"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("Importer une image"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("Accord Utilisateur"),

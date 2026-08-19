@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as path;
 import 'package:stars/data/services/application_data_directory.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
+import 'package:stars/data/services/image_media_type.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 
@@ -21,13 +22,42 @@ class AttachmentRepositoryImpl implements ConversationAssetRepository {
   final AttachmentDocumentsDirectoryProvider _documentsDirectoryProvider;
 
   @override
-  Future<String?> captureImage() => _service.captureImage();
+  Future<String?> captureImage() =>
+      _selectSupportedImage(_service.captureImage);
 
   @override
-  Future<String?> selectImage() => _service.selectImage();
+  Future<String?> selectImage() => _selectSupportedImage(_service.selectImage);
 
   @override
   Future<String?> selectFile() => _service.selectFile();
+
+  Future<String?> _selectSupportedImage(
+    Future<String?> Function() pickImage,
+  ) async {
+    final selectedPath = await pickImage();
+    if (selectedPath == null) return null;
+
+    final file = File(selectedPath);
+    try {
+      final reader = await file.open();
+      try {
+        final header = await reader.read(12);
+        if (detectImageMediaType(header) == null) {
+          throw const AppFailure.validation('unsupported_image_format');
+        }
+      } finally {
+        await reader.close();
+      }
+    } on AppFailure {
+      rethrow;
+    } on Object catch (error) {
+      throw AppFailure.storage(
+        'attachment_image_validation_failed',
+        cause: error,
+      );
+    }
+    return selectedPath;
+  }
 
   @override
   Future<List<String>> persistAssets({

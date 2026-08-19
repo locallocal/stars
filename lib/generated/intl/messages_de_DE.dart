@@ -148,10 +148,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System-Prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Wird von Stars verwaltet und jeder Modellanfrage hinzugefügt. Die Kennungen des aktuellen Agenten und der Unterhaltung werden zur Laufzeit ergänzt und können nicht bearbeitet werden.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Wird von Stars verwaltet und jeder Modellanfrage hinzugefügt. Die Kennungen des aktuellen Agenten und der Unterhaltung werden zur Laufzeit ergänzt und können nicht bearbeitet werden.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -1055,6 +1054,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Fähigkeit deinstallieren",
     ),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("Lösen"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "Nicht unterstütztes Bildformat. Wählen Sie ein JPEG-, PNG-, GIF-, BMP- oder WebP-Bild.",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("Datei hochladen"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("Bild hochladen"),
     "userAgreement": MessageLookupByLibrary.simpleMessage(

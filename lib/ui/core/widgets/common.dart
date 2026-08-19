@@ -17,6 +17,9 @@ String safeFailureMessage(BuildContext context, Object error) {
   if (failure.code == 'database_recovery_failed') {
     return S.of(context).databaseRecoveryFailed;
   }
+  if (failure.code == 'unsupported_image_format') {
+    return S.of(context).unsupportedImageFormat;
+  }
   return switch (failure.kind) {
     AppFailureKind.cancelled => S.of(context).replyCancelled,
     AppFailureKind.networkTimeout => S.of(context).statusTimedOut,

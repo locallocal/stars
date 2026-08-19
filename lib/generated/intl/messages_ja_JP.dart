@@ -883,6 +883,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "uninstall": MessageLookupByLibrary.simpleMessage("アンインストール"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("スキルをアンインストール"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("固定解除"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "この画像形式には対応していません。JPEG、PNG、GIF、BMP、または WebP 画像を選択してください。",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("ファイルをアップロード"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("画像をアップロード"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("ユーザー同意"),

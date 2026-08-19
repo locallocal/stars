@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -1510,7 +1509,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -1921,6 +1921,16 @@ class S {
     return Intl.message(
       'Remove file',
       name: 'removeFileAttachment',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unsupported image format. Choose a JPEG, PNG, GIF, BMP, or WebP image.`
+  String get unsupportedImageFormat {
+    return Intl.message(
+      'Unsupported image format. Choose a JPEG, PNG, GIF, BMP, or WebP image.',
+      name: 'unsupportedImageFormat',
       desc: '',
       args: [],
     );
