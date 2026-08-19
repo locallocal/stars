@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon/app_icon.png" alt="Stars app logo" width="128">
+</p>
+
 # Stars
 
 [English](README.md) | [简体中文](docs/README_zh-CN.md)
