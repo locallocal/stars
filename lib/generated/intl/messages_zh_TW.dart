@@ -801,6 +801,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "uninstall": MessageLookupByLibrary.simpleMessage("解除安裝"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("解除安裝技能"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("解除固定"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "不支援此圖片格式。請選擇 JPEG、PNG、GIF、BMP 或 WebP 圖片。",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("上傳檔案"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("上傳圖片"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("用戶協議"),

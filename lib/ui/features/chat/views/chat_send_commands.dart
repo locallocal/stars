@@ -3,23 +3,31 @@ part of 'chat.dart';
 extension ChatPageSendCommands on ChatPageState {
   // 从相机获取图片
   Future<void> getAttachImageFromCamera() async {
-    final imagePath = await _chatViewModel.captureImage();
-    if (imagePath != null && mounted) {
-      _updateState(() {
-        _selectedImages.add(File(imagePath));
-      });
-      unawaited(_persistDraft());
-    }
+    await _addSelectedImage(_chatViewModel.captureImage);
   }
 
   // 从相册获取图片
   Future<void> getAttachImageFromGallery() async {
-    final imagePath = await _chatViewModel.selectImage();
-    if (imagePath != null && mounted) {
-      _updateState(() {
-        _selectedImages.add(File(imagePath));
-      });
-      unawaited(_persistDraft());
+    await _addSelectedImage(_chatViewModel.selectImage);
+  }
+
+  Future<void> _addSelectedImage(Future<String?> Function() pickImage) async {
+    try {
+      final imagePath = await pickImage();
+      if (imagePath != null && mounted) {
+        _updateState(() {
+          _selectedImages.add(File(imagePath));
+        });
+        unawaited(_persistDraft());
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        showStarsNotice(
+          context,
+          safeFailureMessage(context, error),
+          tone: StarsNoticeTone.error,
+        );
+      }
     }
   }
 

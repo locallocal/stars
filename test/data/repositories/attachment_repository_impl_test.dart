@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:stars/data/repositories/attachment_repository_impl.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
@@ -62,4 +63,47 @@ void main() {
       isEmpty,
     );
   });
+
+  test('selectImage accepts a supported raster image', () async {
+    final image = File(path.join(root.path, 'photo.png'));
+    await image.writeAsBytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+    final imageRepository = _repositoryWithSelectedImage(root, image.path);
+
+    expect(await imageRepository.selectImage(), image.path);
+  });
+
+  test('selectImage rejects SVG before it reaches Image.file', () async {
+    final image = File(path.join(root.path, 'provider.svg'));
+    await image.writeAsString('<svg xmlns="http://www.w3.org/2000/svg"/>');
+    final imageRepository = _repositoryWithSelectedImage(root, image.path);
+
+    await expectLater(
+      imageRepository.selectImage(),
+      throwsA(
+        isA<AppFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'unsupported_image_format',
+        ),
+      ),
+    );
+  });
+}
+
+AttachmentRepositoryImpl _repositoryWithSelectedImage(
+  Directory root,
+  String imagePath,
+) {
+  return AttachmentRepositoryImpl(
+    service: AttachmentPickerService(
+      imagePathPicker:
+          ({
+            required ImageSource source,
+            int? imageQuality,
+            double? maxWidth,
+            double? maxHeight,
+          }) async => imagePath,
+    ),
+    documentsDirectoryProvider: () async => root,
+  );
 }

@@ -790,6 +790,7 @@
     "clearAttachments": "Clear attachments",
     "removeImageAttachment": "Remove image",
     "removeFileAttachment": "Remove file",
+    "unsupportedImageFormat": "この画像形式には対応していません。JPEG、PNG、GIF、BMP、または WebP 画像を選択してください。",
     "imageAttachment": "Image attachment",
     "imageResult": "Image result",
     "fileAttachment": "File attachment",

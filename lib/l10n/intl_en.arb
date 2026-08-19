@@ -685,6 +685,7 @@
     "clearAttachments": "Clear attachments",
     "removeImageAttachment": "Remove image",
     "removeFileAttachment": "Remove file",
+    "unsupportedImageFormat": "Unsupported image format. Choose a JPEG, PNG, GIF, BMP, or WebP image.",
     "imageAttachment": "Image attachment",
     "imageResult": "Image result",
     "fileAttachment": "File attachment",

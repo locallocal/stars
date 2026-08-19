@@ -790,6 +790,7 @@
     "clearAttachments": "Clear attachments",
     "removeImageAttachment": "Remove image",
     "removeFileAttachment": "Remove file",
+    "unsupportedImageFormat": "यह इमेज फ़ॉर्मैट समर्थित नहीं है। JPEG, PNG, GIF, BMP या WebP इमेज चुनें।",
     "imageAttachment": "Image attachment",
     "imageResult": "Image result",
     "fileAttachment": "File attachment",

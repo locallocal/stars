@@ -145,10 +145,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -994,6 +993,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "uninstall": MessageLookupByLibrary.simpleMessage("Uninstall"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("Uninstall Skill"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("Unpin"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "Unsupported image format. Choose a JPEG, PNG, GIF, BMP, or WebP image.",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("File"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("Image"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("User Agreement"),

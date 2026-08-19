@@ -145,10 +145,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "सिस्टम प्रॉम्प्ट",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -1008,6 +1007,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "कौशल अनइंस्टॉल करें",
     ),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("अनपिन करें"),
+    "unsupportedImageFormat": MessageLookupByLibrary.simpleMessage(
+      "यह इमेज फ़ॉर्मैट समर्थित नहीं है। JPEG, PNG, GIF, BMP या WebP इमेज चुनें।",
+    ),
     "uploadFile": MessageLookupByLibrary.simpleMessage("फ़ाइल अपलोड करें"),
     "uploadImage": MessageLookupByLibrary.simpleMessage("छवि अपलोड करें"),
     "userAgreement": MessageLookupByLibrary.simpleMessage("उपयोगकर्ता समझौता"),
