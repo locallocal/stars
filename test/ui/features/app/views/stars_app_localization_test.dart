@@ -5,6 +5,24 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/ui/features/app/views/stars_app.dart';
 
 void main() {
+  testWidgets('desktop startup shell uses the 14px default font size', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await tester.pumpWidget(const StartupShell.loading());
+      await tester.pump();
+
+      final scaffoldContext = tester.element(find.byType(Scaffold));
+      expect(
+        Theme.of(scaffoldContext).textTheme.bodyLarge?.fontSize,
+        ProfileDefaults.desktopFontSize,
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('startup shell uses the platform locale before Profile loads', (
     tester,
   ) async {

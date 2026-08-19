@@ -12,6 +12,29 @@ import 'package:stars/utils/theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('desktop font reset restores the 14px default', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    Profile? savedProfile;
+    try {
+      await tester.pumpWidget(
+        _profileHarness(
+          onProfileSaved: (profile) async => savedProfile = profile,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final resetButton = find.widgetWithText(ShadButton, '恢复默认');
+      await tester.ensureVisible(resetButton);
+      await tester.tap(resetButton);
+      await tester.pumpAndSettle();
+
+      expect(savedProfile?.fontSize, ProfileDefaults.desktopFontSize);
+      expect(find.text('14 px'), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('desktop font slider keeps the semantics tree consistent', (
     tester,
   ) async {

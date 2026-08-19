@@ -163,7 +163,7 @@ extension _ProfileSettingsControls on _ProfilePageState {
 
   Widget _buildDesktopFontSizeControl(BuildContext context) {
     final isDefault =
-        (_fontSize - _ProfilePageState._defaultFontSize).abs() < 0.01;
+        (_fontSize - ProfileDefaults.desktopFontSize).abs() < 0.01;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 14, 8, 16),
@@ -198,7 +198,7 @@ extension _ProfileSettingsControls on _ProfilePageState {
                 enabled: !isDefault,
                 size: ShadButtonSize.sm,
                 onPressed:
-                    () => _commitFontSize(_ProfilePageState._defaultFontSize),
+                    () => _commitFontSize(ProfileDefaults.desktopFontSize),
                 leading: const Icon(Icons.restart_alt_rounded, size: 16),
                 child: Text(S.of(context).resetToDefault),
               ),

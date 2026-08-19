@@ -291,13 +291,17 @@ void main() {
   test(
     'profile repository creates one default and publishes updates',
     () async {
-      final repository = SqliteProfileRepository(localDatabase: localDatabase);
+      final repository = SqliteProfileRepository(
+        localDatabase: localDatabase,
+        defaultFontSize: ProfileDefaults.desktopFontSize,
+      );
       addTearDown(repository.dispose);
       final changes = <Profile>[];
       final subscription = repository.changes.listen(changes.add);
       addTearDown(subscription.cancel);
 
       final profile = await repository.getProfile();
+      expect(profile.fontSize, ProfileDefaults.desktopFontSize);
       expect(profile.showExecutionStatus, isTrue);
       final updated = Profile(
         name: 'Earthwind',
