@@ -119,15 +119,18 @@ class StartupShell extends StatelessWidget {
     }
 
     return ShadApp.custom(
-      theme: buildStarsShadTheme(brightness: Brightness.light, fontSize: 16),
+      theme: buildStarsShadTheme(
+        brightness: Brightness.light,
+        fontSize: ProfileDefaults.desktopFontSize,
+      ),
       appBuilder: (context) {
         final theme = buildShadMaterialBridgeTheme(
           context: context,
-          fontSize: 16,
+          fontSize: ProfileDefaults.desktopFontSize,
         );
         final highContrastTheme = buildShadMaterialBridgeTheme(
           context: context,
-          fontSize: 16,
+          fontSize: ProfileDefaults.desktopFontSize,
           highContrast: true,
           reduceTransparency: true,
         );
@@ -147,7 +150,7 @@ class StartupShell extends StatelessWidget {
           builder: (context, child) {
             final shadTheme = buildStarsShadTheme(
               brightness: Theme.of(context).brightness,
-              fontSize: 16,
+              fontSize: ProfileDefaults.desktopFontSize,
               highContrast: MediaQuery.highContrastOf(context),
             );
             return ShadTheme(

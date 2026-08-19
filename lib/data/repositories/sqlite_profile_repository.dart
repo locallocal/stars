@@ -6,11 +6,35 @@ import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/profile_repository.dart';
 
+double defaultProfileFontSizeForPlatform(
+  TargetPlatform platform, {
+  bool isWeb = false,
+}) {
+  if (isWeb) return ProfileDefaults.mobileFontSize;
+  return switch (platform) {
+    TargetPlatform.linux ||
+    TargetPlatform.macOS ||
+    TargetPlatform.windows => ProfileDefaults.desktopFontSize,
+    TargetPlatform.android ||
+    TargetPlatform.iOS => ProfileDefaults.mobileFontSize,
+    TargetPlatform.fuchsia => ProfileDefaults.mobileFontSize,
+  };
+}
+
 class SqliteProfileRepository implements ProfileRepository {
-  SqliteProfileRepository({required LocalDatabaseService localDatabase})
-    : _localDatabase = localDatabase;
+  SqliteProfileRepository({
+    required LocalDatabaseService localDatabase,
+    double? defaultFontSize,
+  }) : _localDatabase = localDatabase,
+       _defaultFontSize =
+           defaultFontSize ??
+           defaultProfileFontSizeForPlatform(
+             defaultTargetPlatform,
+             isWeb: kIsWeb,
+           );
 
   final LocalDatabaseService _localDatabase;
+  final double _defaultFontSize;
   final StreamController<Profile> _changes =
       StreamController<Profile>.broadcast();
   Profile? _cache;
@@ -29,7 +53,7 @@ class SqliteProfileRepository implements ProfileRepository {
       final profile = Profile(
         name: '用户名',
         avatar: '',
-        fontSize: 16,
+        fontSize: _defaultFontSize,
         themeMode: 0,
         language: 'zh_CN',
         showExecutionStatus: true,

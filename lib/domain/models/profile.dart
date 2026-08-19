@@ -1,3 +1,8 @@
+abstract final class ProfileDefaults {
+  static const double desktopFontSize = 14.0;
+  static const double mobileFontSize = 16.0;
+}
+
 class Profile {
   const Profile({
     required this.name,

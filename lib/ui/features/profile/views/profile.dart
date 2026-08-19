@@ -49,8 +49,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   void _updateState(VoidCallback callback) => setState(callback);
 
-  static const double _defaultFontSize = 16.0;
-
   Profile? _profile;
   bool _isLoading = true;
   ThemeMode _themeMode = ThemeMode.system;
