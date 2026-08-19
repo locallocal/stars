@@ -36,7 +36,7 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m7(botName) => "確定要清空與 \"${botName}\" 的所有聊天記錄嗎？此操作無法撤銷。";
 
-  static String m8(botName) => "刪除機器人會刪除對應的聊天記錄，確定要刪除 ${botName} 嗎？";
+  static String m8(botName) => "刪除智能體會刪除對應的聊天記錄，確定要刪除 ${botName} 嗎？";
 
   static String m9(botName) => "刪除聊天會清空所有的聊天記錄，確定要刪除與 ${botName} 的聊天嗎？";
 
@@ -110,7 +110,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "The active request cannot be stopped",
     ),
     "addAttachment": MessageLookupByLibrary.simpleMessage("Attachment"),
-    "addBot": MessageLookupByLibrary.simpleMessage("添加機器人"),
+    "addBot": MessageLookupByLibrary.simpleMessage("添加智能體"),
     "addMcpServer": MessageLookupByLibrary.simpleMessage("新增 MCP 伺服器"),
     "addSkill": MessageLookupByLibrary.simpleMessage("加入技能"),
     "adjustAppFontSize": MessageLookupByLibrary.simpleMessage("調整應用內文字大小"),
@@ -148,14 +148,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "自動摘要可能不準確，目前訊息始終優先。",
     ),
-    "backToDailyUsage": MessageLookupByLibrary.simpleMessage(
-      "Back to daily usage",
-    ),
-    "basicInformation": MessageLookupByLibrary.simpleMessage(
-      "Basic Information",
-    ),
+    "backToDailyUsage": MessageLookupByLibrary.simpleMessage("返回每日用量"),
+    "basicInformation": MessageLookupByLibrary.simpleMessage("基本資訊"),
     "botAddedSuccess": m0,
-    "botAvatar": MessageLookupByLibrary.simpleMessage("機器人頭像"),
+    "botAvatar": MessageLookupByLibrary.simpleMessage("智能體頭像"),
     "botDeleted": m1,
     "botGreeting": m2,
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
@@ -163,10 +159,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
       "按工具啟用目前智慧代理可使用的 MCP 能力；預設每次呼叫都需要確認。",
     ),
-    "botName": MessageLookupByLibrary.simpleMessage("機器人名稱"),
-    "botSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search filters the list by bot name.",
-    ),
+    "botName": MessageLookupByLibrary.simpleMessage("智能體名稱"),
+    "botSearchScope": MessageLookupByLibrary.simpleMessage("搜尋會依智能體名稱篩選清單。"),
     "botSkills": MessageLookupByLibrary.simpleMessage("技能"),
     "botSkillsDescription": MessageLookupByLibrary.simpleMessage(
       "選擇這個智慧體可以使用的可重複指令。",
@@ -197,7 +191,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "clearPinnedSkills": MessageLookupByLibrary.simpleMessage("清除會話固定技能"),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clickDayForHourlyUsage": MessageLookupByLibrary.simpleMessage(
-      "Select a day to view hourly usage",
+      "選擇日期以查看每小時用量",
     ),
     "clickToCreateBot": MessageLookupByLibrary.simpleMessage("點擊右上角 + 添加智能體"),
     "clickToStartChat": MessageLookupByLibrary.simpleMessage("點擊新建聊天建立會話"),
@@ -219,18 +213,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindow": MessageLookupByLibrary.simpleMessage("上下文視窗"),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("會話摘要"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
-      "Token share by conversation",
+      "各對話 Token 占比",
     ),
-    "copyApiKey": MessageLookupByLibrary.simpleMessage("Copy API Key"),
+    "copyApiKey": MessageLookupByLibrary.simpleMessage("複製 API 金鑰"),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
     "copyright": m12,
     "createChatFailed": m13,
     "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
-    "creationTime": MessageLookupByLibrary.simpleMessage("Creation Time"),
+    "creationTime": MessageLookupByLibrary.simpleMessage("建立時間"),
     "customProvider": MessageLookupByLibrary.simpleMessage("自定義供應商..."),
-    "dailyTokenUsage": MessageLookupByLibrary.simpleMessage("Daily usage"),
+    "dailyTokenUsage": MessageLookupByLibrary.simpleMessage("每日用量"),
     "darkMode": MessageLookupByLibrary.simpleMessage("深色模式"),
     "databaseDowngradeNotSupported": MessageLookupByLibrary.simpleMessage(
       "資料庫由較新版本的 Stars 建立，請升級應用程式後再開啟。",
@@ -274,7 +268,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "durationMilliseconds": m15,
     "durationSeconds": m16,
     "edit": MessageLookupByLibrary.simpleMessage("編輯"),
-    "editBot": MessageLookupByLibrary.simpleMessage("編輯機器人"),
+    "editBot": MessageLookupByLibrary.simpleMessage("編輯智能體"),
     "editMcpServer": MessageLookupByLibrary.simpleMessage("編輯 MCP 伺服器"),
     "editMemory": MessageLookupByLibrary.simpleMessage("編輯記憶"),
     "editName": MessageLookupByLibrary.simpleMessage("修改名稱"),
@@ -340,11 +334,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "生成失敗 · 保留部分回覆",
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("幫助與反饋"),
-    "hideApiKey": MessageLookupByLibrary.simpleMessage("Hide API Key"),
+    "hideApiKey": MessageLookupByLibrary.simpleMessage("隱藏 API 金鑰"),
     "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("首頁"),
-    "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("Hourly usage"),
+    "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("每小時用量"),
     "idle": MessageLookupByLibrary.simpleMessage("閒置"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -481,28 +475,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("輸入消息..."),
     "messageSkills": MessageLookupByLibrary.simpleMessage("技能"),
     "minutesAgo": m27,
-    "modalityAudio": MessageLookupByLibrary.simpleMessage("Audio"),
-    "modalityFile": MessageLookupByLibrary.simpleMessage("File"),
-    "modalityImage": MessageLookupByLibrary.simpleMessage("Image"),
-    "modalityMulti": MessageLookupByLibrary.simpleMessage("Multimodal"),
-    "modalityMusic": MessageLookupByLibrary.simpleMessage("Music"),
-    "modalityRealtime": MessageLookupByLibrary.simpleMessage("Realtime"),
-    "modalitySpeech": MessageLookupByLibrary.simpleMessage("Speech"),
-    "modalityText": MessageLookupByLibrary.simpleMessage("Text"),
-    "modalityVideo": MessageLookupByLibrary.simpleMessage("Video"),
+    "modalityAudio": MessageLookupByLibrary.simpleMessage("音訊"),
+    "modalityFile": MessageLookupByLibrary.simpleMessage("檔案"),
+    "modalityImage": MessageLookupByLibrary.simpleMessage("圖片"),
+    "modalityMulti": MessageLookupByLibrary.simpleMessage("多模態"),
+    "modalityMusic": MessageLookupByLibrary.simpleMessage("音樂"),
+    "modalityRealtime": MessageLookupByLibrary.simpleMessage("即時"),
+    "modalitySpeech": MessageLookupByLibrary.simpleMessage("語音"),
+    "modalityText": MessageLookupByLibrary.simpleMessage("文字"),
+    "modalityVideo": MessageLookupByLibrary.simpleMessage("影片"),
     "model": MessageLookupByLibrary.simpleMessage("模型"),
-    "modelConfiguration": MessageLookupByLibrary.simpleMessage(
-      "Model Configuration",
-    ),
-    "modelContextWindow": MessageLookupByLibrary.simpleMessage(
-      "Model Context Size",
-    ),
-    "modelInputModalities": MessageLookupByLibrary.simpleMessage("Input"),
-    "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Output"),
+    "modelConfiguration": MessageLookupByLibrary.simpleMessage("模型設定"),
+    "modelContextWindow": MessageLookupByLibrary.simpleMessage("模型上下文大小"),
+    "modelInputModalities": MessageLookupByLibrary.simpleMessage("輸入"),
+    "modelOutputModalities": MessageLookupByLibrary.simpleMessage("輸出"),
     "modelsRetrievedSuccess": m28,
-    "modificationTime": MessageLookupByLibrary.simpleMessage(
-      "Modification Time",
-    ),
+    "modificationTime": MessageLookupByLibrary.simpleMessage("修改時間"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
     "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
     "name": MessageLookupByLibrary.simpleMessage("名稱"),
@@ -527,9 +515,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "目前還沒有可用的會話摘要。",
     ),
-    "noMatchingBots": MessageLookupByLibrary.simpleMessage(
-      "No matching bots found",
-    ),
+    "noMatchingBots": MessageLookupByLibrary.simpleMessage("找不到符合的智能體"),
     "noMatchingChats": MessageLookupByLibrary.simpleMessage(
       "No matching chats found",
     ),
@@ -553,9 +539,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "匯入包含 SKILL.md 的智慧體技能資料夾或 ZIP。",
     ),
     "noTokenUsageRecorded": MessageLookupByLibrary.simpleMessage(
-      "No token usage recorded",
+      "尚無 Token 用量記錄",
     ),
-    "notSupported": MessageLookupByLibrary.simpleMessage("Not supported"),
+    "notSupported": MessageLookupByLibrary.simpleMessage("不支援"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage("沒有足夠的舊上下文可壓縮"),
     "orphanedChatGuidance": MessageLookupByLibrary.simpleMessage(
       "Delete this orphaned chat or recreate the missing bot.",
@@ -591,9 +577,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "profile": MessageLookupByLibrary.simpleMessage("我的"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage("提供您的意見和建議"),
     "provider": MessageLookupByLibrary.simpleMessage("供應商"),
-    "providerInformation": MessageLookupByLibrary.simpleMessage(
-      "Provider Information",
-    ),
+    "providerInformation": MessageLookupByLibrary.simpleMessage("供應商資訊"),
     "reasoningCompleted": MessageLookupByLibrary.simpleMessage("思考完成"),
     "reasoningInProgress": MessageLookupByLibrary.simpleMessage("思考中"),
     "reasoningInterrupted": MessageLookupByLibrary.simpleMessage("思考中斷"),
@@ -631,7 +615,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Could not save to gallery",
     ),
     "savingChanges": MessageLookupByLibrary.simpleMessage("儲存中..."),
-    "searchBots": MessageLookupByLibrary.simpleMessage("Search bots"),
+    "searchBots": MessageLookupByLibrary.simpleMessage("搜尋智能體"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage("搜尋 MCP 伺服器"),
     "searchMcpTools": MessageLookupByLibrary.simpleMessage("Search tools"),
@@ -649,7 +633,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
       "Image from Stars",
     ),
-    "showApiKey": MessageLookupByLibrary.simpleMessage("Show API Key"),
+    "showApiKey": MessageLookupByLibrary.simpleMessage("顯示 API 金鑰"),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "在對話內容中顯示執行狀態。",
     ),
@@ -758,9 +742,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("結構化過程資訊"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反饋"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("已摘要訊息數"),
-    "supported": MessageLookupByLibrary.simpleMessage("Supported"),
-    "supportsMcp": MessageLookupByLibrary.simpleMessage("Supports MCP"),
-    "supportsSkills": MessageLookupByLibrary.simpleMessage("Supports Skills"),
+    "supported": MessageLookupByLibrary.simpleMessage("支援"),
+    "supportsMcp": MessageLookupByLibrary.simpleMessage("支援 MCP"),
+    "supportsSkills": MessageLookupByLibrary.simpleMessage("支援技能"),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("系統提示詞"),
     "takePhoto": MessageLookupByLibrary.simpleMessage("Camera"),
     "testSkill": MessageLookupByLibrary.simpleMessage("測試"),
@@ -772,8 +756,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("思考完成"),
     "thinkingCompletedWithDuration": m37,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("正在思考…"),
-    "tokenUsage": MessageLookupByLibrary.simpleMessage("Token usage"),
-    "tokens": MessageLookupByLibrary.simpleMessage("tokens"),
+    "tokenUsage": MessageLookupByLibrary.simpleMessage("Token 用量"),
+    "tokens": MessageLookupByLibrary.simpleMessage("Token"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage("已允許一次"),
     "toolApprovalDenied": MessageLookupByLibrary.simpleMessage("已拒絕"),
     "toolCalls": MessageLookupByLibrary.simpleMessage("工具呼叫"),
@@ -783,9 +767,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceBuiltIn": MessageLookupByLibrary.simpleMessage("內建"),
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage("技能指令碼"),
-    "totalTokens": MessageLookupByLibrary.simpleMessage("Total tokens"),
+    "totalTokens": MessageLookupByLibrary.simpleMessage("Token 總量"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
-      "Try a different search, or create a new item.",
+      "請嘗試其他搜尋條件，或建立新項目。",
     ),
     "typing": MessageLookupByLibrary.simpleMessage("正在輸入..."),
     "unableToLoadBots": MessageLookupByLibrary.simpleMessage(
@@ -797,7 +781,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
     ),
-    "unavailableBot": MessageLookupByLibrary.simpleMessage("Unavailable bot"),
+    "unavailableBot": MessageLookupByLibrary.simpleMessage("智能體不可用"),
     "uninstall": MessageLookupByLibrary.simpleMessage("解除安裝"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("解除安裝技能"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("解除固定"),

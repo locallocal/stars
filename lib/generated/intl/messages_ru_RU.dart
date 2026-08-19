@@ -167,10 +167,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Автоматические сводки могут быть неточными. Текущее сообщение всегда имеет приоритет.",
     ),
     "backToDailyUsage": MessageLookupByLibrary.simpleMessage(
-      "Back to daily usage",
+      "Вернуться к ежедневному использованию",
     ),
     "basicInformation": MessageLookupByLibrary.simpleMessage(
-      "Basic Information",
+      "Основная информация",
     ),
     "botAddedSuccess": m0,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Аватар бота"),
@@ -183,7 +183,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "botName": MessageLookupByLibrary.simpleMessage("Имя бота"),
     "botSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search filters the list by bot name.",
+      "Поиск фильтрует список по имени бота.",
     ),
     "botSkills": MessageLookupByLibrary.simpleMessage("Навыки"),
     "botSkillsDescription": MessageLookupByLibrary.simpleMessage(
@@ -195,7 +195,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "botUpdated": m4,
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("Изменить аватар"),
-    "changesSaved": MessageLookupByLibrary.simpleMessage("Saved"),
+    "changesSaved": MessageLookupByLibrary.simpleMessage("Сохранено"),
     "chatDeleted": m5,
     "chatExecutionStatus": MessageLookupByLibrary.simpleMessage(
       "Статус выполнения чата",
@@ -225,7 +225,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
     "clickDayForHourlyUsage": MessageLookupByLibrary.simpleMessage(
-      "Select a day to view hourly usage",
+      "Выберите день для просмотра почасового использования",
     ),
     "clickToCreateBot": MessageLookupByLibrary.simpleMessage(
       "Нажмите + в правом верхнем углу, чтобы добавить бота",
@@ -265,20 +265,22 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сводка разговора",
     ),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
-      "Token share by conversation",
+      "Доля токенов по диалогам",
     ),
-    "copyApiKey": MessageLookupByLibrary.simpleMessage("Copy API Key"),
+    "copyApiKey": MessageLookupByLibrary.simpleMessage("Копировать ключ API"),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
     "copyright": m12,
     "createChatFailed": m13,
     "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
-    "creationTime": MessageLookupByLibrary.simpleMessage("Creation Time"),
+    "creationTime": MessageLookupByLibrary.simpleMessage("Время создания"),
     "customProvider": MessageLookupByLibrary.simpleMessage(
       "Пользовательский провайдер...",
     ),
-    "dailyTokenUsage": MessageLookupByLibrary.simpleMessage("Daily usage"),
+    "dailyTokenUsage": MessageLookupByLibrary.simpleMessage(
+      "Ежедневное использование",
+    ),
     "darkMode": MessageLookupByLibrary.simpleMessage("Тёмная тема"),
     "databaseDowngradeNotSupported": MessageLookupByLibrary.simpleMessage(
       "Эта база данных создана более новой версией Stars. Обновите приложение, прежде чем открывать её.",
@@ -438,11 +440,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage(
       "Помощь и обратная связь",
     ),
-    "hideApiKey": MessageLookupByLibrary.simpleMessage("Hide API Key"),
+    "hideApiKey": MessageLookupByLibrary.simpleMessage("Скрыть ключ API"),
     "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("Главная"),
-    "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("Hourly usage"),
+    "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
+      "Почасовое использование",
+    ),
     "idle": MessageLookupByLibrary.simpleMessage("Ожидание"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -605,28 +609,26 @@ class MessageLookup extends MessageLookupByLibrary {
     "messageHint": MessageLookupByLibrary.simpleMessage("Введите сообщение..."),
     "messageSkills": MessageLookupByLibrary.simpleMessage("Навыки"),
     "minutesAgo": m27,
-    "modalityAudio": MessageLookupByLibrary.simpleMessage("Audio"),
-    "modalityFile": MessageLookupByLibrary.simpleMessage("File"),
-    "modalityImage": MessageLookupByLibrary.simpleMessage("Image"),
-    "modalityMulti": MessageLookupByLibrary.simpleMessage("Multimodal"),
-    "modalityMusic": MessageLookupByLibrary.simpleMessage("Music"),
-    "modalityRealtime": MessageLookupByLibrary.simpleMessage("Realtime"),
-    "modalitySpeech": MessageLookupByLibrary.simpleMessage("Speech"),
-    "modalityText": MessageLookupByLibrary.simpleMessage("Text"),
-    "modalityVideo": MessageLookupByLibrary.simpleMessage("Video"),
+    "modalityAudio": MessageLookupByLibrary.simpleMessage("Аудио"),
+    "modalityFile": MessageLookupByLibrary.simpleMessage("Файл"),
+    "modalityImage": MessageLookupByLibrary.simpleMessage("Изображение"),
+    "modalityMulti": MessageLookupByLibrary.simpleMessage("Мультимодальный"),
+    "modalityMusic": MessageLookupByLibrary.simpleMessage("Музыка"),
+    "modalityRealtime": MessageLookupByLibrary.simpleMessage("Реальное время"),
+    "modalitySpeech": MessageLookupByLibrary.simpleMessage("Речь"),
+    "modalityText": MessageLookupByLibrary.simpleMessage("Текст"),
+    "modalityVideo": MessageLookupByLibrary.simpleMessage("Видео"),
     "model": MessageLookupByLibrary.simpleMessage("Модель"),
     "modelConfiguration": MessageLookupByLibrary.simpleMessage(
-      "Model Configuration",
+      "Настройка модели",
     ),
     "modelContextWindow": MessageLookupByLibrary.simpleMessage(
-      "Model Context Size",
+      "Размер контекста модели",
     ),
-    "modelInputModalities": MessageLookupByLibrary.simpleMessage("Input"),
-    "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Output"),
+    "modelInputModalities": MessageLookupByLibrary.simpleMessage("Ввод"),
+    "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Вывод"),
     "modelsRetrievedSuccess": m28,
-    "modificationTime": MessageLookupByLibrary.simpleMessage(
-      "Modification Time",
-    ),
+    "modificationTime": MessageLookupByLibrary.simpleMessage("Время изменения"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
     "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
     "name": MessageLookupByLibrary.simpleMessage("Имя"),
@@ -658,7 +660,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сводка разговора пока недоступна.",
     ),
     "noMatchingBots": MessageLookupByLibrary.simpleMessage(
-      "No matching bots found",
+      "Подходящие боты не найдены",
     ),
     "noMatchingChats": MessageLookupByLibrary.simpleMessage(
       "No matching chats found",
@@ -689,9 +691,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Импортируйте папку Agent Skills или ZIP-архив с файлом SKILL.md.",
     ),
     "noTokenUsageRecorded": MessageLookupByLibrary.simpleMessage(
-      "No token usage recorded",
+      "Нет данных об использовании токенов",
     ),
-    "notSupported": MessageLookupByLibrary.simpleMessage("Not supported"),
+    "notSupported": MessageLookupByLibrary.simpleMessage("Не поддерживается"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage(
       "Недостаточно старого контекста для сжатия",
     ),
@@ -744,7 +746,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "provider": MessageLookupByLibrary.simpleMessage("Провайдер"),
     "providerInformation": MessageLookupByLibrary.simpleMessage(
-      "Provider Information",
+      "Информация о провайдере",
     ),
     "reasoningCompleted": MessageLookupByLibrary.simpleMessage(
       "Рассуждение завершено",
@@ -798,8 +800,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage(
       "Could not save to gallery",
     ),
-    "savingChanges": MessageLookupByLibrary.simpleMessage("Saving..."),
-    "searchBots": MessageLookupByLibrary.simpleMessage("Search bots"),
+    "savingChanges": MessageLookupByLibrary.simpleMessage("Сохранение..."),
+    "searchBots": MessageLookupByLibrary.simpleMessage("Поиск ботов"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
@@ -821,7 +823,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
       "Image from Stars",
     ),
-    "showApiKey": MessageLookupByLibrary.simpleMessage("Show API Key"),
+    "showApiKey": MessageLookupByLibrary.simpleMessage("Показать ключ API"),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Показывать сведения о выполнении в сообщениях беседы.",
     ),
@@ -968,9 +970,11 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("Отправить отзыв"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("Сводка сообщений"),
-    "supported": MessageLookupByLibrary.simpleMessage("Supported"),
-    "supportsMcp": MessageLookupByLibrary.simpleMessage("Supports MCP"),
-    "supportsSkills": MessageLookupByLibrary.simpleMessage("Supports Skills"),
+    "supported": MessageLookupByLibrary.simpleMessage("Поддерживается"),
+    "supportsMcp": MessageLookupByLibrary.simpleMessage("Поддерживает MCP"),
+    "supportsSkills": MessageLookupByLibrary.simpleMessage(
+      "Поддерживает навыки",
+    ),
     "systemPrompt": MessageLookupByLibrary.simpleMessage("Системный промпт"),
     "takePhoto": MessageLookupByLibrary.simpleMessage("Camera"),
     "testSkill": MessageLookupByLibrary.simpleMessage("Тест"),
@@ -992,8 +996,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "thinkingCompletedWithDuration": m37,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Размышление…"),
-    "tokenUsage": MessageLookupByLibrary.simpleMessage("Token usage"),
-    "tokens": MessageLookupByLibrary.simpleMessage("tokens"),
+    "tokenUsage": MessageLookupByLibrary.simpleMessage("Использование токенов"),
+    "tokens": MessageLookupByLibrary.simpleMessage("токенов"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage(
       "Разрешено один раз",
     ),
@@ -1009,9 +1013,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage(
       "Скрипт навыка",
     ),
-    "totalTokens": MessageLookupByLibrary.simpleMessage("Total tokens"),
+    "totalTokens": MessageLookupByLibrary.simpleMessage("Всего токенов"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
-      "Try a different search, or create a new item.",
+      "Измените условия поиска или создайте новый элемент.",
     ),
     "typing": MessageLookupByLibrary.simpleMessage("Печатает..."),
     "unableToLoadBots": MessageLookupByLibrary.simpleMessage(
@@ -1023,7 +1027,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
     ),
-    "unavailableBot": MessageLookupByLibrary.simpleMessage("Unavailable bot"),
+    "unavailableBot": MessageLookupByLibrary.simpleMessage("Бот недоступен"),
     "uninstall": MessageLookupByLibrary.simpleMessage("Удалить"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("Удалить навык"),
     "unpinMemory": MessageLookupByLibrary.simpleMessage("Открепить"),
