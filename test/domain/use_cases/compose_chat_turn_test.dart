@@ -789,7 +789,7 @@ SkillContent _systemSkillInstallerSkill() {
       id: skillInstallerSkillId,
       name: 'skill-installer',
       description: 'Install a validated Stars Skill package.',
-      version: '2',
+      version: '$skillInstallerSkillPromptVersion',
       scope: SkillScope.bundled,
       sourceUri: 'asset:///skill-installer/SKILL.md',
       rootPath: 'assets/skills/system/skill-installer',

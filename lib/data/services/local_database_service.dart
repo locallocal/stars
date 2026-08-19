@@ -162,13 +162,15 @@ class LocalDatabaseService {
       FROM skills AS s
       LEFT JOIN bot_skill_bindings AS b ON b.skill_id = s.id
       WHERE ? = ''
+        OR instr(lower(s.id), ?) > 0
         OR instr(lower(s.name), ?) > 0
         OR instr(lower(s.description), ?) > 0
+        OR instr(lower(s.source_uri), ?) > 0
       GROUP BY s.id
       ORDER BY lower(s.name) ASC, s.id ASC
       LIMIT ?
     ''',
-      [query, query, query, limit],
+      [query, query, query, query, query, limit],
     );
   }
 

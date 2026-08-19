@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -663,7 +665,11 @@ class _MainPageState extends State<MainPage> {
 
   void _onPageChanged(int index) {
     if (!mounted) return;
+    final shouldRefreshSkills = index == 2 && _viewModel.currentIndex != index;
     _viewModel.selectPage(index);
+    if (shouldRefreshSkills) {
+      unawaited(_skillLibraryViewModel.refresh());
+    }
   }
 
   void _requestCreateChat() {

@@ -67,6 +67,18 @@ void main() {
       expect(page.items.single.boundBotCount, 2);
       expect(page.items.single.enabledBotCount, 1);
 
+      final byId = await repository.listInstalled(
+        query: 'USER:REVIEWER',
+        limit: 10,
+      );
+      expect(byId.items.single.id, 'user:reviewer');
+
+      final bySource = await repository.listInstalled(
+        query: 'file:///Reviewer',
+        limit: 10,
+      );
+      expect(bySource.items.single.id, 'user:reviewer');
+
       final injection = await repository.listInstalled(
         query: "' OR 1=1 --",
         limit: 10,
