@@ -11,7 +11,7 @@ void main() {
     final content = await skill.loadContent();
 
     expect(skill.isValid, isTrue);
-    expect(skill.promptVersion, 2);
+    expect(skill.promptVersion, 3);
     expect(skill.contentDigest, hasLength(64));
     expect(content.descriptor.id, skillInstallerSkillId);
     expect(content.descriptor.scope, SkillScope.bundled);
@@ -20,6 +20,8 @@ void main() {
     expect(content.instructions, contains('source_type'));
     expect(content.instructions, contains('subdirectory'));
     expect(content.instructions, contains('list_installed_skills'));
+    expect(content.instructions, contains('exact `skill_id`'));
+    expect(content.instructions, contains('Never use `run_shell_command`'));
     expect(content.instructions, contains('configured_enabled'));
     expect(content.files, ['SKILL.md']);
   });

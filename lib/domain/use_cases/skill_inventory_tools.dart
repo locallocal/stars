@@ -134,8 +134,8 @@ final class ListInstalledSkillsTool implements ExecutableTool {
           'type': 'string',
           'maxLength': 128,
           'description':
-              'Optional case-insensitive text matched against Skill name and '
-              'description. This is text data, not SQL.',
+              'Optional case-insensitive text matched against Skill id, name, '
+              'description, and source URI. This is text data, not SQL.',
         },
         'limit': {
           'type': 'integer',

@@ -121,6 +121,21 @@ final class SkillLibraryViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> refresh() async {
+    if (_disposed) return;
+    _error = null;
+    try {
+      final installed = await _skillRepository.getInstalled(forceRefresh: true);
+      if (_disposed) return;
+      _applyInstalledSkills(installed, notify: false);
+      await _refreshEcosystemState(notify: false);
+    } catch (error) {
+      if (_disposed) return;
+      _error = AppFailure.from(error, code: 'skill_library_load_failed');
+    }
+    if (!_disposed) notifyListeners();
+  }
+
   void search(String query) {
     if (_query == query) return;
     _query = query;
@@ -294,8 +309,10 @@ final class SkillLibraryViewModel extends ChangeNotifier {
             ? _skills
             : List<SkillDescriptor>.unmodifiable(
               _skills.where((skill) {
-                return skill.name.toLowerCase().contains(normalized) ||
-                    skill.description.toLowerCase().contains(normalized);
+                return skill.id.toLowerCase().contains(normalized) ||
+                    skill.name.toLowerCase().contains(normalized) ||
+                    skill.description.toLowerCase().contains(normalized) ||
+                    skill.sourceUri.toLowerCase().contains(normalized);
               }),
             );
     _normalizePage();

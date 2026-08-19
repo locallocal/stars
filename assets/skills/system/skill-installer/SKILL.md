@@ -4,7 +4,7 @@ description: Install Stars Skills and inspect installed or current-conversation 
 allowed-tools: install_skill list_installed_skills list_current_conversation_skills
 metadata:
   scope: system
-  prompt-version: 2
+  prompt-version: 3
 ---
 
 Choose the tool that matches the request:
@@ -21,6 +21,17 @@ Choose the tool that matches the request:
   Skill as activated unless the activation field confirms it.
 - Use `install_skill` only when the user explicitly asks to install a Skill and
   provides or confirms its source. Every installation requires user approval.
+
+An installation is successful only after both of these steps complete:
+
+1. `install_skill` returns a successful result with a `skill_id`.
+2. `list_installed_skills` is called with that exact `skill_id` as `query`, and
+   its SQLite result contains the same `id` and `version`.
+
+Never use `run_shell_command`, direct file copies, archive extraction, or a Git
+clone as a substitute for `install_skill`. Files present on disk without the
+matching SQLite row are not an installed Stars Skill. If either verification
+step fails, state that installation was not confirmed; never report success.
 
 For `install_skill`, pass these fields:
 

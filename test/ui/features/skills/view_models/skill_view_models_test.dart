@@ -93,7 +93,7 @@ void main() {
     expect(updatesSnapshot, hasLength(1));
   });
 
-  test('library searches Skill names and descriptions', () async {
+  test('library searches Skill names and installation metadata', () async {
     final repository = _FakeSkillRepository([
       _skill('Release Notes', description: 'Create polished changelogs'),
       _skill('Code Review', description: 'Find concise improvements'),
@@ -115,12 +115,39 @@ void main() {
       'Code Review',
     ]);
 
+    viewModel.search('user:release notes');
+    expect(viewModel.filteredSkills.map((skill) => skill.name), [
+      'Release Notes',
+    ]);
+
+    viewModel.search('file:///Code Review');
+    expect(viewModel.filteredSkills.map((skill) => skill.name), [
+      'Code Review',
+    ]);
+
     viewModel.search('missing');
     expect(viewModel.filteredSkills, isEmpty);
 
     viewModel.clearSearch();
     expect(viewModel.query, isEmpty);
     expect(viewModel.filteredSkills, hasLength(2));
+  });
+
+  test('library refresh discovers Skills installed outside the page', () async {
+    final repository = _FakeSkillRepository([_skill('one')]);
+    final viewModel = SkillLibraryViewModel(
+      skillRepository: repository,
+      pickerRepository: const _FakeSkillPickerRepository(null),
+    );
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+
+    repository.replaceSilently([_skill('one'), _skill('from-chat')]);
+    expect(viewModel.skills.map((skill) => skill.name), ['one']);
+
+    await viewModel.refresh();
+
+    expect(viewModel.skills.map((skill) => skill.name), ['one', 'from-chat']);
   });
 
   test(
@@ -601,6 +628,10 @@ final class _FakeSkillRepository implements SkillRepository {
       StreamController<List<SkillDescriptor>>.broadcast();
   final List<SkillImportSource> installedSources = [];
   List<SkillDescriptor> _skills;
+
+  void replaceSilently(List<SkillDescriptor> skills) {
+    _skills = List<SkillDescriptor>.of(skills);
+  }
 
   @override
   Stream<List<SkillDescriptor>> get changes => _changes.stream;
