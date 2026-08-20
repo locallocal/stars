@@ -418,6 +418,7 @@ final class PrepareConversationContext {
             ChatMessage(
               role: 'assistant',
               content: message.content,
+              reasoning: message.reasoning,
               images: message.images,
               files: message.files,
             ),

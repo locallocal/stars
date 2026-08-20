@@ -304,6 +304,51 @@ void main() {
   });
 
   group('Moonshot thinking configuration', () {
+    test('preserves K3 assistant reasoning in later turns', () async {
+      Map<String, dynamic>? requestBody;
+      final client = MockClient((request) async {
+        requestBody = Map<String, dynamic>.from(
+          jsonDecode(request.body) as Map,
+        );
+        return http.Response(
+          'data: ${jsonEncode({
+            'choices': [
+              {
+                'delta': {'content': 'continued'},
+                'finish_reason': 'stop',
+              },
+            ],
+          })}\n\ndata: [DONE]\n\n',
+          200,
+          headers: {'content-type': 'text/event-stream'},
+        );
+      });
+      final provider = Moonshot(_bot(model: 'kimi-k3'), client: client);
+      final session = provider.openModelSession(
+        ModelRequest(
+          messages: [
+            ChatMessage(role: 'user', content: 'first question'),
+            ChatMessage(
+              role: 'assistant',
+              content: 'first answer',
+              reasoning: 'preserved reasoning',
+            ),
+            ChatMessage(role: 'user', content: 'follow-up'),
+          ],
+        ),
+      );
+      addTearDown(session.close);
+
+      await session.start().toList();
+
+      final messages = requestBody?['messages'] as List;
+      expect(messages[1], {
+        'role': 'assistant',
+        'content': 'first answer',
+        'reasoning_content': 'preserved reasoning',
+      });
+    });
+
     test('sends the K2.6 thinking mode selected by the user', () async {
       final disabled = await _requestBodyFor(
         model: 'kimi-k2.6',

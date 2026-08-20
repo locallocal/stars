@@ -24,4 +24,15 @@ void main() {
 
     expect(tokens, greaterThanOrEqualTo(330));
   });
+
+  test('counts preserved assistant reasoning', () async {
+    final withoutReasoning = await estimator.estimateMessages(profile, [
+      ChatMessage(role: 'assistant', content: 'answer'),
+    ]);
+    final withReasoning = await estimator.estimateMessages(profile, [
+      ChatMessage(role: 'assistant', content: 'answer', reasoning: 'reasoning'),
+    ]);
+
+    expect(withReasoning, greaterThan(withoutReasoning));
+  });
 }
