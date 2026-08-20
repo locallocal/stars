@@ -50,7 +50,11 @@ void main() {
       bot: _bot(systemPrompt: 'You are a helpful assistant.'),
       history: [
         _message(senderId: 'user-1', content: 'Earlier question'),
-        _message(senderId: 'bot-1', content: 'Earlier answer'),
+        _message(
+          senderId: 'bot-1',
+          content: 'Earlier answer',
+          reasoning: 'Earlier reasoning',
+        ),
       ],
       userMessage: _message(senderId: 'user-1', content: 'Current question'),
       currentUserId: 'user-1',
@@ -101,6 +105,12 @@ void main() {
       contains('Current conversation ID: chat-1'),
     );
     expect(result.requestedToolNames, {'calculate'});
+    expect(
+      result.messages
+          .singleWhere((message) => message.role == 'assistant')
+          .reasoning,
+      'Earlier reasoning',
+    );
   });
 
   test('does not send empty assistant history entries to providers', () async {
@@ -863,14 +873,18 @@ Bot _bot({String systemPrompt = '', Map<String, dynamic>? parameters}) => Bot(
   modifyTimestamp: DateTime(2026),
 );
 
-Message _message({required String senderId, required String content}) =>
-    Message(
-      chatId: 'chat-1',
-      botId: 'bot-1',
-      senderId: senderId,
-      content: content,
-      timestamp: DateTime(2026, 7, 26),
-    );
+Message _message({
+  required String senderId,
+  required String content,
+  String reasoning = '',
+}) => Message(
+  chatId: 'chat-1',
+  botId: 'bot-1',
+  senderId: senderId,
+  content: content,
+  reasoning: reasoning,
+  timestamp: DateTime(2026, 7, 26),
+);
 
 final class _FakeSkillRepository implements SkillRepository {
   _FakeSkillRepository(this.contents, {this.resources = const {}});

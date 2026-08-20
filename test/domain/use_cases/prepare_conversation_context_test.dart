@@ -127,6 +127,30 @@ void main() {
     );
   });
 
+  test('preserves assistant reasoning in prepared history', () async {
+    final useCase = PrepareConversationContext(
+      memoryRepository: _MemoryRepository(),
+      aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+    );
+
+    final result = await useCase(
+      bot: _bot(),
+      systemPrompt: '',
+      history: [
+        _message(0, true, 'question'),
+        _message(0, false, 'answer', reasoning: 'preserved reasoning'),
+      ],
+      userMessage: _current('follow-up'),
+      currentUserId: 'user_1',
+      providerSupportsHistoryLookup: true,
+    );
+
+    final assistant = result.messages.singleWhere(
+      (message) => message.role == 'assistant',
+    );
+    expect(assistant.reasoning, 'preserved reasoning');
+  });
+
   test(
     'does not expose history lookup when its system Skill is disabled',
     () async {
@@ -207,6 +231,7 @@ Message _message(
   int turn,
   bool user,
   String content, {
+  String reasoning = '',
   MessageTerminalOutcome terminalOutcome = MessageTerminalOutcome.completed,
 }) => Message(
   messageId: 'message_${turn}_${user ? 'u' : 'a'}',
@@ -215,6 +240,7 @@ Message _message(
   botId: 'bot_1',
   senderId: user ? 'user_1' : 'bot_1',
   content: content,
+  reasoning: reasoning,
   terminalOutcome: user ? null : terminalOutcome,
   timestamp: DateTime(2026, 8, 1).add(Duration(minutes: turn)),
 );

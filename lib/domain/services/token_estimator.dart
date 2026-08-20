@@ -29,6 +29,7 @@ final class ConservativeTokenEstimator implements TokenEstimator {
       total += messageOverheadTokens;
       total += await estimateText(profile, message.role);
       total += await estimateText(profile, message.content);
+      total += await estimateText(profile, message.reasoning);
       total += message.images.length * 256;
       total += message.files.length * 64;
     }

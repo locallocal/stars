@@ -33,6 +33,22 @@ class Moonshot extends Provider {
   }
 
   @override
+  List<Map<String, dynamic>> processMessagesWithImages(
+    List<ChatMessage> messages,
+  ) {
+    final formatted = super.processMessagesWithImages(messages);
+    if (!bot.model.toLowerCase().startsWith('kimi-k3')) return formatted;
+
+    for (var index = 0; index < messages.length; index++) {
+      final message = messages[index];
+      if (message.role == 'assistant' && message.reasoning.isNotEmpty) {
+        formatted[index]['reasoning_content'] = message.reasoning;
+      }
+    }
+    return formatted;
+  }
+
+  @override
   bool supportMcp() {
     return (bot.configuredSupportsMcp ?? true) &&
         capabilities.supportsAgentLoop;

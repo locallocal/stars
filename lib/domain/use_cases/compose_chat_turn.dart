@@ -468,7 +468,13 @@ ${resource.content.trim()}
         messages.add(ChatMessage(role: 'user', content: pendingUserMessage));
         pendingUserMessage = '';
       }
-      messages.add(ChatMessage(role: 'assistant', content: message.content));
+      messages.add(
+        ChatMessage(
+          role: 'assistant',
+          content: message.content,
+          reasoning: message.reasoning,
+        ),
+      );
     }
 
     final latestContent =

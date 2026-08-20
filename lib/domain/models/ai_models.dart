@@ -4,6 +4,7 @@ class ChatMessage {
   ChatMessage({
     required this.role,
     required this.content,
+    this.reasoning = '',
     List<String> images = const [],
     List<String> files = const [],
   }) : images = List<String>.unmodifiable(images),
@@ -11,6 +12,7 @@ class ChatMessage {
 
   final String role;
   final String content;
+  final String reasoning;
   final List<String> images;
   final List<String> files;
 }
