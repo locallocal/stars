@@ -10,13 +10,12 @@ import 'package:stars/ui/features/chat/view_models/message_action_view_model.dar
 class ChatViewModel extends DisposableChangeNotifier {
   ChatViewModel({required ChatInteractionFacade interaction})
     : _interaction = interaction,
-      chatId = interaction.chatId,
-      bot = interaction.bot;
+      chatId = interaction.chatId;
 
   final String chatId;
-  final Bot bot;
   final ChatInteractionFacade _interaction;
 
+  Bot get bot => _interaction.bot;
   ChatWorkflowFacade get _workflow => _interaction.workflow;
   MessageActionViewModel get messageActions => _interaction.messageActions;
   ChatGenerationViewModel get generationViewModel =>
@@ -243,6 +242,8 @@ class ChatViewModel extends DisposableChangeNotifier {
   Future<bool> cancelMedia() => _workflow.cancelMedia();
 
   bool get hasBlockingRun => _interaction.hasBlockingRun;
+
+  void updateBot(Bot bot) => _interaction.updateBot(bot);
 
   bool get supportsRunCancellation => _interaction.supportsRunCancellation;
 
