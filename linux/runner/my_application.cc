@@ -1,9 +1,6 @@
 #include "my_application.h"
 
 #include <flutter_linux/flutter_linux.h>
-#ifdef GDK_WINDOWING_X11
-#include <gdk/gdkx.h>
-#endif
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -14,38 +11,66 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+static GtkWidget* create_window_button(const gchar* label,
+                                       const gchar* tooltip,
+                                       GCallback callback,
+                                       GtkWindow* window) {
+  GtkWidget* button = gtk_button_new_with_label(label);
+  gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+  gtk_widget_set_tooltip_text(button, tooltip);
+  gtk_widget_set_focus_on_click(button, FALSE);
+  g_signal_connect(button, "clicked", callback, window);
+  return button;
+}
+
+static void minimize_window(GtkButton* button, gpointer user_data) {
+  gtk_window_iconify(GTK_WINDOW(user_data));
+}
+
+static void toggle_maximize_window(GtkButton* button, gpointer user_data) {
+  GtkWindow* window = GTK_WINDOW(user_data);
+  if (gtk_window_is_maximized(window)) {
+    gtk_window_unmaximize(window);
+  } else {
+    gtk_window_maximize(window);
+  }
+}
+
+static void close_window(GtkButton* button, gpointer user_data) {
+  gtk_window_close(GTK_WINDOW(user_data));
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
-  // Use a header bar when running in GNOME as this is the common style used
-  // by applications and is the setup most users will be using (e.g. Ubuntu
-  // desktop).
-  // If running on X and not using GNOME then just use a traditional title bar
-  // in case the window manager does more exotic layout, e.g. tiling.
-  // If running on Wayland assume the header bar will work (may need changing
-  // if future cases occur).
-  gboolean use_header_bar = TRUE;
-#ifdef GDK_WINDOWING_X11
-  GdkScreen* screen = gtk_window_get_screen(window);
-  if (GDK_IS_X11_SCREEN(screen)) {
-    const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
-    if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
-      use_header_bar = FALSE;
-    }
-  }
-#endif
-  if (use_header_bar) {
-    GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
-    gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "Stars");
-    gtk_header_bar_set_show_close_button(header_bar, TRUE);
-    gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
-  } else {
-    gtk_window_set_title(window, "Stars");
-  }
+  // Do not use GtkHeaderBar's automatic window controls. They eagerly load
+  // symbolic SVG icons through glycin; if its image sandbox cannot start,
+  // GTK blocks before the Flutter engine and Dart VM are created.
+  GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
+  gtk_header_bar_set_title(header_bar, "Stars");
+  gtk_header_bar_set_show_close_button(header_bar, FALSE);
+
+  GtkWidget* window_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_box_pack_start(
+      GTK_BOX(window_controls),
+      create_window_button("−", "Minimize", G_CALLBACK(minimize_window),
+                           window),
+      FALSE, FALSE, 0);
+  gtk_box_pack_start(
+      GTK_BOX(window_controls),
+      create_window_button("□", "Maximize", G_CALLBACK(toggle_maximize_window),
+                           window),
+      FALSE, FALSE, 0);
+  gtk_box_pack_start(
+      GTK_BOX(window_controls),
+      create_window_button("×", "Close", G_CALLBACK(close_window), window),
+      FALSE, FALSE, 0);
+  gtk_header_bar_pack_end(header_bar, window_controls);
+  gtk_widget_show_all(GTK_WIDGET(header_bar));
+  gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
 
   gtk_window_set_default_size(window, 1280, 800);
   gtk_widget_set_size_request(GTK_WIDGET(window), 800, 600);
