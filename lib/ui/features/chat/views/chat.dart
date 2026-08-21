@@ -121,7 +121,7 @@ class ChatPageState extends State<ChatPage> {
   void didUpdateWidget(covariant ChatPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_dependenciesInitialized && oldWidget.bot != widget.bot) {
-      _generationViewModel.updateBot(widget.bot);
+      _chatViewModel.updateBot(widget.bot);
     }
   }
 

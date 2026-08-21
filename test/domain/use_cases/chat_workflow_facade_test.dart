@@ -91,6 +91,82 @@ void main() {
       expect(await facade.readDraft(), isNull);
     },
   );
+
+  test('uses updated Bot configuration for an existing conversation', () async {
+    final messages = _PagedMessages();
+    final chats = _FakeChats();
+    final assets = _FakeAssets();
+    final providers = _FakeProviders();
+    final persistAssets = PersistConversationAssets(repository: assets);
+    Bot? preparedBot;
+    final facade = ChatWorkflowFacade(
+      chatId: 'chat-1',
+      bot: _bot,
+      messageRepository: messages,
+      chatRepository: chats,
+      aiProviderRepository: providers,
+      attachmentRepository: assets,
+      conversationDraftRepository: _MemoryDrafts(),
+      createUserMessage: CreateUserMessage(messageRepository: messages),
+      persistConversationAssets: persistAssets,
+      generateMediaTurn: GenerateMediaTurn(
+        messageRepository: messages,
+        chatRepository: chats,
+        providerRepository: providers,
+        attachmentRepository: assets,
+        persistConversationAssets: persistAssets,
+      ),
+      prepareTextGeneration: PrepareTextGeneration(
+        aiProviderRepository: providers,
+        composeChatTurn: ({
+          required bot,
+          required history,
+          required userMessage,
+          required currentUserId,
+          skillToolProvider,
+        }) async {
+          preparedBot = bot;
+          return PreparedChatTurn(
+            messages: const [],
+            activatedSkills: const [],
+          );
+        },
+      ),
+    );
+    final updatedBot = Bot(
+      id: _bot.id,
+      name: _bot.name,
+      avatar: _bot.avatar,
+      provider: _bot.provider,
+      baseURL: _bot.baseURL,
+      apiKey: _bot.apiKey,
+      apiType: _bot.apiType,
+      model: _bot.model,
+      systemPrompt: _bot.systemPrompt,
+      parameters: {
+        Bot.parameterMcpTools: [
+          {
+            'server_id': 'server-1',
+            'remote_name': 'search',
+            'requires_approval': false,
+          },
+        ],
+      },
+      createTimestamp: _bot.createTimestamp,
+      modifyTimestamp: DateTime(2026, 2),
+    );
+
+    facade.updateBot(updatedBot);
+    await facade.prepareTextTurn(
+      history: const [],
+      userMessage: _message('user-message'),
+      currentUserId: 'user-1',
+    );
+
+    expect(facade.bot, same(updatedBot));
+    expect(preparedBot, same(updatedBot));
+    expect(preparedBot!.mcpTools.single.remoteName, 'search');
+  });
 }
 
 final _bot = Bot(

@@ -21,6 +21,11 @@ final class ChatInteractionFacade {
   String get chatId => workflow.chatId;
   Bot get bot => workflow.bot;
 
+  void updateBot(Bot bot) {
+    workflow.updateBot(bot);
+    generationViewModel.updateBot(bot);
+  }
+
   Future<MediaTurnResult> generateMediaTurn(
     MediaTurnRequest request, {
     MediaUserPersisted? onUserPersisted,

@@ -27,9 +27,9 @@ final class ChatHistoryBatch {
 /// Repository capabilities and multi-step Use Cases stay behind this boundary,
 /// so the Chat ViewModel only coordinates immutable UI state.
 final class ChatWorkflowFacade {
-  const ChatWorkflowFacade({
+  ChatWorkflowFacade({
     required this.chatId,
-    required this.bot,
+    required Bot bot,
     required MessageRepository messageRepository,
     required ChatRepository chatRepository,
     required AiProviderRepository aiProviderRepository,
@@ -39,7 +39,8 @@ final class ChatWorkflowFacade {
     required PersistConversationAssets persistConversationAssets,
     required GenerateMediaTurn generateMediaTurn,
     required PrepareTextGeneration prepareTextGeneration,
-  }) : _messages = messageRepository,
+  }) : _bot = bot,
+       _messages = messageRepository,
        _chats = chatRepository,
        _providers = aiProviderRepository,
        _attachments = attachmentRepository,
@@ -50,7 +51,7 @@ final class ChatWorkflowFacade {
        _prepareTextGeneration = prepareTextGeneration;
 
   final String chatId;
-  final Bot bot;
+  Bot _bot;
   final MessageRepository _messages;
   final ChatRepository _chats;
   final AiProviderRepository _providers;
@@ -60,6 +61,19 @@ final class ChatWorkflowFacade {
   final PersistConversationAssets _persistConversationAssets;
   final GenerateMediaTurn _generateMediaTurn;
   final PrepareTextGeneration _prepareTextGeneration;
+
+  Bot get bot => _bot;
+
+  void updateBot(Bot bot) {
+    if (bot.id != _bot.id) {
+      throw ArgumentError.value(
+        bot.id,
+        'bot.id',
+        'A conversation cannot change its Bot identity.',
+      );
+    }
+    _bot = bot;
+  }
 
   ChatHistoryBatch? peekHistory() {
     final messages = _messages;

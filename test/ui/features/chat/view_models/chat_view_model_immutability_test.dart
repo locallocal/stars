@@ -42,6 +42,42 @@ void main() {
     expect(harness.viewModel.messages, hasLength(3));
     expect(loadedSnapshot, hasLength(2));
   });
+
+  test('updates workflow and generation provider together', () {
+    final harness = _createHarness(_MutableMessageRepository(const []));
+    addTearDown(harness.dispose);
+    final updatedBot = Bot(
+      id: _bot.id,
+      name: _bot.name,
+      avatar: _bot.avatar,
+      provider: _bot.provider,
+      baseURL: _bot.baseURL,
+      apiKey: _bot.apiKey,
+      apiType: _bot.apiType,
+      model: _bot.model,
+      systemPrompt: _bot.systemPrompt,
+      parameters: {
+        Bot.parameterMcpTools: [
+          {
+            'server_id': 'server-1',
+            'remote_name': 'search',
+            'requires_approval': true,
+          },
+        ],
+      },
+      createTimestamp: _bot.createTimestamp,
+      modifyTimestamp: DateTime(2026, 2),
+    );
+
+    harness.viewModel.updateBot(updatedBot);
+
+    expect(harness.viewModel.bot, same(updatedBot));
+    expect(
+      harness.viewModel.generationViewModel.capabilityProvider.bot,
+      same(updatedBot),
+    );
+    expect(harness.viewModel.bot.mcpTools.single.remoteName, 'search');
+  });
 }
 
 _ChatHarness _createHarness(_MutableMessageRepository messages) {
