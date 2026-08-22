@@ -679,6 +679,7 @@
     "mcpUnsupportedProtocol": "MCP 伺服器使用不支援的協定版本。",
     "mcpStdioStartFailed": "無法啟動 stdio MCP 命令。",
     "mcpInvalidStdioEnvironment": "環境變數必須以每行一個 KEY=VALUE 的格式填寫。",
+    "mcpServerInUseByBot": "此 MCP 伺服器正由智慧代理使用，請先從智慧代理中移除後再刪除。",
     "mcpConnectionFailed": "MCP 連線失敗：{error}",
     "@mcpConnectionFailed": {
         "placeholders": {

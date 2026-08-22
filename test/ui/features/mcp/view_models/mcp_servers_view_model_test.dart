@@ -8,6 +8,7 @@ import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/data/services/mcp/mcp_catalog_service.dart';
 import 'package:stars/data/services/tools/add_mcp_server_tool.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/catalog_controller.dart';
 import 'package:stars/domain/repositories/mcp_client.dart';
 import 'package:stars/domain/repositories/mcp_credential_store.dart';
@@ -58,6 +59,7 @@ void main() {
       ),
       deleteServer: DeleteMcpServer(
         repository: repository,
+        botRepository: const _EmptyBotRepository(),
         credentialStore: credentials,
         catalogController: catalog,
       ),
@@ -199,6 +201,7 @@ void main() {
       ),
       deleteServer: DeleteMcpServer(
         repository: mutableRepository,
+        botRepository: const _EmptyBotRepository(),
         credentialStore: _MemoryCredentialStore(),
         catalogController: catalog,
       ),
@@ -427,6 +430,17 @@ void main() {
     expect(viewModel.error?.code, 'mcp_credential_read_failed');
     expect(await repository.getServers(), isEmpty);
   });
+}
+
+final class _EmptyBotRepository implements BotRepository {
+  const _EmptyBotRepository();
+
+  @override
+  Future<List<Bot>> getBots({bool forceRefresh = false}) async => const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('Bot operation is not used by this test.');
 }
 
 final class _MemoryCredentialStore implements McpCredentialStore {

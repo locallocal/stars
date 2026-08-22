@@ -473,6 +473,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Secure environment variables",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("Server details"),
+    "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(
+      "This MCP server is used by an agent. Remove it from the agent before deleting it.",
+    ),
     "mcpServerName": MessageLookupByLibrary.simpleMessage("Server name"),
     "mcpServers": MessageLookupByLibrary.simpleMessage("MCP サーバー"),
     "mcpServersDescription": MessageLookupByLibrary.simpleMessage(

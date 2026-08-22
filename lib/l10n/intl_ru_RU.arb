@@ -857,6 +857,7 @@
     "mcpUnsupportedProtocol": "The MCP server uses an unsupported protocol version.",
     "mcpStdioStartFailed": "The stdio MCP command could not be started.",
     "mcpInvalidStdioEnvironment": "Environment variables must use one KEY=VALUE entry per line.",
+    "mcpServerInUseByBot": "This MCP server is used by an agent. Remove it from the agent before deleting it.",
     "mcpConnectionFailed": "MCP connection failed: {error}",
     "deleteMcpServer": "Delete MCP Server",
     "confirmDeleteMcpServer": "Delete {name}? Its cached Tool catalog and secure credential will also be removed.",

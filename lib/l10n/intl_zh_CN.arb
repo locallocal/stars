@@ -943,6 +943,7 @@
     "mcpUnsupportedProtocol": "MCP 服务器使用了不受支持的协议版本。",
     "mcpStdioStartFailed": "无法启动 stdio MCP 命令。",
     "mcpInvalidStdioEnvironment": "环境变量必须按每行一个 KEY=VALUE 的格式填写。",
+    "mcpServerInUseByBot": "此 MCP 服务器正被智能体使用，请先从智能体中移除后再删除。",
     "mcpConnectionFailed": "MCP 连接失败：{error}",
     "@mcpConnectionFailed": {
         "placeholders": {

@@ -1,4 +1,5 @@
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/catalog_controller.dart';
 import 'package:stars/domain/repositories/mcp_credential_store.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
@@ -239,18 +240,27 @@ final class SaveAndConnectMcpServer {
 final class DeleteMcpServer {
   const DeleteMcpServer({
     required McpServerRepository repository,
+    required BotRepository botRepository,
     required McpCredentialStore credentialStore,
     required McpCatalogController catalogController,
   }) : _repository = repository,
+       _botRepository = botRepository,
        _credentialStore = credentialStore,
        _catalogController = catalogController;
 
   final McpServerRepository _repository;
+  final BotRepository _botRepository;
   final McpCredentialStore _credentialStore;
   final McpCatalogController _catalogController;
 
   Future<McpServerMutationResult> call(McpServer server) async {
     try {
+      final bots = await _botRepository.getBots(forceRefresh: true);
+      if (bots.any((bot) => bot.mcpServerIds.contains(server.id))) {
+        return const McpServerMutationResult.failed(
+          AppFailure.validation('mcp_server_in_use_by_bot'),
+        );
+      }
       final previousCredential = await _readCredentialForRollback(server.id);
       AppFailure? warning;
       try {
