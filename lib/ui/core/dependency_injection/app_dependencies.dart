@@ -676,6 +676,7 @@ class AppDependencies {
     ),
     deleteServer: DeleteMcpServer(
       repository: mcpServerRepository,
+      botRepository: botRepository,
       credentialStore: mcpCredentialStore,
       catalogController: mcpCatalogService,
     ),

@@ -431,6 +431,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Secure environment variables",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("伺服器詳情"),
+    "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(
+      "此 MCP 伺服器正由智慧代理使用，請先從智慧代理中移除後再刪除。",
+    ),
     "mcpServerName": MessageLookupByLibrary.simpleMessage("伺服器名稱"),
     "mcpServers": MessageLookupByLibrary.simpleMessage("MCP 伺服器"),
     "mcpServersDescription": MessageLookupByLibrary.simpleMessage(

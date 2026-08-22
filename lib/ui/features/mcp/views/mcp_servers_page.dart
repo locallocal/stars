@@ -90,6 +90,9 @@ class _McpServersPageState extends State<McpServersPage> {
   Widget _buildDesktop(BuildContext context) {
     final strings = S.of(context);
     final filteredServers = _filteredServers;
+    final compactInUseError =
+        _viewModel.error?.code == 'mcp_server_in_use_by_bot' &&
+        _viewModel.warning == null;
     const contentMaxWidth = StarsDesktopThemeSpec.formContentMaxWidth;
     const pagePadding = StarsDesktopThemeSpec.formPagePadding;
     return ColoredBox(
@@ -189,26 +192,14 @@ class _McpServersPageState extends State<McpServersPage> {
                                 color: StarsDesktopThemeSpec.mutedText(context),
                               ),
                             ),
-                            if (_viewModel.error != null) ...[
-                              const SizedBox(height: 16),
-                              ShadAlert.destructive(
-                                key: const ValueKey<String>('mcp-error-alert'),
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                icon: const Icon(LucideIcons.circleAlert),
-                                title: Text(_errorMessage(_viewModel.error!)),
-                                trailing: StarsDesktopIconAction(
-                                  key: const ValueKey<String>(
-                                    'close-mcp-error',
-                                  ),
-                                  icon: LucideIcons.x,
-                                  label:
-                                      MaterialLocalizations.of(
-                                        context,
-                                      ).closeButtonTooltip,
-                                  onPressed: _viewModel.clearError,
-                                  iconSize: 16,
-                                ),
+                            if (_viewModel.error case final error?) ...[
+                              SizedBox(
+                                height:
+                                    error.code == 'mcp_server_in_use_by_bot'
+                                        ? 8
+                                        : 16,
                               ),
+                              _buildDesktopErrorAlert(error),
                             ],
                             if (_viewModel.warning != null) ...[
                               const SizedBox(height: 16),
@@ -229,7 +220,7 @@ class _McpServersPageState extends State<McpServersPage> {
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 24),
+                            SizedBox(height: compactInUseError ? 10 : 24),
                           ],
                         ),
                       ),
@@ -269,6 +260,39 @@ class _McpServersPageState extends State<McpServersPage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopErrorAlert(AppFailure error) {
+    final message = _errorMessage(error);
+    if (error.code != 'mcp_server_in_use_by_bot') {
+      return ShadAlert.destructive(
+        key: const ValueKey<String>('mcp-error-alert'),
+        crossAxisAlignment: CrossAxisAlignment.center,
+        icon: const Icon(LucideIcons.circleAlert),
+        title: Text(message),
+        trailing: StarsDesktopIconAction(
+          key: const ValueKey<String>('close-mcp-error'),
+          icon: LucideIcons.x,
+          label: MaterialLocalizations.of(context).closeButtonTooltip,
+          onPressed: _viewModel.clearError,
+          iconSize: 16,
+        ),
+      );
+    }
+
+    return SizedBox(
+      key: const ValueKey<String>('mcp-error-region'),
+      width: double.infinity,
+      child: StarsInlineErrorAlert(
+        error: message,
+        isDesktop: true,
+        onDismiss: _viewModel.clearError,
+        alertKey: const ValueKey<String>('mcp-error-alert'),
+        messageKey: const ValueKey<String>('mcp-error-message'),
+        dismissKey: const ValueKey<String>('close-mcp-error'),
+        padding: EdgeInsets.zero,
       ),
     );
   }
@@ -424,6 +448,7 @@ class _McpServersPageState extends State<McpServersPage> {
         'mcp_invalid_stdio_environment' =>
           S.of(context).mcpInvalidStdioEnvironment,
         'mcp_invalid_endpoint' => S.of(context).mcpHttpsRequired,
+        'mcp_server_in_use_by_bot' => S.of(context).mcpServerInUseByBot,
         _ => safeFailureMessage(context, error),
       };
     }

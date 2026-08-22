@@ -413,6 +413,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "安全环境变量",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("服务器详情"),
+    "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(
+      "此 MCP 服务器正被智能体使用，请先从智能体中移除后再删除。",
+    ),
     "mcpServerName": MessageLookupByLibrary.simpleMessage("服务器名称"),
     "mcpServers": MessageLookupByLibrary.simpleMessage("MCP 服务器"),
     "mcpServersDescription": MessageLookupByLibrary.simpleMessage(

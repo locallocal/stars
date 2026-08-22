@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/catalog_controller.dart';
 import 'package:stars/domain/repositories/mcp_credential_store.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
@@ -8,6 +9,7 @@ import 'package:stars/domain/use_cases/mcp_server_mutations.dart';
 void main() {
   late _MemoryMcpServerRepository repository;
   late _MemoryMcpCredentialStore credentials;
+  late _MemoryBotRepository bots;
   late _FakeMcpCatalogController catalog;
   late SaveAndConnectMcpServer saveAndConnect;
   late DeleteMcpServer deleteServer;
@@ -15,6 +17,7 @@ void main() {
   setUp(() {
     repository = _MemoryMcpServerRepository();
     credentials = _MemoryMcpCredentialStore();
+    bots = _MemoryBotRepository();
     catalog = _FakeMcpCatalogController(repository);
     saveAndConnect = SaveAndConnectMcpServer(
       repository: repository,
@@ -24,6 +27,7 @@ void main() {
     );
     deleteServer = DeleteMcpServer(
       repository: repository,
+      botRepository: bots,
       credentialStore: credentials,
       catalogController: catalog,
     );
@@ -114,6 +118,22 @@ void main() {
   });
 
   group('DeleteMcpServer', () {
+    test('rejects deletion while an agent references the server', () async {
+      final server = _server(id: 'mcp-in-use', name: 'In use');
+      repository.servers[server.id] = server;
+      credentials.values[server.id] = McpCredential(accessToken: 'keep-secret');
+      bots.bots.add(_bot(mcpServerId: server.id));
+
+      final result = await deleteServer(server);
+
+      expect(result.outcome, McpServerMutationOutcome.failure);
+      expect(result.failure?.code, 'mcp_server_in_use_by_bot');
+      expect(repository.servers[server.id], same(server));
+      expect(credentials.values[server.id]?.accessToken, 'keep-secret');
+      expect(catalog.disconnectCount, 0);
+      expect(bots.lastForceRefresh, isTrue);
+    });
+
     test('restores the credential when persistence fails', () async {
       final server = _server(id: 'mcp-delete', name: 'Delete');
       repository.servers[server.id] = server;
@@ -156,6 +176,26 @@ void main() {
       expect(credentials.values[server.id], isNull);
     });
   });
+}
+
+Bot _bot({required String mcpServerId}) {
+  final timestamp = DateTime(2026, 8, 15, 8);
+  return Bot(
+    id: 'bot-1',
+    name: 'Agent',
+    avatar: '',
+    provider: 'OpenAI',
+    baseURL: 'https://example.com',
+    apiKey: '',
+    apiType: Bot.apiTypeOpenAI,
+    model: 'model',
+    systemPrompt: '',
+    parameters: {
+      Bot.parameterMcpServers: [mcpServerId],
+    },
+    createTimestamp: timestamp,
+    modifyTimestamp: timestamp,
+  );
 }
 
 McpServer _server({required String id, required String name}) {
@@ -234,6 +274,21 @@ final class _MemoryMcpCredentialStore implements McpCredentialStore {
   }
 }
 
+final class _MemoryBotRepository implements BotRepository {
+  final List<Bot> bots = [];
+  bool? lastForceRefresh;
+
+  @override
+  Future<List<Bot>> getBots({bool forceRefresh = false}) async {
+    lastForceRefresh = forceRefresh;
+    return List<Bot>.unmodifiable(bots);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('Bot operation is not used by this test.');
+}
+
 final class _FakeMcpCatalogController implements McpCatalogController {
   _FakeMcpCatalogController(this.repository);
 
@@ -242,9 +297,11 @@ final class _FakeMcpCatalogController implements McpCatalogController {
   Object? disconnectError;
   Object? hydrateError;
   int refreshCount = 0;
+  int disconnectCount = 0;
 
   @override
   Future<void> disconnect(McpServer server) async {
+    disconnectCount += 1;
     if (disconnectError case final error?) throw error;
   }
 

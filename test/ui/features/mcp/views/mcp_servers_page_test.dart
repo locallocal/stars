@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/data/services/mcp/mcp_catalog_service.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/mcp_client.dart';
 import 'package:stars/domain/repositories/mcp_credential_store.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
@@ -872,6 +873,95 @@ void main() {
     }
   });
 
+  testWidgets('desktop in-use deletion error keeps original content width', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+
+    final now = DateTime.utc(2026, 7, 30);
+    final server = McpServer(
+      id: 'github',
+      name: 'GitHub',
+      transport: McpStreamableHttpServerTransport(
+        endpoint: Uri.parse('https://example.com/github/mcp'),
+      ),
+      createdAt: now,
+      updatedAt: now,
+    );
+    final repository = _FakeMcpServerRepository(servers: [server]);
+    final viewModel = _createMcpServersViewModel(
+      repository: repository,
+      botRepository: _FakeBotRepository([
+        _botUsingMcpServer(server.id, now: now),
+      ]),
+      credentialStore: const _UnusedCredentialStore(),
+      catalogService: McpCatalogService(
+        repository: repository,
+        client: const _UnusedMcpClient(),
+        toolRegistry: DynamicToolRegistry(const []),
+      ),
+    );
+    addTearDown(viewModel.dispose);
+
+    try {
+      await tester.pumpWidget(_harness(viewModel));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('desktop-mcp-server-actions-github')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('desktop-mcp-server-delete-github')),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.ancestor(of: find.text('删除'), matching: find.byType(ShadButton)),
+      );
+      await tester.pumpAndSettle();
+
+      final content = find.byKey(
+        const ValueKey<String>('mcp-servers-desktop-content'),
+      );
+      final errorRegion = find.byKey(
+        const ValueKey<String>('mcp-error-region'),
+      );
+      final alert = find.byKey(const ValueKey<String>('mcp-error-alert'));
+      final message = find.byKey(const ValueKey<String>('mcp-error-message'));
+      final description = find.text(
+        'Stars 会保存已发现的工具目录。请在编辑智能体时逐个开启工具，只有该智能体会将其提供给模型。',
+      );
+      final serverCard = find.byKey(
+        const ValueKey<String>('desktop-mcp-server-github'),
+      );
+      const expectedWidth = StarsDesktopThemeSpec.formContentMaxWidth;
+      expect(errorRegion, findsOneWidget);
+      expect(alert, findsOneWidget);
+      expect(find.text('此 MCP 服务器正被智能体使用，请先从智能体中移除后再删除。'), findsOneWidget);
+      expect(tester.getSize(errorRegion).width, expectedWidth);
+      expect(tester.getSize(alert).width, expectedWidth);
+      expect(tester.getSize(errorRegion).height, lessThanOrEqualTo(58));
+      expect(tester.getSize(alert).height, lessThanOrEqualTo(58));
+      expect(tester.getRect(alert).top - tester.getRect(description).bottom, 8);
+      expect(tester.getRect(serverCard).top - tester.getRect(alert).bottom, 10);
+      expect(tester.getRect(errorRegion).left, tester.getRect(content).left);
+      expect(tester.getRect(errorRegion).right, tester.getRect(content).right);
+      expect(
+        tester.getCenter(message).dx,
+        closeTo(tester.getCenter(alert).dx, 1),
+      );
+      expect(find.byType(StarsInlineErrorAlert), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    }
+  });
+
   testWidgets('desktop MCP editor matches the Add Bot form dialog', (
     tester,
   ) async {
@@ -1156,6 +1246,7 @@ void main() {
 
 McpServersViewModel _createMcpServersViewModel({
   required McpServerRepository repository,
+  BotRepository botRepository = const _FakeBotRepository(),
   required McpCredentialStore credentialStore,
   required McpCatalogService catalogService,
 }) => McpServersViewModel(
@@ -1168,9 +1259,40 @@ McpServersViewModel _createMcpServersViewModel({
   ),
   deleteServer: DeleteMcpServer(
     repository: repository,
+    botRepository: botRepository,
     credentialStore: credentialStore,
     catalogController: catalogService,
   ),
+);
+
+final class _FakeBotRepository implements BotRepository {
+  const _FakeBotRepository([this.bots = const []]);
+
+  final List<Bot> bots;
+
+  @override
+  Future<List<Bot>> getBots({bool forceRefresh = false}) async => bots;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('Bot operation is not used by this test.');
+}
+
+Bot _botUsingMcpServer(String serverId, {required DateTime now}) => Bot(
+  id: 'agent',
+  name: 'Agent',
+  avatar: '',
+  provider: 'OpenAI',
+  baseURL: 'https://example.com',
+  apiKey: '',
+  apiType: Bot.apiTypeOpenAI,
+  model: 'model',
+  systemPrompt: '',
+  parameters: {
+    Bot.parameterMcpServers: [serverId],
+  },
+  createTimestamp: now,
+  modifyTimestamp: now,
 );
 
 Widget _harness(McpServersViewModel viewModel) {

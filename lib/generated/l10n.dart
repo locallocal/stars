@@ -3576,6 +3576,16 @@ class S {
     );
   }
 
+  /// `This MCP server is used by an agent. Remove it from the agent before deleting it.`
+  String get mcpServerInUseByBot {
+    return Intl.message(
+      'This MCP server is used by an agent. Remove it from the agent before deleting it.',
+      name: 'mcpServerInUseByBot',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `MCP connection failed: {error}`
   String mcpConnectionFailed(String error) {
     return Intl.message(
