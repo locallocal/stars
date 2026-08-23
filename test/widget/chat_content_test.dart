@@ -652,6 +652,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('command-0').hitTestable(), findsNothing);
+
+    await tester.tap(find.text('执行状态'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('command-0').hitTestable(), findsOneWidget);
     final scrollable = find.byKey(
       const ValueKey<String>('execution-details-scroll'),
     );
