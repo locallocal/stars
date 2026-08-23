@@ -65,6 +65,17 @@ void main() {
         find.byKey(const ValueKey<String>('add-mcp-server-desktop')),
         findsOneWidget,
       );
+      final headerAddButton = find.byKey(
+        const ValueKey<String>('add-mcp-server-desktop'),
+      );
+      final emptyAddButton = find.byKey(
+        const ValueKey<String>('add-mcp-server-empty-desktop'),
+      );
+      expect(emptyAddButton, findsOneWidget);
+      expect(
+        tester.getSize(emptyAddButton).width,
+        tester.getSize(headerAddButton).width,
+      );
       final searchField = find.byKey(
         const ValueKey<String>('mcp-search-field'),
       );

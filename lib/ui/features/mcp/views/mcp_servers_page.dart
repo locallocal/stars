@@ -240,7 +240,9 @@ class _McpServersPageState extends State<McpServersPage> {
                             title: strings.noMcpServers,
                             description: strings.noMcpServersDescription,
                             action: ShadButton(
-                              size: ShadButtonSize.sm,
+                              key: const ValueKey<String>(
+                                'add-mcp-server-empty-desktop',
+                              ),
                               onPressed: () => _showEditor(),
                               leading: const Icon(LucideIcons.plus, size: 16),
                               child: Text(strings.addMcpServer),
