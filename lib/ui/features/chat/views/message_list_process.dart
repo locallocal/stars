@@ -51,22 +51,8 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
   @override
   void initState() {
     super.initState();
-    _desktopController = ShadAccordionController<String>(
-      widget.isDesktop && widget.isStreaming ? _itemValue : null,
-    );
+    _desktopController = ShadAccordionController<String>(null);
     _detailsScrollController = ScrollController();
-  }
-
-  @override
-  void didUpdateWidget(covariant ProcessInfoSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.isDesktop || oldWidget.isStreaming == widget.isStreaming) {
-      return;
-    }
-    final isOpen = _desktopController.value.contains(_itemValue);
-    if (widget.isStreaming != isOpen) {
-      _desktopController.toggle(_itemValue);
-    }
   }
 
   @override
