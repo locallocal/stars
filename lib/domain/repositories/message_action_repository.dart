@@ -9,4 +9,6 @@ abstract interface class MessageActionRepository {
   Future<void> shareImage({required String sourcePath, required String text});
 
   Future<bool> openExternal(Uri uri);
+
+  Future<bool> openLocalFile(String path);
 }

@@ -438,6 +438,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
       toolCalls: const [],
       commandExecutions: const [],
       skillActivations: const [],
+      localFiles: const [],
       clearPendingToolApproval: true,
       tokenUsage: ModelTokenUsage.empty,
       supportsCancellation: false,
@@ -528,7 +529,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         _snapshot.reasoningResponse.isNotEmpty ||
         _snapshot.toolCalls.isNotEmpty ||
         _snapshot.commandExecutions.isNotEmpty ||
-        _snapshot.skillActivations.isNotEmpty;
+        _snapshot.skillActivations.isNotEmpty ||
+        _snapshot.localFiles.isNotEmpty;
     if (lifecycle == ChatRunLifecycle.completed && !hasGeneratedContent) {
       lifecycle = ChatRunLifecycle.emptyResponse;
     }
@@ -568,6 +570,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
           ),
         ),
         tokenUsage: _snapshot.tokenUsage,
+        files: List<String>.of(_snapshot.localFiles),
         terminalOutcome: outcome,
         hasPartialContent:
             hasGeneratedContent &&

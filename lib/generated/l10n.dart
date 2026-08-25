@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -1510,7 +1509,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -2026,6 +2026,51 @@ class S {
     return Intl.message(
       'Ready to preview',
       name: 'directPreview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open file`
+  String get openFile {
+    return Intl.message('Open file', name: 'openFile', desc: '', args: []);
+  }
+
+  /// `Open with system app`
+  String get openWithSystem {
+    return Intl.message(
+      'Open with system app',
+      name: 'openWithSystem',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview is not available for this file type. Open it with a system app.`
+  String get filePreviewUnavailable {
+    return Intl.message(
+      'Preview is not available for this file type. Open it with a system app.',
+      name: 'filePreviewUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unable to open this file.`
+  String get fileOpenFailed {
+    return Intl.message(
+      'Unable to open this file.',
+      name: 'fileOpenFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This file no longer exists.`
+  String get fileMissing {
+    return Intl.message(
+      'This file no longer exists.',
+      name: 'fileMissing',
       desc: '',
       args: [],
     );
@@ -4531,7 +4576,8 @@ class S {
     return Intl.message(
       'Starting…',
       name: 'startupStarting',
-      desc: 'Status shown while Stars loads the profile before the main application starts',
+      desc:
+          'Status shown while Stars loads the profile before the main application starts',
       args: [],
     );
   }
@@ -4571,7 +4617,8 @@ class S {
     return Intl.message(
       'This database was created by a newer version of Stars. Update the app before opening it.',
       name: 'databaseDowngradeNotSupported',
-      desc: 'Safe error shown when the local database is newer than the application',
+      desc:
+          'Safe error shown when the local database is newer than the application',
       args: [],
     );
   }
@@ -4581,7 +4628,8 @@ class S {
     return Intl.message(
       'The database integrity check failed, and recovery from this version\'s backup was unsuccessful.',
       name: 'databaseRecoveryFailed',
-      desc: 'Safe error shown when database validation and backup recovery both fail',
+      desc:
+          'Safe error shown when database validation and backup recovery both fail',
       args: [],
     );
   }

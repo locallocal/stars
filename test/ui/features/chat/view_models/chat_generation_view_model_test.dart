@@ -670,6 +670,50 @@ void main() {
       },
     );
 
+    test('successful local file tools attach artifacts to the reply', () async {
+      final tool = _LocalFileArtifactTool();
+      final factory = _AgentProviderFactory(
+        toolName: writeLocalFileToolName,
+        arguments: const {
+          'path': '  /tmp/generated-report.md  ',
+          'content': '# Report',
+        },
+      );
+      final persisted = <Message>[];
+      final controller = ChatGenerationViewModel(
+        chatId: 'chat-1',
+        bot: _bot,
+        providerFactory: factory.create,
+        messagePersister: (message) async {
+          persisted.add(message);
+          return message;
+        },
+        lastMessageUpdater: (_, _) async {},
+        toolRegistry: StaticToolRegistry([tool]),
+      );
+      addTearDown(controller.dispose);
+
+      expect(
+        await controller.startText(
+          userMessage: _userMessage(),
+          messages: [ChatMessage(role: 'user', content: 'Create a report')],
+          requestedToolNames: const {writeLocalFileToolName},
+        ),
+        isTrue,
+      );
+      await _waitFor(() => controller.snapshot.pendingToolApproval != null);
+      controller.resolveToolApproval(ToolApprovalDecision.allowOnce);
+      await _waitFor(
+        () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+      );
+
+      expect(controller.snapshot.localFiles, ['/tmp/generated-report.md']);
+      expect(persisted.last.files, ['/tmp/generated-report.md']);
+
+      controller.acknowledgeTerminal();
+      expect(controller.snapshot.localFiles, isEmpty);
+    });
+
     test(
       'shell command is recorded in process info while audit stays hashed',
       () async {
@@ -986,6 +1030,36 @@ final class _ShellAuditTool implements ExecutableTool {
     cancellationToken.throwIfCancelled();
     executions += 1;
     return ToolResult(callId: call.callId, name: call.name, content: 'done');
+  }
+}
+
+final class _LocalFileArtifactTool implements ExecutableTool {
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: writeLocalFileToolName,
+    title: 'Write local file',
+    description: 'Write an artifact to a local file.',
+    inputSchema: const {
+      'type': 'object',
+      'properties': {
+        'path': {'type': 'string'},
+        'content': {'type': 'string'},
+      },
+      'required': ['path', 'content'],
+      'additionalProperties': false,
+    },
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.write,
+    capabilities: const {ToolCapability.localWrite},
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    cancellationToken.throwIfCancelled();
+    return ToolResult(callId: call.callId, name: call.name, content: 'written');
   }
 }
 

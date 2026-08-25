@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as path_context;
 import 'package:intl/intl.dart' as intl;
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
@@ -19,6 +21,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 part 'message_list_actions.dart';
 part 'message_list_bubble.dart';
+part 'message_list_file_preview.dart';
 part 'message_list_media_preview.dart';
 part 'message_list_process.dart';
 part 'message_list_process_labels.dart';
@@ -30,6 +33,7 @@ class MessageList extends StatefulWidget {
   final ScrollController scrollController;
   final bool isStreaming;
   final String streamingResponse;
+  final List<String> streamingFiles;
   final MessageProcessInfo streamingProcessInfo;
   final ModelTokenUsage streamingTokenUsage;
   final String currentUserId;
@@ -46,6 +50,7 @@ class MessageList extends StatefulWidget {
     required this.scrollController,
     required this.isStreaming,
     required this.streamingResponse,
+    this.streamingFiles = const [],
     this.streamingProcessInfo = const MessageProcessInfo(),
     this.streamingTokenUsage = ModelTokenUsage.empty,
     required this.currentUserId,
@@ -188,6 +193,10 @@ class _MessageListState extends State<MessageList> {
                   tokenUsage: streamingTokenUsage,
                   showExecutionStatus: showExecutionStatus,
                   content: streamingResponse,
+                  files: _localFilesFromMarkdown(
+                    streamingResponse,
+                    widget.streamingFiles,
+                  ),
                   actionViewModel: widget.actionViewModel,
                 ),
               ),
@@ -207,7 +216,10 @@ class _MessageListState extends State<MessageList> {
             showExecutionStatus: showExecutionStatus && !isMe,
             content: message.content,
             images: message.images,
-            files: message.files,
+            files:
+                isMe
+                    ? message.files
+                    : _localFilesFromMarkdown(message.content, message.files),
             audio: message.audio,
             music: message.music,
             video: message.video,

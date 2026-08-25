@@ -36,6 +36,7 @@ class ChatGenerationSnapshot {
     this.toolCalls = const [],
     this.commandExecutions = const [],
     this.skillActivations = const [],
+    this.localFiles = const [],
     this.pendingToolApproval,
     this.tokenUsage = ModelTokenUsage.empty,
     this.supportsCancellation = false,
@@ -54,6 +55,7 @@ class ChatGenerationSnapshot {
   final List<MessageToolCall> toolCalls;
   final List<MessageCommandExecution> commandExecutions;
   final List<MessageSkillActivation> skillActivations;
+  final List<String> localFiles;
   final ToolApprovalRequest? pendingToolApproval;
   final ModelTokenUsage tokenUsage;
   final bool supportsCancellation;
@@ -87,6 +89,7 @@ class ChatGenerationSnapshot {
     List<MessageToolCall>? toolCalls,
     List<MessageCommandExecution>? commandExecutions,
     List<MessageSkillActivation>? skillActivations,
+    List<String>? localFiles,
     ToolApprovalRequest? pendingToolApproval,
     bool clearPendingToolApproval = false,
     ModelTokenUsage? tokenUsage,
@@ -109,6 +112,7 @@ class ChatGenerationSnapshot {
       toolCalls: toolCalls ?? this.toolCalls,
       commandExecutions: commandExecutions ?? this.commandExecutions,
       skillActivations: skillActivations ?? this.skillActivations,
+      localFiles: localFiles ?? this.localFiles,
       pendingToolApproval:
           clearPendingToolApproval
               ? null

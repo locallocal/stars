@@ -27,7 +27,8 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
       _snapshot.reasoningResponse.isNotEmpty ||
       _snapshot.toolCalls.isNotEmpty ||
       _snapshot.commandExecutions.isNotEmpty ||
-      _snapshot.skillActivations.isNotEmpty;
+      _snapshot.skillActivations.isNotEmpty ||
+      _snapshot.localFiles.isNotEmpty;
 
   Message _buildPartialAssistantMessage(String runId) {
     final duration =
@@ -55,6 +56,7 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
         ),
       ),
       tokenUsage: _snapshot.tokenUsage,
+      files: List<String>.of(_snapshot.localFiles),
       hasPartialContent: true,
       timestamp: _startedAt ?? DateTime.now(),
     );

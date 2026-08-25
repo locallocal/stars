@@ -79,6 +79,7 @@ class ChatPageState extends State<ChatPage> {
   List<Message> _messages = [];
   int _messageRevision = 0;
   String _streamingResponse = '';
+  List<String> _streamingFiles = const [];
   String _reasoningResponse = '';
   ModelTokenUsage _streamingTokenUsage = ModelTokenUsage.empty;
   final List<MessageToolCall> _toolCalls = [];
@@ -186,10 +187,12 @@ class ChatPageState extends State<ChatPage> {
               snapshot.reasoningResponse.isNotEmpty ||
               snapshot.toolCalls.isNotEmpty ||
               snapshot.commandExecutions.isNotEmpty ||
-              snapshot.skillActivations.isNotEmpty);
+              snapshot.skillActivations.isNotEmpty ||
+              snapshot.localFiles.isNotEmpty);
       _isCancellable = snapshot.canCancel;
       _isStopping = snapshot.lifecycle == ChatRunLifecycle.stopping;
       _streamingResponse = snapshot.streamingResponse;
+      _streamingFiles = List<String>.of(snapshot.localFiles);
       _reasoningResponse = snapshot.reasoningResponse;
       _streamingTokenUsage = snapshot.tokenUsage;
       _toolCalls

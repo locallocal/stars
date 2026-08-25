@@ -296,6 +296,15 @@ Future<void> _openMarkdownLink(
 ) async {
   if (href == null || href.trim().isEmpty) return;
   final normalized = href.trim();
+  final localPath = _localFilePathFromReference(normalized);
+  if (localPath != null) {
+    _showLocalFileDialog(
+      context,
+      _LocalFileDescriptor.fromPath(localPath),
+      actions,
+    );
+    return;
+  }
   if (await actions?.openExternal(normalized) == true) return;
   if (!context.mounted) return;
 
