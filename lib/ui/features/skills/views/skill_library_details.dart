@@ -29,6 +29,19 @@ class _SkillDetailsDialogState extends State<_SkillDetailsDialog> {
     final strings = S.of(context);
     final skill = widget.content.descriptor;
     return ShadDialog(
+      key: const ValueKey<String>('skill-details-dialog'),
+      closeIcon: StarsDesktopIconAction(
+        key: const ValueKey<String>('skill-details-close'),
+        icon: LucideIcons.x,
+        iconSize: 18,
+        label: MaterialLocalizations.of(context).closeButtonTooltip,
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      closeIconPosition: ShadPosition.directional(
+        top: 12,
+        end: 8,
+        textDirection: Directionality.of(context),
+      ),
       title: Text(
         skill.name,
         key: ValueKey<String>('skill-details-title-${skill.id}'),
