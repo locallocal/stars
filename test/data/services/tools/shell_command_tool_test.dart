@@ -62,6 +62,12 @@ void main() {
 
       expect(definition.riskLevel, ToolRiskLevel.destructive);
       expect(definition.capabilities, contains(ToolCapability.process));
+      expect(definition.description, contains('structured built-in tool'));
+      final properties =
+          definition.inputSchema['properties']! as Map<String, Object?>;
+      for (final schema in properties.values.cast<Map<String, Object?>>()) {
+        expect(schema['description'], isNotEmpty);
+      }
       expect(
         const DefaultToolPolicy().evaluate(definition, call, context).outcome,
         ToolPolicyOutcome.deny,
