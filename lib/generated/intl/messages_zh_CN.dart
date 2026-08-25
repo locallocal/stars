@@ -300,6 +300,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "fetchModelListFirst": MessageLookupByLibrary.simpleMessage("请先获取模型列表"),
     "fileAttachment": MessageLookupByLibrary.simpleMessage("文件附件"),
     "fileCount": m18,
+    "fileMissing": MessageLookupByLibrary.simpleMessage("此文件已不存在。"),
+    "fileOpenFailed": MessageLookupByLibrary.simpleMessage("无法打开此文件。"),
+    "filePreviewUnavailable": MessageLookupByLibrary.simpleMessage(
+      "此文件类型无法在应用内预览，请使用系统应用打开。",
+    ),
     "fileResult": MessageLookupByLibrary.simpleMessage("文件结果"),
     "fileStatus": MessageLookupByLibrary.simpleMessage("文件状态"),
     "fileTypeMusic": MessageLookupByLibrary.simpleMessage("音乐"),
@@ -522,6 +527,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "notSupported": MessageLookupByLibrary.simpleMessage("不支持"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage("没有足够的旧上下文可压缩"),
+    "openFile": MessageLookupByLibrary.simpleMessage("打开文件"),
+    "openWithSystem": MessageLookupByLibrary.simpleMessage("使用系统应用打开"),
     "orphanedChatGuidance": MessageLookupByLibrary.simpleMessage(
       "删除这条孤立会话，或重新创建缺失的智能体。",
     ),

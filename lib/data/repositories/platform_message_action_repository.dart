@@ -56,6 +56,15 @@ final class PlatformMessageActionRepository implements MessageActionRepository {
     if (!await canLaunchUrl(uri)) return false;
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
+
+  @override
+  Future<bool> openLocalFile(String path) async {
+    final source = File(path);
+    if (!await source.exists()) return false;
+    final uri = Uri.file(source.absolute.path);
+    if (!await canLaunchUrl(uri)) return false;
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 }
 
 Future<void> _shareImage({

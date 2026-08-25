@@ -147,10 +147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt di sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Gestito da Stars e aggiunto a ogni richiesta al modello. Gli identificatori dell’agente e della conversazione correnti vengono aggiunti in fase di esecuzione e non sono modificabili.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Gestito da Stars e aggiunto a ogni richiesta al modello. Gli identificatori dell’agente e della conversazione correnti vengono aggiunti in fase di esecuzione e non sono modificabili.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -417,6 +416,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "fileAttachment": MessageLookupByLibrary.simpleMessage("File attachment"),
     "fileCount": m18,
+    "fileMissing": MessageLookupByLibrary.simpleMessage(
+      "This file no longer exists.",
+    ),
+    "fileOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "Unable to open this file.",
+    ),
+    "filePreviewUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Preview is not available for this file type. Open it with a system app.",
+    ),
     "fileResult": MessageLookupByLibrary.simpleMessage("File result"),
     "fileStatus": MessageLookupByLibrary.simpleMessage("Stato dei file"),
     "fileTypeMusic": MessageLookupByLibrary.simpleMessage("Musica"),
@@ -714,6 +722,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "notSupported": MessageLookupByLibrary.simpleMessage("Non supportato"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage(
       "Contesto precedente insufficiente da comprimere",
+    ),
+    "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openWithSystem": MessageLookupByLibrary.simpleMessage(
+      "Open with system app",
     ),
     "orphanedChatGuidance": MessageLookupByLibrary.simpleMessage(
       "Delete this orphaned chat or recreate the missing bot.",

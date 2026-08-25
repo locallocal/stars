@@ -165,6 +165,7 @@ extension _ChatPageWorkspace on ChatPageState {
                   scrollController: _scrollController,
                   isStreaming: _isStreaming,
                   streamingResponse: _streamingResponse,
+                  streamingFiles: _streamingFiles,
                   streamingProcessInfo: _buildStreamingProcessInfo(),
                   streamingTokenUsage: _streamingTokenUsage,
                   currentUserId: _currentUserId,

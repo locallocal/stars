@@ -48,16 +48,33 @@ void main() {
     expect(await viewModel.openExternal('https://example.com'), isTrue);
     expect(repository.openCalls, 1);
   });
+
+  test('opens a normalized local file through the dedicated API', () async {
+    final repository = _FakeMessageActionRepository();
+    final viewModel = MessageActionViewModel(repository: repository);
+
+    expect(await viewModel.openLocalFile('  /tmp/report.pdf  '), isTrue);
+    expect(repository.localFileCalls, ['/tmp/report.pdf']);
+    expect(await viewModel.openLocalFile('   '), isFalse);
+    expect(repository.localFileCalls, hasLength(1));
+  });
 }
 
 final class _FakeMessageActionRepository implements MessageActionRepository {
   MediaExportResult saveResult = MediaExportResult.saved;
   Object? saveError;
   int openCalls = 0;
+  final List<String> localFileCalls = [];
 
   @override
   Future<bool> openExternal(Uri uri) async {
     openCalls += 1;
+    return true;
+  }
+
+  @override
+  Future<bool> openLocalFile(String path) async {
+    localFileCalls.add(path);
     return true;
   }
 

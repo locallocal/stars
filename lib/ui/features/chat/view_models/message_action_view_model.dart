@@ -46,4 +46,14 @@ final class MessageActionViewModel {
       return false;
     }
   }
+
+  Future<bool> openLocalFile(String path) async {
+    final normalizedPath = path.trim();
+    if (normalizedPath.isEmpty) return false;
+    try {
+      return await _repository.openLocalFile(normalizedPath);
+    } on Object {
+      return false;
+    }
+  }
 }

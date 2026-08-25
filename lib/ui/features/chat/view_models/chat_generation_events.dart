@@ -214,9 +214,15 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
         commandExecutions[commandIndex] = commandExecution;
       }
     }
+    final localFiles = List<String>.of(_snapshot.localFiles);
+    final localFile = _successfulLocalFile(invocation);
+    if (localFile != null && !localFiles.contains(localFile)) {
+      localFiles.add(localFile);
+    }
     _snapshot = _snapshot.copyWith(
       toolCalls: calls,
       commandExecutions: commandExecutions,
+      localFiles: localFiles,
     );
     _notifyView();
     _schedulePartialPersistence(runId);
@@ -231,6 +237,19 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
         }),
       );
     }
+  }
+
+  String? _successfulLocalFile(ToolInvocationRecord invocation) {
+    if (invocation.status != ToolInvocationStatus.succeeded) return null;
+    final argumentName = switch (invocation.name) {
+      readLocalFileToolName || writeLocalFileToolName => 'path',
+      copyLocalFileToolName || moveLocalFileToolName => 'destination_path',
+      _ => null,
+    };
+    if (argumentName == null) return null;
+    final path = invocation.arguments[argumentName];
+    if (path is! String || path.trim().isEmpty) return null;
+    return path.trim();
   }
 
   String _truncateAuditText(String value) {

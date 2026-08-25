@@ -349,43 +349,12 @@ class _MessageBubble extends StatelessWidget {
     BuildContext context,
     String filePath,
     bool isCurrentUser,
-  ) {
-    final fileName = filePath.split(Platform.pathSeparator).last;
-
-    return Container(
-      width: isDesktop ? 220 : 170,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color:
-            isCurrentUser
-                ? Colors.white.withValues(alpha: 0.28)
-                : Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
-        borderRadius:
-            isDesktop
-                ? StarsDesktopThemeSpec.containerRadius
-                : BorderRadius.circular(14),
-        border: Border.all(color: StarsDesktopTokens.of(context).separator),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            isDesktop ? LucideIcons.file : Icons.insert_drive_file_rounded,
-            size: 24,
-            color: StarsDesktopTokens.of(context).secondaryText,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            fileName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
+  ) => _LocalFileCard(
+    filePath: filePath,
+    isCurrentUser: isCurrentUser,
+    isDesktop: isDesktop,
+    actionViewModel: actionViewModel,
+  );
 
   MarkdownStyleSheet _buildMarkdownStyleSheet(
     BuildContext context,
