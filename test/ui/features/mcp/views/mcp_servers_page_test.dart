@@ -325,6 +325,27 @@ void main() {
         ),
         findsOneWidget,
       );
+      final detailsClose = find.byKey(
+        const ValueKey<String>('desktop-mcp-server-details-close-github'),
+      );
+      expect(detailsClose, findsOneWidget);
+      final detailsDialogSurface =
+          find.ancestor(of: detailsClose, matching: find.byType(Stack)).first;
+      expect(
+        find.descendant(of: detailsClose, matching: find.byIcon(LucideIcons.x)),
+        findsOneWidget,
+      );
+      expect(tester.getSize(detailsClose), const Size.square(44));
+      expect(
+        tester.getRect(detailsDialogSurface).right -
+            tester.getRect(detailsClose).right,
+        closeTo(8, 0.01),
+      );
+      expect(
+        tester.getRect(detailsClose).top -
+            tester.getRect(detailsDialogSurface).top,
+        closeTo(12, 0.01),
+      );
       expect(
         find.byKey(
           const ValueKey<String>('desktop-mcp-tool-github-search_issues'),

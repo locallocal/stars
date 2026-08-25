@@ -356,6 +356,18 @@ class _McpServerDetailsDialogState extends State<_McpServerDetailsDialog> {
 
     return ShadDialog(
       key: ValueKey<String>('desktop-mcp-server-details-dialog-${server.id}'),
+      closeIcon: StarsDesktopIconAction(
+        key: ValueKey<String>('desktop-mcp-server-details-close-${server.id}'),
+        icon: LucideIcons.x,
+        iconSize: 18,
+        label: MaterialLocalizations.of(context).closeButtonTooltip,
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      closeIconPosition: ShadPosition.directional(
+        top: 12,
+        end: 8,
+        textDirection: Directionality.of(context),
+      ),
       title: Text(
         server.name,
         key: ValueKey<String>('mcp-server-details-title-${server.id}'),
