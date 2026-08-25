@@ -50,6 +50,7 @@ import 'package:stars/data/services/tools/add_mcp_server_tool.dart';
 import 'package:stars/data/services/tools/shell_command_tool.dart';
 import 'package:stars/data/services/tools/skill_installer_tool.dart';
 import 'package:stars/data/services/tools/system_conversation_history_skill.dart';
+import 'package:stars/data/services/tools/system_local_file_system_skills.dart';
 import 'package:stars/data/services/tools/system_shell_skill.dart';
 import 'package:stars/data/services/tools/system_skill_installer_skill.dart';
 import 'package:stars/data/services/tools/system_mcp_installer_skill.dart';
@@ -143,6 +144,8 @@ class AppDependencies {
     required this.prepareTextGeneration,
     required this.compactConversation,
     required this.systemConversationHistorySkill,
+    required this.systemDirectoryOperationsSkill,
+    required this.systemFileOperationsSkill,
     required this.systemMcpInstallerSkill,
     required this.systemShellSkill,
     required this.systemSkillInstallerSkill,
@@ -201,6 +204,8 @@ class AppDependencies {
     );
     const aiProviderRepository = AiProviderRepositoryImpl();
     final systemConversationHistorySkill = SystemConversationHistorySkill();
+    final systemDirectoryOperationsSkill = SystemDirectoryOperationsSkill();
+    final systemFileOperationsSkill = SystemFileOperationsSkill();
     final systemMcpInstallerSkill = SystemMcpInstallerSkill();
     final systemSkillInstallerSkill = SystemSkillInstallerSkill();
     final shellCommandTool = createHostShellCommandTool();
@@ -212,6 +217,16 @@ class AppDependencies {
         contents.add(await systemConversationHistorySkill.loadContent());
       } on Object {
         // A damaged built-in Skill is omitted while other Skills stay usable.
+      }
+      try {
+        contents.add(await systemDirectoryOperationsSkill.loadContent());
+      } on Object {
+        // Directory operations fail closed if their Skill is damaged.
+      }
+      try {
+        contents.add(await systemFileOperationsSkill.loadContent());
+      } on Object {
+        // File operations fail closed if their Skill is damaged.
       }
       try {
         final shellSkill = systemShellSkill;
@@ -414,6 +429,8 @@ class AppDependencies {
       prepareTextGeneration: prepareTextGeneration,
       compactConversation: compactConversation,
       systemConversationHistorySkill: systemConversationHistorySkill,
+      systemDirectoryOperationsSkill: systemDirectoryOperationsSkill,
+      systemFileOperationsSkill: systemFileOperationsSkill,
       systemMcpInstallerSkill: systemMcpInstallerSkill,
       systemShellSkill: systemShellSkill,
       systemSkillInstallerSkill: systemSkillInstallerSkill,
@@ -502,6 +519,8 @@ class AppDependencies {
   final PrepareTextGeneration prepareTextGeneration;
   final CompactConversation compactConversation;
   final SystemConversationHistorySkill systemConversationHistorySkill;
+  final SystemDirectoryOperationsSkill systemDirectoryOperationsSkill;
+  final SystemFileOperationsSkill systemFileOperationsSkill;
   final SystemMcpInstallerSkill systemMcpInstallerSkill;
   final SystemShellSkill? systemShellSkill;
   final SystemSkillInstallerSkill systemSkillInstallerSkill;
@@ -558,6 +577,16 @@ class AppDependencies {
         'conversation_history_skill',
         required: true,
         initialize: systemConversationHistorySkill.validate,
+      );
+      await inspect(
+        'directory_operations_skill',
+        required: true,
+        initialize: systemDirectoryOperationsSkill.validate,
+      );
+      await inspect(
+        'file_operations_skill',
+        required: true,
+        initialize: systemFileOperationsSkill.validate,
       );
       if (systemShellSkill case final shellSkill?) {
         await inspect(

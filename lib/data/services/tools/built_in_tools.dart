@@ -1,8 +1,15 @@
+import 'package:stars/data/services/tools/local_file_system_tools.dart';
 import 'package:stars/domain/models/models.dart';
 
-List<ExecutableTool> createBuiltInTools({DateTime Function()? now}) => [
+List<ExecutableTool> createBuiltInTools({
+  DateTime Function()? now,
+  String Function()? currentWorkingDirectory,
+}) => [
   CalculatorTool(),
   CurrentTimeTool(now: now),
+  ...createLocalFileSystemTools(
+    currentWorkingDirectory: currentWorkingDirectory,
+  ),
 ];
 
 final class CalculatorTool implements ExecutableTool {
