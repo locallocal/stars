@@ -384,6 +384,31 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ShadDialog), findsOneWidget);
+      final detailsDialog = find.byKey(
+        const ValueKey<String>('skill-details-dialog'),
+      );
+      final detailsClose = find.byKey(
+        const ValueKey<String>('skill-details-close'),
+      );
+      expect(detailsDialog, findsOneWidget);
+      expect(detailsClose, findsOneWidget);
+      final detailsDialogSurface =
+          find.ancestor(of: detailsClose, matching: find.byType(Stack)).first;
+      expect(
+        find.descendant(of: detailsClose, matching: find.byIcon(LucideIcons.x)),
+        findsOneWidget,
+      );
+      expect(tester.getSize(detailsClose), const Size.square(44));
+      expect(
+        tester.getRect(detailsDialogSurface).right -
+            tester.getRect(detailsClose).right,
+        closeTo(8, 0.01),
+      );
+      expect(
+        tester.getRect(detailsClose).top -
+            tester.getRect(detailsDialogSurface).top,
+        closeTo(12, 0.01),
+      );
       expect(find.text('Instructions for Release Notes'), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('skill-storage-location')),
