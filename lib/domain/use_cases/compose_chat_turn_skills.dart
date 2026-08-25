@@ -67,6 +67,64 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     return content;
   }
 
+  SkillContent? _loadSystemDirectoryOperationsSkill(
+    AiProvider? provider,
+    _TurnSkillState state,
+    Set<String> enabledSkillIds, {
+    required int reservedTokens,
+  }) => _loadSystemLocalFileSystemSkill(
+    provider,
+    state,
+    enabledSkillIds,
+    skillId: directoryOperationsSkillId,
+    requestedToolNames: directoryOperationsToolNames,
+    reservedTokens: reservedTokens,
+  );
+
+  SkillContent? _loadSystemFileOperationsSkill(
+    AiProvider? provider,
+    _TurnSkillState state,
+    Set<String> enabledSkillIds, {
+    required int reservedTokens,
+  }) => _loadSystemLocalFileSystemSkill(
+    provider,
+    state,
+    enabledSkillIds,
+    skillId: fileOperationsSkillId,
+    requestedToolNames: fileOperationsToolNames,
+    reservedTokens: reservedTokens,
+  );
+
+  SkillContent? _loadSystemLocalFileSystemSkill(
+    AiProvider? provider,
+    _TurnSkillState state,
+    Set<String> enabledSkillIds, {
+    required String skillId,
+    required Set<String> requestedToolNames,
+    required int reservedTokens,
+  }) {
+    if (provider?.capabilities.supportsAgentLoop != true ||
+        !enabledSkillIds.contains(skillId)) {
+      return null;
+    }
+    final content = state.bundledContents[skillId];
+    if (content == null ||
+        content.descriptor.id != skillId ||
+        !content.descriptor.isUsable ||
+        !content.descriptor.requestedToolNames.containsAll(
+          requestedToolNames,
+        )) {
+      return null;
+    }
+    final tokens = _estimateTokens(content.instructions);
+    if (tokens > _budget.maxTokensPerSkill ||
+        state.skillTokens + reservedTokens + tokens >
+            _budget.maxSkillContextTokens) {
+      return null;
+    }
+    return content;
+  }
+
   SkillContent? _loadSystemMcpInstallerSkill(
     AiProvider? provider,
     _TurnSkillState state,

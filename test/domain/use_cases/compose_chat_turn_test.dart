@@ -330,6 +330,48 @@ void main() {
   });
 
   test(
+    'bound local file system Skills expose native tools to Agent providers',
+    () async {
+      final directorySkill = _systemLocalFileSystemSkill(directory: true);
+      final fileSkill = _systemLocalFileSystemSkill(directory: false);
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(const {}),
+        bindingRepository: _FakeBindingRepository([
+          _binding(directoryOperationsSkillId),
+          _binding(fileOperationsSkillId),
+        ]),
+        bundledSkillLoader: () async => [directorySkill, fileSkill],
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Read a file and list its parent directory',
+        ),
+        currentUserId: 'user-1',
+        skillToolProvider: _FakeSkillProvider(const []),
+      );
+
+      expect(result.requestedToolNames, {
+        ...directoryOperationsToolNames,
+        ...fileOperationsToolNames,
+      });
+      expect(result.approvalExemptToolNames, isEmpty);
+      expect(result.activatedSkills.map((skill) => skill.id), {
+        directoryOperationsSkillId,
+        fileOperationsSkillId,
+      });
+      expect(
+        result.messages.first.content,
+        contains(directorySkill.instructions),
+      );
+      expect(result.messages.first.content, contains(fileSkill.instructions));
+    },
+  );
+
+  test(
     'bound Skill installer exposes install and SQLite inventory tools',
     () async {
       final installerSkill = _systemSkillInstallerSkill();
@@ -788,6 +830,37 @@ SkillContent _systemShellSkill() {
     ),
     instructions:
         'Every command requires approval. Use the native platform shell.',
+    files: const ['SKILL.md'],
+  );
+}
+
+SkillContent _systemLocalFileSystemSkill({required bool directory}) {
+  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+  final id = directory ? directoryOperationsSkillId : fileOperationsSkillId;
+  final name = directory ? 'directory-operations' : 'file-operations';
+  final requestedToolNames =
+      directory ? directoryOperationsToolNames : fileOperationsToolNames;
+  return SkillContent(
+    descriptor: SkillDescriptor(
+      id: id,
+      name: name,
+      description: 'Native local $name.',
+      version: '1',
+      scope: SkillScope.bundled,
+      sourceUri: 'asset:///$name/SKILL.md',
+      rootPath: 'assets/skills/system/$name',
+      contentDigest:
+          directory
+              ? directoryOperationsSkillContentDigest
+              : fileOperationsSkillContentDigest,
+      trustState: SkillTrustState.bundledTrusted,
+      validationStatus: SkillValidationStatus.valid,
+      compatibility: 'Stars native platforms',
+      requestedToolNames: requestedToolNames,
+      installedAt: timestamp,
+      updatedAt: timestamp,
+    ),
+    instructions: 'Use native $name tools only after user approval.',
     files: const ['SKILL.md'],
   );
 }

@@ -3,6 +3,13 @@ import 'package:stars/data/services/tools/built_in_tools.dart';
 import 'package:stars/domain/models/models.dart';
 
 void main() {
+  test('built-in registry includes native directory and file tools', () {
+    final names = createBuiltInTools().map((tool) => tool.definition.name);
+
+    expect(names, containsAll(directoryOperationsToolNames));
+    expect(names, containsAll(fileOperationsToolNames));
+  });
+
   test('calculator returns structured arithmetic output', () async {
     final tool = CalculatorTool();
 

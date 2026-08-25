@@ -142,6 +142,8 @@ final class ComposeChatTurn {
       (binding) =>
           descriptors.containsKey(binding.skillId) &&
           binding.skillId != shellCommandSkillId &&
+          binding.skillId != directoryOperationsSkillId &&
+          binding.skillId != fileOperationsSkillId &&
           binding.skillId != skillInstallerSkillId &&
           binding.skillId != mcpInstallerSkillId &&
           binding.skillId != conversationHistorySkillId &&
@@ -210,11 +212,34 @@ final class ComposeChatTurn {
         systemShellSkill == null
             ? 0
             : _estimateTokens(systemShellSkill.instructions);
-    final systemSkillInstallerSkill = _loadSystemSkillInstallerSkill(
+    final systemDirectoryOperationsSkill = _loadSystemDirectoryOperationsSkill(
       provider,
       state,
       enabledSkillIds,
       reservedTokens: systemShellSkillTokens,
+    );
+    final systemDirectoryOperationsTokens =
+        systemDirectoryOperationsSkill == null
+            ? 0
+            : _estimateTokens(systemDirectoryOperationsSkill.instructions);
+    final systemFileOperationsSkill = _loadSystemFileOperationsSkill(
+      provider,
+      state,
+      enabledSkillIds,
+      reservedTokens: systemShellSkillTokens + systemDirectoryOperationsTokens,
+    );
+    final systemFileOperationsTokens =
+        systemFileOperationsSkill == null
+            ? 0
+            : _estimateTokens(systemFileOperationsSkill.instructions);
+    final systemSkillInstallerSkill = _loadSystemSkillInstallerSkill(
+      provider,
+      state,
+      enabledSkillIds,
+      reservedTokens:
+          systemShellSkillTokens +
+          systemDirectoryOperationsTokens +
+          systemFileOperationsTokens,
     );
     final conversationHistorySkillEnabled =
         enabledSkillIds.contains(conversationHistorySkillId) &&
@@ -229,7 +254,11 @@ final class ComposeChatTurn {
       provider,
       state,
       enabledSkillIds,
-      reservedTokens: systemShellSkillTokens + systemSkillInstallerTokens,
+      reservedTokens:
+          systemShellSkillTokens +
+          systemDirectoryOperationsTokens +
+          systemFileOperationsTokens +
+          systemSkillInstallerTokens,
     );
     final systemMcpInstallerTokens =
         systemMcpInstallerSkill == null
@@ -239,12 +268,24 @@ final class ComposeChatTurn {
         state.skillTokens +
         state.resourceTokens +
         systemShellSkillTokens +
+        systemDirectoryOperationsTokens +
+        systemFileOperationsTokens +
         systemSkillInstallerTokens +
         systemMcpInstallerTokens;
     final activePromptSkills = [
       ...state.contents.values,
       if (systemShellSkill != null)
         (content: systemShellSkill, trigger: SkillActivationTrigger.model),
+      if (systemDirectoryOperationsSkill != null)
+        (
+          content: systemDirectoryOperationsSkill,
+          trigger: SkillActivationTrigger.model,
+        ),
+      if (systemFileOperationsSkill != null)
+        (
+          content: systemFileOperationsSkill,
+          trigger: SkillActivationTrigger.model,
+        ),
       if (systemSkillInstallerSkill != null)
         (
           content: systemSkillInstallerSkill,
@@ -263,7 +304,10 @@ final class ComposeChatTurn {
       conversationId: userMessage.chatId,
       resources: state.resources.values.toList(),
       processToolsAvailable:
-          systemShellSkill != null || systemMcpInstallerSkill != null,
+          systemShellSkill != null ||
+          systemDirectoryOperationsSkill != null ||
+          systemFileOperationsSkill != null ||
+          systemMcpInstallerSkill != null,
     );
     final contextPreparer = _prepareConversationContext;
     var preparedContext =
@@ -332,6 +376,21 @@ final class ComposeChatTurn {
             contentDigest: systemShellSkill.descriptor.contentDigest,
             trigger: SkillActivationTrigger.model,
           ),
+        if (systemDirectoryOperationsSkill != null)
+          ActivatedSkill(
+            id: systemDirectoryOperationsSkill.descriptor.id,
+            name: systemDirectoryOperationsSkill.descriptor.name,
+            contentDigest:
+                systemDirectoryOperationsSkill.descriptor.contentDigest,
+            trigger: SkillActivationTrigger.model,
+          ),
+        if (systemFileOperationsSkill != null)
+          ActivatedSkill(
+            id: systemFileOperationsSkill.descriptor.id,
+            name: systemFileOperationsSkill.descriptor.name,
+            contentDigest: systemFileOperationsSkill.descriptor.contentDigest,
+            trigger: SkillActivationTrigger.model,
+          ),
         if (systemSkillInstallerSkill != null)
           ActivatedSkill(
             id: systemSkillInstallerSkill.descriptor.id,
@@ -360,6 +419,9 @@ final class ComposeChatTurn {
         for (final entry in state.contents.values)
           ...entry.content.descriptor.requestedToolNames,
         if (systemShellSkill != null) ...shellCommandToolNames,
+        if (systemDirectoryOperationsSkill != null)
+          ...directoryOperationsToolNames,
+        if (systemFileOperationsSkill != null) ...fileOperationsToolNames,
         if (systemSkillInstallerSkill != null) ...skillInstallerToolNames,
         if (systemMcpInstallerSkill != null) ...mcpInstallerToolNames,
         ...mcpTools.requestedNames,
