@@ -40,9 +40,14 @@ void main() {
       ),
       SkillToolTurn(isComplete: true),
     ]);
+    final requestedArtifactsDirectories = <String>[];
     final compose = ComposeChatTurn(
       skillRepository: skillRepository,
       bindingRepository: bindingRepository,
+      conversationArtifactsDirectoryProvider: (conversationId) async {
+        requestedArtifactsDirectories.add(conversationId);
+        return '/data/Stars/chats/$conversationId';
+      },
       starsSystemPromptProvider: _testStarsSystemPrompt,
     );
 
@@ -77,6 +82,15 @@ void main() {
     expect(systemPrompt, contains('Agent name: Assistant'));
     expect(systemPrompt, contains('Current conversation ID: chat-1'));
     expect(
+      systemPrompt,
+      contains('Conversation artifacts directory: /data/Stars/chats/chat-1'),
+    );
+    expect(
+      systemPrompt,
+      contains('Use this directory to store and access files'),
+    );
+    expect(requestedArtifactsDirectories, ['chat-1']);
+    expect(
       '<stars_conversation_context>'.allMatches(systemPrompt),
       hasLength(1),
     );
@@ -104,6 +118,10 @@ void main() {
       provider.session.request?.messages.first.content,
       contains('Current conversation ID: chat-1'),
     );
+    expect(
+      provider.session.request?.messages.first.content,
+      contains('Conversation artifacts directory: /data/Stars/chats/chat-1'),
+    );
     expect(result.requestedToolNames, {'calculate'});
     expect(
       result.messages
@@ -117,6 +135,8 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository(const {}),
       bindingRepository: _FakeBindingRepository(const []),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
       starsSystemPromptProvider: _testStarsSystemPrompt,
     );
 
@@ -199,6 +219,8 @@ void main() {
         bindingRepository: _FakeBindingRepository([
           _binding('user:release-notes'),
         ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
       );
 
       final result = await compose(
@@ -248,6 +270,8 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository({'user:auto': auto}),
       bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
     );
 
     final result = await compose(
@@ -276,6 +300,8 @@ void main() {
         bindingRepository: _FakeBindingRepository([
           _binding(shellCommandSkillId),
         ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
         bundledSkillLoader: () async => [shellSkill],
       );
 
@@ -305,6 +331,8 @@ void main() {
       final compose = ComposeChatTurn(
         skillRepository: _FakeSkillRepository(const {}),
         bindingRepository: _FakeBindingRepository(bindings),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
         bundledSkillLoader: () async => [shellSkill],
       );
 
@@ -340,6 +368,8 @@ void main() {
           _binding(directoryOperationsSkillId),
           _binding(fileOperationsSkillId),
         ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
         bundledSkillLoader: () async => [directorySkill, fileSkill],
       );
 
@@ -380,6 +410,8 @@ void main() {
         bindingRepository: _FakeBindingRepository([
           _binding(skillInstallerSkillId),
         ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
         bundledSkillLoader: () async => [installerSkill],
       );
 
@@ -411,6 +443,8 @@ void main() {
       bindingRepository: _FakeBindingRepository([
         _binding(mcpInstallerSkillId),
       ]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
       bundledSkillLoader: () async => [mcpInstallerSkill],
     );
 
@@ -490,6 +524,8 @@ void main() {
         bindingRepository: _FakeBindingRepository([
           _binding('user:reference-reader'),
         ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
         budget: const SkillContextBudget(maxResourceTokens: 3),
       );
 
@@ -521,6 +557,8 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository({'user:auto': skill}),
       bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
     );
 
     final result = await compose(
@@ -550,6 +588,8 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository({'user:auto': skill}),
       bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
     );
 
     final result = await compose(
@@ -582,6 +622,8 @@ void main() {
         for (var index = 0; index < 5; index++)
           _binding('user:skill-$index', priority: index),
       ]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
     );
     final provider = _FakeSkillProvider([
       SkillToolTurn(
@@ -622,6 +664,8 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository({'user:oversized': oversized}),
       bindingRepository: _FakeBindingRepository([_binding('user:oversized')]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
       budget: const SkillContextBudget(maxTokensPerSkill: 4),
     );
 
@@ -688,6 +732,8 @@ void main() {
           _binding('user:blocked', priority: 100),
           _binding('user:usable', priority: 1),
         ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
       );
 
       final result = await compose(
@@ -741,6 +787,8 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository(const {}),
       bindingRepository: _FakeBindingRepository(const []),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
       mcpServerRepository: _FakeMcpServerRepository(server, [tool]),
     );
 
@@ -1156,6 +1204,9 @@ final class _FakeBindingRepository implements BotSkillBindingRepository {
   @override
   Future<void> save(BotSkillBinding binding) => throw UnimplementedError();
 }
+
+Future<String> _testConversationArtifactsDirectory(String conversationId) =>
+    Future.value('/data/Stars/chats/$conversationId');
 
 String _testStarsSystemPrompt() => buildStarsSystemPrompt(
   operatingSystem: 'TestOS',

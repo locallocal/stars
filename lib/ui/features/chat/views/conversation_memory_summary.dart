@@ -4,10 +4,12 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
   const _ConversationSystemPromptBlock({
     required this.bot,
     required this.conversationId,
+    required this.artifactsDirectoryPath,
   });
 
   final Bot bot;
   final String conversationId;
+  final String artifactsDirectoryPath;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +19,7 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
           agentId: bot.id,
           agentName: bot.name,
           conversationId: conversationId,
+          artifactsDirectoryPath: artifactsDirectoryPath,
         ).trim();
     return Column(
       key: const ValueKey<String>('conversation-system-prompt-block'),

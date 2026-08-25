@@ -23,6 +23,13 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
+  test('creates and returns the conversation artifacts directory', () async {
+    final outputDirectory = await repository.getOutputDirectory('chat_1');
+
+    expect(outputDirectory, path.join(root.path, 'chats', 'chat_1'));
+    expect(await Directory(outputDirectory).exists(), isTrue);
+  });
+
   test('same-basename assets are unique and preserve extensions', () async {
     final firstDirectory =
         await Directory(path.join(root.path, 'source-a')).create();

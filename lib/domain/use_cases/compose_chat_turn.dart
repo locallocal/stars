@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
@@ -90,6 +91,8 @@ final class ComposeChatTurn {
     PrepareConversationContext? prepareConversationContext,
     CompactConversation? compactConversation,
     BundledSkillLoader? bundledSkillLoader,
+    required ConversationArtifactsDirectoryProvider
+    conversationArtifactsDirectoryProvider,
     StarsSystemPromptProvider starsSystemPromptProvider =
         currentStarsSystemPrompt,
   }) : _skillRepository = skillRepository,
@@ -100,6 +103,8 @@ final class ComposeChatTurn {
        _prepareConversationContext = prepareConversationContext,
        _compactConversation = compactConversation,
        _bundledSkillLoader = bundledSkillLoader,
+       _conversationArtifactsDirectoryProvider =
+           conversationArtifactsDirectoryProvider,
        _starsSystemPromptProvider = starsSystemPromptProvider;
 
   final SkillRepository _skillRepository;
@@ -110,6 +115,8 @@ final class ComposeChatTurn {
   final PrepareConversationContext? _prepareConversationContext;
   final CompactConversation? _compactConversation;
   final BundledSkillLoader? _bundledSkillLoader;
+  final ConversationArtifactsDirectoryProvider
+  _conversationArtifactsDirectoryProvider;
   final StarsSystemPromptProvider _starsSystemPromptProvider;
 
   Future<PreparedChatTurn> call({
@@ -119,6 +126,11 @@ final class ComposeChatTurn {
     required String currentUserId,
     AiProvider? skillToolProvider,
   }) async {
+    final conversationArtifactsDirectory =
+        await _conversationArtifactsDirectoryProvider(userMessage.chatId);
+    if (conversationArtifactsDirectory.trim().isEmpty) {
+      throw StateError('The conversation artifacts directory is unavailable.');
+    }
     final bundledContents = await _loadBundledSkills();
     final bindings = await _bindingRepository.getForBot(bot.id);
     final enabledBindings =
@@ -181,6 +193,7 @@ final class ComposeChatTurn {
           catalog: catalog,
           descriptors: descriptors,
           state: state,
+          conversationArtifactsDirectory: conversationArtifactsDirectory,
         );
       } on TimeoutException {
         state.toolCalls.add(
@@ -302,6 +315,7 @@ final class ComposeChatTurn {
       activePromptSkills,
       bot: bot,
       conversationId: userMessage.chatId,
+      conversationArtifactsDirectory: conversationArtifactsDirectory,
       resources: state.resources.values.toList(),
       processToolsAvailable:
           systemShellSkill != null ||
@@ -452,6 +466,7 @@ final class ComposeChatTurn {
     List<({SkillContent content, SkillActivationTrigger trigger})> skills, {
     required Bot bot,
     required String conversationId,
+    required String conversationArtifactsDirectory,
     List<SkillCatalogEntry> catalog = const [],
     List<SkillResourceContent> resources = const [],
     bool processToolsAvailable = false,
@@ -461,6 +476,7 @@ final class ComposeChatTurn {
         agentId: bot.id,
         agentName: bot.name,
         conversationId: conversationId,
+        artifactsDirectoryPath: conversationArtifactsDirectory,
       ),
     ];
     if (botPrompt.trim().isNotEmpty) sections.add(botPrompt.trim());

@@ -171,12 +171,14 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     required List<SkillCatalogEntry> catalog,
     required Map<String, SkillDescriptor> descriptors,
     required _TurnSkillState state,
+    required String conversationArtifactsDirectory,
   }) async {
     final initialPrompt = _composeSystemPrompt(
       bot.systemPrompt,
       state.contents.values.toList(),
       bot: bot,
       conversationId: userMessage.chatId,
+      conversationArtifactsDirectory: conversationArtifactsDirectory,
       catalog: catalog,
     );
     final initialMessages = <ChatMessage>[

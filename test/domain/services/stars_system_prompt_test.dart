@@ -41,6 +41,7 @@ void main() {
       agentId: 'agent<1>',
       agentName: 'Research & Review',
       conversationId: 'chat>2',
+      artifactsDirectoryPath: '/data/Stars/chats/chat&2',
     );
 
     expect(prompt, startsWith('<stars_conversation_context>'));
@@ -51,6 +52,13 @@ void main() {
     expect(prompt, contains('Agent ID: agent&lt;1&gt;'));
     expect(prompt, contains('Agent name: Research &amp; Review'));
     expect(prompt, contains('Current conversation ID: chat&gt;2'));
+    expect(
+      prompt,
+      contains(
+        'Conversation artifacts directory: /data/Stars/chats/chat&amp;2',
+      ),
+    );
+    expect(prompt, contains('Use this directory to store and access files'));
     expect(prompt, endsWith('</stars_conversation_context>'));
   });
 }
