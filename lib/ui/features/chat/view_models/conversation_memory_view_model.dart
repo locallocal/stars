@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
@@ -11,8 +12,12 @@ final class ConversationMemoryViewModel extends DisposableChangeNotifier {
     required this.bot,
     required ConversationMemoryRepository repository,
     required CompactConversation compactConversation,
+    required ConversationArtifactsDirectoryProvider
+    conversationArtifactsDirectoryProvider,
   }) : _repository = repository,
-       _compactConversation = compactConversation {
+       _compactConversation = compactConversation,
+       _conversationArtifactsDirectoryProvider =
+           conversationArtifactsDirectoryProvider {
     _subscription = _repository.changes
         .where((changedChatId) => changedChatId == chatId)
         .listen((_) => unawaited(load()));
@@ -22,11 +27,14 @@ final class ConversationMemoryViewModel extends DisposableChangeNotifier {
   final Bot bot;
   final ConversationMemoryRepository _repository;
   final CompactConversation _compactConversation;
+  final ConversationArtifactsDirectoryProvider
+  _conversationArtifactsDirectoryProvider;
   StreamSubscription<String>? _subscription;
 
   ConversationMemoryState? _state;
   ConversationSummaryDocument? _summary;
   List<ConversationMemoryItem> _items = const [];
+  String _artifactsDirectoryPath = '';
   bool _loading = false;
   bool _compacting = false;
   AppFailure? _error;
@@ -35,6 +43,7 @@ final class ConversationMemoryViewModel extends DisposableChangeNotifier {
   ConversationMemoryState? get state => _state;
   ConversationSummaryDocument? get summary => _summary;
   List<ConversationMemoryItem> get items => _items;
+  String get artifactsDirectoryPath => _artifactsDirectoryPath;
   bool get loading => _loading;
   bool get compacting => _compacting;
   AppFailure? get error => _error;
@@ -46,6 +55,13 @@ final class ConversationMemoryViewModel extends DisposableChangeNotifier {
     _error = null;
     notifyListeners();
     try {
+      final artifactsDirectoryPath =
+          await _conversationArtifactsDirectoryProvider(chatId);
+      if (artifactsDirectoryPath.trim().isEmpty) {
+        throw StateError(
+          'The conversation artifacts directory is unavailable.',
+        );
+      }
       final state = await _repository.getState(chatId);
       final summary = await _repository.getActiveSummary(chatId);
       final items = await _repository.getItems(chatId);
@@ -53,6 +69,7 @@ final class ConversationMemoryViewModel extends DisposableChangeNotifier {
       _state = state;
       _summary = summary;
       _items = List<ConversationMemoryItem>.unmodifiable(items);
+      _artifactsDirectoryPath = artifactsDirectoryPath;
     } catch (error) {
       if (isDisposed || generation != _loadGeneration) return;
       _error = AppFailure.from(error, code: 'conversation_memory_load_failed');

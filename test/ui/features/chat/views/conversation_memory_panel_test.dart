@@ -28,12 +28,14 @@ void main() {
         memoryRepository: repository,
         summarizerFactory: (_) => const _Summarizer(),
       ),
+      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
     );
     addTearDown(viewModel.dispose);
 
     await viewModel.load();
     final itemsSnapshot = viewModel.items;
 
+    expect(viewModel.artifactsDirectoryPath, '/data/Stars/chats/chat_1');
     expect(() => itemsSnapshot.clear(), throwsUnsupportedError);
 
     repository.items.add(
@@ -72,6 +74,7 @@ void main() {
         memoryRepository: repository,
         summarizerFactory: (_) => const _Summarizer(),
       ),
+      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
     );
     addTearDown(viewModel.dispose);
 
@@ -375,6 +378,7 @@ void main() {
           memoryRepository: repository,
           summarizerFactory: (_) => const _Summarizer(),
         ),
+        conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
       );
       addTearDown(viewModel.dispose);
 
@@ -385,6 +389,7 @@ void main() {
         agentId: bot.id,
         agentName: bot.name,
         conversationId: viewModel.chatId,
+        artifactsDirectoryPath: viewModel.artifactsDirectoryPath,
       );
       final memoryActions = find.byKey(
         const ValueKey<String>('conversation-memory-actions'),
@@ -425,6 +430,14 @@ void main() {
       expect(prompt, contains('Agent ID: bot&lt;1&gt;'));
       expect(prompt, contains('Agent name: Research &amp; Review'));
       expect(prompt, contains('Current conversation ID: chat&gt;2'));
+      expect(
+        prompt,
+        contains(
+          'Conversation artifacts directory: '
+          '/data/Stars/chats/chat&gt;2',
+        ),
+      );
+      expect(prompt, contains('Use this directory to store and access files'));
       expect(prompt, isNot(contains(bot.systemPrompt)));
       expect(tester.takeException(), isNull);
     } finally {
@@ -450,6 +463,7 @@ void main() {
         memoryRepository: repository,
         summarizerFactory: (_) => const _Summarizer(),
       ),
+      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
     );
     addTearDown(viewModel.dispose);
 
@@ -508,6 +522,9 @@ Widget _harness(ConversationMemoryViewModel viewModel) {
         ),
   );
 }
+
+Future<String> _conversationArtifactsDirectory(String chatId) =>
+    Future.value('/data/Stars/chats/$chatId');
 
 final _bot = Bot(
   id: 'bot_1',

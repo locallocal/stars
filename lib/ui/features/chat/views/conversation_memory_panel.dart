@@ -157,6 +157,7 @@ final class _ConversationMemoryPanelState
           _ConversationSystemPromptBlock(
             bot: viewModel.bot,
             conversationId: viewModel.chatId,
+            artifactsDirectoryPath: viewModel.artifactsDirectoryPath,
           ),
         ],
       ),

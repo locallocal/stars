@@ -1,3 +1,6 @@
+typedef ConversationArtifactsDirectoryProvider =
+    Future<String> Function(String chatId);
+
 abstract interface class AttachmentRepository {
   Future<String?> captureImage();
 
@@ -15,5 +18,7 @@ abstract interface class ConversationAssetRepository
     required Iterable<String> sourcePaths,
   });
 
+  /// Ensures and returns the conversation-owned directory shared by persisted
+  /// attachments and agent-generated artifacts.
   Future<String> getOutputDirectory(String chatId);
 }

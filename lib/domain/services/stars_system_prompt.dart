@@ -24,22 +24,32 @@ Operating system version: ${_xmlText(normalizedVersion)}
 </stars_application_context>''';
 }
 
-/// Builds the stable runtime identity for one conversation turn.
+/// Builds the stable runtime identity and storage context for one turn.
 ///
-/// Keeping identifiers in a dedicated application-owned section prevents
-/// them from being confused with the assistant's editable instructions.
+/// Keeping identifiers and the application-owned artifacts directory in a
+/// dedicated section prevents them from being confused with editable agent
+/// instructions.
 String buildStarsConversationContext({
   required String agentId,
   required String agentName,
   required String conversationId,
+  String artifactsDirectoryPath = '',
 }) {
+  final normalizedArtifactsDirectory = artifactsDirectoryPath.trim();
+  final artifactsContext =
+      normalizedArtifactsDirectory.isEmpty
+          ? ''
+          : '''
+Conversation artifacts directory: ${_xmlText(normalizedArtifactsDirectory)}
+Use this directory to store and access files produced or needed by the current conversation.
+'''.trim();
   return '''
 <stars_conversation_context>
 Purpose: Application-provided runtime identity for the current turn.
 Agent ID: ${_xmlText(_valueOrUnknown(agentId))}
 Agent name: ${_xmlText(_valueOrUnknown(agentName))}
 Current conversation ID: ${_xmlText(_valueOrUnknown(conversationId))}
-</stars_conversation_context>''';
+${artifactsContext.isEmpty ? '' : '$artifactsContext\n'}</stars_conversation_context>''';
 }
 
 String prependStarsSystemPrompt(

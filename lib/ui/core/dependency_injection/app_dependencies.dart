@@ -122,6 +122,7 @@ class AppDependencies {
     required this.feedbackRepository,
     required this.aiProviderRepository,
     required this.attachmentRepository,
+    required this.conversationArtifactsDirectoryProvider,
     required this.legalDocumentRepository,
     required this.skillRepository,
     required this.skillInventoryRepository,
@@ -272,6 +273,8 @@ class AppDependencies {
     final attachmentRepository = AttachmentRepositoryImpl(
       service: AttachmentPickerService(),
     );
+    final conversationArtifactsDirectoryProvider =
+        attachmentRepository.getOutputDirectory;
     final persistConversationAssets = PersistConversationAssets(
       repository: attachmentRepository,
     );
@@ -347,6 +350,8 @@ class AppDependencies {
       ),
       compactConversation: compactConversation,
       bundledSkillLoader: loadBundledSkills,
+      conversationArtifactsDirectoryProvider:
+          conversationArtifactsDirectoryProvider,
     );
     final prepareTextGeneration = PrepareTextGeneration(
       composeChatTurn: composeChatTurn.call,
@@ -407,6 +412,8 @@ class AppDependencies {
       feedbackRepository: feedbackRepository,
       aiProviderRepository: aiProviderRepository,
       attachmentRepository: attachmentRepository,
+      conversationArtifactsDirectoryProvider:
+          conversationArtifactsDirectoryProvider,
       legalDocumentRepository: legalDocumentRepository,
       skillRepository: skillRepository,
       skillInventoryRepository: skillInventoryRepository,
@@ -497,6 +504,8 @@ class AppDependencies {
   final FeedbackRepository feedbackRepository;
   final AiProviderRepository aiProviderRepository;
   final AttachmentRepository attachmentRepository;
+  final ConversationArtifactsDirectoryProvider
+  conversationArtifactsDirectoryProvider;
   final LegalDocumentRepository legalDocumentRepository;
   final SkillRepository skillRepository;
   final SkillInventoryRepository skillInventoryRepository;
@@ -780,5 +789,7 @@ class AppDependencies {
     bot: bot,
     repository: conversationMemoryRepository,
     compactConversation: compactConversation,
+    conversationArtifactsDirectoryProvider:
+        conversationArtifactsDirectoryProvider,
   );
 }
