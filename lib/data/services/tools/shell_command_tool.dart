@@ -297,10 +297,13 @@ final class ShellCommandTool implements ExecutableTool {
   @override
   final ToolDefinition definition = ToolDefinition(
     name: shellCommandToolName,
-    title: 'Shell command',
+    title: 'Run shell command',
     description:
-        'Execute one command with the native desktop shell after explicit '
-        'user approval. Windows uses PowerShell; macOS and Linux use POSIX sh.',
+        'Run one process-oriented command through the native desktop shell '
+        'when no structured built-in tool fits, such as a build, test, '
+        'version-control, package-manager, or diagnostic command. Do not use '
+        'for ordinary file or directory operations. Requires explicit user '
+        'approval. Windows uses PowerShell; macOS and Linux use POSIX sh.',
     inputSchema: const {
       'type': 'object',
       'properties': {
@@ -308,16 +311,27 @@ final class ShellCommandTool implements ExecutableTool {
           'type': 'string',
           'minLength': 1,
           'maxLength': maxCommandCharacters,
+          'description':
+              'One coherent command string interpreted by the native shell. '
+              'Do not bundle unrelated or independently approval-sensitive '
+              'actions.',
         },
         'working_directory': {
           'type': 'string',
           'minLength': 1,
           'maxLength': 4096,
+          'description':
+              'Optional native directory in which to start the command. Use '
+              'it when the command depends on project-relative paths.',
         },
         'timeout_seconds': {
           'type': 'integer',
           'minimum': 1,
           'maximum': maxTimeoutSeconds,
+          'description':
+              'Optional execution timeout from 1 to 25 seconds; defaults to '
+              '15 seconds. Interactive and long-running commands are not '
+              'supported.',
         },
       },
       'required': ['command'],

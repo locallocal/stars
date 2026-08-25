@@ -14,8 +14,9 @@ final class SystemDirectoryOperationsSkill extends _SystemLocalFileSystemSkill {
         skillId: directoryOperationsSkillId,
         name: 'directory-operations',
         description:
-            'List, create, and delete local directories with native '
-            'cross-platform file-system APIs.',
+            'Use for listing, creating, or deleting local directories on any '
+            'Stars platform; use file-operations for individual files and '
+            'shell-command only for process-oriented commands.',
         requestedToolNames: directoryOperationsToolNames,
         integrityError:
             'Built-in directory operations Skill failed integrity validation.',
@@ -32,8 +33,9 @@ final class SystemFileOperationsSkill extends _SystemLocalFileSystemSkill {
         skillId: fileOperationsSkillId,
         name: 'file-operations',
         description:
-            'Read, write, copy, move, and delete local files with native '
-            'cross-platform file-system APIs.',
+            'Use for reading, writing, copying, moving, or deleting individual '
+            'local files on any Stars platform; use directory-operations for '
+            'folders and shell-command only for process-oriented commands.',
         requestedToolNames: fileOperationsToolNames,
         integrityError:
             'Built-in file operations Skill failed integrity validation.',

@@ -1,10 +1,10 @@
 ---
 name: file-operations
-description: Read, write, copy, move, and delete local files with native cross-platform file-system APIs.
+description: Use for reading, writing, copying, moving, or deleting individual local files on any Stars platform; use directory-operations for folders and shell-command only for process-oriented commands.
 allowed-tools: read_local_file write_local_file copy_local_file move_local_file delete_local_file
 metadata:
   scope: system
-  prompt-version: 1
+  prompt-version: 2
 ---
 
 # Operate on local files

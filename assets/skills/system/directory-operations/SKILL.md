@@ -1,10 +1,10 @@
 ---
 name: directory-operations
-description: List, create, and delete local directories with native cross-platform file-system APIs.
+description: Use for listing, creating, or deleting local directories on any Stars platform; use file-operations for individual files and shell-command only for process-oriented commands.
 allowed-tools: list_local_directory create_local_directory delete_local_directory
 metadata:
   scope: system
-  prompt-version: 1
+  prompt-version: 2
 ---
 
 # Operate on local directories

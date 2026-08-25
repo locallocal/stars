@@ -43,7 +43,10 @@ final class SystemShellSkill {
         id: shellCommandSkillId,
         name: 'shell-command',
         description:
-            'Execute an approved command with the native desktop shell.',
+            'Run build, test, version-control, package-manager, diagnostic, '
+            'or other process-oriented commands through the native desktop '
+            'shell when no structured built-in Tool fits; do not use for '
+            'ordinary file or directory operations.',
         version: '$shellCommandSkillPromptVersion',
         scope: SkillScope.bundled,
         sourceUri: 'asset:///$assetPath',

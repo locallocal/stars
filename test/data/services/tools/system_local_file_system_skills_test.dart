@@ -1,6 +1,8 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/services/tools/system_local_file_system_skills.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:yaml/yaml.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +13,11 @@ void main() {
       final skill = SystemDirectoryOperationsSkill();
 
       final content = await skill.loadContent();
+      await _expectFrontmatterMatches(
+        assetPath: skill.assetPath,
+        content: content,
+        promptVersion: skill.promptVersion,
+      );
 
       expect(skill.isValid, isTrue);
       expect(skill.promptVersion, directoryOperationsSkillPromptVersion);
@@ -26,7 +33,7 @@ void main() {
       expect(content.descriptor.compatibility, contains('Windows'));
       expect(content.instructions, contains('list_local_directory'));
       expect(content.instructions, contains('recursive'));
-    expect(content.instructions, contains('invoke PowerShell'));
+      expect(content.instructions, contains('invoke PowerShell'));
       expect(content.files, ['SKILL.md']);
     },
   );
@@ -35,6 +42,11 @@ void main() {
     final skill = SystemFileOperationsSkill();
 
     final content = await skill.loadContent();
+    await _expectFrontmatterMatches(
+      assetPath: skill.assetPath,
+      content: content,
+      promptVersion: skill.promptVersion,
+    );
 
     expect(skill.isValid, isTrue);
     expect(skill.promptVersion, fileOperationsSkillPromptVersion);
@@ -50,4 +62,26 @@ void main() {
     expect(content.instructions, contains('overwrite'));
     expect(content.files, ['SKILL.md']);
   });
+}
+
+Future<void> _expectFrontmatterMatches({
+  required String assetPath,
+  required SkillContent content,
+  required int promptVersion,
+}) async {
+  final source = await rootBundle.loadString(assetPath);
+  final normalized = source.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  final lines = normalized.split('\n');
+  final closingIndex = lines.indexWhere((line) => line.trim() == '---', 1);
+  final frontmatter =
+      loadYaml(lines.sublist(1, closingIndex).join('\n'))! as YamlMap;
+  final metadata = frontmatter['metadata']! as YamlMap;
+
+  expect(content.descriptor.name, frontmatter['name']);
+  expect(content.descriptor.description, frontmatter['description']);
+  expect(metadata['prompt-version'], promptVersion);
+  expect(
+    content.descriptor.requestedToolNames,
+    (frontmatter['allowed-tools']! as String).split(RegExp(r'\s+')).toSet(),
+  );
 }
