@@ -413,9 +413,18 @@ final class OpenAiAgentModelSession implements AgentModelSession {
       _messages.add({
         'role': 'tool',
         'tool_call_id': result.callId,
-        'content': result.content,
+        'content': encodeToolResultForModel(result),
       });
     }
+    return _send();
+  }
+
+  @override
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
+    if (!_started) {
+      throw StateError('Agent model session has not started.');
+    }
+    _messages.add({'role': 'user', 'content': feedback});
     return _send();
   }
 

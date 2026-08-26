@@ -225,6 +225,97 @@ void main() {
       contains('max_output_reservation_defaulted'),
     );
   });
+
+  test('recalls relevant Chinese Memory and rejects unrelated items', () async {
+    final source = _message(0, true, '项目资料');
+    final now = DateTime(2026, 8, 8);
+    final useCase = PrepareConversationContext(
+      memoryRepository: _MemoryRepository(
+        items: [
+          ConversationMemoryItem(
+            id: 'relevant',
+            chatId: 'chat_1',
+            memoryKey: 'project.deadline',
+            kind: ConversationMemoryKind.fact,
+            content: '项目截止日期是九月十日',
+            confidence: 0.9,
+            importance: 0.8,
+            sourceMessageIds: [source.messageId],
+            createdAt: now,
+            updatedAt: now,
+          ),
+          ConversationMemoryItem(
+            id: 'unrelated',
+            chatId: 'chat_1',
+            memoryKey: 'lunch.preference',
+            kind: ConversationMemoryKind.preference,
+            content: '午餐喜欢吃面条',
+            confidence: 1,
+            importance: 1,
+            sourceMessageIds: [source.messageId],
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ),
+      aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+    );
+
+    final result = await useCase(
+      bot: _bot(),
+      systemPrompt: '',
+      history: [source, _message(0, false, '收到')],
+      userMessage: _current('项目截止日期是什么时候？'),
+      currentUserId: 'user_1',
+      providerSupportsHistoryLookup: true,
+    );
+
+    expect(result.report.includedMemoryIds, ['relevant']);
+    final memory = result.messages.singleWhere(
+      (message) => message.content.contains('<conversation_memory'),
+    );
+    expect(memory.content, contains('key="project.deadline"'));
+    expect(memory.content, contains('confidence="0.9"'));
+    expect(memory.content, contains('source_message_ids="message_0_u"'));
+    expect(memory.content, isNot(contains('午餐喜欢吃面条')));
+  });
+
+  test(
+    'does not recall an assistant fact without successful tool evidence',
+    () async {
+      final assistant = _message(0, false, '服务器状态是健康');
+      final now = DateTime(2026, 8, 8);
+      final useCase = PrepareConversationContext(
+        memoryRepository: _MemoryRepository(
+          items: [
+            ConversationMemoryItem(
+              id: 'assistant_fact',
+              chatId: 'chat_1',
+              memoryKey: 'server.health',
+              kind: ConversationMemoryKind.fact,
+              content: '服务器状态是健康',
+              confidence: 0.9,
+              sourceMessageIds: [assistant.messageId],
+              createdAt: now,
+              updatedAt: now,
+            ),
+          ],
+        ),
+        aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+      );
+
+      final result = await useCase(
+        bot: _bot(),
+        systemPrompt: '',
+        history: [_message(0, true, '检查服务器'), assistant],
+        userMessage: _current('服务器状态怎么样？'),
+        currentUserId: 'user_1',
+        providerSupportsHistoryLookup: true,
+      );
+
+      expect(result.report.includedMemoryIds, isEmpty);
+    },
+  );
 }
 
 Message _message(
@@ -292,9 +383,10 @@ ConversationSummaryDocument _summary() {
 }
 
 final class _MemoryRepository implements ConversationMemoryRepository {
-  _MemoryRepository({this.summary});
+  _MemoryRepository({this.summary, this.items = const []});
 
   final ConversationSummaryDocument? summary;
+  final List<ConversationMemoryItem> items;
 
   @override
   Stream<String> get changes => const Stream.empty();
@@ -304,8 +396,7 @@ final class _MemoryRepository implements ConversationMemoryRepository {
       summary;
 
   @override
-  Future<List<ConversationMemoryItem>> getItems(String chatId) async =>
-      const [];
+  Future<List<ConversationMemoryItem>> getItems(String chatId) async => items;
 
   @override
   Future<ConversationMemoryState> getState(String chatId) async =>

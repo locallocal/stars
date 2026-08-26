@@ -1145,9 +1145,14 @@ final class _ViewModelAgentSession implements AgentModelSession {
   Stream<ModelEvent> continueWith(List<ToolResult> results) {
     expect(results.single.isError, isFalse);
     return Stream.fromIterable([
-      const TextDelta('Saved.'),
+      const TextDelta('Saved.\n<stars_evidence call_ids="save-1" />'),
       const ModelTurnCompleted(stopReason: 'stop'),
     ]);
+  }
+
+  @override
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
+    throw StateError('The valid test answer must not require repair.');
   }
 
   @override

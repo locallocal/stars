@@ -103,6 +103,65 @@ void main() {
       isNot(contains(predicate<Message>((m) => m.messageId == 'active'))),
     );
   });
+
+  test('preserves original evidence ids across rolling summaries', () async {
+    final previous = _previousSummary();
+    final memory = _MemoryRepository(
+      previousSummary: previous,
+      state: ConversationMemoryState(
+        chatId: 'chat_1',
+        revision: 1,
+        activeSummaryId: previous.metadata.id,
+        coveredThroughMessageId: 'message_2_a',
+        updatedAt: DateTime(2026),
+      ),
+    );
+    late ContextSummaryRequest captured;
+    final useCase = CompactConversation(
+      messageRepository: _MessageRepository(_history(10)),
+      memoryRepository: memory,
+      summarizerFactory:
+          (_) => _Summarizer((request) {
+            captured = request;
+            final now = DateTime(2026);
+            return ContextSummaryResult(
+              markdown:
+                  '# 会话摘要\n\n- preserved\n'
+                  '  <!-- sources: message_0_u -->',
+              items: [
+                ConversationMemoryItem(
+                  id: 'preserved',
+                  chatId: request.chatId,
+                  memoryKey: 'fact.preserved',
+                  kind: ConversationMemoryKind.fact,
+                  content: 'preserved',
+                  sourceMessageIds: const ['message_0_u'],
+                  createdAt: now,
+                  updatedAt: now,
+                ),
+              ],
+            );
+          }),
+      clock: () => DateTime(2026, 8, 9),
+    );
+
+    final result = await useCase(bot: _bot(), chatId: 'chat_1');
+
+    expect(result, ConversationCompactionResult.committed);
+    expect(captured.previousSummary, same(previous));
+    expect(
+      captured.sourceEvidence.map((item) => item.messageId),
+      contains('message_0_u'),
+    );
+    expect(memory.committed?.metadata.sourceStartMessageId, 'message_0_u');
+    expect(memory.committed?.metadata.sourceEndMessageId, 'message_5_a');
+    expect(
+      memory.committed?.metadata.sourceMessageIds,
+      containsAll(['message_0_u', 'message_3_u', 'message_5_a']),
+    );
+    expect(memory.committed?.metadata.markdownSchemaVersion, 2);
+    expect(memory.committed?.metadata.promptVersion, 2);
+  });
 }
 
 List<Message> _history(int turns) => [
@@ -178,6 +237,13 @@ final class _MessageRepository implements MessageRepository {
 }
 
 final class _MemoryRepository implements ConversationMemoryRepository {
+  _MemoryRepository({this.previousSummary, ConversationMemoryState? state})
+    : state =
+          state ??
+          ConversationMemoryState(chatId: 'chat_1', updatedAt: DateTime(2026));
+
+  final ConversationSummaryDocument? previousSummary;
+  final ConversationMemoryState state;
   ConversationSummaryDocument? committed;
   int? expectedRevision;
   final List<ConversationCompactionStatus> statuses = [];
@@ -199,11 +265,10 @@ final class _MemoryRepository implements ConversationMemoryRepository {
 
   @override
   Future<ConversationSummaryDocument?> getActiveSummary(String chatId) async =>
-      null;
+      previousSummary;
 
   @override
-  Future<ConversationMemoryState> getState(String chatId) async =>
-      ConversationMemoryState(chatId: chatId, updatedAt: DateTime(2026));
+  Future<ConversationMemoryState> getState(String chatId) async => state;
 
   @override
   Future<void> setCompactionStatus(
@@ -216,6 +281,36 @@ final class _MemoryRepository implements ConversationMemoryRepository {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+ConversationSummaryDocument _previousSummary() {
+  final now = DateTime(2026, 8, 8);
+  return ConversationSummaryDocument(
+    metadata: ConversationSummaryMetadata(
+      id: 'summary_previous',
+      chatId: 'chat_1',
+      status: ConversationSummaryStatus.active,
+      fileName: 'summary_previous.md',
+      contentDigest: 'digest',
+      sourceStartMessageId: 'message_0_u',
+      sourceEndMessageId: 'message_2_a',
+      sourceMessageIds: const [
+        'message_0_u',
+        'message_0_a',
+        'message_1_u',
+        'message_1_a',
+        'message_2_u',
+        'message_2_a',
+      ],
+      sourceDigest: 'source-digest',
+      baseRevision: 0,
+      createdAt: now,
+      updatedAt: now,
+    ),
+    markdown:
+        '# 会话摘要\n\n- preserved\n'
+        '  <!-- sources: message_0_u -->',
+  );
 }
 
 final class _Summarizer implements ContextSummarizer {

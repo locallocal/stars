@@ -81,9 +81,23 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
       _input.add({
         'type': 'function_call_output',
         'call_id': result.callId,
-        'output': result.content,
+        'output': encodeToolResultForModel(result),
       });
     }
+    return _send();
+  }
+
+  @override
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
+    if (!_started) {
+      throw StateError('Agent model session has not started.');
+    }
+    _input.add({
+      'role': 'user',
+      'content': [
+        {'type': 'input_text', 'text': feedback},
+      ],
+    });
     return _send();
   }
 
@@ -248,11 +262,20 @@ final class AnthropicAgentModelSession implements AgentModelSession {
           {
             'type': 'tool_result',
             'tool_use_id': result.callId,
-            'content': result.content,
+            'content': encodeToolResultForModel(result),
             'is_error': result.isError,
           },
       ],
     });
+    return _send();
+  }
+
+  @override
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
+    if (!_started) {
+      throw StateError('Agent model session has not started.');
+    }
+    _messages.add({'role': 'user', 'content': feedback});
     return _send();
   }
 

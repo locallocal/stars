@@ -45,21 +45,107 @@ void main() {
     );
     expect(provider.messages.last.role, 'user');
   });
+
+  test(
+    'drops an assistant fact that has no successful tool evidence',
+    () async {
+      final provider = _SummaryProvider(response: _factResponse('assistant-1'));
+      final summarizer = ProviderContextSummarizer(
+        bot: _bot,
+        providerFactory: (_) => provider,
+        starsSystemPromptProvider: _testStarsSystemPrompt,
+      );
+
+      final result = await summarizer.summarize(
+        ContextSummaryRequest(
+          chatId: 'chat-1',
+          summaryId: 'summary-1',
+          sourceMessages: [
+            Message(
+              messageId: 'assistant-1',
+              chatId: 'chat-1',
+              botId: _bot.id,
+              senderId: _bot.id,
+              content: 'The deployment succeeded.',
+              terminalOutcome: MessageTerminalOutcome.completed,
+              timestamp: DateTime(2026),
+            ),
+          ],
+          targetTokens: 500,
+        ),
+      );
+
+      expect(result.items, isEmpty);
+      expect(result.markdown, isNot(contains('deployment succeeded')));
+      expect(provider.messages.last.content, contains('tool_grounded="false"'));
+    },
+  );
+
+  test('keeps a tool-grounded assistant fact with source provenance', () async {
+    final provider = _SummaryProvider(response: _factResponse('assistant-1'));
+    final summarizer = ProviderContextSummarizer(
+      bot: _bot,
+      providerFactory: (_) => provider,
+      starsSystemPromptProvider: _testStarsSystemPrompt,
+    );
+
+    final result = await summarizer.summarize(
+      ContextSummaryRequest(
+        chatId: 'chat-1',
+        summaryId: 'summary-1',
+        sourceMessages: [
+          Message(
+            messageId: 'assistant-1',
+            chatId: 'chat-1',
+            botId: _bot.id,
+            senderId: _bot.id,
+            content: 'The deployment succeeded.',
+            processInfo: const MessageProcessInfo(
+              toolCalls: [
+                MessageToolCall(
+                  callId: 'deploy-1',
+                  name: 'deploy',
+                  status: 'succeeded',
+                  resultSummary: 'completed',
+                ),
+              ],
+            ),
+            terminalOutcome: MessageTerminalOutcome.completed,
+            timestamp: DateTime(2026),
+          ),
+        ],
+        targetTokens: 500,
+      ),
+    );
+
+    expect(result.items.single.sourceMessageIds, ['assistant-1']);
+    expect(result.markdown, contains('<!-- sources: assistant-1 -->'));
+    expect(provider.messages.last.content, contains('tool_grounded="true"'));
+    expect(provider.messages.last.content, contains('call_id="deploy-1"'));
+  });
 }
 
 final class _SummaryProvider extends AiProvider {
-  _SummaryProvider() : super(_bot);
+  _SummaryProvider({this.response = _emptyResponse}) : super(_bot);
+
+  final String response;
 
   List<ChatMessage> messages = const [];
 
   @override
   Future<void> generateText(List<ChatMessage> messages) async {
     this.messages = List.unmodifiable(messages);
-    onResponse('''
-{"schema_version":1,"narrative_summary":"","facts":[],"preferences":[],"decisions":[],"open_tasks":[],"unresolved_questions":[],"artifact_references":[]}
-''');
+    onResponse(response);
   }
 }
+
+const _emptyResponse = '''
+{"schema_version":1,"narrative_summary":"","facts":[],"preferences":[],"decisions":[],"open_tasks":[],"unresolved_questions":[],"corrections":[],"artifact_references":[]}
+''';
+
+String _factResponse(String sourceId) => '''
+{"schema_version":1,"narrative_summary":"","facts":[{"key":"deployment.status","value":"The deployment succeeded.","confidence":0.9,"importance":0.8,"source_message_ids":["$sourceId"]}],"preferences":[],"decisions":[],"open_tasks":[],"unresolved_questions":[],"corrections":[],"artifact_references":[]}
+''';
 
 final _bot = Bot(
   id: 'bot-1',

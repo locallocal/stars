@@ -247,6 +247,11 @@ abstract interface class AgentModelSession {
 
   Stream<ModelEvent> continueWith(List<ToolResult> results);
 
+  /// Requests a corrected final answer after deterministic reliability checks
+  /// reject a model turn. The feedback is application-authored data, not a new
+  /// end-user request.
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback);
+
   Future<void> cancel();
 
   void close();

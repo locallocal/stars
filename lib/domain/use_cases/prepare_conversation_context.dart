@@ -4,6 +4,7 @@ import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
+import 'package:stars/domain/services/retrieval_terms.dart';
 import 'package:stars/domain/services/token_estimator.dart';
 import 'package:stars/domain/use_cases/context_budgeter.dart';
 
@@ -28,18 +29,27 @@ final class PrepareConversationContext {
     TokenEstimator tokenEstimator = const ConservativeTokenEstimator(),
     ContextBudgeter budgeter = const ContextBudgeter(),
     this.fallbackContextWindowTokens = 32768,
+    this.automaticMemoryMinimumRelevance = 0.15,
+    this.maximumAutomaticMemoryItems = 6,
     bool Function()? historySkillAvailable,
   }) : _memoryRepository = memoryRepository,
        _aiProviderRepository = aiProviderRepository,
        _tokenEstimator = tokenEstimator,
        _budgeter = budgeter,
-       _historySkillAvailable = historySkillAvailable ?? _historySkillEnabled;
+       _historySkillAvailable = historySkillAvailable ?? _historySkillEnabled,
+       assert(
+         automaticMemoryMinimumRelevance >= 0 &&
+             automaticMemoryMinimumRelevance <= 1,
+       ),
+       assert(maximumAutomaticMemoryItems > 0);
 
   final ConversationMemoryRepository _memoryRepository;
   final AiProviderRepository _aiProviderRepository;
   final TokenEstimator _tokenEstimator;
   final ContextBudgeter _budgeter;
   final int fallbackContextWindowTokens;
+  final double automaticMemoryMinimumRelevance;
+  final int maximumAutomaticMemoryItems;
   final bool Function() _historySkillAvailable;
   final Map<String, Future<_ProfileResolution>> _profileCache = {};
 
@@ -121,6 +131,8 @@ final class PrepareConversationContext {
       profile: profile,
       items: items,
       query: userMessage.content,
+      sourceMessages: history,
+      currentUserId: currentUserId,
       pinnedBudget: (inputBudget * _budgeter.policy.pinnedMemoryRatio).floor(),
       automaticBudget:
           (inputBudget * _budgeter.policy.automaticMemoryRatio).floor(),
@@ -443,13 +455,16 @@ final class PrepareConversationContext {
     required ModelContextProfile profile,
     required List<ConversationMemoryItem> items,
     required String query,
+    required List<Message> sourceMessages,
+    required String currentUserId,
     required int pinnedBudget,
     required int automaticBudget,
   }) async {
     final selected = <ConversationMemoryItem>[];
     var pinnedUsed = 0;
     for (final item in items.where(
-      (item) => item.state == ConversationMemoryItemState.pinned,
+      (item) =>
+          item.state == ConversationMemoryItemState.pinned && item.isRecallable,
     )) {
       final tokens = await _tokenEstimator.estimateText(profile, item.content);
       if (pinnedUsed + tokens <= pinnedBudget) {
@@ -457,17 +472,19 @@ final class PrepareConversationContext {
         pinnedUsed += tokens;
       }
     }
-    final terms = query
-        .toLowerCase()
-        .split(RegExp(r'\s+'))
-        .where((term) => term.length > 1);
+    final terms = buildRetrievalTerms(query);
+    final sourceById = {
+      for (final message in sourceMessages) message.messageId: message,
+    };
     final candidates = <({ConversationMemoryItem item, double score})>[];
     final now = DateTime.now();
     for (final item in items) {
       if (!item.isRecallable || selected.contains(item)) continue;
-      final normalized = item.content.toLowerCase();
-      final matches = terms.where(normalized.contains).length;
-      final relevance = terms.isEmpty ? 0.0 : matches / terms.length;
+      if (!_isTrustedAutomaticMemory(item, sourceById, currentUserId)) {
+        continue;
+      }
+      final relevance = retrievalCoverage(terms, item.content);
+      if (relevance < automaticMemoryMinimumRelevance) continue;
       final ageDays = math.max(0, now.difference(item.updatedAt).inDays);
       final recency = 1 / (1 + ageDays / 30);
       final taskBoost =
@@ -487,8 +504,10 @@ final class PrepareConversationContext {
     }
     candidates.sort((left, right) => right.score.compareTo(left.score));
     var automaticUsed = 0;
+    var automaticCount = 0;
     final usedKeys = selected.map((item) => item.memoryKey).toSet();
     for (final candidate in candidates) {
+      if (automaticCount >= maximumAutomaticMemoryItems) break;
       if (!usedKeys.add(candidate.item.memoryKey)) continue;
       final tokens = await _tokenEstimator.estimateText(
         profile,
@@ -497,8 +516,45 @@ final class PrepareConversationContext {
       if (automaticUsed + tokens > automaticBudget) continue;
       selected.add(candidate.item);
       automaticUsed += tokens;
+      automaticCount += 1;
     }
     return selected;
+  }
+
+  bool _isTrustedAutomaticMemory(
+    ConversationMemoryItem item,
+    Map<String, Message> sourceById,
+    String currentUserId,
+  ) {
+    if (item.origin == ConversationMemoryOrigin.user ||
+        item.state == ConversationMemoryItemState.pinned) {
+      return true;
+    }
+    final sources = [
+      for (final id in item.sourceMessageIds)
+        if (sourceById[id] case final message?) message,
+    ];
+    if (sources.isEmpty) return false;
+    final hasUserSource = sources.any(
+      (message) => message.senderId == currentUserId,
+    );
+    final hasGroundedAssistantSource = sources.any(
+      (message) =>
+          message.senderId != currentUserId &&
+          message.processInfo.toolCalls.any(
+            (call) => call.status == 'succeeded' && call.errorCode.isEmpty,
+          ),
+    );
+    return switch (item.kind) {
+      ConversationMemoryKind.preference ||
+      ConversationMemoryKind.decision => hasUserSource,
+      ConversationMemoryKind.fact ||
+      ConversationMemoryKind.correction ||
+      ConversationMemoryKind
+          .artifactReference => hasUserSource || hasGroundedAssistantSource,
+      ConversationMemoryKind.openTask ||
+      ConversationMemoryKind.unresolvedQuestion => true,
+    };
   }
 
   Future<String> _boundText(
@@ -525,7 +581,12 @@ String _memoryEnvelope(List<ConversationMemoryItem> items) {
 ''');
   for (final item in items) {
     buffer.writeln(
-      '  <item kind="${item.kind.name}" state="${item.state.name}">'
+      '  <item key="${_escapeAttribute(item.memoryKey)}" '
+      'kind="${item.kind.name}" state="${item.state.name}" '
+      'origin="${item.origin.name}" confidence="${item.confidence}" '
+      'importance="${item.importance}" '
+      'updated_at="${item.updatedAt.toUtc().toIso8601String()}" '
+      'source_message_ids="${_escapeAttribute(item.sourceMessageIds.join(','))}">'
       '${_escapeData(item.content)}</item>',
     );
   }
@@ -547,6 +608,9 @@ String _escapeData(String value) => value
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+
+String _escapeAttribute(String value) =>
+    _escapeData(value).replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 
 bool _historySkillEnabled() => true;
 

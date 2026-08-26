@@ -482,6 +482,13 @@ void main() {
       Map<String, dynamic>.from(continuedInput.last as Map),
       containsPair('type', 'function_call_output'),
     );
+    final output =
+        Map<String, dynamic>.from(continuedInput.last as Map)['output']!
+            as String;
+    final envelope = Map<String, dynamic>.from(jsonDecode(output) as Map);
+    expect(envelope['type'], 'stars_tool_result');
+    expect(envelope['evidence_id'], 'call-1');
+    expect(envelope['status'], 'success');
   });
 }
 

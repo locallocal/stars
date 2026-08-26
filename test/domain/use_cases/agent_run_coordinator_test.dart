@@ -30,7 +30,9 @@ void main() {
           const ModelTurnCompleted(stopReason: 'tool_calls'),
         ],
         [
-          const TextDelta('The answer is 4.'),
+          const TextDelta(
+            'The answer is 4.\n<stars_evidence call_ids="call-1" />',
+          ),
           const UsageReported(
             ModelTokenUsage(
               model: 'test',
@@ -57,7 +59,7 @@ void main() {
       );
 
       expect(result.status, AgentRunStatus.completed);
-      expect(result.text, 'Checking. The answer is 4.');
+      expect(result.text, 'The answer is 4.');
       expect(result.tokenUsage.inputTokens, 25);
       expect(result.tokenUsage.outputTokens, 7);
       expect(tool.executions, 1);
@@ -83,7 +85,10 @@ void main() {
           const ModelTurnCompleted(stopReason: 'tool_calls'),
         ],
         [
-          const TextDelta('I could not calculate that.'),
+          const TextDelta(
+            'I could not calculate that.\n'
+            '<stars_evidence call_ids="" />',
+          ),
           const ModelTurnCompleted(stopReason: 'stop'),
         ],
       ]);
@@ -143,7 +148,10 @@ void main() {
           repeated,
           const ModelTurnCompleted(stopReason: 'tool_calls'),
         ],
-        [const TextDelta('done'), const ModelTurnCompleted(stopReason: 'stop')],
+        [
+          const TextDelta('done\n<stars_evidence call_ids="same-call" />'),
+          const ModelTurnCompleted(stopReason: 'stop'),
+        ],
       ]);
       final coordinator = AgentRunCoordinator(
         toolRegistry: StaticToolRegistry([tool]),
@@ -181,7 +189,10 @@ void main() {
           const ModelTurnCompleted(stopReason: 'tool_calls'),
         ],
         [
-          const TextDelta('both done'),
+          const TextDelta(
+            'both done\n'
+            '<stars_evidence call_ids="parallel-1,parallel-2" />',
+          ),
           const ModelTurnCompleted(stopReason: 'stop'),
         ],
       ]);
@@ -220,7 +231,9 @@ void main() {
           const ModelTurnCompleted(stopReason: 'tool_calls'),
         ],
         [
-          const TextDelta('The write was denied.'),
+          const TextDelta(
+            'The write was denied.\n<stars_evidence call_ids="" />',
+          ),
           const ModelTurnCompleted(stopReason: 'stop'),
         ],
       ]);
@@ -266,7 +279,7 @@ void main() {
           const ModelTurnCompleted(stopReason: 'tool_calls'),
         ],
         [
-          const TextDelta('Saved.'),
+          const TextDelta('Saved.\n<stars_evidence call_ids="write-1" />'),
           const ModelTurnCompleted(stopReason: 'stop'),
         ],
       ]);
@@ -289,6 +302,7 @@ void main() {
       expect(result.toolInvocations.single.approvalDecision, isEmpty);
       expect(result.toolInvocations.single.title, 'Save note');
       expect(result.toolInvocations.single.mcpServerName, 'Notes');
+      expect(session.continuations.single.single.source, ToolSource.mcp);
     });
 
     test('cancels approval wait and provider session', () async {
@@ -379,6 +393,120 @@ void main() {
       expect(result.error, 'agent_run_timeout');
       expect(session.cancelled, isTrue);
     });
+
+    test('repairs a final answer that omits evidence metadata', () async {
+      final tool = _FakeTool(name: 'calculate');
+      final session = _FakeModelSession([
+        [
+          ToolCallRequested(
+            callId: 'repair-1',
+            name: 'calculate',
+            arguments: const {'value': 3},
+          ),
+          const ModelTurnCompleted(stopReason: 'tool_calls'),
+        ],
+        [
+          const TextDelta('The answer is 6.'),
+          const ModelTurnCompleted(stopReason: 'stop'),
+        ],
+        [
+          const TextDelta(
+            'The verified answer is 6.\n'
+            '<stars_evidence call_ids="repair-1" />',
+          ),
+          const ModelTurnCompleted(stopReason: 'stop'),
+        ],
+      ]);
+      final events = <ModelEvent>[];
+      final coordinator = AgentRunCoordinator(
+        toolRegistry: StaticToolRegistry([tool]),
+        toolPolicy: const DefaultToolPolicy(),
+      );
+
+      final result = await coordinator.run(
+        provider: _FakeProvider(session),
+        request: _request(toolNames: {'calculate'}),
+        onModelEvent: events.add,
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(result.text, 'The verified answer is 6.');
+      expect(session.reliabilityFeedback.single, contains('repair-1'));
+      expect(events.whereType<TextDelta>().single.text, result.text);
+    });
+
+    test(
+      'turns an empty successful tool response into an explicit error',
+      () async {
+        final tool = _EmptyTool();
+        final session = _FakeModelSession([
+          [
+            ToolCallRequested(
+              callId: 'empty-1',
+              name: tool.definition.name,
+              arguments: const {},
+            ),
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [
+            const TextDelta(
+              'The tool returned no verifiable result.\n'
+              '<stars_evidence call_ids="" />',
+            ),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+        ]);
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([tool]),
+          toolPolicy: const DefaultToolPolicy(),
+        );
+
+        final result = await coordinator.run(
+          provider: _FakeProvider(session),
+          request: _request(toolNames: {tool.definition.name}),
+        );
+
+        expect(result.status, AgentRunStatus.completed);
+        final returned = session.continuations.single.single;
+        expect(returned.isError, isTrue);
+        expect(returned.errorCode, 'empty_tool_result');
+      },
+    );
+
+    test(
+      'fails closed when a repaired answer cites unknown evidence',
+      () async {
+        final tool = _FakeTool(name: 'calculate');
+        final session = _FakeModelSession([
+          [
+            ToolCallRequested(
+              callId: 'known',
+              name: 'calculate',
+              arguments: const {'value': 4},
+            ),
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [const TextDelta('8'), const ModelTurnCompleted(stopReason: 'stop')],
+          [
+            const TextDelta('8\n<stars_evidence call_ids="invented" />'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+        ]);
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([tool]),
+          toolPolicy: const DefaultToolPolicy(),
+        );
+
+        final result = await coordinator.run(
+          provider: _FakeProvider(session),
+          request: _request(toolNames: {'calculate'}),
+        );
+
+        expect(result.status, AgentRunStatus.failed);
+        expect(result.text, isEmpty);
+        expect(result.error, 'ungrounded_final_answer');
+      },
+    );
   });
 
   group('JsonSchemaValidator', () {
@@ -494,6 +622,7 @@ final class _FakeModelSession implements AgentModelSession {
 
   final List<List<ModelEvent>> turns;
   final List<List<ToolResult>> continuations = [];
+  final List<String> reliabilityFeedback = [];
   var _turnIndex = 0;
   bool cancelled = false;
 
@@ -503,6 +632,12 @@ final class _FakeModelSession implements AgentModelSession {
   @override
   Stream<ModelEvent> continueWith(List<ToolResult> results) {
     continuations.add(List<ToolResult>.of(results));
+    return Stream.fromIterable(turns[_turnIndex++]);
+  }
+
+  @override
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
+    reliabilityFeedback.add(feedback);
     return Stream.fromIterable(turns[_turnIndex++]);
   }
 
@@ -525,6 +660,11 @@ final class _HangingModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> continueWith(List<ToolResult> results) {
+    throw StateError('A hanging session cannot continue.');
+  }
+
+  @override
+  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
     throw StateError('A hanging session cannot continue.');
   }
 
@@ -601,6 +741,24 @@ final class _ParallelTool implements ExecutableTool {
     final value = call.arguments['value']! as int;
     return ToolResult(callId: call.callId, name: call.name, content: '$value');
   }
+}
+
+final class _EmptyTool implements ExecutableTool {
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: 'empty_read',
+    description: 'Returns no data.',
+    inputSchema: const {'type': 'object'},
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.readOnly,
+    capabilities: const {ToolCapability.compute},
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async => ToolResult(callId: call.callId, name: call.name, content: '');
 }
 
 final class _FixedApprovalHandler implements ToolApprovalHandler {
