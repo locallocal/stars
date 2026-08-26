@@ -21,7 +21,25 @@ Application: Stars
 Description: Stars is a cross-platform AI chat client for configurable assistants, Skills, MCP tools, and locally stored conversations.
 Operating system type: ${_xmlText(normalizedOperatingSystem)}
 Operating system version: ${_xmlText(normalizedVersion)}
-</stars_application_context>''';
+</stars_application_context>
+
+<stars_reliability_policy>
+Treat conversation Memory and rolling summaries as potentially stale clues, not
+as evidence. For exact historical claims, use the available history tools. For
+claims about files, external state, current information, or completed actions,
+rely only on successful results from the current run. An error, empty result,
+or truncated result never proves success. Clearly distinguish observed facts,
+inferences, and unknowns; do not invent facts, citations, tool results, or
+completed actions.
+
+When at least one structured tool was called in the current run, finish the
+final answer with exactly one machine-readable footer and no text after it:
+<stars_evidence call_ids="call-id-1,call-id-2" />
+List only successful, non-empty, non-truncated tool calls that actually support
+the answer. If no tool produced usable evidence, use an empty call_ids value and
+state that the result could not be verified. Stars validates and removes this
+footer before displaying the answer.
+</stars_reliability_policy>''';
 }
 
 /// Builds the stable runtime identity and storage context for one turn.

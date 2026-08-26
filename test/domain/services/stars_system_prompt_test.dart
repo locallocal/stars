@@ -19,7 +19,13 @@ void main() {
     );
     expect(prompt, contains('Operating system type: test&lt;os&gt;'));
     expect(prompt, contains('Operating system version: 1.0 &amp; newer'));
-    expect(prompt, endsWith('</stars_application_context>'));
+    expect(prompt, contains('<stars_reliability_policy>'));
+    expect(prompt, contains('An error, empty result,'));
+    expect(
+      prompt,
+      contains('<stars_evidence call_ids="call-id-1,call-id-2" />'),
+    );
+    expect(prompt, endsWith('</stars_reliability_policy>'));
   });
 
   test('places Stars context before the existing system prompt', () {

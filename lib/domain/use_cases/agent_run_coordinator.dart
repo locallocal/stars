@@ -5,11 +5,14 @@ import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
+part 'agent_run_coordinator_support.dart';
+
 final class AgentRunLimits {
   const AgentRunLimits({
     this.maxModelTurns = 6,
     this.maxToolCalls = 12,
     this.maxSameCallRetries = 1,
+    this.maxReliabilityRepairs = 1,
     this.totalTimeout = const Duration(minutes: 3),
     this.toolTimeout = const Duration(seconds: 30),
     this.approvalTimeout = const Duration(minutes: 2),
@@ -17,11 +20,13 @@ final class AgentRunLimits {
   }) : assert(maxModelTurns > 0),
        assert(maxToolCalls > 0),
        assert(maxSameCallRetries >= 0),
+       assert(maxReliabilityRepairs >= 0),
        assert(maxToolOutputCharacters > 0);
 
   final int maxModelTurns;
   final int maxToolCalls;
   final int maxSameCallRetries;
+  final int maxReliabilityRepairs;
   final Duration totalTimeout;
   final Duration toolTimeout;
   final Duration approvalTimeout;
@@ -126,6 +131,8 @@ final class AgentRunCoordinator {
     var usage = ModelTokenUsage.empty;
     var timedOut = false;
     var toolCallCount = 0;
+    var reliabilityRepairs = 0;
+    var reliabilityFeedback = '';
     AgentModelSession? session;
     final timeoutTimer = Timer(_limits.totalTimeout, () {
       timedOut = true;
@@ -172,15 +179,19 @@ final class AgentRunCoordinator {
       ) {
         request.cancellationToken.throwIfCancelled();
         final calls = <ToolCallRequested>[];
-        final events =
-            modelTurn == 0
-                ? activeSession.start()
-                : activeSession.continueWith(results);
+        final turnText = StringBuffer();
+        final events = switch ((modelTurn, reliabilityFeedback)) {
+          (0, _) => activeSession.start(),
+          (_, final feedback) when feedback.isNotEmpty => activeSession
+              .continueWithReliabilityFeedback(feedback),
+          _ => activeSession.continueWith(results),
+        };
+        reliabilityFeedback = '';
         await _consumeEvents(events, request.cancellationToken, (event) {
-          onModelEvent?.call(event);
+          if (event is! TextDelta) onModelEvent?.call(event);
           switch (event) {
             case TextDelta():
-              text += event.text;
+              turnText.write(event.text);
             case ReasoningDelta():
               reasoning += event.text;
             case ToolCallRequested():
@@ -197,6 +208,32 @@ final class AgentRunCoordinator {
         });
 
         if (calls.isEmpty) {
+          final validation = _validateFinalAnswer(
+            turnText.toString(),
+            completedCalls: completedCalls,
+          );
+          if (!validation.isValid) {
+            if (reliabilityRepairs < _limits.maxReliabilityRepairs &&
+                modelTurn + 1 < _limits.maxModelTurns) {
+              reliabilityRepairs += 1;
+              reliabilityFeedback = _reliabilityFeedback(
+                validation.reason,
+                completedCalls,
+              );
+              results = const [];
+              continue;
+            }
+            return AgentRunResult(
+              status: AgentRunStatus.failed,
+              text: '',
+              reasoning: reasoning,
+              tokenUsage: usage,
+              toolInvocations: invocations,
+              error: 'ungrounded_final_answer',
+            );
+          }
+          text = validation.text;
+          if (text.isNotEmpty) onModelEvent?.call(TextDelta(text));
           return AgentRunResult(
             status: AgentRunStatus.completed,
             text: text,
@@ -376,12 +413,16 @@ final class AgentRunCoordinator {
     final attempts = (callAttempts[call.callId] ?? 0) + 1;
     callAttempts[call.callId] = attempts;
     if (attempts > _limits.maxSameCallRetries + 1) {
+      final source =
+          _toolRegistry.find(call.name)?.definition.source ??
+          ToolSource.builtIn;
       return ToolResult(
         callId: call.callId,
         name: call.name,
         content: 'The tool retry limit was reached.',
         isError: true,
         errorCode: 'tool_retry_limit_reached',
+        source: source,
       );
     }
     final previous = completedCalls[call.callId];
@@ -418,6 +459,7 @@ final class AgentRunCoordinator {
         content: 'The call id was already used with different arguments.',
         isError: true,
         errorCode: 'duplicate_call_id_conflict',
+        source: definition?.source ?? ToolSource.builtIn,
       );
     }
 
@@ -430,6 +472,7 @@ final class AgentRunCoordinator {
         content: 'The requested tool is not available for this run.',
         isError: true,
         errorCode: 'tool_not_available',
+        source: tool?.definition.source ?? ToolSource.builtIn,
       );
       observeInvocation(
         ToolInvocationRecord(
@@ -477,6 +520,7 @@ final class AgentRunCoordinator {
         content: 'Tool arguments failed schema validation.',
         isError: true,
         errorCode: 'invalid_tool_arguments',
+        source: definition.source,
       );
       record = _completeRecord(
         record,
@@ -504,6 +548,7 @@ final class AgentRunCoordinator {
             policyDecision.reason.isEmpty
                 ? 'tool_policy_denied'
                 : policyDecision.reason,
+        source: definition.source,
       );
       record = _completeRecord(
         record,
@@ -552,6 +597,7 @@ final class AgentRunCoordinator {
           content: 'Tool approval timed out.',
           isError: true,
           errorCode: 'tool_approval_timeout',
+          source: definition.source,
         );
         record = _completeRecord(
           record,
@@ -570,6 +616,7 @@ final class AgentRunCoordinator {
           content: 'The user denied the tool call.',
           isError: true,
           errorCode: 'tool_approval_denied',
+          source: definition.source,
         );
         record = _completeRecord(
           record,
@@ -600,6 +647,7 @@ final class AgentRunCoordinator {
         content: 'Tool execution timed out.',
         isError: true,
         errorCode: 'tool_execution_timeout',
+        source: definition.source,
       );
       record = _completeRecord(
         record,
@@ -624,6 +672,21 @@ final class AgentRunCoordinator {
         content: 'Tool execution failed.',
         isError: true,
         errorCode: 'tool_execution_failed',
+        source: definition.source,
+      );
+    }
+
+    result = result.copyWith(source: definition.source);
+    if (!result.isError &&
+        result.content.trim().isEmpty &&
+        result.structuredContent == null) {
+      result = ToolResult(
+        callId: call.callId,
+        name: call.name,
+        content: 'The tool returned no usable result.',
+        isError: true,
+        errorCode: 'empty_tool_result',
+        source: definition.source,
       );
     }
 
@@ -636,6 +699,7 @@ final class AgentRunCoordinator {
           content: 'Tool output failed schema validation.',
           isError: true,
           errorCode: 'invalid_tool_output',
+          source: definition.source,
         );
       } else {
         final outputIssues = _schemaValidator.validate(
@@ -649,6 +713,7 @@ final class AgentRunCoordinator {
             content: 'Tool output failed schema validation.',
             isError: true,
             errorCode: 'invalid_tool_output',
+            source: definition.source,
           );
         }
       }
@@ -667,128 +732,4 @@ final class AgentRunCoordinator {
     completedCalls[call.callId] = _CompletedCall(fingerprint, result);
     return result;
   }
-
-  Future<void> _consumeEvents(
-    Stream<ModelEvent> events,
-    AgentCancellationToken cancellationToken,
-    void Function(ModelEvent event) consume,
-  ) async {
-    final iterator = StreamIterator<ModelEvent>(events);
-    try {
-      while (await _raceCancellation(iterator.moveNext(), cancellationToken)) {
-        consume(iterator.current);
-      }
-    } finally {
-      await iterator.cancel();
-    }
-  }
-
-  Future<T> _raceCancellation<T>(
-    Future<T> operation,
-    AgentCancellationToken cancellationToken,
-  ) {
-    cancellationToken.throwIfCancelled();
-    return Future.any<T>([
-      operation,
-      cancellationToken.whenCancelled.then<T>(
-        (_) => throw const AgentRunCancelledException(),
-      ),
-    ]);
-  }
-
-  ToolInvocationRecord _completeRecord(
-    ToolInvocationRecord record, {
-    required ToolInvocationStatus status,
-    String resultSummary = '',
-    String errorCode = '',
-    String approvalDecision = '',
-  }) {
-    final completedAt = DateTime.now();
-    return record.copyWith(
-      status: status,
-      resultSummary: _truncate(resultSummary, 512),
-      errorCode: errorCode,
-      approvalDecision:
-          approvalDecision.isEmpty ? record.approvalDecision : approvalDecision,
-      completedAt: completedAt,
-      durationMs: completedAt.difference(record.startedAt).inMilliseconds,
-    );
-  }
-
-  ToolResult _truncateResult(ToolResult result) {
-    if (result.content.runes.length <= _limits.maxToolOutputCharacters) {
-      return result;
-    }
-    const suffix = '\n[tool output truncated]';
-    final retained = _limits.maxToolOutputCharacters - suffix.runes.length;
-    return result.copyWith(
-      content:
-          '${String.fromCharCodes(result.content.runes.take(retained))}$suffix',
-      clearStructuredContent: true,
-    );
-  }
-
-  String _issuesSummary(List<JsonSchemaValidationIssue> issues) {
-    return issues
-        .take(3)
-        .map((issue) => '${issue.path}:${issue.code}')
-        .join(', ');
-  }
-
-  String _auditResultSummary(ToolDefinition definition, ToolResult result) {
-    if (result.isError) {
-      return result.errorCode.isEmpty ? 'tool_error' : result.errorCode;
-    }
-    if (conversationHistoryToolNames.contains(definition.name) &&
-        result.structuredContent is Map) {
-      final structured = result.structuredContent! as Map;
-      return jsonEncode({
-        'count': structured['count'],
-        'truncated': structured['truncated'],
-        'message_ids': structured['message_ids'],
-      });
-    }
-    final isPureBuiltIn =
-        definition.source == ToolSource.builtIn &&
-        definition.capabilities.every(
-          (capability) => capability == ToolCapability.compute,
-        );
-    return isPureBuiltIn ? result.content : 'completed';
-  }
-
-  String _fingerprint(ToolCallRequest call) {
-    return '${call.name}:${_canonicalJson(call.arguments)}';
-  }
-
-  String _canonicalJson(Object? value) {
-    if (value is Map) {
-      final entries =
-          value.entries.toList()
-            ..sort((left, right) => '${left.key}'.compareTo('${right.key}'));
-      return '{${entries.map((entry) => '${jsonEncode(entry.key.toString())}:${_canonicalJson(entry.value)}').join(',')}}';
-    }
-    if (value is List) {
-      return '[${value.map(_canonicalJson).join(',')}]';
-    }
-    return jsonEncode(value);
-  }
-
-  String _truncate(String value, int maxCharacters) {
-    if (value.runes.length <= maxCharacters) return value;
-    return '${String.fromCharCodes(value.runes.take(maxCharacters - 1))}…';
-  }
-}
-
-final class _CompletedCall {
-  const _CompletedCall(this.fingerprint, this.result);
-
-  final String fingerprint;
-  final ToolResult result;
-}
-
-final class _AgentModelFailure implements Exception {
-  const _AgentModelFailure(this.message, this.code);
-
-  final String message;
-  final String code;
 }

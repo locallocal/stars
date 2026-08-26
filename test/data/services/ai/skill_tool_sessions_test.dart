@@ -250,6 +250,16 @@ void main() {
       (continuedMessages.last as Map<Object?, Object?>)['tool_call_id'],
       'generic-1',
     );
+    final envelope =
+        jsonDecode(
+              (continuedMessages.last as Map<Object?, Object?>)['content']!
+                  as String,
+            )
+            as Map<String, Object?>;
+    expect(envelope['type'], 'stars_tool_result');
+    expect(envelope['evidence_id'], 'generic-1');
+    expect(envelope['status'], 'success');
+    expect(envelope['truncated'], isFalse);
   });
 
   test(

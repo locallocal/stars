@@ -154,11 +154,26 @@ final class CompactConversation {
     final now = _clock();
     _sequence = (_sequence + 1) & 0x7fffffff;
     final summaryId = 'summary_${now.microsecondsSinceEpoch}_$_sequence';
+    final currentSourceIds =
+        sourceMessages.map((message) => message.messageId).toSet();
+    final allowedSourceIds = <String>{
+      ...?previousSummary?.metadata.sourceMessageIds,
+      ...currentSourceIds,
+    };
+    final messageById = {
+      for (final message in messages) message.messageId: message,
+    };
+    final sourceEvidence = [
+      for (final id in allowedSourceIds)
+        if (messageById[id] case final message?)
+          ContextSourceEvidence.fromMessage(message),
+    ];
     final result = await _summarizerFactory(bot).summarize(
       ContextSummaryRequest(
         chatId: chatId,
         summaryId: summaryId,
         sourceMessages: sourceMessages,
+        sourceEvidence: sourceEvidence,
         previousSummary: previousSummary,
         targetTokens: 2048,
       ),
@@ -172,9 +187,9 @@ final class CompactConversation {
         result.usage,
       );
     }
-    final sourceIds =
-        sourceMessages.map((message) => message.messageId).toSet();
-    if (!_validResult(result, sourceIds)) {
+    if (!_validResult(result, allowedSourceIds, {
+      for (final evidence in sourceEvidence) evidence.messageId: evidence,
+    })) {
       return ConversationCompactionResult.invalidSummary;
     }
     final profile = ModelContextProfile(
@@ -185,6 +200,12 @@ final class CompactConversation {
             .convert(
               utf8.encode(
                 jsonEncode([
+                  if (previousSummary != null)
+                    {
+                      'previous_summary_id': previousSummary.metadata.id,
+                      'previous_source_digest':
+                          previousSummary.metadata.sourceDigest,
+                    },
                   for (final message in sourceMessages)
                     {
                       'id': message.messageId,
@@ -202,11 +223,13 @@ final class CompactConversation {
       id: summaryId,
       chatId: chatId,
       fileName: '$summaryId.md',
+      markdownSchemaVersion: 2,
       contentDigest: '',
-      sourceStartMessageId: sourceMessages.first.messageId,
+      sourceStartMessageId:
+          previousSummary?.metadata.sourceStartMessageId ??
+          sourceMessages.first.messageId,
       sourceEndMessageId: sourceMessages.last.messageId,
-      sourceMessageIds:
-          sourceMessages.map((message) => message.messageId).toList(),
+      sourceMessageIds: allowedSourceIds.toList(growable: false),
       sourceDigest: sourceDigest,
       estimatedTokenCount: await _tokenEstimator.estimateText(
         profile,
@@ -214,6 +237,7 @@ final class CompactConversation {
       ),
       provider: result.provider,
       model: result.model,
+      promptVersion: 2,
       baseRevision: state.revision,
       createdAt: now,
       updatedAt: now,
@@ -268,7 +292,11 @@ final class CompactConversation {
     );
   }
 
-  bool _validResult(ContextSummaryResult result, Set<String> sourceIds) {
+  bool _validResult(
+    ContextSummaryResult result,
+    Set<String> sourceIds,
+    Map<String, ContextSourceEvidence> evidenceById,
+  ) {
     if (result.markdown.trim().isEmpty || result.markdown.length > 200000) {
       return false;
     }
@@ -280,6 +308,13 @@ final class CompactConversation {
         return false;
       }
       if (item.sourceMessageIds.any((id) => !sourceIds.contains(id))) {
+        return false;
+      }
+      if (!canSourceEvidenceSupportMemory(
+        item.kind,
+        item.sourceMessageIds,
+        evidenceById,
+      )) {
         return false;
       }
     }

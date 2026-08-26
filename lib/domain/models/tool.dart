@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:stars/domain/models/mcp_installer.dart';
 import 'package:stars/domain/models/skill_installer.dart';
@@ -79,6 +80,8 @@ final class ToolResult {
     this.structuredContent,
     this.isError = false,
     this.errorCode = '',
+    this.source = ToolSource.builtIn,
+    this.truncated = false,
   });
 
   final String callId;
@@ -87,6 +90,8 @@ final class ToolResult {
   final Object? structuredContent;
   final bool isError;
   final String errorCode;
+  final ToolSource source;
+  final bool truncated;
 
   ToolResult copyWith({
     String? content,
@@ -94,6 +99,8 @@ final class ToolResult {
     bool clearStructuredContent = false,
     bool? isError,
     String? errorCode,
+    ToolSource? source,
+    bool? truncated,
   }) {
     return ToolResult(
       callId: callId,
@@ -105,8 +112,36 @@ final class ToolResult {
               : structuredContent ?? this.structuredContent,
       isError: isError ?? this.isError,
       errorCode: errorCode ?? this.errorCode,
+      source: source ?? this.source,
+      truncated: truncated ?? this.truncated,
     );
   }
+}
+
+/// Encodes a tool result with explicit reliability and provenance metadata.
+/// Provider adapters must send this envelope instead of bare tool text.
+String encodeToolResultForModel(ToolResult result) {
+  Object? structured;
+  if (result.structuredContent != null) {
+    try {
+      structured = jsonDecode(jsonEncode(result.structuredContent));
+    } on Object {
+      structured = null;
+    }
+  }
+  return jsonEncode({
+    'type': 'stars_tool_result',
+    'version': 1,
+    'evidence_id': result.callId,
+    'call_id': result.callId,
+    'tool_name': result.name,
+    'source': result.source.name,
+    'status': result.isError ? 'error' : 'success',
+    'error_code': result.errorCode,
+    'truncated': result.truncated,
+    'content': result.content,
+    if (structured != null) 'structured_data': structured,
+  });
 }
 
 enum ToolPolicyOutcome { allow, requireApproval, deny }

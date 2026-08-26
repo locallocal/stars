@@ -5,6 +5,7 @@ import 'package:stars/domain/models/conversation_history.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/repositories/conversation_history_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
+import 'package:stars/domain/services/retrieval_terms.dart';
 
 /// Current-chat history reader. It only projects user-visible message fields.
 final class SqliteConversationHistoryRepository
@@ -49,9 +50,9 @@ final class SqliteConversationHistoryRepository
         '${query.before?.toIso8601String()}',
       ),
     );
-    final terms = normalizedQuery.split(' ').where((term) => term.isNotEmpty);
+    final terms = buildRetrievalTerms(normalizedQuery);
     final messages = await _messageRepository.getMessages(chatId);
-    final scored = <({ConversationHistoryHit hit, int score})>[];
+    final scored = <({ConversationHistoryHit hit, double score})>[];
     for (final message in messages) {
       if (message.chatId != chatId || message.content.trim().isEmpty) continue;
       if (query.excludedRunId.isNotEmpty &&
@@ -68,8 +69,8 @@ final class SqliteConversationHistoryRepository
       if (query.before != null && !message.timestamp.isBefore(query.before!)) {
         continue;
       }
-      final content = message.content.toLowerCase();
-      final matchedTerms = terms.where(content.contains).toList();
+      final contentTerms = buildRetrievalTerms(message.content);
+      final matchedTerms = terms.where(contentTerms.contains).toList();
       if (matchedTerms.isEmpty) continue;
       scored.add((
         hit: ConversationHistoryHit(
@@ -81,7 +82,7 @@ final class SqliteConversationHistoryRepository
           terminalOutcome: message.terminalOutcome,
           hasPartialContent: message.hasPartialContent,
         ),
-        score: matchedTerms.length,
+        score: matchedTerms.length / terms.length,
       ));
     }
     scored.sort((left, right) {
