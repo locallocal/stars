@@ -140,18 +140,9 @@ class _StatusCardHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.12),
-            borderRadius:
-                isDesktop
-                    ? StarsDesktopThemeSpec.itemRadius
-                    : BorderRadius.circular(10),
-          ),
+        _StatusHeaderIcon(
+          key: const ValueKey<String>('execution-status-icon'),
+          isDesktop: isDesktop,
           child: Icon(
             icon,
             size: 16,
@@ -188,6 +179,34 @@ class _StatusCardHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _StatusHeaderIcon extends StatelessWidget {
+  const _StatusHeaderIcon({
+    super.key,
+    required this.isDesktop,
+    required this.child,
+  });
+
+  final bool isDesktop;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+        borderRadius:
+            isDesktop
+                ? StarsDesktopThemeSpec.itemRadius
+                : BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: child,
     );
   }
 }

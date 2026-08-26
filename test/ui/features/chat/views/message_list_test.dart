@@ -166,6 +166,46 @@ void main() => print('done');
   });
 
   testWidgets(
+    'desktop completed reasoning icon aligns with execution status icon',
+    (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          isStreaming: false,
+          body: const Column(
+            children: [
+              ReasoningSection(reasoning: 'reasoning', isDesktop: true),
+              ProcessInfoSection(
+                processInfo: MessageProcessInfo(durationMs: 1000),
+                isDesktop: true,
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final reasoningIcon = find.byKey(
+        const ValueKey<String>('reasoning-status-icon'),
+      );
+      final executionIcon = find.byKey(
+        const ValueKey<String>('execution-status-icon'),
+      );
+
+      expect(tester.getSize(reasoningIcon), const Size.square(28));
+      expect(tester.getSize(reasoningIcon), tester.getSize(executionIcon));
+      expect(
+        tester.getTopLeft(reasoningIcon).dx,
+        closeTo(tester.getTopLeft(executionIcon).dx, 0.01),
+      );
+
+      final background = tester.widget<DecoratedBox>(
+        find.descendant(of: reasoningIcon, matching: find.byType(DecoratedBox)),
+      );
+      expect((background.decoration as BoxDecoration).color, isNotNull);
+    },
+  );
+
+  testWidgets(
     'execution durations use localized units and decimal separators',
     (tester) async {
       await tester.pumpWidget(
@@ -201,7 +241,11 @@ Widget _messageListHarness(
   );
 }
 
-Widget _harness({required bool isStreaming, bool disableAnimations = false}) {
+Widget _harness({
+  required bool isStreaming,
+  bool disableAnimations = false,
+  Widget? body,
+}) {
   final shadTheme = buildStarsShadTheme(
     brightness: Brightness.light,
     fontSize: 16,
@@ -232,11 +276,13 @@ Widget _harness({required bool isStreaming, bool disableAnimations = false}) {
                 child: ShadAppBuilder(child: child!),
               ),
           home: Scaffold(
-            body: ReasoningSection(
-              reasoning: 'reasoning',
-              isDesktop: true,
-              isStreaming: isStreaming,
-            ),
+            body:
+                body ??
+                ReasoningSection(
+                  reasoning: 'reasoning',
+                  isDesktop: true,
+                  isStreaming: isStreaming,
+                ),
           ),
         ),
   );

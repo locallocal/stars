@@ -112,32 +112,31 @@ class _ReasoningSectionState extends State<ReasoningSection>
                 child: Row(
                   children: [
                     ExcludeSemantics(
-                      child:
-                          widget.isStreaming
-                              ? RotationTransition(
-                                key: const ValueKey<String>(
-                                  'reasoning-streaming-spinner',
-                                ),
-                                turns: _rotationController,
-                                child: Icon(
-                                  LucideIcons.loaderCircle,
+                      child: _StatusHeaderIcon(
+                        key: const ValueKey<String>('reasoning-status-icon'),
+                        isDesktop: true,
+                        child:
+                            widget.isStreaming
+                                ? RotationTransition(
+                                  key: const ValueKey<String>(
+                                    'reasoning-streaming-spinner',
+                                  ),
+                                  turns: _rotationController,
+                                  child: Icon(
+                                    LucideIcons.loaderCircle,
+                                    size: 16,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                )
+                                : Icon(
+                                  LucideIcons.brain,
                                   size: 16,
-                                  color:
-                                      StarsDesktopTokens.of(
-                                        context,
-                                      ).secondaryText,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
-                              )
-                              : Icon(
-                                LucideIcons.brain,
-                                size: 16,
-                                color:
-                                    StarsDesktopTokens.of(
-                                      context,
-                                    ).secondaryText,
-                              ),
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         title,
