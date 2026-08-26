@@ -181,6 +181,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Browse conversation data",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("キャンセル"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("アバターを変更"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("保存済み"),
@@ -229,6 +232,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("コンテキストとメモリ"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("コンテキストを圧縮しました"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("コンテキストウィンドウ"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Conversation data directory",
+    ),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Browse files and folders stored for this conversation.",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "This conversation directory is empty.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会話の要約"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("会話別トークン比率"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API キーをコピー"),
@@ -574,6 +586,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noContentReturned": MessageLookupByLibrary.simpleMessage(
       "コンテンツが返されませんでした",
     ),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "No matching files or folders.",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "利用できる会話の要約はまだありません。",
     ),
@@ -693,6 +708,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("保存中..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("ボットを検索"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage(
+      "Search files and folders",
+    ),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
     ),

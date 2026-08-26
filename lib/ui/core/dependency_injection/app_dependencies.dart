@@ -2,6 +2,7 @@ import 'package:stars/data/repositories/ai_provider_repository_impl.dart';
 import 'package:stars/data/repositories/attachment_repository_impl.dart';
 import 'package:stars/data/repositories/feedback_repository_impl.dart';
 import 'package:stars/data/repositories/legal_document_repository_impl.dart';
+import 'package:stars/data/repositories/local_conversation_directory_repository.dart';
 import 'package:stars/data/repositories/memory_conversation_draft_repository.dart';
 import 'package:stars/data/repositories/platform_message_action_repository.dart';
 import 'package:stars/data/repositories/file_skill_repository.dart';
@@ -65,6 +66,7 @@ import 'package:stars/domain/repositories/conversation_skill_pin_repository.dart
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
 import 'package:stars/domain/repositories/conversation_history_repository.dart';
 import 'package:stars/domain/repositories/conversation_draft_repository.dart';
+import 'package:stars/domain/repositories/conversation_directory_repository.dart';
 import 'package:stars/domain/repositories/feedback_repository.dart';
 import 'package:stars/domain/repositories/legal_document_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
@@ -90,6 +92,7 @@ import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/chat_interaction_facade.dart';
+import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
 import 'package:stars/ui/features/app/view_models/app_view_model.dart';
 import 'package:stars/ui/features/app/view_models/main_shell_view_model.dart';
 import 'package:stars/ui/features/app/view_models/startup_view_model.dart';
@@ -109,6 +112,8 @@ import 'package:stars/ui/features/mcp/view_models/mcp_servers_view_model.dart';
 import 'package:stars/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:stars/ui/features/profile/view_models/legal_document_view_model.dart';
 import 'package:stars/ui/features/skills/view_models/skill_library_view_model.dart';
+
+part 'app_dependencies_chat.dart';
 
 /// Application composition root. Production implementations are assembled in
 /// one place; views only receive repositories through their ViewModels.
@@ -154,6 +159,7 @@ class AppDependencies {
     required this.createChat,
     required this.generationRegistry,
     ConversationDraftRepository? conversationDraftRepository,
+    ConversationDirectoryRepository? conversationDirectoryRepository,
     MessageActionRepository? messageActionRepository,
     this.skillEcosystemRepository,
     this.skillScriptCatalogService,
@@ -161,6 +167,11 @@ class AppDependencies {
     this.skillOrganizationPolicyBundleService,
   }) : conversationDraftRepository =
            conversationDraftRepository ?? MemoryConversationDraftRepository(),
+       conversationDirectoryRepository =
+           conversationDirectoryRepository ??
+           LocalConversationDirectoryRepository(
+             directoryProvider: conversationArtifactsDirectoryProvider,
+           ),
        messageActionRepository =
            messageActionRepository ?? const PlatformMessageActionRepository();
 
@@ -513,6 +524,7 @@ class AppDependencies {
   final BotSkillBindingRepository botSkillBindingRepository;
   final ConversationSkillPinRepository conversationSkillPinRepository;
   final ConversationMemoryRepository conversationMemoryRepository;
+  final ConversationDirectoryRepository conversationDirectoryRepository;
   final ConversationHistoryRepository conversationHistoryRepository;
   final SkillRunRepository skillRunRepository;
   final McpServerRepository mcpServerRepository;
@@ -773,23 +785,4 @@ class AppDependencies {
       ),
     );
   }
-
-  ChatTokenUsageViewModel createChatTokenUsageViewModel(String chatId) =>
-      ChatTokenUsageViewModel(
-        chatId: chatId,
-        messageRepository: messageRepository,
-        chatRepository: chatRepository,
-      );
-
-  ConversationMemoryViewModel createConversationMemoryViewModel(
-    String chatId,
-    Bot bot,
-  ) => ConversationMemoryViewModel(
-    chatId: chatId,
-    bot: bot,
-    repository: conversationMemoryRepository,
-    compactConversation: compactConversation,
-    conversationArtifactsDirectoryProvider:
-        conversationArtifactsDirectoryProvider,
-  );
 }

@@ -12,6 +12,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   final VoidCallback? onToggleInspector;
   final VoidCallback? onCreateChat;
   final VoidCallback? onSearchRequested;
+  final VoidCallback? onBrowseConversationDirectory;
   final VoidCallback? onClearChat;
 
   const _UnifiedDesktopToolbar({
@@ -26,6 +27,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     required this.onToggleInspector,
     required this.onCreateChat,
     required this.onSearchRequested,
+    required this.onBrowseConversationDirectory,
     required this.onClearChat,
   });
 
@@ -145,6 +147,15 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             ),
                             onPressed: onCreateChat,
                             icon: desktopStartConversationIcon,
+                          ),
+                        if (onBrowseConversationDirectory != null)
+                          StarsDesktopIconAction(
+                            key: const ValueKey<String>(
+                              'desktop-toolbar-conversation-directory',
+                            ),
+                            label: S.of(context).browseConversationDirectory,
+                            onPressed: onBrowseConversationDirectory,
+                            icon: LucideIcons.folderOpen,
                           ),
                         if (onClearChat != null)
                           StarsDesktopIconAction(

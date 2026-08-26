@@ -6,6 +6,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
 import 'package:stars/generated/l10n.dart';
+import 'package:stars/ui/core/dependency_injection/app_dependencies.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -13,6 +14,7 @@ import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.da
 import 'package:stars/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:stars/ui/features/chat/views/attachments.dart';
 import 'package:stars/ui/features/chat/views/clear_chat_dialog.dart';
+import 'package:stars/ui/features/chat/views/conversation_directory_dialog.dart';
 import 'package:stars/ui/features/chat/views/message_input.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'package:stars/ui/features/chat/views/typing_indicator.dart';
@@ -427,6 +429,12 @@ class ChatPageState extends State<ChatPage> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
+          IconButton(
+            key: const ValueKey<String>('chat-conversation-directory'),
+            icon: const Icon(LucideIcons.folderOpen, size: 22),
+            tooltip: S.of(context).browseConversationDirectory,
+            onPressed: requestBrowseConversationDirectory,
+          ),
           IconButton(
             icon: Icon(Icons.cleaning_services_rounded, size: 24),
             tooltip: desktopConversationText(
