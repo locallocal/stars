@@ -140,6 +140,7 @@ void main() {
       'lib/ui/features/chat/view_models/chat_generation_view_model.dart',
       'lib/ui/features/chat/view_models/chat_skill_view_model.dart',
       'lib/ui/features/chat/view_models/chat_view_model.dart',
+      'lib/ui/features/chat/view_models/conversation_directory_view_model.dart',
       'lib/ui/features/chat/view_models/conversation_memory_view_model.dart',
       'lib/ui/features/chats/view_models/chat_list_view_model.dart',
       'lib/ui/features/feedback/view_models/feedback_view_model.dart',

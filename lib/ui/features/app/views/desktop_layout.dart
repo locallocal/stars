@@ -15,6 +15,7 @@ import 'package:stars/ui/features/bots/views/edit_bot.dart';
 import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';
+import 'package:stars/ui/features/chat/views/conversation_directory_dialog.dart';
 import 'package:stars/ui/features/chat/views/conversation_memory_panel.dart';
 import 'package:stars/ui/features/chat/views/conversation_model_controls.dart';
 import 'package:stars/ui/features/chat/views/token_usage_chart.dart';
@@ -362,6 +363,15 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                   widget.currentIndex == 0 &&
                                           widget.selectedChatId != null
                                       ? _requestClearChat
+                                      : null,
+                              onBrowseConversationDirectory:
+                                  widget.currentIndex == 0 &&
+                                          widget.selectedChatId != null
+                                      ? () => unawaited(
+                                        _requestBrowseConversationDirectory(
+                                          context,
+                                        ),
+                                      )
                                       : null,
                             ),
                             Expanded(

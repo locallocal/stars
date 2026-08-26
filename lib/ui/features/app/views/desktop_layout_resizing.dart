@@ -66,4 +66,14 @@ extension _DesktopLayoutResizing on _DesktopLayoutState {
   Future<void> _requestClearChat() async {
     await _chatPageKey?.currentState?.requestClearChat();
   }
+
+  Future<void> _requestBrowseConversationDirectory(BuildContext context) async {
+    final dependencies = _dependencies;
+    final chatId = widget.selectedChatId;
+    if (dependencies == null || chatId == null || !context.mounted) return;
+    await showConversationDirectoryDialog(
+      context: context,
+      viewModel: dependencies.createConversationDirectoryViewModel(chatId),
+    );
+  }
 }

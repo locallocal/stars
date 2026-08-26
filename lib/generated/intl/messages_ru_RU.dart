@@ -147,10 +147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Системный промпт",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -194,6 +193,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Browse conversation data",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("Отмена"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("Изменить аватар"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("Сохранено"),
@@ -262,6 +264,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("Контекст сжат"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Окно контекста"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Conversation data directory",
+    ),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Browse files and folders stored for this conversation.",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "This conversation directory is empty.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Сводка разговора",
     ),
@@ -669,6 +680,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noContentReturned": MessageLookupByLibrary.simpleMessage(
       "Содержимое не возвращено",
     ),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "No matching files or folders.",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "Сводка разговора пока недоступна.",
     ),
@@ -820,6 +834,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("Сохранение..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("Поиск ботов"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage(
+      "Search files and folders",
+    ),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
     ),

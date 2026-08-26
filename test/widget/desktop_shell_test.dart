@@ -177,7 +177,7 @@ void main() {
     });
   });
 
-  testWidgets('desktop selected chat exposes clear action in the toolbar', (
+  testWidgets('desktop selected chat exposes directory before clear action', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -192,6 +192,18 @@ void main() {
         find.byKey(const ValueKey<String>('desktop-toolbar-clear-chat')),
         findsOneWidget,
       );
+      final directoryAction = find.byKey(
+        const ValueKey<String>('desktop-toolbar-conversation-directory'),
+      );
+      final clearAction = find.byKey(
+        const ValueKey<String>('desktop-toolbar-clear-chat'),
+      );
+      expect(directoryAction, findsOneWidget);
+      expect(
+        tester.getCenter(directoryAction).dx,
+        lessThan(tester.getCenter(clearAction).dx),
+      );
+      expect(find.bySemanticsLabel('查看会话数据'), findsOneWidget);
       expect(find.bySemanticsLabel('清空会话记录'), findsOneWidget);
     });
   });
@@ -679,5 +691,4 @@ void main() {
     expect(chatBorder.bottom.width, 0);
     expect(chatBorder.bottom.style, BorderStyle.solid);
   });
-
 }

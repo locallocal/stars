@@ -169,6 +169,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "查看會話資料",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("更換頭像"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("已儲存"),
@@ -211,6 +214,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("上下文與記憶"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("上下文已壓縮"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("上下文視窗"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage("會話資料目錄"),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "查看此會話儲存的檔案和資料夾。",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "此會話資料目錄為空。",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("會話摘要"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
       "各對話 Token 占比",
@@ -524,6 +534,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("沒有可用的智能體"),
     "noChats": MessageLookupByLibrary.simpleMessage("還沒有聊天記錄"),
     "noContentReturned": MessageLookupByLibrary.simpleMessage("未傳回內容"),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "找不到符合的檔案或資料夾。",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "目前還沒有可用的會話摘要。",
     ),
@@ -633,6 +646,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("儲存中..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("搜尋智能體"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage("搜尋檔案和資料夾"),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage("搜尋 MCP 伺服器"),
     "searchMcpTools": MessageLookupByLibrary.simpleMessage("Search tools"),
     "searchMemory": MessageLookupByLibrary.simpleMessage("搜尋記憶"),

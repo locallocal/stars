@@ -148,10 +148,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt do sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Gerenciado pelo Stars e adicionado a cada solicitação ao modelo. Os identificadores do agente e da conversa atuais são incluídos em tempo de execução e não podem ser editados.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Gerenciado pelo Stars e adicionado a cada solicitação ao modelo. Os identificadores do agente e da conversa atuais são incluídos em tempo de execução e não podem ser editados.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -195,6 +194,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Browse conversation data",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancelar"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("Alterar avatar"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("Salvo"),
@@ -263,6 +265,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Contexto compactado",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Janela de contexto"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Conversation data directory",
+    ),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Browse files and folders stored for this conversation.",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "This conversation directory is empty.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Resumo da conversa",
     ),
@@ -680,6 +691,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noContentReturned": MessageLookupByLibrary.simpleMessage(
       "Nenhum conteúdo retornado",
     ),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "No matching files or folders.",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "Ainda não há um resumo da conversa disponível.",
     ),
@@ -829,6 +843,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("Salvando..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("Pesquisar bots"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage(
+      "Search files and folders",
+    ),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
     ),

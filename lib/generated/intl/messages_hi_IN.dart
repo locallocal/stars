@@ -145,10 +145,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "सिस्टम प्रॉम्प्ट",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -188,6 +187,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Browse conversation data",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("रद्द करें"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("अवतार बदलें"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("सहेजा गया"),
@@ -254,6 +256,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "संदर्भ संपीड़ित हुआ",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("संदर्भ विंडो"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Conversation data directory",
+    ),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Browse files and folders stored for this conversation.",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "This conversation directory is empty.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "वार्तालाप सारांश",
     ),
@@ -663,6 +674,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noContentReturned": MessageLookupByLibrary.simpleMessage(
       "कोई सामग्री नहीं मिली",
     ),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "No matching files or folders.",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "अभी कोई वार्तालाप सारांश उपलब्ध नहीं है।",
     ),
@@ -804,6 +818,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("सहेजा जा रहा है..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("बॉट खोजें"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage(
+      "Search files and folders",
+    ),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
     ),

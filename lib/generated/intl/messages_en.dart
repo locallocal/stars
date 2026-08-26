@@ -145,10 +145,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -190,6 +189,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Browse conversation data",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("Change avatar"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("Saved"),
@@ -258,6 +260,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Context compacted",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Context window"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Conversation data directory",
+    ),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Browse files and folders stored for this conversation.",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "This conversation directory is empty.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Conversation summary",
     ),
@@ -653,6 +664,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noContentReturned": MessageLookupByLibrary.simpleMessage(
       "No content returned",
     ),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "No matching files or folders.",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "No conversation summary is available yet.",
     ),
@@ -794,6 +808,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("Saving..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("Search bots"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage(
+      "Search files and folders",
+    ),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
     ),

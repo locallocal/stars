@@ -180,6 +180,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This bot is unavailable",
     ),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Browse conversation data",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("취소"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("아바타 변경"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("저장됨"),
@@ -226,6 +229,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("컨텍스트와 메모리"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("컨텍스트가 압축되었습니다"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("컨텍스트 창"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "Conversation data directory",
+    ),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Browse files and folders stored for this conversation.",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "This conversation directory is empty.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("대화 요약"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("대화별 토큰 비율"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API 키 복사"),
@@ -567,6 +579,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("사용 가능한 봇이 없습니다"),
     "noChats": MessageLookupByLibrary.simpleMessage("아직 채팅이 없습니다"),
     "noContentReturned": MessageLookupByLibrary.simpleMessage("콘텐츠가 반환되지 않음"),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "No matching files or folders.",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "아직 사용할 수 있는 대화 요약이 없습니다.",
     ),
@@ -686,6 +701,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("저장 중..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("봇 검색"),
     "searchChats": MessageLookupByLibrary.simpleMessage("Search conversations"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage(
+      "Search files and folders",
+    ),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage(
       "Search MCP servers",
     ),

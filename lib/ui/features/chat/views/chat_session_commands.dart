@@ -1,6 +1,16 @@
 part of 'chat.dart';
 
 extension ChatPageSessionCommands on ChatPageState {
+  Future<void> requestBrowseConversationDirectory() async {
+    final viewModel = AppScope.of(
+      context,
+    ).createConversationDirectoryViewModel(widget.id);
+    await showConversationDirectoryDialog(
+      context: context,
+      viewModel: viewModel,
+    );
+  }
+
   Future<void> requestClearChat() async {
     final shouldClear = await showClearChatDialog(context, widget.bot.name);
     if (!mounted) return;

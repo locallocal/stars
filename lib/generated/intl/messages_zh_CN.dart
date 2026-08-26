@@ -165,6 +165,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "botUnavailableTitle": MessageLookupByLibrary.simpleMessage("此智能体已不可用"),
     "botUpdated": m4,
+    "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
+      "查看会话数据",
+    ),
     "cancel": MessageLookupByLibrary.simpleMessage("取消"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("更换头像"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("已保存"),
@@ -205,6 +208,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("上下文与记忆"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("上下文已压缩"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("上下文窗口"),
+    "conversationDirectory": MessageLookupByLibrary.simpleMessage("会话数据目录"),
+    "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
+      "查看此会话存储的文件和文件夹。",
+    ),
+    "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
+      "此会话数据目录为空。",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会话摘要"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
       "会话 Token 占比",
@@ -500,6 +510,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "noBotsAvailable": MessageLookupByLibrary.simpleMessage("没有可用的智能体"),
     "noChats": MessageLookupByLibrary.simpleMessage("还没有聊天记录"),
     "noContentReturned": MessageLookupByLibrary.simpleMessage("未返回内容"),
+    "noConversationFilesFound": MessageLookupByLibrary.simpleMessage(
+      "未找到匹配的文件或文件夹。",
+    ),
     "noConversationSummary": MessageLookupByLibrary.simpleMessage(
       "当前还没有可用的会话摘要。",
     ),
@@ -595,6 +608,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "savingChanges": MessageLookupByLibrary.simpleMessage("保存中..."),
     "searchBots": MessageLookupByLibrary.simpleMessage("搜索智能体"),
     "searchChats": MessageLookupByLibrary.simpleMessage("搜索会话"),
+    "searchConversationFiles": MessageLookupByLibrary.simpleMessage("搜索文件和文件夹"),
     "searchMcpServers": MessageLookupByLibrary.simpleMessage("搜索 MCP 服务器"),
     "searchMcpTools": MessageLookupByLibrary.simpleMessage("搜索工具"),
     "searchMemory": MessageLookupByLibrary.simpleMessage("搜索记忆"),
