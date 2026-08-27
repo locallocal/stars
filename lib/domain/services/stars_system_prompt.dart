@@ -42,7 +42,7 @@ footer before displaying the answer.
 </stars_reliability_policy>''';
 }
 
-/// Builds the stable runtime identity and storage context for one turn.
+/// Builds the runtime time, identity, and storage context for one turn.
 ///
 /// Keeping identifiers and the application-owned artifacts directory in a
 /// dedicated section prevents them from being confused with editable agent
@@ -52,7 +52,9 @@ String buildStarsConversationContext({
   required String agentName,
   required String conversationId,
   String artifactsDirectoryPath = '',
+  DateTime? currentTime,
 }) {
+  final effectiveCurrentTime = currentTime ?? DateTime.now();
   final normalizedArtifactsDirectory = artifactsDirectoryPath.trim();
   final artifactsContext =
       normalizedArtifactsDirectory.isEmpty
@@ -64,6 +66,7 @@ Use this directory to store and access files produced or needed by the current c
   return '''
 <stars_conversation_context>
 Purpose: Application-provided runtime identity for the current turn.
+Current time: ${_iso8601WithOffset(effectiveCurrentTime)}
 Agent ID: ${_xmlText(_valueOrUnknown(agentId))}
 Agent name: ${_xmlText(_valueOrUnknown(agentName))}
 Current conversation ID: ${_xmlText(_valueOrUnknown(conversationId))}
@@ -85,6 +88,27 @@ String prependStarsSystemPrompt(
 String _valueOrUnknown(String value) {
   final normalized = value.trim();
   return normalized.isEmpty ? 'unknown' : normalized;
+}
+
+String _iso8601WithOffset(DateTime value) {
+  final timestamp =
+      '${value.year.toString().padLeft(4, '0')}-'
+      '${value.month.toString().padLeft(2, '0')}-'
+      '${value.day.toString().padLeft(2, '0')}T'
+      '${value.hour.toString().padLeft(2, '0')}:'
+      '${value.minute.toString().padLeft(2, '0')}:'
+      '${value.second.toString().padLeft(2, '0')}';
+  if (value.isUtc) return '${timestamp}Z';
+
+  final offsetMinutes = value.timeZoneOffset.inMinutes;
+  final sign = offsetMinutes < 0 ? '-' : '+';
+  final absoluteOffsetMinutes = offsetMinutes.abs();
+  final offsetHours = (absoluteOffsetMinutes ~/ 60).toString().padLeft(2, '0');
+  final offsetRemainder = (absoluteOffsetMinutes % 60).toString().padLeft(
+    2,
+    '0',
+  );
+  return '$timestamp$sign$offsetHours:$offsetRemainder';
 }
 
 String _xmlText(String value) => value
