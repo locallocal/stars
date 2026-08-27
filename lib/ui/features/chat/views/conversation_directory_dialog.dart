@@ -195,7 +195,7 @@ final class _ConversationDirectoryDialogState
   }
 }
 
-final class _DirectoryPath extends StatelessWidget {
+final class _DirectoryPath extends StatefulWidget {
   const _DirectoryPath({
     required this.path,
     required this.canNavigateUp,
@@ -209,43 +209,70 @@ final class _DirectoryPath extends StatelessWidget {
   final VoidCallback onNavigateUp;
 
   @override
+  State<_DirectoryPath> createState() => _DirectoryPathState();
+}
+
+final class _DirectoryPathState extends State<_DirectoryPath> {
+  late final TextEditingController _pathController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pathController = TextEditingController(text: _displayPath);
+  }
+
+  @override
+  void didUpdateWidget(covariant _DirectoryPath oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_pathController.text == _displayPath) return;
+    _pathController.value = TextEditingValue(text: _displayPath);
+  }
+
+  @override
+  void dispose() {
+    _pathController.dispose();
+    super.dispose();
+  }
+
+  String get _displayPath => widget.path.isEmpty ? '…' : widget.path;
+
+  @override
   Widget build(BuildContext context) {
-    final tokens = StarsDesktopTokens.of(context);
+    final shadTheme = ShadTheme.of(context);
     return Row(
       children: [
         StarsDesktopIconAction(
           key: const ValueKey<String>('conversation-directory-up'),
           icon: LucideIcons.arrowLeft,
           label: MaterialLocalizations.of(context).backButtonTooltip,
-          enabled: canNavigateUp && !loading,
-          onPressed: onNavigateUp,
+          enabled: widget.canNavigateUp && !widget.loading,
+          onPressed: widget.onNavigateUp,
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Container(
+          child: ShadInput(
             key: const ValueKey<String>('conversation-directory-path'),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: tokens.controlFill,
-              borderRadius: StarsDesktopThemeSpec.itemRadius,
-              border: Border.all(color: tokens.separator),
-            ),
-            child: Row(
-              children: [
-                Icon(
+            controller: _pathController,
+            readOnly: true,
+            showCursor: false,
+            maxLines: 1,
+            style: StarsDesktopThemeSpec.metaStyle(context),
+            padding: StarsDesktopThemeSpec.formFieldPadding,
+            leading: SizedBox(
+              width: 17,
+              height: 44,
+              child: Center(
+                child: Icon(
                   LucideIcons.folderOpen,
                   size: 17,
-                  color: tokens.secondaryText,
+                  color: shadTheme.colorScheme.mutedForeground,
                 ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: SelectableText(
-                    path.isEmpty ? '…' : path,
-                    maxLines: 2,
-                    style: StarsDesktopThemeSpec.metaStyle(context),
-                  ),
-                ),
-              ],
+              ),
+            ),
+            alignment: Alignment.centerLeft,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            constraints: const BoxConstraints(
+              minHeight: StarsDesktopThemeSpec.botFormFieldHeight,
             ),
           ),
         ),
