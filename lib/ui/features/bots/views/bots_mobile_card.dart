@@ -141,7 +141,7 @@ class _BotListItemState extends State<_BotListItem> {
                         key: ValueKey<String>(
                           'bot-list-token-total-${widget.bot.id}',
                         ),
-                        icon: LucideIcons.chartNoAxesColumnIncreasing,
+                        icon: Icons.data_usage_rounded,
                         name: S.of(context).totalTokens,
                         value: numberFormat.format(
                           widget.metrics.tokenUsage.effectiveTotalTokens,

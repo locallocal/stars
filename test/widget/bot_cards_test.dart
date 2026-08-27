@@ -103,7 +103,7 @@ void main() {
       );
       final tokenMetricIcon = find.descendant(
         of: tokenMetric,
-        matching: find.byIcon(LucideIcons.chartNoAxesColumnIncreasing),
+        matching: find.byIcon(Icons.data_usage_rounded),
       );
       final skillMetric = find.byKey(
         const ValueKey<String>('bot-card-skill-count-bot-1'),
@@ -477,7 +477,7 @@ void main() {
       );
       final tokenIcon = find.descendant(
         of: tokenMetric,
-        matching: find.byIcon(LucideIcons.chartNoAxesColumnIncreasing),
+        matching: find.byIcon(Icons.data_usage_rounded),
       );
       final skillIcon = find.descendant(
         of: skillMetric,
