@@ -9,7 +9,6 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/context_summarizer.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
-import 'package:stars/domain/services/stars_system_prompt.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
@@ -385,12 +384,6 @@ void main() {
       await tester.pumpWidget(_harness(viewModel));
       await tester.pumpAndSettle();
 
-      final prompt = buildStarsConversationContext(
-        agentId: bot.id,
-        agentName: bot.name,
-        conversationId: viewModel.chatId,
-        artifactsDirectoryPath: viewModel.artifactsDirectoryPath,
-      );
       final memoryActions = find.byKey(
         const ValueKey<String>('conversation-memory-actions'),
       );
@@ -403,16 +396,15 @@ void main() {
       final promptValue = find.byKey(
         const ValueKey<String>('conversation-system-prompt-value'),
       );
+      final promptText = find.descendant(
+        of: promptBlock,
+        matching: find.byType(SelectableText),
+      );
+      final prompt = tester.widget<SelectableText>(promptText).data!;
 
       expect(promptBlock, findsOneWidget);
       expect(find.text('系统提示词'), findsOneWidget);
-      expect(
-        find.descendant(
-          of: promptBlock,
-          matching: find.widgetWithText(SelectableText, prompt),
-        ),
-        findsOneWidget,
-      );
+      expect(promptText, findsOneWidget);
       expect(find.byType(ShadTextarea), findsNothing);
       expect(
         tester.getTopLeft(promptTitle).dy,
@@ -430,6 +422,15 @@ void main() {
       expect(prompt, contains('Agent ID: bot&lt;1&gt;'));
       expect(prompt, contains('Agent name: Research &amp; Review'));
       expect(prompt, contains('Current conversation ID: chat&gt;2'));
+      expect(
+        prompt,
+        matches(
+          RegExp(
+            r'Current time: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'
+            r'(?:Z|[+-]\d{2}:\d{2})',
+          ),
+        ),
+      );
       expect(
         prompt,
         contains(

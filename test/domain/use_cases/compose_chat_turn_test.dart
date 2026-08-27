@@ -78,6 +78,7 @@ void main() {
     expect(systemPrompt, contains('Operating system type: TestOS'));
     expect(systemPrompt, contains('Operating system version: 1.2.3'));
     expect(systemPrompt, contains('<stars_conversation_context>'));
+    expect(systemPrompt, contains('Current time:'));
     expect(systemPrompt, contains('Agent ID: bot-1'));
     expect(systemPrompt, contains('Agent name: Assistant'));
     expect(systemPrompt, contains('Current conversation ID: chat-1'));

@@ -48,6 +48,7 @@ void main() {
       agentName: 'Research & Review',
       conversationId: 'chat>2',
       artifactsDirectoryPath: '/data/Stars/chats/chat&2',
+      currentTime: DateTime.utc(2026, 8, 27, 6, 30, 45),
     );
 
     expect(prompt, startsWith('<stars_conversation_context>'));
@@ -55,6 +56,7 @@ void main() {
       prompt,
       contains('Application-provided runtime identity for the current turn.'),
     );
+    expect(prompt, contains('Current time: 2026-08-27T06:30:45Z'));
     expect(prompt, contains('Agent ID: agent&lt;1&gt;'));
     expect(prompt, contains('Agent name: Research &amp; Review'));
     expect(prompt, contains('Current conversation ID: chat&gt;2'));
