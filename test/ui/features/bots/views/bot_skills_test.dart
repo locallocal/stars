@@ -106,6 +106,37 @@ void main() {
         await tester.tap(addSkill);
         await tester.pumpAndSettle();
 
+        final addSkillClose = find.byKey(
+          const ValueKey<String>('bot-add-skill-close'),
+        );
+        final addSkillDialog = find.byKey(
+          const ValueKey<String>('bot-add-skill-dialog'),
+        );
+        expect(addSkillClose, findsOneWidget);
+        expect(addSkillDialog, findsOneWidget);
+        final addSkillDialogSurface =
+            find
+                .ancestor(of: addSkillClose, matching: find.byType(Stack))
+                .first;
+        expect(tester.getSize(addSkillClose), const Size.square(44));
+        expect(
+          find.descendant(
+            of: addSkillClose,
+            matching: find.byIcon(LucideIcons.x),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          tester.getRect(addSkillDialogSurface).right -
+              tester.getRect(addSkillClose).right,
+          closeTo(8, 0.01),
+        );
+        expect(
+          tester.getRect(addSkillClose).top -
+              tester.getRect(addSkillDialogSurface).top,
+          closeTo(12, 0.01),
+        );
+
         final searchField = find.byKey(
           const ValueKey<String>('bot-skill-search-field'),
         );
@@ -245,12 +276,18 @@ void main() {
       await tester.tap(testDescription);
       await tester.pumpAndSettle();
 
+      final skillDescriptionDialog = find.byKey(
+        const ValueKey<String>('skill-description-test-dialog'),
+      );
+      expect(skillDescriptionDialog, findsOneWidget);
+      expect(find.text('测试技能描述'), findsOneWidget);
       expect(
-        find.byKey(const ValueKey<String>('skill-description-test-dialog')),
+        find.descendant(
+          of: skillDescriptionDialog,
+          matching: find.byType(ShadTextarea),
+        ),
         findsOneWidget,
       );
-      expect(find.text('测试技能描述'), findsOneWidget);
-      expect(find.byType(ShadTextarea), findsOneWidget);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('cancel-skill-description-test')),
