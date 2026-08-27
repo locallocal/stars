@@ -306,7 +306,7 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                                 key: ValueKey<String>(
                                   'bot-card-token-total-${widget.bot.id}',
                                 ),
-                                icon: LucideIcons.chartNoAxesColumnIncreasing,
+                                icon: Icons.data_usage_rounded,
                                 name: S.of(context).totalTokens,
                                 value: numberFormat.format(
                                   widget
