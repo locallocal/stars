@@ -96,6 +96,12 @@ final class _ConversationDirectoryDialogState
       ),
       description: Text(strings.conversationDirectoryDescription),
       constraints: const BoxConstraints(maxWidth: 760),
+      closeIcon: StarsDesktopIconAction(
+        key: const ValueKey<String>('conversation-directory-header-close'),
+        icon: LucideIcons.x,
+        label: MaterialLocalizations.of(context).closeButtonTooltip,
+        onPressed: () => Navigator.pop(context),
+      ),
       actions: [
         ShadButton.outline(
           key: const ValueKey<String>('conversation-directory-close'),

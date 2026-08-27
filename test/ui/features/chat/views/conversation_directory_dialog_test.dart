@@ -90,6 +90,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final headerClose = find.byKey(
+      const ValueKey<String>('conversation-directory-header-close'),
+    );
+    expect(headerClose, findsOneWidget);
+    expect(tester.getSize(headerClose), const Size.square(44));
+
     expect(find.text('/data/chats/chat-1'), findsOneWidget);
     expect(find.text('notes'), findsOneWidget);
     expect(find.text('image.png'), findsOneWidget);
@@ -154,9 +160,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('conversation-directory-close')),
-    );
+    await tester.tap(headerClose);
     await tester.pumpAndSettle();
   });
 }
