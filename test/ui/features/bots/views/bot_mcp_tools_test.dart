@@ -489,6 +489,47 @@ void main() {
     expect(saved, isNull);
   });
 
+  for (final readOnly in [false, true]) {
+    testWidgets('desktop MCP Server dialog aligns its close button in '
+        '${readOnly ? 'query' : 'edit'} mode', (tester) async {
+      tester.view.physicalSize = const Size(1200, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        _editHarness(
+          bot: _bot(supportsMcp: true, serverIds: const {'server-1'}),
+          embedded: true,
+          readOnly: readOnly,
+          onSaved: (_) async {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final selectedServer = find.byKey(
+        const ValueKey<String>('bot-mcp-server-server-1'),
+      );
+      await tester.ensureVisible(selectedServer);
+      await tester.tap(selectedServer);
+      await tester.pumpAndSettle();
+
+      _expectDesktopDialogCloseAligned(
+        tester,
+        dialogKey: 'bot-mcp-tools-dialog-server-1',
+        closeKey: 'bot-mcp-tools-close-server-1',
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('bot-mcp-tools-close-server-1')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey<String>('bot-mcp-tools-dialog-server-1')),
+        findsNothing,
+      );
+    });
+  }
+
   testWidgets('a new bot configures all MCP Tools at once', (tester) async {
     tester.view.physicalSize = const Size(1200, 1000);
     tester.view.devicePixelRatio = 1;
@@ -540,6 +581,11 @@ void main() {
     expect(serverSearch, findsOneWidget);
     final serverDialog = find.byKey(
       const ValueKey<String>('bot-add-mcp-server-dialog'),
+    );
+    _expectDesktopDialogCloseAligned(
+      tester,
+      dialogKey: 'bot-add-mcp-server-dialog',
+      closeKey: 'bot-add-mcp-server-close',
     );
     final serverDialogRect = tester.getRect(serverDialog);
     final serverSearchRect = tester.getRect(serverSearchField);
@@ -780,43 +826,86 @@ void main() {
   });
 }
 
+void _expectDesktopDialogCloseAligned(
+  WidgetTester tester, {
+  required String dialogKey,
+  required String closeKey,
+}) {
+  final dialog = find.byKey(ValueKey<String>(dialogKey));
+  final close = find.byKey(ValueKey<String>(closeKey));
+  expect(dialog, findsOneWidget);
+  expect(close, findsOneWidget);
+  final dialogSurface =
+      find.ancestor(of: close, matching: find.byType(Stack)).first;
+  expect(tester.getSize(close), const Size.square(44));
+  expect(
+    find.descendant(of: close, matching: find.byIcon(LucideIcons.x)),
+    findsOneWidget,
+  );
+  expect(
+    tester.getRect(dialogSurface).right - tester.getRect(close).right,
+    closeTo(8, 0.01),
+  );
+  expect(
+    tester.getRect(close).top - tester.getRect(dialogSurface).top,
+    closeTo(12, 0.01),
+  );
+}
+
 Widget _editHarness({
   required Bot bot,
   required Future<void> Function(Bot) onSaved,
+  bool embedded = false,
   bool readOnly = false,
   bool includeSecondServer = false,
   bool includeSecondTool = false,
 }) {
   final server = _server();
   final secondServer = _server(id: 'server-2', name: 'Analytics');
-  return MaterialApp(
-    locale: const Locale('zh', 'CN'),
-    supportedLocales: supportedLocales,
-    localizationsDelegates: const [
-      GlobalShadLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-      S.delegate,
-    ],
-    home: EditBotPage(
-      bot: bot,
-      readOnly: readOnly,
-      mcpCatalogLoader:
-          () async => (
-            servers: [server, if (includeSecondServer) secondServer],
-            toolsByServer: {
-              server.id: [
-                _tool(server),
-                if (includeSecondTool)
-                  _tool(server, remoteName: 'fetch', title: 'Fetch'),
-              ],
-              if (includeSecondServer) secondServer.id: [_tool(secondServer)],
-            },
+  final shadTheme = buildStarsShadTheme(
+    brightness: Brightness.light,
+    fontSize: 16,
+  );
+  return ShadApp.custom(
+    themeMode: ThemeMode.light,
+    theme: shadTheme,
+    appBuilder:
+        (shadContext) => MaterialApp(
+          theme: buildShadMaterialBridgeTheme(
+            context: shadContext,
+            fontSize: 16,
           ),
-      onBotUpdated: onSaved,
-      onBotDeleted: () async {},
-    ),
+          locale: const Locale('zh', 'CN'),
+          supportedLocales: supportedLocales,
+          localizationsDelegates: const [
+            GlobalShadLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            S.delegate,
+          ],
+          builder: (context, child) => ShadAppBuilder(child: child!),
+          home: EditBotPage(
+            bot: bot,
+            embedded: embedded,
+            readOnly: readOnly,
+            mcpCatalogLoader:
+                () async => (
+                  servers: [server, if (includeSecondServer) secondServer],
+                  toolsByServer: {
+                    server.id: [
+                      _tool(server),
+                      if (includeSecondTool)
+                        _tool(server, remoteName: 'fetch', title: 'Fetch'),
+                    ],
+                    if (includeSecondServer)
+                      secondServer.id: [_tool(secondServer)],
+                  },
+                ),
+            onBotUpdated: onSaved,
+            onBotDeleted: () async {},
+          ),
+        ),
   );
 }
 

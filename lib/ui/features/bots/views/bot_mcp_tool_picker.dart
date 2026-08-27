@@ -278,6 +278,19 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
         builder:
             (dialogContext) => ShadDialog(
               key: const ValueKey<String>('bot-add-mcp-server-dialog'),
+              closeIcon: StarsDesktopIconAction(
+                key: const ValueKey<String>('bot-add-mcp-server-close'),
+                icon: LucideIcons.x,
+                iconSize: 18,
+                label:
+                    MaterialLocalizations.of(dialogContext).closeButtonTooltip,
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+              closeIconPosition: ShadPosition.directional(
+                top: 12,
+                end: 8,
+                textDirection: Directionality.of(dialogContext),
+              ),
               title: Text(S.of(context).addMcpServer),
               description: Text(S.of(context).botMcpToolsDescription),
               constraints: const BoxConstraints(maxWidth: 620),
@@ -334,6 +347,19 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
         builder:
             (dialogContext) => ShadDialog(
               key: ValueKey<String>('bot-mcp-tools-dialog-$serverId'),
+              closeIcon: StarsDesktopIconAction(
+                key: ValueKey<String>('bot-mcp-tools-close-$serverId'),
+                icon: LucideIcons.x,
+                iconSize: 18,
+                label:
+                    MaterialLocalizations.of(dialogContext).closeButtonTooltip,
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+              closeIconPosition: ShadPosition.directional(
+                top: 12,
+                end: 8,
+                textDirection: Directionality.of(dialogContext),
+              ),
               title: Text(title),
               description: Text(description),
               constraints: const BoxConstraints(maxWidth: 680),
