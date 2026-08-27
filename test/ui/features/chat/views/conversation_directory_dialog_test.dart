@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/conversation_directory_repository.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
 import 'package:stars/ui/features/chat/views/conversation_directory_dialog.dart';
+import 'package:stars/utils/theme.dart';
 
 import '../../../../support/widget_test_support.dart';
 
@@ -95,6 +97,30 @@ void main() {
     );
     expect(headerClose, findsOneWidget);
     expect(tester.getSize(headerClose), const Size.square(44));
+
+    final pathField = find.byKey(
+      const ValueKey<String>('conversation-directory-path'),
+    );
+    final pathFieldWidget = tester.widget<ShadInput>(pathField);
+    final pathFolderIcon = find.descendant(
+      of: pathField,
+      matching: find.byIcon(LucideIcons.folderOpen),
+    );
+    final pathText = find.descendant(
+      of: pathField,
+      matching: find.byType(EditableText),
+    );
+    expect(pathFieldWidget.readOnly, isTrue);
+    expect(pathFieldWidget.alignment, Alignment.centerLeft);
+    expect(pathFieldWidget.crossAxisAlignment, CrossAxisAlignment.center);
+    expect(
+      tester.getSize(pathField).height,
+      StarsDesktopThemeSpec.botFormFieldHeight,
+    );
+    expect(
+      tester.getCenter(pathFolderIcon).dy,
+      closeTo(tester.getCenter(pathText).dy, 0.1),
+    );
 
     expect(find.text('/data/chats/chat-1'), findsOneWidget);
     expect(find.text('notes'), findsOneWidget);
