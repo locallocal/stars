@@ -337,7 +337,7 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                                 key: ValueKey<String>(
                                   'bot-card-mcp-count-${widget.bot.id}',
                                 ),
-                                icon: LucideIcons.server,
+                                icon: Icons.hub_outlined,
                                 name: S.of(context).mcpServers,
                                 value: '${mcpServerNames.length}',
                                 separatorKey: ValueKey<String>(

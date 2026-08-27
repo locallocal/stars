@@ -485,7 +485,7 @@ void main() {
       );
       final mcpIcon = find.descendant(
         of: mcpMetric,
-        matching: find.byIcon(LucideIcons.server),
+        matching: find.byIcon(Icons.hub_outlined),
       );
       final contextWindowIcon = find.descendant(
         of: contextWindowMetric,
