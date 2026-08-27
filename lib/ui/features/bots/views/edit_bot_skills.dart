@@ -336,6 +336,22 @@ extension _EditBotSkills on _EditAIBotPageState {
               (dialogContext) => StatefulBuilder(
                 builder:
                     (dialogContext, setDialogState) => ShadDialog(
+                      key: const ValueKey<String>('bot-add-skill-dialog'),
+                      closeIcon: StarsDesktopIconAction(
+                        key: const ValueKey<String>('bot-add-skill-close'),
+                        icon: LucideIcons.x,
+                        iconSize: 18,
+                        label:
+                            MaterialLocalizations.of(
+                              dialogContext,
+                            ).closeButtonTooltip,
+                        onPressed: () => Navigator.pop(dialogContext),
+                      ),
+                      closeIconPosition: ShadPosition.directional(
+                        top: 12,
+                        end: 8,
+                        textDirection: Directionality.of(dialogContext),
+                      ),
                       title: Text(S.of(context).addSkill),
                       description: Text(S.of(context).botSkillsDescription),
                       constraints: const BoxConstraints(maxWidth: 620),
