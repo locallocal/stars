@@ -30,6 +30,29 @@ void main() {
     expect(find.byType(ShadDialog), findsOneWidget);
     expect(find.byType(ShadTextarea), findsOneWidget);
     expect(find.byType(ShadSwitch), findsOneWidget);
+    final dialog = find.byKey(
+      const ValueKey<String>('skill-description-test-dialog'),
+    );
+    final close = find.byKey(
+      const ValueKey<String>('skill-description-test-close'),
+    );
+    expect(dialog, findsOneWidget);
+    expect(close, findsOneWidget);
+    final dialogSurface =
+        find.ancestor(of: close, matching: find.byType(Stack)).first;
+    expect(tester.getSize(close), const Size.square(44));
+    expect(
+      find.descendant(of: close, matching: find.byIcon(LucideIcons.x)),
+      findsOneWidget,
+    );
+    expect(
+      tester.getRect(dialogSurface).right - tester.getRect(close).right,
+      closeTo(8, 0.01),
+    );
+    expect(
+      tester.getRect(close).top - tester.getRect(dialogSurface).top,
+      closeTo(12, 0.01),
+    );
     expect(find.text('Release notes'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('skill-description-test-summary')),

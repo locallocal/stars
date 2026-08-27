@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
+import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/utils/theme.dart';
 
 Future<SkillDescriptionTestCase?> showSkillDescriptionTestDialog({
@@ -56,6 +57,18 @@ class _SkillDescriptionTestDialogState
     if (widget.desktopMode) {
       return ShadDialog(
         key: const ValueKey<String>('skill-description-test-dialog'),
+        closeIcon: StarsDesktopIconAction(
+          key: const ValueKey<String>('skill-description-test-close'),
+          icon: LucideIcons.x,
+          iconSize: 18,
+          label: MaterialLocalizations.of(context).closeButtonTooltip,
+          onPressed: () => Navigator.pop(context),
+        ),
+        closeIconPosition: ShadPosition.directional(
+          top: 12,
+          end: 8,
+          textDirection: Directionality.of(context),
+        ),
         title: Text(strings.testSkillDescription),
         description: Text(strings.autoActivationDescription),
         constraints: const BoxConstraints(maxWidth: 560),
