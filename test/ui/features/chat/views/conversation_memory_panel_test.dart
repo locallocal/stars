@@ -347,6 +347,84 @@ void main() {
       find.byKey(const ValueKey<String>('memory-summary-card')),
       findsOneWidget,
     );
+
+    await tester.tap(find.text('清除自动记忆'));
+    await tester.pumpAndSettle();
+
+    expect(repository.hasSummary, isFalse);
+    expect(repository.items, isEmpty);
+    expect(
+      find.byKey(const ValueKey<String>('memory-summary-card')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('manager applies pin, edit, forget, and restore actions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repository = _MemoryRepository();
+    final viewModel = ConversationMemoryViewModel(
+      chatId: 'chat_1',
+      bot: _bot,
+      repository: repository,
+      compactConversation: CompactConversation(
+        messageRepository: _MessageRepository(),
+        memoryRepository: repository,
+        summarizerFactory: (_) => const _Summarizer(),
+      ),
+      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
+    );
+    addTearDown(viewModel.dispose);
+
+    await tester.pumpWidget(_harness(viewModel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('memory-manage')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey<String>('memory-pin-memory_1')));
+    await tester.pumpAndSettle();
+    expect(repository.items.single.state, ConversationMemoryItemState.pinned);
+    expect(repository.items.single.origin, ConversationMemoryOrigin.user);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('memory-edit-memory_1')),
+    );
+    await tester.pumpAndSettle();
+    final editInput = find.byKey(
+      const ValueKey<String>('memory-edit-input-memory_1'),
+    );
+    expect(editInput, findsOneWidget);
+    await tester.enterText(editInput, 'Use encrypted SQLite metadata');
+    await tester.tap(
+      find.byKey(const ValueKey<String>('memory-edit-save-memory_1')),
+    );
+    await tester.pumpAndSettle();
+    expect(repository.items.single.content, 'Use encrypted SQLite metadata');
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('memory-forget-memory_1')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      repository.items.single.state,
+      ConversationMemoryItemState.forgotten,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('memory-forget-memory_1')),
+    );
+    await tester.pumpAndSettle();
+    expect(repository.items.single.state, ConversationMemoryItemState.active);
+    expect(
+      find.byKey(const ValueKey<String>('memory-action-error')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('shows the conversation system prompt read only below memory', (
@@ -446,6 +524,41 @@ void main() {
     }
   });
 
+  testWidgets('reports manager mutation failures without leaking exceptions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repository = _MemoryRepository(failMutations: true);
+    final viewModel = ConversationMemoryViewModel(
+      chatId: 'chat_1',
+      bot: _bot,
+      repository: repository,
+      compactConversation: CompactConversation(
+        messageRepository: _MessageRepository(),
+        memoryRepository: repository,
+        summarizerFactory: (_) => const _Summarizer(),
+      ),
+      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
+    );
+    addTearDown(viewModel.dispose);
+
+    await tester.pumpWidget(_harness(viewModel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('memory-manage')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey<String>('memory-pin-memory_1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('加载内容时出错，请稍后再试。'), findsOneWidget);
+  });
+
   testWidgets('explains when a conversation summary is not available', (
     tester,
   ) async {
@@ -542,8 +655,9 @@ final _bot = Bot(
 );
 
 final class _MemoryRepository implements ConversationMemoryRepository {
-  _MemoryRepository({this.hasSummary = true})
-    : items = [
+  _MemoryRepository({bool hasSummary = true, this.failMutations = false})
+    : _hasSummary = hasSummary,
+      items = [
         ConversationMemoryItem(
           id: 'memory_1',
           chatId: 'chat_1',
@@ -555,16 +669,19 @@ final class _MemoryRepository implements ConversationMemoryRepository {
         ),
       ];
 
-  final bool hasSummary;
+  bool _hasSummary;
+  final bool failMutations;
   final List<ConversationMemoryItem> items;
   final StreamController<String> controller = StreamController.broadcast();
+
+  bool get hasSummary => _hasSummary;
 
   @override
   Stream<String> get changes => controller.stream;
 
   @override
   Future<ConversationSummaryDocument?> getActiveSummary(String chatId) async {
-    if (!hasSummary) return null;
+    if (!_hasSummary) return null;
     final now = DateTime(2026, 8, 8);
     return ConversationSummaryDocument(
       metadata: ConversationSummaryMetadata(
@@ -594,11 +711,60 @@ final class _MemoryRepository implements ConversationMemoryRepository {
       ConversationMemoryState(chatId: chatId, updatedAt: DateTime(2026, 8, 8));
 
   @override
+  Future<void> saveUserItem(ConversationMemoryItem item) async {
+    _failMutation();
+    final index = items.indexWhere((existing) => existing.id == item.id);
+    final saved = item.copyWith(origin: ConversationMemoryOrigin.user);
+    if (index < 0) {
+      items.add(saved);
+    } else {
+      items[index] = saved;
+    }
+  }
+
+  @override
+  Future<void> forgetItem(String chatId, String itemId) async {
+    _failMutation();
+    _setItemState(itemId, ConversationMemoryItemState.forgotten);
+  }
+
+  @override
+  Future<void> restoreItem(String chatId, String itemId) async {
+    _failMutation();
+    _setItemState(itemId, ConversationMemoryItemState.active);
+  }
+
+  @override
+  Future<void> setAutoMemoryEnabled(String chatId, bool enabled) async {
+    _failMutation();
+  }
+
+  @override
+  Future<void> clearAutomaticMemory(String chatId) async {
+    _failMutation();
+    _hasSummary = false;
+    items.removeWhere(
+      (item) =>
+          item.origin == ConversationMemoryOrigin.auto &&
+          item.state != ConversationMemoryItemState.forgotten,
+    );
+  }
+
+  @override
   Future<void> setCompactionStatus(
     String chatId,
     ConversationCompactionStatus status, {
     String lastError = '',
   }) async {}
+
+  void _setItemState(String itemId, ConversationMemoryItemState state) {
+    final index = items.indexWhere((item) => item.id == itemId);
+    if (index >= 0) items[index] = items[index].copyWith(state: state);
+  }
+
+  void _failMutation() {
+    if (failMutations) throw StateError('Injected memory mutation failure.');
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
