@@ -127,14 +127,18 @@ class _BotMcpServerSearchListState extends State<_BotMcpServerSearchList> {
                                     children: [
                                       Text(
                                         server.name,
-                                        style:
-                                            widget.embedded
+                                        style: (widget.embedded
                                                 ? ShadTheme.of(
                                                   context,
                                                 ).textTheme.small
                                                 : Theme.of(
                                                   context,
-                                                ).textTheme.titleSmall,
+                                                ).textTheme.titleSmall)
+                                            ?.copyWith(
+                                              color: StarsDesktopThemeSpec.text(
+                                                context,
+                                              ),
+                                            ),
                                       ),
                                       const SizedBox(height: 3),
                                       Text(

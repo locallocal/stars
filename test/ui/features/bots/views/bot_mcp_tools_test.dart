@@ -78,6 +78,10 @@ void main() {
     final availableServer = find.byKey(
       const ValueKey<String>('available-bot-mcp-server-server-1'),
     );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: availableServer, matching: find.text('Docs')),
+    );
     expect(
       find.descendant(
         of: availableServer,
@@ -92,6 +96,10 @@ void main() {
     final selectedServer = find.byKey(
       const ValueKey<String>('bot-mcp-server-server-1'),
     );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: selectedServer, matching: find.text('Docs')),
+    );
     expect(
       find.descendant(
         of: selectedServer,
@@ -102,6 +110,15 @@ void main() {
     await tester.ensureVisible(selectedServer);
     await tester.tap(selectedServer);
     await tester.pumpAndSettle();
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('bot-mcp-tools-dialog-server-1'),
+        ),
+        matching: find.text('Docs'),
+      ),
+    );
 
     final toolSearch = find.descendant(
       of: find.byKey(const ValueKey<String>('bot-mcp-tool-search-server-1')),
@@ -143,6 +160,10 @@ void main() {
     );
     final toolRow = find.byKey(
       const ValueKey<String>('bot-mcp-tool-server-1-search'),
+    );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: toolRow, matching: find.text('Search')),
     );
     final toolDescription = find.byKey(
       const ValueKey<String>('bot-mcp-tool-description-server-1-search'),
@@ -635,6 +656,10 @@ void main() {
     final availableServer = find.byKey(
       const ValueKey<String>('available-bot-mcp-server-server-1'),
     );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: availableServer, matching: find.text('Docs')),
+    );
     expect(
       find.descendant(
         of: availableServer,
@@ -648,6 +673,10 @@ void main() {
     await tester.pumpAndSettle();
     final selectedServer = find.byKey(
       const ValueKey<String>('bot-mcp-server-server-1'),
+    );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: selectedServer, matching: find.text('Docs')),
     );
     expect(
       find.descendant(
@@ -671,6 +700,10 @@ void main() {
     final searchRect = tester.getRect(toolSearchField);
     final toolDialog = find.byKey(
       const ValueKey<String>('bot-mcp-tools-dialog-server-1'),
+    );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: toolDialog, matching: find.text('Docs')),
     );
     final dialogRect = tester.getRect(toolDialog);
     await tester.tap(toolSearch);
@@ -705,6 +738,10 @@ void main() {
 
     final searchToolRow = find.byKey(
       const ValueKey<String>('bot-mcp-tool-server-1-search'),
+    );
+    _expectPrimaryTextColor(
+      tester,
+      find.descendant(of: searchToolRow, matching: find.text('Search')),
     );
     final searchToolToggle = find.byKey(
       const ValueKey<String>('bot-mcp-tool-toggle-server-1-search'),
@@ -824,6 +861,14 @@ void main() {
     expect(added?.mcpTools, isEmpty);
     expect(added?.mcpServerIds, isEmpty);
   });
+}
+
+void _expectPrimaryTextColor(WidgetTester tester, Finder textFinder) {
+  expect(textFinder, findsOneWidget);
+  expect(
+    tester.widget<Text>(textFinder).style?.color,
+    StarsDesktopThemeSpec.text(tester.element(textFinder)),
+  );
 }
 
 void _expectDesktopDialogCloseAligned(
