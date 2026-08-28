@@ -227,11 +227,12 @@ void main() {
         updatedAt: timestamp,
       ),
     ]);
+    final provider = _AutoProvider();
     final viewModel = BotSkillViewModel(
       botId: 'bot-1',
       skillRepository: _FakeSkillRepository([_skill('release-notes')]),
       bindingRepository: bindingRepository,
-      skillToolProvider: _AutoProvider(),
+      skillToolProvider: provider,
     );
     addTearDown(bindingRepository.dispose);
     addTearDown(viewModel.dispose);
@@ -288,6 +289,29 @@ void main() {
         ),
         findsOneWidget,
       );
+
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('skill-description-test-input'),
+          ),
+          matching: find.byType(EditableText),
+        ),
+        'Create release notes',
+      );
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('run-skill-description-test')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(skillDescriptionDialog, findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('skill-description-test-result')),
+        findsOneWidget,
+      );
+      expect(find.text('3 / 3'), findsOneWidget);
+      expect(provider.startedSessions, 3);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('cancel-skill-description-test')),
@@ -561,6 +585,8 @@ final class _AutoProvider extends AiProvider {
         ),
       );
 
+  var startedSessions = 0;
+
   @override
   AiProviderCapabilities get capabilities => const AiProviderCapabilities(
     supportsStructuredToolCalls: true,
@@ -568,5 +594,35 @@ final class _AutoProvider extends AiProvider {
   );
 
   @override
+  SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
+    startedSessions += 1;
+    return _AutoSkillSession(skillName: request.catalog.single.name);
+  }
+
+  @override
   Future<void> generateText(List<ChatMessage> messages) async {}
+}
+
+final class _AutoSkillSession implements SkillToolSession {
+  const _AutoSkillSession({required this.skillName});
+
+  final String skillName;
+
+  @override
+  Future<SkillToolTurn> start() async => SkillToolTurn(
+    calls: [
+      SkillToolCall(
+        callId: 'call',
+        name: 'activate_skill',
+        arguments: {'name': skillName},
+      ),
+    ],
+  );
+
+  @override
+  Future<SkillToolTurn> continueWith(List<SkillToolResult> results) async =>
+      SkillToolTurn(isComplete: true);
+
+  @override
+  void close() {}
 }

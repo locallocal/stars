@@ -204,27 +204,18 @@ class _AddBotSkillsState extends State<AddBotSkills> {
   }
 
   Future<void> _showSkillDescriptionTest(SkillDescriptor skill) async {
-    final testCase = await showSkillDescriptionTestDialog(
+    await showSkillDescriptionTestDialog(
       context: context,
       skill: skill,
       desktopMode: true,
+      onRun: (testCase) async {
+        final report = await viewModel.testDescription(
+          skillId: skill.id,
+          cases: [testCase],
+        );
+        return report.results.single;
+      },
     );
-    if (testCase == null || !mounted) return;
-    try {
-      final report = await viewModel.testDescription(
-        skillId: skill.id,
-        cases: [testCase],
-      );
-      if (!mounted) return;
-      final result = report.results.single;
-      showStarsNotice(
-        context,
-        '${S.of(context).skillDescriptionTestResult}: '
-        '${result.activations}/${result.runs}',
-      );
-    } catch (error) {
-      if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
-    }
   }
 
   Widget _buildPagination({

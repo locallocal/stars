@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +11,7 @@ import 'package:stars/ui/features/bots/views/skill_description_test_dialog.dart'
 import 'package:stars/utils/theme.dart';
 
 void main() {
-  testWidgets('desktop dialog uses Shad controls and returns the test case', (
+  testWidgets('desktop dialog runs the test and keeps the result visible', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(900, 760);
@@ -18,12 +20,18 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(_desktopHarness());
+    final runCompleter = Completer<SkillDescriptionTestResult>();
+    SkillDescriptionTestCase? submittedCase;
     final resultFuture = showSkillDescriptionTestDialog(
       context: tester.element(
         find.byKey(const ValueKey<String>('skill-description-test-host')),
       ),
       skill: _skill,
       desktopMode: true,
+      onRun: (testCase) {
+        submittedCase = testCase;
+        return runCompleter.future;
+      },
     );
     await tester.pumpAndSettle();
 
@@ -80,10 +88,39 @@ void main() {
     expect(tester.widget<ShadSwitch>(expectationSwitch).value, isFalse);
 
     await tester.tap(runButton);
+    await tester.pump();
+
+    expect(dialog, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('skill-description-test-progress')),
+      findsOneWidget,
+    );
+    expect(tester.widget<ShadButton>(runButton).enabled, isFalse);
+    expect(submittedCase?.input, 'Write release notes');
+    expect(submittedCase?.shouldActivate, isFalse);
+
+    runCompleter.complete(
+      SkillDescriptionTestResult(
+        testCase: submittedCase!,
+        runs: 3,
+        activations: 1,
+      ),
+    );
     await tester.pumpAndSettle();
-    final result = await resultFuture;
-    expect(result?.input, 'Write release notes');
-    expect(result?.shouldActivate, isFalse);
+
+    expect(dialog, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('skill-description-test-result')),
+      findsOneWidget,
+    );
+    expect(find.text('1 / 3'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('cancel-skill-description-test')),
+    );
+    await tester.pumpAndSettle();
+    await resultFuture;
+    expect(dialog, findsNothing);
   });
 
   testWidgets('mobile dialog keeps Material controls and fits narrow screens', (
@@ -101,6 +138,8 @@ void main() {
       ),
       skill: _skill,
       desktopMode: false,
+      onRun:
+          (_) => throw StateError('The cancelled dialog must not run a test.'),
     );
     await tester.pumpAndSettle();
 
@@ -113,7 +152,53 @@ void main() {
       find.byKey(const ValueKey<String>('cancel-skill-description-test')),
     );
     await tester.pumpAndSettle();
-    expect(await resultFuture, isNull);
+    await resultFuture;
+  });
+
+  testWidgets('desktop dialog keeps test failures visible', (tester) async {
+    tester.view.physicalSize = const Size(900, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(_desktopHarness());
+    final dialogFuture = showSkillDescriptionTestDialog(
+      context: tester.element(
+        find.byKey(const ValueKey<String>('skill-description-test-host')),
+      ),
+      skill: _skill,
+      desktopMode: true,
+      onRun: (_) => throw StateError('Provider failed.'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(const ValueKey<String>('skill-description-test-input')),
+        matching: find.byType(EditableText),
+      ),
+      'Write release notes',
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('run-skill-description-test')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('skill-description-test-dialog')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('skill-description-test-error')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('cancel-skill-description-test')),
+    );
+    await tester.pumpAndSettle();
+    await dialogFuture;
   });
 }
 

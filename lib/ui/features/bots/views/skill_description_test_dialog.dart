@@ -2,36 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
+import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/utils/theme.dart';
 
-Future<SkillDescriptionTestCase?> showSkillDescriptionTestDialog({
+typedef SkillDescriptionTestRunner =
+    Future<SkillDescriptionTestResult> Function(
+      SkillDescriptionTestCase testCase,
+    );
+
+Future<void> showSkillDescriptionTestDialog({
   required BuildContext context,
   required SkillDescriptor skill,
   required bool desktopMode,
-}) =>
-    desktopMode
-        ? showShadDialog<SkillDescriptionTestCase>(
-          context: context,
-          builder:
-              (dialogContext) =>
-                  _SkillDescriptionTestDialog(skill: skill, desktopMode: true),
-        )
-        : showDialog<SkillDescriptionTestCase>(
-          context: context,
-          builder:
-              (dialogContext) =>
-                  _SkillDescriptionTestDialog(skill: skill, desktopMode: false),
-        );
+  required SkillDescriptionTestRunner onRun,
+}) async {
+  if (desktopMode) {
+    await showShadDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (dialogContext) => _SkillDescriptionTestDialog(
+            skill: skill,
+            desktopMode: true,
+            onRun: onRun,
+          ),
+    );
+    return;
+  }
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder:
+        (dialogContext) => _SkillDescriptionTestDialog(
+          skill: skill,
+          desktopMode: false,
+          onRun: onRun,
+        ),
+  );
+}
 
 class _SkillDescriptionTestDialog extends StatefulWidget {
   const _SkillDescriptionTestDialog({
     required this.skill,
     required this.desktopMode,
+    required this.onRun,
   });
 
   final SkillDescriptor skill;
   final bool desktopMode;
+  final SkillDescriptionTestRunner onRun;
 
   @override
   State<_SkillDescriptionTestDialog> createState() =>
@@ -42,8 +62,11 @@ class _SkillDescriptionTestDialogState
     extends State<_SkillDescriptionTestDialog> {
   final _inputController = TextEditingController();
   var _shouldActivate = true;
+  var _isRunning = false;
+  SkillDescriptionTestResult? _result;
+  String? _errorMessage;
 
-  bool get _canRun => _inputController.text.trim().isNotEmpty;
+  bool get _canRun => !_isRunning && _inputController.text.trim().isNotEmpty;
 
   @override
   void dispose() {
@@ -62,6 +85,7 @@ class _SkillDescriptionTestDialogState
           icon: LucideIcons.x,
           iconSize: 18,
           label: MaterialLocalizations.of(context).closeButtonTooltip,
+          enabled: !_isRunning,
           onPressed: () => Navigator.pop(context),
         ),
         closeIconPosition: ShadPosition.directional(
@@ -75,18 +99,19 @@ class _SkillDescriptionTestDialogState
         actions: [
           ShadButton.outline(
             key: const ValueKey<String>('cancel-skill-description-test'),
-            onPressed: () => Navigator.of(context).pop(),
+            enabled: !_isRunning,
+            onPressed: _isRunning ? null : () => Navigator.of(context).pop(),
             child: Text(strings.cancel),
           ),
           ShadButton(
             key: const ValueKey<String>('run-skill-description-test'),
             enabled: _canRun,
-            onPressed: _canRun ? _submit : null,
-            leading: const Icon(LucideIcons.play, size: 15),
+            onPressed: _canRun ? _runTest : null,
+            leading: _buildRunLeading(context),
             child: Text(strings.runSkillDescriptionTest),
           ),
         ],
-        child: _buildForm(),
+        child: _buildBody(),
       );
     }
 
@@ -104,21 +129,20 @@ class _SkillDescriptionTestDialogState
               strings.autoActivationDescription,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 16),
-            _buildForm(),
+            _buildBody(),
           ],
         ),
       ),
       actions: [
         TextButton(
           key: const ValueKey<String>('cancel-skill-description-test'),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _isRunning ? null : () => Navigator.of(context).pop(),
           child: Text(strings.cancel),
         ),
         FilledButton.icon(
           key: const ValueKey<String>('run-skill-description-test'),
-          onPressed: _canRun ? _submit : null,
-          icon: const Icon(Icons.play_arrow_rounded, size: 18),
+          onPressed: _canRun ? _runTest : null,
+          icon: _buildRunLeading(context),
           label: Text(strings.runSkillDescriptionTest),
         ),
       ],
@@ -130,17 +154,167 @@ class _SkillDescriptionTestDialogState
     inputController: _inputController,
     shouldActivate: _shouldActivate,
     desktopMode: widget.desktopMode,
-    onInputChanged: (_) => setState(() {}),
-    onShouldActivateChanged: (value) => setState(() => _shouldActivate = value),
+    enabled: !_isRunning,
+    onInputChanged: _handleInputChanged,
+    onShouldActivateChanged: _handleShouldActivateChanged,
   );
 
-  void _submit() {
-    Navigator.of(context).pop(
-      SkillDescriptionTestCase(
-        input: _inputController.text.trim(),
-        shouldActivate: _shouldActivate,
+  Widget _buildBody() => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _buildForm(),
+      if (_result != null || _errorMessage != null) ...[
+        const SizedBox(height: 16),
+        _buildOutcome(),
+      ],
+    ],
+  );
+
+  Widget _buildRunLeading(BuildContext context) {
+    if (!_isRunning) {
+      return Icon(
+        widget.desktopMode ? LucideIcons.play : Icons.play_arrow_rounded,
+        size: widget.desktopMode ? 15 : 18,
+      );
+    }
+    return SizedBox.square(
+      key: const ValueKey<String>('skill-description-test-progress'),
+      dimension: 16,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        color:
+            widget.desktopMode
+                ? ShadTheme.of(context).colorScheme.primaryForeground
+                : Theme.of(context).colorScheme.onPrimary,
       ),
     );
+  }
+
+  Widget _buildOutcome() {
+    final strings = S.of(context);
+    final errorMessage = _errorMessage;
+    if (widget.desktopMode) {
+      if (errorMessage != null) {
+        return Semantics(
+          liveRegion: true,
+          container: true,
+          child: ShadAlert.destructive(
+            key: const ValueKey<String>('skill-description-test-error'),
+            icon: const Icon(LucideIcons.circleAlert),
+            title: Text(errorMessage),
+          ),
+        );
+      }
+      final result = _result!;
+      final alert =
+          result.passed
+              ? ShadAlert(
+                key: const ValueKey<String>('skill-description-test-result'),
+                icon: const Icon(LucideIcons.checkCircle),
+                title: Text(strings.skillDescriptionTestResult),
+                description: Text('${result.activations} / ${result.runs}'),
+              )
+              : ShadAlert.destructive(
+                key: const ValueKey<String>('skill-description-test-result'),
+                icon: const Icon(LucideIcons.circleX),
+                title: Text(strings.skillDescriptionTestResult),
+                description: Text('${result.activations} / ${result.runs}'),
+              );
+      return Semantics(liveRegion: true, container: true, child: alert);
+    }
+
+    final result = _result;
+    final failed = errorMessage != null || result?.passed == false;
+    final colorScheme = Theme.of(context).colorScheme;
+    final accent = failed ? colorScheme.error : colorScheme.primary;
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: Container(
+        key: ValueKey<String>(
+          errorMessage == null
+              ? 'skill-description-test-result'
+              : 'skill-description-test-error',
+        ),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          border: Border.all(color: accent.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              failed ? Icons.error_outline_rounded : Icons.check_circle_outline,
+              color: accent,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    errorMessage ?? strings.skillDescriptionTestResult,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  if (result != null) ...[
+                    const SizedBox(height: 3),
+                    Text('${result.activations} / ${result.runs}'),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleInputChanged(String _) {
+    setState(() {
+      _result = null;
+      _errorMessage = null;
+    });
+  }
+
+  void _handleShouldActivateChanged(bool value) {
+    setState(() {
+      _shouldActivate = value;
+      _result = null;
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _runTest() async {
+    if (!_canRun) return;
+    final testCase = SkillDescriptionTestCase(
+      input: _inputController.text.trim(),
+      shouldActivate: _shouldActivate,
+    );
+    setState(() {
+      _isRunning = true;
+      _result = null;
+      _errorMessage = null;
+    });
+
+    SkillDescriptionTestResult? result;
+    Object? failure;
+    try {
+      result = await widget.onRun(testCase);
+    } catch (error) {
+      failure = error;
+    }
+    if (!mounted) return;
+    final errorMessage =
+        failure == null ? null : safeFailureMessage(context, failure);
+    setState(() {
+      _isRunning = false;
+      _result = result;
+      _errorMessage = errorMessage;
+    });
   }
 }
 
@@ -150,6 +324,7 @@ class _SkillDescriptionTestForm extends StatelessWidget {
     required this.inputController,
     required this.shouldActivate,
     required this.desktopMode,
+    required this.enabled,
     required this.onInputChanged,
     required this.onShouldActivateChanged,
   });
@@ -158,6 +333,7 @@ class _SkillDescriptionTestForm extends StatelessWidget {
   final TextEditingController inputController;
   final bool shouldActivate;
   final bool desktopMode;
+  final bool enabled;
   final ValueChanged<String> onInputChanged;
   final ValueChanged<bool> onShouldActivateChanged;
 
@@ -185,6 +361,7 @@ class _SkillDescriptionTestForm extends StatelessWidget {
               minHeight: 104,
               maxHeight: 160,
               resizable: false,
+              enabled: enabled,
               placeholder: Text(strings.skillDescriptionTestInput),
               leading: const Icon(LucideIcons.messageSquareText, size: 17),
               onChanged: onInputChanged,
@@ -193,6 +370,7 @@ class _SkillDescriptionTestForm extends StatelessWidget {
             TextField(
               key: const ValueKey<String>('skill-description-test-input'),
               controller: inputController,
+              enabled: enabled,
               autofocus: true,
               minLines: 3,
               maxLines: 5,
@@ -334,13 +512,14 @@ class _SkillDescriptionTestForm extends StatelessWidget {
             ShadSwitch(
               key: const ValueKey<String>('skill-description-should-activate'),
               value: shouldActivate,
-              onChanged: onShouldActivateChanged,
+              enabled: enabled,
+              onChanged: enabled ? onShouldActivateChanged : null,
             )
           else
             Switch.adaptive(
               key: const ValueKey<String>('skill-description-should-activate'),
               value: shouldActivate,
-              onChanged: onShouldActivateChanged,
+              onChanged: enabled ? onShouldActivateChanged : null,
             ),
         ],
       ),

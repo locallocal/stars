@@ -584,27 +584,20 @@ extension _EditBotSkills on _EditAIBotPageState {
   }
 
   Future<void> _showSkillDescriptionTest(SkillDescriptor skill) async {
-    final testCase = await showSkillDescriptionTestDialog(
+    final viewModel = _skillViewModel;
+    if (viewModel == null) return;
+    await showSkillDescriptionTestDialog(
       context: context,
       skill: skill,
       desktopMode: widget.embedded,
+      onRun: (testCase) async {
+        final report = await viewModel.testDescription(
+          skillId: skill.id,
+          cases: [testCase],
+        );
+        return report.results.single;
+      },
     );
-    if (testCase == null || !mounted) return;
-    try {
-      final report = await _skillViewModel!.testDescription(
-        skillId: skill.id,
-        cases: [testCase],
-      );
-      if (!mounted) return;
-      final result = report.results.single;
-      showStarsNotice(
-        context,
-        '${S.of(context).skillDescriptionTestResult}: '
-        '${result.activations}/${result.runs}',
-      );
-    } catch (error) {
-      if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
-    }
   }
 
   Widget _buildFormSection(
