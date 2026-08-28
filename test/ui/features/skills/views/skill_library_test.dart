@@ -9,7 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/data/services/skills/skill_script_catalog_service.dart';
 import 'package:stars/data/services/skills/skill_script_manifest_parser.dart';
+import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/skill_ecosystem_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
 import 'package:stars/domain/repositories/skill_script_sandbox.dart';
@@ -484,6 +486,22 @@ void main() {
       await tester.pumpWidget(_harness(viewModel));
       await tester.pumpAndSettle();
 
+      final menuButton = find.byKey(
+        ValueKey<String>('mobile-skill-menu-button-${skill.id}'),
+      );
+      await tester.tap(menuButton);
+      await tester.pumpAndSettle();
+      final testAction = find.byKey(
+        ValueKey<String>('mobile-skill-test-${skill.id}'),
+      );
+      expect(testAction, findsOneWidget);
+      expect(
+        find.byKey(ValueKey<String>('mobile-skill-uninstall-${skill.id}')),
+        findsOneWidget,
+      );
+      await tester.tapAt(const Offset(8, 8));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text(skill.name));
       await tester.pumpAndSettle();
 
@@ -508,6 +526,79 @@ void main() {
         find.byKey(const ValueKey<String>('skill-file-references/tone.md')),
         findsOneWidget,
       );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    }
+  });
+
+  testWidgets('desktop Skill card runs description tests from its menu', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    tester.view.physicalSize = const Size(1400, 1000);
+    tester.view.devicePixelRatio = 1;
+
+    final skill = _skill('Release Notes', 'Create polished changelogs');
+    final firstBot = _testBot('bot-1', 'First Agent');
+    final selectedBot = _testBot('bot-2', 'Selected Agent');
+    final providers = {
+      firstBot.id: _DescriptionProvider(firstBot),
+      selectedBot.id: _DescriptionProvider(selectedBot),
+    };
+    final viewModel = SkillLibraryViewModel(
+      skillRepository: _FakeSkillRepository([skill]),
+      pickerRepository: const _FakeSkillPickerRepository(),
+      testBotLoader: () async => [firstBot, selectedBot],
+      testProviderFactory: (bot) => providers[bot.id]!,
+    );
+    addTearDown(viewModel.dispose);
+    try {
+      await viewModel.load();
+      await tester.pumpWidget(_harness(viewModel));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(ValueKey<String>('desktop-skill-menu-button-${skill.id}')),
+      );
+      await tester.pumpAndSettle();
+
+      final testAction = find.byKey(
+        ValueKey<String>('desktop-skill-test-${skill.id}'),
+      );
+      expect(testAction, findsOneWidget);
+      await tester.tap(testAction);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('skill-test-bot-dialog')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(ValueKey<String>('skill-test-bot-${selectedBot.id}')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('skill-description-test-dialog')),
+        findsOneWidget,
+      );
+      final input = find.descendant(
+        of: find.byKey(const ValueKey<String>('skill-description-test-input')),
+        matching: find.byType(EditableText),
+      );
+      await tester.enterText(input, 'Write release notes');
+      await tester.pump();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('run-skill-description-test')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('激活结果: 3/3'), findsOneWidget);
+      expect(providers[firstBot.id]!.requests, isEmpty);
+      expect(providers[selectedBot.id]!.requests, hasLength(3));
+      expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
       tester.view.resetPhysicalSize();
@@ -697,14 +788,19 @@ void main() {
       expect(actionMenu, findsOneWidget);
       expect(
         find.descendant(of: actionMenu, matching: find.byType(ShadButton)),
-        findsNWidgets(2),
+        findsNWidgets(3),
       );
       expect(detailsAction, findsOneWidget);
+      expect(
+        find.byKey(ValueKey<String>('desktop-skill-test-${skill.id}')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(ValueKey<String>('desktop-skill-uninstall-${skill.id}')),
         findsOneWidget,
       );
       expect(find.text('详情'), findsOneWidget);
+      expect(find.text('测试'), findsOneWidget);
       expect(find.text('卸载'), findsOneWidget);
       expect(
         tester.getRect(actionMenu).right,
@@ -828,6 +924,66 @@ SkillContent _bundledSkillContent() {
     instructions: 'Query conversation history when exact context is needed.',
     files: const ['SKILL.md'],
   );
+}
+
+Bot _testBot(String id, String name) => Bot(
+  id: id,
+  name: name,
+  avatar: '',
+  provider: 'test',
+  baseURL: '',
+  apiKey: '',
+  apiType: Bot.apiTypeOpenAI,
+  model: 'test',
+  systemPrompt: '',
+  createTimestamp: DateTime(2026),
+  modifyTimestamp: DateTime(2026),
+);
+
+final class _DescriptionProvider extends AiProvider {
+  _DescriptionProvider(super.bot);
+
+  final requests = <SkillToolSessionRequest>[];
+
+  @override
+  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
+    supportsStructuredToolCalls: true,
+    supportsToolResults: true,
+  );
+
+  @override
+  SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
+    requests.add(request);
+    return _DescriptionSession(skillName: request.catalog.single.name);
+  }
+
+  @override
+  Future<void> generateText(List<ChatMessage> messages) async {}
+}
+
+final class _DescriptionSession implements SkillToolSession {
+  const _DescriptionSession({required this.skillName});
+
+  final String skillName;
+
+  @override
+  Future<SkillToolTurn> start() async => SkillToolTurn(
+    calls: [
+      SkillToolCall(
+        callId: 'call',
+        name: 'activate_skill',
+        arguments: {'name': skillName},
+      ),
+    ],
+    isComplete: false,
+  );
+
+  @override
+  Future<SkillToolTurn> continueWith(List<SkillToolResult> results) async =>
+      SkillToolTurn(isComplete: true);
+
+  @override
+  void close() {}
 }
 
 final class _FakeSkillRepository implements SkillRepository {

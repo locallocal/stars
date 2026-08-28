@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
 import 'package:stars/generated/l10n.dart';
@@ -214,7 +212,7 @@ void main() {
     },
   );
 
-  testWidgets('capable provider exposes automatic Skills only', (tester) async {
+  testWidgets('edit page omits Skill test actions', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
@@ -231,7 +229,7 @@ void main() {
       botId: 'bot-1',
       skillRepository: _FakeSkillRepository([_skill('release-notes')]),
       bindingRepository: bindingRepository,
-      skillToolProvider: _AutoProvider(),
+      supportsAutoActivation: true,
     );
     addTearDown(bindingRepository.dispose);
     addTearDown(viewModel.dispose);
@@ -254,7 +252,7 @@ void main() {
       expect(find.text('始终启用'), findsNothing);
       expect(
         find.descendant(of: skillRow, matching: find.text('测试')),
-        findsOneWidget,
+        findsNothing,
       );
 
       expect(
@@ -265,34 +263,11 @@ void main() {
       final testDescription = find.byKey(
         const ValueKey<String>('test-skill-description-user:release-notes'),
       );
-      final skillToggle = find.byKey(
-        const ValueKey<String>('bot-skill-toggle-user:release-notes'),
+      final skillMenu = find.byKey(
+        const ValueKey<String>('bot-skill-menu-button-user:release-notes'),
       );
-      expect(
-        tester.getRect(testDescription).right,
-        lessThan(tester.getRect(skillToggle).left),
-      );
-      await tester.ensureVisible(testDescription);
-      await tester.tap(testDescription);
-      await tester.pumpAndSettle();
-
-      final skillDescriptionDialog = find.byKey(
-        const ValueKey<String>('skill-description-test-dialog'),
-      );
-      expect(skillDescriptionDialog, findsOneWidget);
-      expect(find.text('测试技能描述'), findsOneWidget);
-      expect(
-        find.descendant(
-          of: skillDescriptionDialog,
-          matching: find.byType(ShadTextarea),
-        ),
-        findsOneWidget,
-      );
-
-      await tester.tap(
-        find.byKey(const ValueKey<String>('cancel-skill-description-test')),
-      );
-      await tester.pumpAndSettle();
+      expect(testDescription, findsNothing);
+      expect(skillMenu, findsNothing);
       expect(find.byType(ShadDialog), findsNothing);
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -348,6 +323,19 @@ void main() {
       expect(find.text('已开启'), findsNothing);
       expect(find.text('已关闭'), findsNothing);
       expect(find.bySemanticsLabel('自动激活'), findsOneWidget);
+
+      expect(
+        find.byKey(
+          const ValueKey<String>('test-skill-description-user:release-notes'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('bot-skill-menu-button-user:release-notes'),
+        ),
+        findsNothing,
+      );
 
       await tester.tap(skillToggle, warnIfMissed: false);
       await tester.pumpAndSettle();
@@ -541,32 +529,4 @@ final class _FakeBindingRepository implements BotSkillBindingRepository {
   }
 
   Future<void> dispose() => _changes.close();
-}
-
-final class _AutoProvider extends AiProvider {
-  _AutoProvider()
-    : super(
-        Bot(
-          id: 'bot-1',
-          name: 'Bot',
-          avatar: '',
-          provider: 'test',
-          baseURL: '',
-          apiKey: '',
-          apiType: Bot.apiTypeOpenAI,
-          model: 'test',
-          systemPrompt: '',
-          createTimestamp: DateTime(2026),
-          modifyTimestamp: DateTime(2026),
-        ),
-      );
-
-  @override
-  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
-    supportsStructuredToolCalls: true,
-    supportsToolResults: true,
-  );
-
-  @override
-  Future<void> generateText(List<ChatMessage> messages) async {}
 }
