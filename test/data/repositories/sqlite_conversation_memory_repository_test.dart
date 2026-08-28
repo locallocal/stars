@@ -148,6 +148,99 @@ void main() {
     );
   });
 
+  test('persists manager changes and clears only automatic memory', () async {
+    final now = DateTime(2026, 8, 8);
+    final summary = ConversationSummaryDocument(
+      metadata: ConversationSummaryMetadata(
+        id: 'summary_manager',
+        chatId: 'chat_1',
+        fileName: 'summary_manager.md',
+        contentDigest: '',
+        sourceStartMessageId: 'message_1',
+        sourceEndMessageId: 'message_2',
+        sourceMessageIds: const ['message_1', 'message_2'],
+        sourceDigest: 'manager-sources',
+        baseRevision: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      markdown: '# 会话摘要\n\n- Manager test',
+    );
+    ConversationMemoryItem item(
+      String id, {
+      ConversationMemoryItemState state = ConversationMemoryItemState.active,
+    }) => ConversationMemoryItem(
+      id: id,
+      chatId: 'chat_1',
+      memoryKey: 'memory.$id',
+      kind: ConversationMemoryKind.fact,
+      content: 'Content for $id',
+      state: state,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    expect(
+      await repository.commitCompaction(
+        chatId: 'chat_1',
+        expectedRevision: 0,
+        summary: summary,
+        items: [
+          item('auto_active'),
+          item('auto_forgotten', state: ConversationMemoryItemState.forgotten),
+        ],
+      ),
+      isTrue,
+    );
+    await repository.saveUserItem(
+      item('user_pinned', state: ConversationMemoryItemState.pinned),
+    );
+    await repository.saveUserItem(
+      item('user_edited').copyWith(content: 'Edited by the user'),
+    );
+    await repository.forgetItem('chat_1', 'user_edited');
+    expect(
+      (await repository.getItems(
+        'chat_1',
+      )).singleWhere((memory) => memory.id == 'user_edited').state,
+      ConversationMemoryItemState.forgotten,
+    );
+    await repository.restoreItem('chat_1', 'user_edited');
+    await repository.setAutoMemoryEnabled('chat_1', false);
+
+    await repository.clearAutomaticMemory('chat_1');
+
+    expect(await repository.getActiveSummary('chat_1'), isNull);
+    final state = await repository.getState('chat_1');
+    expect(state.revision, 0);
+    expect(state.activeSummaryId, isEmpty);
+    expect(state.autoMemoryEnabled, isFalse);
+    final items = await repository.getItems('chat_1');
+    expect(
+      {for (final memory in items) memory.id},
+      {'auto_forgotten', 'user_pinned', 'user_edited'},
+    );
+    expect(
+      items.singleWhere((memory) => memory.id == 'auto_forgotten').state,
+      ConversationMemoryItemState.forgotten,
+    );
+    expect(
+      items.singleWhere((memory) => memory.id == 'user_pinned').state,
+      ConversationMemoryItemState.pinned,
+    );
+    final edited = items.singleWhere((memory) => memory.id == 'user_edited');
+    expect(edited.content, 'Edited by the user');
+    expect(edited.state, ConversationMemoryItemState.active);
+    expect(
+      items.every(
+        (memory) =>
+            memory.id == 'auto_forgotten' ||
+            memory.origin == ConversationMemoryOrigin.user,
+      ),
+      isTrue,
+    );
+  });
+
   test('invalidates an active summary whose Markdown digest changed', () async {
     final now = DateTime(2026, 8, 8);
     final summary = ConversationSummaryDocument(

@@ -11,6 +11,7 @@ final class _MemoryManagerDialog extends StatefulWidget {
 
 final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
   String _query = '';
+  String? _actionError;
 
   @override
   void initState() {
@@ -26,6 +27,16 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
 
   void _changed() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _runAction(Future<void> Function() action) async {
+    if (_actionError != null) setState(() => _actionError = null);
+    try {
+      await action();
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _actionError = safeFailureMessage(context, error));
+    }
   }
 
   @override
@@ -52,7 +63,9 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
         ShadButton.raw(
           variant: ShadButtonVariant.outline,
           foregroundColor: tokens.danger,
-          onPressed: () => unawaited(widget.viewModel.clearAutomaticMemory()),
+          onPressed:
+              () =>
+                  unawaited(_runAction(widget.viewModel.clearAutomaticMemory)),
           leading: const Icon(LucideIcons.trash2, size: 16),
           child: Text(S.of(context).clearAutomaticMemory),
         ),
@@ -61,7 +74,11 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
           onPressed:
               widget.viewModel.compacting
                   ? null
-                  : () => unawaited(widget.viewModel.compactNow(rebuild: true)),
+                  : () => unawaited(
+                    _runAction(() async {
+                      await widget.viewModel.compactNow(rebuild: true);
+                    }),
+                  ),
           leading:
               widget.viewModel.compacting
                   ? const SizedBox.square(
@@ -88,6 +105,16 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
                 hintText: S.of(context).searchMemory,
                 onChanged: (value) => setState(() => _query = value),
               ),
+              if (_actionError case final error?) ...[
+                const SizedBox(height: 10),
+                Text(
+                  error,
+                  key: const ValueKey<String>('memory-action-error'),
+                  style: (StarsDesktopThemeSpec.metaStyle(context) ??
+                          const TextStyle())
+                      .copyWith(color: tokens.danger),
+                ),
+              ],
               const SizedBox(height: 16),
               Expanded(
                 child: ListView(
@@ -101,6 +128,7 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
                       _MemoryItemTile(
                         item: items[index],
                         viewModel: widget.viewModel,
+                        runAction: _runAction,
                       ),
                       if (index != items.length - 1) const SizedBox(height: 10),
                     ],
@@ -168,10 +196,15 @@ final class _SummaryMemoryCard extends StatelessWidget {
 }
 
 final class _MemoryItemTile extends StatelessWidget {
-  const _MemoryItemTile({required this.item, required this.viewModel});
+  const _MemoryItemTile({
+    required this.item,
+    required this.viewModel,
+    required this.runAction,
+  });
 
   final ConversationMemoryItem item;
   final ConversationMemoryViewModel viewModel;
+  final Future<void> Function(Future<void> Function()) runAction;
 
   @override
   Widget build(BuildContext context) {
@@ -219,12 +252,14 @@ final class _MemoryItemTile extends StatelessWidget {
                   : LucideIcons.pin,
           onPressed:
               () => unawaited(
-                viewModel.saveItem(
-                  item,
-                  state:
-                      item.state == ConversationMemoryItemState.pinned
-                          ? ConversationMemoryItemState.active
-                          : ConversationMemoryItemState.pinned,
+                runAction(
+                  () => viewModel.saveItem(
+                    item,
+                    state:
+                        item.state == ConversationMemoryItemState.pinned
+                            ? ConversationMemoryItemState.active
+                            : ConversationMemoryItemState.pinned,
+                  ),
                 ),
               ),
         ),
@@ -250,9 +285,12 @@ final class _MemoryItemTile extends StatelessWidget {
                   : tokens.danger,
           onPressed:
               () => unawaited(
-                item.state == ConversationMemoryItemState.forgotten
-                    ? viewModel.restoreItem(item)
-                    : viewModel.forgetItem(item),
+                runAction(
+                  () =>
+                      item.state == ConversationMemoryItemState.forgotten
+                          ? viewModel.restoreItem(item)
+                          : viewModel.forgetItem(item),
+                ),
               ),
         ),
       ],
@@ -296,6 +334,7 @@ final class _MemoryItemTile extends StatelessWidget {
       context: context,
       builder:
           (dialogContext) => ShadDialog(
+            key: ValueKey<String>('memory-edit-dialog-${item.id}'),
             title: Text(
               S.of(dialogContext).editMemory,
               style: StarsDesktopThemeSpec.pageTitleStyle(dialogContext),
@@ -303,12 +342,14 @@ final class _MemoryItemTile extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 560),
             actions: [
               ShadButton.outline(
+                key: ValueKey<String>('memory-edit-cancel-${item.id}'),
                 onPressed: () => Navigator.pop(dialogContext),
                 child: Text(
                   MaterialLocalizations.of(dialogContext).cancelButtonLabel,
                 ),
               ),
               ShadButton(
+                key: ValueKey<String>('memory-edit-save-${item.id}'),
                 onPressed:
                     () => Navigator.pop(dialogContext, controller.text.trim()),
                 child: Text(S.of(dialogContext).save),
@@ -317,6 +358,7 @@ final class _MemoryItemTile extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: 16),
               child: ShadInput(
+                key: ValueKey<String>('memory-edit-input-${item.id}'),
                 controller: controller,
                 minLines: 4,
                 maxLines: 6,
@@ -326,7 +368,7 @@ final class _MemoryItemTile extends StatelessWidget {
     );
     controller.dispose();
     if (value != null && value.isNotEmpty) {
-      await viewModel.saveItem(item, content: value);
+      await runAction(() => viewModel.saveItem(item, content: value));
     }
   }
 }

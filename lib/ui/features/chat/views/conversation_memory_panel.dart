@@ -136,7 +136,7 @@ final class _ConversationMemoryPanelState
             enabled: !viewModel.loading,
             value: state?.autoMemoryEnabled ?? true,
             onChanged:
-                (value) => unawaited(viewModel.setAutoMemoryEnabled(value)),
+                (value) => unawaited(_setAutoMemoryEnabled(context, value)),
           ),
           const SizedBox(height: 10),
           _MemoryActions(
@@ -185,6 +185,20 @@ final class _ConversationMemoryPanelState
             result == ConversationCompactionResult.revisionConflict ||
             result == ConversationCompactionResult.invalidSummary,
       );
+    } on Object catch (error) {
+      if (context.mounted) {
+        _showNotice(
+          context,
+          safeFailureMessage(context, error),
+          destructive: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _setAutoMemoryEnabled(BuildContext context, bool enabled) async {
+    try {
+      await widget.viewModel.setAutoMemoryEnabled(enabled);
     } on Object catch (error) {
       if (context.mounted) {
         _showNotice(
