@@ -10,8 +10,12 @@ final class _MemoryManagerDialog extends StatefulWidget {
 }
 
 final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
+  static const int _pageSize = 5;
+
   String _query = '';
+  int _pageIndex = 0;
   String? _actionError;
+  final ScrollController _listController = ScrollController();
 
   @override
   void initState() {
@@ -22,11 +26,56 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
   @override
   void dispose() {
     widget.viewModel.removeListener(_changed);
+    _listController.dispose();
     super.dispose();
   }
 
   void _changed() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    final pageIndex = _clampPageIndex(
+      _filteredItems(widget.viewModel.items).length,
+    );
+    if (pageIndex != _pageIndex) _resetListScroll();
+    setState(() => _pageIndex = pageIndex);
+  }
+
+  void _resetListScroll() {
+    if (_listController.hasClients) _listController.jumpTo(0);
+  }
+
+  void _showPage(int pageIndex) {
+    _resetListScroll();
+    setState(() => _pageIndex = pageIndex);
+  }
+
+  void _updateQuery(String query) {
+    _resetListScroll();
+    setState(() {
+      _query = query;
+      _pageIndex = 0;
+    });
+  }
+
+  List<ConversationMemoryItem> _filteredItems(
+    List<ConversationMemoryItem> source,
+  ) {
+    final normalized = _query.trim().toLowerCase();
+    return source
+        .where(
+          (item) =>
+              normalized.isEmpty ||
+              item.content.toLowerCase().contains(normalized) ||
+              item.memoryKey.toLowerCase().contains(normalized),
+        )
+        .toList(growable: false);
+  }
+
+  int _totalPages(int itemCount) =>
+      itemCount == 0 ? 0 : (itemCount + _pageSize - 1) ~/ _pageSize;
+
+  int _clampPageIndex(int itemCount) {
+    final totalPages = _totalPages(itemCount);
+    return totalPages == 0 ? 0 : _pageIndex.clamp(0, totalPages - 1);
   }
 
   Future<void> _runAction(Future<void> Function() action) async {
@@ -41,15 +90,12 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final normalized = _query.trim().toLowerCase();
-    final items = widget.viewModel.items
-        .where(
-          (item) =>
-              normalized.isEmpty ||
-              item.content.toLowerCase().contains(normalized) ||
-              item.memoryKey.toLowerCase().contains(normalized),
-        )
-        .toList(growable: false);
+    final items = _filteredItems(widget.viewModel.items);
+    final totalPages = _totalPages(items.length);
+    final pageIndex = _clampPageIndex(items.length);
+    final pageStart = pageIndex * _pageSize;
+    final pageEnd = (pageStart + _pageSize).clamp(pageStart, items.length);
+    final paginatedItems = items.sublist(pageStart, pageEnd);
     final tokens = StarsDesktopTokens.of(context);
     return ShadDialog(
       key: const ValueKey<String>('conversation-memory-manager-dialog'),
@@ -103,7 +149,7 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
               StarsSearchField(
                 key: const ValueKey<String>('memory-search-input'),
                 hintText: S.of(context).searchMemory,
-                onChanged: (value) => setState(() => _query = value),
+                onChanged: _updateQuery,
               ),
               if (_actionError case final error?) ...[
                 const SizedBox(height: 10),
@@ -117,20 +163,49 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
               ],
               const SizedBox(height: 16),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.only(bottom: 4),
+                child: Column(
                   children: [
-                    if (widget.viewModel.summary case final summary?) ...[
-                      _SummaryMemoryCard(summary: summary),
-                      if (items.isNotEmpty) const SizedBox(height: 10),
-                    ],
-                    for (var index = 0; index < items.length; index++) ...[
-                      _MemoryItemTile(
-                        item: items[index],
-                        viewModel: widget.viewModel,
-                        runAction: _runAction,
+                    Expanded(
+                      child: ListView(
+                        key: const ValueKey<String>('memory-list'),
+                        controller: _listController,
+                        padding: const EdgeInsets.only(bottom: 4),
+                        children: [
+                          if (widget.viewModel.summary case final summary?) ...[
+                            _SummaryMemoryCard(summary: summary),
+                            if (paginatedItems.isNotEmpty)
+                              const SizedBox(height: 10),
+                          ],
+                          for (
+                            var index = 0;
+                            index < paginatedItems.length;
+                            index++
+                          ) ...[
+                            _MemoryItemTile(
+                              item: paginatedItems[index],
+                              viewModel: widget.viewModel,
+                              runAction: _runAction,
+                            ),
+                            if (index != paginatedItems.length - 1)
+                              const SizedBox(height: 10),
+                          ],
+                        ],
                       ),
-                      if (index != items.length - 1) const SizedBox(height: 10),
+                    ),
+                    if (totalPages > 1) ...[
+                      const SizedBox(height: 12),
+                      _MemoryPagination(
+                        currentPage: pageIndex + 1,
+                        totalPages: totalPages,
+                        onPreviousPage:
+                            pageIndex > 0
+                                ? () => _showPage(pageIndex - 1)
+                                : null,
+                        onNextPage:
+                            pageIndex + 1 < totalPages
+                                ? () => _showPage(pageIndex + 1)
+                                : null,
+                      ),
                     ],
                   ],
                 ),
@@ -139,6 +214,54 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
           ),
         ),
       ),
+    );
+  }
+}
+
+final class _MemoryPagination extends StatelessWidget {
+  const _MemoryPagination({
+    required this.currentPage,
+    required this.totalPages,
+    required this.onPreviousPage,
+    required this.onNextPage,
+  });
+
+  final int currentPage;
+  final int totalPages;
+  final VoidCallback? onPreviousPage;
+  final VoidCallback? onNextPage;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        StarsDesktopIconAction(
+          key: const ValueKey<String>('memory-previous-page'),
+          icon: LucideIcons.chevronLeft,
+          label: localizations.previousPageTooltip,
+          variant: ShadButtonVariant.outline,
+          iconSize: 16,
+          enabled: onPreviousPage != null,
+          onPressed: onPreviousPage,
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '$currentPage / $totalPages',
+          key: const ValueKey<String>('memory-page-indicator'),
+        ),
+        const SizedBox(width: 12),
+        StarsDesktopIconAction(
+          key: const ValueKey<String>('memory-next-page'),
+          icon: LucideIcons.chevronRight,
+          label: localizations.nextPageTooltip,
+          variant: ShadButtonVariant.outline,
+          iconSize: 16,
+          enabled: onNextPage != null,
+          onPressed: onNextPage,
+        ),
+      ],
     );
   }
 }
