@@ -468,37 +468,9 @@ void main() {
     );
     final memoryList = find.byKey(const ValueKey<String>('memory-list'));
 
-    expect(find.text('1 / 3'), findsOneWidget);
+    expect(find.text('1 / 2'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('memory-item-memory_1')),
-      findsOneWidget,
-    );
-    await tester.drag(memoryList, const Offset(0, -1000));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey<String>('memory-item-memory_5')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('memory-item-memory_6')),
-      findsNothing,
-    );
-    expect(
-      tester.widget<StarsDesktopIconAction>(previousPage).enabled,
-      isFalse,
-    );
-    expect(tester.widget<StarsDesktopIconAction>(nextPage).enabled, isTrue);
-
-    await tester.tap(nextPage);
-    await tester.pump();
-
-    expect(find.text('2 / 3'), findsOneWidget);
-    expect(
-      find.byKey(const ValueKey<String>('memory-item-memory_1')),
-      findsNothing,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('memory-item-memory_6')),
       findsOneWidget,
     );
     await tester.drag(memoryList, const Offset(0, -1000));
@@ -511,11 +483,20 @@ void main() {
       find.byKey(const ValueKey<String>('memory-item-memory_11')),
       findsNothing,
     );
+    expect(
+      tester.widget<StarsDesktopIconAction>(previousPage).enabled,
+      isFalse,
+    );
+    expect(tester.widget<StarsDesktopIconAction>(nextPage).enabled, isTrue);
 
     await tester.tap(nextPage);
     await tester.pump();
 
-    expect(find.text('3 / 3'), findsOneWidget);
+    expect(find.text('2 / 2'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_1')),
+      findsNothing,
+    );
     expect(
       find.byKey(const ValueKey<String>('memory-item-memory_11')),
       findsOneWidget,
@@ -529,15 +510,15 @@ void main() {
 
     await tester.tap(previousPage);
     await tester.pump();
-    expect(find.text('2 / 3'), findsOneWidget);
+    expect(find.text('1 / 2'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey<String>('memory-item-memory_6')),
+      find.byKey(const ValueKey<String>('memory-item-memory_1')),
       findsOneWidget,
     );
 
     await tester.tap(nextPage);
     await tester.pump();
-    expect(find.text('3 / 3'), findsOneWidget);
+    expect(find.text('2 / 2'), findsOneWidget);
 
     await tester.enterText(searchInput, 'Memory item 2');
     await tester.pump();
@@ -555,12 +536,10 @@ void main() {
     await tester.enterText(searchInput, '');
     await tester.pump();
 
-    expect(find.text('1 / 3'), findsOneWidget);
+    expect(find.text('1 / 2'), findsOneWidget);
     await tester.tap(nextPage);
     await tester.pump();
-    await tester.tap(nextPage);
-    await tester.pump();
-    expect(find.text('3 / 3'), findsOneWidget);
+    expect(find.text('2 / 2'), findsOneWidget);
 
     repository.items.removeWhere(
       (item) => item.id == 'memory_11' || item.id == 'memory_12',
@@ -568,9 +547,9 @@ void main() {
     await viewModel.load();
     await tester.pump();
 
-    expect(find.text('2 / 2'), findsOneWidget);
+    expect(pageIndicator, findsNothing);
     expect(
-      find.byKey(const ValueKey<String>('memory-item-memory_6')),
+      find.byKey(const ValueKey<String>('memory-item-memory_1')),
       findsOneWidget,
     );
     await tester.drag(memoryList, const Offset(0, -1000));
@@ -579,7 +558,8 @@ void main() {
       find.byKey(const ValueKey<String>('memory-item-memory_10')),
       findsOneWidget,
     );
-    expect(tester.widget<StarsDesktopIconAction>(nextPage).enabled, isFalse);
+    expect(previousPage, findsNothing);
+    expect(nextPage, findsNothing);
     expect(tester.takeException(), isNull);
   });
 

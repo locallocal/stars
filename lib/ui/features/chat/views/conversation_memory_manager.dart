@@ -10,7 +10,7 @@ final class _MemoryManagerDialog extends StatefulWidget {
 }
 
 final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
-  static const int _pageSize = 5;
+  static const int _pageSize = 10;
 
   String _query = '';
   int _pageIndex = 0;
