@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -7,7 +5,6 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
-import 'package:stars/ui/features/bots/views/skill_description_test_dialog.dart';
 import 'package:stars/ui/features/skills/view_models/skill_library_view_model.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
@@ -291,9 +288,6 @@ class _SkillLibraryPageState extends State<SkillLibraryPage> {
                   scriptEnabled: viewModel.isScriptEnabled(skill.id),
                   update: update,
                   onOpen: () => _showDetails(context, skill),
-                  onTest:
-                      () =>
-                          unawaited(_showSkillDescriptionTest(context, skill)),
                   onUninstall:
                       skill.scope == SkillScope.bundled
                           ? null
@@ -493,50 +487,14 @@ class _SkillLibraryPageState extends State<SkillLibraryPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () => _showDetails(context, skill),
-                  trailing: PopupMenuButton<_MobileSkillAction>(
-                    key: ValueKey<String>(
-                      'mobile-skill-menu-button-${skill.id}',
-                    ),
-                    tooltip: MaterialLocalizations.of(context).showMenuTooltip,
-                    onSelected: (action) {
-                      switch (action) {
-                        case _MobileSkillAction.test:
-                          unawaited(_showSkillDescriptionTest(context, skill));
-                        case _MobileSkillAction.uninstall:
-                          unawaited(_confirmUninstall(context, skill));
-                      }
-                    },
-                    itemBuilder:
-                        (context) => [
-                          PopupMenuItem<_MobileSkillAction>(
-                            key: ValueKey<String>(
-                              'mobile-skill-test-${skill.id}',
-                            ),
-                            value: _MobileSkillAction.test,
-                            child: Row(
-                              children: [
-                                const Icon(Icons.science_outlined, size: 18),
-                                const SizedBox(width: 10),
-                                Text(strings.testSkill),
-                              ],
-                            ),
+                  trailing:
+                      skill.scope == SkillScope.bundled
+                          ? null
+                          : IconButton(
+                            tooltip: strings.uninstallSkill,
+                            onPressed: () => _confirmUninstall(context, skill),
+                            icon: const Icon(Icons.delete_outline),
                           ),
-                          if (skill.scope != SkillScope.bundled)
-                            PopupMenuItem<_MobileSkillAction>(
-                              key: ValueKey<String>(
-                                'mobile-skill-uninstall-${skill.id}',
-                              ),
-                              value: _MobileSkillAction.uninstall,
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.delete_outline, size: 18),
-                                  const SizedBox(width: 10),
-                                  Text(strings.uninstall),
-                                ],
-                              ),
-                            ),
-                        ],
-                  ),
                 ),
               );
             },
@@ -675,107 +633,6 @@ class _SkillLibraryPageState extends State<SkillLibraryPage> {
         _showMessage(context, safeFailureMessage(context, error));
       }
     }
-  }
-
-  Future<void> _showSkillDescriptionTest(
-    BuildContext context,
-    SkillDescriptor skill,
-  ) async {
-    try {
-      final bots = await viewModel.loadTestBots();
-      if (!context.mounted) return;
-      if (bots.isEmpty) {
-        _showMessage(context, S.of(context).noBotsAvailable);
-        return;
-      }
-      final bot =
-          bots.length == 1
-              ? bots.single
-              : await _selectSkillTestBot(context, bots);
-      if (bot == null || !context.mounted) return;
-      final testCase = await showSkillDescriptionTestDialog(
-        context: context,
-        skill: skill,
-        desktopMode: isDesktopPlatform(context),
-      );
-      if (testCase == null || !context.mounted) return;
-      final report = await viewModel.testDescription(
-        bot: bot,
-        skill: skill,
-        cases: [testCase],
-      );
-      if (!context.mounted) return;
-      final result = report.results.single;
-      showStarsNotice(
-        context,
-        '${S.of(context).skillDescriptionTestResult}: '
-        '${result.activations}/${result.runs}',
-      );
-    } catch (error) {
-      if (context.mounted) {
-        _showMessage(context, safeFailureMessage(context, error));
-      }
-    }
-  }
-
-  Future<Bot?> _selectSkillTestBot(BuildContext context, List<Bot> bots) {
-    final strings = S.of(context);
-    if (!isDesktopPlatform(context)) {
-      return showDialog<Bot>(
-        context: context,
-        builder:
-            (dialogContext) => SimpleDialog(
-              key: const ValueKey<String>('skill-test-bot-dialog'),
-              title: Text(strings.selectBot),
-              children: [
-                for (final bot in bots)
-                  SimpleDialogOption(
-                    key: ValueKey<String>('skill-test-bot-${bot.id}'),
-                    onPressed: () => Navigator.pop(dialogContext, bot),
-                    child: Text(bot.name),
-                  ),
-              ],
-            ),
-      );
-    }
-    return showShadDialog<Bot>(
-      context: context,
-      builder:
-          (dialogContext) => ShadDialog(
-            key: const ValueKey<String>('skill-test-bot-dialog'),
-            title: Text(strings.selectBot),
-            description: Text(strings.autoActivationDescription),
-            constraints: const BoxConstraints(maxWidth: 480),
-            actions: [
-              ShadButton.outline(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text(strings.cancel),
-              ),
-            ],
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final bot in bots)
-                        ShadButton.ghost(
-                          key: ValueKey<String>('skill-test-bot-${bot.id}'),
-                          expands: true,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          leading: const Icon(LucideIcons.bot, size: 16),
-                          onPressed: () => Navigator.pop(dialogContext, bot),
-                          child: Text(bot.name),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-    );
   }
 
   Future<void> _showDetails(BuildContext context, SkillDescriptor skill) async {
@@ -920,5 +777,3 @@ class _SkillLibraryPageState extends State<SkillLibraryPage> {
     showStarsNotice(context, message, tone: StarsNoticeTone.error);
   }
 }
-
-enum _MobileSkillAction { test, uninstall }

@@ -2,14 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/catalog_controller.dart';
 import 'package:stars/domain/repositories/skill_ecosystem_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
-import 'package:stars/domain/use_cases/test_skill_description.dart';
-
-typedef SkillTestBotLoader = Future<List<Bot>> Function();
-typedef SkillTestProviderFactory = AiProvider Function(Bot bot);
 
 final class SkillLibraryViewModel extends ChangeNotifier {
   static const int defaultPageSize = 10;
@@ -21,9 +16,6 @@ final class SkillLibraryViewModel extends ChangeNotifier {
     SkillScriptCatalogController? scriptCatalogService,
     SkillCatalogController? catalogService,
     BundledSkillLoader? bundledSkillLoader,
-    SkillTestBotLoader? testBotLoader,
-    SkillTestProviderFactory? testProviderFactory,
-    TestSkillDescription testSkillDescription = const TestSkillDescription(),
     this.pageSize = defaultPageSize,
   }) : _skillRepository = skillRepository,
        _pickerRepository = pickerRepository,
@@ -31,13 +23,6 @@ final class SkillLibraryViewModel extends ChangeNotifier {
        _scriptCatalogService = scriptCatalogService,
        _catalogService = catalogService,
        _bundledSkillLoader = bundledSkillLoader,
-       _testBotLoader = testBotLoader,
-       _testProviderFactory = testProviderFactory,
-       _testSkillDescription = testSkillDescription,
-       assert(
-         (testBotLoader == null) == (testProviderFactory == null),
-         'Skill testing requires both a Bot loader and Provider factory.',
-       ),
        assert(pageSize > 0) {
     _changesSubscription = _skillRepository.changes.listen((skills) {
       if (_disposed) return;
@@ -52,9 +37,6 @@ final class SkillLibraryViewModel extends ChangeNotifier {
   final SkillScriptCatalogController? _scriptCatalogService;
   final SkillCatalogController? _catalogService;
   final BundledSkillLoader? _bundledSkillLoader;
-  final SkillTestBotLoader? _testBotLoader;
-  final SkillTestProviderFactory? _testProviderFactory;
-  final TestSkillDescription _testSkillDescription;
   final int pageSize;
   late final StreamSubscription<List<SkillDescriptor>> _changesSubscription;
 
@@ -118,44 +100,6 @@ final class SkillLibraryViewModel extends ChangeNotifier {
 
   bool isScriptEnabled(String skillId) =>
       _scriptEnabledSkillIds.contains(skillId);
-
-  Future<List<Bot>> loadTestBots() async {
-    final loadBots = _testBotLoader;
-    final createProvider = _testProviderFactory;
-    if (loadBots == null || createProvider == null) return const [];
-    final bots = await loadBots();
-    return List<Bot>.unmodifiable(
-      bots.where((bot) {
-        final configured = bot.configuredSupportsAutomaticSkillActivation;
-        if (configured != null) return configured;
-        try {
-          return createProvider(
-            bot,
-          ).capabilities.supportsAutomaticSkillActivation;
-        } on Object {
-          return false;
-        }
-      }),
-    );
-  }
-
-  Future<SkillDescriptionTestReport> testDescription({
-    required Bot bot,
-    required SkillDescriptor skill,
-    required List<SkillDescriptionTestCase> cases,
-    int runsPerCase = 3,
-  }) {
-    final createProvider = _testProviderFactory;
-    if (createProvider == null) {
-      throw StateError('Skill test Provider is unavailable.');
-    }
-    return _testSkillDescription(
-      provider: createProvider(bot),
-      skill: skill,
-      cases: cases,
-      runsPerCase: runsPerCase,
-    );
-  }
 
   Future<void> load() async {
     _isLoading = true;

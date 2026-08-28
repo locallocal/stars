@@ -7,7 +7,6 @@ class _DesktopSkillCard extends StatefulWidget {
     required this.scriptEnabled,
     required this.update,
     required this.onOpen,
-    required this.onTest,
     required this.onUninstall,
     required this.onToggleScripts,
     required this.onUpdate,
@@ -18,7 +17,6 @@ class _DesktopSkillCard extends StatefulWidget {
   final bool scriptEnabled;
   final OnlineSkillCatalogEntry? update;
   final VoidCallback onOpen;
-  final VoidCallback onTest;
   final VoidCallback? onUninstall;
   final VoidCallback onToggleScripts;
   final VoidCallback? onUpdate;
@@ -112,16 +110,6 @@ class _DesktopSkillCardState extends State<_DesktopSkillCard> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       leading: const Icon(LucideIcons.info, size: 16),
                       child: Text(S.of(context).details),
-                    ),
-                    ShadButton.ghost(
-                      key: ValueKey<String>(
-                        'desktop-skill-test-${widget.skill.id}',
-                      ),
-                      size: ShadButtonSize.sm,
-                      onPressed: () => _invokeMenuAction(widget.onTest),
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      leading: const Icon(LucideIcons.flaskConical, size: 16),
-                      child: Text(S.of(context).testSkill),
                     ),
                     if (widget.hasScriptTools)
                       ShadButton.ghost(

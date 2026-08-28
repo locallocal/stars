@@ -19,6 +19,7 @@ import 'package:stars/ui/features/bots/view_models/bot_skill_view_model.dart';
 import 'package:stars/ui/features/bots/view_models/bot_form_view_model.dart';
 import 'package:stars/ui/features/bots/views/bot_mcp_tool_picker.dart';
 import 'package:stars/ui/features/bots/views/bot_token_usage.dart';
+import 'package:stars/ui/features/bots/views/skill_description_test_dialog.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 

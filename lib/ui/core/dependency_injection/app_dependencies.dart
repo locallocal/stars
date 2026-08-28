@@ -714,8 +714,6 @@ class AppDependencies {
     scriptCatalogService: skillScriptCatalogService,
     catalogService: skillCatalogService,
     bundledSkillLoader: bundledSkillLoader,
-    testBotLoader: () => botRepository.getBots(forceRefresh: true),
-    testProviderFactory: aiProviderRepository.create,
   );
 
   McpServersViewModel createMcpServersViewModel() => McpServersViewModel(

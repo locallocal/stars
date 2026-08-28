@@ -236,6 +236,17 @@ extension _EditBotSkills on _EditAIBotPageState {
                 ),
               ),
               const SizedBox(width: 12),
+              if (enabled && viewModel.supportsAutoActivation) ...[
+                ShadButton.ghost(
+                  key: ValueKey<String>('test-skill-description-${skill.id}'),
+                  size: ShadButtonSize.sm,
+                  width: 0,
+                  onPressed: () => _showSkillDescriptionTest(skill),
+                  leading: const Icon(LucideIcons.flaskConical, size: 14),
+                  child: Text(strings.testSkill),
+                ),
+                const SizedBox(width: 8),
+              ],
               switchWidget,
               if (!widget.readOnly) ...[const SizedBox(width: 8), removeButton],
             ],
@@ -567,6 +578,30 @@ extension _EditBotSkills on _EditAIBotPageState {
     if (widget.readOnly) return;
     try {
       await _skillViewModel?.removeSkill(skillId);
+    } catch (error) {
+      if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
+    }
+  }
+
+  Future<void> _showSkillDescriptionTest(SkillDescriptor skill) async {
+    final testCase = await showSkillDescriptionTestDialog(
+      context: context,
+      skill: skill,
+      desktopMode: widget.embedded,
+    );
+    if (testCase == null || !mounted) return;
+    try {
+      final report = await _skillViewModel!.testDescription(
+        skillId: skill.id,
+        cases: [testCase],
+      );
+      if (!mounted) return;
+      final result = report.results.single;
+      showStarsNotice(
+        context,
+        '${S.of(context).skillDescriptionTestResult}: '
+        '${result.activations}/${result.runs}',
+      );
     } catch (error) {
       if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
     }
