@@ -11,6 +11,7 @@ import 'package:stars/domain/repositories/conversation_memory_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/generated/l10n.dart';
+import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
 import 'package:stars/ui/features/chat/views/conversation_memory_panel.dart';
 import 'package:stars/utils/theme.dart';
@@ -427,6 +428,161 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('manager paginates memory items and keeps pages valid', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repository = _MemoryRepository(itemCount: 12);
+    final viewModel = ConversationMemoryViewModel(
+      chatId: 'chat_1',
+      bot: _bot,
+      repository: repository,
+      compactConversation: CompactConversation(
+        messageRepository: _MessageRepository(),
+        memoryRepository: repository,
+        summarizerFactory: (_) => const _Summarizer(),
+      ),
+      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
+    );
+    addTearDown(viewModel.dispose);
+
+    await tester.pumpWidget(_harness(viewModel));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<String>('memory-manage')));
+    await tester.pumpAndSettle();
+
+    final previousPage = find.byKey(
+      const ValueKey<String>('memory-previous-page'),
+    );
+    final nextPage = find.byKey(const ValueKey<String>('memory-next-page'));
+    final pageIndicator = find.byKey(
+      const ValueKey<String>('memory-page-indicator'),
+    );
+    final searchInput = find.descendant(
+      of: find.byKey(const ValueKey<String>('memory-search-input')),
+      matching: find.byType(ShadInput),
+    );
+    final memoryList = find.byKey(const ValueKey<String>('memory-list'));
+
+    expect(find.text('1 / 3'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_1')),
+      findsOneWidget,
+    );
+    await tester.drag(memoryList, const Offset(0, -1000));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_5')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_6')),
+      findsNothing,
+    );
+    expect(
+      tester.widget<StarsDesktopIconAction>(previousPage).enabled,
+      isFalse,
+    );
+    expect(tester.widget<StarsDesktopIconAction>(nextPage).enabled, isTrue);
+
+    await tester.tap(nextPage);
+    await tester.pump();
+
+    expect(find.text('2 / 3'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_1')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_6')),
+      findsOneWidget,
+    );
+    await tester.drag(memoryList, const Offset(0, -1000));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_10')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_11')),
+      findsNothing,
+    );
+
+    await tester.tap(nextPage);
+    await tester.pump();
+
+    expect(find.text('3 / 3'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_11')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_12')),
+      findsOneWidget,
+    );
+    expect(tester.widget<StarsDesktopIconAction>(previousPage).enabled, isTrue);
+    expect(tester.widget<StarsDesktopIconAction>(nextPage).enabled, isFalse);
+
+    await tester.tap(previousPage);
+    await tester.pump();
+    expect(find.text('2 / 3'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_6')),
+      findsOneWidget,
+    );
+
+    await tester.tap(nextPage);
+    await tester.pump();
+    expect(find.text('3 / 3'), findsOneWidget);
+
+    await tester.enterText(searchInput, 'Memory item 2');
+    await tester.pump();
+
+    expect(pageIndicator, findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_2')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_12')),
+      findsNothing,
+    );
+
+    await tester.enterText(searchInput, '');
+    await tester.pump();
+
+    expect(find.text('1 / 3'), findsOneWidget);
+    await tester.tap(nextPage);
+    await tester.pump();
+    await tester.tap(nextPage);
+    await tester.pump();
+    expect(find.text('3 / 3'), findsOneWidget);
+
+    repository.items.removeWhere(
+      (item) => item.id == 'memory_11' || item.id == 'memory_12',
+    );
+    await viewModel.load();
+    await tester.pump();
+
+    expect(find.text('2 / 2'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_6')),
+      findsOneWidget,
+    );
+    await tester.drag(memoryList, const Offset(0, -1000));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('memory-item-memory_10')),
+      findsOneWidget,
+    );
+    expect(tester.widget<StarsDesktopIconAction>(nextPage).enabled, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows the conversation system prompt read only below memory', (
     tester,
   ) async {
@@ -655,19 +811,23 @@ final _bot = Bot(
 );
 
 final class _MemoryRepository implements ConversationMemoryRepository {
-  _MemoryRepository({bool hasSummary = true, this.failMutations = false})
-    : _hasSummary = hasSummary,
-      items = [
-        ConversationMemoryItem(
-          id: 'memory_1',
-          chatId: 'chat_1',
-          memoryKey: 'storage.choice',
-          kind: ConversationMemoryKind.decision,
-          content: 'Use SQLite metadata',
-          createdAt: DateTime(2026, 8, 8),
-          updatedAt: DateTime(2026, 8, 8),
-        ),
-      ];
+  _MemoryRepository({
+    bool hasSummary = true,
+    this.failMutations = false,
+    int itemCount = 1,
+  }) : _hasSummary = hasSummary,
+       items = [
+         for (var index = 1; index <= itemCount; index += 1)
+           ConversationMemoryItem(
+             id: 'memory_$index',
+             chatId: 'chat_1',
+             memoryKey: index == 1 ? 'storage.choice' : 'memory.$index',
+             kind: ConversationMemoryKind.decision,
+             content: index == 1 ? 'Use SQLite metadata' : 'Memory item $index',
+             createdAt: DateTime(2026, 8, 8),
+             updatedAt: DateTime(2026, 8, 8),
+           ),
+       ];
 
   bool _hasSummary;
   final bool failMutations;
