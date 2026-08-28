@@ -220,10 +220,10 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
               children: [
                 Text(
                   server?.name ?? serverId,
-                  style:
-                      widget.embedded
+                  style: (widget.embedded
                           ? ShadTheme.of(context).textTheme.small
-                          : Theme.of(context).textTheme.titleSmall,
+                          : Theme.of(context).textTheme.titleSmall)
+                      ?.copyWith(color: StarsDesktopThemeSpec.text(context)),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -360,7 +360,12 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
                 end: 8,
                 textDirection: Directionality.of(dialogContext),
               ),
-              title: Text(title),
+              title: Text(
+                title,
+                style: TextStyle(
+                  color: StarsDesktopThemeSpec.text(dialogContext),
+                ),
+              ),
               description: Text(description),
               constraints: const BoxConstraints(maxWidth: 680),
               actions: [
@@ -389,7 +394,12 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
       builder:
           (dialogContext) => AlertDialog(
             key: ValueKey<String>('bot-mcp-tools-dialog-$serverId'),
-            title: Text(title),
+            title: Text(
+              title,
+              style: TextStyle(
+                color: StarsDesktopThemeSpec.text(dialogContext),
+              ),
+            ),
             content: SizedBox(
               width: 560,
               child: _BotMcpToolListViewport(
@@ -610,7 +620,10 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
               ),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title),
+                Text(
+                  title,
+                  style: TextStyle(color: StarsDesktopThemeSpec.text(context)),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   tool.description.isEmpty
