@@ -198,8 +198,9 @@ String? _localFilePathFromReference(String reference) {
 
   try {
     normalized = Uri.decodeFull(normalized);
-  } on FormatException {
-    return null;
+  } on ArgumentError {
+    // Native paths may contain raw Unicode that is valid for the file system
+    // but is not an encoded URI. Keep that path unchanged.
   }
   if (path_context.isAbsolute(normalized)) {
     return path_context.normalize(normalized);
