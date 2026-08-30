@@ -214,6 +214,30 @@ Future<T?> showChatShadDialog<T>({
   }
 }
 
+/// Builds the standard close action used by desktop dialogs.
+Widget buildStarsDesktopDialogCloseAction(
+  BuildContext context, {
+  required Key key,
+  required VoidCallback onPressed,
+}) {
+  return StarsDesktopIconAction(
+    key: key,
+    icon: LucideIcons.x,
+    iconSize: 18,
+    label: MaterialLocalizations.of(context).closeButtonTooltip,
+    onPressed: onPressed,
+  );
+}
+
+/// Positions a standard desktop dialog close action against its top-end edge.
+ShadPosition starsDesktopDialogClosePosition(BuildContext context) {
+  return ShadPosition.directional(
+    top: 12,
+    end: 8,
+    textDirection: Directionality.of(context),
+  );
+}
+
 /// Shows a Shad sheet while preserving the local desktop-chat theme.
 ///
 /// Dialogs and sheets deliberately share the same [useRootNavigator] default
