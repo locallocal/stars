@@ -1,7 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
@@ -117,6 +119,82 @@ void main() => print('done');
     expect(clipboardWrites.single.arguments, {
       'text': "void main() => print('done');",
     });
+  });
+
+  testWidgets('desktop message hover shows its persisted timestamp', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(600, 800);
+    addTearDown(tester.view.reset);
+    final scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+    final timestamp = DateTime(2026, 8, 11, 14, 5, 9);
+
+    await tester.pumpWidget(
+      _desktopMessageListHarness(
+        MessageList(
+          messages: [
+            Message(
+              messageId: 'timestamped-message',
+              chatId: 'chat-1',
+              botId: 'bot-1',
+              senderId: 'bot-1',
+              content: 'hover me',
+              timestamp: timestamp,
+            ),
+          ],
+          scrollController: scrollController,
+          isStreaming: false,
+          streamingResponse: '',
+          currentUserId: 'me',
+          isDesktop: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final timestampText = find.byKey(
+      const ValueKey<String>('desktop-message-timestamp'),
+    );
+    expect(timestampText, findsOneWidget);
+    expect(
+      tester.widget<Text>(timestampText).data,
+      intl.DateFormat.yMd('zh_CN').add_Hms().format(timestamp),
+    );
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.ancestor(
+              of: timestampText,
+              matching: find.byType(AnimatedOpacity),
+            ),
+          )
+          .opacity,
+      0,
+    );
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(find.text('hover me')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.ancestor(
+              of: timestampText,
+              matching: find.byType(AnimatedOpacity),
+            ),
+          )
+          .opacity,
+      1,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('desktop-message-copy-action')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('desktop reasoning icon rotates while the model is thinking', (
@@ -239,6 +317,10 @@ Widget _messageListHarness(
     ],
     home: Scaffold(body: Column(children: [child])),
   );
+}
+
+Widget _desktopMessageListHarness(Widget child) {
+  return _harness(isStreaming: false, body: Column(children: [child]));
 }
 
 Widget _harness({

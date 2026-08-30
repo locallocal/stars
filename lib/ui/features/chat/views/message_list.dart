@@ -241,6 +241,7 @@ class _MessageListState extends State<MessageList> {
                       ? _DesktopMessageActions(
                         content: message.content,
                         isCurrentUser: isMe,
+                        timestamp: message.timestamp,
                         child: bubble,
                       )
                       : GestureDetector(
