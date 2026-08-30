@@ -13,16 +13,18 @@ const directoryOperationsToolNames = {
 };
 
 const fileOperationsSkillId = 'system:file-operations';
-const fileOperationsSkillPromptVersion = 2;
+const fileOperationsSkillPromptVersion = 3;
 const fileOperationsSkillContentDigest =
-    'd86ff49a8a323bb1193cda2effd4ecc36f04ffde809d3e464fe0683fa45f6fc0';
+    '311b9f9e3f34547c954f3ad770c672127fb697fbf86f871a3163d3423fc975e5';
 
+const queryLocalFilesToolName = 'query_local_files';
 const readLocalFileToolName = 'read_local_file';
 const writeLocalFileToolName = 'write_local_file';
 const copyLocalFileToolName = 'copy_local_file';
 const moveLocalFileToolName = 'move_local_file';
 const deleteLocalFileToolName = 'delete_local_file';
 const fileOperationsToolNames = {
+  queryLocalFilesToolName,
   readLocalFileToolName,
   writeLocalFileToolName,
   copyLocalFileToolName,

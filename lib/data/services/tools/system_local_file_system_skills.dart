@@ -33,9 +33,10 @@ final class SystemFileOperationsSkill extends _SystemLocalFileSystemSkill {
         skillId: fileOperationsSkillId,
         name: 'file-operations',
         description:
-            'Use for reading, writing, copying, moving, or deleting individual '
-            'local files on any Stars platform; use directory-operations for '
-            'folders and shell-command only for process-oriented commands.',
+            'Use for finding, reading, writing, copying, moving, or deleting '
+            'individual local files on any Stars platform; use '
+            'directory-operations for folders and shell-command only for '
+            'process-oriented commands.',
         requestedToolNames: fileOperationsToolNames,
         integrityError:
             'Built-in file operations Skill failed integrity validation.',
