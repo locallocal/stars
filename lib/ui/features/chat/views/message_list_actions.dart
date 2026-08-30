@@ -4,11 +4,13 @@ class _DesktopMessageActions extends StatefulWidget {
   const _DesktopMessageActions({
     required this.content,
     required this.isCurrentUser,
+    required this.timestamp,
     required this.child,
   });
 
   final String content;
   final bool isCurrentUser;
+  final DateTime timestamp;
   final Widget child;
 
   @override
@@ -20,7 +22,7 @@ class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
   bool _hovered = false;
 
   bool get _canCopy => widget.content.isNotEmpty;
-  bool get _showActions => _canCopy && (_hovered || _focusNode.hasFocus);
+  bool get _showActions => _hovered || _focusNode.hasFocus;
 
   @override
   void initState() {
@@ -49,12 +51,17 @@ class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
   @override
   Widget build(BuildContext context) {
     final copyLabel = MaterialLocalizations.of(context).copyButtonLabel;
+    final locale = Localizations.localeOf(context).toString();
+    final timestamp = intl.DateFormat.yMd(
+      locale,
+    ).add_Hms().format(widget.timestamp.toLocal());
     final actions = <Widget>[
-      ShadContextMenuItem(
-        leading: const Icon(LucideIcons.copy, size: 16),
-        onPressed: _copyMessage,
-        child: Text(copyLabel),
-      ),
+      if (_canCopy)
+        ShadContextMenuItem(
+          leading: const Icon(LucideIcons.copy, size: 16),
+          onPressed: _copyMessage,
+          child: Text(copyLabel),
+        ),
     ];
 
     return StarsContextMenu(
@@ -72,34 +79,62 @@ class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
           mainAxisSize: MainAxisSize.min,
           children: [
             widget.child,
-            if (_canCopy)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: AnimatedOpacity(
-                  opacity: _showActions ? 1 : 0,
-                  duration:
-                      MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : const Duration(milliseconds: 100),
-                  child: ExcludeFocus(
-                    excluding: !_showActions,
-                    child: IgnorePointer(
-                      ignoring: !_showActions,
-                      child: StarsDesktopIconAction(
-                        key: const ValueKey<String>(
-                          'desktop-message-copy-action',
-                        ),
-                        icon: LucideIcons.copy,
-                        label: copyLabel,
-                        onPressed: _copyMessage,
-                      ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: AnimatedOpacity(
+                opacity: _showActions ? 1 : 0,
+                duration:
+                    MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 100),
+                child: ExcludeFocus(
+                  excluding: !_showActions,
+                  child: IgnorePointer(
+                    ignoring: !_showActions,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.isCurrentUser) ...[
+                          _MessageTimestamp(timestamp: timestamp),
+                          if (_canCopy) const SizedBox(width: 4),
+                        ],
+                        if (_canCopy)
+                          StarsDesktopIconAction(
+                            key: const ValueKey<String>(
+                              'desktop-message-copy-action',
+                            ),
+                            icon: LucideIcons.copy,
+                            label: copyLabel,
+                            onPressed: _copyMessage,
+                          ),
+                        if (!widget.isCurrentUser) ...[
+                          if (_canCopy) const SizedBox(width: 4),
+                          _MessageTimestamp(timestamp: timestamp),
+                        ],
+                      ],
                     ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MessageTimestamp extends StatelessWidget {
+  const _MessageTimestamp({required this.timestamp});
+
+  final String timestamp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      timestamp,
+      key: const ValueKey<String>('desktop-message-timestamp'),
+      style: StarsDesktopThemeSpec.metaStyle(context),
     );
   }
 }
