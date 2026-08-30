@@ -228,6 +228,14 @@ final class _ConversationMemoryPanelState
               ),
               description: Text(S.of(dialogContext).automaticSummaryWarning),
               constraints: const BoxConstraints(maxWidth: 720),
+              closeIcon: buildStarsDesktopDialogCloseAction(
+                dialogContext,
+                key: const ValueKey<String>(
+                  'conversation-summary-header-close',
+                ),
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+              closeIconPosition: starsDesktopDialogClosePosition(dialogContext),
               actions: [
                 ShadButton.outline(
                   key: const ValueKey<String>('conversation-summary-close'),

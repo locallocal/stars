@@ -508,21 +508,15 @@ extension _ProfileSettingsControls on _ProfilePageState {
     BuildContext dialogContext, {
     required Key key,
   }) {
-    return StarsDesktopIconAction(
+    return buildStarsDesktopDialogCloseAction(
+      dialogContext,
       key: key,
-      icon: LucideIcons.x,
-      iconSize: 18,
-      label: MaterialLocalizations.of(dialogContext).closeButtonTooltip,
       onPressed: () => Navigator.pop(dialogContext),
     );
   }
 
   ShadPosition _desktopDialogClosePosition(BuildContext dialogContext) {
-    return ShadPosition.directional(
-      top: 12,
-      end: 8,
-      textDirection: Directionality.of(dialogContext),
-    );
+    return starsDesktopDialogClosePosition(dialogContext);
   }
 
   ImageProvider _buildAvatarImageProvider() {

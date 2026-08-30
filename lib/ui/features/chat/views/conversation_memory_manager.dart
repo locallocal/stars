@@ -105,6 +105,12 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
       ),
       description: Text(S.of(context).automaticSummaryWarning),
       constraints: const BoxConstraints(maxWidth: 760),
+      closeIcon: buildStarsDesktopDialogCloseAction(
+        context,
+        key: const ValueKey<String>('conversation-memory-manager-header-close'),
+        onPressed: () => Navigator.pop(context),
+      ),
+      closeIconPosition: starsDesktopDialogClosePosition(context),
       actions: [
         ShadButton.raw(
           variant: ShadButtonVariant.outline,

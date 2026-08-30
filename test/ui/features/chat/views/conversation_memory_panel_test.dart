@@ -242,6 +242,11 @@ void main() {
       find.byKey(const ValueKey<String>('conversation-summary-dialog')),
       findsOneWidget,
     );
+    _expectDesktopDialogCloseAligned(
+      tester,
+      dialogKey: 'conversation-summary-dialog',
+      closeKey: 'conversation-summary-header-close',
+    );
     expect(
       find.byKey(const ValueKey<String>('conversation-summary-surface')),
       findsOneWidget,
@@ -258,7 +263,7 @@ void main() {
     expect(summaryMarkdown.styleSheet?.code?.fontSize, 12);
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('conversation-summary-close')),
+      find.byKey(const ValueKey<String>('conversation-summary-header-close')),
     );
     await tester.pumpAndSettle();
 
@@ -268,6 +273,11 @@ void main() {
     expect(
       find.byKey(const ValueKey<String>('conversation-memory-manager-dialog')),
       findsOneWidget,
+    );
+    _expectDesktopDialogCloseAligned(
+      tester,
+      dialogKey: 'conversation-memory-manager-dialog',
+      closeKey: 'conversation-memory-manager-header-close',
     );
     expect(
       find.byKey(const ValueKey<String>('memory-search-input')),
@@ -732,6 +742,32 @@ void main() {
       findsNothing,
     );
   });
+}
+
+void _expectDesktopDialogCloseAligned(
+  WidgetTester tester, {
+  required String dialogKey,
+  required String closeKey,
+}) {
+  final dialog = find.byKey(ValueKey<String>(dialogKey));
+  final close = find.byKey(ValueKey<String>(closeKey));
+  expect(dialog, findsOneWidget);
+  expect(close, findsOneWidget);
+  final dialogSurface =
+      find.ancestor(of: close, matching: find.byType(Stack)).first;
+  expect(tester.getSize(close), const Size.square(44));
+  expect(
+    find.descendant(of: close, matching: find.byIcon(LucideIcons.x)),
+    findsOneWidget,
+  );
+  expect(
+    tester.getRect(dialogSurface).right - tester.getRect(close).right,
+    closeTo(8, 0.01),
+  );
+  expect(
+    tester.getRect(close).top - tester.getRect(dialogSurface).top,
+    closeTo(12, 0.01),
+  );
 }
 
 Widget _harness(ConversationMemoryViewModel viewModel) {
