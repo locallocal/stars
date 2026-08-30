@@ -12,6 +12,55 @@ import 'package:stars/ui/features/chat/views/video_player_widget.dart';
 import '../../../../support/widget_test_support.dart';
 
 void main() {
+  testWidgets('Kimi003 Markdown result is visible and opens a preview', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'stars-kimi003-markdown-preview-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/Rust学习计划.md');
+    file.writeAsStringSync('# Rust 学习计划\n\n正文内容');
+    final content = '''
+✅ **这次文件真实写入成功了！** 已通过 shell 命令直接验证：
+
+**stat 验证结果：**
+- 📁 文件：`${file.path}`
+- 📏 大小：**3,883 字节**（125 行）
+- 👤 所有者：earthwind，权限 0664
+- 🕐 创建时间：2026-08-30 23:52:10
+- ✅ 文件开头内容正确：`# Rust 学习计划`
+
+**问题原因说明**：之前我使用的内置文件写入工具返回了"成功"的结果，但实际上文件并未落盘到磁盘（可能是虚拟层或缓存问题），导致我多次错误地向您确认"已写入"。这是我的严重失误，非常抱歉！🙏
+
+这次通过 shell 的 `cat` 写入 + `stat` 直接验证，文件**确定存在**。您可以自己再运行一次确认：
+
+```bash
+stat "${file.path}"
+cat "${file.path}"
+```
+
+学习计划内容完整：五个阶段（12 周），从所有权基础到并发编程，并结合您对 io_uring 的兴趣推荐了系统编程方向。🦀
+''';
+
+    await _pumpFileMessage(tester, files: const [], content: content);
+
+    final card = find.byKey(
+      ValueKey<String>('message-local-file-${file.path}'),
+    );
+    expect(card, findsOneWidget);
+    expect(card.hitTestable(), findsOneWidget);
+
+    await tester.tap(card);
+    await _pumpDialog(tester);
+
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-markdown-preview')),
+      findsOneWidget,
+    );
+    expect(find.text('Rust 学习计划'), findsOneWidget);
+  });
+
   testWidgets('Kimi inline Markdown path becomes a deduplicated preview', (
     tester,
   ) async {
