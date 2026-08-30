@@ -57,6 +57,8 @@ void main() {
     expect(content.descriptor.requestedToolNames, fileOperationsToolNames);
     expect(content.descriptor.compatibility, contains('iOS'));
     expect(content.descriptor.compatibility, contains('Linux'));
+    expect(content.instructions, contains('query_local_files'));
+    expect(content.instructions, contains('Zero results'));
     expect(content.instructions, contains('read_local_file'));
     expect(content.instructions, contains('next_offset_bytes'));
     expect(content.instructions, contains('overwrite'));

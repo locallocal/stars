@@ -102,6 +102,7 @@ void main() {
 
   group('local file tools', () {
     late Directory sandbox;
+    late QueryLocalFilesTool queryTool;
     late WriteLocalFileTool writeTool;
     late ReadLocalFileTool readTool;
     late CopyLocalFileTool copyTool;
@@ -111,6 +112,9 @@ void main() {
     setUp(() async {
       sandbox = await Directory.systemTemp.createTemp('stars-file-tools-');
       String currentWorkingDirectory() => sandbox.path;
+      queryTool = QueryLocalFilesTool(
+        currentWorkingDirectory: currentWorkingDirectory,
+      );
       writeTool = WriteLocalFileTool(
         currentWorkingDirectory: currentWorkingDirectory,
       );
@@ -130,6 +134,89 @@ void main() {
 
     tearDown(() async {
       if (await sandbox.exists()) await sandbox.delete(recursive: true);
+    });
+
+    test(
+      'queries exact and partial file basenames with trusted paths',
+      () async {
+        await Directory(
+          path_context.join(sandbox.path, 'docs', 'archive'),
+        ).create(recursive: true);
+        await File(
+          path_context.join(sandbox.path, 'docs', 'Report.md'),
+        ).writeAsString('current');
+        await File(
+          path_context.join(sandbox.path, 'docs', 'archive', 'report-old.md'),
+        ).writeAsString('old');
+        await File(
+          path_context.join(sandbox.path, 'docs', 'archive', 'notes.txt'),
+        ).writeAsString('notes');
+
+        final exactResult = await queryTool.execute(
+          _call(queryTool, {'root_path': 'docs', 'query': 'report.md'}),
+          AgentCancellationToken(),
+        );
+
+        _expectValidOutput(queryTool, exactResult);
+        final exact = exactResult.structuredContent! as Map<String, Object?>;
+        final exactFiles =
+            (exact['files']! as List<Object?>).cast<Map<String, Object?>>();
+        expect(exact['match_mode'], 'exact');
+        expect(exact['case_sensitive'], isFalse);
+        expect(exact['recursive'], isFalse);
+        expect(exact['truncated'], isFalse);
+        expect(exactFiles, hasLength(1));
+        expect(exactFiles.single['name'], 'Report.md');
+        expect(exactFiles.single['relative_path'], 'Report.md');
+        expect(
+          path_context.isAbsolute(exactFiles.single['path']! as String),
+          isTrue,
+        );
+
+        final partialResult = await queryTool.execute(
+          _call(queryTool, {
+            'root_path': 'docs',
+            'query': 'report',
+            'match_mode': 'contains',
+            'recursive': true,
+          }),
+          AgentCancellationToken(),
+        );
+
+        _expectValidOutput(queryTool, partialResult);
+        final partial =
+            partialResult.structuredContent! as Map<String, Object?>;
+        final partialFiles =
+            (partial['files']! as List<Object?>).cast<Map<String, Object?>>();
+        expect(partialFiles.map((file) => file['relative_path']), [
+          'Report.md',
+          path_context.join('archive', 'report-old.md'),
+        ]);
+        expect(partialResult.content, contains('query completed'));
+      },
+    );
+
+    test('marks an incomplete zero-result query as truncated', () async {
+      for (var index = 0; index < 3; index++) {
+        await File(
+          path_context.join(sandbox.path, '$index.txt'),
+        ).writeAsString('$index');
+      }
+
+      final result = await queryTool.execute(
+        _call(queryTool, {
+          'root_path': '.',
+          'query': 'missing.txt',
+          'max_entries': 1,
+        }),
+        AgentCancellationToken(),
+      );
+
+      _expectValidOutput(queryTool, result);
+      expect(result.structuredContent, containsPair('scanned_entries', 1));
+      expect(result.structuredContent, containsPair('truncated', true));
+      expect(result.truncated, isTrue);
+      expect(result.content, contains('does not prove'));
     });
 
     test('writes, reads, copies, moves, and deletes a file', () async {
@@ -163,6 +250,7 @@ void main() {
       _expectValidOutput(readTool, readResult);
       expect(readResult.content, 'hello');
       expect(readResult.structuredContent, containsPair('truncated', true));
+      expect(readResult.truncated, isTrue);
       expect(
         readResult.structuredContent,
         containsPair('next_offset_bytes', 5),
@@ -286,6 +374,10 @@ void main() {
       byName[listLocalDirectoryToolName]!.riskLevel,
       ToolRiskLevel.readOnly,
     );
+    expect(byName[queryLocalFilesToolName]!.riskLevel, ToolRiskLevel.readOnly);
+    expect(byName[queryLocalFilesToolName]!.capabilities, {
+      ToolCapability.localRead,
+    });
     expect(byName[readLocalFileToolName]!.capabilities, {
       ToolCapability.localRead,
     });
@@ -303,18 +395,20 @@ void main() {
       expect(byName[name]!.riskLevel, ToolRiskLevel.destructive);
     }
 
-    final readDecision = const DefaultToolPolicy().evaluate(
-      byName[readLocalFileToolName]!,
-      ToolCallRequest(callId: 'read-approval', name: readLocalFileToolName),
-      ToolPolicyContext(
-        runId: 'run-1',
-        chatId: 'chat-1',
-        botId: 'bot-1',
-        requestedToolNames: {readLocalFileToolName},
-      ),
-    );
-    expect(readDecision.outcome, ToolPolicyOutcome.requireApproval);
-    expect(readDecision.reason, 'local_read_requires_approval');
+    for (final name in {queryLocalFilesToolName, readLocalFileToolName}) {
+      final decision = const DefaultToolPolicy().evaluate(
+        byName[name]!,
+        ToolCallRequest(callId: '$name-approval', name: name),
+        ToolPolicyContext(
+          runId: 'run-1',
+          chatId: 'chat-1',
+          botId: 'bot-1',
+          requestedToolNames: {name},
+        ),
+      );
+      expect(decision.outcome, ToolPolicyOutcome.requireApproval);
+      expect(decision.reason, 'local_read_requires_approval');
+    }
   });
 }
 
