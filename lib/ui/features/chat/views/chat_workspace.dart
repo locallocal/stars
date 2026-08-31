@@ -178,8 +178,6 @@ extension _ChatPageWorkspace on ChatPageState {
                 AssistantTypingIndicator(
                   botName: widget.bot.name,
                   isResponding: _isTyping,
-                  streamingResponse: _streamingResponse,
-                  reasoningResponse: _reasoningResponse,
                   isDesktop: isDesktop,
                 ),
               ],

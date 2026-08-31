@@ -50,59 +50,81 @@ void main() {
     );
   });
 
-  testWidgets(
-    'assistant typing remains visible until text or reasoning starts',
-    (tester) async {
-      await tester.pumpWidget(
-        _harness(
-          body: const AssistantTypingIndicator(
-            botName: 'Stars',
-            isResponding: true,
-            streamingResponse: '',
-            reasoningResponse: '',
-            isDesktop: true,
-          ),
-          disableAnimations: true,
+  testWidgets('assistant typing follows the complete response lifecycle', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(
+        body: const AssistantTypingIndicator(
+          botName: 'Stars',
+          isResponding: true,
+          isDesktop: true,
         ),
-      );
-      await tester.pumpAndSettle();
+        disableAnimations: true,
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.byType(TypingIndicator), findsOneWidget);
-      expect(find.text('Stars正在输入...'), findsOneWidget);
+    expect(find.byType(TypingIndicator), findsOneWidget);
+    expect(find.text('Stars正在输入...'), findsOneWidget);
 
-      await tester.pumpWidget(
-        _harness(
-          body: const AssistantTypingIndicator(
-            botName: 'Stars',
-            isResponding: true,
-            streamingResponse: 'answer',
-            reasoningResponse: '',
-            isDesktop: true,
-          ),
-          disableAnimations: true,
+    await tester.pumpWidget(
+      _harness(
+        body: const Column(
+          children: [
+            Text('answer'),
+            AssistantTypingIndicator(
+              botName: 'Stars',
+              isResponding: true,
+              isDesktop: true,
+            ),
+          ],
         ),
-      );
-      await tester.pumpAndSettle();
+        disableAnimations: true,
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.byType(TypingIndicator), findsNothing);
+    expect(find.text('answer'), findsOneWidget);
+    expect(find.byType(TypingIndicator), findsOneWidget);
+    expect(find.text('Stars正在输入...'), findsOneWidget);
 
-      await tester.pumpWidget(
-        _harness(
-          body: const AssistantTypingIndicator(
-            botName: 'Stars',
-            isResponding: true,
-            streamingResponse: '',
-            reasoningResponse: 'thinking',
-            isDesktop: true,
-          ),
-          disableAnimations: true,
+    await tester.pumpWidget(
+      _harness(
+        body: const Column(
+          children: [
+            Text('thinking'),
+            AssistantTypingIndicator(
+              botName: 'Stars',
+              isResponding: true,
+              isDesktop: true,
+            ),
+          ],
         ),
-      );
-      await tester.pumpAndSettle();
+        disableAnimations: true,
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.byType(TypingIndicator), findsNothing);
-    },
-  );
+    expect(find.text('thinking'), findsOneWidget);
+    expect(find.byType(TypingIndicator), findsOneWidget);
+    expect(find.text('Stars正在输入...'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _harness(
+        body: const AssistantTypingIndicator(
+          botName: 'Stars',
+          isResponding: false,
+          isDesktop: true,
+        ),
+        disableAnimations: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TypingIndicator), findsNothing);
+    expect(find.text('Stars正在输入...'), findsNothing);
+  });
 
   testWidgets(
     'structured Tool and Skill activity coexists with assistant typing',
@@ -152,8 +174,6 @@ void main() {
               const AssistantTypingIndicator(
                 botName: 'Stars',
                 isResponding: true,
-                streamingResponse: '',
-                reasoningResponse: '',
                 isDesktop: true,
               ),
             ],
