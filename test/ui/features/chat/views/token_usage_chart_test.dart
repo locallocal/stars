@@ -1,15 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
-import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.dart';
 import 'package:stars/ui/features/chat/views/token_usage_chart.dart';
 import 'package:stars/utils/theme.dart';
+
+import '../../../../support/widget_test_support.dart';
 
 void main() {
   testWidgets('selecting a day drills into hours and back restores days', (
@@ -78,8 +78,12 @@ void main() {
     expect(labelLefts[2], closeTo(labelLefts[0], 0.01));
 
     final totalLabel = tester.widget<Text>(find.text('Token 总量'));
-    final inputLabel = tester.widget<Text>(find.text('输入 Token'));
-    final outputLabel = tester.widget<Text>(find.text('输出 Token'));
+    final inputLabel = tester.widget<Text>(
+      find.descendant(of: inputMetric, matching: find.text('输入 Token')),
+    );
+    final outputLabel = tester.widget<Text>(
+      find.descendant(of: outputMetric, matching: find.text('输出 Token')),
+    );
     expect(totalLabel.style, inputLabel.style);
     expect(totalLabel.style, outputLabel.style);
     expect(
@@ -139,23 +143,40 @@ void main() {
       findsNothing,
     );
     final firstDailyBar = find.byKey(
-      const ValueKey<String>('token-usage-bar-day-2026-07-24'),
+      const ValueKey<String>('token-usage-input-bar-day-2026-07-24'),
     );
     expect(firstDailyBar, findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('token-usage-output-bar-day-2026-07-24'),
+      ),
+      findsOneWidget,
+    );
     expect(
       tester.getSize(firstDailyBar).width,
       greaterThan(tester.getSize(firstDailyBar).height),
     );
     final firstDailyBucket = find.byKey(
-      const ValueKey<String>('token-usage-bucket-day-2026-07-24'),
+      const ValueKey<String>('token-usage-input-bucket-day-2026-07-24'),
     );
     final firstDailyValue = find.descendant(
       of: firstDailyBucket,
-      matching: find.text('200'),
+      matching: find.text('160'),
     );
     expect(firstDailyValue, findsOneWidget);
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-day-2026-07-25')),
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('token-usage-output-bucket-day-2026-07-24'),
+        ),
+        matching: find.text('40'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('token-usage-input-bucket-day-2026-07-25'),
+      ),
       findsNothing,
     );
     expect(
@@ -169,37 +190,50 @@ void main() {
 
     expect(find.text('小时用量'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-10')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-10')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-11')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-11')),
       findsNothing,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-15')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-15')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-23')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-23')),
       findsNothing,
     );
     final firstHourlyBar = find.byKey(
-      const ValueKey<String>('token-usage-bar-hour-10'),
+      const ValueKey<String>('token-usage-input-bar-hour-10'),
     );
     expect(firstHourlyBar, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('token-usage-output-bar-hour-10')),
+      findsOneWidget,
+    );
     expect(
       tester.getSize(firstHourlyBar).width,
       greaterThan(tester.getSize(firstHourlyBar).height),
     );
     final firstHourlyBucket = find.byKey(
-      const ValueKey<String>('token-usage-bucket-hour-10'),
+      const ValueKey<String>('token-usage-input-bucket-hour-10'),
     );
     final firstHourlyValue = find.descendant(
       of: firstHourlyBucket,
-      matching: find.text('150'),
+      matching: find.text('120'),
     );
     expect(firstHourlyValue, findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('token-usage-output-bucket-hour-10'),
+        ),
+        matching: find.text('30'),
+      ),
+      findsOneWidget,
+    );
     expect(
       tester.getRect(firstHourlyBucket).right -
           tester.getRect(firstHourlyValue).right,
@@ -229,25 +263,29 @@ void main() {
 
     expect(find.text('每日用量'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-day-2026-07-26')),
+      find.byKey(
+        const ValueKey<String>('token-usage-input-bucket-day-2026-07-26'),
+      ),
       findsOneWidget,
     );
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('token-usage-bucket-day-2026-07-26')),
+      find.byKey(
+        const ValueKey<String>('token-usage-input-bucket-day-2026-07-26'),
+      ),
     );
     await tester.pump();
 
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-8')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-8')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-9')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-9')),
       findsNothing,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bucket-hour-23')),
+      find.byKey(const ValueKey<String>('token-usage-input-bucket-hour-23')),
       findsNothing,
     );
   });
@@ -277,23 +315,17 @@ class _Harness extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      locale: const Locale('zh', 'CN'),
-      localizationsDelegates: const [
-        S.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: S.delegate.supportedLocales,
-      home: Scaffold(
-        body: SizedBox(
-          width: 320,
-          child: SingleChildScrollView(
-            child: ConversationTokenUsagePanel(viewModel: viewModel),
+    return shadHarness(
+      brightness: Brightness.light,
+      homeBuilder:
+          (context) => Scaffold(
+            body: SizedBox(
+              width: 320,
+              child: SingleChildScrollView(
+                child: ConversationTokenUsagePanel(viewModel: viewModel),
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 }
