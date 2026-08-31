@@ -145,10 +145,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -455,6 +454,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("Home"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("Hourly usage"),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML preview"),
     "idle": MessageLookupByLibrary.simpleMessage("Idle"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -710,6 +710,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "There is not enough older context to compact",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("Open link"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -741,6 +742,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("Preview"),
     "previewText": MessageLookupByLibrary.simpleMessage("Preview text effect"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("Privacy Policy"),
     "processCommandCount": m29,
@@ -924,6 +926,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Validation notes",
     ),
     "skillVersion": MessageLookupByLibrary.simpleMessage("Version"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("Source code"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(

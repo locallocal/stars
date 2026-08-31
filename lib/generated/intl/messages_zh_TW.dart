@@ -358,6 +358,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("首頁"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("每小時用量"),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML 預覽"),
     "idle": MessageLookupByLibrary.simpleMessage("閒置"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -569,6 +570,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "notSupported": MessageLookupByLibrary.simpleMessage("不支援"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage("沒有足夠的舊上下文可壓縮"),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("開啟連結"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -596,6 +598,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("預覽"),
     "previewText": MessageLookupByLibrary.simpleMessage("預覽文字效果"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("隱私政策"),
     "processCommandCount": m29,
@@ -735,6 +738,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "skillUserScope": MessageLookupByLibrary.simpleMessage("使用者"),
     "skillValidationWarnings": MessageLookupByLibrary.simpleMessage("驗證說明"),
     "skillVersion": MessageLookupByLibrary.simpleMessage("版本"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("原始碼"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage("在下方輸入框中發送訊息開始聊天"),

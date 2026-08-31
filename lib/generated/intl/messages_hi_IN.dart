@@ -145,10 +145,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "सिस्टम प्रॉम्प्ट",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -459,6 +458,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
       "प्रति घंटे उपयोग",
     ),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML पूर्वावलोकन"),
     "idle": MessageLookupByLibrary.simpleMessage("निष्क्रिय"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -720,6 +720,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "संपीड़ित करने के लिए पर्याप्त पुराना संदर्भ नहीं है",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("लिंक खोलें"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -751,6 +752,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("पूर्वावलोकन"),
     "previewText": MessageLookupByLibrary.simpleMessage("टेक्स्ट प्रीव्यू"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("गोपनीयता नीति"),
     "processCommandCount": m29,
@@ -936,6 +938,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "सत्यापन टिप्पणियाँ",
     ),
     "skillVersion": MessageLookupByLibrary.simpleMessage("संस्करण"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("स्रोत कोड"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(

@@ -147,10 +147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt del sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars lo administra y lo añade a cada solicitud al modelo. Los identificadores del agente y la conversación actuales se agregan en tiempo de ejecución y no se pueden editar.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars lo administra y lo añade a cada solicitud al modelo. Los identificadores del agente y la conversación actuales se agregan en tiempo de ejecución y no se pueden editar.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -477,6 +476,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("Inicio"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("Uso por hora"),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("Vista previa HTML"),
     "idle": MessageLookupByLibrary.simpleMessage("Inactivo"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -742,6 +742,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "No hay suficiente contexto anterior para compactar",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("Abrir enlace"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -777,6 +778,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("Vista previa"),
     "previewText": MessageLookupByLibrary.simpleMessage(
       "Vista previa del texto",
     ),
@@ -982,6 +984,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Notas de validación",
     ),
     "skillVersion": MessageLookupByLibrary.simpleMessage("Versión"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("Código fuente"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(
