@@ -83,7 +83,7 @@ void main() {
     final tokenUsageSection = find.byKey(
       const ValueKey<String>('desktop-bot-token-usage-section'),
     );
-    expect(find.byType(ShadCard), findsNWidgets(4));
+    expect(find.byType(ShadCard), findsNWidgets(6));
     for (final section in [
       basicSection,
       providerSection,
@@ -96,6 +96,16 @@ void main() {
         StarsDesktopThemeSpec.formContentMaxWidth,
       );
       expect(tester.widget<ShadCard>(section).backgroundColor, raisedSurface);
+    }
+    for (final seriesSection in [
+      find.byKey(const ValueKey<String>('token-usage-input-section')),
+      find.byKey(const ValueKey<String>('token-usage-output-section')),
+    ]) {
+      expect(seriesSection, findsOneWidget);
+      expect(
+        find.descendant(of: seriesSection, matching: find.byType(ShadCard)),
+        findsOneWidget,
+      );
     }
     for (final (section, title) in [
       (basicSection, '基本信息'),
@@ -606,5 +616,4 @@ void main() {
     expect(searchCount, 1);
     expect(find.text('Stars'), findsNothing);
   });
-
 }

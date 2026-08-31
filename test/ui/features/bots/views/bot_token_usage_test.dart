@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/view_models/token_usage_timeline.dart';
 import 'package:stars/ui/features/bots/view_models/bot_token_usage_view_model.dart';
 import 'package:stars/ui/features/bots/views/bot_token_usage.dart';
+
+import '../../../../support/widget_test_support.dart';
 
 void main() {
   testWidgets('desktop panel shows summary and conversation pie side by side', (
@@ -129,11 +130,19 @@ void main() {
     final buckets = [
       TokenUsageBucket(
         start: DateTime(2026, 7, 24),
-        usage: const ModelTokenUsage(totalTokens: 25),
+        usage: const ModelTokenUsage(
+          inputTokens: 20,
+          outputTokens: 5,
+          totalTokens: 25,
+        ),
       ),
       TokenUsageBucket(
         start: DateTime(2026, 7, 25),
-        usage: const ModelTokenUsage(totalTokens: 75),
+        usage: const ModelTokenUsage(
+          inputTokens: 45,
+          outputTokens: 30,
+          totalTokens: 75,
+        ),
       ),
     ];
 
@@ -156,27 +165,82 @@ void main() {
       find.byKey(const ValueKey<String>('bot-token-usage-timeline-divider')),
       findsOneWidget,
     );
+    expect(find.byType(FilterChip), findsNothing);
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bar-day-2026-07-24')),
+      find.byKey(const ValueKey<String>('token-usage-toggle-input')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('token-usage-toggle-output')),
+      findsNothing,
+    );
+    final inputSection = find.byKey(
+      const ValueKey<String>('token-usage-input-section'),
+    );
+    final outputSection = find.byKey(
+      const ValueKey<String>('token-usage-output-section'),
+    );
+    expect(inputSection, findsOneWidget);
+    expect(outputSection, findsOneWidget);
+    expect(
+      tester.getTopLeft(inputSection).dy,
+      lessThan(tester.getTopLeft(outputSection).dy),
+    );
+    expect(
+      find.descendant(of: inputSection, matching: find.byType(ShadCard)),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-bar-day-2026-07-25')),
+      find.descendant(of: outputSection, matching: find.byType(ShadCard)),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('token-usage-chart-vertical')),
+      find.descendant(of: inputSection, matching: find.text('输入 Token')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: outputSection, matching: find.text('输出 Token')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: inputSection, matching: find.text('65')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: outputSection, matching: find.text('35')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('token-usage-input-chart-vertical')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('token-usage-output-chart-vertical')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('token-usage-input-bar-day-2026-07-25'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('token-usage-output-bar-day-2026-07-25'),
+      ),
       findsOneWidget,
     );
     final tallestDailyBar = find.byKey(
-      const ValueKey<String>('token-usage-bar-day-2026-07-25'),
+      const ValueKey<String>('token-usage-input-bar-day-2026-07-25'),
     );
     expect(
       tester.getSize(tallestDailyBar).height,
       greaterThan(tester.getSize(tallestDailyBar).width),
     );
     await tester.tap(
-      find.byKey(const ValueKey<String>('token-usage-bucket-day-2026-07-24')),
+      find.byKey(
+        const ValueKey<String>('token-usage-input-bucket-day-2026-07-24'),
+      ),
     );
     expect(selectedBucket?.start, DateTime(2026, 7, 24));
   });
@@ -187,7 +251,11 @@ void main() {
     final hourlyBuckets = List<TokenUsageBucket>.generate(24, (hour) {
       return TokenUsageBucket(
         start: DateTime(2026, 7, 24, hour),
-        usage: ModelTokenUsage(totalTokens: 24 - hour),
+        usage: ModelTokenUsage(
+          inputTokens: 24 - hour,
+          outputTokens: hour + 1,
+          totalTokens: 25,
+        ),
       );
     });
 
@@ -200,7 +268,11 @@ void main() {
           dailyBuckets: [
             TokenUsageBucket(
               start: DateTime(2026, 7, 24),
-              usage: const ModelTokenUsage(totalTokens: 300),
+              usage: const ModelTokenUsage(
+                inputTokens: 300,
+                outputTokens: 24,
+                totalTokens: 324,
+              ),
             ),
           ],
           visibleBuckets: hourlyBuckets,
@@ -213,24 +285,60 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('小时用量'), findsOneWidget);
-    final firstHourlyBar = find.byKey(
-      const ValueKey<String>('token-usage-bar-hour-0'),
-    );
-    expect(firstHourlyBar, findsOneWidget);
     expect(
-      tester.getSize(firstHourlyBar).height,
-      greaterThan(tester.getSize(firstHourlyBar).width),
+      find.byKey(const ValueKey<String>('token-usage-input-bar-hour-0')),
+      findsOneWidget,
     );
-    final verticalChart = find.byKey(
-      const ValueKey<String>('token-usage-chart-vertical'),
+    expect(
+      find.byKey(const ValueKey<String>('token-usage-output-bar-hour-0')),
+      findsOneWidget,
     );
-    final scrollable = find.descendant(
-      of: verticalChart,
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey<String>('token-usage-input-bar-hour-0')),
+          )
+          .height,
+      greaterThan(
+        tester
+            .getSize(
+              find.byKey(
+                const ValueKey<String>('token-usage-input-bar-hour-0'),
+              ),
+            )
+            .width,
+      ),
+    );
+    final inputSection = find.byKey(
+      const ValueKey<String>('token-usage-input-section'),
+    );
+    final outputSection = find.byKey(
+      const ValueKey<String>('token-usage-output-section'),
+    );
+    expect(
+      tester.getTopLeft(inputSection).dy,
+      lessThan(tester.getTopLeft(outputSection).dy),
+    );
+    final inputScrollable = find.descendant(
+      of: find.byKey(
+        const ValueKey<String>('token-usage-input-chart-vertical'),
+      ),
       matching: find.byType(Scrollable),
     );
-    expect(scrollable, findsOneWidget);
+    final outputScrollable = find.descendant(
+      of: find.byKey(
+        const ValueKey<String>('token-usage-output-chart-vertical'),
+      ),
+      matching: find.byType(Scrollable),
+    );
+    expect(inputScrollable, findsOneWidget);
+    expect(outputScrollable, findsOneWidget);
     expect(
-      tester.state<ScrollableState>(scrollable).position.maxScrollExtent,
+      tester.state<ScrollableState>(inputScrollable).position.maxScrollExtent,
+      greaterThan(0),
+    );
+    expect(
+      tester.state<ScrollableState>(outputScrollable).position.maxScrollExtent,
       greaterThan(0),
     );
   });
@@ -244,21 +352,17 @@ class _Harness extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      locale: const Locale('zh', 'CN'),
-      localizationsDelegates: const [
-        S.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: S.delegate.supportedLocales,
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.topLeft,
-          child: SizedBox(width: width, child: child),
-        ),
-      ),
+    return shadHarness(
+      brightness: Brightness.light,
+      homeBuilder:
+          (context) => Scaffold(
+            body: SingleChildScrollView(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(width: width, child: child),
+              ),
+            ),
+          ),
     );
   }
 }

@@ -10,6 +10,8 @@ import 'package:stars/utils/theme.dart';
 
 enum TokenUsageChartOrientation { horizontal, vertical }
 
+enum TokenUsageSeries { input, output }
+
 class ConversationTokenUsagePanel extends StatelessWidget {
   const ConversationTokenUsagePanel({super.key, required this.viewModel});
 
@@ -132,14 +134,106 @@ class TokenUsageTimelineSection extends StatelessWidget {
             style: StarsDesktopThemeSpec.metaStyle(context),
           ),
         ],
-        const SizedBox(height: 10),
-        TokenUsageChart(
-          buckets: visibleBuckets,
-          granularity: granularity,
-          onBucketSelected: onBucketSelected,
-          orientation: chartOrientation,
+        const SizedBox(height: 16),
+        _TokenUsageSeriesCard(
+          key: const ValueKey<String>('token-usage-input-section'),
+          series: TokenUsageSeries.input,
+          total: _seriesTotal(visibleBuckets, TokenUsageSeries.input),
+          child: TokenUsageChart(
+            buckets: visibleBuckets,
+            granularity: granularity,
+            series: TokenUsageSeries.input,
+            onBucketSelected: onBucketSelected,
+            orientation: chartOrientation,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _TokenUsageSeriesCard(
+          key: const ValueKey<String>('token-usage-output-section'),
+          series: TokenUsageSeries.output,
+          total: _seriesTotal(visibleBuckets, TokenUsageSeries.output),
+          child: TokenUsageChart(
+            buckets: visibleBuckets,
+            granularity: granularity,
+            series: TokenUsageSeries.output,
+            onBucketSelected: onBucketSelected,
+            orientation: chartOrientation,
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _TokenUsageSeriesCard extends StatelessWidget {
+  const _TokenUsageSeriesCard({
+    super.key,
+    required this.series,
+    required this.total,
+    required this.child,
+  });
+
+  final TokenUsageSeries series;
+  final int total;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final shadTheme = ShadTheme.of(context);
+    final tokens = StarsDesktopTokens.of(context);
+    final numberFormat = NumberFormat.compact(
+      locale: Localizations.localeOf(context).toString(),
+    );
+    final label = _seriesLabel(context, series);
+    return Semantics(
+      container: true,
+      label: '$label ${numberFormat.format(total)}',
+      child: ShadCard(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        backgroundColor: tokens.raisedSurface,
+        radius: StarsDesktopThemeSpec.containerRadius,
+        border: ShadBorder.all(color: tokens.separator, width: 1),
+        columnCrossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _seriesColor(context, series),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    key: ValueKey<String>(
+                      'token-usage-${series.name}-section-title',
+                    ),
+                    label,
+                    style: shadTheme.textTheme.small.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  numberFormat.format(total),
+                  style: shadTheme.textTheme.muted.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            child,
+          ],
+        ),
+      ),
     );
   }
 }
@@ -212,12 +306,14 @@ class TokenUsageChart extends StatelessWidget {
     super.key,
     required this.buckets,
     required this.granularity,
+    required this.series,
     this.onBucketSelected,
     this.orientation = TokenUsageChartOrientation.horizontal,
   });
 
   final List<TokenUsageBucket> buckets;
   final TokenUsageGranularity granularity;
+  final TokenUsageSeries series;
   final ValueChanged<TokenUsageBucket>? onBucketSelected;
   final TokenUsageChartOrientation orientation;
 
@@ -225,18 +321,16 @@ class TokenUsageChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (buckets.isEmpty) {
       return SizedBox(
-        key: const ValueKey<String>('token-usage-chart-empty'),
+        key: ValueKey<String>('token-usage-${series.name}-chart-empty'),
         height: 150,
         child: Center(child: Text(S.of(context).noTokenUsageRecorded)),
       );
     }
 
-    final maximum = buckets.fold<int>(
-      0,
-      (value, bucket) => math.max(value, bucket.usage.effectiveTotalTokens),
-    );
+    final maximum = buckets.fold<int>(0, (value, bucket) {
+      return math.max(value, _seriesValue(bucket.usage, series));
+    });
     final locale = Localizations.localeOf(context).toString();
-    final numberFormat = NumberFormat.compact(locale: locale);
     final isDaily = granularity == TokenUsageGranularity.day;
 
     if (orientation == TokenUsageChartOrientation.vertical) {
@@ -244,25 +338,27 @@ class TokenUsageChart extends StatelessWidget {
         buckets: buckets,
         maximum: maximum,
         granularity: granularity,
+        series: series,
         onBucketSelected: onBucketSelected,
       );
     }
 
     if (isDaily) {
       return Column(
-        key: const ValueKey<String>('token-usage-chart'),
+        key: ValueKey<String>('token-usage-${series.name}-chart'),
         children: [
           for (final bucket in buckets)
             _HorizontalTokenUsageBar(
               bucket: bucket,
               maximum: maximum,
               bucketKey:
-                  'token-usage-bucket-day-${_tokenUsageDateKey(bucket.start)}',
-              barKey: 'token-usage-bar-day-${_tokenUsageDateKey(bucket.start)}',
+                  'token-usage-${series.name}-bucket-day-'
+                  '${_tokenUsageDateKey(bucket.start)}',
+              barKey:
+                  'token-usage-${series.name}-bar-day-'
+                  '${_tokenUsageDateKey(bucket.start)}',
               label: DateFormat.Md(locale).format(bucket.start),
-              valueLabel: numberFormat.format(
-                bucket.usage.effectiveTotalTokens,
-              ),
+              series: series,
               onTap:
                   onBucketSelected == null
                       ? null
@@ -273,16 +369,17 @@ class TokenUsageChart extends StatelessWidget {
     }
 
     return Column(
-      key: const ValueKey<String>('token-usage-chart'),
+      key: ValueKey<String>('token-usage-${series.name}-chart'),
       children: [
         for (final bucket in buckets)
           _HorizontalTokenUsageBar(
             bucket: bucket,
             maximum: maximum,
-            bucketKey: 'token-usage-bucket-hour-${bucket.start.hour}',
-            barKey: 'token-usage-bar-hour-${bucket.start.hour}',
+            bucketKey:
+                'token-usage-${series.name}-bucket-hour-${bucket.start.hour}',
+            barKey: 'token-usage-${series.name}-bar-hour-${bucket.start.hour}',
             label: '${bucket.start.hour.toString().padLeft(2, '0')}:00',
-            valueLabel: numberFormat.format(bucket.usage.effectiveTotalTokens),
+            series: series,
           ),
       ],
     );
@@ -294,18 +391,19 @@ class _VerticalTokenUsageChart extends StatelessWidget {
     required this.buckets,
     required this.maximum,
     required this.granularity,
+    required this.series,
     required this.onBucketSelected,
   });
 
   final List<TokenUsageBucket> buckets;
   final int maximum;
   final TokenUsageGranularity granularity;
+  final TokenUsageSeries series;
   final ValueChanged<TokenUsageBucket>? onBucketSelected;
 
   @override
   Widget build(BuildContext context) {
     final locale = Localizations.localeOf(context).toString();
-    final numberFormat = NumberFormat.compact(locale: locale);
     final isDaily = granularity == TokenUsageGranularity.day;
     final minimumSlotWidth = isDaily ? 64.0 : 50.0;
 
@@ -320,10 +418,10 @@ class _VerticalTokenUsageChart extends StatelessWidget {
           availableWidth / buckets.length,
         );
         return SizedBox(
-          key: const ValueKey<String>('token-usage-chart'),
+          key: ValueKey<String>('token-usage-${series.name}-chart'),
           height: 176,
           child: ListView.builder(
-            key: const ValueKey<String>('token-usage-chart-vertical'),
+            key: ValueKey<String>('token-usage-${series.name}-chart-vertical'),
             scrollDirection: Axis.horizontal,
             itemCount: buckets.length,
             itemExtent: slotWidth,
@@ -331,14 +429,16 @@ class _VerticalTokenUsageChart extends StatelessWidget {
               final bucket = buckets[index];
               final bucketKey =
                   isDaily
-                      ? 'token-usage-bucket-day-'
+                      ? 'token-usage-${series.name}-bucket-day-'
                           '${_tokenUsageDateKey(bucket.start)}'
-                      : 'token-usage-bucket-hour-${bucket.start.hour}';
+                      : 'token-usage-${series.name}-bucket-hour-'
+                          '${bucket.start.hour}';
               final barKey =
                   isDaily
-                      ? 'token-usage-bar-day-'
+                      ? 'token-usage-${series.name}-bar-day-'
                           '${_tokenUsageDateKey(bucket.start)}'
-                      : 'token-usage-bar-hour-${bucket.start.hour}';
+                      : 'token-usage-${series.name}-bar-hour-'
+                          '${bucket.start.hour}';
               final label =
                   isDaily
                       ? DateFormat.Md(locale).format(bucket.start)
@@ -349,9 +449,7 @@ class _VerticalTokenUsageChart extends StatelessWidget {
                 bucketKey: bucketKey,
                 barKey: barKey,
                 label: label,
-                valueLabel: numberFormat.format(
-                  bucket.usage.effectiveTotalTokens,
-                ),
+                series: series,
                 onTap:
                     onBucketSelected == null
                         ? null
@@ -372,7 +470,7 @@ class _VerticalTokenUsageBar extends StatelessWidget {
     required this.bucketKey,
     required this.barKey,
     required this.label,
-    required this.valueLabel,
+    required this.series,
     this.onTap,
   });
 
@@ -381,20 +479,26 @@ class _VerticalTokenUsageBar extends StatelessWidget {
   final String bucketKey;
   final String barKey;
   final String label;
-  final String valueLabel;
+  final TokenUsageSeries series;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final total = bucket.usage.effectiveTotalTokens;
-    final semanticsLabel =
-        '$label, ${S.of(context).totalTokens} $total, '
-        '${S.of(context).inputTokens} ${bucket.usage.inputTokens}, '
-        '${S.of(context).outputTokens} ${bucket.usage.outputTokens}';
+    final semanticsLabel = _visibleUsageLabel(
+      context,
+      label: label,
+      usage: bucket.usage,
+      series: series,
+    );
     final colors = Theme.of(context).colorScheme;
+    final numberFormat = NumberFormat.compact(
+      locale: Localizations.localeOf(context).toString(),
+    );
+    final value = _seriesValue(bucket.usage, series);
+    final color = _seriesColor(context, series);
 
-    return Tooltip(
-      message: semanticsLabel,
+    return ShadTooltip(
+      builder: (context) => Text(semanticsLabel),
       child: Semantics(
         button: onTap != null,
         label: semanticsLabel,
@@ -407,43 +511,50 @@ class _VerticalTokenUsageBar extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(
-                  height: 20,
-                  child: Text(
-                    valueLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 120,
+                  height: 144,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final height =
-                          total == 0 || maximum == 0
+                          value == 0 || maximum == 0
                               ? 2.0
                               : math.max(
                                 6.0,
-                                constraints.maxHeight * total / maximum,
+                                (constraints.maxHeight - 24) * value / maximum,
                               );
-                      return Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
-                          key: ValueKey<String>(barKey),
-                          width: 18,
-                          height: height,
-                          decoration: BoxDecoration(
-                            color:
-                                total == 0
-                                    ? colors.surfaceContainerHighest
-                                    : colors.primary,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4),
+                      return Column(
+                        children: [
+                          SizedBox(
+                            height: 20,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                numberFormat.format(value),
+                                maxLines: 1,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                key: ValueKey<String>(barKey),
+                                width: 18,
+                                height: height,
+                                decoration: BoxDecoration(
+                                  color:
+                                      value == 0
+                                          ? colors.surfaceContainerHighest
+                                          : color,
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -475,7 +586,7 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
     required this.bucketKey,
     required this.barKey,
     required this.label,
-    required this.valueLabel,
+    required this.series,
     this.onTap,
   });
 
@@ -484,20 +595,26 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
   final String bucketKey;
   final String barKey;
   final String label;
-  final String valueLabel;
+  final TokenUsageSeries series;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final total = bucket.usage.effectiveTotalTokens;
-    final semanticsLabel =
-        '$label, ${S.of(context).totalTokens} $total, '
-        '${S.of(context).inputTokens} ${bucket.usage.inputTokens}, '
-        '${S.of(context).outputTokens} ${bucket.usage.outputTokens}';
+    final semanticsLabel = _visibleUsageLabel(
+      context,
+      label: label,
+      usage: bucket.usage,
+      series: series,
+    );
     final colors = Theme.of(context).colorScheme;
+    final numberFormat = NumberFormat.compact(
+      locale: Localizations.localeOf(context).toString(),
+    );
+    final value = _seriesValue(bucket.usage, series);
+    final color = _seriesColor(context, series);
 
-    return Tooltip(
-      message: semanticsLabel,
+    return ShadTooltip(
+      builder: (context) => Text(semanticsLabel),
       child: Semantics(
         button: onTap != null,
         label: semanticsLabel,
@@ -521,40 +638,18 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final width =
-                          total == 0 || maximum == 0
-                              ? 2.0
-                              : math.max(
-                                4.0,
-                                constraints.maxWidth * total / maximum,
-                              );
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          key: ValueKey<String>(barKey),
-                          width: width,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color:
-                                total == 0
-                                    ? colors.surfaceContainerHighest
-                                    : colors.primary,
-                            borderRadius: const BorderRadius.horizontal(
-                              right: Radius.circular(4),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                  child: _HorizontalTokenUsageSeriesBar(
+                    key: ValueKey<String>(barKey),
+                    value: value,
+                    maximum: maximum,
+                    color: color,
                   ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
                   width: 42,
                   child: Text(
-                    valueLabel,
+                    numberFormat.format(value),
                     maxLines: 1,
                     overflow: TextOverflow.fade,
                     softWrap: false,
@@ -569,6 +664,85 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HorizontalTokenUsageSeriesBar extends StatelessWidget {
+  const _HorizontalTokenUsageSeriesBar({
+    super.key,
+    required this.value,
+    required this.maximum,
+    required this.color,
+  });
+
+  final int value;
+  final int maximum;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 12,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width =
+              value == 0 || maximum == 0
+                  ? 2.0
+                  : math.max(4.0, constraints.maxWidth * value / maximum);
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: width,
+              decoration: BoxDecoration(
+                color: value == 0 ? colors.surfaceContainerHighest : color,
+                borderRadius: const BorderRadius.horizontal(
+                  right: Radius.circular(4),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+String _visibleUsageLabel(
+  BuildContext context, {
+  required String label,
+  required ModelTokenUsage usage,
+  required TokenUsageSeries series,
+}) {
+  return '$label, ${_seriesLabel(context, series)} '
+      '${_seriesValue(usage, series)}';
+}
+
+int _seriesTotal(Iterable<TokenUsageBucket> buckets, TokenUsageSeries series) {
+  return buckets.fold<int>(
+    0,
+    (total, bucket) => total + _seriesValue(bucket.usage, series),
+  );
+}
+
+int _seriesValue(ModelTokenUsage usage, TokenUsageSeries series) {
+  return switch (series) {
+    TokenUsageSeries.input => usage.inputTokens,
+    TokenUsageSeries.output => usage.outputTokens,
+  };
+}
+
+String _seriesLabel(BuildContext context, TokenUsageSeries series) {
+  return switch (series) {
+    TokenUsageSeries.input => S.of(context).inputTokens,
+    TokenUsageSeries.output => S.of(context).outputTokens,
+  };
+}
+
+Color _seriesColor(BuildContext context, TokenUsageSeries series) {
+  return switch (series) {
+    TokenUsageSeries.input => StarsDesktopThemeSpec.primaryActionColor(context),
+    TokenUsageSeries.output => StarsDesktopTokens.of(context).secondaryText,
+  };
 }
 
 String _tokenUsageDateKey(DateTime date) {
