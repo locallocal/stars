@@ -249,6 +249,108 @@ cat "${file.path}"
     );
     expect(find.byType(VideoPlayerWidget), findsOneWidget);
   });
+
+  testWidgets('local HTML exposes a safe content preview and source mode', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'stars-html-preview-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/report.html');
+    const source = '''
+<!doctype html>
+<html>
+  <head>
+    <title>Launch dashboard</title>
+    <meta name="description" content="A safe local report.">
+    <style>body { color: red; }</style>
+  </head>
+  <body>
+    <h1>Weekly report</h1>
+    <p>Revenue increased by <strong>12%</strong>.</p>
+    <script>window.shouldNotRun = true;</script>
+  </body>
+</html>
+''';
+    file.writeAsStringSync(source);
+
+    await _pumpFileMessage(tester, files: [file.path]);
+
+    expect(find.text('HTML'), findsOneWidget);
+    await tester.tap(
+      find.byKey(ValueKey<String>('message-local-file-${file.path}')),
+    );
+    await _pumpDialog(tester);
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-html-preview')),
+      findsOneWidget,
+    );
+    expect(find.text('Launch dashboard'), findsOneWidget);
+    expect(find.text('A safe local report.'), findsOneWidget);
+    expect(find.textContaining('Revenue increased by 12%.'), findsOneWidget);
+    expect(find.textContaining('window.shouldNotRun'), findsNothing);
+
+    await tester.tap(find.text('源代码'));
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('message-local-html-source')),
+      findsOneWidget,
+    );
+    expect(find.text(source), findsOneWidget);
+  });
+
+  testWidgets('URL previews deduplicate safe links and open from their cards', (
+    tester,
+  ) async {
+    const primaryUrl = 'https://example.com/docs?q=chat#section';
+    const secondUrl = 'https://dart.dev/guides';
+    final repository = _FakeMessageActionRepository();
+    final actions = MessageActionViewModel(repository: repository);
+    const content = '''
+[OpenAI docs]($primaryUrl)
+
+$primaryUrl
+
+`https://ignored.example/inside-code`
+
+[unsafe](javascript:alert('no'))
+
+$secondUrl.
+''';
+
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: content,
+      actions: actions,
+    );
+
+    final primaryCard = find.byKey(
+      const ValueKey<String>('message-url-preview-$primaryUrl'),
+    );
+    expect(primaryCard, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('message-url-preview-$secondUrl')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>(
+          'message-url-preview-https://ignored.example/inside-code',
+        ),
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(primaryCard);
+    await tester.pump();
+
+    expect(repository.openedLinks, [Uri.parse(primaryUrl)]);
+  });
 }
 
 Future<void> _pumpFileMessage(
@@ -304,6 +406,7 @@ Future<void> _pumpDialog(WidgetTester tester) async {
 
 final class _FakeMessageActionRepository implements MessageActionRepository {
   final List<String> openedFiles = [];
+  final List<Uri> openedLinks = [];
 
   @override
   Future<bool> openLocalFile(String path) async {
@@ -312,7 +415,10 @@ final class _FakeMessageActionRepository implements MessageActionRepository {
   }
 
   @override
-  Future<bool> openExternal(Uri uri) async => true;
+  Future<bool> openExternal(Uri uri) async {
+    openedLinks.add(uri);
+    return true;
+  }
 
   @override
   Future<MediaExportResult> saveImage({

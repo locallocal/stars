@@ -148,10 +148,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System-Prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Wird von Stars verwaltet und jeder Modellanfrage hinzugefügt. Die Kennungen des aktuellen Agenten und der Unterhaltung werden zur Laufzeit ergänzt und können nicht bearbeitet werden.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Wird von Stars verwaltet und jeder Modellanfrage hinzugefügt. Die Kennungen des aktuellen Agenten und der Unterhaltung werden zur Laufzeit ergänzt und können nicht bearbeitet werden.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -474,6 +473,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
       "Stündliche Nutzung",
     ),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML-Vorschau"),
     "idle": MessageLookupByLibrary.simpleMessage("Leerlauf"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -739,6 +739,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Nicht genügend älterer Kontext zum Komprimieren",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("Link öffnen"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -772,6 +773,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("Vorschau"),
     "previewText": MessageLookupByLibrary.simpleMessage("Texteffekt-Vorschau"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage(
       "Datenschutzrichtlinie",
@@ -981,6 +983,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Validierungshinweise",
     ),
     "skillVersion": MessageLookupByLibrary.simpleMessage("Version"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("Quellcode"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(

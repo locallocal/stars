@@ -392,6 +392,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("ホーム"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("時間別使用量"),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML プレビュー"),
     "idle": MessageLookupByLibrary.simpleMessage("待機中"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -625,6 +626,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "圧縮できる古いコンテキストが不足しています",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("リンクを開く"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -656,6 +658,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("プレビュー"),
     "previewText": MessageLookupByLibrary.simpleMessage("テキスト効果のプレビュー"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("プライバシーポリシー"),
     "processCommandCount": m29,
@@ -809,6 +812,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "skillUserScope": MessageLookupByLibrary.simpleMessage("ユーザー"),
     "skillValidationWarnings": MessageLookupByLibrary.simpleMessage("検証メモ"),
     "skillVersion": MessageLookupByLibrary.simpleMessage("バージョン"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("ソースコード"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(

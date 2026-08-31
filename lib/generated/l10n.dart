@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -29,9 +28,10 @@ class S {
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<S> load(Locale locale) {
-    final name = (locale.countryCode?.isEmpty ?? false)
-        ? locale.languageCode
-        : locale.toString();
+    final name =
+        (locale.countryCode?.isEmpty ?? false)
+            ? locale.languageCode
+            : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -1510,7 +1510,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -2089,6 +2090,31 @@ class S {
       desc: '',
       args: [],
     );
+  }
+
+  /// `Open link`
+  String get openLink {
+    return Intl.message('Open link', name: 'openLink', desc: '', args: []);
+  }
+
+  /// `HTML preview`
+  String get htmlPreview {
+    return Intl.message(
+      'HTML preview',
+      name: 'htmlPreview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Preview`
+  String get preview {
+    return Intl.message('Preview', name: 'preview', desc: '', args: []);
+  }
+
+  /// `Source code`
+  String get sourceCode {
+    return Intl.message('Source code', name: 'sourceCode', desc: '', args: []);
   }
 
   /// `Open file`
@@ -4636,7 +4662,8 @@ class S {
     return Intl.message(
       'Starting…',
       name: 'startupStarting',
-      desc: 'Status shown while Stars loads the profile before the main application starts',
+      desc:
+          'Status shown while Stars loads the profile before the main application starts',
       args: [],
     );
   }
@@ -4676,7 +4703,8 @@ class S {
     return Intl.message(
       'This database was created by a newer version of Stars. Update the app before opening it.',
       name: 'databaseDowngradeNotSupported',
-      desc: 'Safe error shown when the local database is newer than the application',
+      desc:
+          'Safe error shown when the local database is newer than the application',
       args: [],
     );
   }
@@ -4686,7 +4714,8 @@ class S {
     return Intl.message(
       'The database integrity check failed, and recovery from this version\'s backup was unsuccessful.',
       name: 'databaseRecoveryFailed',
-      desc: 'Safe error shown when database validation and backup recovery both fail',
+      desc:
+          'Safe error shown when database validation and backup recovery both fail',
       args: [],
     );
   }

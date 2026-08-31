@@ -147,10 +147,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Системный промпт",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -469,6 +468,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
       "Почасовое использование",
     ),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("Предпросмотр HTML"),
     "idle": MessageLookupByLibrary.simpleMessage("Ожидание"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -726,6 +726,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Недостаточно старого контекста для сжатия",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("Открыть ссылку"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -759,6 +760,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("Предпросмотр"),
     "previewText": MessageLookupByLibrary.simpleMessage(
       "Предварительный просмотр текста",
     ),
@@ -958,6 +960,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Примечания проверки",
     ),
     "skillVersion": MessageLookupByLibrary.simpleMessage("Версия"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("Исходный код"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(

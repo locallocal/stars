@@ -385,6 +385,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("홈"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("시간별 사용량"),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML 미리보기"),
     "idle": MessageLookupByLibrary.simpleMessage("유휴"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("Image attachment"),
     "imageResult": MessageLookupByLibrary.simpleMessage("Image result"),
@@ -618,6 +619,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "압축할 이전 컨텍스트가 충분하지 않습니다",
     ),
     "openFile": MessageLookupByLibrary.simpleMessage("Open file"),
+    "openLink": MessageLookupByLibrary.simpleMessage("링크 열기"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage(
       "Open with system app",
     ),
@@ -649,6 +651,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "Enter a description for video generation",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("미리보기"),
     "previewText": MessageLookupByLibrary.simpleMessage("텍스트 효과 미리보기"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("개인정보 처리방침"),
     "processCommandCount": m29,
@@ -804,6 +807,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "유효성 검사 참고",
     ),
     "skillVersion": MessageLookupByLibrary.simpleMessage("버전"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("소스 코드"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("Speech generated"),
     "speechResult": MessageLookupByLibrary.simpleMessage("Speech result"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage(

@@ -344,6 +344,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideSidebar": MessageLookupByLibrary.simpleMessage("隐藏侧栏"),
     "home": MessageLookupByLibrary.simpleMessage("首页"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("小时用量"),
+    "htmlPreview": MessageLookupByLibrary.simpleMessage("HTML 预览"),
     "idle": MessageLookupByLibrary.simpleMessage("空闲"),
     "imageAttachment": MessageLookupByLibrary.simpleMessage("图片附件"),
     "imageResult": MessageLookupByLibrary.simpleMessage("图片结果"),
@@ -541,6 +542,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "notSupported": MessageLookupByLibrary.simpleMessage("不支持"),
     "nothingToCompact": MessageLookupByLibrary.simpleMessage("没有足够的旧上下文可压缩"),
     "openFile": MessageLookupByLibrary.simpleMessage("打开文件"),
+    "openLink": MessageLookupByLibrary.simpleMessage("打开链接"),
     "openWithSystem": MessageLookupByLibrary.simpleMessage("使用系统应用打开"),
     "orphanedChatGuidance": MessageLookupByLibrary.simpleMessage(
       "删除这条孤立会话，或重新创建缺失的智能体。",
@@ -566,6 +568,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "pleaseEnterVideoDescription": MessageLookupByLibrary.simpleMessage(
       "请输入视频描述",
     ),
+    "preview": MessageLookupByLibrary.simpleMessage("预览"),
     "previewText": MessageLookupByLibrary.simpleMessage("预览文字效果"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("隐私政策"),
     "processCommandCount": m29,
@@ -693,6 +696,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "skillUserScope": MessageLookupByLibrary.simpleMessage("用户"),
     "skillValidationWarnings": MessageLookupByLibrary.simpleMessage("校验说明"),
     "skillVersion": MessageLookupByLibrary.simpleMessage("版本"),
+    "sourceCode": MessageLookupByLibrary.simpleMessage("源代码"),
     "speechGenerated": MessageLookupByLibrary.simpleMessage("语音已生成"),
     "speechResult": MessageLookupByLibrary.simpleMessage("语音结果"),
     "startChatPrompt": MessageLookupByLibrary.simpleMessage("在下方输入框发送消息开始聊天"),

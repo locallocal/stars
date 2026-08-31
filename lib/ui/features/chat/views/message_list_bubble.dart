@@ -40,6 +40,10 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
+    final urlPreviews =
+        isStreaming
+            ? const <_UrlPreviewDescriptor>[]
+            : _urlPreviewsFromMarkdown(content);
     final useBubbleShell = !isDesktop || isCurrentUser;
     final backgroundColor =
         isCurrentUser
@@ -91,6 +95,15 @@ class _MessageBubble extends StatelessWidget {
                   _openMarkdownLink(context, href, actionViewModel),
                 ),
             styleSheet: _buildMarkdownStyleSheet(context, fontSize),
+          ),
+        if (urlPreviews.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: _UrlPreviewList(
+              previews: urlPreviews,
+              isDesktop: isDesktop,
+              actionViewModel: actionViewModel,
+            ),
           ),
         if (_showsProcessInfoBeforeMedia)
           Padding(

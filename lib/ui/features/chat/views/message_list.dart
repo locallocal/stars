@@ -16,12 +16,15 @@ import 'package:stars/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:html/dom.dart' as html_dom;
+import 'package:html/parser.dart' as html_parser;
 import 'package:markdown/markdown.dart' as md;
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 part 'message_list_actions.dart';
 part 'message_list_bubble.dart';
 part 'message_list_file_preview.dart';
+part 'message_list_link_preview.dart';
 part 'message_list_media_preview.dart';
 part 'message_list_process.dart';
 part 'message_list_process_labels.dart';
