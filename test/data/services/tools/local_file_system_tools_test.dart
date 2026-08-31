@@ -98,6 +98,28 @@ void main() {
       expect((structured['entries']! as List<Object?>), hasLength(2));
       expect(structured['truncated'], isTrue);
     });
+
+    test(
+      'model-visible results distinguish an existing directory from creation',
+      () async {
+        await Directory(path_context.join(sandbox.path, 'existing')).create();
+
+        final result = await createTool.execute(
+          _call(createTool, {'path': 'existing'}),
+          AgentCancellationToken(),
+        );
+
+        _expectValidOutput(createTool, result);
+        final envelope =
+            jsonDecode(encodeToolResultForModel(result))
+                as Map<String, Object?>;
+        final structured = envelope['structured_data']! as Map<String, Object?>;
+        expect(envelope['status'], 'success');
+        expect(envelope['truncated'], isFalse);
+        expect(structured['created'], isFalse);
+        expect(structured['path'], path_context.join(sandbox.path, 'existing'));
+      },
+    );
   });
 
   group('local file tools', () {
@@ -217,6 +239,13 @@ void main() {
       expect(result.structuredContent, containsPair('truncated', true));
       expect(result.truncated, isTrue);
       expect(result.content, contains('does not prove'));
+      final envelope =
+          jsonDecode(encodeToolResultForModel(result)) as Map<String, Object?>;
+      final structured = envelope['structured_data']! as Map<String, Object?>;
+      expect(envelope['status'], 'success');
+      expect(envelope['truncated'], isTrue);
+      expect(structured['files'], isEmpty);
+      expect(structured['truncated'], isTrue);
     });
 
     test('writes, reads, copies, moves, and deletes a file', () async {
