@@ -14,9 +14,10 @@ final class SystemDirectoryOperationsSkill extends _SystemLocalFileSystemSkill {
         skillId: directoryOperationsSkillId,
         name: 'directory-operations',
         description:
-            'Use for listing, creating, or deleting local directories on any '
-            'Stars platform; use file-operations for individual files and '
-            'shell-command only for process-oriented commands.',
+            'Inspect, create, or delete local directories with Stars\' '
+            'structured tools. Use for folder-level requests; use '
+            'file-operations for individual files, and require current tool '
+            'evidence for directory state and completed actions.',
         requestedToolNames: directoryOperationsToolNames,
         integrityError:
             'Built-in directory operations Skill failed integrity validation.',
@@ -33,10 +34,11 @@ final class SystemFileOperationsSkill extends _SystemLocalFileSystemSkill {
         skillId: fileOperationsSkillId,
         name: 'file-operations',
         description:
-            'Use for finding, reading, writing, copying, moving, or deleting '
-            'individual local files on any Stars platform; use '
-            'directory-operations for folders and shell-command only for '
-            'process-oriented commands.',
+            'Find, inspect, create, append, overwrite, copy, move, or delete '
+            'individual local files with Stars\' structured tools. Use for '
+            'file-level requests; use directory-operations for folders, and '
+            'require current tool evidence for file state and completed '
+            'actions.',
         requestedToolNames: fileOperationsToolNames,
         integrityError:
             'Built-in file operations Skill failed integrity validation.',

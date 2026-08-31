@@ -33,7 +33,10 @@ void main() {
       expect(content.descriptor.compatibility, contains('Windows'));
       expect(content.instructions, contains('list_local_directory'));
       expect(content.instructions, contains('recursive'));
-      expect(content.instructions, contains('invoke PowerShell'));
+      expect(content.instructions, contains('status: error'));
+      expect(content.instructions, contains('created: false'));
+      expect(content.instructions, contains('deleted: true'));
+      expect(content.instructions, contains('stayed unchanged'));
       expect(content.files, ['SKILL.md']);
     },
   );
@@ -58,10 +61,13 @@ void main() {
     expect(content.descriptor.compatibility, contains('iOS'));
     expect(content.descriptor.compatibility, contains('Linux'));
     expect(content.instructions, contains('query_local_files'));
-    expect(content.instructions, contains('Zero results'));
+    expect(content.instructions, contains('files[].path'));
+    expect(content.instructions, contains('status: error'));
+    expect(content.instructions, contains('truncated: true'));
     expect(content.instructions, contains('read_local_file'));
     expect(content.instructions, contains('next_offset_bytes'));
-    expect(content.instructions, contains('overwrite'));
+    expect(content.instructions, contains('bytes_written'));
+    expect(content.instructions, contains('stayed unchanged'));
     expect(content.files, ['SKILL.md']);
   });
 }
