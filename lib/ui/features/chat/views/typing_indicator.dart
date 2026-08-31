@@ -2,35 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 
-/// Keeps the typing status visible while the assistant is still working but
-/// has not started returning user-visible text or reasoning content.
+/// Keeps the typing status visible for the full assistant-response lifecycle.
 ///
-/// Structured activity such as Skill activation, Tool execution, or approval
-/// is intentionally not part of this visibility decision. Those events can be
-/// shown alongside the typing status while the assistant prepares its reply.
+/// The caller supplies the same request-running state used by the composer
+/// action, so the indicator and stop button appear and disappear together.
 class AssistantTypingIndicator extends StatelessWidget {
   const AssistantTypingIndicator({
     super.key,
     required this.botName,
     required this.isResponding,
-    required this.streamingResponse,
-    required this.reasoningResponse,
     this.isDesktop = false,
   });
 
   final String botName;
   final bool isResponding;
-  final String streamingResponse;
-  final String reasoningResponse;
   final bool isDesktop;
 
   @override
   Widget build(BuildContext context) {
-    if (!isResponding ||
-        streamingResponse.isNotEmpty ||
-        reasoningResponse.isNotEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (!isResponding) return const SizedBox.shrink();
     return TypingIndicator(botName: botName, isDesktop: isDesktop);
   }
 }
