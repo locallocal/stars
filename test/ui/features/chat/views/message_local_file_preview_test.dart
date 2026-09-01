@@ -351,6 +351,39 @@ $secondUrl.
 
     expect(repository.openedLinks, [Uri.parse(primaryUrl)]);
   });
+
+  testWidgets('URL preview stops before Chinese sentence punctuation', (
+    tester,
+  ) async {
+    const url = 'https://tech.dewu.com/article?id=40';
+    const content = '使用fetch mcp读取一下这篇文章$url，并给出总结';
+    final repository = _FakeMessageActionRepository();
+    final actions = MessageActionViewModel(repository: repository);
+
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: content,
+      actions: actions,
+    );
+
+    final card = find.byKey(const ValueKey<String>('message-url-preview-$url'));
+    expect(card, findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>(
+          'message-url-preview-https://tech.dewu.com/'
+          'article?id=40%EF%BC%8C%E5%B9%B6%E7%BB%99%E5%87%BA%E6%80%BB%E7%BB%93',
+        ),
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(card);
+    await tester.pump();
+
+    expect(repository.openedLinks, [Uri.parse(url)]);
+  });
 }
 
 Future<void> _pumpFileMessage(
