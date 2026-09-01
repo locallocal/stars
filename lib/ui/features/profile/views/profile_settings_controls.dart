@@ -318,37 +318,41 @@ extension _ProfileSettingsControls on _ProfilePageState {
       children: [
         MergeSemantics(
           child: Row(
+            key: const ValueKey<String>('profile-application-prompt-header'),
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
                 width: StarsDesktopThemeSpec.settingsRowIconSlotWidth,
                 child: Icon(
-                  Icons.lock_outline_rounded,
+                  LucideIcons.lockKeyhole,
+                  key: const ValueKey<String>(
+                    'profile-application-prompt-icon',
+                  ),
                   size: StarsDesktopThemeSpec.settingsRowIconSize,
                   color: StarsDesktopThemeSpec.mutedText(context),
                 ),
               ),
               const SizedBox(width: StarsDesktopThemeSpec.settingsRowIconGap),
               Expanded(
-                child: Text(
-                  S.of(context).applicationInjectedPrompt,
-                  style: StarsDesktopThemeSpec.bodyStyle(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      S.of(context).applicationInjectedPrompt,
+                      style: StarsDesktopThemeSpec.bodyStyle(context),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      S.of(context).applicationInjectedPromptDescription,
+                      style: StarsDesktopThemeSpec.metaStyle(context),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: StarsDesktopThemeSpec.settingsRowValueGap),
               promptSwitch,
             ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsetsDirectional.only(
-            start:
-                StarsDesktopThemeSpec.settingsRowIconSlotWidth +
-                StarsDesktopThemeSpec.settingsRowIconGap,
-          ),
-          child: Text(
-            S.of(context).applicationInjectedPromptDescription,
-            style: StarsDesktopThemeSpec.metaStyle(context),
           ),
         ),
         const SizedBox(height: 10),
