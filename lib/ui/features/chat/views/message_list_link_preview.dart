@@ -88,7 +88,9 @@ void _collectUrlPreviews(
   }
 }
 
-final _plainUrlPattern = RegExp(r'''https?://[^\s<>\[\]{}"']+''');
+final _plainUrlPattern = RegExp(
+  r'''https?://[^\s<>\[\]{}"'，。；：！？、（）【】《》〈〉「」『』“”‘’]+''',
+);
 
 String _trimUrlPunctuation(String value) {
   var result = value;
