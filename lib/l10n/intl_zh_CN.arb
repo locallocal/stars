@@ -601,7 +601,7 @@
     "desktopAppearanceAndLanguage": "外观与语言",
     "desktopGeneral": "通用",
     "applicationInjectedPrompt": "系统提示词",
-    "applicationInjectedPromptDescription": "由 Stars 管理并注入到每次模型请求中。当前智能体与会话标识会在运行时补充，不可编辑。",
+    "applicationInjectedPromptDescription": "由 Stars 管理。开启后会把以下内容注入会话模型请求，关闭后不注入；必要的运行时会话上下文不受此开关影响。内容不可编辑。",
     "desktopHelpAndSupport": "帮助与支持",
     "desktopAboutAndLegal": "关于与法律信息",
     "desktopSettingsDescription": "管理个人信息、外观、语言与应用支持。",

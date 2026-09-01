@@ -31,17 +31,11 @@ extension _ProfileDialogs on _ProfilePageState {
 
     void saveName(BuildContext dialogContext) {
       setState(() {
-        _profile = Profile(
+        _profile = _profile!.copyWith(
           name:
               controller.text.trim().isEmpty
                   ? _randomName
                   : controller.text.trim(),
-          avatar: _avatar,
-          fontSize: _fontSize,
-          themeMode: themeModeToInt(_themeMode),
-          language: _language,
-          showExecutionStatus: _showExecutionStatus,
-          createTimestamp: _profile!.createTimestamp,
           modifyTimestamp: DateTime.now(),
         );
       });
@@ -360,14 +354,8 @@ extension _ProfileDialogs on _ProfilePageState {
                     TextButton(
                       onPressed: () {
                         this.setState(() {
-                          _profile = Profile(
-                            name: _name,
-                            avatar: _avatar,
+                          _profile = _profile!.copyWith(
                             fontSize: tempFontSize,
-                            language: _language,
-                            themeMode: themeModeToInt(_themeMode),
-                            showExecutionStatus: _showExecutionStatus,
-                            createTimestamp: _profile!.createTimestamp,
                             modifyTimestamp: DateTime.now(),
                           );
                         });

@@ -28,10 +28,9 @@ class S {
   static const AppLocalizationDelegate delegate = AppLocalizationDelegate();
 
   static Future<S> load(Locale locale) {
-    final name =
-        (locale.countryCode?.isEmpty ?? false)
-            ? locale.languageCode
-            : locale.toString();
+    final name = (locale.countryCode?.isEmpty ?? false)
+        ? locale.languageCode
+        : locale.toString();
     final localeName = Intl.canonicalizedLocale(name);
     return initializeMessages(localeName).then((_) {
       Intl.defaultLocale = localeName;
@@ -1330,10 +1329,10 @@ class S {
     );
   }
 
-  /// `Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.`
+  /// `Managed by Stars. When enabled, the content below is added to conversation model requests; when disabled, it is omitted. Required runtime conversation context is unaffected. The content cannot be edited.`
   String get applicationInjectedPromptDescription {
     return Intl.message(
-      'Managed by Stars and added to every model-facing system prompt. Current agent and conversation identifiers are added at runtime and cannot be edited.',
+      'Managed by Stars. When enabled, the content below is added to conversation model requests; when disabled, it is omitted. Required runtime conversation context is unaffected. The content cannot be edited.',
       name: 'applicationInjectedPromptDescription',
       desc: '',
       args: [],

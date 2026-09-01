@@ -566,7 +566,7 @@
     "desktopAppearanceAndLanguage": "Apariencia e idioma",
     "desktopGeneral": "General",
     "applicationInjectedPrompt": "Prompt del sistema",
-    "applicationInjectedPromptDescription": "Stars lo administra y lo añade a cada solicitud al modelo. Los identificadores del agente y la conversación actuales se agregan en tiempo de ejecución y no se pueden editar.",
+    "applicationInjectedPromptDescription": "Stars lo administra. Al activarlo, el contenido siguiente se añade a las solicitudes del modelo de la conversación; al desactivarlo, se omite. El contexto de ejecución necesario no se ve afectado. El contenido no se puede editar.",
     "desktopHelpAndSupport": "Ayuda y soporte",
     "desktopAboutAndLegal": "Acerca de e información legal",
     "desktopSettingsDescription": "Gestiona tu perfil, apariencia, idioma y soporte de la aplicación.",

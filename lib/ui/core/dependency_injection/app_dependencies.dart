@@ -268,6 +268,10 @@ class AppDependencies {
           (bot) => ProviderContextSummarizer(
             bot: bot,
             providerFactory: aiProviderRepository.create,
+            starsSystemPromptEnabledProvider:
+                () async =>
+                    (await profileRepository.getProfile())
+                        .injectApplicationPrompt,
           ),
       usagePersister:
           (operationId, chatId, bot, usage) => modelUsageRepository.upsert(
@@ -363,6 +367,9 @@ class AppDependencies {
       bundledSkillLoader: loadBundledSkills,
       conversationArtifactsDirectoryProvider:
           conversationArtifactsDirectoryProvider,
+      starsSystemPromptEnabledProvider:
+          () async =>
+              (await profileRepository.getProfile()).injectApplicationPrompt,
     );
     final prepareTextGeneration = PrepareTextGeneration(
       composeChatTurn: composeChatTurn.call,

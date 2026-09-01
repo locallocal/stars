@@ -93,6 +93,8 @@ class _ProfilePageState extends State<ProfilePage> {
   // 获取字体大小
   double get _fontSize => _profile?.fontSize ?? 16.0;
   bool get _showExecutionStatus => _profile?.showExecutionStatus ?? true;
+  bool get _injectApplicationPrompt =>
+      _profile?.injectApplicationPrompt ?? true;
   String get _applicationInjectedPrompt =>
       (widget.applicationPromptProvider?.call() ?? currentStarsSystemPrompt())
           .trim();
@@ -194,14 +196,8 @@ class _ProfilePageState extends State<ProfilePage> {
     if (imagePath != null && mounted) {
       setState(() {
         if (_profile != null) {
-          _profile = Profile(
-            name: _name,
+          _profile = _profile!.copyWith(
             avatar: imagePath,
-            fontSize: _fontSize,
-            language: _language,
-            themeMode: themeModeToInt(_themeMode),
-            showExecutionStatus: _showExecutionStatus,
-            createTimestamp: _profile!.createTimestamp,
             modifyTimestamp: DateTime.now(),
           );
           _saveProfile(); // 保存头像设置
@@ -214,14 +210,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _saveProfile() async {
     if (_profile == null) return;
 
-    final profile = Profile(
+    final profile = _profile!.copyWith(
       name: _name,
       avatar: _avatar,
       fontSize: _fontSize,
       themeMode: themeModeToInt(_themeMode),
-      language: _language, // 添加语言设置
+      language: _language,
       showExecutionStatus: _showExecutionStatus,
-      createTimestamp: _profile!.createTimestamp,
+      injectApplicationPrompt: _injectApplicationPrompt,
       modifyTimestamp: DateTime.now(),
     );
     final onProfileSaved = widget.onProfileSaved;

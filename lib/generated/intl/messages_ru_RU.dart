@@ -148,7 +148,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Системный промпт",
     ),
     "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
-      "Управляется Stars и добавляется к каждому запросу модели. Идентификаторы текущего агента и беседы подставляются во время выполнения и недоступны для редактирования.",
+      "Управляется Stars. Когда включено, содержимое ниже добавляется к запросам модели в беседе; когда выключено, оно не добавляется. Необходимый контекст выполнения беседы не затрагивается. Содержимое нельзя редактировать.",
     ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
