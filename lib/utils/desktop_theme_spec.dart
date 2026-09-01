@@ -47,6 +47,13 @@ class StarsDesktopThemeSpec {
   static const EdgeInsetsDirectional settingsRowSeparatorMargin =
       EdgeInsetsDirectional.only(start: 40);
   static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);
+  static const double sidebarFooterBottomInset = 18;
+  static const EdgeInsets profilePagePadding = EdgeInsets.fromLTRB(
+    32,
+    28,
+    32,
+    sidebarFooterBottomInset,
+  );
   static const double panelRadiusValue = 8;
   static const double itemRadiusValue = 6;
   static const double workspaceRadiusValue = 0;

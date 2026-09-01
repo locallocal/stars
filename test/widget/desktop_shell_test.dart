@@ -13,6 +13,7 @@ import 'package:stars/ui/features/chat/views/clear_chat_dialog.dart';
 import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
 import 'package:stars/ui/features/chats/views/chats.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
+import 'package:stars/ui/features/profile/views/profile.dart';
 import 'package:stars/utils/theme.dart';
 
 import '../support/widget_test_support.dart';
@@ -525,6 +526,65 @@ void main() {
         findsNothing,
       );
     }
+  });
+
+  testWidgets('desktop profile footer aligns with the My navigation button', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+
+    await withDesktopPlatform(() async {
+      final profilePage = ProfilePage(
+        initialProfile: Profile(
+          name: 'Test User',
+          avatar: '',
+          fontSize: 16,
+          themeMode: 1,
+          language: 'zh_CN',
+          showExecutionStatus: true,
+          createTimestamp: DateTime(2026),
+          modifyTimestamp: DateTime(2026),
+        ),
+        onProfileSaved: (_) async {},
+        onOpenSkillLibrary: () {},
+        onOpenMcpServers: () {},
+      );
+
+      await tester.pumpWidget(
+        desktopHarness(currentIndex: 4, profilePage: profilePage),
+      );
+      await tester.pumpAndSettle();
+
+      final aboutAndLegalTitle = find.text('关于与法律信息');
+      final scrollPosition =
+          Scrollable.of(tester.element(aboutAndLegalTitle)).position;
+      scrollPosition.jumpTo(scrollPosition.maxScrollExtent);
+      await tester.pump();
+
+      final myButton =
+          find
+              .ancestor(of: find.text('我的'), matching: find.byType(ShadButton))
+              .first;
+      final aboutAndLegalSection = find.ancestor(
+        of: aboutAndLegalTitle,
+        matching: find.byType(ShadCard),
+      );
+      final viewportBottom =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      final myButtonBottomInset =
+          viewportBottom - tester.getRect(myButton).bottom;
+      final sectionBottomInset =
+          viewportBottom - tester.getRect(aboutAndLegalSection).bottom;
+
+      expect(
+        myButtonBottomInset,
+        closeTo(StarsDesktopThemeSpec.sidebarFooterBottomInset, 0.01),
+      );
+      expect(sectionBottomInset, closeTo(myButtonBottomInset, 0.01));
+      expect(tester.takeException(), isNull);
+    });
   });
 
   testWidgets(

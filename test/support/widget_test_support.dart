@@ -83,6 +83,7 @@ Widget desktopHarness({
   Bot? selectedChatBot,
   String? selectedChatId,
   Widget? chatListPage,
+  Widget? profilePage,
   VoidCallback? onCreateChat,
   VoidCallback? onSearchRequested,
 }) {
@@ -98,7 +99,7 @@ Widget desktopHarness({
               const Center(child: Text('bot list')),
               const Center(child: Text('skills')),
               const Center(child: Text('mcp servers')),
-              const Center(child: Text('profile')),
+              profilePage ?? const Center(child: Text('profile')),
             ],
             selectedChatId: selectedChatId,
             selectedChatBot: selectedChatBot,

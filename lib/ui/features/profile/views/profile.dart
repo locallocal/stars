@@ -392,7 +392,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return ColoredBox(
       color: StarsDesktopThemeSpec.workspaceSurface(context),
       child: SingleChildScrollView(
-        padding: StarsDesktopThemeSpec.formPagePadding,
+        padding: StarsDesktopThemeSpec.profilePagePadding,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
