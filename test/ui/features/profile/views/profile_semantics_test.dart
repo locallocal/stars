@@ -391,6 +391,61 @@ Application: Stars
     }
   });
 
+  testWidgets('system prompt icon matches and centers with the Skill row', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      await tester.pumpWidget(_profileHarness());
+      await tester.pumpAndSettle();
+
+      final skillEntry = find.byKey(
+        const ValueKey<String>('profile-skill-library'),
+      );
+      final promptPanel = find.byKey(
+        const ValueKey<String>('profile-application-injected-prompt'),
+      );
+      final promptHeader = find.byKey(
+        const ValueKey<String>('profile-application-prompt-header'),
+      );
+      final promptIcon = find.byKey(
+        const ValueKey<String>('profile-application-prompt-icon'),
+      );
+      final skillIcon = find.descendant(
+        of: skillEntry,
+        matching: find.byIcon(LucideIcons.wrench),
+      );
+
+      await tester.scrollUntilVisible(
+        promptPanel,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(skillIcon, findsOneWidget);
+      expect(promptIcon, findsOneWidget);
+      expect(tester.widget<Icon>(promptIcon).icon, LucideIcons.lockKeyhole);
+      expect(
+        tester.widget<Icon>(promptIcon).size,
+        tester.widget<Icon>(skillIcon).size,
+      );
+      expect(
+        (tester.getCenter(promptIcon).dx - tester.getCenter(skillIcon).dx)
+            .abs(),
+        lessThan(0.01),
+      );
+      expect(
+        (tester.getCenter(promptIcon).dy - tester.getCenter(promptHeader).dy)
+            .abs(),
+        lessThan(0.01),
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('desktop general section opens Skill and MCP pages', (
     tester,
   ) async {
