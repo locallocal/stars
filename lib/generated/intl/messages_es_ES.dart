@@ -148,7 +148,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Prompt del sistema",
     ),
     "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
-      "Stars lo administra y lo añade a cada solicitud al modelo. Los identificadores del agente y la conversación actuales se agregan en tiempo de ejecución y no se pueden editar.",
+      "Stars lo administra. Al activarlo, el contenido siguiente se añade a las solicitudes del modelo de la conversación; al desactivarlo, se omite. El contexto de ejecución necesario no se ve afectado. El contenido no se puede editar.",
     ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),

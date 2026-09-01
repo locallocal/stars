@@ -303,14 +303,14 @@ void main() {
       final profile = await repository.getProfile();
       expect(profile.fontSize, ProfileDefaults.desktopFontSize);
       expect(profile.showExecutionStatus, isTrue);
-      final updated = Profile(
+      expect(profile.injectApplicationPrompt, isTrue);
+      final updated = profile.copyWith(
         name: 'Earthwind',
-        avatar: profile.avatar,
         fontSize: 18,
         themeMode: 2,
         language: 'en_US',
         showExecutionStatus: false,
-        createTimestamp: profile.createTimestamp,
+        injectApplicationPrompt: false,
         modifyTimestamp: DateTime(2026, 7, 21),
       );
       await repository.updateProfile(updated);
@@ -319,6 +319,7 @@ void main() {
       final rows = await database.query('profile');
       expect(rows, hasLength(1));
       expect(rows.single['show_execution_status'], 0);
+      expect(rows.single['inject_application_prompt'], 0);
       expect(await repository.getProfile(), same(updated));
       expect(changes, [updated]);
     },

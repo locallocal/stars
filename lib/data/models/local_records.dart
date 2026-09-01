@@ -215,6 +215,7 @@ final class ProfileRecord {
       'theme_mode': profile.themeMode,
       'language': profile.language,
       'show_execution_status': profile.showExecutionStatus ? 1 : 0,
+      'inject_application_prompt': profile.injectApplicationPrompt ? 1 : 0,
       'create_timestamp': profile.createTimestamp.millisecondsSinceEpoch,
       'modify_timestamp': profile.modifyTimestamp.millisecondsSinceEpoch,
     });
@@ -230,6 +231,10 @@ final class ProfileRecord {
       themeMode: _storageInt(values['theme_mode']),
       language: _string(values['language']),
       showExecutionStatus: _storageBool(values['show_execution_status']),
+      injectApplicationPrompt: _storageBoolOrDefault(
+        values['inject_application_prompt'],
+        defaultValue: true,
+      ),
       createTimestamp: _timestamp(values['create_timestamp']),
       modifyTimestamp: _timestamp(values['modify_timestamp']),
     );
@@ -396,6 +401,9 @@ bool _storageBool(Object? value) {
     _ => throw const FormatException('Stored value must be 0 or 1.'),
   };
 }
+
+bool _storageBoolOrDefault(Object? value, {required bool defaultValue}) =>
+    value == null ? defaultValue : _storageBool(value);
 
 DateTime _timestamp(Object? value) =>
     DateTime.fromMillisecondsSinceEpoch(_storageInt(value));

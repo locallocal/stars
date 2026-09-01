@@ -1,6 +1,9 @@
 import 'dart:io';
 
 typedef StarsSystemPromptProvider = String Function();
+typedef StarsSystemPromptEnabledProvider = Future<bool> Function();
+
+Future<bool> starsSystemPromptEnabledByDefault() async => true;
 
 /// Builds the application context that precedes every model-facing system
 /// prompt.

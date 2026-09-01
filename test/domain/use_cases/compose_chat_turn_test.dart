@@ -165,6 +165,38 @@ void main() {
   });
 
   test(
+    'omits the Stars application prompt when injection is disabled',
+    () async {
+      var preferenceReads = 0;
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(const {}),
+        bindingRepository: _FakeBindingRepository(const []),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        starsSystemPromptProvider: _testStarsSystemPrompt,
+        starsSystemPromptEnabledProvider: () async {
+          preferenceReads += 1;
+          return false;
+        },
+      );
+
+      final result = await compose(
+        bot: _bot(systemPrompt: 'Bot-owned instructions.'),
+        history: const [],
+        userMessage: _message(senderId: 'user-1', content: 'Hello'),
+        currentUserId: 'user-1',
+      );
+
+      final systemPrompt = result.messages.first.content;
+      expect(systemPrompt, isNot(contains('<stars_application_context>')));
+      expect(systemPrompt, isNot(contains('<stars_reliability_policy>')));
+      expect(systemPrompt, contains('<stars_conversation_context>'));
+      expect(systemPrompt, contains('Bot-owned instructions.'));
+      expect(preferenceReads, 1);
+    },
+  );
+
+  test(
     'auto activation uses structured tools and injects requested references',
     () async {
       final auto = _skill(

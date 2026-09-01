@@ -566,7 +566,7 @@
     "desktopAppearanceAndLanguage": "दिखावट और भाषा",
     "desktopGeneral": "सामान्य",
     "applicationInjectedPrompt": "सिस्टम प्रॉम्प्ट",
-    "applicationInjectedPromptDescription": "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
+    "applicationInjectedPromptDescription": "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
     "desktopHelpAndSupport": "सहायता और समर्थन",
     "desktopAboutAndLegal": "ऐप के बारे में और कानूनी जानकारी",
     "desktopSettingsDescription": "अपनी प्रोफ़ाइल, दिखावट, भाषा और ऐप सहायता प्रबंधित करें।",

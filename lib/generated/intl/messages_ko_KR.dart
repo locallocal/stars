@@ -141,7 +141,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "시스템 프롬프트",
     ),
     "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
-      "Stars에서 관리하며 모든 모델 요청에 주입됩니다. 현재 에이전트와 대화 식별자는 런타임에 추가되며 편집할 수 없습니다.",
+      "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
     ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),

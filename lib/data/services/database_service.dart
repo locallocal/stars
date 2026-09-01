@@ -71,6 +71,7 @@ class DatabaseService {
       onCreate: createSchema,
     );
     try {
+      await _ensureCompatibleProfileSchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
       return database;
@@ -82,6 +83,18 @@ class DatabaseService {
 
   static Future<void> configure(Database database) async {
     await database.execute('PRAGMA foreign_keys = ON');
+  }
+
+  static Future<void> _ensureCompatibleProfileSchema(Database database) async {
+    final columns = await database.rawQuery('PRAGMA table_info(profile)');
+    final columnNames =
+        columns.map((column) => column['name']).whereType<String>().toSet();
+    if (columnNames.contains('inject_application_prompt')) return;
+    await database.execute('''
+      ALTER TABLE profile
+      ADD COLUMN inject_application_prompt INTEGER NOT NULL DEFAULT 1
+        CHECK (inject_application_prompt IN (0, 1))
+    ''');
   }
 
   static Future<void> _migrateLegacyData(
@@ -440,6 +453,8 @@ class DatabaseService {
         language TEXT NOT NULL,
         show_execution_status INTEGER NOT NULL
           CHECK (show_execution_status IN (0, 1)),
+        inject_application_prompt INTEGER NOT NULL DEFAULT 1
+          CHECK (inject_application_prompt IN (0, 1)),
         create_timestamp INTEGER NOT NULL,
         modify_timestamp INTEGER NOT NULL
       )

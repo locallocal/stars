@@ -320,6 +320,63 @@ void main() {
     });
 
     test(
+      'adds the prompt preference to an existing current database',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'stars_current_profile_upgrade_',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final dataDirectory = _applicationDataDirectory(directory);
+        await dataDirectory.create(recursive: true);
+        final databasePath = path.join(dataDirectory.path, 'app.db');
+        final initialDatabase = await databaseFactoryFfi.openDatabase(
+          databasePath,
+          options: OpenDatabaseOptions(
+            version: DatabaseService.databaseVersion,
+            onConfigure: DatabaseService.configure,
+            onCreate: DatabaseService.createSchema,
+          ),
+        );
+        await initialDatabase.execute('DROP TABLE profile');
+        await initialDatabase.execute('''
+          CREATE TABLE profile (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            avatar TEXT NOT NULL,
+            font_size REAL NOT NULL,
+            theme_mode INTEGER NOT NULL,
+            language TEXT NOT NULL,
+            show_execution_status INTEGER NOT NULL
+              CHECK (show_execution_status IN (0, 1)),
+            create_timestamp INTEGER NOT NULL,
+            modify_timestamp INTEGER NOT NULL
+          )
+        ''');
+        await initialDatabase.insert('profile', <String, Object?>{
+          'name': 'Existing User',
+          'avatar': '',
+          'font_size': 14.0,
+          'theme_mode': 0,
+          'language': 'zh_CN',
+          'show_execution_status': 1,
+          'create_timestamp': 1,
+          'modify_timestamp': 1,
+        });
+        await initialDatabase.close();
+
+        final service = DatabaseService(
+          applicationDocumentsDirectoryProvider: () async => directory,
+        );
+        final migratedDatabase = await service.initDatabase();
+        addTearDown(migratedDatabase.close);
+
+        final rows = await migratedDatabase.query('profile');
+        expect(rows.single['name'], 'Existing User');
+        expect(rows.single['inject_application_prompt'], 1);
+      },
+    );
+
+    test(
       'deletes any non-current database before creating the current schema',
       () async {
         final directory = await Directory.systemTemp.createTemp(
@@ -616,6 +673,29 @@ Future<void> _expectCurrentSchema(Database database) async {
       (column) => column['name'] == 'turn_id',
     )['notnull'],
     1,
+  );
+
+  final profileColumns = await database.rawQuery('PRAGMA table_info(profile)');
+  expect(
+    profileColumns.map((column) => column['name']),
+    orderedEquals(<String>[
+      'id',
+      'name',
+      'avatar',
+      'font_size',
+      'theme_mode',
+      'language',
+      'show_execution_status',
+      'inject_application_prompt',
+      'create_timestamp',
+      'modify_timestamp',
+    ]),
+  );
+  expect(
+    profileColumns.singleWhere(
+      (column) => column['name'] == 'inject_application_prompt',
+    )['dflt_value'],
+    '1',
   );
 
   final mcpColumns = await database.rawQuery('PRAGMA table_info(mcp_servers)');

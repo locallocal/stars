@@ -141,6 +141,7 @@ void main() {
       themeMode: 2,
       language: 'zh_CN',
       showExecutionStatus: false,
+      injectApplicationPrompt: false,
       createTimestamp: timestamp,
       modifyTimestamp: timestamp,
     );
@@ -160,6 +161,15 @@ void main() {
     expect(restoredChat.lastMessageTimestamp, timestamp);
     expect(restoredProfile.fontSize, 18);
     expect(restoredProfile.showExecutionStatus, isFalse);
+    expect(restoredProfile.injectApplicationPrompt, isFalse);
+
+    final legacyProfileValues = Map<String, Object?>.from(
+      ProfileRecord.fromDomain(profile).values,
+    )..remove('inject_application_prompt');
+    expect(
+      ProfileRecord(legacyProfileValues).toDomain().injectApplicationPrompt,
+      isTrue,
+    );
   });
 
   test('rejects corrupt current Bot parameters instead of erasing them', () {

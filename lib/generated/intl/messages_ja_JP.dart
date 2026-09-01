@@ -142,10 +142,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "システムプロンプト",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars が管理し、すべてのモデルリクエストに注入します。現在のエージェントと会話の識別子は実行時に追加され、編集できません。",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),

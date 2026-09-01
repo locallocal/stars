@@ -566,7 +566,7 @@
     "desktopAppearanceAndLanguage": "Erscheinungsbild und Sprache",
     "desktopGeneral": "Allgemein",
     "applicationInjectedPrompt": "System-Prompt",
-    "applicationInjectedPromptDescription": "Wird von Stars verwaltet und jeder Modellanfrage hinzugefügt. Die Kennungen des aktuellen Agenten und der Unterhaltung werden zur Laufzeit ergänzt und können nicht bearbeitet werden.",
+    "applicationInjectedPromptDescription": "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
     "desktopHelpAndSupport": "Hilfe und Support",
     "desktopAboutAndLegal": "Info und Rechtliches",
     "desktopSettingsDescription": "Verwalte dein Profil, das Erscheinungsbild, die Sprache und den App-Support.",

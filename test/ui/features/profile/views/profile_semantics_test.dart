@@ -347,6 +347,50 @@ Application: Stars
     }
   });
 
+  testWidgets('system prompt switch persists the injection preference', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    Profile? savedProfile;
+    try {
+      await tester.pumpWidget(
+        _profileHarness(
+          onProfileSaved: (profile) async => savedProfile = profile,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final promptPanel = find.byKey(
+        const ValueKey<String>('profile-application-injected-prompt'),
+      );
+      final switchFinder = find.byKey(
+        const ValueKey<String>('profile-inject-application-prompt-switch'),
+      );
+      await tester.scrollUntilVisible(
+        promptPanel,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<ShadSwitch>(switchFinder).value, isTrue);
+
+      await tester.tap(switchFinder);
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<ShadSwitch>(switchFinder).value, isFalse);
+      expect(savedProfile?.injectApplicationPrompt, isFalse);
+      expect(
+        find.byKey(const ValueKey<String>('profile-application-prompt-value')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('desktop general section opens Skill and MCP pages', (
     tester,
   ) async {

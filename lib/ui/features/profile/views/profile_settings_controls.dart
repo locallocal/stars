@@ -297,27 +297,47 @@ extension _ProfileSettingsControls on _ProfilePageState {
     required bool desktop,
   }) {
     final prompt = _applicationInjectedPrompt;
+    final promptSwitch =
+        desktop
+            ? ShadSwitch(
+              key: const ValueKey<String>(
+                'profile-inject-application-prompt-switch',
+              ),
+              value: _injectApplicationPrompt,
+              onChanged: _updateInjectApplicationPrompt,
+            )
+            : Switch.adaptive(
+              key: const ValueKey<String>(
+                'profile-inject-application-prompt-switch',
+              ),
+              value: _injectApplicationPrompt,
+              onChanged: _updateInjectApplicationPrompt,
+            );
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            SizedBox(
-              width: StarsDesktopThemeSpec.settingsRowIconSlotWidth,
-              child: Icon(
-                Icons.lock_outline_rounded,
-                size: StarsDesktopThemeSpec.settingsRowIconSize,
-                color: StarsDesktopThemeSpec.mutedText(context),
+        MergeSemantics(
+          child: Row(
+            children: [
+              SizedBox(
+                width: StarsDesktopThemeSpec.settingsRowIconSlotWidth,
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  size: StarsDesktopThemeSpec.settingsRowIconSize,
+                  color: StarsDesktopThemeSpec.mutedText(context),
+                ),
               ),
-            ),
-            const SizedBox(width: StarsDesktopThemeSpec.settingsRowIconGap),
-            Expanded(
-              child: Text(
-                S.of(context).applicationInjectedPrompt,
-                style: StarsDesktopThemeSpec.bodyStyle(context),
+              const SizedBox(width: StarsDesktopThemeSpec.settingsRowIconGap),
+              Expanded(
+                child: Text(
+                  S.of(context).applicationInjectedPrompt,
+                  style: StarsDesktopThemeSpec.bodyStyle(context),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: StarsDesktopThemeSpec.settingsRowValueGap),
+              promptSwitch,
+            ],
+          ),
         ),
         const SizedBox(height: 4),
         Padding(
@@ -410,14 +430,8 @@ extension _ProfileSettingsControls on _ProfilePageState {
     if (_profile == null || (_fontSize - value).abs() < 0.01) return;
 
     setState(() {
-      _profile = Profile(
-        name: _name,
-        avatar: _avatar,
+      _profile = _profile!.copyWith(
         fontSize: value,
-        themeMode: themeModeToInt(_themeMode),
-        language: _language,
-        showExecutionStatus: _showExecutionStatus,
-        createTimestamp: _profile!.createTimestamp,
         modifyTimestamp: DateTime.now(),
       );
     });
@@ -431,14 +445,19 @@ extension _ProfileSettingsControls on _ProfilePageState {
   Future<void> _updateShowExecutionStatus(bool value) async {
     if (_profile == null || _showExecutionStatus == value) return;
     setState(() {
-      _profile = Profile(
-        name: _name,
-        avatar: _avatar,
-        fontSize: _fontSize,
-        themeMode: themeModeToInt(_themeMode),
-        language: _language,
+      _profile = _profile!.copyWith(
         showExecutionStatus: value,
-        createTimestamp: _profile!.createTimestamp,
+        modifyTimestamp: DateTime.now(),
+      );
+    });
+    await _saveProfile();
+  }
+
+  Future<void> _updateInjectApplicationPrompt(bool value) async {
+    if (_profile == null || _injectApplicationPrompt == value) return;
+    setState(() {
+      _profile = _profile!.copyWith(
+        injectApplicationPrompt: value,
         modifyTimestamp: DateTime.now(),
       );
     });

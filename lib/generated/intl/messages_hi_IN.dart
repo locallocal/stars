@@ -146,7 +146,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "सिस्टम प्रॉम्प्ट",
     ),
     "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
-      "Stars इसे प्रबंधित करता है और हर मॉडल अनुरोध में जोड़ता है। वर्तमान एजेंट और बातचीत के पहचानकर्ता रनटाइम पर जोड़े जाते हैं और संपादित नहीं किए जा सकते।",
+      "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
     ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),

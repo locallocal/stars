@@ -132,7 +132,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage("系統提示詞"),
     "applicationInjectedPromptDescription":
         MessageLookupByLibrary.simpleMessage(
-          "由 Stars 管理並注入至每次模型請求。目前智慧代理與對話識別碼會在執行階段補充，無法編輯。",
+          "由 Stars 管理。啟用後會將以下內容注入對話模型請求，停用後不會注入；必要的執行階段對話內容不受此開關影響。內容無法編輯。",
         ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),

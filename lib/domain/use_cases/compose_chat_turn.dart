@@ -95,6 +95,8 @@ final class ComposeChatTurn {
     conversationArtifactsDirectoryProvider,
     StarsSystemPromptProvider starsSystemPromptProvider =
         currentStarsSystemPrompt,
+    StarsSystemPromptEnabledProvider starsSystemPromptEnabledProvider =
+        starsSystemPromptEnabledByDefault,
   }) : _skillRepository = skillRepository,
        _bindingRepository = bindingRepository,
        _mcpServerRepository = mcpServerRepository,
@@ -105,7 +107,8 @@ final class ComposeChatTurn {
        _bundledSkillLoader = bundledSkillLoader,
        _conversationArtifactsDirectoryProvider =
            conversationArtifactsDirectoryProvider,
-       _starsSystemPromptProvider = starsSystemPromptProvider;
+       _starsSystemPromptProvider = starsSystemPromptProvider,
+       _starsSystemPromptEnabledProvider = starsSystemPromptEnabledProvider;
 
   final SkillRepository _skillRepository;
   final BotSkillBindingRepository _bindingRepository;
@@ -118,6 +121,7 @@ final class ComposeChatTurn {
   final ConversationArtifactsDirectoryProvider
   _conversationArtifactsDirectoryProvider;
   final StarsSystemPromptProvider _starsSystemPromptProvider;
+  final StarsSystemPromptEnabledProvider _starsSystemPromptEnabledProvider;
 
   Future<PreparedChatTurn> call({
     required Bot bot,
@@ -131,6 +135,7 @@ final class ComposeChatTurn {
     if (conversationArtifactsDirectory.trim().isEmpty) {
       throw StateError('The conversation artifacts directory is unavailable.');
     }
+    final injectApplicationPrompt = await _starsSystemPromptEnabledProvider();
     final bundledContents = await _loadBundledSkills();
     final bindings = await _bindingRepository.getForBot(bot.id);
     final enabledBindings =
@@ -194,6 +199,7 @@ final class ComposeChatTurn {
           descriptors: descriptors,
           state: state,
           conversationArtifactsDirectory: conversationArtifactsDirectory,
+          injectApplicationPrompt: injectApplicationPrompt,
         );
       } on TimeoutException {
         state.toolCalls.add(
@@ -322,6 +328,7 @@ final class ComposeChatTurn {
           systemDirectoryOperationsSkill != null ||
           systemFileOperationsSkill != null ||
           systemMcpInstallerSkill != null,
+      injectApplicationPrompt: injectApplicationPrompt,
     );
     final contextPreparer = _prepareConversationContext;
     var preparedContext =
@@ -470,6 +477,7 @@ final class ComposeChatTurn {
     List<SkillCatalogEntry> catalog = const [],
     List<SkillResourceContent> resources = const [],
     bool processToolsAvailable = false,
+    required bool injectApplicationPrompt,
   }) {
     final sections = <String>[
       buildStarsConversationContext(
@@ -507,8 +515,10 @@ ${entry.content.instructions.trim()}
 ${resource.content.trim()}
 </skill_resource>''');
     }
+    final composedPrompt = sections.join('\n\n');
+    if (!injectApplicationPrompt) return composedPrompt;
     return prependStarsSystemPrompt(
-      sections.join('\n\n'),
+      composedPrompt,
       starsSystemPromptProvider: _starsSystemPromptProvider,
     );
   }

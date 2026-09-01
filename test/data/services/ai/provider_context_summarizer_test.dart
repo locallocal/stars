@@ -47,6 +47,46 @@ void main() {
   });
 
   test(
+    'omits Stars context from summaries when injection is disabled',
+    () async {
+      final provider = _SummaryProvider();
+      final summarizer = ProviderContextSummarizer(
+        bot: _bot,
+        providerFactory: (_) => provider,
+        starsSystemPromptProvider: _testStarsSystemPrompt,
+        starsSystemPromptEnabledProvider: () async => false,
+      );
+
+      await summarizer.summarize(
+        ContextSummaryRequest(
+          chatId: 'chat-1',
+          summaryId: 'summary-1',
+          sourceMessages: [
+            Message(
+              messageId: 'message-1',
+              chatId: 'chat-1',
+              botId: _bot.id,
+              senderId: 'user-1',
+              content: 'Keep this short.',
+              timestamp: DateTime(2026),
+            ),
+          ],
+          targetTokens: 500,
+        ),
+      );
+
+      expect(
+        provider.messages.first.content,
+        isNot(contains('<stars_application_context>')),
+      );
+      expect(
+        provider.messages.first.content,
+        startsWith('You compress conversation data.'),
+      );
+    },
+  );
+
+  test(
     'drops an assistant fact that has no successful tool evidence',
     () async {
       final provider = _SummaryProvider(response: _factResponse('assistant-1'));

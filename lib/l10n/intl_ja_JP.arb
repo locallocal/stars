@@ -566,7 +566,7 @@
     "desktopAppearanceAndLanguage": "外観と言語",
     "desktopGeneral": "一般",
     "applicationInjectedPrompt": "システムプロンプト",
-    "applicationInjectedPromptDescription": "Stars が管理し、すべてのモデルリクエストに注入します。現在のエージェントと会話の識別子は実行時に追加され、編集できません。",
+    "applicationInjectedPromptDescription": "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
     "desktopHelpAndSupport": "ヘルプとサポート",
     "desktopAboutAndLegal": "このアプリについて・法的情報",
     "desktopSettingsDescription": "プロフィール、外観、言語、アプリのサポートを管理します。",
