@@ -139,12 +139,7 @@ typedef MessageIdFactory = String Function(String prefix);
 typedef SkillActivationPersister =
     Future<void> Function(Iterable<SkillActivationRecord> records);
 typedef ToolInvocationPersister =
-    Future<void> Function(
-      String runId,
-      String chatId,
-      String botId,
-      MessageToolCall audit,
-    );
+    Future<void> Function(ToolExecutionRecord record);
 typedef TerminalMessageObserver =
     Future<void> Function(
       String chatId,

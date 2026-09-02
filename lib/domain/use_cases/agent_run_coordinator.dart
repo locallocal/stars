@@ -410,6 +410,7 @@ final class AgentRunCoordinator {
     required void Function(ToolInvocationRecord) observeInvocation,
   }) async {
     final fingerprint = _fingerprint(call);
+    final executionId = '$runId:tool:${call.callId}';
     final attempts = (callAttempts[call.callId] ?? 0) + 1;
     callAttempts[call.callId] = attempts;
     if (attempts > _limits.maxSameCallRetries + 1) {
@@ -431,6 +432,7 @@ final class AgentRunCoordinator {
       final now = DateTime.now();
       observeInvocation(
         ToolInvocationRecord(
+          executionId: executionId,
           callId: call.callId,
           name: call.name,
           title: definition?.title ?? '',
@@ -476,6 +478,7 @@ final class AgentRunCoordinator {
       );
       observeInvocation(
         ToolInvocationRecord(
+          executionId: executionId,
           callId: call.callId,
           name: call.name,
           title: tool?.definition.title ?? '',
@@ -497,6 +500,7 @@ final class AgentRunCoordinator {
     final definition = tool.definition;
     final startedAt = DateTime.now();
     var record = ToolInvocationRecord(
+      executionId: executionId,
       callId: call.callId,
       name: call.name,
       title: definition.title,

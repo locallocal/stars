@@ -1,6 +1,9 @@
 part of 'database_service.dart';
 
-Future<void> _verifyCurrentDatabaseSchema(Database database) async {
+Future<void> _verifyCurrentDatabaseSchema(
+  Database database, {
+  bool allowMissingToolExecutionSchema = false,
+}) async {
   final tables = await database.rawQuery('''
     SELECT name
     FROM sqlite_master
@@ -8,7 +11,11 @@ Future<void> _verifyCurrentDatabaseSchema(Database database) async {
   ''');
   final tableNames =
       tables.map((row) => row['name']).whereType<String>().toSet();
-  if (!_setsEqual(tableNames, _currentTableNames)) {
+  final hasCurrentTables = _setsEqual(tableNames, _currentTableNames);
+  final hasCompatibleTables =
+      allowMissingToolExecutionSchema &&
+      _setsEqual(tableNames, _currentTableNamesWithoutToolExecutions);
+  if (!hasCurrentTables && !hasCompatibleTables) {
     throw const FormatException(
       'Database tables do not match the current Stars schema.',
     );
@@ -21,7 +28,11 @@ Future<void> _verifyCurrentDatabaseSchema(Database database) async {
   ''');
   final indexNames =
       indexes.map((row) => row['name']).whereType<String>().toSet();
-  if (!_setsEqual(indexNames, _currentIndexNames)) {
+  final hasCurrentIndexes = _setsEqual(indexNames, _currentIndexNames);
+  final hasCompatibleIndexes =
+      allowMissingToolExecutionSchema &&
+      _setsEqual(indexNames, _currentIndexNamesWithoutToolExecutions);
+  if (!hasCurrentIndexes && !hasCompatibleIndexes) {
     throw const FormatException(
       'Database indexes do not match the current Stars schema.',
     );
@@ -97,6 +108,7 @@ const Set<String> _currentTableNames = <String>{
   'bots',
   'chats',
   'messages',
+  'tool_execution_records',
   'token_usage_records',
   'skills',
   'bot_skill_bindings',
@@ -118,6 +130,8 @@ const Set<String> _currentTableNames = <String>{
 const Set<String> _currentIndexNames = <String>{
   'messages_message_id_unique',
   'messages_bot_id_index',
+  'tool_execution_records_run_id_index',
+  'tool_execution_records_chat_started_at_index',
   'token_usage_records_chat_id_index',
   'token_usage_records_bot_id_index',
   'bot_skill_bindings_skill_id_index',
@@ -130,6 +144,18 @@ const Set<String> _currentIndexNames = <String>{
   'messages_chat_timestamp_message_index',
   'mcp_tools_server_id_index',
 };
+
+final Set<String> _currentTableNamesWithoutToolExecutions = Set.unmodifiable(
+  _currentTableNames.where((name) => name != 'tool_execution_records'),
+);
+
+final Set<String> _currentIndexNamesWithoutToolExecutions = Set.unmodifiable(
+  _currentIndexNames.where(
+    (name) =>
+        name != 'tool_execution_records_run_id_index' &&
+        name != 'tool_execution_records_chat_started_at_index',
+  ),
+);
 
 const Set<String> _currentTriggerNames = <String>{
   'bot_skill_bindings_validate_skill_insert',

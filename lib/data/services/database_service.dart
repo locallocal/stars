@@ -8,6 +8,7 @@ import 'package:stars/data/services/application_data_directory.dart';
 import 'package:stars/domain/models/app_failure.dart';
 
 part 'database_schema_verifier.dart';
+part 'database_tool_execution_schema.dart';
 
 typedef ApplicationDocumentsDirectoryProvider = Future<Directory> Function();
 
@@ -72,6 +73,7 @@ class DatabaseService {
     );
     try {
       await _ensureCompatibleProfileSchema(database);
+      await _ensureCompatibleToolExecutionSchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
       return database;
@@ -229,7 +231,10 @@ class DatabaseService {
         throw const FormatException('Backup schema version is not current.');
       }
       await _verifyIntegrity(database);
-      await _verifyCurrentDatabaseSchema(database);
+      await _verifyCurrentDatabaseSchema(
+        database,
+        allowMissingToolExecutionSchema: true,
+      );
     } finally {
       await database.close();
     }
@@ -436,6 +441,7 @@ class DatabaseService {
       'ON messages(message_id)',
     );
     await db.execute('CREATE INDEX messages_bot_id_index ON messages(bot_id)');
+    await _createToolExecutionSchema(db);
     await _createTokenUsageSchema(db);
     await _createSkillSchema(db);
     await _createSkillEcosystemSchema(db);

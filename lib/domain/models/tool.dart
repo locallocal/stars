@@ -536,6 +536,7 @@ enum ToolInvocationStatus {
 
 final class ToolInvocationRecord {
   ToolInvocationRecord({
+    required this.executionId,
     required this.callId,
     required this.name,
     this.title = '',
@@ -552,6 +553,7 @@ final class ToolInvocationRecord {
     this.durationMs,
   }) : arguments = Map<String, Object?>.unmodifiable(arguments);
 
+  final String executionId;
   final String callId;
   final String name;
   final String title;
@@ -576,6 +578,7 @@ final class ToolInvocationRecord {
     int? durationMs,
   }) {
     return ToolInvocationRecord(
+      executionId: executionId,
       callId: callId,
       name: name,
       title: title,
@@ -592,4 +595,60 @@ final class ToolInvocationRecord {
       durationMs: durationMs ?? this.durationMs,
     );
   }
+}
+
+/// A redacted, durable audit record for one tool execution in a chat run.
+///
+/// [executionId] is stable while the invocation moves through requested,
+/// approval, running, and terminal states. Raw tool arguments and results are
+/// intentionally excluded from this model so credentials cannot cross the
+/// persistence boundary.
+final class ToolExecutionRecord {
+  const ToolExecutionRecord({
+    required this.executionId,
+    required this.runId,
+    required this.turnId,
+    required this.messageId,
+    required this.chatId,
+    required this.botId,
+    required this.callId,
+    required this.name,
+    this.title = '',
+    this.mcpServerName = '',
+    required this.source,
+    required this.riskLevel,
+    required this.status,
+    this.detail = '',
+    this.argumentsSummary = '',
+    this.resultSummary = '',
+    this.approvalStatus = '',
+    this.errorCode = '',
+    this.durationMs,
+    required this.startedAt,
+    this.completedAt,
+    required this.updatedAt,
+  });
+
+  final String executionId;
+  final String runId;
+  final String turnId;
+  final String messageId;
+  final String chatId;
+  final String botId;
+  final String callId;
+  final String name;
+  final String title;
+  final String mcpServerName;
+  final ToolSource source;
+  final ToolRiskLevel riskLevel;
+  final ToolInvocationStatus status;
+  final String detail;
+  final String argumentsSummary;
+  final String resultSummary;
+  final String approvalStatus;
+  final String errorCode;
+  final int? durationMs;
+  final DateTime startedAt;
+  final DateTime? completedAt;
+  final DateTime updatedAt;
 }

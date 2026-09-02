@@ -1,5 +1,6 @@
 class MessageToolCall {
   const MessageToolCall({
+    this.executionId = '',
     this.callId = '',
     required this.name,
     this.title = '',
@@ -15,6 +16,7 @@ class MessageToolCall {
     this.durationMs,
   });
 
+  final String executionId;
   final String callId;
   final String name;
   final String title;
@@ -38,6 +40,7 @@ class MessageToolCall {
     int? durationMs,
   }) {
     return MessageToolCall(
+      executionId: executionId,
       callId: callId,
       name: name,
       title: title,

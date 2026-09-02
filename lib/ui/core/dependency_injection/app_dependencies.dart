@@ -21,6 +21,7 @@ import 'package:stars/data/repositories/sqlite_profile_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_run_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_ecosystem_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_inventory_repository.dart';
+import 'package:stars/data/repositories/sqlite_tool_execution_repository.dart';
 import 'package:stars/data/services/feedback_service.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
 import 'package:stars/data/services/asset_text_service.dart';
@@ -80,6 +81,7 @@ import 'package:stars/domain/repositories/skill_repository.dart';
 import 'package:stars/domain/repositories/skill_ecosystem_repository.dart';
 import 'package:stars/domain/repositories/skill_inventory_repository.dart';
 import 'package:stars/domain/repositories/skill_run_repository.dart';
+import 'package:stars/domain/repositories/tool_execution_repository.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -138,6 +140,7 @@ class AppDependencies {
     required this.conversationMemoryRepository,
     required this.conversationHistoryRepository,
     required this.skillRunRepository,
+    required this.toolExecutionRepository,
     required this.mcpServerRepository,
     required this.mcpInventoryRepository,
     required this.mcpCredentialStore,
@@ -340,6 +343,9 @@ class AppDependencies {
     final skillRunRepository = SqliteSkillRunRepository(
       localDatabase: localDatabase,
     );
+    final toolExecutionRepository = SqliteToolExecutionRepository(
+      localDatabase: localDatabase,
+    );
     final conversationSkillPinRepository = SqliteConversationSkillPinRepository(
       localDatabase: localDatabase,
     );
@@ -446,6 +452,7 @@ class AppDependencies {
       conversationMemoryRepository: conversationMemoryRepository,
       conversationHistoryRepository: conversationHistoryRepository,
       skillRunRepository: skillRunRepository,
+      toolExecutionRepository: toolExecutionRepository,
       mcpServerRepository: mcpServerRepository,
       mcpInventoryRepository: mcpInventoryRepository,
       mcpCredentialStore: mcpCredentialStore,
@@ -480,33 +487,12 @@ class AppDependencies {
             await compactConversation(bot: bot, chatId: chatId);
           }
         },
-        toolInvocationPersister: (runId, chatId, botId, audit) async {
-          final now = DateTime.now();
-          await skillEcosystemRepository.appendComplianceEvent(
-            SkillComplianceEvent(
-              id:
-                  '${now.microsecondsSinceEpoch}:tool:$runId:'
-                  '${audit.callId}:${audit.status}',
-              type: SkillComplianceEventType.toolInvoked,
-              decision: audit.approvalStatus,
-              reason: audit.errorCode,
-              metadata: {
-                'runId': runId,
-                'chatId': chatId,
-                'botId': botId,
-                'callId': audit.callId,
-                'tool': audit.name,
-                'source': audit.source,
-                'riskLevel': audit.riskLevel,
-                'status': audit.status,
-                'argumentsSummary': audit.argumentsSummary,
-                'resultSummary': audit.resultSummary,
-                'durationMs': audit.durationMs,
-              },
-              timestamp: now,
+        toolInvocationPersister:
+            (record) => _persistToolInvocation(
+              toolExecutionRepository,
+              skillEcosystemRepository,
+              record,
             ),
-          );
-        },
         toolRegistry: toolRegistry,
         toolPolicy: toolPolicy,
       ),
@@ -539,6 +525,7 @@ class AppDependencies {
   final ConversationDirectoryRepository conversationDirectoryRepository;
   final ConversationHistoryRepository conversationHistoryRepository;
   final SkillRunRepository skillRunRepository;
+  final ToolExecutionRepository toolExecutionRepository;
   final McpServerRepository mcpServerRepository;
   final McpInventoryRepository mcpInventoryRepository;
   final McpCredentialStore mcpCredentialStore;

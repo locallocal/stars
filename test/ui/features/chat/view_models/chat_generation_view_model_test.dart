@@ -591,7 +591,7 @@ void main() {
         final tool = _ViewModelTool();
         final factory = _AgentProviderFactory();
         final persisted = <Message>[];
-        final toolAudits = <MessageToolCall>[];
+        final toolAudits = <ToolExecutionRecord>[];
         final controller = ChatGenerationViewModel(
           chatId: 'chat-1',
           bot: _bot,
@@ -601,8 +601,8 @@ void main() {
             return message;
           },
           lastMessageUpdater: (_, _) async {},
-          toolInvocationPersister: (_, _, _, audit) async {
-            toolAudits.add(audit);
+          toolInvocationPersister: (record) async {
+            toolAudits.add(record);
           },
           toolRegistry: StaticToolRegistry([tool]),
         );
@@ -632,6 +632,10 @@ void main() {
         expect(controller.snapshot.streamingResponse, 'Saved.');
         expect(controller.snapshot.toolCalls.single.callId, 'save-1');
         expect(
+          controller.snapshot.toolCalls.single.executionId,
+          startsWith('run:'),
+        );
+        expect(
           controller.snapshot.toolCalls.single.status,
           ToolInvocationStatus.succeeded.name,
         );
@@ -652,14 +656,25 @@ void main() {
         expect(assistant.processInfo.toolCalls.single.title, 'Save note');
         expect(assistant.processInfo.toolCalls.single.mcpServerName, 'Notes');
         expect(
+          assistant.processInfo.toolCalls.single.executionId,
+          controller.snapshot.toolCalls.single.executionId,
+        );
+        expect(
           assistant.processInfo.toolCalls.single.approvalStatus,
           ToolApprovalDecision.allowOnce.name,
         );
         await _flushAsyncWork();
         expect(toolAudits, isNotEmpty);
+        expect(toolAudits.map((record) => record.executionId).toSet(), {
+          controller.snapshot.toolCalls.single.executionId,
+        });
+        expect(toolAudits.last.runId, startsWith('run:'));
+        expect(toolAudits.last.chatId, 'chat-1');
+        expect(toolAudits.last.source, ToolSource.mcp);
+        expect(toolAudits.last.status, ToolInvocationStatus.succeeded);
         expect(
           toolAudits.every(
-            (audit) => !audit.argumentsSummary.contains('do-not-persist'),
+            (record) => !record.argumentsSummary.contains('do-not-persist'),
           ),
           isTrue,
         );
@@ -728,7 +743,7 @@ void main() {
             'timeout_seconds': 8,
           },
         );
-        final toolAudits = <MessageToolCall>[];
+        final toolAudits = <ToolExecutionRecord>[];
         final persisted = <Message>[];
         final controller = ChatGenerationViewModel(
           chatId: 'chat-1',
@@ -739,8 +754,8 @@ void main() {
             return message;
           },
           lastMessageUpdater: (_, _) async {},
-          toolInvocationPersister: (_, _, _, audit) async {
-            toolAudits.add(audit);
+          toolInvocationPersister: (record) async {
+            toolAudits.add(record);
           },
           toolRegistry: StaticToolRegistry([tool]),
           toolPolicy: const DefaultToolPolicy(allowProcessExecution: true),
@@ -809,15 +824,15 @@ void main() {
           'connect': true,
         },
       );
-      final toolAudits = <MessageToolCall>[];
+      final toolAudits = <ToolExecutionRecord>[];
       final controller = ChatGenerationViewModel(
         chatId: 'chat-1',
         bot: _bot,
         providerFactory: factory.create,
         messagePersister: (message) async => message,
         lastMessageUpdater: (_, _) async {},
-        toolInvocationPersister: (_, _, _, audit) async {
-          toolAudits.add(audit);
+        toolInvocationPersister: (record) async {
+          toolAudits.add(record);
         },
         toolRegistry: StaticToolRegistry([tool]),
         toolPolicy: const DefaultToolPolicy(allowProcessExecution: true),
