@@ -320,6 +320,50 @@ void main() {
     });
 
     test(
+      'adds Tool execution storage to an existing current database',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'stars_current_tool_execution_upgrade_',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final dataDirectory = _applicationDataDirectory(directory);
+        await dataDirectory.create(recursive: true);
+        final databasePath = path.join(dataDirectory.path, 'app.db');
+        final initialDatabase = await databaseFactoryFfi.openDatabase(
+          databasePath,
+          options: OpenDatabaseOptions(
+            version: DatabaseService.databaseVersion,
+            onConfigure: DatabaseService.configure,
+            onCreate: DatabaseService.createSchema,
+          ),
+        );
+        await initialDatabase.insert('bots', _botRow('existing-bot'));
+        await initialDatabase.execute('DROP TABLE tool_execution_records');
+        await initialDatabase.close();
+
+        final service = DatabaseService(
+          applicationDocumentsDirectoryProvider: () async => directory,
+        );
+        final migratedDatabase = await service.initDatabase();
+        addTearDown(migratedDatabase.close);
+
+        expect(
+          await migratedDatabase.query(
+            'bots',
+            where: 'id = ?',
+            whereArgs: const <Object?>['existing-bot'],
+          ),
+          hasLength(1),
+        );
+        final tables = await migratedDatabase.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+          const <Object?>['tool_execution_records'],
+        );
+        expect(tables, hasLength(1));
+      },
+    );
+
+    test(
       'adds the prompt preference to an existing current database',
       () async {
         final directory = await Directory.systemTemp.createTemp(
@@ -577,6 +621,7 @@ Future<void> _expectCurrentSchema(Database database) async {
     unorderedEquals(<String>[
       'chats',
       'messages',
+      'tool_execution_records',
       'token_usage_records',
       'skills',
       'bot_skill_bindings',
@@ -607,6 +652,8 @@ Future<void> _expectCurrentSchema(Database database) async {
     unorderedEquals(<String>[
       'messages_message_id_unique',
       'messages_bot_id_index',
+      'tool_execution_records_run_id_index',
+      'tool_execution_records_chat_started_at_index',
       'token_usage_records_chat_id_index',
       'token_usage_records_bot_id_index',
       'bot_skill_bindings_skill_id_index',
@@ -653,6 +700,37 @@ Future<void> _expectCurrentSchema(Database database) async {
       (column) => column['name'] == 'message_id',
     )['notnull'],
     1,
+  );
+
+  final toolExecutionColumns = await database.rawQuery(
+    'PRAGMA table_info(tool_execution_records)',
+  );
+  expect(
+    toolExecutionColumns.map((column) => column['name']),
+    orderedEquals(<String>[
+      'execution_id',
+      'run_id',
+      'turn_id',
+      'message_id',
+      'chat_id',
+      'bot_id',
+      'call_id',
+      'tool_name',
+      'tool_title',
+      'mcp_server_name',
+      'source',
+      'risk_level',
+      'status',
+      'detail',
+      'arguments_summary',
+      'result_summary',
+      'approval_status',
+      'error_code',
+      'duration_ms',
+      'started_at',
+      'completed_at',
+      'updated_at',
+    ]),
   );
 
   final chatColumns = await database.rawQuery('PRAGMA table_info(chats)');

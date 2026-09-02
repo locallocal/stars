@@ -66,10 +66,14 @@ void main() {
       expect(session.continuations, hasLength(1));
       expect(session.continuations.single.single.content, '4');
       expect(records.last.status, ToolInvocationStatus.succeeded);
+      expect(records.last.executionId, 'run-1:tool:call-1');
       expect(
         result.toolInvocations.single.status,
         ToolInvocationStatus.succeeded,
       );
+      expect(records.map((record) => record.executionId).toSet(), {
+        'run-1:tool:call-1',
+      });
       expect(events.whereType<ToolCallRequested>(), hasLength(1));
     });
 

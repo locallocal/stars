@@ -92,6 +92,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   ContextAssemblyReport? _contextAssemblyReport;
   Timer? _partialPersistenceTimer;
   Future<void> _partialPersistenceQueue = Future<void>.value();
+  Future<void> _toolPersistenceQueue = Future<void>.value();
 
   ChatGenerationSnapshot get snapshot => _snapshot;
   ContextAssemblyReport? get contextAssemblyReport => _contextAssemblyReport;
@@ -517,6 +518,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _partialPersistenceTimer?.cancel();
     _partialPersistenceTimer = null;
     await _partialPersistenceQueue;
+    await _toolPersistenceQueue;
     if (!_isActiveRun(runId)) return;
 
     var lifecycle = switch (providerTerminal) {

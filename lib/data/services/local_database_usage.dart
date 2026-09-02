@@ -141,11 +141,18 @@ extension LocalDatabaseUsage on LocalDatabaseService {
 
   Future<void> deleteMessages(String chatId) async {
     final database = await _databaseProvider();
-    await database.delete(
-      'messages',
-      where: 'chat_id = ?',
-      whereArgs: [chatId],
-    );
+    await database.transaction((transaction) async {
+      await transaction.delete(
+        'tool_execution_records',
+        where: 'chat_id = ?',
+        whereArgs: [chatId],
+      );
+      await transaction.delete(
+        'messages',
+        where: 'chat_id = ?',
+        whereArgs: [chatId],
+      );
+    });
     _advanceMessageRevision(chatId);
   }
 

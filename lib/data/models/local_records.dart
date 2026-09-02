@@ -271,6 +271,7 @@ List<T> _records<T>(Object? raw, T Function(Map<String, Object?>) decode) {
 }
 
 Map<String, Object?> _toolCallToMap(MessageToolCall call) => {
+  'execution_id': call.executionId,
   'call_id': call.callId,
   'name': call.name,
   'title': call.title,
@@ -288,6 +289,7 @@ Map<String, Object?> _toolCallToMap(MessageToolCall call) => {
 
 MessageToolCall _toolCallFromMap(Map<String, Object?> values) {
   return MessageToolCall(
+    executionId: _string(values['execution_id']),
     callId: _string(values['call_id']),
     name: _string(values['name']),
     title: _string(values['title']),

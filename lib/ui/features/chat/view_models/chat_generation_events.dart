@@ -175,6 +175,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
             ? jsonEncode(_addMcpServerAuditArguments(invocation.arguments))
             : jsonEncode(_redactAuditValue(invocation.arguments));
     final item = MessageToolCall(
+      executionId: invocation.executionId,
       callId: invocation.callId,
       name: invocation.name,
       title: invocation.title,
@@ -228,14 +229,38 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
     _schedulePartialPersistence(runId);
     final persister = _toolInvocationPersister;
     if (persister != null) {
-      unawaited(
-        persister(runId, chatId, _bot.id, item).catchError((
-          Object error,
-          StackTrace stackTrace,
-        ) {
-          debugPrint('Failed to persist Tool audit for $runId: $error');
-        }),
+      final now = DateTime.now();
+      final record = ToolExecutionRecord(
+        executionId: invocation.executionId,
+        runId: runId,
+        turnId: _snapshot.turnId ?? runId,
+        messageId: '$runId:assistant',
+        chatId: chatId,
+        botId: _bot.id,
+        callId: invocation.callId,
+        name: invocation.name,
+        title: invocation.title,
+        mcpServerName: invocation.mcpServerName,
+        source: invocation.source,
+        riskLevel: invocation.riskLevel,
+        status: invocation.status,
+        detail: detail,
+        argumentsSummary: item.argumentsSummary,
+        resultSummary: item.resultSummary,
+        approvalStatus: invocation.approvalDecision,
+        errorCode: invocation.errorCode,
+        durationMs: invocation.durationMs,
+        startedAt: invocation.startedAt,
+        completedAt: invocation.completedAt,
+        updatedAt: now,
       );
+      _toolPersistenceQueue = _toolPersistenceQueue.then((_) async {
+        try {
+          await persister(record);
+        } catch (error) {
+          debugPrint('Failed to persist Tool audit for $runId: $error');
+        }
+      });
     }
   }
 

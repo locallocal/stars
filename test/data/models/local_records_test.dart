@@ -51,6 +51,7 @@ void main() {
     const info = MessageProcessInfo(
       toolCalls: [
         MessageToolCall(
+          executionId: 'run-1:tool:call-1',
           callId: 'call-1',
           name: 'mcp.server-1.save_note',
           title: 'Save note',
@@ -72,6 +73,7 @@ void main() {
         ).toDomain();
     final call = restored.toolCalls.single;
 
+    expect(call.executionId, 'run-1:tool:call-1');
     expect(call.callId, 'call-1');
     expect(call.name, 'mcp.server-1.save_note');
     expect(call.title, 'Save note');
