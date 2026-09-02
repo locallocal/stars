@@ -55,6 +55,48 @@ void main() {
     );
   });
 
+  testWidgets('history error alert keeps retry on the trailing edge', (
+    tester,
+  ) async {
+    var retryCalls = 0;
+    await tester.pumpWidget(
+      _harness(
+        SizedBox(
+          width: 720,
+          child: ChatHistoryErrorAlert(
+            error: '数据库暂时不可用',
+            onRetry: () => retryCalls += 1,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final alert = find.byKey(
+      const ValueKey<String>('chat-history-error-alert'),
+    );
+    final message = find.byKey(
+      const ValueKey<String>('chat-history-error-message'),
+    );
+    final retry = find.byKey(const ValueKey<String>('retry-chat-history'));
+
+    expect(alert, findsOneWidget);
+    expect(find.text('无法加载消息'), findsOneWidget);
+    expect(
+      tester.widget<ShadAlert>(alert).variant,
+      ShadAlertVariant.destructive,
+    );
+    expect(
+      tester.getCenter(retry).dx,
+      greaterThan(tester.getCenter(message).dx),
+    );
+    expect(tester.widget<ShadButton>(retry).variant, ShadButtonVariant.outline);
+
+    await tester.tap(retry);
+    await tester.pump();
+    expect(retryCalls, 1);
+  });
+
   group('desktop MessageInput', () {
     testWidgets('does not show provider or model metadata', (tester) async {
       final controller = TextEditingController();

@@ -70,6 +70,7 @@ extension _ChatPageWorkspace on ChatPageState {
             children: [
               _buildAttachmentsBar(desktopMode: true),
               _buildToolApprovalCard(isDesktop: true),
+              _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: true),
               MessageInput(
                 provider: _provider,
@@ -123,40 +124,15 @@ extension _ChatPageWorkspace on ChatPageState {
                 : const CircularProgressIndicator(),
       );
     }
-    if (_historyError != null && _messages.isEmpty) {
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: ShadAlert.destructive(
-            icon: Icon(
-              isDesktop ? LucideIcons.circleAlert : Icons.error_outline,
-            ),
-            title: Text(S.of(context).unableToLoadMessages),
-            description: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_historyError!),
-                const SizedBox(height: 12),
-                ShadButton.outline(
-                  size: ShadButtonSize.sm,
-                  onPressed: _loadMessages,
-                  leading: const Icon(LucideIcons.refreshCw, size: 16),
-                  child: Text(S.of(context).retry),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
     final conversation =
         _messages.isEmpty
-            ? WelcomeView(
-              bot: widget.bot,
-              fontSize: fontSize,
-              isDesktop: isDesktop,
-            )
+            ? _historyError != null
+                ? const SizedBox.expand()
+                : WelcomeView(
+                  bot: widget.bot,
+                  fontSize: fontSize,
+                  isDesktop: isDesktop,
+                )
             : Column(
               children: [
                 MessageList(
@@ -252,6 +228,21 @@ extension _ChatPageWorkspace on ChatPageState {
       isDesktop: isDesktop,
       onDismiss: _dismissGenerationError,
     );
+  }
+
+  Widget _buildHistoryAlert() {
+    final error = _historyError;
+    if (error == null || error.isEmpty) return const SizedBox.shrink();
+
+    return ChatHistoryErrorAlert(error: error, onRetry: _retryHistoryLoad);
+  }
+
+  void _retryHistoryLoad() {
+    if (_historyRetryLoadsEarlier) {
+      unawaited(_loadEarlierMessages());
+      return;
+    }
+    unawaited(_loadMessages());
   }
 
   Widget _buildToolApprovalCard({required bool isDesktop}) {

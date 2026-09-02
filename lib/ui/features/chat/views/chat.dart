@@ -66,6 +66,7 @@ class ChatPageState extends State<ChatPage> {
 
   bool _isLoading = true;
   bool _isLoadingEarlier = false;
+  bool _historyRetryLoadsEarlier = false;
   String? _historyError;
   int _composerFocusToken = 0;
   bool _isTyping = false;
@@ -235,6 +236,7 @@ class ChatPageState extends State<ChatPage> {
         _messageRevision += 1;
         _isLoading = false;
         _historyError = null;
+        _historyRetryLoadsEarlier = false;
         _followLatest = true;
         _showJumpToLatest = false;
       });
@@ -244,6 +246,7 @@ class ChatPageState extends State<ChatPage> {
     setState(() {
       _isLoading = true;
       _historyError = null;
+      _historyRetryLoadsEarlier = false;
     });
 
     try {
@@ -257,6 +260,8 @@ class ChatPageState extends State<ChatPage> {
         _messages = mergedMessages;
         _messageRevision += 1;
         _isLoading = false;
+        _historyError = null;
+        _historyRetryLoadsEarlier = false;
         _followLatest = true;
         _showJumpToLatest = false;
       });
@@ -265,6 +270,7 @@ class ChatPageState extends State<ChatPage> {
       setState(() {
         _isLoading = false;
         _historyError = safeFailureMessage(context, error);
+        _historyRetryLoadsEarlier = false;
       });
     }
   }
@@ -367,17 +373,26 @@ class ChatPageState extends State<ChatPage> {
 
   Future<void> _loadEarlierMessages() async {
     if (_isLoadingEarlier || !_chatViewModel.hasEarlierMessages) return;
-    setState(() => _isLoadingEarlier = true);
+    setState(() {
+      _isLoadingEarlier = true;
+      _historyError = null;
+      _historyRetryLoadsEarlier = false;
+    });
     try {
       final messages = await _chatViewModel.loadEarlierMessages();
       if (!mounted) return;
       setState(() {
         _messages = _mergeLoadedMessages(messages);
         _messageRevision += 1;
+        _historyError = null;
+        _historyRetryLoadsEarlier = false;
       });
     } on Object catch (error) {
       if (!mounted) return;
-      setState(() => _historyError = safeFailureMessage(context, error));
+      setState(() {
+        _historyError = safeFailureMessage(context, error);
+        _historyRetryLoadsEarlier = true;
+      });
     } finally {
       if (mounted) setState(() => _isLoadingEarlier = false);
     }
@@ -453,6 +468,7 @@ class ChatPageState extends State<ChatPage> {
               Expanded(child: _buildConversationBody(context, fontSize)),
               _buildAttachmentsBar(),
               _buildToolApprovalCard(isDesktop: false),
+              _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: false),
               MessageInput(
                 provider: _provider,
@@ -618,4 +634,54 @@ class ChatGenerationErrorAlert extends StatelessWidget {
     messageKey: const ValueKey<String>('chat-generation-error-message'),
     dismissKey: const ValueKey<String>('dismiss-chat-generation-error'),
   );
+}
+
+class ChatHistoryErrorAlert extends StatelessWidget {
+  const ChatHistoryErrorAlert({
+    super.key,
+    required this.error,
+    required this.onRetry,
+  });
+
+  final String error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ShadAlert.destructive(
+        key: const ValueKey<String>('chat-history-error-alert'),
+        decoration: const ShadDecoration(
+          border: ShadBorder(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+        ),
+        crossAxisAlignment: CrossAxisAlignment.center,
+        iconPadding: const EdgeInsetsDirectional.only(end: 8),
+        icon: const SizedBox(
+          width: 36,
+          child: Center(child: Icon(LucideIcons.circleAlert, size: 18)),
+        ),
+        title: Text(
+          S.of(context).unableToLoadMessages,
+          key: const ValueKey<String>('chat-history-error-title'),
+        ),
+        description: Text(
+          error,
+          key: const ValueKey<String>('chat-history-error-message'),
+        ),
+        trailing: Padding(
+          padding: const EdgeInsetsDirectional.only(start: 12),
+          child: ShadButton.outline(
+            key: const ValueKey<String>('retry-chat-history'),
+            size: ShadButtonSize.sm,
+            onPressed: onRetry,
+            leading: const Icon(LucideIcons.refreshCw, size: 16),
+            child: Text(S.of(context).retry),
+          ),
+        ),
+      ),
+    );
+  }
 }
