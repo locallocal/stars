@@ -7,9 +7,13 @@ final class TestSkillDescription {
   const TestSkillDescription({
     StarsSystemPromptProvider starsSystemPromptProvider =
         currentStarsSystemPrompt,
-  }) : _starsSystemPromptProvider = starsSystemPromptProvider;
+    StarsSystemPromptLanguageProvider starsSystemPromptLanguageProvider =
+        starsSystemPromptLanguageByDefault,
+  }) : _starsSystemPromptProvider = starsSystemPromptProvider,
+       _starsSystemPromptLanguageProvider = starsSystemPromptLanguageProvider;
 
   final StarsSystemPromptProvider _starsSystemPromptProvider;
+  final StarsSystemPromptLanguageProvider _starsSystemPromptLanguageProvider;
 
   Future<SkillDescriptionTestReport> call({
     required AiProvider provider,
@@ -30,6 +34,8 @@ final class TestSkillDescription {
     if (runsPerCase < 1 || runsPerCase > 10) {
       throw RangeError.range(runsPerCase, 1, 10, 'runsPerCase');
     }
+    final applicationPromptLanguage =
+        await _starsSystemPromptLanguageProvider();
 
     final catalog = [
       SkillCatalogEntry(
@@ -51,6 +57,7 @@ final class TestSkillDescription {
                 role: 'system',
                 content: prependStarsSystemPrompt(
                   'Use activate_skill only when the available Skill is relevant.',
+                  languageCode: applicationPromptLanguage,
                   starsSystemPromptProvider: _starsSystemPromptProvider,
                 ),
               ),

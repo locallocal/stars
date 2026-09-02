@@ -86,6 +86,37 @@ void main() {
     },
   );
 
+  test('uses the selected language for summary prompt injection', () async {
+    final provider = _SummaryProvider();
+    final summarizer = ProviderContextSummarizer(
+      bot: _bot,
+      providerFactory: (_) => provider,
+      starsSystemPromptProvider: _testStarsSystemPrompt,
+      starsSystemPromptLanguageProvider: () async => 'ja_JP',
+    );
+
+    await summarizer.summarize(
+      ContextSummaryRequest(
+        chatId: 'chat-1',
+        summaryId: 'summary-1',
+        sourceMessages: [
+          Message(
+            messageId: 'message-1',
+            chatId: 'chat-1',
+            botId: _bot.id,
+            senderId: 'user-1',
+            content: 'Keep this short.',
+            timestamp: DateTime(2026),
+          ),
+        ],
+        targetTokens: 500,
+      ),
+    );
+
+    expect(provider.messages.first.content, contains('アプリケーション: Stars'));
+    expect(provider.messages.first.content, contains('選択中の表示言語: 日本語'));
+  });
+
   test(
     'drops an assistant fact that has no successful tool evidence',
     () async {
@@ -201,7 +232,8 @@ final _bot = Bot(
   modifyTimestamp: DateTime(2026),
 );
 
-String _testStarsSystemPrompt() => buildStarsSystemPrompt(
+String _testStarsSystemPrompt(String languageCode) => buildStarsSystemPrompt(
   operatingSystem: 'TestOS',
   operatingSystemVersion: '1.2.3',
+  languageCode: languageCode,
 );

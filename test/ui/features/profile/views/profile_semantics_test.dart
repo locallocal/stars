@@ -298,7 +298,7 @@ Application: Stars
     final semantics = tester.ensureSemantics();
     try {
       await tester.pumpWidget(
-        _profileHarness(applicationPromptProvider: () => prompt),
+        _profileHarness(applicationPromptProvider: (languageCode) => prompt),
       );
       await tester.pumpAndSettle();
 
@@ -343,6 +343,44 @@ Application: Stars
       expect(tester.takeException(), isNull);
     } finally {
       semantics.dispose();
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('system prompt display uses the selected profile language', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    String? requestedLanguage;
+    try {
+      await tester.pumpWidget(
+        _profileHarness(
+          language: 'ja_JP',
+          applicationPromptProvider: (languageCode) {
+            requestedLanguage = languageCode;
+            return 'prompt:$languageCode';
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final promptPanel = find.byKey(
+        const ValueKey<String>('profile-application-injected-prompt'),
+      );
+      await tester.scrollUntilVisible(
+        promptPanel,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(requestedLanguage, 'ja_JP');
+      expect(
+        find.descendant(of: promptPanel, matching: find.text('prompt:ja_JP')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
       debugDefaultTargetPlatformOverride = null;
     }
   });
@@ -798,7 +836,8 @@ Widget _profileHarness({
   Future<void> Function(Profile profile)? onProfileSaved,
   VoidCallback? onOpenSkillLibrary,
   VoidCallback? onOpenMcpServers,
-  String Function()? applicationPromptProvider,
+  String Function(String languageCode)? applicationPromptProvider,
+  String language = 'zh_CN',
 }) {
   final shadTheme = buildStarsShadTheme(
     brightness: Brightness.light,
@@ -831,7 +870,7 @@ Widget _profileHarness({
                 avatar: '',
                 fontSize: 16,
                 themeMode: 1,
-                language: 'zh_CN',
+                language: language,
                 showExecutionStatus: true,
                 createTimestamp: DateTime(2026),
                 modifyTimestamp: DateTime(2026),

@@ -13,12 +13,14 @@ final class ProviderContextSummarizer implements ContextSummarizer {
     required this.providerFactory,
     this.starsSystemPromptProvider = currentStarsSystemPrompt,
     this.starsSystemPromptEnabledProvider = starsSystemPromptEnabledByDefault,
+    this.starsSystemPromptLanguageProvider = starsSystemPromptLanguageByDefault,
   });
 
   final Bot bot;
   final AiProvider Function(Bot bot) providerFactory;
   final StarsSystemPromptProvider starsSystemPromptProvider;
   final StarsSystemPromptEnabledProvider starsSystemPromptEnabledProvider;
+  final StarsSystemPromptLanguageProvider starsSystemPromptLanguageProvider;
 
   @override
   Future<ContextSummaryResult> summarize(ContextSummaryRequest request) async {
@@ -36,6 +38,10 @@ final class ProviderContextSummarizer implements ContextSummarizer {
     );
     final sourceEnvelope = _sourceEnvelope(request);
     final injectApplicationPrompt = await starsSystemPromptEnabledProvider();
+    final applicationPromptLanguage =
+        injectApplicationPrompt
+            ? await starsSystemPromptLanguageProvider()
+            : defaultStarsSystemPromptLanguageCode;
     await provider.generateText([
       ChatMessage(
         role: 'system',
@@ -43,6 +49,7 @@ final class ProviderContextSummarizer implements ContextSummarizer {
             injectApplicationPrompt
                 ? prependStarsSystemPrompt(
                   _summarizerSystemPrompt,
+                  languageCode: applicationPromptLanguage,
                   starsSystemPromptProvider: starsSystemPromptProvider,
                 )
                 : _summarizerSystemPrompt.trim(),

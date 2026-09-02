@@ -196,6 +196,30 @@ void main() {
     },
   );
 
+  test('injects the Stars prompt using the selected language', () async {
+    final compose = ComposeChatTurn(
+      skillRepository: _FakeSkillRepository(const {}),
+      bindingRepository: _FakeBindingRepository(const []),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
+      starsSystemPromptProvider: _testStarsSystemPrompt,
+      starsSystemPromptLanguageProvider: () async => 'zh_CN',
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: const [],
+      userMessage: _message(senderId: 'user-1', content: 'Hello'),
+      currentUserId: 'user-1',
+    );
+
+    final systemPrompt = result.messages.first.content;
+    expect(systemPrompt, contains('应用: Stars'));
+    expect(systemPrompt, contains('已选择的界面语言: 简体中文'));
+    expect(systemPrompt, contains('操作系统类型: TestOS'));
+    expect(systemPrompt, isNot(contains('Description:')));
+  });
+
   test(
     'auto activation uses structured tools and injects requested references',
     () async {
@@ -1241,7 +1265,8 @@ final class _FakeBindingRepository implements BotSkillBindingRepository {
 Future<String> _testConversationArtifactsDirectory(String conversationId) =>
     Future.value('/data/Stars/chats/$conversationId');
 
-String _testStarsSystemPrompt() => buildStarsSystemPrompt(
+String _testStarsSystemPrompt(String languageCode) => buildStarsSystemPrompt(
   operatingSystem: 'TestOS',
   operatingSystemVersion: '1.2.3',
+  languageCode: languageCode,
 );
