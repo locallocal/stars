@@ -74,6 +74,7 @@ extension _DesktopLayoutResizing on _DesktopLayoutState {
     await showConversationDirectoryDialog(
       context: context,
       viewModel: dependencies.createConversationDirectoryViewModel(chatId),
+      actionViewModel: dependencies.createMessageActionViewModel(),
     );
   }
 }

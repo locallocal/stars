@@ -8,6 +8,7 @@ extension ChatPageSessionCommands on ChatPageState {
     await showConversationDirectoryDialog(
       context: context,
       viewModel: viewModel,
+      actionViewModel: _chatViewModel.messageActions,
     );
   }
 

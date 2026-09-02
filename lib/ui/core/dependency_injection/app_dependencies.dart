@@ -784,9 +784,7 @@ class AppDependencies {
     return ChatViewModel(
       interaction: ChatInteractionFacade(
         workflow: workflow,
-        messageActions: MessageActionViewModel(
-          repository: messageActionRepository,
-        ),
+        messageActions: createMessageActionViewModel(),
         generationRegistry: generationRegistry,
         generationViewModel: generationRegistry.viewModelFor(chatId, bot),
       ),
