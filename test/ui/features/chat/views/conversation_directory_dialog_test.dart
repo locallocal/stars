@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -189,6 +190,110 @@ void main() {
     await tester.tap(headerClose);
     await tester.pumpAndSettle();
   });
+
+  testWidgets(
+    'opens an in-app preview for a file and returns to the directory',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(900, 800);
+      addTearDown(tester.view.reset);
+      final directory = Directory.systemTemp.createTempSync(
+        'stars-conversation-directory-preview-',
+      );
+      addTearDown(() {
+        if (directory.existsSync()) directory.deleteSync(recursive: true);
+      });
+      final file = File('${directory.path}/notes.txt');
+      file.writeAsStringSync('Preview from the conversation directory');
+      final viewModel = ConversationDirectoryViewModel(
+        chatId: 'chat-1',
+        repository: _DirectoryRepository({
+          '': ConversationDirectorySnapshot(
+            path: directory.path,
+            relativePath: '',
+            entries: [
+              ConversationDirectoryEntry(
+                name: 'notes.txt',
+                relativePath: 'notes.txt',
+                isDirectory: false,
+                modifiedAt: DateTime.utc(2026, 9, 2, 12),
+                sizeBytes: file.lengthSync(),
+              ),
+            ],
+          ),
+        }),
+      );
+      addTearDown(viewModel.dispose);
+
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed:
+                        () => unawaited(
+                          showConversationDirectoryDialog(
+                            context: context,
+                            viewModel: viewModel,
+                          ),
+                        ),
+                    child: const Text('Open directory'),
+                  ),
+                ),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open directory'));
+      await tester.pumpAndSettle();
+
+      final fileRow = find.byKey(
+        const ValueKey<String>('conversation-directory-notes.txt'),
+      );
+      expect(fileRow.hitTestable(), findsOneWidget);
+      expect(find.byIcon(LucideIcons.eye), findsNothing);
+
+      await tester.tap(fileRow);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.byKey(const ValueKey<String>('message-local-file-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('message-local-file-text-preview')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Preview from the conversation directory'),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('message-local-file-close')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.byKey(const ValueKey<String>('conversation-directory-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('message-local-file-dialog')),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('conversation-directory-close')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    },
+  );
 }
 
 final class _DirectoryRepository implements ConversationDirectoryRepository {

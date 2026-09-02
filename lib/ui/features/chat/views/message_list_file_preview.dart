@@ -263,7 +263,11 @@ class _LocalFileCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         expands: true,
         onPressed:
-            () => _showLocalFileDialog(context, descriptor, actionViewModel),
+            () => showLocalFilePreviewDialog(
+              context: context,
+              filePath: descriptor.path,
+              actions: actionViewModel,
+            ),
         leading: DecoratedBox(
           decoration: BoxDecoration(
             color: theme.colorScheme.secondary,
@@ -309,6 +313,22 @@ class _LocalFileCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Opens the shared in-app preview for a local conversation artifact.
+///
+/// Keeping this entry point public lets the message timeline and conversation
+/// directory present files consistently without duplicating preview logic.
+void showLocalFilePreviewDialog({
+  required BuildContext context,
+  required String filePath,
+  MessageActionViewModel? actions,
+}) {
+  _showLocalFileDialog(
+    context,
+    _LocalFileDescriptor.fromPath(filePath),
+    actions,
+  );
 }
 
 void _showLocalFileDialog(

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/conversation_directory_repository.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
@@ -47,6 +48,11 @@ void main() {
 
     await viewModel.load();
     expect(viewModel.canNavigateUp, isFalse);
+    expect(
+      viewModel.filePathFor(viewModel.visibleEntries.last),
+      path.join('/data/chats/chat-1', 'image.png'),
+    );
+    expect(viewModel.filePathFor(viewModel.visibleEntries.first), isNull);
 
     await viewModel.openDirectory(viewModel.visibleEntries.first);
     viewModel.search('SUMMARY');

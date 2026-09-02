@@ -37,6 +37,15 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
     );
   }
 
+  /// Resolves a listed file while keeping path handling out of the view.
+  String? filePathFor(ConversationDirectoryEntry entry) {
+    final currentPath = _snapshot?.path;
+    if (currentPath == null || entry.isDirectory) return null;
+    final normalizedDirectory = path.normalize(currentPath);
+    final filePath = path.normalize(path.join(normalizedDirectory, entry.name));
+    return path.isWithin(normalizedDirectory, filePath) ? filePath : null;
+  }
+
   Future<void> load() => _loadDirectory(_requestedRelativePath);
 
   Future<void> openDirectory(ConversationDirectoryEntry entry) async {

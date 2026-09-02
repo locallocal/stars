@@ -1,6 +1,9 @@
 part of 'app_dependencies.dart';
 
 extension AppDependenciesChatFactories on AppDependencies {
+  MessageActionViewModel createMessageActionViewModel() =>
+      MessageActionViewModel(repository: messageActionRepository);
+
   ChatTokenUsageViewModel createChatTokenUsageViewModel(String chatId) =>
       ChatTokenUsageViewModel(
         chatId: chatId,

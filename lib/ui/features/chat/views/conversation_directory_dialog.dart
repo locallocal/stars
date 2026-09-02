@@ -7,17 +7,23 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
+import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
+import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'package:stars/utils/theme.dart';
 
 Future<void> showConversationDirectoryDialog({
   required BuildContext context,
   required ConversationDirectoryViewModel viewModel,
+  MessageActionViewModel? actionViewModel,
 }) async {
   try {
     await showChatShadDialog<void>(
       context: context,
       builder:
-          (dialogContext) => ConversationDirectoryDialog(viewModel: viewModel),
+          (dialogContext) => ConversationDirectoryDialog(
+            viewModel: viewModel,
+            actionViewModel: actionViewModel,
+          ),
     );
   } finally {
     viewModel.dispose();
@@ -25,9 +31,14 @@ Future<void> showConversationDirectoryDialog({
 }
 
 final class ConversationDirectoryDialog extends StatefulWidget {
-  const ConversationDirectoryDialog({super.key, required this.viewModel});
+  const ConversationDirectoryDialog({
+    super.key,
+    required this.viewModel,
+    this.actionViewModel,
+  });
 
   final ConversationDirectoryViewModel viewModel;
+  final MessageActionViewModel? actionViewModel;
 
   @override
   State<ConversationDirectoryDialog> createState() =>
@@ -182,12 +193,21 @@ final class _ConversationDirectoryDialogState
         separatorBuilder: (_, _) => const ShadSeparator.horizontal(),
         itemBuilder: (context, index) {
           final entry = entries[index];
+          final filePath = viewModel.filePathFor(entry);
           return _DirectoryEntryRow(
             entry: entry,
             onOpen:
-                entry.isDirectory && !viewModel.loading
+                viewModel.loading
+                    ? null
+                    : entry.isDirectory
                     ? () => unawaited(viewModel.openDirectory(entry))
-                    : null,
+                    : filePath == null
+                    ? null
+                    : () => showLocalFilePreviewDialog(
+                      context: context,
+                      filePath: filePath,
+                      actions: widget.actionViewModel,
+                    ),
           );
         },
       ),
@@ -297,7 +317,8 @@ final class _DirectoryEntryRow extends StatelessWidget {
     ];
     return Semantics(
       label: entry.name,
-      button: entry.isDirectory,
+      hint: entry.isDirectory ? null : S.of(context).preview,
+      button: onOpen != null,
       onTap: onOpen,
       child: ExcludeSemantics(
         child: Material(
@@ -347,7 +368,7 @@ final class _DirectoryEntryRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (entry.isDirectory) ...[
+                  if (entry.isDirectory && onOpen != null) ...[
                     const SizedBox(width: 8),
                     Icon(
                       LucideIcons.chevronRight,
