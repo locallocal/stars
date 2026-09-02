@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -130,6 +131,69 @@ void main() {
       await localDatabase.clearChatHistory('chat-cache', timestamp);
       expect(repository.peekMessages('chat-cache'), isNull);
       expect(await repository.getMessages('chat-cache'), isEmpty);
+    },
+  );
+
+  test(
+    'message history loads tool calls persisted before execution IDs',
+    () async {
+      final repository = SqliteMessageRepository(localDatabase: localDatabase);
+      addTearDown(repository.dispose);
+      final bot = _bot();
+      final timestamp = DateTime(2026, 9, 2, 10);
+      await botRepository.addBot(bot);
+      await localDatabase.insertChat(
+        ChatRecord.fromDomain(
+          Chat(
+            id: 'chat-legacy-tool-call',
+            botId: bot.id,
+            lastMessageTimestamp: timestamp,
+            createTimestamp: timestamp,
+            modifyTimestamp: timestamp,
+          ),
+        ).values,
+      );
+      final values =
+          MessageRecord.fromDomain(
+            Message(
+              messageId: 'message-legacy-tool-call',
+              turnId: 'turn-legacy-tool-call',
+              runId: 'run-legacy-tool-call',
+              chatId: 'chat-legacy-tool-call',
+              botId: bot.id,
+              senderId: bot.id,
+              content: 'Legacy response',
+              processInfo: const MessageProcessInfo(
+                toolCalls: [
+                  MessageToolCall(
+                    callId: 'legacy-call-1',
+                    name: 'legacy.tool',
+                    status: 'succeeded',
+                  ),
+                ],
+              ),
+              timestamp: timestamp,
+            ),
+          ).values;
+      final processInfo = Map<String, Object?>.from(
+        jsonDecode(values['process_info']! as String) as Map,
+      );
+      final toolCalls = processInfo['tool_calls']! as List<Object?>;
+      final legacyCall = Map<String, Object?>.from(toolCalls.single! as Map);
+      legacyCall.remove('execution_id');
+      processInfo['tool_calls'] = <Object?>[legacyCall];
+      values['process_info'] = jsonEncode(processInfo);
+      await database.insert('messages', values);
+
+      final messages = await repository.getMessages('chat-legacy-tool-call');
+
+      expect(messages, hasLength(1));
+      expect(messages.single.processInfo.toolCalls, hasLength(1));
+      expect(messages.single.processInfo.toolCalls.single.executionId, isEmpty);
+      expect(
+        messages.single.processInfo.toolCalls.single.callId,
+        'legacy-call-1',
+      );
     },
   );
 

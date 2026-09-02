@@ -86,6 +86,58 @@ void main() {
     expect(call.durationMs, 12);
   });
 
+  test('legacy tool invocation without execution ID remains readable', () {
+    final restored =
+        MessageProcessInfoRecord.fromRaw(
+          jsonEncode(<String, Object?>{
+            'reasoning_status': 'completed',
+            'duration_ms': 42,
+            'tool_calls': <Object?>[
+              <String, Object?>{
+                'call_id': 'legacy-call-1',
+                'name': 'legacy.tool',
+                'title': 'Legacy tool',
+                'mcp_server_name': '',
+                'status': 'succeeded',
+                'detail': 'completed',
+                'source': 'builtIn',
+                'risk_level': 'readOnly',
+                'arguments_summary': '{}',
+                'result_summary': 'ok',
+                'approval_status': '',
+                'error_code': '',
+                'duration_ms': 12,
+              },
+            ],
+            'command_executions': <Object?>[],
+            'file_edits': <Object?>[],
+            'skill_activations': <Object?>[],
+          }),
+        ).toDomain();
+
+    final call = restored.toolCalls.single;
+    expect(call.executionId, isEmpty);
+    expect(call.callId, 'legacy-call-1');
+    expect(call.name, 'legacy.tool');
+    expect(call.status, 'succeeded');
+  });
+
+  test('legacy execution ID compatibility still rejects invalid values', () {
+    final values =
+        MessageProcessInfoRecord.fromDomain(
+          const MessageProcessInfo(
+            toolCalls: [MessageToolCall(name: 'invalid.tool')],
+          ),
+        ).values;
+    final calls = values['tool_calls']! as List<Map<String, Object?>>;
+    calls.single['execution_id'] = 42;
+
+    expect(
+      () => MessageProcessInfoRecord.fromRaw(jsonEncode(values)).toDomain(),
+      throwsFormatException,
+    );
+  });
+
   test('shell command execution survives process info serialization', () {
     const info = MessageProcessInfo(
       commandExecutions: [

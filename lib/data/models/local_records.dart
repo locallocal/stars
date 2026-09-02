@@ -289,7 +289,9 @@ Map<String, Object?> _toolCallToMap(MessageToolCall call) => {
 
 MessageToolCall _toolCallFromMap(Map<String, Object?> values) {
   return MessageToolCall(
-    executionId: _string(values['execution_id']),
+    // execution_id was added after process_info was already persisted in the
+    // current database generation. Historical calls legitimately omit it.
+    executionId: _optionalString(values['execution_id']),
     callId: _string(values['call_id']),
     name: _string(values['name']),
     title: _string(values['title']),
@@ -383,6 +385,8 @@ String _string(Object? value) {
   if (value is String) return value;
   throw const FormatException('Stored value must be a string.');
 }
+
+String _optionalString(Object? value) => value == null ? '' : _string(value);
 
 int _storageInt(Object? value) {
   if (value is int) return value;
