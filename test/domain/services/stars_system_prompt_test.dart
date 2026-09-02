@@ -28,6 +28,59 @@ void main() {
     expect(prompt, endsWith('</stars_reliability_policy>'));
   });
 
+  test('localizes the displayed and injected prompt language', () {
+    final prompt = buildStarsSystemPrompt(
+      operatingSystem: '',
+      operatingSystemVersion: '',
+      languageCode: 'zh-CN',
+    );
+
+    expect(prompt, contains('应用: Stars'));
+    expect(prompt, contains('已选择的界面语言: 简体中文'));
+    expect(prompt, contains('面向用户的回答请使用简体中文'));
+    expect(prompt, contains('操作系统类型: 未知'));
+    expect(prompt, contains('只列出确实支持回答'));
+    expect(prompt, isNot(contains('Description:')));
+  });
+
+  test('supports every selectable language and falls back to English', () {
+    const localizedMarkers = <String, String>{
+      'en_US': 'Selected interface language: English',
+      'zh_CN': '已选择的界面语言: 简体中文',
+      'zh_TW': '已選取的介面語言: 繁體中文',
+      'ja_JP': '選択中の表示言語: 日本語',
+      'fr_FR': 'Langue d’interface sélectionnée: Français',
+      'de_DE': 'Ausgewählte Oberflächensprache: Deutsch',
+      'ko_KR': '선택한 인터페이스 언어: 한국어',
+      'ru_RU': 'Выбранный язык интерфейса: Русский',
+      'es_ES': 'Idioma de interfaz seleccionado: Español',
+      'hi_IN': 'चुनी गई इंटरफ़ेस भाषा: हिन्दी',
+      'pt_BR': 'Idioma da interface selecionado: Português',
+      'it_IT': 'Lingua dell’interfaccia selezionata: Italiano',
+    };
+
+    for (final entry in localizedMarkers.entries) {
+      final prompt = buildStarsSystemPrompt(
+        operatingSystem: 'TestOS',
+        operatingSystemVersion: '1',
+        languageCode: entry.key,
+      );
+      expect(prompt, contains(entry.value), reason: entry.key);
+      expect(
+        '<stars_evidence'.allMatches(prompt),
+        hasLength(1),
+        reason: entry.key,
+      );
+    }
+
+    final fallback = buildStarsSystemPrompt(
+      operatingSystem: 'TestOS',
+      operatingSystemVersion: '1',
+      languageCode: 'unsupported',
+    );
+    expect(fallback, contains(localizedMarkers['en_US']));
+  });
+
   test('places Stars context before the existing system prompt', () {
     final prompt = prependStarsSystemPrompt(
       '  Existing assistant instructions.  ',
@@ -71,7 +124,8 @@ void main() {
   });
 }
 
-String _testStarsSystemPrompt() => buildStarsSystemPrompt(
+String _testStarsSystemPrompt(String languageCode) => buildStarsSystemPrompt(
   operatingSystem: 'TestOS',
   operatingSystemVersion: '1.2.3',
+  languageCode: languageCode,
 );

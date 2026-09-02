@@ -38,7 +38,7 @@ class ProfilePage extends StatefulWidget {
   final Future<void> Function(Profile profile)? onProfileSaved;
   final ProfileViewModel? viewModel;
   final Future<String?> Function()? avatarPicker;
-  final String Function()? applicationPromptProvider;
+  final String Function(String languageCode)? applicationPromptProvider;
   final VoidCallback onOpenSkillLibrary;
   final VoidCallback onOpenMcpServers;
 
@@ -96,7 +96,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool get _injectApplicationPrompt =>
       _profile?.injectApplicationPrompt ?? true;
   String get _applicationInjectedPrompt =>
-      (widget.applicationPromptProvider?.call() ?? currentStarsSystemPrompt())
+      (widget.applicationPromptProvider?.call(_language) ??
+              currentStarsSystemPrompt(_language))
           .trim();
 
   @override

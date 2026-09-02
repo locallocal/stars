@@ -97,6 +97,8 @@ final class ComposeChatTurn {
         currentStarsSystemPrompt,
     StarsSystemPromptEnabledProvider starsSystemPromptEnabledProvider =
         starsSystemPromptEnabledByDefault,
+    StarsSystemPromptLanguageProvider starsSystemPromptLanguageProvider =
+        starsSystemPromptLanguageByDefault,
   }) : _skillRepository = skillRepository,
        _bindingRepository = bindingRepository,
        _mcpServerRepository = mcpServerRepository,
@@ -108,7 +110,8 @@ final class ComposeChatTurn {
        _conversationArtifactsDirectoryProvider =
            conversationArtifactsDirectoryProvider,
        _starsSystemPromptProvider = starsSystemPromptProvider,
-       _starsSystemPromptEnabledProvider = starsSystemPromptEnabledProvider;
+       _starsSystemPromptEnabledProvider = starsSystemPromptEnabledProvider,
+       _starsSystemPromptLanguageProvider = starsSystemPromptLanguageProvider;
 
   final SkillRepository _skillRepository;
   final BotSkillBindingRepository _bindingRepository;
@@ -122,6 +125,7 @@ final class ComposeChatTurn {
   _conversationArtifactsDirectoryProvider;
   final StarsSystemPromptProvider _starsSystemPromptProvider;
   final StarsSystemPromptEnabledProvider _starsSystemPromptEnabledProvider;
+  final StarsSystemPromptLanguageProvider _starsSystemPromptLanguageProvider;
 
   Future<PreparedChatTurn> call({
     required Bot bot,
@@ -136,6 +140,10 @@ final class ComposeChatTurn {
       throw StateError('The conversation artifacts directory is unavailable.');
     }
     final injectApplicationPrompt = await _starsSystemPromptEnabledProvider();
+    final applicationPromptLanguage =
+        injectApplicationPrompt
+            ? await _starsSystemPromptLanguageProvider()
+            : defaultStarsSystemPromptLanguageCode;
     final bundledContents = await _loadBundledSkills();
     final bindings = await _bindingRepository.getForBot(bot.id);
     final enabledBindings =
@@ -200,6 +208,7 @@ final class ComposeChatTurn {
           state: state,
           conversationArtifactsDirectory: conversationArtifactsDirectory,
           injectApplicationPrompt: injectApplicationPrompt,
+          applicationPromptLanguage: applicationPromptLanguage,
         );
       } on TimeoutException {
         state.toolCalls.add(
@@ -329,6 +338,7 @@ final class ComposeChatTurn {
           systemFileOperationsSkill != null ||
           systemMcpInstallerSkill != null,
       injectApplicationPrompt: injectApplicationPrompt,
+      applicationPromptLanguage: applicationPromptLanguage,
     );
     final contextPreparer = _prepareConversationContext;
     var preparedContext =
@@ -478,6 +488,7 @@ final class ComposeChatTurn {
     List<SkillResourceContent> resources = const [],
     bool processToolsAvailable = false,
     required bool injectApplicationPrompt,
+    required String applicationPromptLanguage,
   }) {
     final sections = <String>[
       buildStarsConversationContext(
@@ -519,6 +530,7 @@ ${resource.content.trim()}
     if (!injectApplicationPrompt) return composedPrompt;
     return prependStarsSystemPrompt(
       composedPrompt,
+      languageCode: applicationPromptLanguage,
       starsSystemPromptProvider: _starsSystemPromptProvider,
     );
   }

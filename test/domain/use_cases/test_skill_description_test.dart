@@ -10,6 +10,7 @@ void main() {
     final provider = _DescriptionProvider();
     final report = await const TestSkillDescription(
       starsSystemPromptProvider: _testStarsSystemPrompt,
+      starsSystemPromptLanguageProvider: _japaneseLanguage,
     )(
       provider: provider,
       skill: _skill,
@@ -41,6 +42,10 @@ void main() {
     expect(
       provider.requests.first.messages.first.content,
       contains('Use activate_skill only when the available Skill is relevant.'),
+    );
+    expect(
+      provider.requests.first.messages.first.content,
+      contains('選択中の表示言語: 日本語'),
     );
   });
 
@@ -153,7 +158,10 @@ final _skill = SkillDescriptor(
   updatedAt: DateTime(2026),
 );
 
-String _testStarsSystemPrompt() => buildStarsSystemPrompt(
+String _testStarsSystemPrompt(String languageCode) => buildStarsSystemPrompt(
   operatingSystem: 'TestOS',
   operatingSystemVersion: '1.2.3',
+  languageCode: languageCode,
 );
+
+Future<String> _japaneseLanguage() async => 'ja_JP';
