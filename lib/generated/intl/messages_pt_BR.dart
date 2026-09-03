@@ -148,9 +148,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt do sistema",
     ),
-    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
-      "Gerenciado pelo Stars. Quando ativado, o conteúdo abaixo é adicionado às solicitações do modelo da conversa; quando desativado, ele é omitido. O contexto de execução necessário não é afetado. O conteúdo não pode ser editado.",
-    ),
+    "applicationInjectedPromptDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "Gerenciado pelo Stars. Quando ativado, o conteúdo abaixo é adicionado às solicitações do modelo da conversa; quando desativado, ele é omitido. O contexto de execução necessário não é afetado. O conteúdo não pode ser editado.",
+        ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
