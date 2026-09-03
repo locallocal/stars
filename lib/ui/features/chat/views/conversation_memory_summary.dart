@@ -20,6 +20,7 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
           agentName: bot.name,
           conversationId: conversationId,
           artifactsDirectoryPath: artifactsDirectoryPath,
+          languageCode: Localizations.localeOf(context).toLanguageTag(),
         ).trim();
     return Column(
       key: const ValueKey<String>('conversation-system-prompt-block'),

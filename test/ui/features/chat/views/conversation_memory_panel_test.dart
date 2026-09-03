@@ -643,14 +643,14 @@ void main() {
           isReadOnly: true,
         ),
       );
-      expect(prompt, contains('Agent ID: bot&lt;1&gt;'));
-      expect(prompt, contains('Agent name: Research &amp; Review'));
-      expect(prompt, contains('Current conversation ID: chat&gt;2'));
+      expect(prompt, contains('智能体 ID：bot&lt;1&gt;'));
+      expect(prompt, contains('智能体名称：Research &amp; Review'));
+      expect(prompt, contains('当前会话 ID：chat&gt;2'));
       expect(
         prompt,
         matches(
           RegExp(
-            r'Current time: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'
+            r'当前时间：\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'
             r'(?:Z|[+-]\d{2}:\d{2})',
           ),
         ),
@@ -658,11 +658,12 @@ void main() {
       expect(
         prompt,
         contains(
-          'Conversation artifacts directory: '
+          '会话产物目录：'
           '/data/Stars/chats/chat&gt;2',
         ),
       );
-      expect(prompt, contains('Use this directory to store and access files'));
+      expect(prompt, contains('请使用此目录存储和访问当前会话生成或所需的文件'));
+      expect(prompt, isNot(contains('Current conversation ID:')));
       expect(prompt, isNot(contains(bot.systemPrompt)));
       expect(tester.takeException(), isNull);
     } finally {
