@@ -139,6 +139,105 @@ final class MessageProcessInfoRecord {
   }
 }
 
+/// Versioned JSON representation of application-computed message grounding.
+final class MessageGroundingRecord {
+  const MessageGroundingRecord._(this.values, {String? fallbackReasonCode})
+    : _fallbackReasonCode = fallbackReasonCode;
+
+  factory MessageGroundingRecord.fromDomain(MessageGrounding grounding) {
+    return MessageGroundingRecord._(<String, Object?>{
+      'protocol_version': grounding.protocolVersion,
+      'trust_level': grounding.trustLevel.name,
+      'reason_code': grounding.reasonCode,
+      'evidence_ids': grounding.evidenceIds,
+    });
+  }
+
+  factory MessageGroundingRecord.fromRaw(Object? raw) {
+    if (raw == null || raw == '') {
+      return const MessageGroundingRecord._(
+        <String, Object?>{},
+        fallbackReasonCode: legacyReasonCode,
+      );
+    }
+    if (raw is! String) {
+      return const MessageGroundingRecord._(
+        <String, Object?>{},
+        fallbackReasonCode: invalidReasonCode,
+      );
+    }
+    try {
+      return MessageGroundingRecord._(
+        _requiredStringMap(jsonDecode(raw), 'Message grounding'),
+      );
+    } on FormatException {
+      return const MessageGroundingRecord._(
+        <String, Object?>{},
+        fallbackReasonCode: invalidReasonCode,
+      );
+    }
+  }
+
+  static const String legacyReasonCode = 'legacy_grounding_missing';
+  static const String invalidReasonCode = 'invalid_grounding_metadata';
+  static const String unsupportedReasonCode = 'unsupported_grounding_protocol';
+
+  static const Set<String> _fields = <String>{
+    'protocol_version',
+    'trust_level',
+    'reason_code',
+    'evidence_ids',
+  };
+
+  final Map<String, Object?> values;
+  final String? _fallbackReasonCode;
+
+  MessageGrounding toDomain() {
+    final fallbackReasonCode = _fallbackReasonCode;
+    if (fallbackReasonCode != null) {
+      return _unverifiedGrounding(fallbackReasonCode);
+    }
+
+    final protocolVersion = values['protocol_version'];
+    if (protocolVersion is! int) {
+      return _unverifiedGrounding(invalidReasonCode);
+    }
+    if (protocolVersion != 0 &&
+        protocolVersion != MessageGrounding.currentProtocolVersion) {
+      return _unverifiedGrounding(unsupportedReasonCode);
+    }
+    if (!_setsEqual(values.keys.toSet(), _fields)) {
+      return _unverifiedGrounding(invalidReasonCode);
+    }
+
+    final trustLevel = _answerTrustLevel(values['trust_level']);
+    final reasonCode = values['reason_code'];
+    final rawEvidenceIds = values['evidence_ids'];
+    if (trustLevel == null ||
+        reasonCode is! String ||
+        rawEvidenceIds is! List<Object?> ||
+        rawEvidenceIds.any((evidenceId) => evidenceId is! String)) {
+      return _unverifiedGrounding(invalidReasonCode);
+    }
+    if (protocolVersion == 0 &&
+        (trustLevel != AnswerTrustLevel.unverified ||
+            rawEvidenceIds.isNotEmpty)) {
+      return _unverifiedGrounding(invalidReasonCode);
+    }
+
+    try {
+      return MessageGrounding(
+        protocolVersion: protocolVersion,
+        trustLevel: trustLevel,
+        reasonCode: reasonCode,
+        evidenceIds: rawEvidenceIds.cast<String>(),
+      );
+    } on ArgumentError {
+      return _unverifiedGrounding(invalidReasonCode);
+    }
+  }
+}
+
 /// SQLite representation of a [Message].
 final class MessageRecord {
   const MessageRecord(this.values);
@@ -155,6 +254,9 @@ final class MessageRecord {
       'reasoning': message.reasoning,
       'process_info': jsonEncode(
         MessageProcessInfoRecord.fromDomain(message.processInfo).values,
+      ),
+      'grounding_json': jsonEncode(
+        MessageGroundingRecord.fromDomain(message.grounding).values,
       ),
       'images': jsonEncode(message.images),
       'files': jsonEncode(message.files),
@@ -185,6 +287,8 @@ final class MessageRecord {
       reasoning: _string(values['reasoning']),
       processInfo:
           MessageProcessInfoRecord.fromRaw(values['process_info']).toDomain(),
+      grounding:
+          MessageGroundingRecord.fromRaw(values['grounding_json']).toDomain(),
       images: _stringList(values['images']),
       files: _stringList(values['files']),
       audio: _string(values['audio']),
@@ -202,6 +306,23 @@ final class MessageRecord {
     );
   }
 }
+
+MessageGrounding _unverifiedGrounding(String reasonCode) => MessageGrounding(
+  protocolVersion: 0,
+  trustLevel: AnswerTrustLevel.unverified,
+  reasonCode: reasonCode,
+);
+
+AnswerTrustLevel? _answerTrustLevel(Object? raw) => switch (raw) {
+  'verified' => AnswerTrustLevel.verified,
+  'partiallyVerified' => AnswerTrustLevel.partiallyVerified,
+  'unverified' => AnswerTrustLevel.unverified,
+  'failed' => AnswerTrustLevel.failed,
+  _ => null,
+};
+
+bool _setsEqual<T>(Set<T> left, Set<T> right) =>
+    left.length == right.length && left.containsAll(right);
 
 /// SQLite representation of a [Profile].
 final class ProfileRecord {

@@ -73,6 +73,7 @@ class DatabaseService {
     );
     try {
       await _ensureCompatibleProfileSchema(database);
+      await _ensureCompatibleMessageGroundingSchema(database);
       await _ensureCompatibleToolExecutionSchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
@@ -96,6 +97,19 @@ class DatabaseService {
       ALTER TABLE profile
       ADD COLUMN inject_application_prompt INTEGER NOT NULL DEFAULT 1
         CHECK (inject_application_prompt IN (0, 1))
+    ''');
+  }
+
+  static Future<void> _ensureCompatibleMessageGroundingSchema(
+    Database database,
+  ) async {
+    final columns = await database.rawQuery('PRAGMA table_info(messages)');
+    final columnNames =
+        columns.map((column) => column['name']).whereType<String>().toSet();
+    if (columnNames.contains('grounding_json')) return;
+    await database.execute('''
+      ALTER TABLE messages
+      ADD COLUMN grounding_json TEXT NOT NULL DEFAULT ''
     ''');
   }
 
@@ -419,6 +433,7 @@ class DatabaseService {
         content TEXT NOT NULL,
         reasoning TEXT NOT NULL,
         process_info TEXT NOT NULL,
+        grounding_json TEXT NOT NULL DEFAULT '',
         images TEXT NOT NULL,
         files TEXT NOT NULL,
         audio TEXT NOT NULL,

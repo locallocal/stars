@@ -197,6 +197,82 @@ void main() {
     },
   );
 
+  test('message grounding persists and legacy rows fail closed', () async {
+    final repository = SqliteMessageRepository(localDatabase: localDatabase);
+    addTearDown(repository.dispose);
+    final bot = _bot();
+    final timestamp = DateTime(2026, 9, 4, 10);
+    await botRepository.addBot(bot);
+    await localDatabase.insertChat(
+      ChatRecord.fromDomain(
+        Chat(
+          id: 'chat-grounding',
+          botId: bot.id,
+          lastMessageTimestamp: timestamp,
+          createTimestamp: timestamp,
+          modifyTimestamp: timestamp,
+        ),
+      ).values,
+    );
+    await repository.upsertMessage(
+      Message(
+        messageId: 'message-grounding-current',
+        turnId: 'turn-grounding-current',
+        runId: 'run-grounding-current',
+        chatId: 'chat-grounding',
+        botId: bot.id,
+        senderId: bot.id,
+        content: 'Verified answer',
+        grounding: MessageGrounding(
+          trustLevel: AnswerTrustLevel.verified,
+          reasonCode: 'all_claims_grounded',
+          evidenceIds: const ['evidence-current'],
+        ),
+        terminalOutcome: MessageTerminalOutcome.completed,
+        timestamp: timestamp,
+      ),
+    );
+    final legacyValues = Map<String, Object?>.from(
+      MessageRecord.fromDomain(
+        Message(
+          messageId: 'message-grounding-legacy',
+          turnId: 'turn-grounding-legacy',
+          runId: 'run-grounding-legacy',
+          chatId: 'chat-grounding',
+          botId: bot.id,
+          senderId: bot.id,
+          content: 'Legacy answer',
+          processInfo: const MessageProcessInfo(
+            toolCalls: [
+              MessageToolCall(
+                callId: 'legacy-success',
+                name: 'legacy.tool',
+                status: 'succeeded',
+              ),
+            ],
+          ),
+          timestamp: timestamp.add(const Duration(seconds: 1)),
+        ),
+      ).values,
+    )..remove('grounding_json');
+    await database.insert('messages', legacyValues);
+
+    final messages = await repository.getMessages('chat-grounding');
+    final current = messages.singleWhere(
+      (message) => message.messageId == 'message-grounding-current',
+    );
+    final legacy = messages.singleWhere(
+      (message) => message.messageId == 'message-grounding-legacy',
+    );
+
+    expect(current.grounding.trustLevel, AnswerTrustLevel.verified);
+    expect(current.grounding.reasonCode, 'all_claims_grounded');
+    expect(current.grounding.evidenceIds, ['evidence-current']);
+    expect(legacy.grounding.protocolVersion, 0);
+    expect(legacy.grounding.trustLevel, AnswerTrustLevel.unverified);
+    expect(legacy.grounding.reasonCode, 'legacy_grounding_missing');
+  });
+
   test('message pages use a stable timestamp and id cursor', () async {
     final repository = SqliteMessageRepository(localDatabase: localDatabase);
     addTearDown(repository.dispose);
