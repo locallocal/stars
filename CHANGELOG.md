@@ -16,6 +16,8 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Delayed the Linux window until Flutter renders its first frame, preventing
+  startup key events from producing invalid framework-response JSON warnings.
 - Isolated databases, conversation files, and recovery snapshots under the
   app-specific `Documents/Stars` directory. On first launch, Stars now migrates
   a valid legacy database or recovers its own validated backup when another

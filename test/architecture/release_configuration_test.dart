@@ -76,4 +76,26 @@ void main() {
       '$applicationId.mcp.credentials',
     );
   });
+
+  test('Linux runner waits for the first Flutter frame to show its window', () {
+    final source = File('linux/runner/my_application.cc').readAsStringSync();
+
+    expect(source, isNot(contains('gtk_widget_show(GTK_WIDGET(window));')));
+
+    final addView = source.indexOf(
+      'gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));',
+    );
+    final connectFirstFrame = source.indexOf(
+      'g_signal_connect_swapped(view, "first-frame"',
+    );
+    final realizeView = source.indexOf('gtk_widget_realize(GTK_WIDGET(view));');
+    final registerPlugins = source.indexOf(
+      'fl_register_plugins(FL_PLUGIN_REGISTRY(view));',
+    );
+
+    expect(addView, isNonNegative);
+    expect(connectFirstFrame, greaterThan(addView));
+    expect(realizeView, greaterThan(connectFirstFrame));
+    expect(registerPlugins, greaterThan(realizeView));
+  });
 }
