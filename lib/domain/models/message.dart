@@ -130,6 +130,101 @@ class MessageProcessInfo {
 
 enum MessageTerminalOutcome { completed, cancelled, failed, emptyResponse }
 
+/// Application-computed trust state for an assistant answer.
+///
+/// This state is independent from [MessageTerminalOutcome]: completing a
+/// generation does not make its content verified.
+enum AnswerTrustLevel { verified, partiallyVerified, unverified, failed }
+
+/// Immutable grounding metadata attached to a message.
+///
+/// Evidence identifiers only establish provenance at this layer. Later
+/// grounding protocol phases are responsible for checking that referenced
+/// evidence is persisted and actually supports individual claims.
+final class MessageGrounding {
+  factory MessageGrounding({
+    int protocolVersion = currentProtocolVersion,
+    AnswerTrustLevel trustLevel = AnswerTrustLevel.unverified,
+    String reasonCode = '',
+    List<String> evidenceIds = const [],
+  }) {
+    if (protocolVersion < 0) {
+      throw ArgumentError.value(
+        protocolVersion,
+        'protocolVersion',
+        'Grounding protocol version cannot be negative.',
+      );
+    }
+    final copiedEvidenceIds = List<String>.unmodifiable(evidenceIds);
+    final uniqueEvidenceIds = <String>{};
+    for (final evidenceId in copiedEvidenceIds) {
+      if (evidenceId.isEmpty || evidenceId.trim() != evidenceId) {
+        throw ArgumentError.value(
+          evidenceId,
+          'evidenceIds',
+          'Evidence identifiers must be non-empty and normalized.',
+        );
+      }
+      if (!uniqueEvidenceIds.add(evidenceId)) {
+        throw ArgumentError.value(
+          evidenceId,
+          'evidenceIds',
+          'Evidence identifiers must be unique.',
+        );
+      }
+    }
+    if ((trustLevel == AnswerTrustLevel.verified ||
+            trustLevel == AnswerTrustLevel.partiallyVerified) &&
+        copiedEvidenceIds.isEmpty) {
+      throw ArgumentError.value(
+        trustLevel,
+        'trustLevel',
+        'A verified trust state requires evidence.',
+      );
+    }
+    return MessageGrounding._(
+      protocolVersion: protocolVersion,
+      trustLevel: trustLevel,
+      reasonCode: reasonCode,
+      evidenceIds: copiedEvidenceIds,
+    );
+  }
+
+  const MessageGrounding.unverified()
+    : protocolVersion = currentProtocolVersion,
+      trustLevel = AnswerTrustLevel.unverified,
+      reasonCode = '',
+      evidenceIds = const [];
+
+  const MessageGrounding._({
+    required this.protocolVersion,
+    required this.trustLevel,
+    required this.reasonCode,
+    required this.evidenceIds,
+  });
+
+  static const int currentProtocolVersion = 1;
+
+  final int protocolVersion;
+  final AnswerTrustLevel trustLevel;
+  final String reasonCode;
+  final List<String> evidenceIds;
+
+  MessageGrounding copyWith({
+    int? protocolVersion,
+    AnswerTrustLevel? trustLevel,
+    String? reasonCode,
+    List<String>? evidenceIds,
+  }) {
+    return MessageGrounding(
+      protocolVersion: protocolVersion ?? this.protocolVersion,
+      trustLevel: trustLevel ?? this.trustLevel,
+      reasonCode: reasonCode ?? this.reasonCode,
+      evidenceIds: evidenceIds ?? this.evidenceIds,
+    );
+  }
+}
+
 /// Immutable token accounting for one model response or an aggregate.
 ///
 /// Providers do not all return a total, so [effectiveTotalTokens] falls back
@@ -200,7 +295,7 @@ class ModelTokenUsageRecord {
 }
 
 class Message {
-  const Message({
+  Message({
     this.messageId = '',
     this.turnId = '',
     this.runId = '',
@@ -216,10 +311,26 @@ class Message {
     this.music = '',
     this.video = '',
     this.tokenUsage = ModelTokenUsage.empty,
+    this.grounding = const MessageGrounding.unverified(),
     this.terminalOutcome,
     this.hasPartialContent = false,
     required this.timestamp,
-  });
+  }) {
+    final trustLevel = grounding.trustLevel;
+    final hasUnsuccessfulTerminalOutcome =
+        terminalOutcome == MessageTerminalOutcome.cancelled ||
+        terminalOutcome == MessageTerminalOutcome.failed ||
+        terminalOutcome == MessageTerminalOutcome.emptyResponse;
+    if (hasUnsuccessfulTerminalOutcome &&
+        trustLevel != AnswerTrustLevel.unverified &&
+        trustLevel != AnswerTrustLevel.failed) {
+      throw ArgumentError.value(
+        trustLevel,
+        'grounding',
+        'Cancelled, failed, and empty responses cannot be verified.',
+      );
+    }
+  }
 
   final String messageId;
   final String turnId;
@@ -236,6 +347,7 @@ class Message {
   final String music;
   final String video;
   final ModelTokenUsage tokenUsage;
+  final MessageGrounding grounding;
   final MessageTerminalOutcome? terminalOutcome;
   final bool hasPartialContent;
   final DateTime timestamp;
@@ -256,6 +368,7 @@ class Message {
     String? music,
     String? video,
     ModelTokenUsage? tokenUsage,
+    MessageGrounding? grounding,
     MessageTerminalOutcome? terminalOutcome,
     bool clearTerminalOutcome = false,
     bool? hasPartialContent,
@@ -277,6 +390,7 @@ class Message {
       music: music ?? this.music,
       video: video ?? this.video,
       tokenUsage: tokenUsage ?? this.tokenUsage,
+      grounding: grounding ?? this.grounding,
       terminalOutcome:
           clearTerminalOutcome ? null : terminalOutcome ?? this.terminalOutcome,
       hasPartialContent: hasPartialContent ?? this.hasPartialContent,
