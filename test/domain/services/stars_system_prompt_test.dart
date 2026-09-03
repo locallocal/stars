@@ -122,6 +122,44 @@ void main() {
     expect(prompt, contains('Use this directory to store and access files'));
     expect(prompt, endsWith('</stars_conversation_context>'));
   });
+
+  test('localizes conversation context for every selectable language', () {
+    const localizedConversationLabels = <String, String>{
+      'en_US': 'Current conversation ID: chat-1',
+      'zh_CN': '当前会话 ID：chat-1',
+      'zh_TW': '目前對話 ID：chat-1',
+      'ja_JP': '現在の会話 ID：chat-1',
+      'fr_FR': 'ID de la conversation actuelle : chat-1',
+      'de_DE': 'ID der aktuellen Unterhaltung: chat-1',
+      'ko_KR': '현재 대화 ID: chat-1',
+      'ru_RU': 'ID текущего диалога: chat-1',
+      'es_ES': 'ID de la conversación actual: chat-1',
+      'hi_IN': 'वर्तमान बातचीत ID: chat-1',
+      'pt_BR': 'ID da conversa atual: chat-1',
+      'it_IT': 'ID della conversazione corrente: chat-1',
+    };
+
+    for (final entry in localizedConversationLabels.entries) {
+      final prompt = buildStarsConversationContext(
+        agentId: '',
+        agentName: 'Assistant',
+        conversationId: 'chat-1',
+        artifactsDirectoryPath: '/data/chat-1',
+        currentTime: DateTime.utc(2026),
+        languageCode: entry.key,
+      );
+      expect(prompt, contains(entry.value), reason: entry.key);
+    }
+
+    final fallback = buildStarsConversationContext(
+      agentId: 'agent-1',
+      agentName: 'Assistant',
+      conversationId: 'chat-1',
+      currentTime: DateTime.utc(2026),
+      languageCode: 'unsupported',
+    );
+    expect(fallback, contains(localizedConversationLabels['en_US']));
+  });
 }
 
 String _testStarsSystemPrompt(String languageCode) => buildStarsSystemPrompt(

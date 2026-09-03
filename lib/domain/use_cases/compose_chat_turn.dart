@@ -140,10 +140,7 @@ final class ComposeChatTurn {
       throw StateError('The conversation artifacts directory is unavailable.');
     }
     final injectApplicationPrompt = await _starsSystemPromptEnabledProvider();
-    final applicationPromptLanguage =
-        injectApplicationPrompt
-            ? await _starsSystemPromptLanguageProvider()
-            : defaultStarsSystemPromptLanguageCode;
+    final systemPromptLanguage = await _starsSystemPromptLanguageProvider();
     final bundledContents = await _loadBundledSkills();
     final bindings = await _bindingRepository.getForBot(bot.id);
     final enabledBindings =
@@ -208,7 +205,7 @@ final class ComposeChatTurn {
           state: state,
           conversationArtifactsDirectory: conversationArtifactsDirectory,
           injectApplicationPrompt: injectApplicationPrompt,
-          applicationPromptLanguage: applicationPromptLanguage,
+          systemPromptLanguage: systemPromptLanguage,
         );
       } on TimeoutException {
         state.toolCalls.add(
@@ -338,7 +335,7 @@ final class ComposeChatTurn {
           systemFileOperationsSkill != null ||
           systemMcpInstallerSkill != null,
       injectApplicationPrompt: injectApplicationPrompt,
-      applicationPromptLanguage: applicationPromptLanguage,
+      systemPromptLanguage: systemPromptLanguage,
     );
     final contextPreparer = _prepareConversationContext;
     var preparedContext =
@@ -488,7 +485,7 @@ final class ComposeChatTurn {
     List<SkillResourceContent> resources = const [],
     bool processToolsAvailable = false,
     required bool injectApplicationPrompt,
-    required String applicationPromptLanguage,
+    required String systemPromptLanguage,
   }) {
     final sections = <String>[
       buildStarsConversationContext(
@@ -496,6 +493,7 @@ final class ComposeChatTurn {
         agentName: bot.name,
         conversationId: conversationId,
         artifactsDirectoryPath: conversationArtifactsDirectory,
+        languageCode: systemPromptLanguage,
       ),
     ];
     if (botPrompt.trim().isNotEmpty) sections.add(botPrompt.trim());
@@ -530,7 +528,7 @@ ${resource.content.trim()}
     if (!injectApplicationPrompt) return composedPrompt;
     return prependStarsSystemPrompt(
       composedPrompt,
-      languageCode: applicationPromptLanguage,
+      languageCode: systemPromptLanguage,
       starsSystemPromptProvider: _starsSystemPromptProvider,
     );
   }

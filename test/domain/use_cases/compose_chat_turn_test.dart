@@ -165,9 +165,10 @@ void main() {
   });
 
   test(
-    'omits the Stars application prompt when injection is disabled',
+    'omits the application prompt but localizes conversation context',
     () async {
       var preferenceReads = 0;
+      var languageReads = 0;
       final compose = ComposeChatTurn(
         skillRepository: _FakeSkillRepository(const {}),
         bindingRepository: _FakeBindingRepository(const []),
@@ -177,6 +178,10 @@ void main() {
         starsSystemPromptEnabledProvider: () async {
           preferenceReads += 1;
           return false;
+        },
+        starsSystemPromptLanguageProvider: () async {
+          languageReads += 1;
+          return 'zh_CN';
         },
       );
 
@@ -191,8 +196,11 @@ void main() {
       expect(systemPrompt, isNot(contains('<stars_application_context>')));
       expect(systemPrompt, isNot(contains('<stars_reliability_policy>')));
       expect(systemPrompt, contains('<stars_conversation_context>'));
+      expect(systemPrompt, contains('当前会话 ID：chat-1'));
+      expect(systemPrompt, isNot(contains('Current conversation ID:')));
       expect(systemPrompt, contains('Bot-owned instructions.'));
       expect(preferenceReads, 1);
+      expect(languageReads, 1);
     },
   );
 
@@ -217,7 +225,10 @@ void main() {
     expect(systemPrompt, contains('应用: Stars'));
     expect(systemPrompt, contains('已选择的界面语言: 简体中文'));
     expect(systemPrompt, contains('操作系统类型: TestOS'));
+    expect(systemPrompt, contains('当前会话 ID：chat-1'));
+    expect(systemPrompt, contains('会话产物目录：/data/Stars/chats/chat-1'));
     expect(systemPrompt, isNot(contains('Description:')));
+    expect(systemPrompt, isNot(contains('Current conversation ID:')));
   });
 
   test(

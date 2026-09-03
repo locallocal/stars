@@ -16,6 +16,8 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Localized the per-conversation runtime system prompt using the selected
+  interface language, including the read-only conversation prompt preview.
 - Delayed the Linux window until Flutter renders its first frame, preventing
   startup key events from producing invalid framework-response JSON warnings.
 - Isolated databases, conversation files, and recovery snapshots under the

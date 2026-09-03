@@ -173,7 +173,7 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     required _TurnSkillState state,
     required String conversationArtifactsDirectory,
     required bool injectApplicationPrompt,
-    required String applicationPromptLanguage,
+    required String systemPromptLanguage,
   }) async {
     final initialPrompt = _composeSystemPrompt(
       bot.systemPrompt,
@@ -183,7 +183,7 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
       conversationArtifactsDirectory: conversationArtifactsDirectory,
       catalog: catalog,
       injectApplicationPrompt: injectApplicationPrompt,
-      applicationPromptLanguage: applicationPromptLanguage,
+      systemPromptLanguage: systemPromptLanguage,
     );
     final initialMessages = <ChatMessage>[
       if (initialPrompt.isNotEmpty)

@@ -60,23 +60,26 @@ String buildStarsConversationContext({
   required String conversationId,
   String artifactsDirectoryPath = '',
   DateTime? currentTime,
+  String languageCode = defaultStarsSystemPromptLanguageCode,
 }) {
+  final copy = _conversationPromptCopyFor(languageCode);
+  final unknownValue = _systemPromptCopyFor(languageCode).unknownValue;
   final effectiveCurrentTime = currentTime ?? DateTime.now();
   final normalizedArtifactsDirectory = artifactsDirectoryPath.trim();
   final artifactsContext =
       normalizedArtifactsDirectory.isEmpty
           ? ''
           : '''
-Conversation artifacts directory: ${_xmlText(normalizedArtifactsDirectory)}
-Use this directory to store and access files produced or needed by the current conversation.
+${copy.artifactsDirectoryLabel}${copy.labelSeparator}${_xmlText(normalizedArtifactsDirectory)}
+${copy.artifactsDirectoryInstruction}
 '''.trim();
   return '''
 <stars_conversation_context>
-Purpose: Application-provided runtime identity for the current turn.
-Current time: ${_iso8601WithOffset(effectiveCurrentTime)}
-Agent ID: ${_xmlText(_valueOrUnknown(agentId))}
-Agent name: ${_xmlText(_valueOrUnknown(agentName))}
-Current conversation ID: ${_xmlText(_valueOrUnknown(conversationId))}
+${copy.purpose}
+${copy.currentTimeLabel}${copy.labelSeparator}${_iso8601WithOffset(effectiveCurrentTime)}
+${copy.agentIdLabel}${copy.labelSeparator}${_xmlText(_valueOrFallback(agentId, unknownValue))}
+${copy.agentNameLabel}${copy.labelSeparator}${_xmlText(_valueOrFallback(agentName, unknownValue))}
+${copy.conversationIdLabel}${copy.labelSeparator}${_xmlText(_valueOrFallback(conversationId, unknownValue))}
 ${artifactsContext.isEmpty ? '' : '$artifactsContext\n'}</stars_conversation_context>''';
 }
 
@@ -92,8 +95,6 @@ String prependStarsSystemPrompt(
   if (normalizedExistingPrompt.isEmpty) return starsPrompt;
   return '$starsPrompt\n\n$normalizedExistingPrompt';
 }
-
-String _valueOrUnknown(String value) => _valueOrFallback(value, 'unknown');
 
 String _valueOrFallback(String value, String fallback) {
   final normalized = value.trim();
@@ -140,9 +141,25 @@ typedef _StarsSystemPromptCopy =
       String reliabilityPolicy,
     });
 
+typedef _StarsConversationPromptCopy =
+    ({
+      String purpose,
+      String labelSeparator,
+      String currentTimeLabel,
+      String agentIdLabel,
+      String agentNameLabel,
+      String conversationIdLabel,
+      String artifactsDirectoryLabel,
+      String artifactsDirectoryInstruction,
+    });
+
 _StarsSystemPromptCopy _systemPromptCopyFor(String languageCode) =>
     _systemPromptCopies[_normalizeLanguageCode(languageCode)] ??
     _systemPromptCopies[defaultStarsSystemPromptLanguageCode]!;
+
+_StarsConversationPromptCopy _conversationPromptCopyFor(String languageCode) =>
+    _conversationPromptCopies[_normalizeLanguageCode(languageCode)] ??
+    _conversationPromptCopies[defaultStarsSystemPromptLanguageCode]!;
 
 String _normalizeLanguageCode(String languageCode) {
   final normalized = languageCode.trim().replaceAll('-', '_').toLowerCase();
@@ -397,5 +414,146 @@ Liste apenas chamadas de ferramentas bem-sucedidas, não vazias e não truncadas
 Quando nell’esecuzione corrente è stato chiamato almeno uno strumento strutturato, termina la risposta finale con esattamente un piè di pagina leggibile dalla macchina e non aggiungere alcun testo dopo di esso:
 <stars_evidence call_ids="call-id-1,call-id-2" />
 Elenca solo le chiamate agli strumenti riuscite, non vuote e non troncate che supportano realmente la risposta. Se nessuno strumento ha prodotto prove utilizzabili, usa un valore call_ids vuoto e dichiara che il risultato non è stato verificato. Stars convalida e rimuove questo piè di pagina prima di mostrare la risposta.''',
+  ),
+};
+
+const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
+  'en_US': (
+    purpose:
+        'Purpose: Application-provided runtime identity for the current turn.',
+    labelSeparator: ': ',
+    currentTimeLabel: 'Current time',
+    agentIdLabel: 'Agent ID',
+    agentNameLabel: 'Agent name',
+    conversationIdLabel: 'Current conversation ID',
+    artifactsDirectoryLabel: 'Conversation artifacts directory',
+    artifactsDirectoryInstruction:
+        'Use this directory to store and access files produced or needed by the current conversation.',
+  ),
+  'zh_CN': (
+    purpose: '用途：当前轮次由应用提供的运行时身份信息。',
+    labelSeparator: '：',
+    currentTimeLabel: '当前时间',
+    agentIdLabel: '智能体 ID',
+    agentNameLabel: '智能体名称',
+    conversationIdLabel: '当前会话 ID',
+    artifactsDirectoryLabel: '会话产物目录',
+    artifactsDirectoryInstruction: '请使用此目录存储和访问当前会话生成或所需的文件。',
+  ),
+  'zh_TW': (
+    purpose: '用途：應用程式為目前輪次提供的執行階段身分資訊。',
+    labelSeparator: '：',
+    currentTimeLabel: '目前時間',
+    agentIdLabel: '智慧助理 ID',
+    agentNameLabel: '智慧助理名稱',
+    conversationIdLabel: '目前對話 ID',
+    artifactsDirectoryLabel: '對話產出目錄',
+    artifactsDirectoryInstruction: '請使用此目錄儲存及存取目前對話所產生或需要的檔案。',
+  ),
+  'ja_JP': (
+    purpose: '目的：現在のターンについてアプリケーションが提供する実行時 ID 情報。',
+    labelSeparator: '：',
+    currentTimeLabel: '現在時刻',
+    agentIdLabel: 'エージェント ID',
+    agentNameLabel: 'エージェント名',
+    conversationIdLabel: '現在の会話 ID',
+    artifactsDirectoryLabel: '会話成果物ディレクトリ',
+    artifactsDirectoryInstruction:
+        '現在の会話で生成または必要となるファイルの保存とアクセスには、このディレクトリを使用してください。',
+  ),
+  'fr_FR': (
+    purpose:
+        'Objectif : identité d’exécution fournie par l’application pour le tour actuel.',
+    labelSeparator: ' : ',
+    currentTimeLabel: 'Heure actuelle',
+    agentIdLabel: 'ID de l’agent',
+    agentNameLabel: 'Nom de l’agent',
+    conversationIdLabel: 'ID de la conversation actuelle',
+    artifactsDirectoryLabel: 'Répertoire des artefacts de la conversation',
+    artifactsDirectoryInstruction:
+        'Utilisez ce répertoire pour stocker et consulter les fichiers produits ou nécessaires à la conversation actuelle.',
+  ),
+  'de_DE': (
+    purpose:
+        'Zweck: Von der Anwendung bereitgestellte Laufzeitidentität für den aktuellen Durchlauf.',
+    labelSeparator: ': ',
+    currentTimeLabel: 'Aktuelle Zeit',
+    agentIdLabel: 'Agenten-ID',
+    agentNameLabel: 'Name des Agenten',
+    conversationIdLabel: 'ID der aktuellen Unterhaltung',
+    artifactsDirectoryLabel: 'Artefaktverzeichnis der Unterhaltung',
+    artifactsDirectoryInstruction:
+        'Verwenden Sie dieses Verzeichnis, um Dateien zu speichern und abzurufen, die in der aktuellen Unterhaltung erstellt oder benötigt werden.',
+  ),
+  'ko_KR': (
+    purpose: '목적: 현재 턴에 대해 애플리케이션이 제공하는 런타임 ID 정보.',
+    labelSeparator: ': ',
+    currentTimeLabel: '현재 시간',
+    agentIdLabel: '에이전트 ID',
+    agentNameLabel: '에이전트 이름',
+    conversationIdLabel: '현재 대화 ID',
+    artifactsDirectoryLabel: '대화 결과물 디렉터리',
+    artifactsDirectoryInstruction:
+        '현재 대화에서 생성되거나 필요한 파일을 저장하고 액세스하려면 이 디렉터리를 사용하세요.',
+  ),
+  'ru_RU': (
+    purpose:
+        'Назначение: данные времени выполнения, предоставленные приложением для текущего хода.',
+    labelSeparator: ': ',
+    currentTimeLabel: 'Текущее время',
+    agentIdLabel: 'ID агента',
+    agentNameLabel: 'Имя агента',
+    conversationIdLabel: 'ID текущего диалога',
+    artifactsDirectoryLabel: 'Каталог артефактов диалога',
+    artifactsDirectoryInstruction:
+        'Используйте этот каталог для хранения и доступа к файлам, созданным или необходимым в текущем диалоге.',
+  ),
+  'es_ES': (
+    purpose:
+        'Propósito: identidad de ejecución proporcionada por la aplicación para el turno actual.',
+    labelSeparator: ': ',
+    currentTimeLabel: 'Hora actual',
+    agentIdLabel: 'ID del agente',
+    agentNameLabel: 'Nombre del agente',
+    conversationIdLabel: 'ID de la conversación actual',
+    artifactsDirectoryLabel: 'Directorio de artefactos de la conversación',
+    artifactsDirectoryInstruction:
+        'Use este directorio para almacenar y acceder a los archivos producidos o necesarios para la conversación actual.',
+  ),
+  'hi_IN': (
+    purpose:
+        'उद्देश्य: वर्तमान चरण के लिए एप्लिकेशन द्वारा दी गई रनटाइम पहचान।',
+    labelSeparator: ': ',
+    currentTimeLabel: 'वर्तमान समय',
+    agentIdLabel: 'एजेंट ID',
+    agentNameLabel: 'एजेंट का नाम',
+    conversationIdLabel: 'वर्तमान बातचीत ID',
+    artifactsDirectoryLabel: 'बातचीत आर्टिफ़ैक्ट डायरेक्टरी',
+    artifactsDirectoryInstruction:
+        'वर्तमान बातचीत में बनाई गई या आवश्यक फ़ाइलों को संग्रहीत और एक्सेस करने के लिए इस डायरेक्टरी का उपयोग करें।',
+  ),
+  'pt_BR': (
+    purpose:
+        'Finalidade: identidade de execução fornecida pelo aplicativo para o turno atual.',
+    labelSeparator: ': ',
+    currentTimeLabel: 'Hora atual',
+    agentIdLabel: 'ID do agente',
+    agentNameLabel: 'Nome do agente',
+    conversationIdLabel: 'ID da conversa atual',
+    artifactsDirectoryLabel: 'Diretório de artefatos da conversa',
+    artifactsDirectoryInstruction:
+        'Use este diretório para armazenar e acessar os arquivos produzidos ou necessários para a conversa atual.',
+  ),
+  'it_IT': (
+    purpose:
+        'Scopo: identità di runtime fornita dall’applicazione per il turno corrente.',
+    labelSeparator: ': ',
+    currentTimeLabel: 'Ora corrente',
+    agentIdLabel: 'ID dell’agente',
+    agentNameLabel: 'Nome dell’agente',
+    conversationIdLabel: 'ID della conversazione corrente',
+    artifactsDirectoryLabel: 'Directory degli artefatti della conversazione',
+    artifactsDirectoryInstruction:
+        'Usa questa directory per archiviare e accedere ai file prodotti o necessari per la conversazione corrente.',
   ),
 };
