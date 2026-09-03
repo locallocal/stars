@@ -32,6 +32,7 @@ void main() {
             messages: [ChatMessage(role: 'user', content: 'hello')],
             activatedSkills: const [],
             requestedToolNames: const {'unavailable_tool'},
+            reliabilityPolicyEnabled: false,
           );
         },
       );
@@ -49,6 +50,7 @@ void main() {
       expect(result.messages.single.content, 'hello');
       expect(result.requestedToolNames, {'unavailable_tool'});
       expect(result.runScopedTools, isEmpty);
+      expect(result.reliabilityPolicyEnabled, isFalse);
       expect(
         () => result.messages.add(
           ChatMessage(role: 'assistant', content: 'mutate'),

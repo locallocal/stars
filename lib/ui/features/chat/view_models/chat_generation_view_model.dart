@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/services/answer_trust_policy.dart';
 import 'package:stars/domain/use_cases/agent_run_coordinator.dart';
 import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
 
@@ -46,6 +47,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     ToolRegistry? toolRegistry,
     ToolPolicy toolPolicy = const DefaultToolPolicy(),
     AgentRunLimits agentRunLimits = const AgentRunLimits(),
+    AnswerTrustPolicy answerTrustPolicy = const AnswerTrustPolicy(),
     Duration partialPersistenceInterval = defaultPartialPersistenceInterval,
   }) : _bot = bot,
        _providerFactory = providerFactory,
@@ -58,6 +60,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
        _toolRegistry = toolRegistry ?? StaticToolRegistry(const []),
        _toolPolicy = toolPolicy,
        _agentRunLimits = agentRunLimits,
+       _answerTrustPolicy = answerTrustPolicy,
        _partialPersistenceInterval = partialPersistenceInterval,
        _capabilityProvider = providerFactory(bot),
        _snapshot = ChatGenerationSnapshot(chatId: chatId);
@@ -73,6 +76,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
   final AgentRunLimits _agentRunLimits;
+  final AnswerTrustPolicy _answerTrustPolicy;
   final Duration _partialPersistenceInterval;
 
   Bot _bot;
@@ -93,6 +97,11 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   Timer? _partialPersistenceTimer;
   Future<void> _partialPersistenceQueue = Future<void>.value();
   Future<void> _toolPersistenceQueue = Future<void>.value();
+  bool _providerSupportsAgentLoop = false;
+  bool _reliabilityPolicyEnabled = true;
+  AnswerEvidenceState _answerEvidenceState = AnswerEvidenceState.none;
+  AnswerTrustGateResult _answerTrustGateResult = AnswerTrustGateResult.notRun;
+  String _criticalPersistenceFailureCode = '';
 
   ChatGenerationSnapshot get snapshot => _snapshot;
   ContextAssemblyReport? get contextAssemblyReport => _contextAssemblyReport;
@@ -162,6 +171,11 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _startedAt = DateTime.now();
     _preflightTokenUsage = ModelTokenUsage.empty;
     _agentTokenUsage = ModelTokenUsage.empty;
+    _providerSupportsAgentLoop = provider.capabilities.supportsAgentLoop;
+    _reliabilityPolicyEnabled = true;
+    _answerEvidenceState = AnswerEvidenceState.none;
+    _answerTrustGateResult = AnswerTrustGateResult.notRun;
+    _criticalPersistenceFailureCode = '';
     _terminalCompleter = Completer<ChatRunLifecycle>();
     _preparingRuns.add(runId);
     _snapshot = ChatGenerationSnapshot(
@@ -204,6 +218,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     );
     _preflightTokenUsage = prepared.preflightTokenUsage;
     _contextAssemblyReport = prepared.contextAssemblyReport;
+    _reliabilityPolicyEnabled = prepared.reliabilityPolicyEnabled;
     _snapshot = _snapshot.copyWith(
       supportsCancellation: provider.supportsCancellation,
       tokenUsage: prepared.preflightTokenUsage,
@@ -550,6 +565,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
           _startedAt == null
               ? null
               : DateTime.now().difference(_startedAt!).inMilliseconds;
+      final grounding = _evaluateGrounding(outcome, failureReasonCode: error);
       final terminalDraft = Message(
         messageId: '$runId:assistant',
         turnId: _snapshot.turnId ?? runId,
@@ -572,6 +588,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
           ),
         ),
         tokenUsage: _snapshot.tokenUsage,
+        grounding: grounding,
         files: List<String>.of(_snapshot.localFiles),
         terminalOutcome: outcome,
         hasPartialContent:
@@ -586,12 +603,18 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         terminalPersisted = true;
       } catch (persistenceError) {
         lifecycle = ChatRunLifecycle.failed;
-        error =
+        final failureCode =
             AppFailure.from(
               persistenceError,
               code: 'generation_response_persist_failed',
             ).code;
+        error = failureCode;
         terminalMessage = terminalDraft.copyWith(
+          grounding: _evaluateGrounding(
+            MessageTerminalOutcome.failed,
+            failureReasonCode: failureCode,
+            criticalPersistenceSucceeded: false,
+          ),
           terminalOutcome: MessageTerminalOutcome.failed,
           hasPartialContent: hasGeneratedContent,
         );
@@ -643,6 +666,30 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _applyPendingBot();
     _finalizingRuns.remove(runId);
     notifyListeners();
+  }
+
+  MessageGrounding _evaluateGrounding(
+    MessageTerminalOutcome terminalOutcome, {
+    String? failureReasonCode,
+    bool? criticalPersistenceSucceeded,
+  }) {
+    final persistenceFailureCode = _criticalPersistenceFailureCode;
+    return _answerTrustPolicy.evaluate(
+      AnswerTrustPolicyInput(
+        terminalOutcome: terminalOutcome,
+        providerSupportsAgentLoop: _providerSupportsAgentLoop,
+        reliabilityPolicyEnabled: _reliabilityPolicyEnabled,
+        toolCalls: _snapshot.toolCalls,
+        evidenceState: _answerEvidenceState,
+        gateResult: _answerTrustGateResult,
+        criticalPersistenceSucceeded:
+            criticalPersistenceSucceeded ?? persistenceFailureCode.isEmpty,
+        failureReasonCode:
+            failureReasonCode?.isNotEmpty ?? false
+                ? failureReasonCode!
+                : persistenceFailureCode,
+      ),
+    );
   }
 
   void _completeTerminal(ChatRunLifecycle lifecycle) {

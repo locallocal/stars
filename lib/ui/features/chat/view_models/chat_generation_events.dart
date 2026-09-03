@@ -95,6 +95,16 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
             if (!_isActiveRun(runId) || _finalizingRuns.contains(runId)) {
               return;
             }
+            if (result.status == AgentRunStatus.completed) {
+              _answerTrustGateResult = AnswerTrustGateResult.passed;
+              _answerEvidenceState =
+                  result.toolInvocations.isEmpty
+                      ? AnswerEvidenceState.none
+                      : AnswerEvidenceState.legacyFormatOnly;
+            } else if (result.error == 'ungrounded_final_answer') {
+              _answerTrustGateResult = AnswerTrustGateResult.failed;
+              _answerEvidenceState = AnswerEvidenceState.invalid;
+            }
             final terminal = switch (result.status) {
               AgentRunStatus.completed => ProviderTerminalType.completed,
               AgentRunStatus.cancelled => ProviderTerminalType.cancelled,
@@ -258,6 +268,11 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
         try {
           await persister(record);
         } catch (error) {
+          _criticalPersistenceFailureCode =
+              AppFailure.from(
+                error,
+                code: 'tool_execution_persist_failed',
+              ).code;
           debugPrint('Failed to persist Tool audit for $runId: $error');
         }
       });

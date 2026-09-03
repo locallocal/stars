@@ -163,6 +163,7 @@ class PreparedTextGeneration {
     this.approvalExemptToolNames = const {},
     this.runScopedTools = const [],
     this.contextAssemblyReport,
+    this.reliabilityPolicyEnabled = true,
   });
 
   final Message userMessage;
@@ -175,4 +176,5 @@ class PreparedTextGeneration {
   final Set<String> approvalExemptToolNames;
   final List<ExecutableTool> runScopedTools;
   final ContextAssemblyReport? contextAssemblyReport;
+  final bool reliabilityPolicyEnabled;
 }

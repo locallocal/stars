@@ -64,11 +64,76 @@ void main() {
       expect(controller.snapshot.streamingResponse, 'answer');
       expect(controller.snapshot.terminalMessage?.content, 'answer');
       expect(
+        controller.snapshot.terminalMessage?.grounding.trustLevel,
+        AnswerTrustLevel.unverified,
+      );
+      expect(
+        controller.snapshot.terminalMessage?.grounding.reasonCode,
+        'provider_tools_unsupported',
+      );
+      expect(
         harness.persisted.where((message) => message.senderId == _bot.id),
         hasLength(1),
       );
       expect(harness.lastMessages, <String>['Hello', 'answer']);
     });
+
+    test(
+      'an empty Agent Tool registry cannot produce verified trust',
+      () async {
+        final harness = _ControllerHarness(
+          cancellable: true,
+          supportsAgentLoop: true,
+        );
+        final controller = harness.controller;
+        addTearDown(controller.dispose);
+
+        await controller.startText(
+          userMessage: _userMessage(),
+          messages: [ChatMessage(role: 'user', content: 'Hello')],
+        );
+        harness.runProvider.emitToken('answer');
+        harness.runProvider.emitTerminal(ProviderTerminalType.completed);
+        await _waitFor(
+          () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+        );
+
+        final grounding = controller.snapshot.terminalMessage!.grounding;
+        expect(grounding.trustLevel, AnswerTrustLevel.unverified);
+        expect(grounding.reasonCode, 'no_tool_evidence');
+      },
+    );
+
+    test(
+      'application trust gate remains active when prompt is disabled',
+      () async {
+        final harness = _ControllerHarness(
+          cancellable: true,
+          supportsAgentLoop: true,
+        );
+        final controller = harness.controller;
+        addTearDown(controller.dispose);
+
+        await controller.startTextWithPreparation(
+          userMessage: _userMessage(),
+          prepare:
+              (userMessage) async => PreparedTextGeneration(
+                userMessage: userMessage,
+                messages: [ChatMessage(role: 'user', content: 'Hello')],
+                reliabilityPolicyEnabled: false,
+              ),
+        );
+        harness.runProvider.emitToken('answer');
+        harness.runProvider.emitTerminal(ProviderTerminalType.completed);
+        await _waitFor(
+          () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+        );
+
+        final grounding = controller.snapshot.terminalMessage!.grounding;
+        expect(grounding.trustLevel, AnswerTrustLevel.unverified);
+        expect(grounding.reasonCode, 'reliability_policy_disabled');
+      },
+    );
 
     test(
       'registry keeps generating and persists incremental drafts after detach',
@@ -369,6 +434,67 @@ void main() {
       expect(harness.lastMessages, <String>['Hello', 'partial']);
     });
 
+    test('provider failure keeps streamed content explicitly failed', () async {
+      final harness = _ControllerHarness(cancellable: true);
+      final controller = harness.controller;
+      addTearDown(controller.dispose);
+
+      await controller.startText(
+        userMessage: _userMessage(),
+        messages: [ChatMessage(role: 'user', content: 'Hello')],
+      );
+      harness.runProvider.emitToken('partial answer');
+      harness.runProvider.emitTerminal(
+        ProviderTerminalType.failed,
+        error: 'provider_timeout',
+      );
+      await _waitFor(
+        () => controller.snapshot.lifecycle == ChatRunLifecycle.failed,
+      );
+
+      final terminal = controller.snapshot.terminalMessage!;
+      expect(terminal.content, 'partial answer');
+      expect(terminal.hasPartialContent, isTrue);
+      expect(terminal.grounding.trustLevel, AnswerTrustLevel.failed);
+      expect(terminal.grounding.reasonCode, 'network_timeout');
+    });
+
+    test('terminal persistence failure produces failed trust', () async {
+      final factory = _FakeProviderFactory(cancellable: true);
+      final controller = ChatGenerationViewModel(
+        chatId: 'chat-1',
+        bot: _bot,
+        providerFactory: factory.create,
+        messagePersister: (message) async {
+          if (message.senderId == _bot.id) {
+            throw StateError('storage unavailable');
+          }
+          return message;
+        },
+        lastMessageUpdater: (_, _) async {},
+      );
+      addTearDown(controller.dispose);
+
+      await controller.startText(
+        userMessage: _userMessage(),
+        messages: [ChatMessage(role: 'user', content: 'Hello')],
+      );
+      final provider = factory.instances.last;
+      provider.emitToken('answer');
+      provider.emitTerminal(ProviderTerminalType.completed);
+      await _waitFor(
+        () => controller.snapshot.lifecycle == ChatRunLifecycle.failed,
+      );
+
+      final terminal = controller.snapshot.terminalMessage!;
+      expect(terminal.terminalOutcome, MessageTerminalOutcome.failed);
+      expect(terminal.grounding.trustLevel, AnswerTrustLevel.failed);
+      expect(
+        terminal.grounding.reasonCode,
+        'generation_response_persist_failed',
+      );
+    });
+
     test(
       'slow turn preparation is immediately cancellable and never starts provider',
       () async {
@@ -649,6 +775,8 @@ void main() {
         );
         final assistant = persisted.last;
         expect(assistant.content, 'Saved.');
+        expect(assistant.grounding.trustLevel, AnswerTrustLevel.unverified);
+        expect(assistant.grounding.reasonCode, 'legacy_evidence_unverified');
         expect(
           assistant.processInfo.toolCalls.single.name,
           'mcp.notes.save_note',
@@ -682,6 +810,45 @@ void main() {
           toolAudits.last.argumentsSummary,
           contains('"api_token":"[redacted]"'),
         );
+      },
+    );
+
+    test(
+      'tool audit persistence failure prevents trusted publication',
+      () async {
+        final tool = _ViewModelTool();
+        final factory = _AgentProviderFactory();
+        final persisted = <Message>[];
+        final controller = ChatGenerationViewModel(
+          chatId: 'chat-1',
+          bot: _bot,
+          providerFactory: factory.create,
+          messagePersister: (message) async {
+            persisted.add(message);
+            return message;
+          },
+          lastMessageUpdater: (_, _) async {},
+          toolInvocationPersister:
+              (_) async => throw StateError('tool audit unavailable'),
+          toolRegistry: StaticToolRegistry([tool]),
+        );
+        addTearDown(controller.dispose);
+
+        await controller.startText(
+          userMessage: _userMessage(),
+          messages: [ChatMessage(role: 'user', content: 'Save it')],
+          requestedToolNames: const {'mcp.notes.save_note'},
+        );
+        await _waitFor(() => controller.snapshot.pendingToolApproval != null);
+        controller.resolveToolApproval(ToolApprovalDecision.allowOnce);
+        await _waitFor(
+          () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+        );
+
+        final assistant = persisted.last;
+        expect(assistant.terminalOutcome, MessageTerminalOutcome.completed);
+        expect(assistant.grounding.trustLevel, AnswerTrustLevel.failed);
+        expect(assistant.grounding.reasonCode, 'tool_execution_persist_failed');
       },
     );
 
@@ -897,8 +1064,13 @@ Message _userMessage() => Message(
 );
 
 class _ControllerHarness {
-  _ControllerHarness({required bool cancellable})
-    : factory = _FakeProviderFactory(cancellable: cancellable) {
+  _ControllerHarness({
+    required bool cancellable,
+    bool supportsAgentLoop = false,
+  }) : factory = _FakeProviderFactory(
+         cancellable: cancellable,
+         supportsAgentLoop: supportsAgentLoop,
+       ) {
     controller = ChatGenerationViewModel(
       chatId: 'chat-1',
       bot: _bot,
@@ -926,25 +1098,47 @@ class _ControllerHarness {
 }
 
 class _FakeProviderFactory {
-  _FakeProviderFactory({required this.cancellable});
+  _FakeProviderFactory({
+    required this.cancellable,
+    this.supportsAgentLoop = false,
+  });
 
   final bool cancellable;
+  final bool supportsAgentLoop;
   final List<_FakeProvider> instances = <_FakeProvider>[];
 
   AiProvider create(Bot bot) {
-    final provider = _FakeProvider(bot, cancellable: cancellable);
+    final provider = _FakeProvider(
+      bot,
+      cancellable: cancellable,
+      supportsAgentLoop: supportsAgentLoop,
+    );
     instances.add(provider);
     return provider;
   }
 }
 
 class _FakeProvider extends AiProvider {
-  _FakeProvider(super.bot, {required this.cancellable});
+  _FakeProvider(
+    super.bot, {
+    required this.cancellable,
+    required this.supportsAgentLoop,
+  });
 
   final bool cancellable;
+  final bool supportsAgentLoop;
   final Completer<void> _generation = Completer<void>();
   int cancelRequests = 0;
   int generateCalls = 0;
+
+  @override
+  AiProviderCapabilities get capabilities =>
+      supportsAgentLoop
+          ? const AiProviderCapabilities(
+            supportsStructuredToolCalls: true,
+            supportsToolResults: true,
+          )
+          : AiProviderCapabilities.legacy;
 
   @override
   bool get supportsCancellation => cancellable;
@@ -959,8 +1153,8 @@ class _FakeProvider extends AiProvider {
 
   void emitUsage(ModelTokenUsage usage) => onTokenUsage?.call(usage);
 
-  void emitTerminal(ProviderTerminalType type) {
-    onTerminal?.call(ProviderTerminalEvent(type: type));
+  void emitTerminal(ProviderTerminalType type, {String? error}) {
+    onTerminal?.call(ProviderTerminalEvent(type: type, error: error));
     if (!_generation.isCompleted) _generation.complete();
   }
 

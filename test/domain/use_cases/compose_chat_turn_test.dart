@@ -199,6 +199,7 @@ void main() {
       expect(systemPrompt, contains('当前会话 ID：chat-1'));
       expect(systemPrompt, isNot(contains('Current conversation ID:')));
       expect(systemPrompt, contains('Bot-owned instructions.'));
+      expect(result.reliabilityPolicyEnabled, isFalse);
       expect(preferenceReads, 1);
       expect(languageReads, 1);
     },

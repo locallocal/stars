@@ -113,7 +113,12 @@
 
 ### GRD-003 所有文本生成统一经过终态信任门禁
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/services/answer_trust_policy.dart`、
+`lib/ui/features/chat/view_models/chat_generation_view_model.dart`；领域与流程回归测试：
+`test/domain/services/answer_trust_policy_test.dart` 和
+`test/ui/features/chat/view_models/chat_generation_view_model_test.dart`。
 
 目标：消除 `provider.generateText` 直通完成态造成的错误授信。
 

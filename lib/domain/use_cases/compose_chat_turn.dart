@@ -23,6 +23,7 @@ final class PreparedChatTurn {
     List<MessageToolCall> skillToolCalls = const [],
     Set<String> requestedToolNames = const {},
     Set<String> approvalExemptToolNames = const {},
+    this.reliabilityPolicyEnabled = true,
     this.estimatedSkillContextTokens = 0,
     this.preflightTokenUsage = ModelTokenUsage.empty,
     ContextAssemblyReport? contextAssemblyReport,
@@ -47,6 +48,7 @@ final class PreparedChatTurn {
   final List<MessageToolCall> skillToolCalls;
   final Set<String> requestedToolNames;
   final Set<String> approvalExemptToolNames;
+  final bool reliabilityPolicyEnabled;
   final int estimatedSkillContextTokens;
   final ModelTokenUsage preflightTokenUsage;
   final ContextAssemblyReport contextAssemblyReport;
@@ -463,6 +465,7 @@ final class ComposeChatTurn {
         if (preparedContext?.report.historyLookupAvailable ?? false)
           ...conversationHistoryToolNames,
       },
+      reliabilityPolicyEnabled: injectApplicationPrompt,
       estimatedSkillContextTokens: totalSkillTokens,
       preflightTokenUsage: state.preflightTokenUsage,
       contextAssemblyReport: preparedContext?.report,

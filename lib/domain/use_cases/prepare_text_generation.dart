@@ -30,6 +30,7 @@ final class PreparedChatGeneration {
     required Set<String> approvalExemptToolNames,
     required List<ExecutableTool> runScopedTools,
     required this.contextAssemblyReport,
+    this.reliabilityPolicyEnabled = true,
   }) : messages = List<ChatMessage>.unmodifiable(messages),
        activatedSkills = List<ActivatedSkill>.unmodifiable(activatedSkills),
        activationAttempts = List<SkillActivationAttempt>.unmodifiable(
@@ -52,6 +53,7 @@ final class PreparedChatGeneration {
   final Set<String> approvalExemptToolNames;
   final List<ExecutableTool> runScopedTools;
   final ContextAssemblyReport contextAssemblyReport;
+  final bool reliabilityPolicyEnabled;
 }
 
 /// Prepares a text generation request and its run-scoped tools.
@@ -151,6 +153,7 @@ final class PrepareTextGeneration {
         ...mcpInventoryTools,
       ],
       contextAssemblyReport: preparedTurn.contextAssemblyReport,
+      reliabilityPolicyEnabled: preparedTurn.reliabilityPolicyEnabled,
     );
   }
 }
