@@ -421,6 +421,62 @@ void main() {
     );
 
     test(
+      'adds message grounding storage without deleting existing rows',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'stars_current_grounding_upgrade_',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final dataDirectory = _applicationDataDirectory(directory);
+        await dataDirectory.create(recursive: true);
+        final databasePath = path.join(dataDirectory.path, 'app.db');
+        final initialDatabase = await databaseFactoryFfi.openDatabase(
+          databasePath,
+          options: OpenDatabaseOptions(
+            version: DatabaseService.databaseVersion,
+            onConfigure: DatabaseService.configure,
+            onCreate: DatabaseService.createSchema,
+          ),
+        );
+        await initialDatabase.insert('bots', _botRow('bot-grounding-upgrade'));
+        await initialDatabase.insert(
+          'chats',
+          _chatRow('chat-grounding-upgrade', 'bot-grounding-upgrade'),
+        );
+        await initialDatabase.insert(
+          'messages',
+          _messageRow(
+            'message-grounding-upgrade',
+            'chat-grounding-upgrade',
+            'bot-grounding-upgrade',
+            'Existing answer',
+          ),
+        );
+        await initialDatabase.execute(
+          'ALTER TABLE messages DROP COLUMN grounding_json',
+        );
+        await initialDatabase.close();
+
+        final service = DatabaseService(
+          applicationDocumentsDirectoryProvider: () async => directory,
+        );
+        final migratedDatabase = await service.initDatabase();
+        addTearDown(migratedDatabase.close);
+
+        final columns = await migratedDatabase.rawQuery(
+          'PRAGMA table_info(messages)',
+        );
+        final rows = await migratedDatabase.query('messages');
+        expect(
+          columns.map((column) => column['name']),
+          contains('grounding_json'),
+        );
+        expect(rows.single['content'], 'Existing answer');
+        expect(rows.single['grounding_json'], isEmpty);
+      },
+    );
+
+    test(
       'deletes any non-current database before creating the current schema',
       () async {
         final directory = await Directory.systemTemp.createTemp(
@@ -681,6 +737,7 @@ Future<void> _expectCurrentSchema(Database database) async {
       'content',
       'reasoning',
       'process_info',
+      'grounding_json',
       'images',
       'files',
       'audio',
@@ -700,6 +757,12 @@ Future<void> _expectCurrentSchema(Database database) async {
       (column) => column['name'] == 'message_id',
     )['notnull'],
     1,
+  );
+  expect(
+    messageColumns.singleWhere(
+      (column) => column['name'] == 'grounding_json',
+    )['dflt_value'],
+    "''",
   );
 
   final toolExecutionColumns = await database.rawQuery(

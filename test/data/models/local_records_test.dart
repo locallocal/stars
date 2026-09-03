@@ -226,6 +226,146 @@ void main() {
     );
   });
 
+  test('message grounding survives local record serialization', () {
+    final timestamp = DateTime.fromMillisecondsSinceEpoch(1770000000123);
+    final record = MessageRecord.fromDomain(
+      Message(
+        messageId: 'message-grounded',
+        turnId: 'turn-grounded',
+        runId: 'run-grounded',
+        chatId: 'chat-grounded',
+        botId: 'bot-grounded',
+        senderId: 'bot-grounded',
+        content: 'Partially grounded answer',
+        grounding: MessageGrounding(
+          trustLevel: AnswerTrustLevel.partiallyVerified,
+          reasonCode: 'some_claims_ungrounded',
+          evidenceIds: const ['evidence-1', 'evidence-2'],
+        ),
+        terminalOutcome: MessageTerminalOutcome.completed,
+        timestamp: timestamp,
+      ),
+    );
+
+    expect(
+      jsonDecode(record.values['grounding_json']! as String),
+      <String, Object?>{
+        'protocol_version': MessageGrounding.currentProtocolVersion,
+        'trust_level': 'partiallyVerified',
+        'reason_code': 'some_claims_ungrounded',
+        'evidence_ids': <String>['evidence-1', 'evidence-2'],
+      },
+    );
+
+    final restored = record.toDomain();
+    expect(
+      restored.grounding.protocolVersion,
+      MessageGrounding.currentProtocolVersion,
+    );
+    expect(restored.grounding.trustLevel, AnswerTrustLevel.partiallyVerified);
+    expect(restored.grounding.reasonCode, 'some_claims_ungrounded');
+    expect(restored.grounding.evidenceIds, ['evidence-1', 'evidence-2']);
+  });
+
+  test('legacy message records remain unverified despite successful tools', () {
+    final values = Map<String, Object?>.from(
+      MessageRecord.fromDomain(
+        Message(
+          messageId: 'message-legacy-grounding',
+          turnId: 'turn-legacy-grounding',
+          runId: 'run-legacy-grounding',
+          chatId: 'chat-legacy-grounding',
+          botId: 'bot-legacy-grounding',
+          senderId: 'bot-legacy-grounding',
+          content: 'Legacy answer',
+          processInfo: const MessageProcessInfo(
+            toolCalls: [
+              MessageToolCall(
+                callId: 'legacy-success',
+                name: 'legacy.tool',
+                status: 'succeeded',
+              ),
+            ],
+          ),
+          timestamp: DateTime.fromMillisecondsSinceEpoch(1),
+        ),
+      ).values,
+    )..remove('grounding_json');
+
+    final restored = MessageRecord(values).toDomain();
+    final grounding = restored.grounding;
+
+    expect(grounding.protocolVersion, 0);
+    expect(grounding.trustLevel, AnswerTrustLevel.unverified);
+    expect(grounding.reasonCode, 'legacy_grounding_missing');
+    expect(grounding.evidenceIds, isEmpty);
+
+    final rewrittenGrounding =
+        MessageRecord.fromDomain(restored).toDomain().grounding;
+    expect(rewrittenGrounding.protocolVersion, 0);
+    expect(rewrittenGrounding.trustLevel, AnswerTrustLevel.unverified);
+    expect(rewrittenGrounding.reasonCode, 'legacy_grounding_missing');
+    expect(rewrittenGrounding.evidenceIds, isEmpty);
+  });
+
+  test('invalid grounding metadata fails closed', () {
+    final baseValues =
+        MessageRecord.fromDomain(
+          Message(
+            messageId: 'message-invalid-grounding',
+            turnId: 'turn-invalid-grounding',
+            runId: 'run-invalid-grounding',
+            chatId: 'chat-invalid-grounding',
+            botId: 'bot-invalid-grounding',
+            senderId: 'bot-invalid-grounding',
+            content: 'Untrusted answer',
+            timestamp: DateTime.fromMillisecondsSinceEpoch(1),
+          ),
+        ).values;
+    final invalidRecords = <String, Object?>{
+      'unknown protocol': jsonEncode(<String, Object?>{
+        'protocol_version': MessageGrounding.currentProtocolVersion + 1,
+        'trust_level': 'verified',
+        'reason_code': 'future_protocol',
+        'evidence_ids': <String>['evidence-1'],
+      }),
+      'invalid enum': jsonEncode(<String, Object?>{
+        'protocol_version': MessageGrounding.currentProtocolVersion,
+        'trust_level': 'trusted',
+        'reason_code': 'invalid_enum',
+        'evidence_ids': <String>['evidence-1'],
+      }),
+      'forged legacy verification': jsonEncode(<String, Object?>{
+        'protocol_version': 0,
+        'trust_level': 'verified',
+        'reason_code': 'legacy_verified',
+        'evidence_ids': <String>['evidence-1'],
+      }),
+      'missing field': jsonEncode(<String, Object?>{
+        'protocol_version': MessageGrounding.currentProtocolVersion,
+        'trust_level': 'verified',
+        'reason_code': 'missing_evidence_ids',
+      }),
+    };
+
+    for (final entry in invalidRecords.entries) {
+      final values = <String, Object?>{
+        ...baseValues,
+        'grounding_json': entry.value,
+      };
+      final grounding = MessageRecord(values).toDomain().grounding;
+
+      expect(grounding.protocolVersion, 0, reason: entry.key);
+      expect(
+        grounding.trustLevel,
+        AnswerTrustLevel.unverified,
+        reason: entry.key,
+      );
+      expect(grounding.evidenceIds, isEmpty, reason: entry.key);
+      expect(grounding.reasonCode, isNotEmpty, reason: entry.key);
+    }
+  });
+
   test('rejects corrupt current Bot parameters instead of erasing them', () {
     final timestamp = DateTime.fromMillisecondsSinceEpoch(1);
     final record = BotRecord.fromDomain(

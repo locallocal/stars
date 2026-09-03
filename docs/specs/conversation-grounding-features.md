@@ -83,7 +83,13 @@
 
 ### GRD-002 可信元数据序列化与旧数据兼容
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/data/models/local_records.dart`、
+`lib/data/services/database_service.dart`；持久化与兼容回归测试：
+`test/data/models/local_records_test.dart`、
+`test/data/repositories/sqlite_repositories_test.dart` 和
+`test/data/services/database_service_test.dart`。
 
 目标：让可信状态随消息保存，并安全读取旧消息。
 
