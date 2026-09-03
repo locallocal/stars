@@ -1,5 +1,7 @@
 # Stars 桌面端界面规范
 
+[返回文档导航](../README.md)
+
 ## 1. 状态与范围
 
 本文档是 Windows、Linux 和 macOS 当前桌面界面的实现与验收基线，不再描述历史
@@ -10,7 +12,7 @@
 - Bot：`lib/ui/features/bots/`；
 - 共享组件：`lib/ui/core/widgets/desktop_chat_primitives.dart`；
 - 语义颜色与尺寸：`lib/utils/theme.dart`、`lib/utils/desktop_theme_spec.dart`；
-- 组件选型：`docs/desktop_component_matrix.md`。
+- 组件选型：[`desktop-components.md`](desktop-components.md)。
 
 平台能力由 `isDesktopPlatform` 判断；窗口适配只能由 `LayoutBuilder`、约束和 breakpoint
 决定。不得把平台类型与窗口宽度重新合并为同一个布尔值。
@@ -109,7 +111,7 @@ light、dark、high contrast 都必须有确定值；系统 high-contrast 状态
 
 ### 5.3 交互组件
 
-组件必须遵守 `docs/desktop_component_matrix.md`：
+组件必须遵守[桌面组件矩阵](desktop-components.md)：
 
 - 文本按钮使用对应 variant 的 `ShadButton`；
 - icon action 使用 44×44 命中区的 `StarsDesktopIconAction`；

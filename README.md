@@ -34,7 +34,7 @@ local SQLite database.
   Hindi, Brazilian Portuguese, and Italian from profile settings.
 
 The complete provider registry is available in
-[`ai_provider_repository_impl.dart`](lib/data/repositories/ai_provider_repository_impl.dart).
+[`provider_catalog.dart`](lib/domain/models/provider_catalog.dart).
 
 ## Getting Started
 
@@ -109,7 +109,8 @@ lib/
 ```
 
 See [Architecture](docs/architecture.md) for the dependency rules and design
-decisions used by the project.
+decisions used by the project. The [documentation index](docs/README.md) links
+the maintained specifications and implementation references.
 
 ## Contributing
 

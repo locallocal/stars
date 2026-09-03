@@ -1,5 +1,7 @@
 # Stars 架构
 
+[返回文档导航](README.md)
+
 Stars 采用分层架构与 MVVM。依赖方向固定为：
 
 ```text
