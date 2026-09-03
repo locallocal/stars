@@ -40,6 +40,13 @@ static void close_window(GtkButton* button, gpointer user_data) {
   gtk_window_close(GTK_WINDOW(user_data));
 }
 
+// Keeps the native window hidden until the framework can process platform
+// messages. Showing it earlier allows startup key events to reach the Linux
+// embedder before the Dart key-event channel is ready.
+static void first_frame_cb(MyApplication* self, FlView* view) {
+  gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
@@ -74,14 +81,18 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1280, 800);
   gtk_widget_set_size_request(GTK_WIDGET(window), 800, 600);
-  gtk_widget_show(GTK_WIDGET(window));
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
-  fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
+  fl_dart_project_set_dart_entrypoint_arguments(
+      project, self->dart_entrypoint_arguments);
 
   FlView* view = fl_view_new(project);
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
+
+  g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
+                           self);
+  gtk_widget_realize(GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
 
