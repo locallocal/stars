@@ -1,8 +1,12 @@
 # 桌面组件矩阵
 
+[返回文档导航](../README.md)
+
 本文档定义 Stars 桌面端唯一允许的交互与视觉组件入口。平台能力由
 `isDesktopPlatform` 判断，窗口尺寸与布局断点由 `LayoutBuilder`、`MediaQuery`
 或 Shad breakpoint 单独决定。
+
+整体布局、视觉规则与验收要求见[桌面端界面规范](desktop-ui.md)。
 
 ## 组件选型
 
