@@ -56,7 +56,10 @@
 
 ### GRD-001 回答可信等级领域模型
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/models/message.dart`；领域回归测试：
+`test/domain/models/message_grounding_test.dart`。
 
 目标：把流程终态和回答可信度拆成两个正交概念。
 
