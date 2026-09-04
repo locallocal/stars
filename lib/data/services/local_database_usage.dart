@@ -143,6 +143,16 @@ extension LocalDatabaseUsage on LocalDatabaseService {
     final database = await _databaseProvider();
     await database.transaction((transaction) async {
       await transaction.delete(
+        'tool_evidence_records',
+        where: 'chat_id = ?',
+        whereArgs: [chatId],
+      );
+      await transaction.delete(
+        'tool_invocation_events',
+        where: 'chat_id = ?',
+        whereArgs: [chatId],
+      );
+      await transaction.delete(
         'tool_execution_records',
         where: 'chat_id = ?',
         whereArgs: [chatId],
