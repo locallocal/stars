@@ -581,6 +581,266 @@ void main() {
     expect(envelope['provider_call_id'], 'call-1');
     expect(envelope['status'], 'success');
   });
+
+  test('Responses model session normalizes a completed cited web search', () async {
+    const answer = 'OpenAI released an update. access_token=body-secret';
+    Map<String, dynamic>? requestBody;
+    final client = MockClient((request) async {
+      requestBody = Map<String, dynamic>.from(jsonDecode(request.body) as Map);
+      return http.Response(
+        jsonEncode({
+          'id': 'resp-1',
+          'created_at': 1788566400,
+          'status': 'completed',
+          'output': [
+            {
+              'type': 'web_search_call',
+              'id': 'ws-1',
+              'status': 'completed',
+              'action': {
+                'type': 'search',
+                'queries': ['private search query'],
+                'sources': [
+                  {
+                    'type': 'url',
+                    'url':
+                        'https://user:secret@example.com/news?token=secret#part',
+                  },
+                ],
+              },
+            },
+            {
+              'id': 'msg-1',
+              'type': 'message',
+              'status': 'completed',
+              'role': 'assistant',
+              'content': [
+                {
+                  'type': 'output_text',
+                  'text': answer,
+                  'annotations': [
+                    {
+                      'type': 'url_citation',
+                      'start_index': 0,
+                      'end_index': answer.length,
+                      'url':
+                          'https://user:secret@example.com/news?token=secret#part',
+                      'title': 'Product update api_key=title-secret',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        200,
+      );
+    });
+    final provider = OpenAI(_bot(model: 'gpt-5.6-sol'), skillToolClient: client)
+      ..setWebSearch(true);
+    final session = provider.openModelSession(
+      ModelRequest(
+        messages: [ChatMessage(role: 'user', content: 'latest update')],
+        options: const ModelGenerationOptions(webSearch: true),
+      ),
+    );
+    addTearDown(session.close);
+
+    final events = await session.start().toList();
+    final native = events.whereType<ProviderNativeToolResult>().single;
+    final citations =
+        (native.result.structuredContent!
+                as Map<Object?, Object?>)['citations']!
+            as List<Object?>;
+    final citation = citations.single as Map<Object?, Object?>;
+
+    expect(provider.capabilities.supportsNativeToolEvidence, isTrue);
+    expect(requestBody?['tools'], [
+      {'type': 'web_search'},
+    ]);
+    expect(requestBody?['include'], ['web_search_call.action.sources']);
+    expect(native.call.callId, 'ws-1');
+    expect(native.call.arguments['action'], 'search');
+    expect(native.call.arguments['query_digest'], hasLength(64));
+    expect(jsonEncode(native.call.arguments), isNot(contains('private')));
+    expect(native.definition.source, ToolSource.providerNative);
+    expect(native.definition.producesEvidence, isTrue);
+    expect(native.result.schemaValid, isTrue);
+    expect(native.result.evidenceKind, EvidenceKind.observation);
+    expect(
+      native.result.structuredFacts.single.value,
+      'OpenAI released an update. access_token=[redacted]',
+    );
+    expect(
+      native.result.structuredFacts.single.attributes['provider_reference_id'],
+      'msg-1:url_citation:0',
+    );
+    expect(citation['url'], 'https://example.com/news');
+    expect(jsonEncode(citation), isNot(contains('secret')));
+    expect(
+      const JsonSchemaValidator().validate(
+        native.result.structuredContent,
+        native.definition.outputSchema!,
+      ),
+      isEmpty,
+    );
+  });
+
+  test(
+    'Responses web search without citations produces only failure evidence',
+    () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          jsonEncode({
+            'created_at': 1788566400,
+            'status': 'completed',
+            'output': [
+              {
+                'type': 'web_search_call',
+                'id': 'ws-missing-citation',
+                'status': 'completed',
+                'action': {'type': 'search', 'query': 'latest'},
+              },
+              {
+                'id': 'msg-no-citation',
+                'type': 'message',
+                'content': [
+                  {
+                    'type': 'output_text',
+                    'text': 'Uncited answer',
+                    'annotations': <Object?>[],
+                  },
+                ],
+              },
+            ],
+          }),
+          200,
+        ),
+      );
+      final session = OpenAI(
+        _bot(model: 'gpt-5.6-sol'),
+        skillToolClient: client,
+      ).openModelSession(
+        ModelRequest(
+          messages: [ChatMessage(role: 'user', content: 'latest')],
+          options: const ModelGenerationOptions(webSearch: true),
+        ),
+      );
+      addTearDown(session.close);
+
+      final native =
+          (await session.start().toList())
+              .whereType<ProviderNativeToolResult>()
+              .single;
+
+      expect(native.result.isError, isTrue);
+      expect(native.result.errorCode, 'provider_native_citation_missing');
+      expect(native.result.evidenceKind, isNull);
+      expect(native.result.structuredFacts, isEmpty);
+    },
+  );
+
+  test(
+    'Responses failed web search cannot produce observation evidence',
+    () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          jsonEncode({
+            'created_at': 1788566400,
+            'status': 'completed',
+            'output': [
+              {
+                'type': 'web_search_call',
+                'id': 'ws-failed',
+                'status': 'failed',
+                'action': {'type': 'search', 'query': 'latest'},
+              },
+            ],
+          }),
+          200,
+        ),
+      );
+      final session = OpenAI(
+        _bot(model: 'gpt-5.6-sol'),
+        skillToolClient: client,
+      ).openModelSession(
+        ModelRequest(
+          messages: [ChatMessage(role: 'user', content: 'latest')],
+          options: const ModelGenerationOptions(webSearch: true),
+        ),
+      );
+      addTearDown(session.close);
+
+      final native =
+          (await session.start().toList())
+              .whereType<ProviderNativeToolResult>()
+              .single;
+
+      expect(native.result.isError, isTrue);
+      expect(native.result.errorCode, 'provider_native_tool_incomplete');
+      expect(native.result.evidenceKind, isNull);
+      expect(native.result.structuredFacts, isEmpty);
+    },
+  );
+
+  test('Responses web search rejects truncated citation text', () async {
+    final longCitation = List.filled(600, 'x').join();
+    final client = MockClient(
+      (request) async => http.Response(
+        jsonEncode({
+          'created_at': 1788566400,
+          'status': 'completed',
+          'output': [
+            {
+              'type': 'web_search_call',
+              'id': 'ws-truncated',
+              'status': 'completed',
+              'action': {'type': 'search', 'query': 'latest'},
+            },
+            {
+              'id': 'msg-truncated',
+              'type': 'message',
+              'content': [
+                {
+                  'type': 'output_text',
+                  'text': longCitation,
+                  'annotations': [
+                    {
+                      'type': 'url_citation',
+                      'start_index': 0,
+                      'end_index': longCitation.length,
+                      'url': 'https://example.com/long',
+                      'title': 'Long result',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        200,
+      ),
+    );
+    final session = OpenAI(
+      _bot(model: 'gpt-5.6-sol'),
+      skillToolClient: client,
+    ).openModelSession(
+      ModelRequest(
+        messages: [ChatMessage(role: 'user', content: 'latest')],
+        options: const ModelGenerationOptions(webSearch: true),
+      ),
+    );
+    addTearDown(session.close);
+
+    final native =
+        (await session.start().toList())
+            .whereType<ProviderNativeToolResult>()
+            .single;
+
+    expect(native.result.isError, isTrue);
+    expect(native.result.truncated, isTrue);
+    expect(native.result.errorCode, 'provider_native_result_truncated');
+  });
 }
 
 String _sse(Map<String, Object?> event) => 'data: ${jsonEncode(event)}\n\n';

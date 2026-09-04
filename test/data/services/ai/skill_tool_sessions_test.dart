@@ -308,6 +308,158 @@ void main() {
     },
   );
 
+  test('OpenAI Chat returns the shared grounded answer DTO', () async {
+    final requests = <Map<String, Object?>>[];
+    final client = MockClient((request) async {
+      requests.add(
+        (jsonDecode(request.body) as Map<Object?, Object?>).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+      return http.Response(
+        jsonEncode({
+          'choices': [
+            {
+              'message': {
+                'content': requests.length == 1 ? 'draft' : _groundedJson,
+              },
+              'finish_reason': 'stop',
+            },
+          ],
+        }),
+        200,
+      );
+    });
+    final session = OpenAI(
+      _bot,
+      skillToolClient: client,
+    ).openModelSession(_modelRequest);
+    addTearDown(session.close);
+
+    await session.start().toList();
+    final events =
+        await session.synthesizeGroundedAnswer(_groundedRequest).toList();
+
+    _expectGroundedProtocol(events);
+    expect(requests.last, isNot(contains('tools')));
+    final messages = requests.last['messages']! as List<Object?>;
+    final prompt =
+        (messages.last as Map<Object?, Object?>)['content']! as String;
+    expect(prompt, contains(_evidenceId));
+    expect(prompt, contains('Do not emit a legacy evidence footer'));
+  });
+
+  test('OpenAI Responses returns the shared grounded answer DTO', () async {
+    final requests = <Map<String, Object?>>[];
+    final client = MockClient((request) async {
+      requests.add(
+        (jsonDecode(request.body) as Map<Object?, Object?>).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+      return http.Response(
+        jsonEncode({
+          'status': 'completed',
+          'output': [
+            {
+              'type': 'message',
+              'role': 'assistant',
+              'content': [
+                {
+                  'type': 'output_text',
+                  'text': requests.length == 1 ? 'draft' : _groundedJson,
+                },
+              ],
+            },
+          ],
+        }),
+        200,
+      );
+    });
+    final session = OpenAI(
+      _firstPartyBot,
+      skillToolClient: client,
+    ).openModelSession(_modelRequest);
+    addTearDown(session.close);
+
+    await session.start().toList();
+    final events =
+        await session.synthesizeGroundedAnswer(_groundedRequest).toList();
+
+    _expectGroundedProtocol(events);
+    expect(requests.last, isNot(contains('tools')));
+    expect(requests.last, isNot(contains('include')));
+  });
+
+  test('Anthropic returns the shared grounded answer DTO', () async {
+    final requests = <Map<String, Object?>>[];
+    final client = MockClient((request) async {
+      requests.add(
+        (jsonDecode(request.body) as Map<Object?, Object?>).map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+      return http.Response(
+        jsonEncode({
+          'content': [
+            {
+              'type': 'text',
+              'text': requests.length == 1 ? 'draft' : _groundedJson,
+            },
+          ],
+          'stop_reason': 'end_turn',
+        }),
+        200,
+      );
+    });
+    final session = Anthropic(
+      _bot,
+      skillToolClient: client,
+    ).openModelSession(_modelRequest);
+    addTearDown(session.close);
+
+    await session.start().toList();
+    final events =
+        await session.synthesizeGroundedAnswer(_groundedRequest).toList();
+
+    _expectGroundedProtocol(events);
+    expect(requests.last, isNot(contains('tools')));
+  });
+
+  test('structured synthesis rejects invalid Provider JSON', () async {
+    var requestCount = 0;
+    final client = MockClient((request) async {
+      requestCount += 1;
+      return http.Response(
+        jsonEncode({
+          'choices': [
+            {
+              'message': {'content': requestCount == 1 ? 'draft' : '{not-json'},
+              'finish_reason': 'stop',
+            },
+          ],
+        }),
+        200,
+      );
+    });
+    final session = OpenAI(
+      _bot,
+      skillToolClient: client,
+    ).openModelSession(_modelRequest);
+    addTearDown(session.close);
+
+    await session.start().toList();
+    final events =
+        await session.synthesizeGroundedAnswer(_groundedRequest).toList();
+
+    expect(events.whereType<GroundedAnswerProduced>(), isEmpty);
+    expect(
+      events.whereType<ModelTurnFailed>().single.code,
+      'invalid_grounded_json',
+    );
+    expect(events.whereType<TextDelta>(), isEmpty);
+  });
+
   test('provider-safe aliases round-trip canonical MCP Tool names', () async {
     Map<String, Object?>? sentPayload;
     final client = MockClient((request) async {
@@ -370,6 +522,57 @@ void main() {
       'mcp.docs.search',
     );
   });
+
+  test(
+    'unsupported Anthropic native search output stays unnormalized',
+    () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          jsonEncode({
+            'content': [
+              {
+                'type': 'server_tool_use',
+                'id': 'server-tool-1',
+                'name': 'web_search',
+                'input': {'query': 'latest'},
+              },
+              {
+                'type': 'web_search_tool_result',
+                'tool_use_id': 'server-tool-1',
+                'content': [
+                  {
+                    'type': 'web_search_result',
+                    'url': 'https://example.com/result',
+                  },
+                ],
+              },
+              {'type': 'text', 'text': 'Unverified search answer'},
+            ],
+            'stop_reason': 'end_turn',
+          }),
+          200,
+        ),
+      );
+      final provider = Anthropic(_bot, skillToolClient: client);
+      final session = provider.openModelSession(
+        ModelRequest(
+          messages: [ChatMessage(role: 'user', content: 'Search')],
+          options: const ModelGenerationOptions(webSearch: true),
+        ),
+      );
+      addTearDown(session.close);
+
+      final events = await session.start().toList();
+
+      expect(provider.capabilities.supportsNativeToolEvidence, isFalse);
+      expect(events.whereType<ProviderNativeToolResult>(), isEmpty);
+      expect(events.whereType<ToolCallRequested>(), isEmpty);
+      expect(
+        events.whereType<TextDelta>().single.text,
+        'Unverified search answer',
+      );
+    },
+  );
 
   test(
     '404 fails once with no trusted text or sensitive response data',
@@ -559,6 +762,35 @@ void main() {
     expect(requests, 3);
   });
 }
+
+void _expectGroundedProtocol(List<ModelEvent> events) {
+  final candidate = events.whereType<GroundedAnswerProduced>().single.candidate;
+  expect(events.whereType<TextDelta>(), isEmpty);
+  expect(candidate.schemaVersion, 1);
+  expect(candidate.claims.single.claimId, 'claim-1');
+  expect(candidate.claims.single.kind, ClaimKind.externalFact);
+  expect(candidate.claims.single.evidenceIds, [_evidenceId]);
+  expect(candidate.renderedText, 'The answer is four.');
+  expect(jsonEncode(candidate.toJson()), isNot(contains('provider')));
+}
+
+const _evidenceId = 'run-1:invocation:1:attempt:1:evidence';
+const _groundedJson =
+    '{"schema_version":1,"claims":[{"claim_id":"claim-1",'
+    '"text":"The answer is four.","kind":"external_fact",'
+    '"evidence_ids":["$_evidenceId"]}],"non_factual_text":""}';
+
+final _groundedRequest = GroundedAnswerSynthesisRequest(
+  draftText: 'draft',
+  evidence: [
+    GroundedEvidenceReference(
+      evidenceId: _evidenceId,
+      providerCallId: 'provider-call-1',
+      toolName: 'calculate',
+      isError: false,
+    ),
+  ],
+);
 
 final _bot = Bot(
   id: 'bot-1',

@@ -62,6 +62,7 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
   final bool _closeClient;
   final ProviderResponseDecoder _decodeResponse;
   final String? _reasoningEffort;
+  final DateTime Function() _now = DateTime.now;
   bool _started = false;
   bool _closed = false;
 
@@ -101,9 +102,30 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
     return _send();
   }
 
-  Stream<ModelEvent> _send() async* {
-    final tools = _openAiResponsesTools(_request.tools, _toolNames);
-    if (_request.options.webSearch) tools.add({'type': 'web_search'});
+  @override
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request,
+  ) {
+    if (!_started) {
+      throw StateError('Agent model session has not started.');
+    }
+    _input.add({
+      'role': 'user',
+      'content': [
+        {'type': 'input_text', 'text': _groundedAnswerSynthesisPrompt(request)},
+      ],
+    });
+    return _send(groundedRequest: request);
+  }
+
+  Stream<ModelEvent> _send({
+    GroundedAnswerSynthesisRequest? groundedRequest,
+  }) async* {
+    final tools = <Map<String, Object?>>[];
+    if (groundedRequest == null) {
+      tools.addAll(_openAiResponsesTools(_request.tools, _toolNames));
+      if (_request.options.webSearch) tools.add({'type': 'web_search'});
+    }
     late final http.Response response;
     try {
       response = await sendProviderRequest(
@@ -120,6 +142,8 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
                   'parallel_tool_calls':
                       _request.options.allowParallelToolCalls,
                 },
+                if (groundedRequest == null && _request.options.webSearch)
+                  'include': const ['web_search_call.action.sources'],
                 if (_request.options.deepThinking && _reasoningEffort != null)
                   'reasoning': {'effort': _reasoningEffort, 'summary': 'auto'},
               }),
@@ -142,6 +166,54 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
       return;
     }
     _input.addAll(output.map(_objectMap));
+    if (groundedRequest != null) {
+      final groundedText = StringBuffer();
+      var invalidOutput = false;
+      for (final rawItem in output) {
+        final item = _objectMap(rawItem);
+        switch (item['type']) {
+          case 'reasoning':
+            for (final rawSummary in _objectList(item['summary'])) {
+              final summary = _objectMap(rawSummary);
+              final text = summary['text']?.toString() ?? '';
+              if (text.isNotEmpty) yield ReasoningDelta(text);
+            }
+          case 'message':
+            for (final rawContent in _objectList(item['content'])) {
+              final content = _objectMap(rawContent);
+              if (content['type'] != 'output_text') {
+                invalidOutput = true;
+                continue;
+              }
+              groundedText.write(content['text']?.toString() ?? '');
+            }
+          default:
+            invalidOutput = true;
+        }
+      }
+      if (invalidOutput || groundedText.isEmpty) {
+        yield const ModelTurnFailed(
+          error: 'invalid_grounded_provider_response',
+          code: 'invalid_grounded_provider_response',
+        );
+        return;
+      }
+      final event = _parseGroundedAnswerOutput(
+        groundedText.toString(),
+        groundedRequest,
+      );
+      yield event;
+      if (event is ModelTurnFailed) return;
+      final usage = _openAiResponsesUsage(root, _bot.model);
+      if (usage.hasData) yield UsageReported(usage);
+      yield ModelTurnCompleted(stopReason: root['status']?.toString() ?? '');
+      return;
+    }
+    final providerToolResults = _normalizeOpenAiNativeToolResults(
+      root: root,
+      output: output,
+      now: _now,
+    );
 
     var hasToolCalls = false;
     for (final rawItem in output) {
@@ -177,6 +249,9 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
             name: name,
             arguments: _decodeArguments(rawArguments),
           );
+        case 'web_search_call':
+          final normalized = providerToolResults[item['id']?.toString() ?? ''];
+          if (normalized != null) yield normalized;
       }
     }
 
@@ -282,7 +357,23 @@ final class AnthropicAgentModelSession implements AgentModelSession {
     return _send();
   }
 
-  Stream<ModelEvent> _send() async* {
+  @override
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request,
+  ) {
+    if (!_started) {
+      throw StateError('Agent model session has not started.');
+    }
+    _messages.add({
+      'role': 'user',
+      'content': _groundedAnswerSynthesisPrompt(request),
+    });
+    return _send(groundedRequest: request);
+  }
+
+  Stream<ModelEvent> _send({
+    GroundedAnswerSynthesisRequest? groundedRequest,
+  }) async* {
     late final http.Response response;
     try {
       response = await sendProviderRequest(
@@ -294,7 +385,7 @@ final class AnthropicAgentModelSession implements AgentModelSession {
                 'model': _bot.model,
                 'messages': _messages,
                 'system': _system,
-                if (_request.tools.isNotEmpty) ...{
+                if (groundedRequest == null && _request.tools.isNotEmpty) ...{
                   'tools': _anthropicTools(_request.tools, _toolNames),
                   'tool_choice': {'type': 'auto'},
                 },
@@ -314,6 +405,41 @@ final class AnthropicAgentModelSession implements AgentModelSession {
     final root = _objectMap(_decodeResponse(utf8.decode(response.bodyBytes)));
     final content = _objectList(root['content']);
     _messages.add({'role': 'assistant', 'content': content});
+    if (groundedRequest != null) {
+      final groundedText = StringBuffer();
+      var invalidOutput = false;
+      for (final rawBlock in content) {
+        final block = _objectMap(rawBlock);
+        switch (block['type']) {
+          case 'text':
+            groundedText.write(block['text']?.toString() ?? '');
+          case 'thinking':
+            final thinking = block['thinking']?.toString() ?? '';
+            if (thinking.isNotEmpty) yield ReasoningDelta(thinking);
+          default:
+            invalidOutput = true;
+        }
+      }
+      if (invalidOutput || groundedText.isEmpty) {
+        yield const ModelTurnFailed(
+          error: 'invalid_grounded_provider_response',
+          code: 'invalid_grounded_provider_response',
+        );
+        return;
+      }
+      final event = _parseGroundedAnswerOutput(
+        groundedText.toString(),
+        groundedRequest,
+      );
+      yield event;
+      if (event is ModelTurnFailed) return;
+      final usage = _anthropicUsage(root, _bot.model);
+      if (usage.hasData) yield UsageReported(usage);
+      yield ModelTurnCompleted(
+        stopReason: root['stop_reason']?.toString() ?? '',
+      );
+      return;
+    }
     for (final rawBlock in content) {
       final block = _objectMap(rawBlock);
       switch (block['type']) {

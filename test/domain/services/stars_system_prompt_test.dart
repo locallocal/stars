@@ -21,10 +21,7 @@ void main() {
     expect(prompt, contains('Operating system version: 1.0 &amp; newer'));
     expect(prompt, contains('<stars_reliability_policy>'));
     expect(prompt, contains('An error, empty result,'));
-    expect(
-      prompt,
-      contains('<stars_evidence call_ids="call-id-1,call-id-2" />'),
-    );
+    expect(prompt, isNot(contains('<stars_evidence')));
     expect(prompt, endsWith('</stars_reliability_policy>'));
   });
 
@@ -39,7 +36,7 @@ void main() {
     expect(prompt, contains('已选择的界面语言: 简体中文'));
     expect(prompt, contains('面向用户的回答请使用简体中文'));
     expect(prompt, contains('操作系统类型: 未知'));
-    expect(prompt, contains('只列出确实支持回答'));
+    expect(prompt, contains('不得编造事实、引用、工具结果或已完成的操作'));
     expect(prompt, isNot(contains('Description:')));
   });
 
@@ -66,11 +63,7 @@ void main() {
         languageCode: entry.key,
       );
       expect(prompt, contains(entry.value), reason: entry.key);
-      expect(
-        '<stars_evidence'.allMatches(prompt),
-        hasLength(1),
-        reason: entry.key,
-      );
+      expect(prompt, isNot(contains('<stars_evidence')), reason: entry.key);
     }
 
     final fallback = buildStarsSystemPrompt(

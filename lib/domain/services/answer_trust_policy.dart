@@ -4,6 +4,7 @@ import 'package:stars/domain/models/models.dart';
 enum AnswerEvidenceState {
   none,
   legacyFormatOnly,
+  structuredUnvalidated,
   partiallyValidated,
   fullyValidated,
   invalid,
@@ -100,6 +101,9 @@ final class AnswerTrustPolicy {
       AnswerEvidenceState.none => _unverified('no_usable_evidence'),
       AnswerEvidenceState.legacyFormatOnly => _unverified(
         'legacy_evidence_unverified',
+      ),
+      AnswerEvidenceState.structuredUnvalidated => _unverified(
+        'structured_claims_unvalidated',
       ),
       AnswerEvidenceState.invalid => _failed('evidence_validation_failed'),
       AnswerEvidenceState.partiallyValidated => _validated(

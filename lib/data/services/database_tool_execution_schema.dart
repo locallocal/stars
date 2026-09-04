@@ -24,7 +24,10 @@ Future<void> _ensureCompatibleToolExecutionSchema(Database database) async {
   final hasAttemptStatuses =
       createSql.contains("'duplicateReused'") &&
       createSql.contains("'duplicateConflict'");
-  if (hasSeparatedIdentities && hasAttemptStatuses) return;
+  final hasProviderNativeSource = createSql.contains("'providerNative'");
+  if (hasSeparatedIdentities && hasAttemptStatuses && hasProviderNativeSource) {
+    return;
+  }
 
   await database.transaction((transaction) async {
     await transaction.execute('''
@@ -135,7 +138,7 @@ Future<void> _createToolExecutionSchema(DatabaseExecutor database) async {
       tool_title TEXT NOT NULL DEFAULT '',
       mcp_server_name TEXT NOT NULL DEFAULT '',
       source TEXT NOT NULL
-        CHECK (source IN ('builtIn', 'mcp', 'skillScript')),
+        CHECK (source IN ('builtIn', 'mcp', 'skillScript', 'providerNative')),
       risk_level TEXT NOT NULL
         CHECK (risk_level IN ('readOnly', 'write', 'destructive')),
       status TEXT NOT NULL

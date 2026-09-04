@@ -8,6 +8,7 @@ export 'conversation_history.dart';
 export 'conversation_memory.dart';
 export 'conversation_draft.dart';
 export 'conversation_directory.dart';
+export 'grounded_answer.dart';
 export 'local_file_system.dart';
 export 'message.dart';
 export 'message_page.dart';

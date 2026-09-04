@@ -6,6 +6,8 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 
+part 'chat_generation_view_model_test_support.dart';
+
 void main() {
   group('ChatGenerationViewModel', () {
     test(
@@ -785,7 +787,7 @@ void main() {
         final assistant = persisted.last;
         expect(assistant.content, 'Saved.');
         expect(assistant.grounding.trustLevel, AnswerTrustLevel.unverified);
-        expect(assistant.grounding.reasonCode, 'legacy_evidence_unverified');
+        expect(assistant.grounding.reasonCode, 'structured_claims_unvalidated');
         expect(
           assistant.processInfo.toolCalls.single.name,
           'mcp.notes.save_note',
@@ -1435,53 +1437,6 @@ final class _AgentProvider extends AiProvider {
   Future<void> generateText(List<ChatMessage> messages) {
     throw StateError('Legacy generation must not be used.');
   }
-}
-
-final class _ViewModelAgentSession implements AgentModelSession {
-  _ViewModelAgentSession({
-    required this.toolName,
-    required this.arguments,
-    required this.repeatCall,
-  });
-
-  final String toolName;
-  final Map<String, Object?> arguments;
-  final bool repeatCall;
-
-  @override
-  Stream<ModelEvent> start() {
-    final call = ToolCallRequested(
-      callId: 'save-1',
-      name: toolName,
-      arguments: arguments,
-    );
-    return Stream.fromIterable([
-      call,
-      if (repeatCall) call,
-      const ModelTurnCompleted(stopReason: 'tool_calls'),
-    ]);
-  }
-
-  @override
-  Stream<ModelEvent> continueWith(List<ToolResult> results) {
-    expect(results, hasLength(repeatCall ? 2 : 1));
-    expect(results.every((result) => !result.isError), isTrue);
-    return Stream.fromIterable([
-      const TextDelta('Saved.\n<stars_evidence call_ids="save-1" />'),
-      const ModelTurnCompleted(stopReason: 'stop'),
-    ]);
-  }
-
-  @override
-  Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
-    throw StateError('The valid test answer must not require repair.');
-  }
-
-  @override
-  Future<void> cancel() async {}
-
-  @override
-  void close() {}
 }
 
 Future<void> _waitFor(bool Function() predicate) async {

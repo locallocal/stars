@@ -37,6 +37,16 @@ void main() {
       expect(grounding.evidenceIds, isEmpty);
     });
 
+    test('structured claims stay unverified before claim validation', () {
+      final grounding = policy.evaluate(
+        _input(evidenceState: AnswerEvidenceState.structuredUnvalidated),
+      );
+
+      expect(grounding.trustLevel, AnswerTrustLevel.unverified);
+      expect(grounding.reasonCode, 'structured_claims_unvalidated');
+      expect(grounding.evidenceIds, isEmpty);
+    });
+
     test('duplicate reuse does not replace or downgrade a successful call', () {
       final grounding = policy.evaluate(
         _input(

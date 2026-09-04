@@ -103,8 +103,19 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
               _answerEvidenceState =
                   result.toolInvocations.isEmpty
                       ? AnswerEvidenceState.none
-                      : AnswerEvidenceState.legacyFormatOnly;
-            } else if (result.error == 'ungrounded_final_answer') {
+                      : result.groundedAnswer?.isLegacy ?? true
+                      ? AnswerEvidenceState.legacyFormatOnly
+                      : AnswerEvidenceState.structuredUnvalidated;
+            } else if (const <String>{
+              'invalid_grounded_json',
+              'invalid_grounded_answer',
+              'invalid_grounded_answer_protocol',
+              'invalid_grounded_provider_response',
+              'evidence_id_out_of_range',
+              'unknown_claim_kind',
+              'duplicate_claim_id',
+              'empty_claim_text',
+            }.contains(result.error)) {
               _answerTrustGateResult = AnswerTrustGateResult.failed;
               _answerEvidenceState = AnswerEvidenceState.invalid;
             }
@@ -162,6 +173,8 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
       case ToolCallStarted():
       case ToolCallArgumentsDelta():
       case ToolCallRequested():
+      case ProviderNativeToolResult():
+      case GroundedAnswerProduced():
       case ModelTurnCompleted():
       case ModelTurnFailed():
         break;

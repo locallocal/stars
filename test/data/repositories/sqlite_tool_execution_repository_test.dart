@@ -139,6 +139,42 @@ void main() {
     },
   );
 
+  test('round-trips a Provider-native execution projection', () async {
+    final database = await databaseFactoryFfi.openDatabase(
+      inMemoryDatabasePath,
+      options: OpenDatabaseOptions(
+        version: DatabaseService.databaseVersion,
+        onConfigure: DatabaseService.configure,
+        onCreate: DatabaseService.createSchema,
+      ),
+    );
+    addTearDown(database.close);
+    await database.insert('bots', _botRow);
+    await database.insert('chats', _chatRow);
+    final repository = SqliteToolExecutionRepository(
+      localDatabase: LocalDatabaseService(
+        databaseProvider: () async => database,
+      ),
+    );
+    final now = DateTime.utc(2026, 9, 5, 10);
+
+    await repository.upsert(
+      _record(
+        status: ToolInvocationStatus.succeeded,
+        source: ToolSource.providerNative,
+        startedAt: now,
+        completedAt: now,
+        updatedAt: now,
+        resultSummary: 'Provider web search returned one cited source.',
+      ),
+    );
+
+    expect(
+      (await repository.getForRun('run-1')).single.source,
+      ToolSource.providerNative,
+    );
+  });
+
   test('clearing a conversation removes its tool executions', () async {
     final database = await databaseFactoryFfi.openDatabase(
       inMemoryDatabasePath,
@@ -182,6 +218,7 @@ ToolExecutionRecord _record({
   int? durationMs,
   String resultSummary = '',
   String errorCode = '',
+  ToolSource source = ToolSource.mcp,
 }) {
   return ToolExecutionRecord(
     executionId: 'run-1:invocation:1:attempt:$attemptNumber',
@@ -197,7 +234,7 @@ ToolExecutionRecord _record({
     name: 'mcp.notes.save_note',
     title: 'Save note',
     mcpServerName: 'Notes',
-    source: ToolSource.mcp,
+    source: source,
     riskLevel: ToolRiskLevel.write,
     status: status,
     argumentsSummary: '{"title":"Release"}',

@@ -9,7 +9,7 @@ part 'tool_json_schema_validator.dart';
 part 'tool_evidence.dart';
 part 'tool_evidence_contract.dart';
 
-enum ToolSource { builtIn, mcp, skillScript }
+enum ToolSource { builtIn, mcp, skillScript, providerNative }
 
 enum ToolRiskLevel { readOnly, write, destructive }
 

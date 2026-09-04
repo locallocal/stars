@@ -291,7 +291,11 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     final agentTools = runToolRegistry.list(
       allowedNames: prepared.requestedToolNames,
     );
-    if (provider.capabilities.supportsAgentLoop && agentTools.isNotEmpty) {
+    final usesNormalizedNativeTools =
+        provider.getWebSearch() &&
+        provider.capabilities.supportsNativeToolEvidence;
+    if (provider.capabilities.supportsAgentLoop &&
+        (agentTools.isNotEmpty || usesNormalizedNativeTools)) {
       return _startAgentRun(
         runId: runId,
         provider: provider,

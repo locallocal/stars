@@ -1,25 +1,40 @@
 part of 'database_service.dart';
 
-const int _toolEvidencePreviousDatabaseVersion = 18;
+const int _toolEvidenceInitialDatabaseVersion = 18;
+const int _providerNativePreviousDatabaseVersion = 19;
+const Set<int> _supportedPreviousDatabaseVersions = {
+  _toolEvidenceInitialDatabaseVersion,
+  _providerNativePreviousDatabaseVersion,
+};
 
 Future<void> _upgradeToolEvidenceSchema(
   Database database,
   int oldVersion,
   int newVersion,
 ) async {
-  if (oldVersion != _toolEvidencePreviousDatabaseVersion ||
+  if (!_supportedPreviousDatabaseVersions.contains(oldVersion) ||
       newVersion != DatabaseService.databaseVersion) {
     throw StateError(
       'Unsupported database migration from $oldVersion to $newVersion.',
     );
   }
-  await _createToolEvidenceSchema(database);
+  if (oldVersion == _toolEvidenceInitialDatabaseVersion) {
+    await _createToolEvidenceSchema(database);
+    return;
+  }
+  await _rebuildToolEvidenceSchemaForProviderNative(database);
 }
 
 Future<void> _ensureCompatibleToolEvidenceSchema(Database database) =>
     _createToolEvidenceSchema(database);
 
-Future<bool> _isPreviousToolEvidenceSchemaValid(String databasePath) async {
+Future<bool> _isSupportedPreviousDatabaseValid(
+  String databasePath,
+  int expectedVersion,
+) async {
+  if (!_supportedPreviousDatabaseVersions.contains(expectedVersion)) {
+    return false;
+  }
   try {
     final database = await openDatabase(
       databasePath,
@@ -27,13 +42,16 @@ Future<bool> _isPreviousToolEvidenceSchemaValid(String databasePath) async {
       singleInstance: false,
     );
     try {
-      if (await database.getVersion() != _toolEvidencePreviousDatabaseVersion) {
+      if (await database.getVersion() != expectedVersion) {
         return false;
       }
       await DatabaseService._verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(
         database,
-        allowMissingToolEvidenceSchema: true,
+        allowMissingToolExecutionSchema:
+            expectedVersion == _providerNativePreviousDatabaseVersion,
+        allowMissingToolEvidenceSchema:
+            expectedVersion == _toolEvidenceInitialDatabaseVersion,
       );
       return true;
     } finally {
@@ -53,16 +71,17 @@ Future<void> _verifySupportedDatabaseFile(String databasePath) async {
   try {
     final version = await database.getVersion();
     if (version != DatabaseService.databaseVersion &&
-        version != _toolEvidencePreviousDatabaseVersion) {
+        !_supportedPreviousDatabaseVersions.contains(version)) {
       throw const FormatException('Database schema version is unsupported.');
     }
     await DatabaseService._verifyIntegrity(database);
     await _verifyCurrentDatabaseSchema(
       database,
       allowMissingToolExecutionSchema:
-          version == DatabaseService.databaseVersion,
+          version == DatabaseService.databaseVersion ||
+          version == _providerNativePreviousDatabaseVersion,
       allowMissingToolEvidenceSchema:
-          version == _toolEvidencePreviousDatabaseVersion ||
+          version == _toolEvidenceInitialDatabaseVersion ||
           version == DatabaseService.databaseVersion,
     );
   } finally {
@@ -84,7 +103,7 @@ Future<void> _createToolEvidenceSchema(DatabaseExecutor database) async {
       tool_name TEXT NOT NULL CHECK (length(tool_name) > 0),
       tool_version TEXT NOT NULL DEFAULT '',
       source TEXT NOT NULL
-        CHECK (source IN ('builtIn', 'mcp', 'skillScript')),
+        CHECK (source IN ('builtIn', 'mcp', 'skillScript', 'providerNative')),
       status TEXT NOT NULL
         CHECK (status IN (
           'requested',
@@ -138,7 +157,7 @@ Future<void> _createToolEvidenceSchema(DatabaseExecutor database) async {
       tool_name TEXT NOT NULL CHECK (length(tool_name) > 0),
       tool_version TEXT NOT NULL CHECK (length(tool_version) > 0),
       source TEXT NOT NULL
-        CHECK (source IN ('builtIn', 'mcp', 'skillScript')),
+        CHECK (source IN ('builtIn', 'mcp', 'skillScript', 'providerNative')),
       capabilities_json TEXT NOT NULL DEFAULT '[]',
       terminal_status TEXT NOT NULL
         CHECK (terminal_status IN (
@@ -265,4 +284,40 @@ Future<void> _createToolEvidenceSchema(DatabaseExecutor database) async {
       SELECT RAISE(ABORT, 'Claim evidence links are append-only');
     END
   ''');
+}
+
+Future<void> _rebuildToolEvidenceSchemaForProviderNative(
+  DatabaseExecutor database,
+) async {
+  await database.execute('''
+    CREATE TEMP TABLE grd012_invocation_events AS
+    SELECT * FROM tool_invocation_events
+  ''');
+  await database.execute('''
+    CREATE TEMP TABLE grd012_evidence_records AS
+    SELECT * FROM tool_evidence_records
+  ''');
+  await database.execute('''
+    CREATE TEMP TABLE grd012_claim_evidence AS
+    SELECT * FROM answer_claim_evidence
+  ''');
+  await database.execute('DROP TABLE answer_claim_evidence');
+  await database.execute('DROP TABLE tool_evidence_records');
+  await database.execute('DROP TABLE tool_invocation_events');
+  await _createToolEvidenceSchema(database);
+  await database.execute('''
+    INSERT INTO tool_invocation_events
+    SELECT * FROM grd012_invocation_events
+  ''');
+  await database.execute('''
+    INSERT INTO tool_evidence_records
+    SELECT * FROM grd012_evidence_records
+  ''');
+  await database.execute('''
+    INSERT INTO answer_claim_evidence
+    SELECT * FROM grd012_claim_evidence
+  ''');
+  await database.execute('DROP TABLE grd012_claim_evidence');
+  await database.execute('DROP TABLE grd012_evidence_records');
+  await database.execute('DROP TABLE grd012_invocation_events');
 }
