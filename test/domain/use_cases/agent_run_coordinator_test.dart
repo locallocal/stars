@@ -534,29 +534,29 @@ void main() {
       expect(session.cancelled, isTrue);
     });
 
-    test('repairs a final answer that omits evidence metadata', () async {
-      final tool = _FakeTool(name: 'calculate');
-      final session = _FakeModelSession([
+    test('commits only the structured synthesis candidate', () async {
+      final tool = _EvidenceCalculationTool();
+      final session = _FakeModelSession(
         [
-          ToolCallRequested(
-            callId: 'repair-1',
-            name: 'calculate',
-            arguments: const {'value': 3},
-          ),
-          const ModelTurnCompleted(stopReason: 'tool_calls'),
+          [
+            ToolCallRequested(
+              callId: 'synthesis-1',
+              name: tool.definition.name,
+              arguments: const {'value': 3},
+            ),
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [
+            const TextDelta('Uncommitted draft answer.'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
         ],
-        [
-          const TextDelta('The answer is 6.'),
-          const ModelTurnCompleted(stopReason: 'stop'),
-        ],
-        [
-          const TextDelta(
-            'The verified answer is 6.\n'
-            '<stars_evidence call_ids="repair-1" />',
-          ),
-          const ModelTurnCompleted(stopReason: 'stop'),
-        ],
-      ]);
+        groundedOutput:
+            '{"schema_version":1,"claims":[{"claim_id":"answer",'
+            '"text":"The verified answer is 6.","kind":"external_fact",'
+            '"evidence_ids":["run-1:invocation:1:attempt:1:evidence"]}],'
+            '"non_factual_text":""}',
+      );
       final events = <ModelEvent>[];
       final coordinator = AgentRunCoordinator(
         toolRegistry: StaticToolRegistry([tool]),
@@ -565,13 +565,15 @@ void main() {
 
       final result = await coordinator.run(
         provider: _FakeProvider(session),
-        request: _request(toolNames: {'calculate'}),
+        request: _request(toolNames: {tool.definition.name}),
         onModelEvent: events.add,
       );
 
       expect(result.status, AgentRunStatus.completed);
       expect(result.text, 'The verified answer is 6.');
-      expect(session.reliabilityFeedback.single, contains('repair-1'));
+      expect(result.groundedAnswer?.schemaVersion, 1);
+      expect(result.text, isNot(contains('Uncommitted draft')));
+      expect(session.reliabilityFeedback, isEmpty);
       expect(events.whereType<TextDelta>().single.text, result.text);
     });
 
@@ -614,24 +616,29 @@ void main() {
     );
 
     test(
-      'fails closed when a repaired answer cites unknown evidence',
+      'fails closed when structured synthesis cites unknown evidence',
       () async {
-        final tool = _FakeTool(name: 'calculate');
-        final session = _FakeModelSession([
+        final tool = _EvidenceCalculationTool();
+        final session = _FakeModelSession(
           [
-            ToolCallRequested(
-              callId: 'known',
-              name: 'calculate',
-              arguments: const {'value': 4},
-            ),
-            const ModelTurnCompleted(stopReason: 'tool_calls'),
+            [
+              ToolCallRequested(
+                callId: 'known',
+                name: tool.definition.name,
+                arguments: const {'value': 4},
+              ),
+              const ModelTurnCompleted(stopReason: 'tool_calls'),
+            ],
+            [
+              const TextDelta('Uncommitted draft.'),
+              const ModelTurnCompleted(stopReason: 'stop'),
+            ],
           ],
-          [const TextDelta('8'), const ModelTurnCompleted(stopReason: 'stop')],
-          [
-            const TextDelta('8\n<stars_evidence call_ids="invented" />'),
-            const ModelTurnCompleted(stopReason: 'stop'),
-          ],
-        ]);
+          groundedOutput:
+              '{"schema_version":1,"claims":[{"claim_id":"answer",'
+              '"text":"8","kind":"external_fact",'
+              '"evidence_ids":["invented"]}],"non_factual_text":""}',
+        );
         final coordinator = AgentRunCoordinator(
           toolRegistry: StaticToolRegistry([tool]),
           toolPolicy: const DefaultToolPolicy(),
@@ -639,12 +646,12 @@ void main() {
 
         final result = await coordinator.run(
           provider: _FakeProvider(session),
-          request: _request(toolNames: {'calculate'}),
+          request: _request(toolNames: {tool.definition.name}),
         );
 
         expect(result.status, AgentRunStatus.failed);
         expect(result.text, isEmpty);
-        expect(result.error, 'ungrounded_final_answer');
+        expect(result.error, 'evidence_id_out_of_range');
       },
     );
 
@@ -984,9 +991,10 @@ final class _EvidenceCalculationTool implements ExecutableTool {
 }
 
 final class _FakeModelSession implements AgentModelSession {
-  _FakeModelSession(this.turns);
+  _FakeModelSession(this.turns, {this.groundedOutput});
 
   final List<List<ModelEvent>> turns;
+  final String? groundedOutput;
   final List<List<ToolResult>> continuations = [];
   final List<String> reliabilityFeedback = [];
   var _turnIndex = 0;
@@ -1005,6 +1013,26 @@ final class _FakeModelSession implements AgentModelSession {
   Stream<ModelEvent> continueWithReliabilityFeedback(String feedback) {
     reliabilityFeedback.add(feedback);
     return Stream.fromIterable(turns[_turnIndex++]);
+  }
+
+  @override
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request,
+  ) async* {
+    try {
+      final candidate =
+          groundedOutput == null
+              ? _testGroundedCandidate(request)
+              : GroundedAnswerCandidate.parseProviderOutput(
+                groundedOutput!,
+                allowedEvidenceIds: request.allowedEvidenceIds,
+                providerCallToEvidenceId: request.legacyEvidenceAliases,
+              );
+      yield GroundedAnswerProduced(candidate);
+      yield const ModelTurnCompleted(stopReason: 'stop');
+    } on GroundedAnswerFormatException catch (error) {
+      yield ModelTurnFailed(error: error.code, code: error.code);
+    }
   }
 
   @override
@@ -1035,6 +1063,11 @@ final class _HangingModelSession implements AgentModelSession {
   }
 
   @override
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request,
+  ) => throw StateError('A hanging session cannot synthesize.');
+
+  @override
   Future<void> cancel() async {
     cancelled = true;
     await _controller.close();
@@ -1045,6 +1078,25 @@ final class _HangingModelSession implements AgentModelSession {
     if (!_controller.isClosed) {
       unawaited(_controller.close());
     }
+  }
+}
+
+GroundedAnswerCandidate _testGroundedCandidate(
+  GroundedAnswerSynthesisRequest request,
+) {
+  try {
+    return GroundedAnswerCandidate.parseProviderOutput(
+      request.draftText,
+      allowedEvidenceIds: request.allowedEvidenceIds,
+      providerCallToEvidenceId: request.legacyEvidenceAliases,
+    );
+  } on GroundedAnswerFormatException {
+    if (request.allowedEvidenceIds.isNotEmpty) rethrow;
+    final migratedText = request.draftText.replaceFirst(
+      RegExp(r'\s*<stars_evidence\s+call_ids="[^"]*"\s*/>\s*$'),
+      '',
+    );
+    return GroundedAnswerCandidate(nonFactualText: migratedText);
   }
 }
 

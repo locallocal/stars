@@ -8,89 +8,10 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 part 'agent_run_coordinator_support.dart';
 part 'agent_run_evidence.dart';
+part 'agent_run_grounded_answer.dart';
+part 'agent_run_models.dart';
 part 'agent_run_persistence.dart';
-
-final class AgentRunLimits {
-  const AgentRunLimits({
-    this.maxModelTurns = 6,
-    this.maxToolCalls = 12,
-    this.maxSameCallRetries = 1,
-    this.maxReliabilityRepairs = 1,
-    this.totalTimeout = const Duration(minutes: 3),
-    this.toolTimeout = const Duration(seconds: 30),
-    this.approvalTimeout = const Duration(minutes: 2),
-    this.maxToolOutputCharacters = 16000,
-  }) : assert(maxModelTurns > 0),
-       assert(maxToolCalls > 0),
-       assert(maxSameCallRetries >= 0),
-       assert(maxReliabilityRepairs >= 0),
-       assert(maxToolOutputCharacters > 0);
-
-  final int maxModelTurns;
-  final int maxToolCalls;
-  final int maxSameCallRetries;
-  final int maxReliabilityRepairs;
-  final Duration totalTimeout;
-  final Duration toolTimeout;
-  final Duration approvalTimeout;
-  final int maxToolOutputCharacters;
-}
-
-final class AgentRunRequest {
-  AgentRunRequest({
-    required this.runId,
-    required this.chatId,
-    required this.botId,
-    this.turnId = '',
-    this.messageId = '',
-    required List<ChatMessage> messages,
-    required Set<String> requestedToolNames,
-    Set<String> approvalExemptToolNames = const {},
-    AgentCancellationToken? cancellationToken,
-  }) : messages = List<ChatMessage>.unmodifiable(messages),
-       requestedToolNames = Set<String>.unmodifiable(requestedToolNames),
-       approvalExemptToolNames = Set<String>.unmodifiable(
-         approvalExemptToolNames,
-       ),
-       cancellationToken = cancellationToken ?? AgentCancellationToken();
-
-  final String runId;
-  final String chatId;
-  final String botId;
-  final String turnId;
-  final String messageId;
-  final List<ChatMessage> messages;
-  final Set<String> requestedToolNames;
-  final Set<String> approvalExemptToolNames;
-  final AgentCancellationToken cancellationToken;
-}
-
-enum AgentRunStatus { completed, cancelled, failed, timedOut, limitExceeded }
-
-final class AgentRunResult {
-  AgentRunResult({
-    required this.status,
-    required this.text,
-    required this.reasoning,
-    required this.tokenUsage,
-    required List<ToolInvocationRecord> toolInvocations,
-    this.error = '',
-    this.providerFailure,
-  }) : toolInvocations = List<ToolInvocationRecord>.unmodifiable(
-         toolInvocations,
-       );
-
-  final AgentRunStatus status;
-  final String text;
-  final String reasoning;
-  final ModelTokenUsage tokenUsage;
-  final List<ToolInvocationRecord> toolInvocations;
-  final String error;
-  final ProviderFailure? providerFailure;
-}
-
-typedef ModelEventObserver = void Function(ModelEvent event);
-typedef ToolInvocationObserver = void Function(ToolInvocationRecord invocation);
+part 'agent_run_provider_tools.dart';
 
 final class AgentRunCoordinator {
   const AgentRunCoordinator({
@@ -147,8 +68,6 @@ final class AgentRunCoordinator {
     var usage = ModelTokenUsage.empty;
     var timedOut = false;
     var toolCallCount = 0;
-    var reliabilityRepairs = 0;
-    var reliabilityFeedback = '';
     AgentModelSession? session;
     final timeoutTimer = Timer(_limits.totalTimeout, () {
       timedOut = true;
@@ -196,14 +115,12 @@ final class AgentRunCoordinator {
       ) {
         request.cancellationToken.throwIfCancelled();
         final calls = <ToolCallRequested>[];
+        final providerToolResults = <ProviderNativeToolResult>[];
         final turnText = StringBuffer();
-        final events = switch ((modelTurn, reliabilityFeedback)) {
-          (0, _) => activeSession.start(),
-          (_, final feedback) when feedback.isNotEmpty => activeSession
-              .continueWithReliabilityFeedback(feedback),
-          _ => activeSession.continueWith(results),
-        };
-        reliabilityFeedback = '';
+        final events =
+            modelTurn == 0
+                ? activeSession.start()
+                : activeSession.continueWith(results);
         await _consumeEvents(events, request.cancellationToken, (event) {
           if (event is! TextDelta) onModelEvent?.call(event);
           switch (event) {
@@ -213,6 +130,14 @@ final class AgentRunCoordinator {
               reasoning += event.text;
             case ToolCallRequested():
               calls.add(event);
+            case ProviderNativeToolResult():
+              providerToolResults.add(event);
+            case GroundedAnswerProduced():
+              throw const _AgentModelFailure(
+                'unexpected_grounded_answer_event',
+                'unexpected_grounded_answer_event',
+                null,
+              );
             case UsageReported():
               usage = usage + event.usage;
             case ModelTurnFailed():
@@ -228,32 +153,37 @@ final class AgentRunCoordinator {
           }
         });
 
-        if (calls.isEmpty) {
-          final validation = _validateFinalAnswer(
-            turnText.toString(),
+        for (final providerToolResult in providerToolResults) {
+          await _recordProviderNativeToolResult(
+            event: providerToolResult,
             completedCalls: completedCalls,
+            invocationIdentities: invocationIdentities,
+            observeInvocation: observeInvocation,
           );
-          if (!validation.isValid) {
-            if (reliabilityRepairs < _limits.maxReliabilityRepairs &&
-                modelTurn + 1 < _limits.maxModelTurns) {
-              reliabilityRepairs += 1;
-              reliabilityFeedback = _reliabilityFeedback(
-                validation.reason,
-                completedCalls,
-              );
-              results = const [];
-              continue;
-            }
-            return AgentRunResult(
-              status: AgentRunStatus.failed,
-              text: '',
-              reasoning: reasoning,
-              tokenUsage: usage,
-              toolInvocations: invocations,
-              error: 'ungrounded_final_answer',
-            );
-          }
-          text = validation.text;
+        }
+        toolCallCount += providerToolResults.length;
+        if (toolCallCount > _limits.maxToolCalls) {
+          return AgentRunResult(
+            status: AgentRunStatus.limitExceeded,
+            text: text,
+            reasoning: reasoning,
+            tokenUsage: usage,
+            toolInvocations: invocations,
+            error: 'tool_call_limit_reached',
+          );
+        }
+
+        if (calls.isEmpty) {
+          final synthesis = await _synthesizeGroundedAnswer(
+            session: activeSession,
+            draftText: turnText.toString(),
+            invocations: invocations,
+            cancellationToken: request.cancellationToken,
+            onModelEvent: onModelEvent,
+          );
+          reasoning += synthesis.reasoning;
+          usage = usage + synthesis.usage;
+          text = synthesis.candidate.renderedText;
           if (text.isNotEmpty) onModelEvent?.call(TextDelta(text));
           return AgentRunResult(
             status: AgentRunStatus.completed,
@@ -261,6 +191,7 @@ final class AgentRunCoordinator {
             reasoning: reasoning,
             tokenUsage: usage,
             toolInvocations: invocations,
+            groundedAnswer: synthesis.candidate,
           );
         }
         if (calls.any(

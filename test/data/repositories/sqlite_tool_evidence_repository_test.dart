@@ -63,6 +63,48 @@ void main() {
     expect(await repository.verifyDigest(_evidenceId), isTrue);
   });
 
+  test('round-trips Provider-native citation evidence', () async {
+    final database = await _openDatabase(inMemoryDatabasePath);
+    addTearDown(database.close);
+    await _insertConversation(database);
+    final repository = _repository(database);
+    final citation = StructuredFact(
+      name: 'web.citation.1',
+      value: 'Current result.',
+      attributes: const {
+        'provider_reference_id': 'provider-message-1:url_citation:0',
+        'source_resource_id': 'url:reference-1',
+      },
+    );
+
+    await repository.commitRun(
+      runId: 'run-1',
+      chatId: 'chat-1',
+      invocationEvents: [
+        _event(
+          status: ToolInvocationStatus.succeeded,
+          source: ToolSource.providerNative,
+          toolName: 'openai.responses.web_search',
+        ),
+      ],
+      evidenceRecords: [
+        _evidence(
+          source: ToolSource.providerNative,
+          toolName: 'openai.responses.web_search',
+          structuredFacts: [citation],
+        ),
+      ],
+    );
+
+    final restored = await repository.getById(_evidenceId);
+    expect(restored?.source, ToolSource.providerNative);
+    expect(restored?.evidenceId, isNot(restored?.providerCallId));
+    expect(
+      restored?.structuredFacts.single.attributes['provider_reference_id'],
+      'provider-message-1:url_citation:0',
+    );
+  });
+
   test(
     'recovers after evidence commits but the grounded answer rolls back',
     () async {
@@ -322,6 +364,8 @@ const _resultDigest =
 ToolInvocationEvent _event({
   int sequence = 1,
   ToolInvocationStatus status = ToolInvocationStatus.requested,
+  ToolSource source = ToolSource.mcp,
+  String toolName = 'mcp.resources.read',
 }) => ToolInvocationEvent(
   eventId: '$_attemptId:event:$sequence',
   runId: 'run-1',
@@ -331,46 +375,52 @@ ToolInvocationEvent _event({
   invocationId: 'run-1:invocation:1',
   attemptId: _attemptId,
   providerCallId: 'provider-call-1',
-  toolName: 'mcp.resources.read',
+  toolName: toolName,
   toolVersion: '1.0.0',
-  source: ToolSource.mcp,
+  source: source,
   status: status,
   sequence: sequence,
   occurredAt: DateTime.utc(2026, 9, 4, 10, 0, sequence),
 );
 
-ToolEvidenceRecord _evidence({String resultSummary = 'Resource observed.'}) =>
-    ToolEvidenceRecord(
-      evidenceId: _evidenceId,
-      runId: 'run-1',
-      turnId: 'turn-1',
-      chatId: 'chat-1',
-      messageId: 'message-1',
-      invocationId: 'run-1:invocation:1',
-      attemptId: _attemptId,
-      providerCallId: 'provider-call-1',
-      toolName: 'mcp.resources.read',
-      toolVersion: '1.0.0',
-      source: ToolSource.mcp,
-      capabilities: const {ToolCapability.externalRead},
-      terminalStatus: ToolInvocationStatus.succeeded,
-      evidenceKind: EvidenceKind.observation,
-      subject: 'resource:item-1',
-      scope: const {'resource_id': 'item-1'},
-      resultSummary: resultSummary,
-      argumentsDigest: _argumentsDigest,
-      resultDigest: _resultDigest,
-      structuredFacts: [
+ToolEvidenceRecord _evidence({
+  String resultSummary = 'Resource observed.',
+  ToolSource source = ToolSource.mcp,
+  String toolName = 'mcp.resources.read',
+  List<StructuredFact>? structuredFacts,
+}) => ToolEvidenceRecord(
+  evidenceId: _evidenceId,
+  runId: 'run-1',
+  turnId: 'turn-1',
+  chatId: 'chat-1',
+  messageId: 'message-1',
+  invocationId: 'run-1:invocation:1',
+  attemptId: _attemptId,
+  providerCallId: 'provider-call-1',
+  toolName: toolName,
+  toolVersion: '1.0.0',
+  source: source,
+  capabilities: const {ToolCapability.externalRead},
+  terminalStatus: ToolInvocationStatus.succeeded,
+  evidenceKind: EvidenceKind.observation,
+  subject: 'resource:item-1',
+  scope: const {'resource_id': 'item-1'},
+  resultSummary: resultSummary,
+  argumentsDigest: _argumentsDigest,
+  resultDigest: _resultDigest,
+  structuredFacts:
+      structuredFacts ??
+      [
         StructuredFact(
           name: 'resource.state',
           value: const {'status': 'ready', 'revision': 2},
         ),
       ],
-      observedAt: DateTime.utc(2026, 9, 4, 10),
-      validUntil: DateTime.utc(2026, 9, 4, 10, 5),
-      payloadRef: 'encrypted://tool-results/evidence-1',
-      payloadExpiresAt: DateTime.utc(2026, 9, 5, 10),
-    );
+  observedAt: DateTime.utc(2026, 9, 4, 10),
+  validUntil: DateTime.utc(2026, 9, 4, 10, 5),
+  payloadRef: 'encrypted://tool-results/evidence-1',
+  payloadExpiresAt: DateTime.utc(2026, 9, 5, 10),
+);
 
 Message _answerCheckpoint() => Message(
   messageId: 'message-1',

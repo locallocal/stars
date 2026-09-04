@@ -403,7 +403,22 @@ append-only、digest 自校验、敏感 payload 保留期与级联清理测试�
 
 ### GRD-012 Provider 原生工具证据归一化
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/data/services/ai/openai_native_tool_evidence.dart`、
+`lib/data/services/ai/skill_tool_agent_sessions.dart`、
+`lib/data/services/database_tool_evidence_schema.dart`、
+`lib/domain/models/ai_models.dart`、
+`lib/domain/use_cases/agent_run_provider_tools.dart` 和
+`lib/ui/features/chat/view_models/chat_generation_view_model.dart`；OpenAI Responses 归一化、未支持
+Provider 降级、统一调用生命周期、混合证据集合和账本身份映射回归测试：
+`test/data/services/ai/openai_test.dart`、
+`test/data/services/ai/skill_tool_sessions_test.dart`、
+`test/data/repositories/sqlite_tool_evidence_repository_test.dart`、
+`test/data/services/database_service_test.dart`、
+`test/domain/use_cases/provider_native_tool_coordinator_test.dart`、
+`test/domain/use_cases/persist_tool_invocation_test.dart` 和
+`test/ui/features/chat/view_models/chat_generation_native_tools_test.dart`。
 
 目标：Provider 托管的搜索等工具与本地、MCP 工具遵循同一证据协议。
 
@@ -429,7 +444,20 @@ append-only、digest 自校验、敏感 payload 保留期与级联清理测试�
 
 ### GRD-013 结构化回答声明协议
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/models/grounded_answer.dart`、
+`lib/domain/models/ai_models.dart`、
+`lib/data/services/ai/grounded_answer_protocol.dart`、
+`lib/data/services/ai/skill_tool_agent_sessions.dart`、
+`lib/data/services/ai/skill_tool_sessions.dart`、
+`lib/domain/use_cases/agent_run_grounded_answer.dart` 和
+`lib/domain/services/answer_trust_policy.dart`；严格领域解析、旧页脚迁移、三个 Provider 的统一
+DTO 协议、协调器仅提交结构化段落及未校验声明不升级可信等级的回归测试：
+`test/domain/models/grounded_answer_test.dart`、
+`test/data/services/ai/skill_tool_sessions_test.dart`、
+`test/domain/use_cases/agent_run_coordinator_test.dart` 和
+`test/domain/services/answer_trust_policy_test.dart`。
 
 目标：不再从自由文本页脚推测整条回答是否可信。
 

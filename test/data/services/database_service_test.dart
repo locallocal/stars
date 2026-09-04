@@ -359,7 +359,7 @@ void main() {
         ),
       );
       await _dropToolEvidenceSchema(previousDatabase);
-      await previousDatabase.setVersion(DatabaseService.databaseVersion - 1);
+      await previousDatabase.setVersion(18);
       await previousDatabase.close();
 
       final service = DatabaseService(
@@ -383,6 +383,85 @@ void main() {
         'upgrade-attempt',
       );
       await _expectCurrentSchema(upgradedDatabase);
+    });
+
+    test('upgrades version 19 without losing the evidence ledger', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_provider_native_upgrade_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final dataDirectory = _applicationDataDirectory(directory);
+      await dataDirectory.create(recursive: true);
+      final databasePath = path.join(dataDirectory.path, 'app.db');
+      final previousDatabase = await databaseFactoryFfi.openDatabase(
+        databasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      await previousDatabase.insert('bots', _botRow('evidence-upgrade-bot'));
+      await previousDatabase.insert(
+        'chats',
+        _chatRow('evidence-upgrade-chat', 'evidence-upgrade-bot'),
+      );
+      await previousDatabase.insert(
+        'messages',
+        _messageRow(
+          'evidence-upgrade-message',
+          'evidence-upgrade-chat',
+          'evidence-upgrade-bot',
+          'Preserved grounded answer',
+        ),
+      );
+      await previousDatabase.insert(
+        'tool_invocation_events',
+        _toolInvocationEventRow(),
+      );
+      await previousDatabase.insert(
+        'tool_evidence_records',
+        _toolEvidenceRecordRow(),
+      );
+      await previousDatabase.insert('answer_claim_evidence', {
+        'message_id': 'evidence-upgrade-message',
+        'claim_id': 'claim-1',
+        'evidence_id': 'evidence-upgrade-attempt:evidence',
+        'created_at': 3,
+      });
+      await previousDatabase.setVersion(19);
+      await previousDatabase.close();
+
+      final service = DatabaseService(
+        applicationDocumentsDirectoryProvider: () async => directory,
+      );
+      final upgradedDatabase = await service.initDatabase();
+      addTearDown(upgradedDatabase.close);
+
+      expect(await upgradedDatabase.getVersion(), 20);
+      expect(
+        await upgradedDatabase.query('tool_invocation_events'),
+        hasLength(1),
+      );
+      expect(
+        await upgradedDatabase.query('tool_evidence_records'),
+        hasLength(1),
+      );
+      expect(
+        await upgradedDatabase.query('answer_claim_evidence'),
+        hasLength(1),
+      );
+      for (final table in const [
+        'tool_execution_records',
+        'tool_invocation_events',
+        'tool_evidence_records',
+      ]) {
+        final schema = await upgradedDatabase.rawQuery(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+          [table],
+        );
+        expect(schema.single['sql'], contains("'providerNative'"));
+      }
     });
 
     test(
@@ -1186,6 +1265,63 @@ Map<String, Object?> _toolExecutionRow({
   'started_at': 1,
   'completed_at': 2,
   'updated_at': 2,
+};
+
+Map<String, Object?> _toolInvocationEventRow() => <String, Object?>{
+  'event_id': 'evidence-upgrade-attempt:event:1',
+  'run_id': 'evidence-upgrade-run',
+  'turn_id': 'evidence-upgrade-turn',
+  'chat_id': 'evidence-upgrade-chat',
+  'message_id': 'evidence-upgrade-message',
+  'invocation_id': 'evidence-upgrade-invocation',
+  'attempt_id': 'evidence-upgrade-attempt',
+  'provider_call_id': 'provider-call-1',
+  'tool_name': 'mcp.resources.read',
+  'tool_version': '1.0.0',
+  'source': 'mcp',
+  'status': 'succeeded',
+  'sequence': 1,
+  'occurred_at': 1,
+  'error_code': '',
+  'record_digest':
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+};
+
+Map<String, Object?> _toolEvidenceRecordRow() => <String, Object?>{
+  'evidence_id': 'evidence-upgrade-attempt:evidence',
+  'run_id': 'evidence-upgrade-run',
+  'turn_id': 'evidence-upgrade-turn',
+  'chat_id': 'evidence-upgrade-chat',
+  'message_id': 'evidence-upgrade-message',
+  'invocation_id': 'evidence-upgrade-invocation',
+  'attempt_id': 'evidence-upgrade-attempt',
+  'provider_call_id': 'provider-call-1',
+  'tool_name': 'mcp.resources.read',
+  'tool_version': '1.0.0',
+  'source': 'mcp',
+  'capabilities_json': '["externalRead"]',
+  'terminal_status': 'succeeded',
+  'evidence_kind': 'observation',
+  'subject': 'resource:item-1',
+  'scope_json': '{"resource_id":"item-1"}',
+  'result_summary': 'Resource observed.',
+  'arguments_digest':
+      'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  'result_digest':
+      'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+  'structured_facts_json':
+      '[{"name":"resource.state","value":"ready",'
+      '"unit":"","attributes":{}}]',
+  'observed_at': 1,
+  'valid_until': 2,
+  'payload_ref': '',
+  'payload_expires_at': null,
+  'truncated': 0,
+  'schema_valid': 1,
+  'persisted': 1,
+  'error_code': '',
+  'record_digest':
+      'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
 };
 
 Map<String, Object?> _skillRow(String id) => <String, Object?>{

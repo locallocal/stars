@@ -100,11 +100,69 @@ void main() {
       expect(evidenceRepository.events.single.toolVersion, '1.0.0');
     },
   );
+
+  test(
+    'persists Provider-native citations under application evidence IDs',
+    () async {
+      final evidenceRepository = _FaultInjectingEvidenceRepository(order: []);
+      final useCase = PersistToolInvocation(
+        evidenceRepository: evidenceRepository,
+        executionRepository: _RecordingExecutionRepository(order: []),
+      );
+      final observedAt = DateTime.utc(2026, 9, 5, 10);
+      final candidate = ToolEvidenceCandidate(
+        toolVersion: 'openai.responses.web_search.1',
+        capabilities: const {
+          ToolCapability.network,
+          ToolCapability.externalRead,
+        },
+        evidenceKind: EvidenceKind.observation,
+        subject: 'web:search',
+        scope: const {'action': 'search'},
+        structuredFacts: [
+          StructuredFact(
+            name: 'web.citation.1',
+            value: 'Current result.',
+            attributes: const {
+              'provider_reference_id': 'provider-message-1:url_citation:0',
+              'source_resource_id': 'url:reference-1',
+            },
+          ),
+        ],
+        argumentsDigest:
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        resultDigest:
+            'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        observedAt: observedAt,
+        validUntil: observedAt.add(const Duration(minutes: 15)),
+      );
+
+      await useCase(
+        _record(
+          status: ToolInvocationStatus.succeeded,
+          evidenceCandidate: candidate,
+          source: ToolSource.providerNative,
+        ),
+      );
+
+      final evidence = evidenceRepository.evidence.single;
+      expect(evidence.source, ToolSource.providerNative);
+      expect(evidence.evidenceKind, EvidenceKind.observation);
+      expect(evidence.providerCallId, 'provider-call-1');
+      expect(evidence.evidenceId, isNot(evidence.providerCallId));
+      expect(
+        evidence.structuredFacts.single.attributes['provider_reference_id'],
+        'provider-message-1:url_citation:0',
+      );
+      expect(evidence.validUntil, DateTime.utc(2026, 9, 5, 10, 15));
+    },
+  );
 }
 
 ToolExecutionRecord _record({
   required ToolInvocationStatus status,
   ToolEvidenceCandidate? evidenceCandidate,
+  ToolSource source = ToolSource.mcp,
 }) {
   final timestamp = DateTime.utc(2026, 9, 4, 10);
   return ToolExecutionRecord(
@@ -119,7 +177,7 @@ ToolExecutionRecord _record({
     botId: 'bot-1',
     callId: 'provider-call-1',
     name: 'mcp.resources.read',
-    source: ToolSource.mcp,
+    source: source,
     riskLevel: ToolRiskLevel.readOnly,
     status: status,
     argumentsSummary: '{"token":"[redacted]"}',

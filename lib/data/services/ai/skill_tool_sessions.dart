@@ -1,12 +1,15 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/provider_transport.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 
 part 'skill_tool_agent_sessions.dart';
+part 'grounded_answer_protocol.dart';
 part 'skill_tool_name_codec.dart';
+part 'openai_native_tool_evidence.dart';
 
 typedef ProviderResponseDecoder = Object? Function(String source);
 
@@ -423,8 +426,26 @@ final class OpenAiAgentModelSession implements AgentModelSession {
     return _send();
   }
 
-  Stream<ModelEvent> _send() async* {
-    if (_streamResponses && _request.options.stream) {
+  @override
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request,
+  ) {
+    if (!_started) {
+      throw StateError('Agent model session has not started.');
+    }
+    _messages.add({
+      'role': 'user',
+      'content': _groundedAnswerSynthesisPrompt(request),
+    });
+    return _send(groundedRequest: request);
+  }
+
+  Stream<ModelEvent> _send({
+    GroundedAnswerSynthesisRequest? groundedRequest,
+  }) async* {
+    if (groundedRequest == null &&
+        _streamResponses &&
+        _request.options.stream) {
       yield* _sendStreaming();
       return;
     }
@@ -436,7 +457,12 @@ final class OpenAiAgentModelSession implements AgentModelSession {
             () => _client.post(
               _uri,
               headers: _headers,
-              body: jsonEncode(_requestBody(stream: false)),
+              body: jsonEncode(
+                _requestBody(
+                  stream: false,
+                  includeTools: groundedRequest == null,
+                ),
+              ),
             ),
         endpointKind: ProviderEndpointKind.chatCompletions,
         timeout: const Duration(seconds: 60),
@@ -469,6 +495,24 @@ final class OpenAiAgentModelSession implements AgentModelSession {
         '';
     if (reasoning.isNotEmpty) yield ReasoningDelta(reasoning);
     final content = message['content']?.toString() ?? '';
+    if (groundedRequest != null) {
+      if (rawCalls.isNotEmpty || content.isEmpty) {
+        yield const ModelTurnFailed(
+          error: 'invalid_grounded_provider_response',
+          code: 'invalid_grounded_provider_response',
+        );
+        return;
+      }
+      final event = _parseGroundedAnswerOutput(content, groundedRequest);
+      yield event;
+      if (event is ModelTurnFailed) return;
+      final usage = _openAiUsage(root, _bot.model);
+      if (usage.hasData) yield UsageReported(usage);
+      yield ModelTurnCompleted(
+        stopReason: choice['finish_reason']?.toString() ?? '',
+      );
+      return;
+    }
     if (content.isNotEmpty) yield TextDelta(content);
     for (final rawCall in rawCalls) {
       final call = _objectMap(rawCall);
@@ -611,10 +655,13 @@ final class OpenAiAgentModelSession implements AgentModelSession {
     yield ModelTurnCompleted(stopReason: finishReason);
   }
 
-  Map<String, Object?> _requestBody({required bool stream}) => {
+  Map<String, Object?> _requestBody({
+    required bool stream,
+    bool includeTools = true,
+  }) => {
     'model': _bot.model,
     'messages': _messages,
-    if (_request.tools.isNotEmpty) ...{
+    if (includeTools && _request.tools.isNotEmpty) ...{
       'tools': _openAiTools(_request.tools, _toolNames),
       'tool_choice': 'auto',
       'parallel_tool_calls': _request.options.allowParallelToolCalls,

@@ -25,7 +25,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 19;
+  static const int databaseVersion = 20;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -186,8 +186,7 @@ class DatabaseService {
 
     final version = await _readVersion(databasePath);
     if (version < databaseVersion) {
-      if (version == _toolEvidencePreviousDatabaseVersion &&
-          await _isPreviousToolEvidenceSchemaValid(databasePath)) {
+      if (await _isSupportedPreviousDatabaseValid(databasePath, version)) {
         return;
       }
       await _deleteCurrentData(root, databasePath);

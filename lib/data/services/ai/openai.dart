@@ -43,10 +43,11 @@ class OpenAI extends Provider {
       );
 
   @override
-  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
+  AiProviderCapabilities get capabilities => AiProviderCapabilities(
     supportsStructuredToolCalls: true,
     supportsToolResults: true,
     supportsParallelToolCalls: true,
+    supportsNativeToolEvidence: _usesResponsesApi,
   );
 
   @override

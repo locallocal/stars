@@ -1,9 +1,5 @@
 part of 'agent_run_coordinator.dart';
 
-final RegExp _evidenceFooter = RegExp(
-  r'<stars_evidence\s+call_ids="([^"]*)"\s*/>',
-);
-
 extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
   Future<List<ToolResult>> _executeSequentially({
     required List<ToolCallRequest> calls,
@@ -80,16 +76,18 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     String errorCode = '',
     String approvalDecision = '',
     ToolEvidenceCandidate? evidenceCandidate,
+    DateTime? completedAt,
   }) {
-    final completedAt = DateTime.now();
+    final effectiveCompletedAt = completedAt ?? DateTime.now();
     return record.copyWith(
       status: status,
       resultSummary: _truncate(resultSummary, 512),
       errorCode: errorCode,
       approvalDecision:
           approvalDecision.isEmpty ? record.approvalDecision : approvalDecision,
-      completedAt: completedAt,
-      durationMs: completedAt.difference(record.startedAt).inMilliseconds,
+      completedAt: effectiveCompletedAt,
+      durationMs:
+          effectiveCompletedAt.difference(record.startedAt).inMilliseconds,
       evidenceCandidate: evidenceCandidate,
     );
   }
@@ -141,92 +139,6 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
           (capability) => capability == ToolCapability.compute,
         );
     return isPureBuiltIn ? result.content : 'completed';
-  }
-
-  _FinalAnswerValidation _validateFinalAnswer(
-    String candidate, {
-    required Map<String, _CompletedCall> completedCalls,
-  }) {
-    final normalized = candidate.trimRight();
-    final footerMatches = _evidenceFooter.allMatches(normalized).toList();
-    if (completedCalls.isEmpty) {
-      if (footerMatches.isEmpty) {
-        return _FinalAnswerValidation.valid(normalized);
-      }
-      if (footerMatches.length != 1) {
-        return const _FinalAnswerValidation.invalid(
-          'multiple_evidence_footers',
-        );
-      }
-      final ids = _evidenceIds(footerMatches.single.group(1) ?? '');
-      if (ids.isNotEmpty) {
-        return const _FinalAnswerValidation.invalid('unknown_evidence_id');
-      }
-      return _FinalAnswerValidation.valid(
-        normalized.substring(0, footerMatches.single.start).trimRight(),
-      );
-    }
-    if (footerMatches.length != 1 ||
-        footerMatches.single.end != normalized.length) {
-      return const _FinalAnswerValidation.invalid('missing_evidence_footer');
-    }
-    final ids = _evidenceIds(footerMatches.single.group(1) ?? '');
-    final usableIds = <String>{
-      for (final entry in completedCalls.entries)
-        if (_isUsableEvidence(entry.value.result)) entry.key,
-    };
-    if (ids.any((id) => !usableIds.contains(id))) {
-      return const _FinalAnswerValidation.invalid('invalid_evidence_id');
-    }
-    if (usableIds.isNotEmpty && ids.isEmpty) {
-      return const _FinalAnswerValidation.invalid('usable_evidence_not_cited');
-    }
-    if (usableIds.isEmpty && ids.isNotEmpty) {
-      return const _FinalAnswerValidation.invalid('unusable_evidence_cited');
-    }
-    return _FinalAnswerValidation.valid(
-      normalized.substring(0, footerMatches.single.start).trimRight(),
-    );
-  }
-
-  List<String> _evidenceIds(String value) => value
-      .split(',')
-      .map((id) => id.trim())
-      .where((id) => id.isNotEmpty)
-      .toSet()
-      .toList(growable: false);
-
-  bool _isUsableEvidence(ToolResult result) =>
-      !result.isError &&
-      !result.truncated &&
-      (result.content.trim().isNotEmpty || result.structuredContent != null);
-
-  String _reliabilityFeedback(
-    String reason,
-    Map<String, _CompletedCall> completedCalls,
-  ) {
-    final ledger = [
-      for (final entry in completedCalls.entries)
-        {
-          'evidence_id': entry.value.result.evidenceId,
-          'provider_call_id': entry.key,
-          'tool_name': entry.value.result.name,
-          'status': entry.value.result.isError ? 'error' : 'success',
-          'error_code': entry.value.result.errorCode,
-          'truncated': entry.value.result.truncated,
-          'usable': _isUsableEvidence(entry.value.result),
-        },
-    ];
-    return '''
-<stars_reliability_feedback>
-The previous final answer was rejected by deterministic validation: $reason.
-Rewrite the complete final answer using only the usable evidence listed below.
-Do not claim success from error, empty, or truncated results. End with exactly
-one <stars_evidence call_ids="..." /> footer. If no evidence is usable, explain
-that the result cannot be verified and use an empty call_ids value.
-Evidence ledger: ${jsonEncode(ledger)}
-</stars_reliability_feedback>
-'''.trim();
   }
 
   String _fingerprint(ToolCallRequest call) {
@@ -315,18 +227,6 @@ final class _AttemptIdentity {
   final String attemptId;
   final int matchingAttemptNumber;
   final bool hasFingerprintConflict;
-}
-
-final class _FinalAnswerValidation {
-  const _FinalAnswerValidation.valid(this.text) : isValid = true, reason = '';
-
-  const _FinalAnswerValidation.invalid(this.reason)
-    : isValid = false,
-      text = '';
-
-  final bool isValid;
-  final String text;
-  final String reason;
 }
 
 final class _AgentModelFailure implements Exception {

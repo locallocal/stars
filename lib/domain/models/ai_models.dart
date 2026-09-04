@@ -92,6 +92,115 @@ final class ToolCallRequested extends ModelEvent {
       ToolCallRequest(callId: callId, name: name, arguments: arguments);
 }
 
+/// A Provider-hosted Tool execution normalized by an application adapter.
+///
+/// Unlike [ToolCallRequested], this execution already happened remotely. The
+/// coordinator records its lifecycle and revalidates its [result], but never
+/// invokes it again.
+final class ProviderNativeToolResult extends ModelEvent {
+  ProviderNativeToolResult({
+    required this.definition,
+    required this.call,
+    required this.result,
+    required DateTime reportedAt,
+  }) : reportedAt = reportedAt.toUtc() {
+    if (definition.source != ToolSource.providerNative) {
+      throw ArgumentError.value(
+        definition.source,
+        'definition',
+        'Provider-native results require a Provider-native Tool definition.',
+      );
+    }
+    if (call.callId.trim().isEmpty ||
+        call.name != definition.name ||
+        result.callId != call.callId ||
+        result.name != definition.name ||
+        result.source != ToolSource.providerNative) {
+      throw ArgumentError(
+        'Provider-native definition, call, and result identities must match.',
+      );
+    }
+  }
+
+  final ToolDefinition definition;
+  final ToolCallRequest call;
+  final ToolResult result;
+  final DateTime reportedAt;
+}
+
+/// Application evidence made available to one structured synthesis turn.
+final class GroundedEvidenceReference {
+  GroundedEvidenceReference({
+    required this.evidenceId,
+    required this.providerCallId,
+    required this.toolName,
+    required this.isError,
+  }) {
+    if (evidenceId.trim().isEmpty || toolName.trim().isEmpty) {
+      throw ArgumentError('Grounded evidence identities cannot be empty.');
+    }
+  }
+
+  final String evidenceId;
+
+  /// Opaque migration alias used only to translate legacy evidence footers.
+  final String providerCallId;
+
+  final String toolName;
+  final bool isError;
+}
+
+/// Provider-independent input for the final structured answer turn.
+final class GroundedAnswerSynthesisRequest {
+  GroundedAnswerSynthesisRequest({
+    required this.draftText,
+    List<GroundedEvidenceReference> evidence = const [],
+  }) : evidence = List<GroundedEvidenceReference>.unmodifiable(evidence) {
+    final evidenceIds = <String>{};
+    for (final reference in this.evidence) {
+      if (!evidenceIds.add(reference.evidenceId)) {
+        throw ArgumentError.value(
+          reference.evidenceId,
+          'evidence',
+          'Evidence IDs must be unique.',
+        );
+      }
+    }
+  }
+
+  final String draftText;
+  final List<GroundedEvidenceReference> evidence;
+
+  Set<String> get allowedEvidenceIds => Set<String>.unmodifiable(
+    evidence.map((reference) => reference.evidenceId),
+  );
+
+  Map<String, String> get legacyEvidenceAliases {
+    final aliases = <String, String>{};
+    final ambiguous = <String>{};
+    for (final reference in evidence) {
+      final providerCallId = reference.providerCallId;
+      if (providerCallId.isEmpty || ambiguous.contains(providerCallId)) {
+        continue;
+      }
+      if (aliases.containsKey(providerCallId)) {
+        aliases.remove(providerCallId);
+        ambiguous.add(providerCallId);
+      } else {
+        aliases[providerCallId] = reference.evidenceId;
+      }
+    }
+    return Map<String, String>.unmodifiable(aliases);
+  }
+}
+
+/// A strictly parsed final answer. Raw Provider JSON is never exposed here.
+final class GroundedAnswerProduced extends ModelEvent {
+  const GroundedAnswerProduced(this.candidate);
+
+  final GroundedAnswerCandidate candidate;
+}
+
 final class UsageReported extends ModelEvent {
   const UsageReported(this.usage);
 
@@ -148,6 +257,7 @@ final class AiProviderCapabilities {
     this.supportsToolResults = false,
     this.supportsParallelToolCalls = false,
     this.supportsHostedSkills = false,
+    this.supportsNativeToolEvidence = false,
   });
 
   static const legacy = AiProviderCapabilities();
@@ -156,6 +266,7 @@ final class AiProviderCapabilities {
   final bool supportsToolResults;
   final bool supportsParallelToolCalls;
   final bool supportsHostedSkills;
+  final bool supportsNativeToolEvidence;
 
   bool get supportsAutomaticSkillActivation =>
       supportsStructuredToolCalls && supportsToolResults;
@@ -263,6 +374,11 @@ abstract interface class AgentModelSession {
   /// reject a model turn. The feedback is application-authored data, not a new
   /// end-user request.
   Stream<ModelEvent> continueWithReliabilityFeedback(String feedback);
+
+  /// Produces one schema-validated, Provider-independent answer candidate.
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request,
+  );
 
   Future<void> cancel();
 

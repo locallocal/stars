@@ -109,6 +109,8 @@ String _toolSourceLabel(S strings, String source) {
       return strings.toolSourceMcp;
     case 'skillScript':
       return strings.toolSourceSkillScript;
+    case 'providerNative':
+      return strings.provider;
     case '':
       return '';
     default:

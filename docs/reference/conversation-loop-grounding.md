@@ -20,15 +20,16 @@ PrepareTextGeneration
        |-- Provider 不支持 Agent Loop，或本轮没有可用工具
        |     -> provider.generateText（直接接受自由文本）
        |
-       `-- Provider 支持 Agent Loop 且本轮有工具
+       `-- Provider 支持 Agent Loop，且本轮有应用工具或已归一化的原生工具
              -> AgentRunCoordinator
                   -> model turn
                   -> ToolCallRequested
                   -> 参数校验 / 策略 / 审批 / 执行 / 结果校验
                   -> ToolResult 回送模型
-                  -> model final turn
-                  -> evidence footer 校验
                   -> 等待调用终态事件与可构造证据提交
+                  -> model draft turn
+                  -> Provider adapter 结构化合成
+                  -> 严格解析 GroundedAnswerCandidate
              -> 原子提交最终消息与 claim-evidence 关系
              -> 发布 UI 终态
 ```
@@ -41,10 +42,12 @@ PrepareTextGeneration
   校验；写入、进程、网络等能力进入策略与审批。
 - `ToolResult` 回送模型时由 `encodeToolResultForModel` 包装，包含 `evidence_id`、来源、成功或
   失败、错误码和截断状态。
-- 最终回答在展示前暂存；只在页脚通过 `_validateFinalAnswer` 后才把正文作为 `TextDelta`
-  发布，页脚本身不会显示给用户。
+- 普通模型文本只作为草稿暂存；Provider adapter 的独立合成入口必须返回统一的
+  `GroundedAnswerCandidate`，协调器只把结构化 claim 与 `nonFactual` 段落发布为 `TextDelta`。
 - `ToolExecutionRecord` 和消息中的 `MessageToolCall` 记录工具状态，并对敏感参数做摘要、哈希
   或脱敏。
+- OpenAI Responses 的原生 web search 会归一化为应用统一的调用生命周期和 observation 证据；
+  未实现该适配的 Provider 仍保持 `unverified`。
 - 会话摘要不会把完全没有成功工具记录的助手消息当作自动事实来源。
 
 这些措施已经阻止了伪造 `call_id`、把空结果或截断结果当作成功以及重复执行部分副作用，但
@@ -70,7 +73,8 @@ PrepareTextGeneration
 - 一个成功的计算调用是否被拿来为无关的天气、文件或执行结果背书；
 - 写工具的成功回执是否足以证明写入后的最终状态。
 
-因此任意一次成功调用都可能被用于“证据漂白”。仅增加页脚规则或二次提示无法封闭该漏洞。
+因此任意一次成功调用仍可能被用于“证据漂白”。GRD-013 已停止从整条自由文本和页脚推测可信
+关系，但声明与证据的语义匹配仍需 GRD-014 的确定性门禁封闭。
 
 ### 3. 内存判定与持久化事实源曾经分离
 
@@ -78,8 +82,9 @@ GRD-010 已把工具审计回调提升为协调器依赖：生命周期事件排
 继续最终回答；关键写入失败会使运行失败，不能只打印日志后发布可信终态。回答与
 claim-evidence 关系也在一个事务中提交，回答失败时保留未验证恢复检查点和已提交证据。
 
-声明支持关系在 GRD-013/014 完成前仍由旧页脚和协调器内存状态过渡承载，因此这条过渡路径
-只能产生 `unverified`，不能授予 `verified`。应用重启后的自动扫描与恢复编排属于 GRD-020。
+GRD-013 已将声明支持关系改为 `GroundedAnswerCandidate` 中的应用 evidence ID；旧页脚只允许在
+Provider adapter 内迁移解析，移除后才可发布或保存，并且迁移候选及尚未经过 GRD-014 声明级
+校验的新候选都只能产生 `unverified`。应用重启后的自动扫描与恢复编排属于 GRD-020。
 
 当前数据库只保存最多 512 字符的脱敏摘要。对于大多数非纯计算工具，成功摘要只是
 `completed`，无法证明具体答案。审计记录适合说明“调用发生过”，还不是可重放的事实账本。
@@ -99,14 +104,18 @@ claim-evidence 关系也在一个事务中提交，回答失败时保留未验�
 摘要侧的 `tool_grounded` 也是消息级布尔值：只要助手消息存在一个成功调用，该消息中的所有
 事实就可能一起获得信任。这仍然存在证据漂白。
 
-### 6. Provider 原生工具和传输失败没有统一进入账本
+### 6. Provider 原生工具按 adapter 明确授予证据资格
 
-例如 OpenAI Responses 会把 `web_search` 作为 Provider 原生工具发送，但当前
-`OpenAiResponsesAgentModelSession` 没有把原生搜索输出规范化为 `ToolInvocationRecord` 和
-`ToolResult`。它得到的当前信息无法通过现有证据门禁。
+GRD-012 已把 OpenAI Responses 的 `web_search_call` 和 `url_citation` 归一化为
+`ProviderNativeToolResult`，再由协调器生成统一的 requested、running 和终态事件，并按 GRD-011
+契约复核后进入同一事实账本。请求会显式取得 action sources；只有已完成且引用能绑定到来源的
+结果才能产生 observation。查询正文只保留摘要，URL 去除凭据、query 和 fragment，引用正文、
+标题与数量均有上限并经过凭据脱敏。Provider 引用 ID 保存在 structured fact 属性中，应用生成
+的 evidence ID 仍由 attempt ID 推导，两类身份不会混用。
 
-HTTP 错误也被压缩成较粗的 `provider_http_error` 或通用失败码。状态码、端点类别、是否可重试
-等安全诊断字段没有统一模型，容易造成无效重试，也不利于明确告诉用户“没有取得事实结果”。
+Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获得此能力标志，其搜索正文只能
+保持 `unverified`。传输失败由 GRD-005 的 `ProviderFailure` 保存状态码、端点类别、请求追踪 ID
+和可重试性等安全诊断字段，响应正文不进入回答或普通日志。
 
 ### 7. 错误记录也是事实，但不是业务事实
 
@@ -251,8 +260,9 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
   原因。`MessageToolCall` 增加 `truncated`、`schemaValid`、`observedAt` 等最小投影。
 - 将 `AgentRunCoordinator` 拆为 Loop 状态机、工具执行器、证据策略和最终声明门禁；限制与取消
   继续由协调器统一拥有。
-- 用 `GroundedAnswerValidator` 替代消息级 `_validateFinalAnswer`。旧
-  `<stars_evidence ... />` 仅用于迁移兼容，不能再授予 `verified`。
+- `AnswerClaim`、`ClaimKind` 和 `GroundedAnswerCandidate` 已替代消息级
+  `_validateFinalAnswer`；后续由 `GroundedAnswerValidator` 校验每条声明。旧
+  `<stars_evidence ... />` 仅用于 adapter 迁移兼容，不能保存或授予 `verified`。
 
 ### Data
 
@@ -265,7 +275,7 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
   提交并使用同一幂等身份重试，重试不会重新执行工具。账本成功后才允许进入回答提交。
 - 最终回答与 claim-evidence 关系在一个本地数据库事务中写入；事务前保存的 `unverified` 部分
   检查点使“证据已提交、回答未提交”的中断状态可在重启后安全重试。自由文本工具在完成
-  GRD-011 至 GRD-014 前仍只能得到 `unverified`，不能因提交成功提前升级为 `verified`。
+  完成 GRD-014 前仍只能得到 `unverified`，不能因提交成功提前升级为 `verified`。
 - 不再吞掉关键证据持久化异常。UI 增量快照写失败可以降级，但最终事实账本写失败必须让运行
   进入明确失败状态。
 - Provider 适配器把原生 web search 等结果转换成统一的调用和证据事件。Provider HTTP 失败
