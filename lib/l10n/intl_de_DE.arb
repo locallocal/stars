@@ -923,5 +923,14 @@
     "databaseDowngradeNotSupported": "Diese Datenbank wurde mit einer neueren Version von Stars erstellt. Aktualisieren Sie die App, bevor Sie sie öffnen.",
     "databaseRecoveryFailed": "Die Integritätsprüfung der Datenbank ist fehlgeschlagen, und die Wiederherstellung aus der Sicherung dieser Version war nicht möglich.",
     "durationMilliseconds": "{milliseconds} ms",
-    "durationSeconds": "{seconds} s"
+    "durationSeconds": "{seconds} s",
+    "answerTrustUnverified": "Nicht verifiziert",
+    "answerTrustFailed": "Fehlgeschlagen",
+    "answerTrustReasonNoTool": "Für diese Antwort sind keine nutzbaren Tool-Belege verfügbar.",
+    "answerTrustReasonProviderUnsupported": "Dieser Provider unterstützt keine Verifizierungs-Tools.",
+    "answerTrustReasonToolRejected": "Die Anfrage an das Verifizierungs-Tool wurde abgelehnt.",
+    "answerTrustReasonProviderFailed": "Die Provider-Anfrage ist fehlgeschlagen, bevor diese Antwort verifiziert werden konnte.",
+    "answerTrustReasonGateFailed": "Diese Antwort hat die Vertrauensprüfung der Anwendung nicht bestanden.",
+    "answerTrustReasonUnavailable": "Die Verifizierung dieser Antwort wurde nicht abgeschlossen.",
+    "answerTrustSemanticLabel": "{status}. {reason}"
 }

@@ -20,89 +20,91 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'ja_JP';
 
-  static String m0(name) => "ボット \"${name}\" が追加されました";
+  static String m0(status, reason) => "${status}。${reason}";
 
-  static String m1(botName) => "\"${botName}\"が削除されました";
+  static String m1(name) => "ボット \"${name}\" が追加されました";
 
-  static String m2(botName) =>
+  static String m2(botName) => "\"${botName}\"が削除されました";
+
+  static String m3(botName) =>
       "こんにちは！私は${botName}というAIアシスタントです。どんな質問でもお気軽にどうぞ、できる限りお手伝いします。";
 
-  static String m3(botName) => "${botName}が入力中...";
+  static String m4(botName) => "${botName}が入力中...";
 
-  static String m4(botName) => "ボット${botName}が更新されました";
+  static String m5(botName) => "ボット${botName}が更新されました";
 
-  static String m5(botName) => "${botName}とのチャットが削除されました";
+  static String m6(botName) => "${botName}とのチャットが削除されました";
 
-  static String m6(error) => "Could not clear chat history: ${error}";
-
-  static String m7(botName) =>
-      "\"${botName}\"とのすべてのチャット履歴を消去してもよろしいですか？この操作は元に戻せません。";
+  static String m7(error) => "Could not clear chat history: ${error}";
 
   static String m8(botName) =>
-      "ボットを削除すると、関連するすべてのチャットも削除されます。${botName}を本当に削除しますか？";
+      "\"${botName}\"とのすべてのチャット履歴を消去してもよろしいですか？この操作は元に戻せません。";
 
   static String m9(botName) =>
+      "ボットを削除すると、関連するすべてのチャットも削除されます。${botName}を本当に削除しますか？";
+
+  static String m10(botName) =>
       "チャットを削除するとすべてのチャット履歴が消去されます。${botName}とのチャットを本当に削除しますか？";
 
-  static String m10(name) =>
+  static String m11(name) =>
       "Delete ${name}? Its cached Tool catalog and secure credential will also be removed.";
 
-  static String m11(name) => "${name} をアンインストールしますか？ボットとの関連付けも削除されます。";
+  static String m12(name) => "${name} をアンインストールしますか？ボットとの関連付けも削除されます。";
 
-  static String m12(year) => "© ${year} Starsチーム";
+  static String m13(year) => "© ${year} Starsチーム";
 
-  static String m13(error) => "Could not create the chat: ${error}";
+  static String m14(error) => "Could not create the chat: ${error}";
 
-  static String m14(error) => "Could not delete the chat: ${error}";
+  static String m15(error) => "Could not delete the chat: ${error}";
 
-  static String m15(milliseconds) => "${milliseconds} ミリ秒";
+  static String m16(milliseconds) => "${milliseconds} ミリ秒";
 
-  static String m16(seconds) => "${seconds} 秒";
+  static String m17(seconds) => "${seconds} 秒";
 
-  static String m17(name) =>
+  static String m18(name) =>
       "${name} が宣言済みスクリプトをツールとして登録することを許可します。各呼び出しにも承認が必要です。";
 
-  static String m18(count) => "${count} files";
+  static String m19(count) => "${count} files";
 
-  static String m19(error) => "Generate image failed: ${error}";
+  static String m20(error) => "Generate image failed: ${error}";
 
-  static String m20(error) => "Could not generate music: ${error}";
+  static String m21(error) => "Could not generate music: ${error}";
 
-  static String m21(error) => "Could not generate speech: ${error}";
+  static String m22(error) => "Could not generate speech: ${error}";
 
-  static String m22(error) => "Could not generate video: ${error}";
+  static String m23(error) => "Could not generate video: ${error}";
 
-  static String m23(count) => "${count} items";
+  static String m24(count) => "${count} items";
 
-  static String m24(language) => "言語が${language}に設定されました";
+  static String m25(language) => "言語が${language}に設定されました";
 
-  static String m25(error) => "MCP connection failed: ${error}";
+  static String m26(error) => "MCP connection failed: ${error}";
 
-  static String m26(count) => "${count} configured (values hidden)";
+  static String m27(count) => "${count} configured (values hidden)";
 
-  static String m27(minutes) => "${minutes}分前";
+  static String m28(minutes) => "${minutes}分前";
 
-  static String m28(count) => "${count}個のモデルが正常に取得されました";
+  static String m29(count) => "${count}個のモデルが正常に取得されました";
 
-  static String m29(count) => "コマンド実行 ${count} 件";
+  static String m30(count) => "コマンド実行 ${count} 件";
 
-  static String m30(duration) => "所要時間 ${duration}";
+  static String m31(duration) => "所要時間 ${duration}";
 
-  static String m31(count) => "ファイル更新 ${count} 件";
+  static String m32(count) => "ファイル更新 ${count} 件";
 
-  static String m32(count) => "ツール呼び出し ${count} 件";
+  static String m33(count) => "ツール呼び出し ${count} 件";
 
-  static String m33(error) => "応答の取得に失敗しました：${error}";
+  static String m34(error) => "応答の取得に失敗しました：${error}";
 
-  static String m34(error) => "Could not save image: ${error}";
+  static String m35(error) => "Could not save image: ${error}";
 
-  static String m35(error) => "Could not share image: ${error}";
+  static String m36(error) => "Could not share image: ${error}";
 
-  static String m36(error) => "スキルをインポートできませんでした：${error}";
+  static String m37(error) => "スキルをインポートできませんでした：${error}";
 
-  static String m37(duration) => "思考完了 · ${duration}";
+  static String m38(duration) => "思考完了 · ${duration}";
 
-  static String m38(error) => "動画の再生エラー: ${error}";
+  static String m39(error) => "動画の再生エラー: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -131,6 +133,26 @@ class MessageLookup extends MessageLookupByLibrary {
       "各テキストリクエストにこのスキルを挿入します。",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("常に有効"),
+    "answerTrustFailed": MessageLookupByLibrary.simpleMessage("失敗"),
+    "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
+      "この回答はアプリの信頼性ゲートを通過しませんでした。",
+    ),
+    "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
+      "この回答に利用可能なツール証拠がありません。",
+    ),
+    "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
+      "この回答を検証する前にプロバイダーへのリクエストが失敗しました。",
+    ),
+    "answerTrustReasonProviderUnsupported":
+        MessageLookupByLibrary.simpleMessage("このプロバイダーは検証ツールをサポートしていません。"),
+    "answerTrustReasonToolRejected": MessageLookupByLibrary.simpleMessage(
+      "検証ツールのリクエストが拒否されました。",
+    ),
+    "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
+      "この回答の検証は完了していません。",
+    ),
+    "answerTrustSemanticLabel": m0,
+    "answerTrustUnverified": MessageLookupByLibrary.simpleMessage("未検証"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("APIアドレス:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("APIキー"),
     "apiType": MessageLookupByLibrary.simpleMessage("APIタイプ:"),
@@ -142,10 +164,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "システムプロンプト",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -162,12 +183,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "backToDailyUsage": MessageLookupByLibrary.simpleMessage("日別使用量に戻る"),
     "basicInformation": MessageLookupByLibrary.simpleMessage("基本情報"),
-    "botAddedSuccess": m0,
+    "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("ボットのアバター"),
-    "botDeleted": m1,
-    "botGreeting": m2,
+    "botDeleted": m2,
+    "botGreeting": m3,
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
-    "botIsTyping": m3,
+    "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
       "このエージェントで MCP ツールを有効にします。ツール呼び出しには既定で確認が必要です。",
     ),
@@ -180,14 +201,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "botUnavailableTitle": MessageLookupByLibrary.simpleMessage(
       "This bot is unavailable",
     ),
-    "botUpdated": m4,
+    "botUpdated": m5,
     "browseConversationDirectory": MessageLookupByLibrary.simpleMessage(
       "Browse conversation data",
     ),
     "cancel": MessageLookupByLibrary.simpleMessage("キャンセル"),
     "changeAvatar": MessageLookupByLibrary.simpleMessage("アバターを変更"),
     "changesSaved": MessageLookupByLibrary.simpleMessage("保存済み"),
-    "chatDeleted": m5,
+    "chatDeleted": m6,
     "chatExecutionStatus": MessageLookupByLibrary.simpleMessage("チャットの実行状況"),
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "チャット履歴が消去されました",
@@ -203,7 +224,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "clearAutomaticMemory": MessageLookupByLibrary.simpleMessage("自動メモリを消去"),
     "clearChat": MessageLookupByLibrary.simpleMessage("チャットをクリア"),
-    "clearChatFailed": m6,
+    "clearChatFailed": m7,
     "clearChatHistory": MessageLookupByLibrary.simpleMessage("チャット履歴をクリア"),
     "clearPinnedSkills": MessageLookupByLibrary.simpleMessage("会話の固定を解除"),
     "clearSearch": MessageLookupByLibrary.simpleMessage("Clear search"),
@@ -222,12 +243,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionFailed": MessageLookupByLibrary.simpleMessage("失敗"),
     "compactionStatus": MessageLookupByLibrary.simpleMessage("圧縮状態"),
     "confirm": MessageLookupByLibrary.simpleMessage("確認"),
-    "confirmClearChat": m7,
+    "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("削除の確認"),
-    "confirmDeleteBot": m8,
-    "confirmDeleteChat": m9,
-    "confirmDeleteMcpServer": m10,
-    "confirmUninstallSkill": m11,
+    "confirmDeleteBot": m9,
+    "confirmDeleteChat": m10,
+    "confirmDeleteMcpServer": m11,
+    "confirmUninstallSkill": m12,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("連絡先情報（任意）"),
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("コンテキストとメモリ"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("コンテキストを圧縮しました"),
@@ -247,8 +268,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
-    "copyright": m12,
-    "createChatFailed": m13,
+    "copyright": m13,
+    "createChatFailed": m14,
     "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
     "creationTime": MessageLookupByLibrary.simpleMessage("作成日時"),
     "customProvider": MessageLookupByLibrary.simpleMessage("カスタムプロバイダー..."),
@@ -267,7 +288,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("削除"),
     "deleteBot": MessageLookupByLibrary.simpleMessage("ボットを削除"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("チャットを削除"),
-    "deleteChatFailed": m14,
+    "deleteChatFailed": m15,
     "deleteMcpServer": MessageLookupByLibrary.simpleMessage(
       "Delete MCP Server",
     ),
@@ -297,8 +318,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "disableAllMcpTools": MessageLookupByLibrary.simpleMessage("すべてのツールを無効化"),
     "disableSkillScripts": MessageLookupByLibrary.simpleMessage("スクリプトを無効化"),
-    "durationMilliseconds": m15,
-    "durationSeconds": m16,
+    "durationMilliseconds": m16,
+    "durationSeconds": m17,
     "edit": MessageLookupByLibrary.simpleMessage("編集"),
     "editBot": MessageLookupByLibrary.simpleMessage("ボットを編集"),
     "editMcpServer": MessageLookupByLibrary.simpleMessage("Edit MCP Server"),
@@ -312,7 +333,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "enableAllMcpTools": MessageLookupByLibrary.simpleMessage("すべてのツールを有効化"),
     "enableSkillScripts": MessageLookupByLibrary.simpleMessage("スクリプトを有効化"),
-    "enableSkillScriptsDescription": m17,
+    "enableSkillScriptsDescription": m18,
     "enableSkillScriptsTitle": MessageLookupByLibrary.simpleMessage(
       "隔離されたスキルスクリプトを有効にしますか？",
     ),
@@ -351,7 +372,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "まずモデルリストを取得してください",
     ),
     "fileAttachment": MessageLookupByLibrary.simpleMessage("File attachment"),
-    "fileCount": m18,
+    "fileCount": m19,
     "fileMissing": MessageLookupByLibrary.simpleMessage(
       "This file no longer exists.",
     ),
@@ -373,10 +394,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "fontSizeSettings": MessageLookupByLibrary.simpleMessage("フォントサイズ"),
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage("フォントサイズが更新されました"),
     "forgetMemory": MessageLookupByLibrary.simpleMessage("忘れる"),
-    "generateImageFailed": m19,
-    "generateMusicFailed": m20,
-    "generateSpeechFailed": m21,
-    "generateVideoFailed": m22,
+    "generateImageFailed": m20,
+    "generateMusicFailed": m21,
+    "generateSpeechFailed": m22,
+    "generateVideoFailed": m23,
     "generatedImage": MessageLookupByLibrary.simpleMessage("Image generated"),
     "generating": MessageLookupByLibrary.simpleMessage("Generating…"),
     "generatingImage": MessageLookupByLibrary.simpleMessage(
@@ -410,10 +431,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "inputTokens": MessageLookupByLibrary.simpleMessage("入力トークン"),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("更新をインストール"),
     "invalidSummary": MessageLookupByLibrary.simpleMessage("生成された要約は検証に失敗しました"),
-    "itemCount": m23,
+    "itemCount": m24,
     "jumpToLatest": MessageLookupByLibrary.simpleMessage("Jump to Latest"),
     "justNow": MessageLookupByLibrary.simpleMessage("たった今"),
-    "languageChanged": m24,
+    "languageChanged": m25,
     "languageSettings": MessageLookupByLibrary.simpleMessage("言語設定"),
     "lightMode": MessageLookupByLibrary.simpleMessage("ライトモード"),
     "linkOpenFailed": MessageLookupByLibrary.simpleMessage(
@@ -450,7 +471,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpConnectionError": MessageLookupByLibrary.simpleMessage(
       "Connection error",
     ),
-    "mcpConnectionFailed": m25,
+    "mcpConnectionFailed": m26,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
@@ -462,7 +483,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
     ),
-    "mcpHiddenEnvironmentVariableCount": m26,
+    "mcpHiddenEnvironmentVariableCount": m27,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
       "Remote MCP endpoints must use HTTPS.",
     ),
@@ -547,7 +568,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "messageHint": MessageLookupByLibrary.simpleMessage("メッセージを入力..."),
     "messageSkills": MessageLookupByLibrary.simpleMessage("スキル"),
-    "minutesAgo": m27,
+    "minutesAgo": m28,
     "modalityAudio": MessageLookupByLibrary.simpleMessage("音声"),
     "modalityFile": MessageLookupByLibrary.simpleMessage("ファイル"),
     "modalityImage": MessageLookupByLibrary.simpleMessage("画像"),
@@ -562,7 +583,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelContextWindow": MessageLookupByLibrary.simpleMessage("モデルのコンテキストサイズ"),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("入力"),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("出力"),
-    "modelsRetrievedSuccess": m28,
+    "modelsRetrievedSuccess": m29,
     "modificationTime": MessageLookupByLibrary.simpleMessage("更新日時"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
     "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
@@ -661,11 +682,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "preview": MessageLookupByLibrary.simpleMessage("プレビュー"),
     "previewText": MessageLookupByLibrary.simpleMessage("テキスト効果のプレビュー"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("プライバシーポリシー"),
-    "processCommandCount": m29,
-    "processDuration": m30,
-    "processFileCount": m31,
+    "processCommandCount": m30,
+    "processDuration": m31,
+    "processFileCount": m32,
     "processInformation": MessageLookupByLibrary.simpleMessage("処理情報"),
-    "processToolCount": m32,
+    "processToolCount": m33,
     "profile": MessageLookupByLibrary.simpleMessage("プロフィール"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage("ご意見やご提案をお寄せください"),
     "provider": MessageLookupByLibrary.simpleMessage("プロバイダー"),
@@ -695,7 +716,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "停止済み · 部分回答を保持",
     ),
     "resetToDefault": MessageLookupByLibrary.simpleMessage("デフォルトに戻す"),
-    "responseError": m33,
+    "responseError": m34,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("復元"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage("保持された最近のターン"),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
@@ -704,7 +725,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveAndConnect": MessageLookupByLibrary.simpleMessage("Save and connect"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("変更を保存"),
     "saveImage": MessageLookupByLibrary.simpleMessage("Save image"),
-    "saveImageFailed": m34,
+    "saveImageFailed": m35,
     "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage(
       "Could not save to gallery",
     ),
@@ -728,7 +749,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "send": MessageLookupByLibrary.simpleMessage("送信"),
     "settings": MessageLookupByLibrary.simpleMessage("設定"),
     "shareImage": MessageLookupByLibrary.simpleMessage("Share image"),
-    "shareImageFailed": m35,
+    "shareImageFailed": m36,
     "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
       "Image from Stars",
     ),
@@ -752,7 +773,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "skillDisabled": MessageLookupByLibrary.simpleMessage("無効"),
     "skillEnabled": MessageLookupByLibrary.simpleMessage("有効"),
     "skillFiles": MessageLookupByLibrary.simpleMessage("ファイル"),
-    "skillImportFailed": m36,
+    "skillImportFailed": m37,
     "skillImportSucceeded": MessageLookupByLibrary.simpleMessage(
       "スキルをインポートしました",
     ),
@@ -872,7 +893,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "themeSettings": MessageLookupByLibrary.simpleMessage("テーマ設定"),
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("思考完了"),
-    "thinkingCompletedWithDuration": m37,
+    "thinkingCompletedWithDuration": m38,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("思考中…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("トークン使用量"),
     "tokens": MessageLookupByLibrary.simpleMessage("トークン"),
@@ -912,7 +933,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "version": MessageLookupByLibrary.simpleMessage("バージョン 1.0.0"),
     "videoGenerated": MessageLookupByLibrary.simpleMessage("Video generated"),
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage("動画を読み込めません"),
-    "videoPlaybackError": m38,
+    "videoPlaybackError": m39,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("要約を表示"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

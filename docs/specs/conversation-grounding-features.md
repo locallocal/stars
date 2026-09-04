@@ -242,7 +242,14 @@
 
 ### GRD-007 最小可信状态 UI
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/ui/features/chat/views/message_list.dart`、
+`lib/ui/features/chat/views/message_list_bubble.dart` 和
+`lib/ui/features/chat/views/message_list_status.dart`；本地化目录 `lib/l10n/` 通过项目
+`intl_utils` 流程更新；持久化回读、可访问性、P0 展示边界与原因分类测试：
+`test/widget/message_trust_status_test.dart` 和
+`test/l10n/localization_contract_test.dart`。
 
 目标：P0 发布时不让用户把未验证回答误认为已验证。
 

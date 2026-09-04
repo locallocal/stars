@@ -226,6 +226,7 @@ class _MessageListState extends State<MessageList> {
             audio: message.audio,
             music: message.music,
             video: message.video,
+            grounding: message.grounding,
             terminalOutcome: message.terminalOutcome,
             hasPartialContent: message.hasPartialContent,
             actionViewModel: widget.actionViewModel,
