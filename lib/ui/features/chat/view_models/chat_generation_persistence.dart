@@ -72,6 +72,45 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
     }
   }
 
+  Future<Message> _persistGroundedTerminal(Message draft) async {
+    if (!_hasDedicatedGroundedMessagePersister) {
+      return _groundedMessagePersister(draft);
+    }
+    await _persistRecoveryCheckpointSafely(draft);
+    Object? lastError;
+    for (var attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await _groundedMessagePersister(draft);
+      } on Object catch (error) {
+        lastError = error;
+      }
+    }
+    throw AppFailure.storage(
+      'generation_response_persist_failed',
+      cause: lastError,
+    );
+  }
+
+  Future<void> _persistRecoveryCheckpointSafely(Message draft) async {
+    if (!_hasGeneratedContent) return;
+    final checkpoint = draft.copyWith(
+      grounding: MessageGrounding(
+        trustLevel: AnswerTrustLevel.unverified,
+        reasonCode: 'evidence_commit_pending',
+      ),
+      clearTerminalOutcome: true,
+      hasPartialContent: true,
+    );
+    try {
+      await _messagePersister(checkpoint);
+    } catch (error) {
+      debugPrint(
+        'Failed to persist answer recovery checkpoint for ${draft.runId}: '
+        '$error',
+      );
+    }
+  }
+
   Future<void> _updateLastMessageSafely(String content) async {
     try {
       await _lastMessageUpdater(chatId, content);

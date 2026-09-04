@@ -74,6 +74,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
       toolPolicy: _toolPolicy,
       approvalHandler: this,
       limits: _agentRunLimits,
+      toolInvocationPersister: _toolInvocationPersister,
     );
     final generation = coordinator.run(
       provider: provider,
@@ -81,6 +82,8 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
         runId: runId,
         chatId: chatId,
         botId: _bot.id,
+        turnId: _snapshot.turnId ?? runId,
+        messageId: '$runId:assistant',
         messages: messages,
         requestedToolNames: requestedToolNames,
         approvalExemptToolNames: approvalExemptToolNames,
@@ -240,49 +243,6 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
     );
     _notifyView();
     _schedulePartialPersistence(runId);
-    final persister = _toolInvocationPersister;
-    if (persister != null) {
-      final now = DateTime.now();
-      final record = ToolExecutionRecord(
-        executionId: invocation.executionId,
-        invocationId: invocation.invocationId,
-        attemptId: invocation.attemptId,
-        providerCallId: invocation.providerCallId,
-        runId: runId,
-        turnId: _snapshot.turnId ?? runId,
-        messageId: '$runId:assistant',
-        chatId: chatId,
-        botId: _bot.id,
-        callId: invocation.callId,
-        name: invocation.name,
-        title: invocation.title,
-        mcpServerName: invocation.mcpServerName,
-        source: invocation.source,
-        riskLevel: invocation.riskLevel,
-        status: invocation.status,
-        detail: detail,
-        argumentsSummary: item.argumentsSummary,
-        resultSummary: item.resultSummary,
-        approvalStatus: invocation.approvalDecision,
-        errorCode: invocation.errorCode,
-        durationMs: invocation.durationMs,
-        startedAt: invocation.startedAt,
-        completedAt: invocation.completedAt,
-        updatedAt: now,
-      );
-      _toolPersistenceQueue = _toolPersistenceQueue.then((_) async {
-        try {
-          await persister(record);
-        } catch (error) {
-          _criticalPersistenceFailureCode =
-              AppFailure.from(
-                error,
-                code: 'tool_execution_persist_failed',
-              ).code;
-          debugPrint('Failed to persist Tool audit for $runId: $error');
-        }
-      });
-    }
   }
 
   String? _successfulLocalFile(ToolInvocationRecord invocation) {

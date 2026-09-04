@@ -38,6 +38,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     required this.chatId,
     required Bot bot,
     required MessagePersister messagePersister,
+    GroundedMessagePersister? groundedMessagePersister,
     required LastMessageUpdater lastMessageUpdater,
     required ProviderFactory providerFactory,
     MessageIdFactory messageIdFactory = _defaultMessageIdFactory,
@@ -52,6 +53,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   }) : _bot = bot,
        _providerFactory = providerFactory,
        _messagePersister = messagePersister,
+       _groundedMessagePersister = groundedMessagePersister ?? messagePersister,
+       _hasDedicatedGroundedMessagePersister = groundedMessagePersister != null,
        _lastMessageUpdater = lastMessageUpdater,
        _messageIdFactory = messageIdFactory,
        _skillActivationPersister = skillActivationPersister,
@@ -68,6 +71,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   final String chatId;
   final ProviderFactory _providerFactory;
   final MessagePersister _messagePersister;
+  final GroundedMessagePersister _groundedMessagePersister;
+  final bool _hasDedicatedGroundedMessagePersister;
   final LastMessageUpdater _lastMessageUpdater;
   final MessageIdFactory _messageIdFactory;
   final SkillActivationPersister? _skillActivationPersister;
@@ -96,12 +101,10 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   ContextAssemblyReport? _contextAssemblyReport;
   Timer? _partialPersistenceTimer;
   Future<void> _partialPersistenceQueue = Future<void>.value();
-  Future<void> _toolPersistenceQueue = Future<void>.value();
   bool _providerSupportsAgentLoop = false;
   bool _reliabilityPolicyEnabled = true;
   AnswerEvidenceState _answerEvidenceState = AnswerEvidenceState.none;
   AnswerTrustGateResult _answerTrustGateResult = AnswerTrustGateResult.notRun;
-  String _criticalPersistenceFailureCode = '';
 
   ChatGenerationSnapshot get snapshot => _snapshot;
   ContextAssemblyReport? get contextAssemblyReport => _contextAssemblyReport;
@@ -175,7 +178,6 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _reliabilityPolicyEnabled = true;
     _answerEvidenceState = AnswerEvidenceState.none;
     _answerTrustGateResult = AnswerTrustGateResult.notRun;
-    _criticalPersistenceFailureCode = '';
     _terminalCompleter = Completer<ChatRunLifecycle>();
     _preparingRuns.add(runId);
     _snapshot = ChatGenerationSnapshot(
@@ -533,7 +535,6 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _partialPersistenceTimer?.cancel();
     _partialPersistenceTimer = null;
     await _partialPersistenceQueue;
-    await _toolPersistenceQueue;
     if (!_isActiveRun(runId)) return;
 
     var lifecycle = switch (providerTerminal) {
@@ -599,7 +600,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
       );
       var terminalPersisted = false;
       try {
-        terminalMessage = await _messagePersister(terminalDraft);
+        terminalMessage = await _persistGroundedTerminal(terminalDraft);
         terminalPersisted = true;
       } catch (persistenceError) {
         lifecycle = ChatRunLifecycle.failed;
@@ -673,7 +674,6 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     String? failureReasonCode,
     bool? criticalPersistenceSucceeded,
   }) {
-    final persistenceFailureCode = _criticalPersistenceFailureCode;
     return _answerTrustPolicy.evaluate(
       AnswerTrustPolicyInput(
         terminalOutcome: terminalOutcome,
@@ -682,12 +682,9 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         toolCalls: _snapshot.toolCalls,
         evidenceState: _answerEvidenceState,
         gateResult: _answerTrustGateResult,
-        criticalPersistenceSucceeded:
-            criticalPersistenceSucceeded ?? persistenceFailureCode.isEmpty,
+        criticalPersistenceSucceeded: criticalPersistenceSucceeded ?? true,
         failureReasonCode:
-            failureReasonCode?.isNotEmpty ?? false
-                ? failureReasonCode!
-                : persistenceFailureCode,
+            failureReasonCode?.isNotEmpty ?? false ? failureReasonCode! : '',
       ),
     );
   }

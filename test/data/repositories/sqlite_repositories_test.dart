@@ -14,6 +14,7 @@ import 'package:stars/data/repositories/sqlite_conversation_skill_pin_repository
 import 'package:stars/data/repositories/sqlite_profile_repository.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_run_repository.dart';
+import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
 import 'package:stars/data/services/bot_api_key_cipher.dart';
 import 'package:stars/data/services/conversation_summary_storage.dart';
 import 'package:stars/data/services/local_database_service.dart';
@@ -217,24 +218,40 @@ void main() {
         ),
       ).values,
     );
-    await repository.upsertMessage(
-      Message(
-        messageId: 'message-grounding-current',
-        turnId: 'turn-grounding-current',
-        runId: 'run-grounding-current',
-        chatId: 'chat-grounding',
-        botId: bot.id,
-        senderId: bot.id,
-        content: 'Verified answer',
-        grounding: MessageGrounding(
-          trustLevel: AnswerTrustLevel.verified,
-          reasonCode: 'all_claims_grounded',
-          evidenceIds: const ['evidence-current'],
-        ),
-        terminalOutcome: MessageTerminalOutcome.completed,
-        timestamp: timestamp,
+    final currentMessage = Message(
+      messageId: 'message-grounding-current',
+      turnId: 'turn-grounding-current',
+      runId: 'run-grounding-current',
+      chatId: 'chat-grounding',
+      botId: bot.id,
+      senderId: bot.id,
+      content: 'Verified answer',
+      grounding: MessageGrounding(
+        trustLevel: AnswerTrustLevel.verified,
+        reasonCode: 'all_claims_grounded',
+        evidenceIds: const ['attempt-grounding-current:evidence'],
       ),
+      terminalOutcome: MessageTerminalOutcome.completed,
+      timestamp: timestamp,
     );
+    await expectLater(
+      repository.upsertMessage(currentMessage),
+      throwsA(isA<DatabaseException>()),
+    );
+    await expectLater(
+      repository.upsertMessages([currentMessage]),
+      throwsArgumentError,
+    );
+    expect(
+      await database.query(
+        'messages',
+        where: 'message_id = ?',
+        whereArgs: [currentMessage.messageId],
+      ),
+      isEmpty,
+    );
+    await _commitGroundingEvidence(localDatabase, timestamp);
+    await repository.upsertMessage(currentMessage);
     final legacyValues = Map<String, Object?>.from(
       MessageRecord.fromDomain(
         Message(
@@ -270,7 +287,9 @@ void main() {
 
     expect(current.grounding.trustLevel, AnswerTrustLevel.verified);
     expect(current.grounding.reasonCode, 'all_claims_grounded');
-    expect(current.grounding.evidenceIds, ['evidence-current']);
+    expect(current.grounding.evidenceIds, [
+      'attempt-grounding-current:evidence',
+    ]);
     expect(legacy.grounding.protocolVersion, 0);
     expect(legacy.grounding.trustLevel, AnswerTrustLevel.unverified);
     expect(legacy.grounding.reasonCode, 'legacy_grounding_missing');
@@ -842,6 +861,64 @@ void main() {
 
     expect(await pinRepository.getForChat(pin.chatId), isEmpty);
   });
+}
+
+Future<void> _commitGroundingEvidence(
+  LocalDatabaseService localDatabase,
+  DateTime timestamp,
+) {
+  const attemptId = 'attempt-grounding-current';
+  return SqliteToolEvidenceRepository(localDatabase: localDatabase).commitRun(
+    runId: 'run-grounding-current',
+    chatId: 'chat-grounding',
+    invocationEvents: [
+      ToolInvocationEvent(
+        eventId: '$attemptId:event:1',
+        runId: 'run-grounding-current',
+        turnId: 'turn-grounding-current',
+        chatId: 'chat-grounding',
+        messageId: 'message-grounding-current',
+        invocationId: 'invocation-grounding-current',
+        attemptId: attemptId,
+        providerCallId: 'provider-grounding-current',
+        toolName: 'calculate.grounding',
+        toolVersion: '1.0.0',
+        source: ToolSource.builtIn,
+        status: ToolInvocationStatus.succeeded,
+        sequence: 1,
+        occurredAt: timestamp,
+      ),
+    ],
+    evidenceRecords: [
+      ToolEvidenceRecord(
+        evidenceId: '$attemptId:evidence',
+        runId: 'run-grounding-current',
+        turnId: 'turn-grounding-current',
+        chatId: 'chat-grounding',
+        messageId: 'message-grounding-current',
+        invocationId: 'invocation-grounding-current',
+        attemptId: attemptId,
+        providerCallId: 'provider-grounding-current',
+        toolName: 'calculate.grounding',
+        toolVersion: '1.0.0',
+        source: ToolSource.builtIn,
+        capabilities: const {ToolCapability.compute},
+        terminalStatus: ToolInvocationStatus.succeeded,
+        evidenceKind: EvidenceKind.calculation,
+        subject: 'message:message-grounding-current',
+        scope: const {'message_id': 'message-grounding-current'},
+        resultSummary: 'Grounding calculation completed.',
+        argumentsDigest:
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        resultDigest:
+            'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        structuredFacts: [
+          StructuredFact(name: 'calculation.grounded', value: true),
+        ],
+        observedAt: timestamp,
+      ),
+    ],
+  );
 }
 
 Bot _bot({String id = 'bot-1'}) => Bot(
