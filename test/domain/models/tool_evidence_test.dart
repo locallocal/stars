@@ -364,6 +364,25 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('requires encrypted payload references and a retention expiry', () {
+      expect(
+        () => _observation(payloadRef: '', payloadExpiresAt: null),
+        returnsNormally,
+      );
+      expect(
+        () => _observation(includePayloadExpiry: false),
+        throwsArgumentError,
+      );
+      expect(
+        () => _observation(payloadRef: 'file:///raw-result'),
+        throwsArgumentError,
+      );
+      expect(
+        () => _observation(payloadExpiresAt: DateTime.utc(2026, 1, 1, 12)),
+        throwsArgumentError,
+      );
+    });
   });
 }
 
@@ -384,6 +403,7 @@ ToolInvocationEvent _event({
   eventId: eventId,
   runId: runId,
   turnId: 'turn-1',
+  chatId: 'chat-1',
   messageId: 'message-1',
   invocationId: 'run-1:invocation:1',
   attemptId: 'run-1:invocation:1:attempt:1',
@@ -407,6 +427,9 @@ ToolEvidenceRecord _observation({
   String resultDigest = _resultDigest,
   List<StructuredFact>? structuredFacts,
   DateTime? validUntil,
+  String payloadRef = 'encrypted://tool-results/evidence-1',
+  DateTime? payloadExpiresAt,
+  bool includePayloadExpiry = true,
   bool truncated = false,
   bool schemaValid = true,
   bool persisted = false,
@@ -422,6 +445,9 @@ ToolEvidenceRecord _observation({
   resultDigest: resultDigest,
   structuredFacts: structuredFacts,
   validUntil: validUntil,
+  payloadRef: payloadRef,
+  payloadExpiresAt: payloadExpiresAt,
+  includePayloadExpiry: includePayloadExpiry,
   truncated: truncated,
   schemaValid: schemaValid,
   persisted: persisted,
@@ -440,6 +466,9 @@ ToolEvidenceRecord _businessEvidence({
   StructuredFact? fact,
   List<StructuredFact>? structuredFacts,
   DateTime? validUntil,
+  String payloadRef = 'encrypted://tool-results/evidence-1',
+  DateTime? payloadExpiresAt,
+  bool includePayloadExpiry = true,
   bool truncated = false,
   bool schemaValid = true,
   bool persisted = false,
@@ -447,6 +476,7 @@ ToolEvidenceRecord _businessEvidence({
   evidenceId: evidenceId,
   runId: 'run-1',
   turnId: 'turn-1',
+  chatId: 'chat-1',
   messageId: 'message-1',
   invocationId: 'run-1:invocation:1',
   attemptId: 'run-1:invocation:1:attempt:1',
@@ -467,7 +497,12 @@ ToolEvidenceRecord _businessEvidence({
       [fact ?? StructuredFact(name: 'resource.exists', value: true)],
   observedAt: DateTime.utc(2026, 1, 1, 12),
   validUntil: validUntil,
-  payloadRef: 'encrypted://tool-results/evidence-1',
+  payloadRef: payloadRef,
+  payloadExpiresAt:
+      includePayloadExpiry
+          ? payloadExpiresAt ??
+              (payloadRef.isEmpty ? null : DateTime.utc(2026, 1, 2, 12))
+          : payloadExpiresAt,
   truncated: truncated,
   schemaValid: schemaValid,
   persisted: persisted,
@@ -482,6 +517,7 @@ ToolEvidenceRecord _executionFailure({
   evidenceId: 'run-1:invocation:1:attempt:1:evidence',
   runId: 'run-1',
   turnId: 'turn-1',
+  chatId: 'chat-1',
   messageId: 'message-1',
   invocationId: 'run-1:invocation:1',
   attemptId: 'run-1:invocation:1:attempt:1',

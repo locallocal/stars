@@ -3,6 +3,7 @@ part of 'database_service.dart';
 Future<void> _verifyCurrentDatabaseSchema(
   Database database, {
   bool allowMissingToolExecutionSchema = false,
+  bool allowMissingToolEvidenceSchema = false,
 }) async {
   final tables = await database.rawQuery('''
     SELECT name
@@ -11,11 +12,10 @@ Future<void> _verifyCurrentDatabaseSchema(
   ''');
   final tableNames =
       tables.map((row) => row['name']).whereType<String>().toSet();
-  final hasCurrentTables = _setsEqual(tableNames, _currentTableNames);
-  final hasCompatibleTables =
-      allowMissingToolExecutionSchema &&
-      _setsEqual(tableNames, _currentTableNamesWithoutToolExecutions);
-  if (!hasCurrentTables && !hasCompatibleTables) {
+  if (!_matchesSchemaNames(tableNames, _currentTableNames, [
+    if (allowMissingToolExecutionSchema) const {'tool_execution_records'},
+    if (allowMissingToolEvidenceSchema) _toolEvidenceTableNames,
+  ])) {
     throw const FormatException(
       'Database tables do not match the current Stars schema.',
     );
@@ -28,11 +28,10 @@ Future<void> _verifyCurrentDatabaseSchema(
   ''');
   final indexNames =
       indexes.map((row) => row['name']).whereType<String>().toSet();
-  final hasCurrentIndexes = _setsEqual(indexNames, _currentIndexNames);
-  final hasCompatibleIndexes =
-      allowMissingToolExecutionSchema &&
-      _setsEqual(indexNames, _currentIndexNamesWithoutToolExecutions);
-  if (!hasCurrentIndexes && !hasCompatibleIndexes) {
+  if (!_matchesSchemaNames(indexNames, _currentIndexNames, [
+    if (allowMissingToolExecutionSchema) _toolExecutionIndexNames,
+    if (allowMissingToolEvidenceSchema) _toolEvidenceIndexNames,
+  ])) {
     throw const FormatException(
       'Database indexes do not match the current Stars schema.',
     );
@@ -45,7 +44,9 @@ Future<void> _verifyCurrentDatabaseSchema(
   ''');
   final triggerNames =
       triggers.map((row) => row['name']).whereType<String>().toSet();
-  if (!_setsEqual(triggerNames, _currentTriggerNames)) {
+  if (!_matchesSchemaNames(triggerNames, _currentTriggerNames, [
+    if (allowMissingToolEvidenceSchema) _toolEvidenceTriggerNames,
+  ])) {
     throw const FormatException(
       'Database triggers do not match the current Stars schema.',
     );
@@ -104,11 +105,30 @@ Future<void> _createSkillReferenceValidationTrigger(
 bool _setsEqual<T>(Set<T> left, Set<T> right) =>
     left.length == right.length && left.containsAll(right);
 
+bool _matchesSchemaNames(
+  Set<String> actual,
+  Set<String> current,
+  List<Set<String>> optionalGroups,
+) {
+  var expectedSets = <Set<String>>[current];
+  for (final group in optionalGroups) {
+    expectedSets = <Set<String>>[
+      ...expectedSets,
+      for (final expected in expectedSets)
+        <String>{...expected}..removeAll(group),
+    ];
+  }
+  return expectedSets.any((expected) => _setsEqual(actual, expected));
+}
+
 const Set<String> _currentTableNames = <String>{
   'bots',
   'chats',
   'messages',
   'tool_execution_records',
+  'tool_invocation_events',
+  'tool_evidence_records',
+  'answer_claim_evidence',
   'token_usage_records',
   'skills',
   'bot_skill_bindings',
@@ -132,6 +152,14 @@ const Set<String> _currentIndexNames = <String>{
   'messages_bot_id_index',
   'tool_execution_records_run_id_index',
   'tool_execution_records_chat_started_at_index',
+  'tool_invocation_events_run_id_index',
+  'tool_invocation_events_message_id_index',
+  'tool_invocation_events_chat_time_index',
+  'tool_evidence_records_run_id_index',
+  'tool_evidence_records_message_id_index',
+  'tool_evidence_records_observed_at_index',
+  'tool_evidence_records_chat_observed_index',
+  'answer_claim_evidence_evidence_id_index',
   'token_usage_records_chat_id_index',
   'token_usage_records_bot_id_index',
   'bot_skill_bindings_skill_id_index',
@@ -145,21 +173,40 @@ const Set<String> _currentIndexNames = <String>{
   'mcp_tools_server_id_index',
 };
 
-final Set<String> _currentTableNamesWithoutToolExecutions = Set.unmodifiable(
-  _currentTableNames.where((name) => name != 'tool_execution_records'),
-);
+const Set<String> _toolEvidenceTableNames = <String>{
+  'tool_invocation_events',
+  'tool_evidence_records',
+  'answer_claim_evidence',
+};
 
-final Set<String> _currentIndexNamesWithoutToolExecutions = Set.unmodifiable(
-  _currentIndexNames.where(
-    (name) =>
-        name != 'tool_execution_records_run_id_index' &&
-        name != 'tool_execution_records_chat_started_at_index',
-  ),
-);
+const Set<String> _toolExecutionIndexNames = <String>{
+  'tool_execution_records_run_id_index',
+  'tool_execution_records_chat_started_at_index',
+};
+
+const Set<String> _toolEvidenceIndexNames = <String>{
+  'tool_invocation_events_run_id_index',
+  'tool_invocation_events_message_id_index',
+  'tool_invocation_events_chat_time_index',
+  'tool_evidence_records_run_id_index',
+  'tool_evidence_records_message_id_index',
+  'tool_evidence_records_observed_at_index',
+  'tool_evidence_records_chat_observed_index',
+  'answer_claim_evidence_evidence_id_index',
+};
 
 const Set<String> _currentTriggerNames = <String>{
   'bot_skill_bindings_validate_skill_insert',
   'bot_skill_bindings_validate_skill_update',
   'conversation_skill_pins_validate_skill_insert',
   'conversation_skill_pins_validate_skill_update',
+  'tool_invocation_events_prevent_update',
+  'tool_evidence_records_prevent_update',
+  'answer_claim_evidence_prevent_update',
+};
+
+const Set<String> _toolEvidenceTriggerNames = <String>{
+  'tool_invocation_events_prevent_update',
+  'tool_evidence_records_prevent_update',
+  'answer_claim_evidence_prevent_update',
 };

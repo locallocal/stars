@@ -58,6 +58,7 @@ final class ToolInvocationEvent {
     required String eventId,
     required String runId,
     required String turnId,
+    required String chatId,
     String messageId = '',
     required String invocationId,
     required String attemptId,
@@ -74,6 +75,7 @@ final class ToolInvocationEvent {
       ('eventId', eventId),
       ('runId', runId),
       ('turnId', turnId),
+      ('chatId', chatId),
       ('invocationId', invocationId),
       ('attemptId', attemptId),
     ]) {
@@ -110,6 +112,7 @@ final class ToolInvocationEvent {
       eventId: eventId,
       runId: runId,
       turnId: turnId,
+      chatId: chatId,
       messageId: messageId,
       invocationId: invocationId,
       attemptId: attemptId,
@@ -128,6 +131,7 @@ final class ToolInvocationEvent {
     required this.eventId,
     required this.runId,
     required this.turnId,
+    required this.chatId,
     required this.messageId,
     required this.invocationId,
     required this.attemptId,
@@ -156,6 +160,7 @@ final class ToolInvocationEvent {
   final String eventId;
   final String runId;
   final String turnId;
+  final String chatId;
   final String messageId;
   final String invocationId;
   final String attemptId;
@@ -184,6 +189,7 @@ final class ToolEvidenceRecord {
     required String evidenceId,
     required String runId,
     required String turnId,
+    required String chatId,
     String messageId = '',
     required String invocationId,
     required String attemptId,
@@ -203,6 +209,7 @@ final class ToolEvidenceRecord {
     required DateTime observedAt,
     DateTime? validUntil,
     String payloadRef = '',
+    DateTime? payloadExpiresAt,
     bool truncated = false,
     bool schemaValid = true,
     bool persisted = false,
@@ -212,6 +219,7 @@ final class ToolEvidenceRecord {
       ('evidenceId', evidenceId),
       ('runId', runId),
       ('turnId', turnId),
+      ('chatId', chatId),
       ('invocationId', invocationId),
       ('attemptId', attemptId),
     ]) {
@@ -256,6 +264,25 @@ final class ToolEvidenceRecord {
         'Evidence validity must end after it was observed.',
       );
     }
+    if (payloadRef.isEmpty != (payloadExpiresAt == null)) {
+      throw ArgumentError(
+        'Encrypted payload references require an explicit retention expiry.',
+      );
+    }
+    if (payloadRef.isNotEmpty && !payloadRef.startsWith('encrypted://')) {
+      throw ArgumentError.value(
+        payloadRef,
+        'payloadRef',
+        'Sensitive payload references must identify encrypted storage.',
+      );
+    }
+    if (payloadExpiresAt != null && !payloadExpiresAt.isAfter(observedAt)) {
+      throw ArgumentError.value(
+        payloadExpiresAt,
+        'payloadExpiresAt',
+        'Payload retention must end after the result was observed.',
+      );
+    }
 
     final frozenCapabilities = Set<ToolCapability>.unmodifiable(capabilities);
     final frozenFacts = List<StructuredFact>.unmodifiable(structuredFacts);
@@ -278,6 +305,7 @@ final class ToolEvidenceRecord {
       evidenceId: evidenceId,
       runId: runId,
       turnId: turnId,
+      chatId: chatId,
       messageId: messageId,
       invocationId: invocationId,
       attemptId: attemptId,
@@ -297,6 +325,7 @@ final class ToolEvidenceRecord {
       observedAt: observedAt,
       validUntil: validUntil,
       payloadRef: payloadRef,
+      payloadExpiresAt: payloadExpiresAt,
       truncated: truncated,
       schemaValid: schemaValid,
       persisted: persisted,
@@ -308,6 +337,7 @@ final class ToolEvidenceRecord {
     required this.evidenceId,
     required this.runId,
     required this.turnId,
+    required this.chatId,
     required this.messageId,
     required this.invocationId,
     required this.attemptId,
@@ -327,6 +357,7 @@ final class ToolEvidenceRecord {
     required this.observedAt,
     required this.validUntil,
     required this.payloadRef,
+    required this.payloadExpiresAt,
     required this.truncated,
     required this.schemaValid,
     required this.persisted,
@@ -342,6 +373,7 @@ final class ToolEvidenceRecord {
   final String evidenceId;
   final String runId;
   final String turnId;
+  final String chatId;
   final String messageId;
   final String invocationId;
   final String attemptId;
@@ -364,6 +396,7 @@ final class ToolEvidenceRecord {
   final DateTime observedAt;
   final DateTime? validUntil;
   final String payloadRef;
+  final DateTime? payloadExpiresAt;
   final bool truncated;
   final bool schemaValid;
   final bool persisted;

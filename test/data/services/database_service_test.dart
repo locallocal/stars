@@ -319,6 +319,72 @@ void main() {
       );
     });
 
+    test('upgrades version 18 without losing messages or Tool audit', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_tool_evidence_upgrade_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final dataDirectory = _applicationDataDirectory(directory);
+      await dataDirectory.create(recursive: true);
+      final databasePath = path.join(dataDirectory.path, 'app.db');
+      final previousDatabase = await databaseFactoryFfi.openDatabase(
+        databasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      await previousDatabase.insert('bots', _botRow('upgrade-bot'));
+      await previousDatabase.insert(
+        'chats',
+        _chatRow('upgrade-chat', 'upgrade-bot'),
+      );
+      await previousDatabase.insert(
+        'messages',
+        _messageRow(
+          'upgrade-message',
+          'upgrade-chat',
+          'upgrade-bot',
+          'Preserved answer',
+        ),
+      );
+      await previousDatabase.insert(
+        'tool_execution_records',
+        _toolExecutionRow(
+          executionId: 'upgrade-attempt',
+          chatId: 'upgrade-chat',
+          botId: 'upgrade-bot',
+          messageId: 'upgrade-message',
+        ),
+      );
+      await _dropToolEvidenceSchema(previousDatabase);
+      await previousDatabase.setVersion(DatabaseService.databaseVersion - 1);
+      await previousDatabase.close();
+
+      final service = DatabaseService(
+        applicationDocumentsDirectoryProvider: () async => directory,
+      );
+      final upgradedDatabase = await service.initDatabase();
+      addTearDown(upgradedDatabase.close);
+
+      expect(
+        await upgradedDatabase.getVersion(),
+        DatabaseService.databaseVersion,
+      );
+      expect(
+        (await upgradedDatabase.query('messages')).single['content'],
+        'Preserved answer',
+      );
+      expect(
+        (await upgradedDatabase.query(
+          'tool_execution_records',
+        )).single['execution_id'],
+        'upgrade-attempt',
+      );
+      await _expectCurrentSchema(upgradedDatabase);
+    });
+
     test(
       'adds Tool execution storage to an existing current database',
       () async {
@@ -744,6 +810,9 @@ Future<void> _expectCurrentSchema(Database database) async {
       'chats',
       'messages',
       'tool_execution_records',
+      'tool_invocation_events',
+      'tool_evidence_records',
+      'answer_claim_evidence',
       'token_usage_records',
       'skills',
       'bot_skill_bindings',
@@ -776,6 +845,14 @@ Future<void> _expectCurrentSchema(Database database) async {
       'messages_bot_id_index',
       'tool_execution_records_run_id_index',
       'tool_execution_records_chat_started_at_index',
+      'tool_invocation_events_run_id_index',
+      'tool_invocation_events_message_id_index',
+      'tool_invocation_events_chat_time_index',
+      'tool_evidence_records_run_id_index',
+      'tool_evidence_records_message_id_index',
+      'tool_evidence_records_observed_at_index',
+      'tool_evidence_records_chat_observed_index',
+      'answer_claim_evidence_evidence_id_index',
       'token_usage_records_chat_id_index',
       'token_usage_records_bot_id_index',
       'bot_skill_bindings_skill_id_index',
@@ -862,6 +939,82 @@ Future<void> _expectCurrentSchema(Database database) async {
       'started_at',
       'completed_at',
       'updated_at',
+    ]),
+  );
+
+  final invocationEventColumns = await database.rawQuery(
+    'PRAGMA table_info(tool_invocation_events)',
+  );
+  expect(
+    invocationEventColumns.map((column) => column['name']),
+    orderedEquals(<String>[
+      'event_id',
+      'run_id',
+      'turn_id',
+      'chat_id',
+      'message_id',
+      'invocation_id',
+      'attempt_id',
+      'provider_call_id',
+      'tool_name',
+      'tool_version',
+      'source',
+      'status',
+      'sequence',
+      'occurred_at',
+      'error_code',
+      'record_digest',
+    ]),
+  );
+
+  final evidenceColumns = await database.rawQuery(
+    'PRAGMA table_info(tool_evidence_records)',
+  );
+  expect(
+    evidenceColumns.map((column) => column['name']),
+    orderedEquals(<String>[
+      'evidence_id',
+      'run_id',
+      'turn_id',
+      'chat_id',
+      'message_id',
+      'invocation_id',
+      'attempt_id',
+      'provider_call_id',
+      'tool_name',
+      'tool_version',
+      'source',
+      'capabilities_json',
+      'terminal_status',
+      'evidence_kind',
+      'subject',
+      'scope_json',
+      'result_summary',
+      'arguments_digest',
+      'result_digest',
+      'structured_facts_json',
+      'observed_at',
+      'valid_until',
+      'payload_ref',
+      'payload_expires_at',
+      'truncated',
+      'schema_valid',
+      'persisted',
+      'error_code',
+      'record_digest',
+    ]),
+  );
+
+  final claimEvidenceColumns = await database.rawQuery(
+    'PRAGMA table_info(answer_claim_evidence)',
+  );
+  expect(
+    claimEvidenceColumns.map((column) => column['name']),
+    orderedEquals(<String>[
+      'message_id',
+      'claim_id',
+      'evidence_id',
+      'created_at',
     ]),
   );
 
@@ -1002,6 +1155,39 @@ Map<String, Object?> _messageRow(
   'timestamp': 1,
 };
 
+Map<String, Object?> _toolExecutionRow({
+  required String executionId,
+  required String chatId,
+  required String botId,
+  required String messageId,
+}) => <String, Object?>{
+  'execution_id': executionId,
+  'invocation_id': '$executionId:invocation',
+  'attempt_id': executionId,
+  'provider_call_id': 'provider-$executionId',
+  'run_id': 'run-$executionId',
+  'turn_id': 'turn-$executionId',
+  'message_id': messageId,
+  'chat_id': chatId,
+  'bot_id': botId,
+  'call_id': 'provider-$executionId',
+  'tool_name': 'resource.read',
+  'tool_title': 'Read resource',
+  'mcp_server_name': '',
+  'source': 'mcp',
+  'risk_level': 'readOnly',
+  'status': 'succeeded',
+  'detail': '',
+  'arguments_summary': '{}',
+  'result_summary': 'Observed',
+  'approval_status': '',
+  'error_code': '',
+  'duration_ms': 1,
+  'started_at': 1,
+  'completed_at': 2,
+  'updated_at': 2,
+};
+
 Map<String, Object?> _skillRow(String id) => <String, Object?>{
   'id': id,
   'name': 'Skill',
@@ -1091,4 +1277,10 @@ Future<void> _replaceWithPreGrd004ToolExecutionSchema(Database database) async {
     'CREATE INDEX tool_execution_records_chat_started_at_index '
     'ON tool_execution_records(chat_id, started_at DESC)',
   );
+}
+
+Future<void> _dropToolEvidenceSchema(Database database) async {
+  await database.execute('DROP TABLE answer_claim_evidence');
+  await database.execute('DROP TABLE tool_evidence_records');
+  await database.execute('DROP TABLE tool_invocation_events');
 }

@@ -9,6 +9,7 @@ import 'package:stars/domain/models/app_failure.dart';
 
 part 'database_schema_verifier.dart';
 part 'database_tool_execution_schema.dart';
+part 'database_tool_evidence_schema.dart';
 
 typedef ApplicationDocumentsDirectoryProvider = Future<Directory> Function();
 
@@ -24,21 +25,17 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  // This is the only supported schema generation. Every other version is
-  // deleted before the database is opened.
-  static const int databaseVersion = 18;
+  static const int databaseVersion = 19;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
   static const String _backupManifestName = 'manifest.json';
 
-  // 获取数据库实例
   Future<Database> get database async {
     if (_database != null) return _database!;
     return initDatabase();
   }
 
-  // 初始化数据库
   Future<Database> initDatabase() async {
     if (_database != null) return _database!;
     final opening = _openingDatabase;
@@ -70,11 +67,13 @@ class DatabaseService {
       version: databaseVersion,
       onConfigure: configure,
       onCreate: createSchema,
+      onUpgrade: _upgradeToolEvidenceSchema,
     );
     try {
       await _ensureCompatibleProfileSchema(database);
       await _ensureCompatibleMessageGroundingSchema(database);
       await _ensureCompatibleToolExecutionSchema(database);
+      await _ensureCompatibleToolEvidenceSchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
       return database;
@@ -139,7 +138,7 @@ class DatabaseService {
           Directory(join(staging.path, 'chats')),
         );
       }
-      await _verifyDatabaseFile(stagedDatabase.path);
+      await _verifySupportedDatabaseFile(stagedDatabase.path);
       await staging.rename(destination.path);
     } on Object catch (error) {
       if (await staging.exists()) await staging.delete(recursive: true);
@@ -151,7 +150,7 @@ class DatabaseService {
     Directory root,
   ) async {
     final database = File(join(root.path, _databaseFileName));
-    if (await _isCurrentDatabaseValid(database)) {
+    if (await _isSupportedDatabaseValid(database)) {
       return _LegacyDataSource(
         database: database,
         chats: Directory(join(root.path, 'chats')),
@@ -169,10 +168,10 @@ class DatabaseService {
     return null;
   }
 
-  static Future<bool> _isCurrentDatabaseValid(File database) async {
+  static Future<bool> _isSupportedDatabaseValid(File database) async {
     if (!await database.exists()) return false;
     try {
-      await _verifyDatabaseFile(database.path);
+      await _verifySupportedDatabaseFile(database.path);
       return true;
     } on Object {
       return false;
@@ -187,6 +186,10 @@ class DatabaseService {
 
     final version = await _readVersion(databasePath);
     if (version < databaseVersion) {
+      if (version == _toolEvidencePreviousDatabaseVersion &&
+          await _isPreviousToolEvidenceSchemaValid(databasePath)) {
+        return;
+      }
       await _deleteCurrentData(root, databasePath);
       return;
     }
@@ -248,6 +251,7 @@ class DatabaseService {
       await _verifyCurrentDatabaseSchema(
         database,
         allowMissingToolExecutionSchema: true,
+        allowMissingToolEvidenceSchema: true,
       );
     } finally {
       await database.close();
@@ -346,8 +350,7 @@ class DatabaseService {
         await _verifyDatabaseFile(databasePath);
         return true;
       } on Object {
-        // Try the previous current-schema snapshot. Historical versions are
-        // never parsed or restored.
+        // Try the previous current-schema snapshot; never restore history.
       }
     }
     return false;
@@ -457,6 +460,7 @@ class DatabaseService {
     );
     await db.execute('CREATE INDEX messages_bot_id_index ON messages(bot_id)');
     await _createToolExecutionSchema(db);
+    await _createToolEvidenceSchema(db);
     await _createTokenUsageSchema(db);
     await _createSkillSchema(db);
     await _createSkillEcosystemSchema(db);

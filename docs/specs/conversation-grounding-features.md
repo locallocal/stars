@@ -302,7 +302,16 @@
 
 ### GRD-009 事实账本数据库与 Repository
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/data/services/database_tool_evidence_schema.dart`、
+`lib/data/services/local_database_tool_evidence.dart`、
+`lib/data/models/tool_evidence_record.dart`、
+`lib/domain/repositories/tool_evidence_repository.dart` 和
+`lib/data/repositories/sqlite_tool_evidence_repository.dart`；v18→v19 迁移、幂等事务、
+append-only、digest 自校验、敏感 payload 保留期与级联清理测试：
+`test/data/services/database_service_test.dart`、
+`test/data/repositories/sqlite_tool_evidence_repository_test.dart`。
 
 目标：证据可以在进程退出后恢复和复验。
 
