@@ -5,6 +5,7 @@ import 'package:stars/domain/models/mcp_installer.dart';
 import 'package:stars/domain/models/skill_installer.dart';
 
 part 'tool_json_schema_validator.dart';
+part 'tool_evidence.dart';
 
 enum ToolSource { builtIn, mcp, skillScript }
 

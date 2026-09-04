@@ -110,7 +110,7 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
       result.copyWith(
         invocationId: identity.invocationId,
         attemptId: identity.attemptId,
-        evidenceId: '${identity.attemptId}:evidence',
+        evidenceId: ToolEvidenceRecord.evidenceIdForAttempt(identity.attemptId),
       );
 
   String _issuesSummary(List<JsonSchemaValidationIssue> issues) {
