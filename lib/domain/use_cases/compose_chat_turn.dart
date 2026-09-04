@@ -209,6 +209,17 @@ final class ComposeChatTurn {
           injectApplicationPrompt: injectApplicationPrompt,
           systemPromptLanguage: systemPromptLanguage,
         );
+      } on ProviderFailure catch (failure) {
+        final isTimeout = failure.kind == ProviderFailureKind.timeout;
+        state.toolCalls.add(
+          MessageToolCall(
+            name: 'activate_skill',
+            status: 'failed',
+            detail: isTimeout ? 'provider_timeout' : failure.code,
+            errorCode:
+                isTimeout ? 'skill_provider_timeout' : 'skill_${failure.code}',
+          ),
+        );
       } on TimeoutException {
         state.toolCalls.add(
           const MessageToolCall(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:stars/data/services/ai/provider_transport.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 
@@ -68,27 +69,24 @@ final class OpenAiSkillToolSession implements SkillToolSession {
   }
 
   Future<SkillToolTurn> _send() async {
-    final response = await _client
-        .post(
-          _uri,
-          headers: _headers,
-          body: jsonEncode({
-            'model': _bot.model,
-            'messages': _messages,
-            'tools': _openAiSkillTools(_request.catalog),
-            'tool_choice': 'auto',
-            'parallel_tool_calls': false,
-            ..._additionalBody,
-            'stream': false,
-          }),
-        )
-        .timeout(_requestTimeout);
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Skill activation request failed: '
-        '${response.statusCode} ${response.body}',
-      );
-    }
+    final response = await sendProviderRequest(
+      send:
+          () => _client.post(
+            _uri,
+            headers: _headers,
+            body: jsonEncode({
+              'model': _bot.model,
+              'messages': _messages,
+              'tools': _openAiSkillTools(_request.catalog),
+              'tool_choice': 'auto',
+              'parallel_tool_calls': false,
+              ..._additionalBody,
+              'stream': false,
+            }),
+          ),
+      endpointKind: ProviderEndpointKind.chatCompletions,
+      timeout: _requestTimeout,
+    );
     final decoded = _decodeResponse(utf8.decode(response.bodyBytes));
     final root = _objectMap(decoded);
     final choices = _objectList(root['choices']);
@@ -146,6 +144,7 @@ final class OpenAiResponsesSkillToolSession implements SkillToolSession {
     required http.Client client,
     required bool closeClient,
     required ProviderResponseDecoder decodeResponse,
+    Duration requestTimeout = const Duration(seconds: 60),
   }) : _bot = bot,
        _request = request,
        _input =
@@ -156,7 +155,8 @@ final class OpenAiResponsesSkillToolSession implements SkillToolSession {
        _headers = headers,
        _client = client,
        _closeClient = closeClient,
-       _decodeResponse = decodeResponse;
+       _decodeResponse = decodeResponse,
+       _requestTimeout = requestTimeout;
 
   final Bot _bot;
   final SkillToolSessionRequest _request;
@@ -166,6 +166,7 @@ final class OpenAiResponsesSkillToolSession implements SkillToolSession {
   final http.Client _client;
   final bool _closeClient;
   final ProviderResponseDecoder _decodeResponse;
+  final Duration _requestTimeout;
   bool _started = false;
 
   @override
@@ -189,25 +190,22 @@ final class OpenAiResponsesSkillToolSession implements SkillToolSession {
   }
 
   Future<SkillToolTurn> _send() async {
-    final response = await _client
-        .post(
-          _uri,
-          headers: _headers,
-          body: jsonEncode({
-            'model': _bot.model,
-            'input': _input,
-            'tools': _openAiResponsesSkillTools(_request.catalog),
-            'tool_choice': 'auto',
-            'parallel_tool_calls': false,
-          }),
-        )
-        .timeout(const Duration(seconds: 60));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Skill activation request failed: '
-        '${response.statusCode} ${response.body}',
-      );
-    }
+    final response = await sendProviderRequest(
+      send:
+          () => _client.post(
+            _uri,
+            headers: _headers,
+            body: jsonEncode({
+              'model': _bot.model,
+              'input': _input,
+              'tools': _openAiResponsesSkillTools(_request.catalog),
+              'tool_choice': 'auto',
+              'parallel_tool_calls': false,
+            }),
+          ),
+      endpointKind: ProviderEndpointKind.responses,
+      timeout: _requestTimeout,
+    );
     final root = _objectMap(_decodeResponse(utf8.decode(response.bodyBytes)));
     final output = _objectList(root['output']);
     _input.addAll(output.map(_objectMap));
@@ -301,27 +299,24 @@ final class AnthropicSkillToolSession implements SkillToolSession {
   }
 
   Future<SkillToolTurn> _send() async {
-    final response = await _client
-        .post(
-          _uri,
-          headers: _headers,
-          body: jsonEncode({
-            'model': _bot.model,
-            'messages': _messages,
-            'system': _system,
-            'tools': _anthropicSkillTools(_request.catalog),
-            'tool_choice': {'type': 'auto'},
-            'max_tokens': _maxTokens < 1024 ? _maxTokens : 1024,
-            'stream': false,
-          }),
-        )
-        .timeout(const Duration(seconds: 30));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Skill activation request failed: '
-        '${response.statusCode} ${response.body}',
-      );
-    }
+    final response = await sendProviderRequest(
+      send:
+          () => _client.post(
+            _uri,
+            headers: _headers,
+            body: jsonEncode({
+              'model': _bot.model,
+              'messages': _messages,
+              'system': _system,
+              'tools': _anthropicSkillTools(_request.catalog),
+              'tool_choice': {'type': 'auto'},
+              'max_tokens': _maxTokens < 1024 ? _maxTokens : 1024,
+              'stream': false,
+            }),
+          ),
+      endpointKind: ProviderEndpointKind.messages,
+      timeout: const Duration(seconds: 30),
+    );
     final decoded = _decodeResponse(utf8.decode(response.bodyBytes));
     final root = _objectMap(decoded);
     final content = _objectList(root['content']);
@@ -434,18 +429,20 @@ final class OpenAiAgentModelSession implements AgentModelSession {
       return;
     }
 
-    final response = await _client
-        .post(
-          _uri,
-          headers: _headers,
-          body: jsonEncode(_requestBody(stream: false)),
-        )
-        .timeout(const Duration(seconds: 60));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      yield ModelTurnFailed(
-        error: 'Model request failed: ${response.statusCode} ${response.body}',
-        code: 'provider_http_error',
+    late final http.Response response;
+    try {
+      response = await sendProviderRequest(
+        send:
+            () => _client.post(
+              _uri,
+              headers: _headers,
+              body: jsonEncode(_requestBody(stream: false)),
+            ),
+        endpointKind: ProviderEndpointKind.chatCompletions,
+        timeout: const Duration(seconds: 60),
       );
+    } on ProviderFailure catch (failure) {
+      yield ModelTurnFailed.fromProvider(failure);
       return;
     }
     final root = _objectMap(_decodeResponse(utf8.decode(response.bodyBytes)));
@@ -500,19 +497,21 @@ final class OpenAiAgentModelSession implements AgentModelSession {
   }
 
   Stream<ModelEvent> _sendStreaming() async* {
-    final request =
-        http.Request('POST', _uri)
-          ..headers.addAll(_headers)
-          ..body = jsonEncode(_requestBody(stream: true));
-    final response = await _client
-        .send(request)
-        .timeout(const Duration(seconds: 60));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final body = await response.stream.bytesToString();
-      yield ModelTurnFailed(
-        error: 'Model request failed: ${response.statusCode} $body',
-        code: 'provider_http_error',
+    late final http.StreamedResponse response;
+    try {
+      response = await sendProviderStreamRequest(
+        send: () {
+          final request =
+              http.Request('POST', _uri)
+                ..headers.addAll(_headers)
+                ..body = jsonEncode(_requestBody(stream: true));
+          return _client.send(request);
+        },
+        endpointKind: ProviderEndpointKind.chatCompletions,
+        timeout: const Duration(seconds: 60),
       );
+    } on ProviderFailure catch (failure) {
+      yield ModelTurnFailed.fromProvider(failure);
       return;
     }
 
@@ -531,9 +530,11 @@ final class OpenAiAgentModelSession implements AgentModelSession {
 
       final root = _objectMap(_decodeResponse(source));
       if (root['error'] != null) {
-        yield ModelTurnFailed(
-          error: 'Model request failed: ${root['error']}',
-          code: 'provider_stream_error',
+        yield ModelTurnFailed.fromProvider(
+          ProviderFailure.invalidResponse(
+            endpointKind: ProviderEndpointKind.chatCompletions,
+            code: 'provider_stream_error',
+          ),
         );
         return;
       }

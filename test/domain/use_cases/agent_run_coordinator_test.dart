@@ -647,6 +647,34 @@ void main() {
         expect(result.error, 'ungrounded_final_answer');
       },
     );
+
+    test(
+      'keeps a structured Provider failure as the failed run fact',
+      () async {
+        final failure = ProviderFailure.fromHttp(
+          statusCode: 404,
+          endpointKind: ProviderEndpointKind.responses,
+        );
+        final session = _FakeModelSession([
+          [ModelTurnFailed.fromProvider(failure)],
+        ]);
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry(const []),
+          toolPolicy: const DefaultToolPolicy(),
+        );
+
+        final result = await coordinator.run(
+          provider: _FakeProvider(session),
+          request: _request(toolNames: const {}),
+        );
+
+        expect(result.status, AgentRunStatus.failed);
+        expect(result.text, isEmpty);
+        expect(result.error, 'provider_endpoint_not_found');
+        expect(result.providerFailure, same(failure));
+        expect(result.providerFailure?.retryable, isFalse);
+      },
+    );
   });
 
   group('JsonSchemaValidator', () {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:stars/domain/models/mcp.dart';
+import 'package:stars/domain/models/provider_failure.dart';
 
 enum AppFailureKind {
   validation,
@@ -66,6 +67,26 @@ final class AppFailure implements Exception {
 
   factory AppFailure.from(Object error, {String code = 'unknown_failure'}) {
     if (error is AppFailure) return error;
+    if (error is ProviderFailure) {
+      return AppFailure(
+        kind: switch (error.kind) {
+          ProviderFailureKind.authentication ||
+          ProviderFailureKind.authorization => AppFailureKind.authentication,
+          ProviderFailureKind.timeout => AppFailureKind.networkTimeout,
+          ProviderFailureKind.rateLimited => AppFailureKind.rateLimited,
+          _ => AppFailureKind.providerRejected,
+        },
+        code: error.code,
+        retryable: error.retryable,
+        arguments: {
+          if (error.httpStatus != null) 'http_status': error.httpStatus,
+          'endpoint_kind': error.endpointKind.name,
+          if (error.requestTraceId.isNotEmpty)
+            'request_trace_id': error.requestTraceId,
+        },
+        debugCause: error,
+      );
+    }
     if (error is McpException) {
       final isTimeout = error.code.contains('timeout');
       final isAuthorizationFailure =
@@ -100,28 +121,9 @@ final class AppFailure implements Exception {
       return AppFailure.validation(code, cause: error);
     }
 
-    // Classify common provider/transport failures without copying their raw
-    // messages (which can contain endpoints, response bodies, or secrets).
+    // Never infer a local Provider failure from an arbitrary exception string:
+    // it may have originated in an independent Codex/ChatGPT client.
     final diagnostic = error.toString().toLowerCase();
-    if (diagnostic.contains('401') ||
-        diagnostic.contains('403') ||
-        diagnostic.contains('unauthorized') ||
-        diagnostic.contains('authentication')) {
-      return AppFailure(
-        kind: AppFailureKind.authentication,
-        code: 'authentication_failed',
-        retryable: false,
-        debugCause: error,
-      );
-    }
-    if (diagnostic.contains('429') || diagnostic.contains('rate limit')) {
-      return AppFailure(
-        kind: AppFailureKind.rateLimited,
-        code: 'rate_limited',
-        retryable: true,
-        debugCause: error,
-      );
-    }
     if (diagnostic.contains('timeout') || diagnostic.contains('timed out')) {
       return AppFailure(
         kind: AppFailureKind.networkTimeout,

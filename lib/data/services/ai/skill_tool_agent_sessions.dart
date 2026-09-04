@@ -104,28 +104,31 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
   Stream<ModelEvent> _send() async* {
     final tools = _openAiResponsesTools(_request.tools, _toolNames);
     if (_request.options.webSearch) tools.add({'type': 'web_search'});
-    final response = await _client
-        .post(
-          _uri,
-          headers: _headers,
-          body: jsonEncode({
-            'model': _bot.model,
-            'input': _input,
-            if (tools.isNotEmpty) ...{
-              'tools': tools,
-              'tool_choice': 'auto',
-              'parallel_tool_calls': _request.options.allowParallelToolCalls,
-            },
-            if (_request.options.deepThinking && _reasoningEffort != null)
-              'reasoning': {'effort': _reasoningEffort, 'summary': 'auto'},
-          }),
-        )
-        .timeout(const Duration(seconds: 60));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      yield ModelTurnFailed(
-        error: 'Model request failed: ${response.statusCode} ${response.body}',
-        code: 'provider_http_error',
+    late final http.Response response;
+    try {
+      response = await sendProviderRequest(
+        send:
+            () => _client.post(
+              _uri,
+              headers: _headers,
+              body: jsonEncode({
+                'model': _bot.model,
+                'input': _input,
+                if (tools.isNotEmpty) ...{
+                  'tools': tools,
+                  'tool_choice': 'auto',
+                  'parallel_tool_calls':
+                      _request.options.allowParallelToolCalls,
+                },
+                if (_request.options.deepThinking && _reasoningEffort != null)
+                  'reasoning': {'effort': _reasoningEffort, 'summary': 'auto'},
+              }),
+            ),
+        endpointKind: ProviderEndpointKind.responses,
+        timeout: const Duration(seconds: 60),
       );
+    } on ProviderFailure catch (failure) {
+      yield ModelTurnFailed.fromProvider(failure);
       return;
     }
 
@@ -280,30 +283,32 @@ final class AnthropicAgentModelSession implements AgentModelSession {
   }
 
   Stream<ModelEvent> _send() async* {
-    final response = await _client
-        .post(
-          _uri,
-          headers: _headers,
-          body: jsonEncode({
-            'model': _bot.model,
-            'messages': _messages,
-            'system': _system,
-            if (_request.tools.isNotEmpty) ...{
-              'tools': _anthropicTools(_request.tools, _toolNames),
-              'tool_choice': {'type': 'auto'},
-            },
-            'max_tokens': _maxTokens,
-            if (_request.options.deepThinking)
-              'thinking': {'type': 'enabled', 'budget_tokens': 16000},
-            'stream': false,
-          }),
-        )
-        .timeout(const Duration(seconds: 60));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      yield ModelTurnFailed(
-        error: 'Model request failed: ${response.statusCode} ${response.body}',
-        code: 'provider_http_error',
+    late final http.Response response;
+    try {
+      response = await sendProviderRequest(
+        send:
+            () => _client.post(
+              _uri,
+              headers: _headers,
+              body: jsonEncode({
+                'model': _bot.model,
+                'messages': _messages,
+                'system': _system,
+                if (_request.tools.isNotEmpty) ...{
+                  'tools': _anthropicTools(_request.tools, _toolNames),
+                  'tool_choice': {'type': 'auto'},
+                },
+                'max_tokens': _maxTokens,
+                if (_request.options.deepThinking)
+                  'thinking': {'type': 'enabled', 'budget_tokens': 16000},
+                'stream': false,
+              }),
+            ),
+        endpointKind: ProviderEndpointKind.messages,
+        timeout: const Duration(seconds: 60),
       );
+    } on ProviderFailure catch (failure) {
+      yield ModelTurnFailed.fromProvider(failure);
       return;
     }
     final root = _objectMap(_decodeResponse(utf8.decode(response.bodyBytes)));

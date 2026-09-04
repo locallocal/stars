@@ -676,6 +676,37 @@ void main() {
     expect(result.skillToolCalls.single.errorCode, 'skill_provider_timeout');
   });
 
+  test('records a safe structured automatic Skill Provider failure', () async {
+    final skill = _skill('user:auto', 'auto', 'Auto instructions.');
+    final compose = ComposeChatTurn(
+      skillRepository: _FakeSkillRepository({'user:auto': skill}),
+      bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
+    );
+    final failure = ProviderFailure.fromHttp(
+      statusCode: 404,
+      endpointKind: ProviderEndpointKind.responses,
+      responseBody: '{"error":{"message":"Bearer sk-secret"}}',
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: const [],
+      userMessage: _message(senderId: 'user-1', content: 'Use auto'),
+      currentUserId: 'user-1',
+      skillToolProvider: _FailingSkillProvider(failure),
+    );
+
+    expect(result.activatedSkills, isEmpty);
+    expect(result.skillToolCalls.single.detail, 'provider_endpoint_not_found');
+    expect(
+      result.skillToolCalls.single.errorCode,
+      'skill_provider_endpoint_not_found',
+    );
+    expect(result.skillToolCalls.single.detail, isNot(contains('sk-secret')));
+  });
+
   test('limits activation to three usable Skills', () async {
     final skills = <String, SkillContent>{
       for (var index = 0; index < 5; index++)

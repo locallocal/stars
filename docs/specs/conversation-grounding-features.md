@@ -177,7 +177,15 @@
 
 ### GRD-005 Provider 失败结构化分类
 
-状态：待实现，可与 GRD-001 至 GRD-004 并行。
+状态：已完成。
+
+实现入口：`lib/domain/models/provider_failure.dart`、
+`lib/data/services/ai/provider_transport.dart`、`lib/data/services/ai/openai.dart`、
+`lib/data/services/ai/skill_tool_sessions.dart` 和
+`lib/domain/use_cases/agent_run_coordinator.dart`；分类、重试、脱敏、Base URL 预检及运行终态测试：
+`test/domain/models/app_failure_test.dart`、`test/data/services/ai/openai_test.dart`、
+`test/data/services/ai/skill_tool_sessions_test.dart` 和
+`test/domain/use_cases/agent_run_coordinator_test.dart`。
 
 目标：让传输失败成为明确的运行事实，而不是模糊字符串。
 
