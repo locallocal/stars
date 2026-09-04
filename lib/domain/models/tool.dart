@@ -670,6 +670,7 @@ final class ToolExecutionRecord {
     required this.startedAt,
     this.completedAt,
     required this.updatedAt,
+    this.eventSequence = 0,
   });
 
   final String executionId;
@@ -697,4 +698,10 @@ final class ToolExecutionRecord {
   final DateTime startedAt;
   final DateTime? completedAt;
   final DateTime updatedAt;
+
+  /// Monotonic lifecycle event number for this attempt.
+  ///
+  /// The current-state projection does not persist this value; the immutable
+  /// event ledger uses it to derive an application-owned event identity.
+  final int eventSequence;
 }

@@ -132,14 +132,13 @@ class ChatGenerationSnapshot {
 }
 
 typedef MessagePersister = Future<Message> Function(Message message);
+typedef GroundedMessagePersister = Future<Message> Function(Message message);
 typedef LastMessageUpdater =
     Future<void> Function(String chatId, String content);
 typedef ProviderFactory = AiProvider Function(Bot bot);
 typedef MessageIdFactory = String Function(String prefix);
 typedef SkillActivationPersister =
     Future<void> Function(Iterable<SkillActivationRecord> records);
-typedef ToolInvocationPersister =
-    Future<void> Function(ToolExecutionRecord record);
 typedef TerminalMessageObserver =
     Future<void> Function(
       String chatId,

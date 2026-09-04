@@ -22,6 +22,7 @@ import 'package:stars/data/repositories/sqlite_skill_run_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_ecosystem_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_inventory_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_execution_repository.dart';
+import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
 import 'package:stars/data/services/feedback_service.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
 import 'package:stars/data/services/asset_text_service.dart';
@@ -89,6 +90,7 @@ import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
 import 'package:stars/domain/use_cases/mcp_server_mutations.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
+import 'package:stars/domain/use_cases/persist_tool_invocation.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
@@ -346,6 +348,14 @@ class AppDependencies {
     final toolExecutionRepository = SqliteToolExecutionRepository(
       localDatabase: localDatabase,
     );
+    final toolEvidenceRepository = SqliteToolEvidenceRepository(
+      localDatabase: localDatabase,
+    );
+    final persistToolInvocation = PersistToolInvocation(
+      evidenceRepository: toolEvidenceRepository,
+      executionRepository: toolExecutionRepository,
+      complianceRepository: skillEcosystemRepository,
+    );
     final conversationSkillPinRepository = SqliteConversationSkillPinRepository(
       localDatabase: localDatabase,
     );
@@ -475,6 +485,7 @@ class AppDependencies {
       createChat: CreateChat(chatRepository: chatRepository),
       generationRegistry: ChatGenerationRegistry(
         messagePersister: messageRepository.upsertMessage,
+        groundedMessagePersister: messageRepository.upsertGroundedMessage,
         lastMessageUpdater: chatRepository.updateLastMessage,
         providerFactory: aiProviderRepository.create,
         messageIdFactory: messageRepository.createId,
@@ -487,12 +498,7 @@ class AppDependencies {
             await compactConversation(bot: bot, chatId: chatId);
           }
         },
-        toolInvocationPersister:
-            (record) => _persistToolInvocation(
-              toolExecutionRepository,
-              skillEcosystemRepository,
-              record,
-            ),
+        toolInvocationPersister: persistToolInvocation.call,
         toolRegistry: toolRegistry,
         toolPolicy: toolPolicy,
       ),

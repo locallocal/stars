@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
 import 'package:stars/data/services/database_service.dart';
 import 'package:stars/data/services/local_database_service.dart';
-import 'package:stars/domain/models/tool.dart';
+import 'package:stars/domain/models/models.dart';
 
 void main() {
   setUpAll(() {
@@ -61,6 +62,80 @@ void main() {
     expect(events.last.status, ToolInvocationStatus.succeeded);
     expect(await repository.verifyDigest(_evidenceId), isTrue);
   });
+
+  test(
+    'recovers after evidence commits but the grounded answer rolls back',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_grounded_answer_restart_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final databasePath = path.join(directory.path, 'grounded.db');
+      var database = await _openDatabase(databasePath);
+      addTearDown(() async {
+        if (database.isOpen) await database.close();
+      });
+      await _insertConversation(database);
+      var localDatabase = LocalDatabaseService(
+        databaseProvider: () async => database,
+      );
+      var evidenceRepository = SqliteToolEvidenceRepository(
+        localDatabase: localDatabase,
+      );
+      var messageRepository = SqliteMessageRepository(
+        localDatabase: localDatabase,
+      );
+      await evidenceRepository.commitRun(
+        runId: 'run-1',
+        chatId: 'chat-1',
+        invocationEvents: [
+          _event(sequence: 1, status: ToolInvocationStatus.succeeded),
+        ],
+        evidenceRecords: [_evidence()],
+      );
+      final checkpoint = _answerCheckpoint();
+      await messageRepository.upsertMessage(checkpoint);
+      final invalidAnswer = _verifiedAnswer(
+        checkpoint,
+        evidenceIds: [_evidenceId, 'missing:evidence'],
+      );
+
+      await expectLater(
+        messageRepository.upsertGroundedMessage(invalidAnswer),
+        throwsA(isA<DatabaseException>()),
+      );
+      expect(await database.query('answer_claim_evidence'), isEmpty);
+      var restored = (await messageRepository.getMessages('chat-1')).single;
+      expect(restored.terminalOutcome, isNull);
+      expect(restored.hasPartialContent, isTrue);
+      expect(restored.grounding.trustLevel, AnswerTrustLevel.unverified);
+      expect(await evidenceRepository.getById(_evidenceId), isNotNull);
+
+      await database.close();
+      database = await _openDatabase(databasePath);
+      localDatabase = LocalDatabaseService(
+        databaseProvider: () async => database,
+      );
+      evidenceRepository = SqliteToolEvidenceRepository(
+        localDatabase: localDatabase,
+      );
+      messageRepository = SqliteMessageRepository(localDatabase: localDatabase);
+      restored = (await messageRepository.getMessages('chat-1')).single;
+      expect(restored.grounding.reasonCode, 'evidence_commit_pending');
+      expect(await evidenceRepository.getById(_evidenceId), isNotNull);
+
+      final recovered = _verifiedAnswer(restored, evidenceIds: [_evidenceId]);
+      await messageRepository.upsertGroundedMessage(recovered);
+      await messageRepository.upsertGroundedMessage(recovered);
+
+      final messages = await messageRepository.getMessages('chat-1');
+      expect(messages.single.terminalOutcome, MessageTerminalOutcome.completed);
+      expect(messages.single.grounding.trustLevel, AnswerTrustLevel.verified);
+      final claims = await database.query('answer_claim_evidence');
+      expect(claims, hasLength(1));
+      expect(claims.single['evidence_id'], _evidenceId);
+    },
+  );
 
   test('repeating content is idempotent and conflicts roll back', () async {
     final database = await _openDatabase(inMemoryDatabasePath);
@@ -296,6 +371,35 @@ ToolEvidenceRecord _evidence({String resultSummary = 'Resource observed.'}) =>
       payloadRef: 'encrypted://tool-results/evidence-1',
       payloadExpiresAt: DateTime.utc(2026, 9, 5, 10),
     );
+
+Message _answerCheckpoint() => Message(
+  messageId: 'message-1',
+  turnId: 'turn-1',
+  runId: 'run-1',
+  chatId: 'chat-1',
+  botId: 'bot-1',
+  senderId: 'bot-1',
+  content: 'Answer',
+  grounding: MessageGrounding(
+    trustLevel: AnswerTrustLevel.unverified,
+    reasonCode: 'evidence_commit_pending',
+  ),
+  hasPartialContent: true,
+  timestamp: DateTime.utc(2026, 9, 4, 10, 1),
+);
+
+Message _verifiedAnswer(
+  Message checkpoint, {
+  required List<String> evidenceIds,
+}) => checkpoint.copyWith(
+  grounding: MessageGrounding(
+    trustLevel: AnswerTrustLevel.verified,
+    reasonCode: 'all_evidence_validated',
+    evidenceIds: evidenceIds,
+  ),
+  terminalOutcome: MessageTerminalOutcome.completed,
+  hasPartialContent: false,
+);
 
 SqliteToolEvidenceRepository _repository(Database database) =>
     SqliteToolEvidenceRepository(

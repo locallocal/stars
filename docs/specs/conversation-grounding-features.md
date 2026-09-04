@@ -336,7 +336,18 @@ append-only、digest 自校验、敏感 payload 保留期与级联清理测试�
 
 ### GRD-010 证据先于回答的提交协议
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/use_cases/agent_run_persistence.dart`、
+`lib/domain/use_cases/persist_tool_invocation.dart`、
+`lib/data/services/local_database_tool_evidence.dart`、
+`lib/data/repositories/sqlite_message_repository.dart` 和
+`lib/ui/features/chat/view_models/chat_generation_persistence.dart`；终态等待、幂等重试、失败关闭、
+原子回答提交与重启恢复测试：`test/domain/use_cases/agent_run_coordinator_test.dart`、
+`test/domain/use_cases/persist_tool_invocation_test.dart`、
+`test/ui/features/chat/view_models/chat_generation_view_model_test.dart`、
+`test/data/repositories/sqlite_repositories_test.dart` 和
+`test/data/repositories/sqlite_tool_evidence_repository_test.dart`。
 
 目标：数据库中不存在“回答已验证但证据未落库”的状态。
 

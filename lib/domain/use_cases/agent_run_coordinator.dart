@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 part 'agent_run_coordinator_support.dart';
+part 'agent_run_persistence.dart';
 
 final class AgentRunLimits {
   const AgentRunLimits({
@@ -38,6 +40,8 @@ final class AgentRunRequest {
     required this.runId,
     required this.chatId,
     required this.botId,
+    this.turnId = '',
+    this.messageId = '',
     required List<ChatMessage> messages,
     required Set<String> requestedToolNames,
     Set<String> approvalExemptToolNames = const {},
@@ -52,6 +56,8 @@ final class AgentRunRequest {
   final String runId;
   final String chatId;
   final String botId;
+  final String turnId;
+  final String messageId;
   final List<ChatMessage> messages;
   final Set<String> requestedToolNames;
   final Set<String> approvalExemptToolNames;
@@ -92,17 +98,20 @@ final class AgentRunCoordinator {
     ToolApprovalHandler approvalHandler = const DenyToolApprovalHandler(),
     JsonSchemaValidator schemaValidator = const JsonSchemaValidator(),
     AgentRunLimits limits = const AgentRunLimits(),
+    ToolInvocationPersister? toolInvocationPersister,
   }) : _toolRegistry = toolRegistry,
        _toolPolicy = toolPolicy,
        _approvalHandler = approvalHandler,
        _schemaValidator = schemaValidator,
-       _limits = limits;
+       _limits = limits,
+       _toolInvocationPersister = toolInvocationPersister;
 
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
   final ToolApprovalHandler _approvalHandler;
   final JsonSchemaValidator _schemaValidator;
   final AgentRunLimits _limits;
+  final ToolInvocationPersister? _toolInvocationPersister;
 
   Future<AgentRunResult> run({
     required AiProvider provider,
@@ -128,6 +137,10 @@ final class AgentRunCoordinator {
     final invocationIndexes = <String, int>{};
     final completedCalls = <String, _CompletedCall>{};
     final invocationIdentities = _InvocationIdentityRegistry(request.runId);
+    final persistence = _RunToolPersistence(
+      request: request,
+      persister: _toolInvocationPersister,
+    );
     var text = '';
     var reasoning = '';
     var usage = ModelTokenUsage.empty;
@@ -141,7 +154,7 @@ final class AgentRunCoordinator {
       request.cancellationToken.cancel();
     });
 
-    void observeInvocation(ToolInvocationRecord invocation) {
+    Future<void> observeInvocation(ToolInvocationRecord invocation) async {
       final existingIndex = invocationIndexes[invocation.attemptId];
       if (existingIndex == null) {
         invocationIndexes[invocation.attemptId] = invocations.length;
@@ -150,6 +163,7 @@ final class AgentRunCoordinator {
         invocations[existingIndex] = invocation;
       }
       onToolInvocation?.call(invocation);
+      await persistence.record(invocation);
     }
 
     try {
@@ -385,7 +399,7 @@ final class AgentRunCoordinator {
     required AgentCancellationToken cancellationToken,
     required Map<String, _CompletedCall> completedCalls,
     required _InvocationIdentityRegistry invocationIdentities,
-    required void Function(ToolInvocationRecord) observeInvocation,
+    required Future<void> Function(ToolInvocationRecord) observeInvocation,
   }) async {
     final fingerprint = _fingerprint(call);
     final identity = invocationIdentities.startAttempt(
@@ -398,7 +412,7 @@ final class AgentRunCoordinator {
     if (identity.hasFingerprintConflict) {
       final definition = _toolRegistry.find(call.name)?.definition;
       final now = DateTime.now();
-      observeInvocation(
+      await observeInvocation(
         ToolInvocationRecord(
           invocationId: invocationId,
           attemptId: attemptId,
@@ -433,7 +447,7 @@ final class AgentRunCoordinator {
       final definition = _toolRegistry.find(call.name)?.definition;
       final now = DateTime.now();
       const errorCode = 'tool_retry_limit_reached';
-      observeInvocation(
+      await observeInvocation(
         ToolInvocationRecord(
           invocationId: invocationId,
           attemptId: attemptId,
@@ -467,7 +481,7 @@ final class AgentRunCoordinator {
     if (previous != null) {
       final definition = _toolRegistry.find(call.name)?.definition;
       final now = DateTime.now();
-      observeInvocation(
+      await observeInvocation(
         ToolInvocationRecord(
           invocationId: invocationId,
           attemptId: attemptId,
@@ -502,7 +516,7 @@ final class AgentRunCoordinator {
         ),
         identity,
       );
-      observeInvocation(
+      await observeInvocation(
         ToolInvocationRecord(
           invocationId: invocationId,
           attemptId: attemptId,
@@ -539,7 +553,7 @@ final class AgentRunCoordinator {
       arguments: call.arguments,
       startedAt: startedAt,
     );
-    observeInvocation(record);
+    await observeInvocation(record);
 
     final inputIssues = _schemaValidator.validate(
       call.arguments,
@@ -563,7 +577,7 @@ final class AgentRunCoordinator {
         errorCode: result.errorCode,
         resultSummary: _issuesSummary(inputIssues),
       );
-      observeInvocation(record);
+      await observeInvocation(record);
       completedCalls[call.callId] = _CompletedCall(result);
       return result;
     }
@@ -595,14 +609,14 @@ final class AgentRunCoordinator {
         resultSummary: policyDecision.reason,
         approvalDecision: ToolApprovalDecision.deny.name,
       );
-      observeInvocation(record);
+      await observeInvocation(record);
       completedCalls[call.callId] = _CompletedCall(result);
       return result;
     }
 
     if (policyDecision.outcome == ToolPolicyOutcome.requireApproval) {
       record = record.copyWith(status: ToolInvocationStatus.awaitingApproval);
-      observeInvocation(record);
+      await observeInvocation(record);
       ToolApprovalDecision approval;
       try {
         approval = await _raceCancellation(
@@ -626,7 +640,7 @@ final class AgentRunCoordinator {
           errorCode: 'agent_run_cancelled',
           approvalDecision: ToolApprovalDecision.deny.name,
         );
-        observeInvocation(record);
+        await observeInvocation(record);
         rethrow;
       } on TimeoutException {
         final result = _identifyResult(
@@ -646,7 +660,7 @@ final class AgentRunCoordinator {
           errorCode: result.errorCode,
           approvalDecision: ToolApprovalDecision.deny.name,
         );
-        observeInvocation(record);
+        await observeInvocation(record);
         completedCalls[call.callId] = _CompletedCall(result);
         return result;
       }
@@ -668,7 +682,7 @@ final class AgentRunCoordinator {
           errorCode: result.errorCode,
           approvalDecision: approval.name,
         );
-        observeInvocation(record);
+        await observeInvocation(record);
         completedCalls[call.callId] = _CompletedCall(result);
         return result;
       }
@@ -677,7 +691,7 @@ final class AgentRunCoordinator {
 
     cancellationToken.throwIfCancelled();
     record = record.copyWith(status: ToolInvocationStatus.running);
-    observeInvocation(record);
+    await observeInvocation(record);
     ToolResult result;
     try {
       result = await _raceCancellation(
@@ -701,7 +715,7 @@ final class AgentRunCoordinator {
         status: ToolInvocationStatus.timedOut,
         errorCode: result.errorCode,
       );
-      observeInvocation(record);
+      await observeInvocation(record);
       completedCalls[call.callId] = _CompletedCall(result);
       return result;
     } on AgentRunCancelledException {
@@ -710,7 +724,7 @@ final class AgentRunCoordinator {
         status: ToolInvocationStatus.cancelled,
         errorCode: 'agent_run_cancelled',
       );
-      observeInvocation(record);
+      await observeInvocation(record);
       rethrow;
     } catch (_) {
       result = ToolResult(
@@ -775,7 +789,7 @@ final class AgentRunCoordinator {
       errorCode: result.errorCode,
       resultSummary: _auditResultSummary(definition, result),
     );
-    observeInvocation(record);
+    await observeInvocation(record);
     completedCalls[call.callId] = _CompletedCall(result);
     return result;
   }

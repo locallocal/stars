@@ -3,6 +3,7 @@ part of 'chat_generation_view_model.dart';
 class ChatGenerationRegistry {
   ChatGenerationRegistry({
     required MessagePersister messagePersister,
+    GroundedMessagePersister? groundedMessagePersister,
     required LastMessageUpdater lastMessageUpdater,
     required ProviderFactory providerFactory,
     MessageIdFactory messageIdFactory = _defaultMessageIdFactory,
@@ -15,6 +16,7 @@ class ChatGenerationRegistry {
     Duration partialPersistenceInterval =
         ChatGenerationViewModel.defaultPartialPersistenceInterval,
   }) : _messagePersister = messagePersister,
+       _groundedMessagePersister = groundedMessagePersister,
        _lastMessageUpdater = lastMessageUpdater,
        _providerFactory = providerFactory,
        _messageIdFactory = messageIdFactory,
@@ -30,6 +32,7 @@ class ChatGenerationRegistry {
   final Set<String> _nonCancellableRuns = {};
   final Map<String, Future<bool> Function()> _externalRunCancellers = {};
   final MessagePersister _messagePersister;
+  final GroundedMessagePersister? _groundedMessagePersister;
   final LastMessageUpdater _lastMessageUpdater;
   final ProviderFactory _providerFactory;
   final MessageIdFactory _messageIdFactory;
@@ -48,6 +51,7 @@ class ChatGenerationRegistry {
         chatId: chatId,
         bot: bot,
         messagePersister: _messagePersister,
+        groundedMessagePersister: _groundedMessagePersister,
         lastMessageUpdater: _lastMessageUpdater,
         providerFactory: _providerFactory,
         messageIdFactory: _messageIdFactory,

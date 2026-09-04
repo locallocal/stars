@@ -11,7 +11,8 @@ class SqliteMessageRepository
     implements
         CachedMessageRepository,
         PaginatedMessageRepository,
-        BotScopedMessageMetricsRepository {
+        BotScopedMessageMetricsRepository,
+        GroundedMessageRepository {
   SqliteMessageRepository({required LocalDatabaseService localDatabase})
     : _localDatabase = localDatabase;
 
@@ -178,20 +179,48 @@ class SqliteMessageRepository
   @override
   Future<Message> upsertMessage(Message message) async {
     final identified = _ensureIdentity(message);
-    await _localDatabase.upsertMessage(
+    final values = MessageRecord.fromDomain(identified).values;
+    if (identified.grounding.evidenceIds.isEmpty) {
+      await _localDatabase.upsertMessage(values);
+    } else {
+      await _localDatabase.upsertGroundedMessage(
+        values,
+        evidenceIds: identified.grounding.evidenceIds,
+      );
+    }
+    _publishPersistedMessage(identified);
+    return identified;
+  }
+
+  @override
+  Future<Message> upsertGroundedMessage(Message message) async {
+    final identified = _ensureIdentity(message);
+    await _localDatabase.upsertGroundedMessage(
       MessageRecord.fromDomain(identified).values,
+      evidenceIds: identified.grounding.evidenceIds,
     );
+    _publishPersistedMessage(identified);
+    return identified;
+  }
+
+  void _publishPersistedMessage(Message identified) {
     _updateCachedMessages(identified.chatId, [identified]);
     _changes.add(null);
     if (identified.botId.isNotEmpty) {
       _botMetricChanges.add({identified.botId});
     }
-    return identified;
   }
 
   @override
   Future<List<Message>> upsertMessages(Iterable<Message> messages) async {
     final identified = messages.map(_ensureIdentity).toList(growable: false);
+    if (identified.any((message) => message.grounding.evidenceIds.isNotEmpty)) {
+      throw ArgumentError.value(
+        messages,
+        'messages',
+        'Evidence-backed messages require an individual grounded commit.',
+      );
+    }
     await _localDatabase.upsertMessages(
       identified.map((message) => MessageRecord.fromDomain(message).values),
     );

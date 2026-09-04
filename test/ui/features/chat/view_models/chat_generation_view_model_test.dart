@@ -923,13 +923,13 @@ void main() {
         await _waitFor(() => controller.snapshot.pendingToolApproval != null);
         controller.resolveToolApproval(ToolApprovalDecision.allowOnce);
         await _waitFor(
-          () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+          () => controller.snapshot.lifecycle == ChatRunLifecycle.failed,
         );
 
         final assistant = persisted.last;
-        expect(assistant.terminalOutcome, MessageTerminalOutcome.completed);
+        expect(assistant.terminalOutcome, MessageTerminalOutcome.failed);
         expect(assistant.grounding.trustLevel, AnswerTrustLevel.failed);
-        expect(assistant.grounding.reasonCode, 'tool_execution_persist_failed');
+        expect(assistant.grounding.reasonCode, 'tool_evidence_persist_failed');
       },
     );
 

@@ -13,7 +13,7 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     required AgentCancellationToken cancellationToken,
     required Map<String, _CompletedCall> completedCalls,
     required _InvocationIdentityRegistry invocationIdentities,
-    required void Function(ToolInvocationRecord) observeInvocation,
+    required Future<void> Function(ToolInvocationRecord) observeInvocation,
   }) async {
     final results = <ToolResult>[];
     for (final call in calls) {

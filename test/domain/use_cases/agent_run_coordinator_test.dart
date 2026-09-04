@@ -675,6 +675,54 @@ void main() {
         expect(result.providerFailure?.retryable, isFalse);
       },
     );
+
+    test(
+      'awaits terminal evidence retry without repeating the tool side effect',
+      () async {
+        final tool = _FakeTool(name: 'calculate');
+        final session = _FakeModelSession([
+          [
+            ToolCallRequested(
+              callId: 'call-1',
+              name: 'calculate',
+              arguments: const {'value': 2},
+            ),
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [
+            const TextDelta('4\n<stars_evidence call_ids="call-1" />'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+        ]);
+        final retryStarted = Completer<void>();
+        final allowCommit = Completer<void>();
+        var terminalAttempts = 0;
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([tool]),
+          toolPolicy: const DefaultToolPolicy(),
+          toolInvocationPersister: (record) async {
+            if (record.status != ToolInvocationStatus.succeeded) return;
+            terminalAttempts += 1;
+            if (terminalAttempts == 1) throw StateError('transient failure');
+            retryStarted.complete();
+            await allowCommit.future;
+          },
+        );
+
+        final run = coordinator.run(
+          provider: _FakeProvider(session),
+          request: _request(toolNames: {'calculate'}),
+        );
+        await retryStarted.future;
+
+        expect(tool.executions, 1);
+        expect(terminalAttempts, 2);
+        expect(session.continuations, isEmpty);
+        allowCommit.complete();
+        expect((await run).status, AgentRunStatus.completed);
+        expect(tool.executions, 1);
+      },
+    );
   });
 
   group('JsonSchemaValidator', () {

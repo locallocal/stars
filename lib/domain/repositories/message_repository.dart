@@ -51,3 +51,8 @@ abstract interface class BotScopedMessageMetricsRepository
     Iterable<String> botIds,
   );
 }
+
+/// Commits a final message and all of its evidence links atomically.
+abstract interface class GroundedMessageRepository {
+  Future<Message> upsertGroundedMessage(Message message);
+}
