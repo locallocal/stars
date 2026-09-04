@@ -37,6 +37,20 @@ void main() {
       expect(grounding.evidenceIds, isEmpty);
     });
 
+    test('duplicate reuse does not replace or downgrade a successful call', () {
+      final grounding = policy.evaluate(
+        _input(
+          toolCalls: const [
+            MessageToolCall(name: 'save_note', status: 'succeeded'),
+            MessageToolCall(name: 'save_note', status: 'duplicateReused'),
+          ],
+        ),
+      );
+
+      expect(grounding.trustLevel, AnswerTrustLevel.verified);
+      expect(grounding.reasonCode, 'all_evidence_validated');
+    });
+
     test(
       'completed answers fail closed when a trust prerequisite is absent',
       () {

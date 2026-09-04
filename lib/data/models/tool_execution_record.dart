@@ -5,8 +5,17 @@ final class ToolExecutionDbRecord {
   const ToolExecutionDbRecord(this.values);
 
   factory ToolExecutionDbRecord.fromDomain(ToolExecutionRecord record) {
+    final invocationId =
+        record.invocationId.isEmpty ? record.executionId : record.invocationId;
+    final attemptId =
+        record.attemptId.isEmpty ? record.executionId : record.attemptId;
+    final providerCallId =
+        record.providerCallId.isEmpty ? record.callId : record.providerCallId;
     return ToolExecutionDbRecord({
       'execution_id': record.executionId,
+      'invocation_id': invocationId,
+      'attempt_id': attemptId,
+      'provider_call_id': providerCallId,
       'run_id': record.runId,
       'turn_id': record.turnId,
       'message_id': record.messageId,
@@ -37,6 +46,9 @@ final class ToolExecutionDbRecord {
     final completedAt = _nullableInteger('completed_at');
     return ToolExecutionRecord(
       executionId: _text('execution_id'),
+      invocationId: _text('invocation_id'),
+      attemptId: _text('attempt_id'),
+      providerCallId: _text('provider_call_id'),
       runId: _text('run_id'),
       turnId: _text('turn_id'),
       messageId: _text('message_id'),

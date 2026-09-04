@@ -5,6 +5,46 @@ final RegExp _evidenceFooter = RegExp(
 );
 
 extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
+  Future<List<ToolResult>> _executeSequentially({
+    required List<ToolCallRequest> calls,
+    required String runId,
+    required Set<String> exposedNames,
+    required ToolPolicyContext policyContext,
+    required AgentCancellationToken cancellationToken,
+    required Map<String, _CompletedCall> completedCalls,
+    required _InvocationIdentityRegistry invocationIdentities,
+    required void Function(ToolInvocationRecord) observeInvocation,
+  }) async {
+    final results = <ToolResult>[];
+    for (final call in calls) {
+      cancellationToken.throwIfCancelled();
+      results.add(
+        await _executeToolCall(
+          call: call,
+          runId: runId,
+          exposedNames: exposedNames,
+          policyContext: policyContext,
+          cancellationToken: cancellationToken,
+          completedCalls: completedCalls,
+          invocationIdentities: invocationIdentities,
+          observeInvocation: observeInvocation,
+        ),
+      );
+    }
+    return results;
+  }
+
+  bool _isParallelSafe(ToolCallRequest call) {
+    final definition = _toolRegistry.find(call.name)?.definition;
+    if (definition == null || definition.riskLevel != ToolRiskLevel.readOnly) {
+      return false;
+    }
+    return definition.capabilities.isNotEmpty &&
+        definition.capabilities.every(
+          (capability) => capability == ToolCapability.compute,
+        );
+  }
+
   Future<void> _consumeEvents(
     Stream<ModelEvent> events,
     AgentCancellationToken cancellationToken,
@@ -65,6 +105,13 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
       truncated: true,
     );
   }
+
+  ToolResult _identifyResult(ToolResult result, _AttemptIdentity identity) =>
+      result.copyWith(
+        invocationId: identity.invocationId,
+        attemptId: identity.attemptId,
+        evidenceId: '${identity.attemptId}:evidence',
+      );
 
   String _issuesSummary(List<JsonSchemaValidationIssue> issues) {
     return issues
@@ -159,7 +206,8 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     final ledger = [
       for (final entry in completedCalls.entries)
         {
-          'evidence_id': entry.key,
+          'evidence_id': entry.value.result.evidenceId,
+          'provider_call_id': entry.key,
           'tool_name': entry.value.result.name,
           'status': entry.value.result.isError ? 'error' : 'success',
           'error_code': entry.value.result.errorCode,
@@ -203,10 +251,68 @@ Evidence ledger: ${jsonEncode(ledger)}
 }
 
 final class _CompletedCall {
-  const _CompletedCall(this.fingerprint, this.result);
+  const _CompletedCall(this.result);
 
-  final String fingerprint;
   final ToolResult result;
+}
+
+/// Allocates application-owned identities while retaining the provider call ID
+/// only as the lookup needed to recognize a repeated provider request.
+final class _InvocationIdentityRegistry {
+  _InvocationIdentityRegistry(this._runId);
+
+  final String _runId;
+  final Map<String, _InvocationIdentity> _byProviderCallId = {};
+  var _invocationSequence = 0;
+
+  _AttemptIdentity startAttempt({
+    required String providerCallId,
+    required String fingerprint,
+  }) {
+    var invocation = _byProviderCallId[providerCallId];
+    if (invocation == null) {
+      _invocationSequence += 1;
+      invocation = _InvocationIdentity(
+        invocationId: '$_runId:invocation:$_invocationSequence',
+        fingerprint: fingerprint,
+      );
+      _byProviderCallId[providerCallId] = invocation;
+    }
+
+    invocation.attemptSequence += 1;
+    final hasFingerprintConflict = invocation.fingerprint != fingerprint;
+    if (!hasFingerprintConflict) invocation.matchingAttempts += 1;
+    return _AttemptIdentity(
+      invocationId: invocation.invocationId,
+      attemptId:
+          '${invocation.invocationId}:attempt:${invocation.attemptSequence}',
+      matchingAttemptNumber: invocation.matchingAttempts,
+      hasFingerprintConflict: hasFingerprintConflict,
+    );
+  }
+}
+
+final class _InvocationIdentity {
+  _InvocationIdentity({required this.invocationId, required this.fingerprint});
+
+  final String invocationId;
+  final String fingerprint;
+  var attemptSequence = 0;
+  var matchingAttempts = 0;
+}
+
+final class _AttemptIdentity {
+  const _AttemptIdentity({
+    required this.invocationId,
+    required this.attemptId,
+    required this.matchingAttemptNumber,
+    required this.hasFingerprintConflict,
+  });
+
+  final String invocationId;
+  final String attemptId;
+  final int matchingAttemptNumber;
+  final bool hasFingerprintConflict;
 }
 
 final class _FinalAnswerValidation {

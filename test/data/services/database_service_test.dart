@@ -364,6 +364,72 @@ void main() {
     );
 
     test(
+      'separates identities in existing current Tool execution storage',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'stars_current_tool_identity_upgrade_',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final dataDirectory = _applicationDataDirectory(directory);
+        await dataDirectory.create(recursive: true);
+        final databasePath = path.join(dataDirectory.path, 'app.db');
+        final initialDatabase = await databaseFactoryFfi.openDatabase(
+          databasePath,
+          options: OpenDatabaseOptions(
+            version: DatabaseService.databaseVersion,
+            onConfigure: DatabaseService.configure,
+            onCreate: DatabaseService.createSchema,
+          ),
+        );
+        await initialDatabase.insert('bots', _botRow('existing-bot'));
+        await initialDatabase.insert(
+          'chats',
+          _chatRow('existing-chat', 'existing-bot'),
+        );
+        await _replaceWithPreGrd004ToolExecutionSchema(initialDatabase);
+        await initialDatabase.insert('tool_execution_records', {
+          'execution_id': 'legacy-execution-1',
+          'run_id': 'run-1',
+          'turn_id': 'turn-1',
+          'message_id': 'message-1',
+          'chat_id': 'existing-chat',
+          'bot_id': 'existing-bot',
+          'call_id': 'provider-call-1',
+          'tool_name': 'legacy.tool',
+          'tool_title': '',
+          'mcp_server_name': '',
+          'source': 'builtIn',
+          'risk_level': 'readOnly',
+          'status': 'succeeded',
+          'detail': '',
+          'arguments_summary': '{}',
+          'result_summary': 'ok',
+          'approval_status': '',
+          'error_code': '',
+          'duration_ms': 1,
+          'started_at': 1,
+          'completed_at': 2,
+          'updated_at': 2,
+        });
+        await initialDatabase.close();
+
+        final service = DatabaseService(
+          applicationDocumentsDirectoryProvider: () async => directory,
+        );
+        final migratedDatabase = await service.initDatabase();
+        addTearDown(migratedDatabase.close);
+
+        final rows = await migratedDatabase.query('tool_execution_records');
+        expect(rows, hasLength(1));
+        expect(rows.single['execution_id'], 'legacy-execution-1');
+        expect(rows.single['invocation_id'], 'legacy-execution-1');
+        expect(rows.single['attempt_id'], 'legacy-execution-1');
+        expect(rows.single['provider_call_id'], 'provider-call-1');
+        expect(rows.single['status'], 'succeeded');
+      },
+    );
+
+    test(
       'adds the prompt preference to an existing current database',
       () async {
         final directory = await Directory.systemTemp.createTemp(
@@ -772,6 +838,9 @@ Future<void> _expectCurrentSchema(Database database) async {
     toolExecutionColumns.map((column) => column['name']),
     orderedEquals(<String>[
       'execution_id',
+      'invocation_id',
+      'attempt_id',
+      'provider_call_id',
       'run_id',
       'turn_id',
       'message_id',
@@ -968,5 +1037,58 @@ Future<Database> _openCurrentDatabase() {
       onConfigure: DatabaseService.configure,
       onCreate: DatabaseService.createSchema,
     ),
+  );
+}
+
+Future<void> _replaceWithPreGrd004ToolExecutionSchema(Database database) async {
+  await database.execute('DROP TABLE tool_execution_records');
+  await database.execute('''
+    CREATE TABLE tool_execution_records (
+      execution_id TEXT PRIMARY KEY,
+      run_id TEXT NOT NULL,
+      turn_id TEXT NOT NULL,
+      message_id TEXT NOT NULL,
+      chat_id TEXT NOT NULL,
+      bot_id TEXT NOT NULL,
+      call_id TEXT NOT NULL,
+      tool_name TEXT NOT NULL,
+      tool_title TEXT NOT NULL DEFAULT '',
+      mcp_server_name TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL
+        CHECK (source IN ('builtIn', 'mcp', 'skillScript')),
+      risk_level TEXT NOT NULL
+        CHECK (risk_level IN ('readOnly', 'write', 'destructive')),
+      status TEXT NOT NULL
+        CHECK (status IN (
+          'requested',
+          'awaitingApproval',
+          'running',
+          'succeeded',
+          'failed',
+          'denied',
+          'cancelled',
+          'timedOut',
+          'duplicate'
+        )),
+      detail TEXT NOT NULL DEFAULT '',
+      arguments_summary TEXT NOT NULL DEFAULT '',
+      result_summary TEXT NOT NULL DEFAULT '',
+      approval_status TEXT NOT NULL DEFAULT '',
+      error_code TEXT NOT NULL DEFAULT '',
+      duration_ms INTEGER,
+      started_at INTEGER NOT NULL,
+      completed_at INTEGER,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+      FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE
+    )
+  ''');
+  await database.execute(
+    'CREATE INDEX tool_execution_records_run_id_index '
+    'ON tool_execution_records(run_id)',
+  );
+  await database.execute(
+    'CREATE INDEX tool_execution_records_chat_started_at_index '
+    'ON tool_execution_records(chat_id, started_at DESC)',
   );
 }

@@ -125,7 +125,7 @@ final class AgentRunCoordinator {
     final invocations = <ToolInvocationRecord>[];
     final invocationIndexes = <String, int>{};
     final completedCalls = <String, _CompletedCall>{};
-    final callAttempts = <String, int>{};
+    final invocationIdentities = _InvocationIdentityRegistry(request.runId);
     var text = '';
     var reasoning = '';
     var usage = ModelTokenUsage.empty;
@@ -140,9 +140,9 @@ final class AgentRunCoordinator {
     });
 
     void observeInvocation(ToolInvocationRecord invocation) {
-      final existingIndex = invocationIndexes[invocation.callId];
+      final existingIndex = invocationIndexes[invocation.attemptId];
       if (existingIndex == null) {
-        invocationIndexes[invocation.callId] = invocations.length;
+        invocationIndexes[invocation.attemptId] = invocations.length;
         invocations.add(invocation);
       } else {
         invocations[existingIndex] = invocation;
@@ -295,7 +295,7 @@ final class AgentRunCoordinator {
                       policyContext: policyContext,
                       cancellationToken: request.cancellationToken,
                       completedCalls: completedCalls,
-                      callAttempts: callAttempts,
+                      invocationIdentities: invocationIdentities,
                       observeInvocation: observeInvocation,
                     ),
                 ])
@@ -306,7 +306,7 @@ final class AgentRunCoordinator {
                   policyContext: policyContext,
                   cancellationToken: request.cancellationToken,
                   completedCalls: completedCalls,
-                  callAttempts: callAttempts,
+                  invocationIdentities: invocationIdentities,
                   observeInvocation: observeInvocation,
                 );
         results = List<ToolResult>.unmodifiable(nextResults);
@@ -359,46 +359,6 @@ final class AgentRunCoordinator {
     }
   }
 
-  Future<List<ToolResult>> _executeSequentially({
-    required List<ToolCallRequest> calls,
-    required String runId,
-    required Set<String> exposedNames,
-    required ToolPolicyContext policyContext,
-    required AgentCancellationToken cancellationToken,
-    required Map<String, _CompletedCall> completedCalls,
-    required Map<String, int> callAttempts,
-    required void Function(ToolInvocationRecord) observeInvocation,
-  }) async {
-    final results = <ToolResult>[];
-    for (final call in calls) {
-      cancellationToken.throwIfCancelled();
-      results.add(
-        await _executeToolCall(
-          call: call,
-          runId: runId,
-          exposedNames: exposedNames,
-          policyContext: policyContext,
-          cancellationToken: cancellationToken,
-          completedCalls: completedCalls,
-          callAttempts: callAttempts,
-          observeInvocation: observeInvocation,
-        ),
-      );
-    }
-    return results;
-  }
-
-  bool _isParallelSafe(ToolCallRequest call) {
-    final definition = _toolRegistry.find(call.name)?.definition;
-    if (definition == null || definition.riskLevel != ToolRiskLevel.readOnly) {
-      return false;
-    }
-    return definition.capabilities.isNotEmpty &&
-        definition.capabilities.every(
-          (capability) => capability == ToolCapability.compute,
-        );
-  }
-
   Future<ToolResult> _executeToolCall({
     required ToolCallRequest call,
     required String runId,
@@ -406,80 +366,129 @@ final class AgentRunCoordinator {
     required ToolPolicyContext policyContext,
     required AgentCancellationToken cancellationToken,
     required Map<String, _CompletedCall> completedCalls,
-    required Map<String, int> callAttempts,
+    required _InvocationIdentityRegistry invocationIdentities,
     required void Function(ToolInvocationRecord) observeInvocation,
   }) async {
     final fingerprint = _fingerprint(call);
-    final executionId = '$runId:tool:${call.callId}';
-    final attempts = (callAttempts[call.callId] ?? 0) + 1;
-    callAttempts[call.callId] = attempts;
-    if (attempts > _limits.maxSameCallRetries + 1) {
-      final source =
-          _toolRegistry.find(call.name)?.definition.source ??
-          ToolSource.builtIn;
-      return ToolResult(
-        callId: call.callId,
-        name: call.name,
-        content: 'The tool retry limit was reached.',
-        isError: true,
-        errorCode: 'tool_retry_limit_reached',
-        source: source,
-      );
-    }
+    final identity = invocationIdentities.startAttempt(
+      providerCallId: call.callId,
+      fingerprint: fingerprint,
+    );
+    final invocationId = identity.invocationId;
+    final attemptId = identity.attemptId;
     final previous = completedCalls[call.callId];
-    if (previous != null) {
+    if (identity.hasFingerprintConflict) {
       final definition = _toolRegistry.find(call.name)?.definition;
       final now = DateTime.now();
       observeInvocation(
         ToolInvocationRecord(
-          executionId: executionId,
-          callId: call.callId,
+          invocationId: invocationId,
+          attemptId: attemptId,
+          providerCallId: call.callId,
           name: call.name,
           title: definition?.title ?? '',
           mcpServerName: definition?.mcpServerName ?? '',
           source: definition?.source ?? ToolSource.builtIn,
           riskLevel: definition?.riskLevel ?? ToolRiskLevel.readOnly,
-          status: ToolInvocationStatus.duplicate,
+          status: ToolInvocationStatus.duplicateConflict,
           arguments: call.arguments,
-          resultSummary:
-              previous.fingerprint == fingerprint
-                  ? 'duplicate_call_reused'
-                  : 'duplicate_call_id_conflict',
-          errorCode:
-              previous.fingerprint == fingerprint
-                  ? ''
-                  : 'duplicate_call_id_conflict',
+          resultSummary: 'duplicate_call_id_conflict',
+          errorCode: 'duplicate_call_id_conflict',
           startedAt: now,
           completedAt: now,
           durationMs: 0,
         ),
       );
-      if (previous.fingerprint == fingerprint) return previous.result;
-      return ToolResult(
-        callId: call.callId,
-        name: call.name,
-        content: 'The call id was already used with different arguments.',
-        isError: true,
-        errorCode: 'duplicate_call_id_conflict',
-        source: definition?.source ?? ToolSource.builtIn,
+      return _identifyResult(
+        ToolResult(
+          callId: call.callId,
+          name: call.name,
+          content: 'The call id was already used with different arguments.',
+          isError: true,
+          errorCode: 'duplicate_call_id_conflict',
+          source: definition?.source ?? ToolSource.builtIn,
+        ),
+        identity,
       );
+    }
+    if (identity.matchingAttemptNumber > _limits.maxSameCallRetries + 1) {
+      final definition = _toolRegistry.find(call.name)?.definition;
+      final now = DateTime.now();
+      const errorCode = 'tool_retry_limit_reached';
+      observeInvocation(
+        ToolInvocationRecord(
+          invocationId: invocationId,
+          attemptId: attemptId,
+          providerCallId: call.callId,
+          name: call.name,
+          title: definition?.title ?? '',
+          mcpServerName: definition?.mcpServerName ?? '',
+          source: definition?.source ?? ToolSource.builtIn,
+          riskLevel: definition?.riskLevel ?? ToolRiskLevel.readOnly,
+          status: ToolInvocationStatus.failed,
+          arguments: call.arguments,
+          resultSummary: errorCode,
+          errorCode: errorCode,
+          startedAt: now,
+          completedAt: now,
+          durationMs: 0,
+        ),
+      );
+      return _identifyResult(
+        ToolResult(
+          callId: call.callId,
+          name: call.name,
+          content: 'The tool retry limit was reached.',
+          isError: true,
+          errorCode: errorCode,
+          source: definition?.source ?? ToolSource.builtIn,
+        ),
+        identity,
+      );
+    }
+    if (previous != null) {
+      final definition = _toolRegistry.find(call.name)?.definition;
+      final now = DateTime.now();
+      observeInvocation(
+        ToolInvocationRecord(
+          invocationId: invocationId,
+          attemptId: attemptId,
+          providerCallId: call.callId,
+          name: call.name,
+          title: definition?.title ?? '',
+          mcpServerName: definition?.mcpServerName ?? '',
+          source: definition?.source ?? ToolSource.builtIn,
+          riskLevel: definition?.riskLevel ?? ToolRiskLevel.readOnly,
+          status: ToolInvocationStatus.duplicateReused,
+          arguments: call.arguments,
+          resultSummary: 'duplicate_call_reused',
+          startedAt: now,
+          completedAt: now,
+          durationMs: 0,
+        ),
+      );
+      return previous.result;
     }
 
     final tool = _toolRegistry.find(call.name);
     if (tool == null || !exposedNames.contains(call.name)) {
       final now = DateTime.now();
-      final result = ToolResult(
-        callId: call.callId,
-        name: call.name,
-        content: 'The requested tool is not available for this run.',
-        isError: true,
-        errorCode: 'tool_not_available',
-        source: tool?.definition.source ?? ToolSource.builtIn,
+      final result = _identifyResult(
+        ToolResult(
+          callId: call.callId,
+          name: call.name,
+          content: 'The requested tool is not available for this run.',
+          isError: true,
+          errorCode: 'tool_not_available',
+          source: tool?.definition.source ?? ToolSource.builtIn,
+        ),
+        identity,
       );
       observeInvocation(
         ToolInvocationRecord(
-          executionId: executionId,
-          callId: call.callId,
+          invocationId: invocationId,
+          attemptId: attemptId,
+          providerCallId: call.callId,
           name: call.name,
           title: tool?.definition.title ?? '',
           mcpServerName: tool?.definition.mcpServerName ?? '',
@@ -494,14 +503,15 @@ final class AgentRunCoordinator {
           durationMs: 0,
         ),
       );
-      completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+      completedCalls[call.callId] = _CompletedCall(result);
       return result;
     }
     final definition = tool.definition;
     final startedAt = DateTime.now();
     var record = ToolInvocationRecord(
-      executionId: executionId,
-      callId: call.callId,
+      invocationId: invocationId,
+      attemptId: attemptId,
+      providerCallId: call.callId,
       name: call.name,
       title: definition.title,
       mcpServerName: definition.mcpServerName,
@@ -518,13 +528,16 @@ final class AgentRunCoordinator {
       definition.inputSchema,
     );
     if (inputIssues.isNotEmpty) {
-      final result = ToolResult(
-        callId: call.callId,
-        name: call.name,
-        content: 'Tool arguments failed schema validation.',
-        isError: true,
-        errorCode: 'invalid_tool_arguments',
-        source: definition.source,
+      final result = _identifyResult(
+        ToolResult(
+          callId: call.callId,
+          name: call.name,
+          content: 'Tool arguments failed schema validation.',
+          isError: true,
+          errorCode: 'invalid_tool_arguments',
+          source: definition.source,
+        ),
+        identity,
       );
       record = _completeRecord(
         record,
@@ -533,7 +546,7 @@ final class AgentRunCoordinator {
         resultSummary: _issuesSummary(inputIssues),
       );
       observeInvocation(record);
-      completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+      completedCalls[call.callId] = _CompletedCall(result);
       return result;
     }
 
@@ -543,16 +556,19 @@ final class AgentRunCoordinator {
       policyContext,
     );
     if (policyDecision.outcome == ToolPolicyOutcome.deny) {
-      final result = ToolResult(
-        callId: call.callId,
-        name: call.name,
-        content: 'The tool call was blocked by application policy.',
-        isError: true,
-        errorCode:
-            policyDecision.reason.isEmpty
-                ? 'tool_policy_denied'
-                : policyDecision.reason,
-        source: definition.source,
+      final result = _identifyResult(
+        ToolResult(
+          callId: call.callId,
+          name: call.name,
+          content: 'The tool call was blocked by application policy.',
+          isError: true,
+          errorCode:
+              policyDecision.reason.isEmpty
+                  ? 'tool_policy_denied'
+                  : policyDecision.reason,
+          source: definition.source,
+        ),
+        identity,
       );
       record = _completeRecord(
         record,
@@ -562,7 +578,7 @@ final class AgentRunCoordinator {
         approvalDecision: ToolApprovalDecision.deny.name,
       );
       observeInvocation(record);
-      completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+      completedCalls[call.callId] = _CompletedCall(result);
       return result;
     }
 
@@ -595,13 +611,16 @@ final class AgentRunCoordinator {
         observeInvocation(record);
         rethrow;
       } on TimeoutException {
-        final result = ToolResult(
-          callId: call.callId,
-          name: call.name,
-          content: 'Tool approval timed out.',
-          isError: true,
-          errorCode: 'tool_approval_timeout',
-          source: definition.source,
+        final result = _identifyResult(
+          ToolResult(
+            callId: call.callId,
+            name: call.name,
+            content: 'Tool approval timed out.',
+            isError: true,
+            errorCode: 'tool_approval_timeout',
+            source: definition.source,
+          ),
+          identity,
         );
         record = _completeRecord(
           record,
@@ -610,17 +629,20 @@ final class AgentRunCoordinator {
           approvalDecision: ToolApprovalDecision.deny.name,
         );
         observeInvocation(record);
-        completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+        completedCalls[call.callId] = _CompletedCall(result);
         return result;
       }
       if (approval != ToolApprovalDecision.allowOnce) {
-        final result = ToolResult(
-          callId: call.callId,
-          name: call.name,
-          content: 'The user denied the tool call.',
-          isError: true,
-          errorCode: 'tool_approval_denied',
-          source: definition.source,
+        final result = _identifyResult(
+          ToolResult(
+            callId: call.callId,
+            name: call.name,
+            content: 'The user denied the tool call.',
+            isError: true,
+            errorCode: 'tool_approval_denied',
+            source: definition.source,
+          ),
+          identity,
         );
         record = _completeRecord(
           record,
@@ -629,7 +651,7 @@ final class AgentRunCoordinator {
           approvalDecision: approval.name,
         );
         observeInvocation(record);
-        completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+        completedCalls[call.callId] = _CompletedCall(result);
         return result;
       }
       record = record.copyWith(approvalDecision: approval.name);
@@ -645,13 +667,16 @@ final class AgentRunCoordinator {
         cancellationToken,
       );
     } on TimeoutException {
-      result = ToolResult(
-        callId: call.callId,
-        name: call.name,
-        content: 'Tool execution timed out.',
-        isError: true,
-        errorCode: 'tool_execution_timeout',
-        source: definition.source,
+      result = _identifyResult(
+        ToolResult(
+          callId: call.callId,
+          name: call.name,
+          content: 'Tool execution timed out.',
+          isError: true,
+          errorCode: 'tool_execution_timeout',
+          source: definition.source,
+        ),
+        identity,
       );
       record = _completeRecord(
         record,
@@ -659,7 +684,7 @@ final class AgentRunCoordinator {
         errorCode: result.errorCode,
       );
       observeInvocation(record);
-      completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+      completedCalls[call.callId] = _CompletedCall(result);
       return result;
     } on AgentRunCancelledException {
       record = _completeRecord(
@@ -722,7 +747,7 @@ final class AgentRunCoordinator {
         }
       }
     }
-    result = _truncateResult(result);
+    result = _identifyResult(_truncateResult(result), identity);
     record = _completeRecord(
       record,
       status:
@@ -733,7 +758,7 @@ final class AgentRunCoordinator {
       resultSummary: _auditResultSummary(definition, result),
     );
     observeInvocation(record);
-    completedCalls[call.callId] = _CompletedCall(fingerprint, result);
+    completedCalls[call.callId] = _CompletedCall(result);
     return result;
   }
 }

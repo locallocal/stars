@@ -142,7 +142,9 @@ final class AnswerTrustPolicy {
   );
 
   bool _isSuccessfulToolCall(MessageToolCall call) =>
-      call.status == 'succeeded' || call.status == 'completed';
+      call.status == 'succeeded' ||
+      call.status == 'completed' ||
+      call.status == 'duplicateReused';
 
   bool _isUnavailableToolCall(MessageToolCall call) =>
       call.errorCode == 'tool_not_available' ||

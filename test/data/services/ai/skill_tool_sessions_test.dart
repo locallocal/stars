@@ -239,7 +239,14 @@ void main() {
 
     final second =
         await session.continueWith([
-          ToolResult(callId: 'generic-1', name: 'calculate', content: '4'),
+          ToolResult(
+            callId: 'generic-1',
+            name: 'calculate',
+            content: '4',
+            invocationId: 'invocation-1',
+            attemptId: 'attempt-1',
+            evidenceId: 'evidence-1',
+          ),
         ]).toList();
     expect(second.whereType<TextDelta>().single.text, 'four');
     final sentTools = requests.first['tools']! as List<Object?>;
@@ -257,7 +264,10 @@ void main() {
             )
             as Map<String, Object?>;
     expect(envelope['type'], 'stars_tool_result');
-    expect(envelope['evidence_id'], 'generic-1');
+    expect(envelope['evidence_id'], 'evidence-1');
+    expect(envelope['invocation_id'], 'invocation-1');
+    expect(envelope['attempt_id'], 'attempt-1');
+    expect(envelope['provider_call_id'], 'generic-1');
     expect(envelope['status'], 'success');
     expect(envelope['truncated'], isFalse);
   });

@@ -186,6 +186,9 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
             : jsonEncode(_redactAuditValue(invocation.arguments));
     final item = MessageToolCall(
       executionId: invocation.executionId,
+      invocationId: invocation.invocationId,
+      attemptId: invocation.attemptId,
+      providerCallId: invocation.providerCallId,
       callId: invocation.callId,
       name: invocation.name,
       title: invocation.title,
@@ -202,7 +205,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
     );
     final calls = List<MessageToolCall>.of(_snapshot.toolCalls);
     final index = calls.indexWhere(
-      (existing) => existing.callId == invocation.callId,
+      (existing) => existing.attemptId == invocation.attemptId,
     );
     if (index < 0) {
       calls.add(item);
@@ -242,6 +245,9 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
       final now = DateTime.now();
       final record = ToolExecutionRecord(
         executionId: invocation.executionId,
+        invocationId: invocation.invocationId,
+        attemptId: invocation.attemptId,
+        providerCallId: invocation.providerCallId,
         runId: runId,
         turnId: _snapshot.turnId ?? runId,
         messageId: '$runId:assistant',
@@ -303,6 +309,10 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
     required String detail,
   }) {
     if (invocation.name != shellCommandToolName) return null;
+    if (invocation.status == ToolInvocationStatus.duplicateReused ||
+        invocation.status == ToolInvocationStatus.duplicateConflict) {
+      return null;
+    }
     final command = invocation.arguments['command'];
     if (command is! String || command.trim().isEmpty) return null;
     return MessageCommandExecution(

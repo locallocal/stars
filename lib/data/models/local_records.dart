@@ -393,6 +393,9 @@ List<T> _records<T>(Object? raw, T Function(Map<String, Object?>) decode) {
 
 Map<String, Object?> _toolCallToMap(MessageToolCall call) => {
   'execution_id': call.executionId,
+  'invocation_id': call.invocationId,
+  'attempt_id': call.attemptId,
+  'provider_call_id': call.providerCallId,
   'call_id': call.callId,
   'name': call.name,
   'title': call.title,
@@ -409,11 +412,25 @@ Map<String, Object?> _toolCallToMap(MessageToolCall call) => {
 };
 
 MessageToolCall _toolCallFromMap(Map<String, Object?> values) {
+  final executionId = _optionalString(values['execution_id']);
+  final callId = _string(values['call_id']);
   return MessageToolCall(
-    // execution_id was added after process_info was already persisted in the
-    // current database generation. Historical calls legitimately omit it.
-    executionId: _optionalString(values['execution_id']),
-    callId: _string(values['call_id']),
+    // Identity fields were added incrementally. Historical calls legitimately
+    // omit them, so the legacy execution/call IDs are safe fallback metadata.
+    executionId: executionId,
+    invocationId:
+        _optionalString(values['invocation_id']).isEmpty
+            ? executionId
+            : _optionalString(values['invocation_id']),
+    attemptId:
+        _optionalString(values['attempt_id']).isEmpty
+            ? executionId
+            : _optionalString(values['attempt_id']),
+    providerCallId:
+        _optionalString(values['provider_call_id']).isEmpty
+            ? callId
+            : _optionalString(values['provider_call_id']),
+    callId: callId,
     name: _string(values['name']),
     title: _string(values['title']),
     mcpServerName: _string(values['mcp_server_name']),

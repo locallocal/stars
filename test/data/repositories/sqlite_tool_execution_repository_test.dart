@@ -11,7 +11,7 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   });
 
-  test('upserts one durable MCP execution by stable execution id', () async {
+  test('upserts one durable MCP attempt by stable attempt id', () async {
     final database = await databaseFactoryFfi.openDatabase(
       inMemoryDatabasePath,
       options: OpenDatabaseOptions(
@@ -52,7 +52,10 @@ void main() {
     final records = await repository.getForRun('run-1');
     expect(records, hasLength(1));
     final record = records.single;
-    expect(record.executionId, 'run-1:tool:call-1');
+    expect(record.executionId, 'run-1:invocation:1:attempt:1');
+    expect(record.invocationId, 'run-1:invocation:1');
+    expect(record.attemptId, 'run-1:invocation:1:attempt:1');
+    expect(record.providerCallId, 'call-1');
     expect(record.callId, 'call-1');
     expect(record.chatId, 'chat-1');
     expect(record.source, ToolSource.mcp);
@@ -64,8 +67,77 @@ void main() {
 
     final rows = await database.query('tool_execution_records');
     expect(rows, hasLength(1));
-    expect(rows.single['execution_id'], 'run-1:tool:call-1');
+    expect(rows.single['execution_id'], 'run-1:invocation:1:attempt:1');
+    expect(rows.single['invocation_id'], 'run-1:invocation:1');
+    expect(rows.single['attempt_id'], 'run-1:invocation:1:attempt:1');
+    expect(rows.single['provider_call_id'], 'call-1');
   });
+
+  test(
+    'keeps the first success when duplicate attempts are appended',
+    () async {
+      final database = await databaseFactoryFfi.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      addTearDown(database.close);
+      await database.insert('bots', _botRow);
+      await database.insert('chats', _chatRow);
+      final repository = SqliteToolExecutionRepository(
+        localDatabase: LocalDatabaseService(
+          databaseProvider: () async => database,
+        ),
+      );
+      final now = DateTime(2026, 9, 3, 10);
+
+      await repository.upsert(
+        _record(
+          status: ToolInvocationStatus.succeeded,
+          startedAt: now,
+          completedAt: now,
+          updatedAt: now,
+          resultSummary: 'saved',
+        ),
+      );
+      await repository.upsert(
+        _record(
+          attemptNumber: 2,
+          status: ToolInvocationStatus.duplicateReused,
+          startedAt: now.add(const Duration(milliseconds: 1)),
+          completedAt: now.add(const Duration(milliseconds: 1)),
+          updatedAt: now.add(const Duration(milliseconds: 1)),
+          resultSummary: 'duplicate_call_reused',
+        ),
+      );
+      await repository.upsert(
+        _record(
+          attemptNumber: 3,
+          status: ToolInvocationStatus.duplicateConflict,
+          startedAt: now.add(const Duration(milliseconds: 2)),
+          completedAt: now.add(const Duration(milliseconds: 2)),
+          updatedAt: now.add(const Duration(milliseconds: 2)),
+          resultSummary: 'duplicate_call_id_conflict',
+          errorCode: 'duplicate_call_id_conflict',
+        ),
+      );
+
+      final records = await repository.getForRun('run-1');
+      expect(records, hasLength(3));
+      expect(records[0].status, ToolInvocationStatus.succeeded);
+      expect(records[0].resultSummary, 'saved');
+      expect(records[1].status, ToolInvocationStatus.duplicateReused);
+      expect(records[2].status, ToolInvocationStatus.duplicateConflict);
+      expect(records[2].errorCode, 'duplicate_call_id_conflict');
+      expect(records.map((record) => record.invocationId).toSet(), {
+        'run-1:invocation:1',
+      });
+      expect(records.map((record) => record.attemptId).toSet(), hasLength(3));
+    },
+  );
 
   test('clearing a conversation removes its tool executions', () async {
     final database = await databaseFactoryFfi.openDatabase(
@@ -102,15 +174,20 @@ void main() {
 }
 
 ToolExecutionRecord _record({
+  int attemptNumber = 1,
   required ToolInvocationStatus status,
   required DateTime startedAt,
   required DateTime updatedAt,
   DateTime? completedAt,
   int? durationMs,
   String resultSummary = '',
+  String errorCode = '',
 }) {
   return ToolExecutionRecord(
-    executionId: 'run-1:tool:call-1',
+    executionId: 'run-1:invocation:1:attempt:$attemptNumber',
+    invocationId: 'run-1:invocation:1',
+    attemptId: 'run-1:invocation:1:attempt:$attemptNumber',
+    providerCallId: 'call-1',
     runId: 'run-1',
     turnId: 'turn-1',
     messageId: 'run-1:assistant',
@@ -125,6 +202,7 @@ ToolExecutionRecord _record({
     status: status,
     argumentsSummary: '{"title":"Release"}',
     resultSummary: resultSummary,
+    errorCode: errorCode,
     approvalStatus: 'allowOnce',
     durationMs: durationMs,
     startedAt: startedAt,
