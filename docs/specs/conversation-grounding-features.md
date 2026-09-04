@@ -272,7 +272,13 @@
 
 ### GRD-008 不可变工具证据领域模型
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/models/tool_evidence.dart`、
+`lib/domain/models/tool.dart` 和
+`lib/domain/use_cases/agent_run_coordinator_support.dart`；不可变性、身份、终态、证据类型、
+完整性、有效期与持久化门禁测试：
+`test/domain/models/tool_evidence_test.dart`。
 
 目标：把“调用发生过”的审计与“可支持声明”的证据分开。
 
