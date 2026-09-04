@@ -7,6 +7,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 part 'agent_run_coordinator_support.dart';
+part 'agent_run_evidence.dart';
 part 'agent_run_persistence.dart';
 
 final class AgentRunLimits {
@@ -751,35 +752,8 @@ final class AgentRunCoordinator {
       );
     }
 
-    if (!result.isError && definition.outputSchema != null) {
-      final structuredContent = result.structuredContent;
-      if (structuredContent == null) {
-        result = ToolResult(
-          callId: call.callId,
-          name: call.name,
-          content: 'Tool output failed schema validation.',
-          isError: true,
-          errorCode: 'invalid_tool_output',
-          source: definition.source,
-        );
-      } else {
-        final outputIssues = _schemaValidator.validate(
-          structuredContent,
-          definition.outputSchema!,
-        );
-        if (outputIssues.isNotEmpty) {
-          result = ToolResult(
-            callId: call.callId,
-            name: call.name,
-            content: 'Tool output failed schema validation.',
-            isError: true,
-            errorCode: 'invalid_tool_output',
-            source: definition.source,
-          );
-        }
-      }
-    }
-    result = _identifyResult(_truncateResult(result), identity);
+    final validated = _validateToolResultContract(definition, call, result);
+    result = _identifyResult(_truncateResult(validated.result), identity);
     record = _completeRecord(
       record,
       status:
@@ -788,6 +762,7 @@ final class AgentRunCoordinator {
               : ToolInvocationStatus.succeeded,
       errorCode: result.errorCode,
       resultSummary: _auditResultSummary(definition, result),
+      evidenceCandidate: result.truncated ? null : validated.evidenceCandidate,
     );
     await observeInvocation(record);
     completedCalls[call.callId] = _CompletedCall(result);

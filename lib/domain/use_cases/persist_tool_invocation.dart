@@ -42,13 +42,16 @@ final class PersistToolInvocation {
       attemptId: record.attemptId,
       providerCallId: record.providerCallId,
       toolName: record.name,
+      toolVersion: record.evidenceCandidate?.toolVersion ?? '',
       source: record.source,
       status: record.status,
       sequence: record.eventSequence,
       occurredAt: record.updatedAt,
       errorCode: errorCode,
     );
-    final evidence = _failureEvidence(record, errorCode: errorCode);
+    final evidence =
+        _businessEvidence(record) ??
+        _failureEvidence(record, errorCode: errorCode);
 
     await _evidenceRepository.commitRun(
       runId: record.runId,
@@ -64,6 +67,39 @@ final class PersistToolInvocation {
       );
     }
   }
+}
+
+ToolEvidenceRecord? _businessEvidence(ToolExecutionRecord record) {
+  final candidate = record.evidenceCandidate;
+  if (record.status != ToolInvocationStatus.succeeded || candidate == null) {
+    return null;
+  }
+  return ToolEvidenceRecord(
+    evidenceId: ToolEvidenceRecord.evidenceIdForAttempt(record.attemptId),
+    runId: record.runId,
+    turnId: record.turnId,
+    chatId: record.chatId,
+    messageId: record.messageId,
+    invocationId: record.invocationId,
+    attemptId: record.attemptId,
+    providerCallId: record.providerCallId,
+    toolName: record.name,
+    toolVersion: candidate.toolVersion,
+    source: record.source,
+    capabilities: candidate.capabilities,
+    terminalStatus: record.status,
+    evidenceKind: candidate.evidenceKind,
+    subject: candidate.subject,
+    scope: candidate.scope,
+    resultSummary:
+        '${record.name} produced '
+        '${candidate.structuredFacts.length} structured fact(s).',
+    argumentsDigest: candidate.argumentsDigest,
+    resultDigest: candidate.resultDigest,
+    structuredFacts: candidate.structuredFacts,
+    observedAt: candidate.observedAt,
+    validUntil: candidate.validUntil,
+  );
 }
 
 ToolEvidenceRecord? _failureEvidence(

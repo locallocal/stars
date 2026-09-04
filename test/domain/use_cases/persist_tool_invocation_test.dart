@@ -55,9 +55,57 @@ void main() {
     expect(order, ['ledger']);
     expect(executionRepository.records, isEmpty);
   });
+
+  test(
+    'turns a validated candidate into immutable business evidence',
+    () async {
+      final order = <String>[];
+      final evidenceRepository = _FaultInjectingEvidenceRepository(
+        order: order,
+      );
+      final executionRepository = _RecordingExecutionRepository(order: order);
+      final useCase = PersistToolInvocation(
+        evidenceRepository: evidenceRepository,
+        executionRepository: executionRepository,
+      );
+      final observedAt = DateTime.utc(2026, 9, 4, 10);
+      final candidate = ToolEvidenceCandidate(
+        toolVersion: '1.0.0',
+        capabilities: const {ToolCapability.compute},
+        evidenceKind: EvidenceKind.calculation,
+        subject: 'calculation:double',
+        scope: const {'value': 2},
+        structuredFacts: [StructuredFact(name: 'calculation.result', value: 4)],
+        argumentsDigest:
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        resultDigest:
+            'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        observedAt: observedAt,
+      );
+
+      await useCase(
+        _record(
+          status: ToolInvocationStatus.succeeded,
+          evidenceCandidate: candidate,
+        ),
+      );
+
+      final evidence = evidenceRepository.evidence.single;
+      expect(evidence.evidenceKind, EvidenceKind.calculation);
+      expect(evidence.toolVersion, '1.0.0');
+      expect(evidence.subject, 'calculation:double');
+      expect(evidence.scope, {'value': 2});
+      expect(evidence.structuredFacts.single.value, 4);
+      expect(evidence.resultDigest, candidate.resultDigest);
+      expect(evidenceRepository.events.single.toolVersion, '1.0.0');
+    },
+  );
 }
 
-ToolExecutionRecord _record({required ToolInvocationStatus status}) {
+ToolExecutionRecord _record({
+  required ToolInvocationStatus status,
+  ToolEvidenceCandidate? evidenceCandidate,
+}) {
   final timestamp = DateTime.utc(2026, 9, 4, 10);
   return ToolExecutionRecord(
     executionId: 'run-1:invocation:1:attempt:1',
@@ -80,6 +128,7 @@ ToolExecutionRecord _record({required ToolInvocationStatus status}) {
     completedAt: timestamp,
     updatedAt: timestamp,
     eventSequence: 2,
+    evidenceCandidate: evidenceCandidate,
   );
 }
 

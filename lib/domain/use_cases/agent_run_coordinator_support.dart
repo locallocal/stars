@@ -79,6 +79,7 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     String resultSummary = '',
     String errorCode = '',
     String approvalDecision = '',
+    ToolEvidenceCandidate? evidenceCandidate,
   }) {
     final completedAt = DateTime.now();
     return record.copyWith(
@@ -89,6 +90,7 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
           approvalDecision.isEmpty ? record.approvalDecision : approvalDecision,
       completedAt: completedAt,
       durationMs: completedAt.difference(record.startedAt).inMilliseconds,
+      evidenceCandidate: evidenceCandidate,
     );
   }
 

@@ -117,6 +117,7 @@ ToolExecutionRecord _toolExecutionProjection(
     completedAt: invocation.completedAt,
     updatedAt: DateTime.now(),
     eventSequence: sequence,
+    evidenceCandidate: invocation.evidenceCandidate,
   );
 }
 

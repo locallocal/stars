@@ -10,11 +10,13 @@ final class McpToolAdapter implements ExecutableTool {
     required McpClient client,
     Future<bool> Function()? availabilityCheck,
     JsonSchemaValidator schemaValidator = const JsonSchemaValidator(),
+    DateTime Function()? now,
   }) : _server = server,
        _descriptor = descriptor,
        _client = client,
        _availabilityCheck = availabilityCheck,
        _schemaValidator = schemaValidator,
+       _now = now ?? DateTime.now,
        definition = ToolDefinition(
          name: descriptor.canonicalName,
          title: descriptor.title,
@@ -46,6 +48,7 @@ final class McpToolAdapter implements ExecutableTool {
   final McpClient _client;
   final Future<bool> Function()? _availabilityCheck;
   final JsonSchemaValidator _schemaValidator;
+  final DateTime Function() _now;
 
   @override
   final ToolDefinition definition;
@@ -66,6 +69,8 @@ final class McpToolAdapter implements ExecutableTool {
           content: 'The MCP Tool is unavailable.',
           isError: true,
           errorCode: 'mcp_tool_unavailable',
+          source: ToolSource.mcp,
+          observedAt: _now(),
         );
       }
       final result = await _client.callTool(
@@ -87,6 +92,8 @@ final class McpToolAdapter implements ExecutableTool {
             content: 'The MCP Tool returned invalid structured output.',
             isError: true,
             errorCode: 'mcp_output_schema_validation_failed',
+            source: ToolSource.mcp,
+            observedAt: _now(),
           );
         }
       }
@@ -103,6 +110,9 @@ final class McpToolAdapter implements ExecutableTool {
         structuredContent: result.structuredContent,
         isError: result.isError,
         errorCode: result.isError ? 'mcp_tool_error' : '',
+        source: ToolSource.mcp,
+        schemaValid: outputSchema != null && result.structuredContent != null,
+        observedAt: _now(),
       );
     } on AgentRunCancelledException {
       rethrow;
@@ -113,6 +123,8 @@ final class McpToolAdapter implements ExecutableTool {
         content: 'The MCP Tool call failed (${error.code}).',
         isError: true,
         errorCode: error.code,
+        source: ToolSource.mcp,
+        observedAt: _now(),
       );
     } on Object {
       return ToolResult(
@@ -121,6 +133,8 @@ final class McpToolAdapter implements ExecutableTool {
         content: 'The MCP Tool call failed.',
         isError: true,
         errorCode: 'mcp_tool_call_failed',
+        source: ToolSource.mcp,
+        observedAt: _now(),
       );
     }
   }

@@ -723,6 +723,83 @@ void main() {
         expect(tool.executions, 1);
       },
     );
+
+    test('accepts a schema-valid scoped evidence result', () async {
+      final tool = _EvidenceCalculationTool();
+      final session = _FakeModelSession([
+        [
+          ToolCallRequested(
+            callId: 'call-1',
+            name: tool.definition.name,
+            arguments: const {'value': 2},
+          ),
+          const ModelTurnCompleted(stopReason: 'tool_calls'),
+        ],
+        [
+          const TextDelta('4\n<stars_evidence call_ids="call-1" />'),
+          const ModelTurnCompleted(stopReason: 'stop'),
+        ],
+      ]);
+      final persisted = <ToolExecutionRecord>[];
+      final coordinator = AgentRunCoordinator(
+        toolRegistry: StaticToolRegistry([tool]),
+        toolPolicy: const DefaultToolPolicy(),
+        toolInvocationPersister: (record) async => persisted.add(record),
+      );
+
+      final result = await coordinator.run(
+        provider: _FakeProvider(session),
+        request: _request(toolNames: {tool.definition.name}),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      final terminal = persisted.last;
+      expect(terminal.status, ToolInvocationStatus.succeeded);
+      expect(terminal.evidenceCandidate, isNotNull);
+      expect(terminal.evidenceCandidate!.toolVersion, '1.0.0');
+      expect(
+        terminal.evidenceCandidate!.evidenceKind,
+        EvidenceKind.calculation,
+      );
+      expect(terminal.evidenceCandidate!.structuredFacts.single.value, 4);
+    });
+
+    test('rejects evidence whose scope differs from Tool arguments', () async {
+      final tool = _EvidenceCalculationTool(mismatchedScope: true);
+      final session = _FakeModelSession([
+        [
+          ToolCallRequested(
+            callId: 'call-1',
+            name: tool.definition.name,
+            arguments: const {'value': 2},
+          ),
+          const ModelTurnCompleted(stopReason: 'tool_calls'),
+        ],
+        [
+          const TextDelta(
+            'The result could not be verified.\n'
+            '<stars_evidence call_ids="" />',
+          ),
+          const ModelTurnCompleted(stopReason: 'stop'),
+        ],
+      ]);
+      final coordinator = AgentRunCoordinator(
+        toolRegistry: StaticToolRegistry([tool]),
+        toolPolicy: const DefaultToolPolicy(),
+      );
+
+      final result = await coordinator.run(
+        provider: _FakeProvider(session),
+        request: _request(toolNames: {tool.definition.name}),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      final returned = session.continuations.single.single;
+      expect(returned.isError, isTrue);
+      expect(returned.errorCode, 'tool_evidence_scope_mismatch');
+      expect(result.toolInvocations.single.status, ToolInvocationStatus.failed);
+      expect(result.toolInvocations.single.evidenceCandidate, isNull);
+    });
   });
 
   group('JsonSchemaValidator', () {
@@ -829,6 +906,79 @@ final class _FakeTool implements ExecutableTool {
       name: call.name,
       content: '${value * 2}',
       structuredContent: {'result': value * 2},
+    );
+  }
+}
+
+final class _EvidenceCalculationTool implements ExecutableTool {
+  _EvidenceCalculationTool({this.mismatchedScope = false});
+
+  final bool mismatchedScope;
+
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: 'evidence_calculate',
+    description: 'Double a number with typed evidence.',
+    inputSchema: const {
+      'type': 'object',
+      'properties': {
+        'value': {'type': 'integer'},
+      },
+      'required': ['value'],
+      'additionalProperties': false,
+    },
+    outputSchema: const {
+      'type': 'object',
+      'properties': {
+        'result': {'type': 'integer'},
+        ...toolEvidenceOutputSchemaProperties,
+      },
+      'required': ['result', ...toolEvidenceOutputRequiredFields],
+      'additionalProperties': false,
+    },
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.readOnly,
+    capabilities: const {ToolCapability.compute},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.calculation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: 'calculation:double',
+      argumentToScope: const {'value': 'value'},
+    ),
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    final value = call.arguments['value']! as int;
+    final scope = <String, Object?>{
+      'value': mismatchedScope ? value + 1 : value,
+    };
+    final facts = [
+      StructuredFact(name: 'calculation.result', value: value * 2),
+    ];
+    final observedAt = DateTime.utc(2026, 9, 4, 10);
+    return ToolResult(
+      callId: call.callId,
+      name: call.name,
+      content: '${value * 2}',
+      structuredContent: {
+        'result': value * 2,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.calculation,
+          subject: 'calculation:double',
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
+      },
+      evidenceKind: EvidenceKind.calculation,
+      subject: 'calculation:double',
+      scope: scope,
+      structuredFacts: facts,
+      observedAt: observedAt,
     );
   }
 }
