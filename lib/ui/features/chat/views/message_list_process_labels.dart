@@ -23,6 +23,8 @@ String _statusLabel(S strings, String status) {
     case 'timedOut':
       return strings.statusTimedOut;
     case 'duplicate':
+    case 'duplicateReused':
+    case 'duplicateConflict':
       return strings.statusDuplicate;
     case 'skipped':
       return strings.statusSkipped;
@@ -181,6 +183,8 @@ String _processDetailLabel(S strings, String detail) {
     case 'timedOut':
       return strings.statusTimedOut;
     case 'duplicate':
+    case 'duplicateReused':
+    case 'duplicateConflict':
       return strings.statusDuplicate;
     case 'skipped':
       return strings.statusSkipped;

@@ -762,6 +762,15 @@ void main() {
           startsWith('run:'),
         );
         expect(
+          controller.snapshot.toolCalls.single.invocationId,
+          startsWith('run:'),
+        );
+        expect(
+          controller.snapshot.toolCalls.single.attemptId,
+          controller.snapshot.toolCalls.single.executionId,
+        );
+        expect(controller.snapshot.toolCalls.single.providerCallId, 'save-1');
+        expect(
           controller.snapshot.toolCalls.single.status,
           ToolInvocationStatus.succeeded.name,
         );
@@ -797,6 +806,9 @@ void main() {
           controller.snapshot.toolCalls.single.executionId,
         });
         expect(toolAudits.last.runId, startsWith('run:'));
+        expect(toolAudits.last.invocationId, startsWith('run:'));
+        expect(toolAudits.last.attemptId, toolAudits.last.executionId);
+        expect(toolAudits.last.providerCallId, 'save-1');
         expect(toolAudits.last.chatId, 'chat-1');
         expect(toolAudits.last.source, ToolSource.mcp);
         expect(toolAudits.last.status, ToolInvocationStatus.succeeded);
@@ -809,6 +821,75 @@ void main() {
         expect(
           toolAudits.last.argumentsSummary,
           contains('"api_token":"[redacted]"'),
+        );
+      },
+    );
+
+    test(
+      'projects and persists duplicate reuse without replacing first success',
+      () async {
+        final tool = _ViewModelTool();
+        final factory = _AgentProviderFactory(repeatCall: true);
+        final persisted = <Message>[];
+        final toolAudits = <ToolExecutionRecord>[];
+        final controller = ChatGenerationViewModel(
+          chatId: 'chat-1',
+          bot: _bot,
+          providerFactory: factory.create,
+          messagePersister: (message) async {
+            persisted.add(message);
+            return message;
+          },
+          lastMessageUpdater: (_, _) async {},
+          toolInvocationPersister: (record) async {
+            toolAudits.add(record);
+          },
+          toolRegistry: StaticToolRegistry([tool]),
+        );
+        addTearDown(controller.dispose);
+
+        expect(
+          await controller.startText(
+            userMessage: _userMessage(),
+            messages: [ChatMessage(role: 'user', content: 'Save it once')],
+            requestedToolNames: const {'mcp.notes.save_note'},
+          ),
+          isTrue,
+        );
+        await _waitFor(() => controller.snapshot.pendingToolApproval != null);
+        controller.resolveToolApproval(ToolApprovalDecision.allowOnce);
+        await _waitFor(
+          () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+        );
+
+        expect(tool.executions, 1);
+        expect(controller.snapshot.toolCalls, hasLength(2));
+        expect(controller.snapshot.toolCalls.map((call) => call.status), [
+          ToolInvocationStatus.succeeded.name,
+          ToolInvocationStatus.duplicateReused.name,
+        ]);
+        final assistant = persisted.last;
+        expect(assistant.processInfo.toolCalls, hasLength(2));
+        expect(
+          assistant.processInfo.toolCalls.first.status,
+          ToolInvocationStatus.succeeded.name,
+        );
+        expect(
+          assistant.processInfo.toolCalls.last.status,
+          ToolInvocationStatus.duplicateReused.name,
+        );
+
+        final terminalAudits = <String, ToolExecutionRecord>{};
+        for (final audit in toolAudits) {
+          terminalAudits[audit.attemptId] = audit;
+        }
+        expect(terminalAudits, hasLength(2));
+        expect(
+          terminalAudits.values.map((audit) => audit.status),
+          containsAll([
+            ToolInvocationStatus.succeeded,
+            ToolInvocationStatus.duplicateReused,
+          ]),
         );
       },
     );
@@ -1298,28 +1379,42 @@ final class _AddMcpServerAuditTool implements ExecutableTool {
 }
 
 final class _AgentProviderFactory {
-  _AgentProviderFactory({String? toolName, Map<String, Object?>? arguments})
-    : toolName = toolName ?? 'mcp.notes.save_note',
-      arguments =
-          arguments ??
-          {
-            'value': 'hello',
-            'api_token': 'do-not-persist',
-            'body': List.filled(140, 'x').join(),
-          };
+  _AgentProviderFactory({
+    String? toolName,
+    Map<String, Object?>? arguments,
+    this.repeatCall = false,
+  }) : toolName = toolName ?? 'mcp.notes.save_note',
+       arguments =
+           arguments ??
+           {
+             'value': 'hello',
+             'api_token': 'do-not-persist',
+             'body': List.filled(140, 'x').join(),
+           };
 
   final String toolName;
   final Map<String, Object?> arguments;
+  final bool repeatCall;
 
-  AiProvider create(Bot bot) =>
-      _AgentProvider(bot, toolName: toolName, arguments: arguments);
+  AiProvider create(Bot bot) => _AgentProvider(
+    bot,
+    toolName: toolName,
+    arguments: arguments,
+    repeatCall: repeatCall,
+  );
 }
 
 final class _AgentProvider extends AiProvider {
-  _AgentProvider(super.bot, {required this.toolName, required this.arguments});
+  _AgentProvider(
+    super.bot, {
+    required this.toolName,
+    required this.arguments,
+    required this.repeatCall,
+  });
 
   final String toolName;
   final Map<String, Object?> arguments;
+  final bool repeatCall;
 
   @override
   AiProviderCapabilities get capabilities => const AiProviderCapabilities(
@@ -1329,7 +1424,11 @@ final class _AgentProvider extends AiProvider {
 
   @override
   AgentModelSession openModelSession(ModelRequest request) {
-    return _ViewModelAgentSession(toolName: toolName, arguments: arguments);
+    return _ViewModelAgentSession(
+      toolName: toolName,
+      arguments: arguments,
+      repeatCall: repeatCall,
+    );
   }
 
   @override
@@ -1339,20 +1438,34 @@ final class _AgentProvider extends AiProvider {
 }
 
 final class _ViewModelAgentSession implements AgentModelSession {
-  _ViewModelAgentSession({required this.toolName, required this.arguments});
+  _ViewModelAgentSession({
+    required this.toolName,
+    required this.arguments,
+    required this.repeatCall,
+  });
 
   final String toolName;
   final Map<String, Object?> arguments;
+  final bool repeatCall;
 
   @override
-  Stream<ModelEvent> start() => Stream.fromIterable([
-    ToolCallRequested(callId: 'save-1', name: toolName, arguments: arguments),
-    const ModelTurnCompleted(stopReason: 'tool_calls'),
-  ]);
+  Stream<ModelEvent> start() {
+    final call = ToolCallRequested(
+      callId: 'save-1',
+      name: toolName,
+      arguments: arguments,
+    );
+    return Stream.fromIterable([
+      call,
+      if (repeatCall) call,
+      const ModelTurnCompleted(stopReason: 'tool_calls'),
+    ]);
+  }
 
   @override
   Stream<ModelEvent> continueWith(List<ToolResult> results) {
-    expect(results.single.isError, isFalse);
+    expect(results, hasLength(repeatCall ? 2 : 1));
+    expect(results.every((result) => !result.isError), isTrue);
     return Stream.fromIterable([
       const TextDelta('Saved.\n<stars_evidence call_ids="save-1" />'),
       const ModelTurnCompleted(stopReason: 'stop'),

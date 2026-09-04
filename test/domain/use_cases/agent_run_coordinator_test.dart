@@ -64,15 +64,25 @@ void main() {
       expect(result.tokenUsage.outputTokens, 7);
       expect(tool.executions, 1);
       expect(session.continuations, hasLength(1));
-      expect(session.continuations.single.single.content, '4');
+      final returnedResult = session.continuations.single.single;
+      expect(returnedResult.content, '4');
+      expect(returnedResult.invocationId, 'run-1:invocation:1');
+      expect(returnedResult.attemptId, 'run-1:invocation:1:attempt:1');
+      expect(
+        returnedResult.evidenceId,
+        'run-1:invocation:1:attempt:1:evidence',
+      );
+      expect(returnedResult.evidenceId, isNot(returnedResult.callId));
       expect(records.last.status, ToolInvocationStatus.succeeded);
-      expect(records.last.executionId, 'run-1:tool:call-1');
+      expect(records.last.invocationId, 'run-1:invocation:1');
+      expect(records.last.attemptId, 'run-1:invocation:1:attempt:1');
+      expect(records.last.providerCallId, 'call-1');
       expect(
         result.toolInvocations.single.status,
         ToolInvocationStatus.succeeded,
       );
-      expect(records.map((record) => record.executionId).toSet(), {
-        'run-1:tool:call-1',
+      expect(records.map((record) => record.attemptId).toSet(), {
+        'run-1:invocation:1:attempt:1',
       });
       expect(events.whereType<ToolCallRequested>(), hasLength(1));
     });
@@ -170,11 +180,137 @@ void main() {
       expect(result.status, AgentRunStatus.completed);
       expect(tool.executions, 1);
       expect(session.continuations.single, hasLength(2));
+      expect(result.toolInvocations, hasLength(2));
+      expect(result.toolInvocations[0].status, ToolInvocationStatus.succeeded);
       expect(
-        result.toolInvocations.single.status,
-        ToolInvocationStatus.duplicate,
+        result.toolInvocations[1].status,
+        ToolInvocationStatus.duplicateReused,
+      );
+      expect(
+        result.toolInvocations.map((record) => record.invocationId).toSet(),
+        {'run-1:invocation:1'},
+      );
+      expect(
+        result.toolInvocations.map((record) => record.attemptId).toSet(),
+        hasLength(2),
+      );
+      expect(session.continuations.single.map((result) => result.content), [
+        '4',
+        '4',
+      ]);
+      expect(
+        session.continuations.single.map((result) => result.evidenceId).toSet(),
+        {'run-1:invocation:1:attempt:1:evidence'},
       );
     });
+
+    test('rejects conflicting duplicate arguments as a new attempt', () async {
+      final tool = _FakeTool(name: 'calculate');
+      final session = _FakeModelSession([
+        [
+          ToolCallRequested(
+            callId: 'same-call',
+            name: 'calculate',
+            arguments: const {'value': 2},
+          ),
+          ToolCallRequested(
+            callId: 'same-call',
+            name: 'calculate',
+            arguments: const {'value': 3},
+          ),
+          const ModelTurnCompleted(stopReason: 'tool_calls'),
+        ],
+        [
+          const TextDelta('done\n<stars_evidence call_ids="same-call" />'),
+          const ModelTurnCompleted(stopReason: 'stop'),
+        ],
+      ]);
+      final coordinator = AgentRunCoordinator(
+        toolRegistry: StaticToolRegistry([tool]),
+        toolPolicy: const DefaultToolPolicy(),
+      );
+
+      final result = await coordinator.run(
+        provider: _FakeProvider(session),
+        request: _request(toolNames: {'calculate'}),
+      );
+
+      expect(result.status, AgentRunStatus.completed);
+      expect(tool.executions, 1);
+      expect(session.continuations.single, hasLength(2));
+      expect(session.continuations.single[0].content, '4');
+      expect(session.continuations.single[1].isError, isTrue);
+      expect(
+        session.continuations.single[1].errorCode,
+        'duplicate_call_id_conflict',
+      );
+      expect(
+        session.continuations.single[1].evidenceId,
+        'run-1:invocation:1:attempt:2:evidence',
+      );
+      expect(result.toolInvocations, hasLength(2));
+      expect(result.toolInvocations[0].status, ToolInvocationStatus.succeeded);
+      expect(
+        result.toolInvocations[1].status,
+        ToolInvocationStatus.duplicateConflict,
+      );
+      expect(result.toolInvocations[1].errorCode, 'duplicate_call_id_conflict');
+      expect(
+        result.toolInvocations.map((record) => record.attemptId).toSet(),
+        hasLength(2),
+      );
+    });
+
+    test(
+      'records a terminal attempt when the retry limit is exceeded',
+      () async {
+        final tool = _FakeTool(name: 'calculate');
+        final repeated = ToolCallRequested(
+          callId: 'same-call',
+          name: 'calculate',
+          arguments: const {'value': 2},
+        );
+        final session = _FakeModelSession([
+          [
+            repeated,
+            repeated,
+            repeated,
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [
+            const TextDelta('done\n<stars_evidence call_ids="same-call" />'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+        ]);
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([tool]),
+          toolPolicy: const DefaultToolPolicy(),
+          limits: const AgentRunLimits(maxSameCallRetries: 1),
+        );
+
+        final result = await coordinator.run(
+          provider: _FakeProvider(session),
+          request: _request(toolNames: {'calculate'}),
+        );
+
+        expect(tool.executions, 1);
+        expect(result.toolInvocations, hasLength(3));
+        expect(result.toolInvocations.map((record) => record.status), [
+          ToolInvocationStatus.succeeded,
+          ToolInvocationStatus.duplicateReused,
+          ToolInvocationStatus.failed,
+        ]);
+        expect(
+          result.toolInvocations.last.errorCode,
+          'tool_retry_limit_reached',
+        );
+        expect(result.toolInvocations.last.completedAt, isNotNull);
+        expect(
+          result.toolInvocations.map((record) => record.attemptId).toSet(),
+          hasLength(3),
+        );
+      },
+    );
 
     test('runs independent pure computation calls in parallel', () async {
       final tool = _ParallelTool();

@@ -466,7 +466,14 @@ void main() {
     final first = await session.start().toList();
     final second =
         await session.continueWith([
-          ToolResult(callId: 'call-1', name: 'calculate', content: '4'),
+          ToolResult(
+            callId: 'call-1',
+            name: 'calculate',
+            content: '4',
+            invocationId: 'invocation-1',
+            attemptId: 'attempt-1',
+            evidenceId: 'evidence-1',
+          ),
         ]).toList();
 
     expect(first.whereType<ReasoningDelta>().single.text, 'checking');
@@ -487,7 +494,10 @@ void main() {
             as String;
     final envelope = Map<String, dynamic>.from(jsonDecode(output) as Map);
     expect(envelope['type'], 'stars_tool_result');
-    expect(envelope['evidence_id'], 'call-1');
+    expect(envelope['evidence_id'], 'evidence-1');
+    expect(envelope['invocation_id'], 'invocation-1');
+    expect(envelope['attempt_id'], 'attempt-1');
+    expect(envelope['provider_call_id'], 'call-1');
     expect(envelope['status'], 'success');
   });
 }

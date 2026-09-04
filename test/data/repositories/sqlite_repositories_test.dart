@@ -181,6 +181,9 @@ void main() {
       final toolCalls = processInfo['tool_calls']! as List<Object?>;
       final legacyCall = Map<String, Object?>.from(toolCalls.single! as Map);
       legacyCall.remove('execution_id');
+      legacyCall.remove('invocation_id');
+      legacyCall.remove('attempt_id');
+      legacyCall.remove('provider_call_id');
       processInfo['tool_calls'] = <Object?>[legacyCall];
       values['process_info'] = jsonEncode(processInfo);
       await database.insert('messages', values);

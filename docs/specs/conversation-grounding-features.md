@@ -145,7 +145,15 @@
 
 ### GRD-004 调用、尝试和证据身份分离
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/use_cases/agent_run_coordinator.dart`、
+`lib/domain/models/tool.dart`、`lib/ui/features/chat/view_models/chat_generation_events.dart`、
+`lib/data/services/database_tool_execution_schema.dart`；运行时、消息投影和持久化回归测试：
+`test/domain/use_cases/agent_run_coordinator_test.dart`、
+`test/ui/features/chat/view_models/chat_generation_view_model_test.dart`、
+`test/data/repositories/sqlite_tool_execution_repository_test.dart` 和
+`test/data/services/database_service_test.dart`。
 
 目标：修复同一 `call_id` 的 duplicate 状态覆盖首次成功调用的问题。
 

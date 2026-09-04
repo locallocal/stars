@@ -77,6 +77,9 @@ final class ToolResult {
     required this.callId,
     required this.name,
     required this.content,
+    this.invocationId = '',
+    this.attemptId = '',
+    this.evidenceId = '',
     this.structuredContent,
     this.isError = false,
     this.errorCode = '',
@@ -87,6 +90,9 @@ final class ToolResult {
   final String callId;
   final String name;
   final String content;
+  final String invocationId;
+  final String attemptId;
+  final String evidenceId;
   final Object? structuredContent;
   final bool isError;
   final String errorCode;
@@ -95,6 +101,9 @@ final class ToolResult {
 
   ToolResult copyWith({
     String? content,
+    String? invocationId,
+    String? attemptId,
+    String? evidenceId,
     Object? structuredContent,
     bool clearStructuredContent = false,
     bool? isError,
@@ -106,6 +115,9 @@ final class ToolResult {
       callId: callId,
       name: name,
       content: content ?? this.content,
+      invocationId: invocationId ?? this.invocationId,
+      attemptId: attemptId ?? this.attemptId,
+      evidenceId: evidenceId ?? this.evidenceId,
       structuredContent:
           clearStructuredContent
               ? null
@@ -131,8 +143,11 @@ String encodeToolResultForModel(ToolResult result) {
   }
   return jsonEncode({
     'type': 'stars_tool_result',
-    'version': 1,
-    'evidence_id': result.callId,
+    'version': 2,
+    'evidence_id': result.evidenceId,
+    'invocation_id': result.invocationId,
+    'attempt_id': result.attemptId,
+    'provider_call_id': result.callId,
     'call_id': result.callId,
     'tool_name': result.name,
     'source': result.source.name,
@@ -531,13 +546,20 @@ enum ToolInvocationStatus {
   denied,
   cancelled,
   timedOut,
+  duplicateReused,
+  duplicateConflict,
+
+  /// Retained so audit records written before GRD-004 remain readable.
   duplicate,
 }
 
 final class ToolInvocationRecord {
   ToolInvocationRecord({
-    required this.executionId,
-    required this.callId,
+    String invocationId = '',
+    String attemptId = '',
+    String providerCallId = '',
+    String executionId = '',
+    String callId = '',
     required this.name,
     this.title = '',
     this.mcpServerName = '',
@@ -551,10 +573,25 @@ final class ToolInvocationRecord {
     required this.startedAt,
     this.completedAt,
     this.durationMs,
-  }) : arguments = Map<String, Object?>.unmodifiable(arguments);
+  }) : invocationId = invocationId.isEmpty ? executionId : invocationId,
+       attemptId = attemptId.isEmpty ? executionId : attemptId,
+       providerCallId = providerCallId.isEmpty ? callId : providerCallId,
+       arguments = Map<String, Object?>.unmodifiable(arguments);
 
-  final String executionId;
-  final String callId;
+  /// Application-owned identity for one logical tool invocation.
+  final String invocationId;
+
+  /// Application-owned identity for this execution or duplicate attempt.
+  final String attemptId;
+
+  /// Provider-owned correlation value. It is never used as an audit identity.
+  final String providerCallId;
+
+  /// Compatibility alias for callers that still render an execution ID.
+  String get executionId => attemptId;
+
+  /// Compatibility alias for provider adapters and legacy projections.
+  String get callId => providerCallId;
   final String name;
   final String title;
   final String mcpServerName;
@@ -578,8 +615,9 @@ final class ToolInvocationRecord {
     int? durationMs,
   }) {
     return ToolInvocationRecord(
-      executionId: executionId,
-      callId: callId,
+      invocationId: invocationId,
+      attemptId: attemptId,
+      providerCallId: providerCallId,
       name: name,
       title: title,
       mcpServerName: mcpServerName,
@@ -599,13 +637,17 @@ final class ToolInvocationRecord {
 
 /// A redacted, durable audit record for one tool execution in a chat run.
 ///
-/// [executionId] is stable while the invocation moves through requested,
-/// approval, running, and terminal states. Raw tool arguments and results are
-/// intentionally excluded from this model so credentials cannot cross the
-/// persistence boundary.
+/// [attemptId] is stable while one attempt moves through requested, approval,
+/// running, and a terminal state. Multiple attempts can share [invocationId],
+/// while [providerCallId] is correlation metadata only. Raw tool arguments and
+/// results are intentionally excluded from this model so credentials cannot
+/// cross the persistence boundary.
 final class ToolExecutionRecord {
   const ToolExecutionRecord({
     required this.executionId,
+    this.invocationId = '',
+    this.attemptId = '',
+    this.providerCallId = '',
     required this.runId,
     required this.turnId,
     required this.messageId,
@@ -630,6 +672,9 @@ final class ToolExecutionRecord {
   });
 
   final String executionId;
+  final String invocationId;
+  final String attemptId;
+  final String providerCallId;
   final String runId;
   final String turnId;
   final String messageId;
