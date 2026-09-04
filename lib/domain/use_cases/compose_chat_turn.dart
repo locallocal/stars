@@ -135,6 +135,7 @@ final class ComposeChatTurn {
     required Message userMessage,
     required String currentUserId,
     AiProvider? skillToolProvider,
+    bool includeUntrustedPartialOutput = false,
   }) async {
     final conversationArtifactsDirectory =
         await _conversationArtifactsDirectoryProvider(userMessage.chatId);
@@ -208,6 +209,7 @@ final class ComposeChatTurn {
           conversationArtifactsDirectory: conversationArtifactsDirectory,
           injectApplicationPrompt: injectApplicationPrompt,
           systemPromptLanguage: systemPromptLanguage,
+          includeUntrustedPartialOutput: includeUntrustedPartialOutput,
         );
       } on ProviderFailure catch (failure) {
         final isTimeout = failure.kind == ProviderFailureKind.timeout;
@@ -363,6 +365,7 @@ final class ComposeChatTurn {
               providerSupportsHistoryLookup:
                   provider?.capabilities.supportsAgentLoop ?? false,
               conversationHistorySkillEnabled: conversationHistorySkillEnabled,
+              includeUntrustedPartialOutput: includeUntrustedPartialOutput,
               skillTokens: totalSkillTokens,
             );
     if (preparedContext?.report.compressionAction ==
@@ -382,6 +385,7 @@ final class ComposeChatTurn {
           providerSupportsHistoryLookup:
               provider?.capabilities.supportsAgentLoop ?? false,
           conversationHistorySkillEnabled: conversationHistorySkillEnabled,
+          includeUntrustedPartialOutput: includeUntrustedPartialOutput,
           skillTokens: totalSkillTokens,
         );
       }
@@ -395,6 +399,7 @@ final class ComposeChatTurn {
             history: history,
             userMessage: userMessage,
             currentUserId: currentUserId,
+            includeUntrustedPartialOutput: includeUntrustedPartialOutput,
           ),
         ];
 
@@ -551,63 +556,30 @@ ${resource.content.trim()}
     required List<Message> history,
     required Message userMessage,
     required String currentUserId,
+    required bool includeUntrustedPartialOutput,
   }) {
-    final limitedHistory =
-        history.length > 100
-            ? history.sublist(history.length - 100)
-            : List<Message>.of(history);
-    var startIndex = 0;
-    for (var index = 0; index < limitedHistory.length; index++) {
-      if (limitedHistory[index].senderId == currentUserId) {
-        startIndex = index;
-        break;
-      }
-    }
-
-    final messages = <ChatMessage>[];
-    var pendingUserMessage = '';
-    for (var index = startIndex; index < limitedHistory.length; index++) {
-      final message = limitedHistory[index];
-      if (message.senderId == currentUserId) {
-        pendingUserMessage =
-            pendingUserMessage.isEmpty
-                ? message.content
-                : '$pendingUserMessage\n${message.content}';
-        continue;
-      }
-      if (!_hasComposableAssistantContent(message)) continue;
-      if (pendingUserMessage.isNotEmpty) {
-        messages.add(ChatMessage(role: 'user', content: pendingUserMessage));
-        pendingUserMessage = '';
-      }
-      messages.add(
-        ChatMessage(
-          role: 'assistant',
-          content: message.content,
-          reasoning: message.reasoning,
-        ),
-      );
-    }
-
-    final latestContent =
-        pendingUserMessage.isEmpty
-            ? userMessage.content
-            : '$pendingUserMessage\n${userMessage.content}';
+    final turns = normalizeConversationHistoryTurns(
+      history: history,
+      currentUserId: currentUserId,
+      currentMessageId: userMessage.messageId,
+      maximumMessages: 100,
+      includeUntrustedPartialOutput: includeUntrustedPartialOutput,
+    );
+    final messages = projectConversationHistoryMessages(
+      turns: turns,
+      currentUserId: currentUserId,
+      includeUntrustedPartialOutput: includeUntrustedPartialOutput,
+    );
     messages.add(
       ChatMessage(
         role: 'user',
-        content: latestContent,
+        content: userMessage.content,
         images: userMessage.images,
         files: userMessage.files,
       ),
     );
     return messages;
   }
-
-  bool _hasComposableAssistantContent(Message message) =>
-      message.content.trim().isNotEmpty ||
-      message.images.isNotEmpty ||
-      message.files.isNotEmpty;
 
   int _estimateTokens(String source) => (source.runes.length + 3) ~/ 4;
 
