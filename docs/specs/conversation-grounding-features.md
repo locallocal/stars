@@ -368,7 +368,19 @@ append-only、digest 自校验、敏感 payload 保留期与级联清理测试�
 
 ### GRD-011 证据型工具输出契约
 
-状态：待实现，可与 GRD-009 并行开发，合并前依赖 GRD-008。
+状态：已完成。
+
+实现入口：`lib/domain/models/tool.dart`、
+`lib/domain/models/tool_evidence_contract.dart`、
+`lib/domain/use_cases/agent_run_evidence.dart`、
+`lib/domain/use_cases/persist_tool_invocation.dart`、
+`lib/data/services/tools/built_in_tools.dart` 和
+`lib/data/services/mcp/mcp_tool_adapter.dart`；领域契约、运行协调、账本衔接、内置工具与 MCP
+回归测试：`test/domain/models/tool_evidence_contract_test.dart`、
+`test/domain/use_cases/agent_run_coordinator_test.dart`、
+`test/domain/use_cases/persist_tool_invocation_test.dart`、
+`test/data/services/tools/built_in_tools_test.dart` 和
+`test/data/services/mcp/mcp_tool_adapter_test.dart`。
 
 目标：让应用能够机械判断工具结果能支持什么类型的声明。
 

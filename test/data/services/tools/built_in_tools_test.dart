@@ -11,7 +11,8 @@ void main() {
   });
 
   test('calculator returns structured arithmetic output', () async {
-    final tool = CalculatorTool();
+    final observedAt = DateTime.utc(2026, 9, 4, 10);
+    final tool = CalculatorTool(now: () => observedAt);
 
     final result = await tool.execute(
       ToolCallRequest(
@@ -24,7 +25,22 @@ void main() {
 
     expect(result.isError, isFalse);
     expect(result.content, '42');
-    expect(result.structuredContent, {'result': 42});
+    expect(result.structuredContent, containsPair('result', 42));
+    expect(result.schemaValid, isTrue);
+    expect(result.evidenceKind, EvidenceKind.calculation);
+    expect(result.subject, 'calculation:basic-arithmetic');
+    expect(result.scope, {'operation': 'multiply', 'left': 6, 'right': 7});
+    expect(result.structuredFacts.single.name, 'calculation.result');
+    expect(result.structuredFacts.single.value, 42);
+    expect(result.observedAt, observedAt);
+    expect(result.resultDigest, hasLength(64));
+    expect(
+      const JsonSchemaValidator().validate(
+        result.structuredContent,
+        tool.definition.outputSchema!,
+      ),
+      isEmpty,
+    );
   });
 
   test('calculator rejects division by zero without throwing', () async {
@@ -64,6 +80,9 @@ void main() {
         'iso8601': '2026-07-29T20:30:00.000+08:00',
         'utc_offset_minutes': 480,
       });
+      expect(result.schemaValid, isTrue);
+      expect(result.observedAt, DateTime.utc(2026, 7, 29, 12, 30));
+      expect(result.evidenceKind, isNull);
     },
   );
 }

@@ -5,7 +5,7 @@ List<ExecutableTool> createBuiltInTools({
   DateTime Function()? now,
   String Function()? currentWorkingDirectory,
 }) => [
-  CalculatorTool(),
+  CalculatorTool(now: now),
   CurrentTimeTool(now: now),
   ...createLocalFileSystemTools(
     currentWorkingDirectory: currentWorkingDirectory,
@@ -13,6 +13,10 @@ List<ExecutableTool> createBuiltInTools({
 ];
 
 final class CalculatorTool implements ExecutableTool {
+  CalculatorTool({DateTime Function()? now}) : _now = now ?? DateTime.now;
+
+  final DateTime Function() _now;
+
   @override
   final ToolDefinition definition = ToolDefinition(
     name: 'calculate',
@@ -36,13 +40,24 @@ final class CalculatorTool implements ExecutableTool {
       'type': 'object',
       'properties': {
         'result': {'type': 'number'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['result'],
+      'required': ['result', ...toolEvidenceOutputRequiredFields],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.readOnly,
     capabilities: const {ToolCapability.compute},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.calculation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: 'calculation:basic-arithmetic',
+      argumentToScope: const {
+        'operation': 'operation',
+        'left': 'left',
+        'right': 'right',
+      },
+    ),
   );
 
   @override
@@ -70,11 +85,33 @@ final class CalculatorTool implements ExecutableTool {
       'divide' => left / right,
       _ => throw StateError('Schema validation accepted an unknown operation.'),
     };
+    final observedAt = _now().toUtc();
+    final scope = <String, Object?>{
+      'operation': operation,
+      'left': left,
+      'right': right,
+    };
+    final facts = [StructuredFact(name: 'calculation.result', value: result)];
     return ToolResult(
       callId: call.callId,
       name: call.name,
       content: '$result',
-      structuredContent: {'result': result},
+      structuredContent: {
+        'result': result,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.calculation,
+          subject: 'calculation:basic-arithmetic',
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
+      },
+      schemaValid: true,
+      evidenceKind: EvidenceKind.calculation,
+      subject: 'calculation:basic-arithmetic',
+      scope: scope,
+      structuredFacts: facts,
+      observedAt: observedAt,
     );
   }
 }
@@ -139,6 +176,8 @@ final class CurrentTimeTool implements ExecutableTool {
         'iso8601': iso8601,
         'utc_offset_minutes': offsetMinutes,
       },
+      schemaValid: true,
+      observedAt: base.toUtc(),
     );
   }
 

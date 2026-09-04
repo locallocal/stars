@@ -21,6 +21,7 @@ void main() {
     expect(adapter.definition.title, 'Search');
     expect(adapter.definition.mcpServerName, 'Example');
     expect(adapter.definition.source, ToolSource.mcp);
+    expect(adapter.definition.producesEvidence, isFalse);
     expect(adapter.definition.riskLevel, ToolRiskLevel.readOnly);
     expect(
       adapter.definition.capabilities,
@@ -59,6 +60,44 @@ void main() {
 
     expect(result.isError, isTrue);
     expect(result.errorCode, 'mcp_output_schema_validation_failed');
+    expect(result.schemaValid, isFalse);
+    expect(result.source, ToolSource.mcp);
+  });
+
+  test('preserves validated MCP result reliability metadata', () async {
+    final observedAt = DateTime.utc(2026, 9, 4, 10);
+    final client =
+        _FakeMcpClient()
+          ..callResult = const McpToolCallResult(
+            content: '',
+            structuredContent: {'count': 2},
+          );
+    final adapter = McpToolAdapter(
+      server: _server(),
+      descriptor: _tool(
+        outputSchema: const {
+          'type': 'object',
+          'properties': {
+            'count': {'type': 'integer'},
+          },
+          'required': ['count'],
+        },
+      ),
+      client: client,
+      now: () => observedAt,
+    );
+
+    final result = await adapter.execute(
+      ToolCallRequest(callId: 'call-1', name: adapter.definition.name),
+      AgentCancellationToken(),
+    );
+
+    expect(result.isError, isFalse);
+    expect(result.schemaValid, isTrue);
+    expect(result.source, ToolSource.mcp);
+    expect(result.observedAt, observedAt);
+    expect(result.resultDigest, hasLength(64));
+    expect(result.evidenceKind, isNull);
   });
 
   test('returns sanitized MCP failures to the Agent Loop', () async {

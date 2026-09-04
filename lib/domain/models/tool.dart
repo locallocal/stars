@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:stars/domain/models/mcp_installer.dart';
 import 'package:stars/domain/models/skill_installer.dart';
 
 part 'tool_json_schema_validator.dart';
 part 'tool_evidence.dart';
+part 'tool_evidence_contract.dart';
 
 enum ToolSource { builtIn, mcp, skillScript }
 
@@ -32,12 +34,20 @@ final class ToolDefinition {
     required this.source,
     required this.riskLevel,
     Set<ToolCapability> capabilities = const {},
+    this.toolVersion = 'unversioned',
+    Set<EvidenceKind> evidenceCapabilities = const {},
+    this.evidenceScope,
+    this.defaultEvidenceValidity,
+    this.requiresReadAfterWrite = false,
   }) : inputSchema = Map<String, Object?>.unmodifiable(inputSchema),
        outputSchema =
            outputSchema == null
                ? null
                : Map<String, Object?>.unmodifiable(outputSchema),
-       capabilities = Set<ToolCapability>.unmodifiable(capabilities) {
+       capabilities = Set<ToolCapability>.unmodifiable(capabilities),
+       evidenceCapabilities = Set<EvidenceKind>.unmodifiable(
+         evidenceCapabilities,
+       ) {
     if (name.trim().isEmpty) {
       throw ArgumentError.value(name, 'name', 'Tool name cannot be empty.');
     }
@@ -48,6 +58,7 @@ final class ToolDefinition {
         'Tool input schema must describe an object.',
       );
     }
+    _validateToolEvidenceDefinition(this);
   }
 
   final String name;
@@ -59,6 +70,13 @@ final class ToolDefinition {
   final ToolSource source;
   final ToolRiskLevel riskLevel;
   final Set<ToolCapability> capabilities;
+  final String toolVersion;
+  final Set<EvidenceKind> evidenceCapabilities;
+  final ToolEvidenceScopeRule? evidenceScope;
+  final Duration? defaultEvidenceValidity;
+  final bool requiresReadAfterWrite;
+
+  bool get producesEvidence => evidenceCapabilities.isNotEmpty;
 }
 
 final class ToolCallRequest {
@@ -86,7 +104,23 @@ final class ToolResult {
     this.errorCode = '',
     this.source = ToolSource.builtIn,
     this.truncated = false,
-  });
+    this.schemaValid = false,
+    this.evidenceKind,
+    this.subject = '',
+    Map<String, Object?> scope = const {},
+    List<StructuredFact> structuredFacts = const [],
+    DateTime? observedAt,
+    DateTime? validUntil,
+    String resultDigest = '',
+  }) : scope = _freezeJsonMap(scope, 'scope'),
+       structuredFacts = List<StructuredFact>.unmodifiable(structuredFacts),
+       observedAt = observedAt?.toUtc(),
+       validUntil = validUntil?.toUtc(),
+       resultDigest = _toolResultDigest(
+         content,
+         structuredContent,
+         supplied: resultDigest,
+       );
 
   final String callId;
   final String name;
@@ -99,6 +133,14 @@ final class ToolResult {
   final String errorCode;
   final ToolSource source;
   final bool truncated;
+  final bool schemaValid;
+  final EvidenceKind? evidenceKind;
+  final String subject;
+  final Map<String, Object?> scope;
+  final List<StructuredFact> structuredFacts;
+  final DateTime? observedAt;
+  final DateTime? validUntil;
+  final String resultDigest;
 
   ToolResult copyWith({
     String? content,
@@ -111,6 +153,16 @@ final class ToolResult {
     String? errorCode,
     ToolSource? source,
     bool? truncated,
+    bool? schemaValid,
+    EvidenceKind? evidenceKind,
+    bool clearEvidenceKind = false,
+    String? subject,
+    Map<String, Object?>? scope,
+    List<StructuredFact>? structuredFacts,
+    DateTime? observedAt,
+    DateTime? validUntil,
+    bool clearValidUntil = false,
+    String? resultDigest,
   }) {
     return ToolResult(
       callId: callId,
@@ -127,6 +179,15 @@ final class ToolResult {
       errorCode: errorCode ?? this.errorCode,
       source: source ?? this.source,
       truncated: truncated ?? this.truncated,
+      schemaValid: schemaValid ?? this.schemaValid,
+      evidenceKind:
+          clearEvidenceKind ? null : evidenceKind ?? this.evidenceKind,
+      subject: subject ?? this.subject,
+      scope: scope ?? this.scope,
+      structuredFacts: structuredFacts ?? this.structuredFacts,
+      observedAt: observedAt ?? this.observedAt,
+      validUntil: clearValidUntil ? null : validUntil ?? this.validUntil,
+      resultDigest: resultDigest ?? this.resultDigest,
     );
   }
 }
@@ -144,7 +205,9 @@ String encodeToolResultForModel(ToolResult result) {
   }
   return jsonEncode({
     'type': 'stars_tool_result',
-    'version': 2,
+    'version': 3,
+    'data_classification': 'untrusted_tool_data',
+    'instructions_allowed': false,
     'evidence_id': result.evidenceId,
     'invocation_id': result.invocationId,
     'attempt_id': result.attemptId,
@@ -155,6 +218,16 @@ String encodeToolResultForModel(ToolResult result) {
     'status': result.isError ? 'error' : 'success',
     'error_code': result.errorCode,
     'truncated': result.truncated,
+    'schema_valid': result.schemaValid,
+    'observed_at': result.observedAt?.toIso8601String(),
+    'valid_until': result.validUntil?.toIso8601String(),
+    'result_digest': result.resultDigest,
+    'evidence_kind': result.evidenceKind?.name,
+    'subject': result.subject,
+    'scope': result.scope,
+    'facts': [
+      for (final fact in result.structuredFacts) _structuredFactJson(fact),
+    ],
     'content': result.content,
     if (structured != null) 'structured_data': structured,
   });
@@ -574,6 +647,7 @@ final class ToolInvocationRecord {
     required this.startedAt,
     this.completedAt,
     this.durationMs,
+    this.evidenceCandidate,
   }) : invocationId = invocationId.isEmpty ? executionId : invocationId,
        attemptId = attemptId.isEmpty ? executionId : attemptId,
        providerCallId = providerCallId.isEmpty ? callId : providerCallId,
@@ -606,6 +680,7 @@ final class ToolInvocationRecord {
   final DateTime startedAt;
   final DateTime? completedAt;
   final int? durationMs;
+  final ToolEvidenceCandidate? evidenceCandidate;
 
   ToolInvocationRecord copyWith({
     ToolInvocationStatus? status,
@@ -614,6 +689,7 @@ final class ToolInvocationRecord {
     String? approvalDecision,
     DateTime? completedAt,
     int? durationMs,
+    ToolEvidenceCandidate? evidenceCandidate,
   }) {
     return ToolInvocationRecord(
       invocationId: invocationId,
@@ -632,6 +708,7 @@ final class ToolInvocationRecord {
       startedAt: startedAt,
       completedAt: completedAt ?? this.completedAt,
       durationMs: durationMs ?? this.durationMs,
+      evidenceCandidate: evidenceCandidate ?? this.evidenceCandidate,
     );
   }
 }
@@ -671,6 +748,7 @@ final class ToolExecutionRecord {
     this.completedAt,
     required this.updatedAt,
     this.eventSequence = 0,
+    this.evidenceCandidate,
   });
 
   final String executionId;
@@ -704,4 +782,5 @@ final class ToolExecutionRecord {
   /// The current-state projection does not persist this value; the immutable
   /// event ledger uses it to derive an application-owned event identity.
   final int eventSequence;
+  final ToolEvidenceCandidate? evidenceCandidate;
 }
