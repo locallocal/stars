@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/provider_service.dart';
+import 'package:stars/data/services/ai/provider_transport.dart';
 import 'package:stars/data/services/ai/skill_tool_sessions.dart';
 import 'package:stars/domain/models/models.dart';
 
@@ -50,13 +51,14 @@ class OpenAI extends Provider {
 
   @override
   AgentModelSession openModelSession(ModelRequest request) {
-    final client = _skillToolClient ?? http.Client();
     if (_usesResponsesApi) {
+      final uri = Uri.parse(_endpoint('responses', defaultApiResponsesUrl));
+      final client = _skillToolClient ?? http.Client();
       return OpenAiResponsesAgentModelSession(
         bot: bot,
         request: request,
         formattedInput: _processMessagesForResponses(request.messages),
-        uri: Uri.parse(_endpoint('responses', defaultApiResponsesUrl)),
+        uri: uri,
         headers: _headers,
         client: client,
         closeClient: _skillToolClient == null,
@@ -64,11 +66,13 @@ class OpenAI extends Provider {
         reasoningEffort: _selectedReasoningEffort,
       );
     }
+    final uri = Uri.parse(_endpoint('chat/completions', defaultApiChatUrl));
+    final client = _skillToolClient ?? http.Client();
     return OpenAiAgentModelSession(
       bot: bot,
       request: request,
       formattedMessages: processMessagesWithImages(request.messages),
-      uri: Uri.parse(_endpoint('chat/completions', defaultApiChatUrl)),
+      uri: uri,
       headers: _headers,
       client: client,
       closeClient: _skillToolClient == null,
@@ -79,24 +83,27 @@ class OpenAI extends Provider {
 
   @override
   SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
-    final client = _skillToolClient ?? http.Client();
     if (_usesResponsesApi) {
+      final uri = Uri.parse(_endpoint('responses', defaultApiResponsesUrl));
+      final client = _skillToolClient ?? http.Client();
       return OpenAiResponsesSkillToolSession(
         bot: bot,
         request: request,
         formattedInput: _processMessagesForResponses(request.messages),
-        uri: Uri.parse(_endpoint('responses', defaultApiResponsesUrl)),
+        uri: uri,
         headers: _headers,
         client: client,
         closeClient: _skillToolClient == null,
         decodeResponse: decodeProviderResponse,
       );
     }
+    final uri = Uri.parse(_endpoint('chat/completions', defaultApiChatUrl));
+    final client = _skillToolClient ?? http.Client();
     return OpenAiSkillToolSession(
       bot: bot,
       request: request,
       formattedMessages: processMessagesWithImages(request.messages),
-      uri: Uri.parse(_endpoint('chat/completions', defaultApiChatUrl)),
+      uri: uri,
       headers: _headers,
       client: client,
       closeClient: _skillToolClient == null,
@@ -151,17 +158,15 @@ class OpenAI extends Provider {
   Future<List<AiModelInfo>> fetchModels() async {
     final client = _skillToolClient ?? http.Client();
     try {
-      final response = await client
-          .get(
-            Uri.parse(_endpoint('models', defaultApiModelsUrl)),
-            headers: _authorizationHeaders,
-          )
-          .timeout(const Duration(seconds: 10));
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(
-          'List models failed: ${response.statusCode}- ${response.body}',
-        );
-      }
+      final response = await sendProviderRequest(
+        send:
+            () => client.get(
+              Uri.parse(_endpoint('models', defaultApiModelsUrl)),
+              headers: _authorizationHeaders,
+            ),
+        endpointKind: ProviderEndpointKind.models,
+        timeout: const Duration(seconds: 10),
+      );
       final data = decodeProviderResponse(utf8.decode(response.bodyBytes));
       final rawModels = data['data'];
       if (rawModels is! List) {
@@ -198,10 +203,6 @@ class OpenAI extends Provider {
           .toList(growable: false);
       selectable.sort(_compareOpenAiModels);
       return selectable;
-    } on TimeoutException {
-      throw Exception('List models Timeout, retry later.');
-    } catch (e) {
-      throw Exception('List models failed: $e');
     } finally {
       if (_skillToolClient == null) client.close();
     }
@@ -237,31 +238,31 @@ class OpenAI extends Provider {
         return;
       }
 
-      final request =
-          http.Request(
-              'POST',
-              Uri.parse(_endpoint('chat/completions', defaultApiChatUrl)),
-            )
-            ..headers.addAll(_headers)
-            ..body = jsonEncode({
-              'model': bot.model,
-              'messages': processMessagesWithImages(messages),
-              'response_format': {'type': 'text'},
-              'stream': true,
-              'stream_options': {'include_usage': true},
-              if (webSearch && _isSearchPreviewModel)
-                'web_search_options': <String, Object?>{},
-              if (deepThinking && _selectedReasoningEffort != null)
-                'reasoning_effort': _selectedReasoningEffort,
-            });
+      final uri = Uri.parse(_endpoint('chat/completions', defaultApiChatUrl));
+      final body = jsonEncode({
+        'model': bot.model,
+        'messages': processMessagesWithImages(messages),
+        'response_format': {'type': 'text'},
+        'stream': true,
+        'stream_options': {'include_usage': true},
+        if (webSearch && _isSearchPreviewModel)
+          'web_search_options': <String, Object?>{},
+        if (deepThinking && _selectedReasoningEffort != null)
+          'reasoning_effort': _selectedReasoningEffort,
+      });
 
       cancelController?.stream.listen((_) => client.close());
-      final streamedResponse = await client.send(request);
-      if (streamedResponse.statusCode < 200 ||
-          streamedResponse.statusCode >= 300) {
-        final body = await streamedResponse.stream.bytesToString();
-        throw Exception('${streamedResponse.statusCode}, $body');
-      }
+      final streamedResponse = await sendProviderStreamRequest(
+        send: () {
+          final request =
+              http.Request('POST', uri)
+                ..headers.addAll(_headers)
+                ..body = body;
+          return client.send(request);
+        },
+        endpointKind: ProviderEndpointKind.chatCompletions,
+        timeout: const Duration(seconds: 60),
+      );
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -305,7 +306,7 @@ class OpenAI extends Provider {
       }
     } catch (e) {
       if (!isCancelled && onError != null) {
-        onError!(e.toString());
+        onError!(AppFailure.from(e, code: 'provider_request_failed').code);
       }
     } finally {
       if (cancelController?.isClosed == false) cancelController?.close();
@@ -356,10 +357,15 @@ class OpenAI extends Provider {
           if (isLegacyDallE) 'response_format': 'url',
           if (isLegacyDallE && style.isNotEmpty) 'style': style,
         };
-        response = await client.post(
-          Uri.parse(_endpoint('images/generations', defaultApiImageUrl)),
-          headers: _headers,
-          body: jsonEncode(requestBody),
+        response = await sendProviderRequest(
+          send:
+              () => client.post(
+                Uri.parse(_endpoint('images/generations', defaultApiImageUrl)),
+                headers: _headers,
+                body: jsonEncode(requestBody),
+              ),
+          endpointKind: ProviderEndpointKind.images,
+          timeout: const Duration(seconds: 60),
         );
       } else {
         if (isLegacyDallE) {
@@ -388,15 +394,13 @@ class OpenAI extends Provider {
         response = await http.Response.fromStream(await client.send(request));
       }
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(
-          'Generate image failed: ${response.statusCode} - ${response.body}',
-        );
-      }
+      _ensureSuccess(response, ProviderEndpointKind.images);
       final data = decodeProviderResponse(utf8.decode(response.bodyBytes));
       return _persistImages(data, imageDirPath, client);
-    } catch (e) {
-      throw Exception('Generate image failed: $e');
+    } on ProviderFailure {
+      rethrow;
+    } catch (error) {
+      throw AppFailure.from(error, code: 'generate_image_failed');
     } finally {
       if (_skillToolClient == null) client.close();
     }
@@ -448,21 +452,21 @@ class OpenAI extends Provider {
     }
     final client = _skillToolClient ?? http.Client();
     try {
-      final response = await client.post(
-        Uri.parse(_endpoint('audio/speech', defaultApiSpeechUrl)),
-        headers: _headers,
-        body: jsonEncode({
-          'model': bot.model,
-          'input': prompt,
-          'voice': voiceType,
-          'response_format': 'mp3',
-        }),
+      final response = await sendProviderRequest(
+        send:
+            () => client.post(
+              Uri.parse(_endpoint('audio/speech', defaultApiSpeechUrl)),
+              headers: _headers,
+              body: jsonEncode({
+                'model': bot.model,
+                'input': prompt,
+                'voice': voiceType,
+                'response_format': 'mp3',
+              }),
+            ),
+        endpointKind: ProviderEndpointKind.speech,
+        timeout: const Duration(seconds: 60),
       );
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(
-          'Generate speech failed: ${response.statusCode} - ${response.body}',
-        );
-      }
       await Directory(outputDirPath).create(recursive: true);
       final path =
           '$outputDirPath/openai_speech_${DateTime.now().millisecondsSinceEpoch}.mp3';
@@ -515,14 +519,19 @@ class OpenAI extends Provider {
         }
       }
       if (reference == null) {
-        createResponse = await client.post(
-          Uri.parse(_endpoint('videos', defaultApiVideosUrl)),
-          headers: _headers,
-          body: jsonEncode({
-            'model': bot.model,
-            'prompt': prompt,
-            'size': size,
-          }),
+        createResponse = await sendProviderRequest(
+          send:
+              () => client.post(
+                Uri.parse(_endpoint('videos', defaultApiVideosUrl)),
+                headers: _headers,
+                body: jsonEncode({
+                  'model': bot.model,
+                  'prompt': prompt,
+                  'size': size,
+                }),
+              ),
+          endpointKind: ProviderEndpointKind.videos,
+          timeout: const Duration(seconds: 60),
         );
       } else {
         final request = http.MultipartRequest(
@@ -541,7 +550,7 @@ class OpenAI extends Provider {
           await client.send(request),
         );
       }
-      _ensureSuccess(createResponse, 'Generate video');
+      _ensureSuccess(createResponse, ProviderEndpointKind.videos);
       var video = Map<String, dynamic>.from(
         decodeProviderResponse(utf8.decode(createResponse.bodyBytes)) as Map,
       );
@@ -554,16 +563,23 @@ class OpenAI extends Provider {
         final status = video['status']?.toString();
         if (status == 'completed') break;
         if (status == 'failed' || status == 'expired') {
-          throw Exception(video['error'] ?? 'Video generation $status.');
+          throw ProviderFailure.invalidResponse(
+            endpointKind: ProviderEndpointKind.videos,
+            code: 'provider_video_failed',
+          );
         }
         await Future<void>.delayed(const Duration(seconds: 2));
-        final pollResponse = await client.get(
-          Uri.parse(
-            _endpoint('videos/$videoId', '$defaultApiVideosUrl/$videoId'),
-          ),
-          headers: _authorizationHeaders,
+        final pollResponse = await sendProviderRequest(
+          send:
+              () => client.get(
+                Uri.parse(
+                  _endpoint('videos/$videoId', '$defaultApiVideosUrl/$videoId'),
+                ),
+                headers: _authorizationHeaders,
+              ),
+          endpointKind: ProviderEndpointKind.videos,
+          timeout: const Duration(seconds: 60),
         );
-        _ensureSuccess(pollResponse, 'Poll video');
         video = Map<String, dynamic>.from(
           decodeProviderResponse(utf8.decode(pollResponse.bodyBytes)) as Map,
         );
@@ -572,16 +588,20 @@ class OpenAI extends Provider {
         throw TimeoutException('Video generation timed out.');
       }
 
-      final contentResponse = await client.get(
-        Uri.parse(
-          _endpoint(
-            'videos/$videoId/content',
-            '$defaultApiVideosUrl/$videoId/content',
-          ),
-        ),
-        headers: _authorizationHeaders,
+      final contentResponse = await sendProviderRequest(
+        send:
+            () => client.get(
+              Uri.parse(
+                _endpoint(
+                  'videos/$videoId/content',
+                  '$defaultApiVideosUrl/$videoId/content',
+                ),
+              ),
+              headers: _authorizationHeaders,
+            ),
+        endpointKind: ProviderEndpointKind.videos,
+        timeout: const Duration(seconds: 60),
       );
-      _ensureSuccess(contentResponse, 'Download video');
       await Directory(outputDirPath).create(recursive: true);
       final path = '$outputDirPath/openai_video_$videoId.mp4';
       await File(path).writeAsBytes(contentResponse.bodyBytes);
@@ -679,7 +699,7 @@ class OpenAI extends Provider {
         final url = image['url']?.toString();
         if (url != null && url.isNotEmpty) {
           final response = await client.get(Uri.parse(url));
-          _ensureSuccess(response, 'Download image');
+          _ensureSuccess(response, ProviderEndpointKind.images);
           bytes = response.bodyBytes;
         }
       }
@@ -696,10 +716,16 @@ class OpenAI extends Provider {
     return paths;
   }
 
-  void _ensureSuccess(http.Response response, String operation) {
+  void _ensureSuccess(
+    http.Response response,
+    ProviderEndpointKind endpointKind,
+  ) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        '$operation failed: ${response.statusCode} - ${response.body}',
+      throw ProviderFailure.fromHttp(
+        statusCode: response.statusCode,
+        endpointKind: endpointKind,
+        headers: response.headers,
+        responseBody: response.body,
       );
     }
   }
@@ -717,9 +743,48 @@ class OpenAI extends Provider {
 
   String _endpoint(String path, String defaultUrl) {
     if (bot.baseURL.isEmpty) return defaultUrl;
-    final base = bot.baseURL.endsWith('/') ? bot.baseURL : '${bot.baseURL}/';
+    final configured = Uri.tryParse(bot.baseURL.trim());
+    final endpointKind = _endpointKind(path);
+    final host = configured?.host.toLowerCase() ?? '';
+    final configuredPath = configured?.path.toLowerCase() ?? '';
+    final isChatGptHost =
+        host == 'chatgpt.com' || host.endsWith('.chatgpt.com');
+    final isInternalCodexPath = configuredPath.contains('/backend-api/codex');
+    if (configured == null ||
+        !configured.hasScheme ||
+        (configured.scheme != 'https' && configured.scheme != 'http') ||
+        host.isEmpty ||
+        configured.userInfo.isNotEmpty ||
+        configured.hasQuery ||
+        configured.hasFragment ||
+        isChatGptHost ||
+        isInternalCodexPath) {
+      throw ProviderFailure.configuration(
+        endpointKind: endpointKind,
+        code: 'openai_invalid_base_url',
+      );
+    }
+    final source = configured.toString();
+    final base = source.endsWith('/') ? source : '$source/';
     final relative = path.startsWith('/') ? path.substring(1) : path;
     return '$base$relative';
+  }
+
+  ProviderEndpointKind _endpointKind(String path) {
+    final normalized = path.startsWith('/') ? path.substring(1) : path;
+    if (normalized == 'models') return ProviderEndpointKind.models;
+    if (normalized.startsWith('chat/completions')) {
+      return ProviderEndpointKind.chatCompletions;
+    }
+    if (normalized.startsWith('responses')) {
+      return ProviderEndpointKind.responses;
+    }
+    if (normalized.startsWith('images/')) return ProviderEndpointKind.images;
+    if (normalized.startsWith('audio/speech')) {
+      return ProviderEndpointKind.speech;
+    }
+    if (normalized.startsWith('videos')) return ProviderEndpointKind.videos;
+    return ProviderEndpointKind.unknown;
   }
 
   Map<String, String> get _authorizationHeaders => {

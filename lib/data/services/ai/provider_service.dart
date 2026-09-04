@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/built_in_model_catalog.dart';
+import 'package:stars/data/services/ai/provider_transport.dart';
 import 'package:stars/data/services/image_media_type.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
@@ -209,29 +210,32 @@ abstract class Provider extends AiProvider {
   }) async {
     final requestClient = client ?? http.Client();
     final closeClient = client == null;
-    final request =
-        http.Request('POST', Uri.parse(url))
-          ..headers.addAll(headers)
-          ..body = jsonEncode({
-            'model': bot.model,
-            'input': formattedInput ?? _responsesInput(messages),
-            'stream': true,
-            if (includeWebSearch)
-              'tools': [
-                {'type': 'web_search'},
-              ],
-            if (reasoning != null) 'reasoning': reasoning,
-          });
+    final uri = Uri.parse(url);
+    final body = jsonEncode({
+      'model': bot.model,
+      'input': formattedInput ?? _responsesInput(messages),
+      'stream': true,
+      if (includeWebSearch)
+        'tools': [
+          {'type': 'web_search'},
+        ],
+      if (reasoning != null) 'reasoning': reasoning,
+    });
 
     try {
       cancelController?.stream.listen((_) => requestClient.close());
 
-      final streamedResponse = await requestClient.send(request);
-      if (streamedResponse.statusCode < 200 ||
-          streamedResponse.statusCode >= 300) {
-        final errorBody = await streamedResponse.stream.bytesToString();
-        throw Exception('${streamedResponse.statusCode}, $errorBody');
-      }
+      final streamedResponse = await sendProviderStreamRequest(
+        send: () {
+          final request =
+              http.Request('POST', uri)
+                ..headers.addAll(headers)
+                ..body = body;
+          return requestClient.send(request);
+        },
+        endpointKind: ProviderEndpointKind.responses,
+        timeout: const Duration(seconds: 60),
+      );
 
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
@@ -256,7 +260,10 @@ abstract class Provider extends AiProvider {
             }
           case 'response.failed':
           case 'error':
-            throw Exception(data['error'] ?? data);
+            throw ProviderFailure.invalidResponse(
+              endpointKind: ProviderEndpointKind.responses,
+              code: 'provider_stream_error',
+            );
         }
       }
     } finally {

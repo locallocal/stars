@@ -146,6 +146,87 @@ void main() {
   );
 
   test(
+    'fetchModels classifies 404 once without exposing response data',
+    () async {
+      var requests = 0;
+      final client = MockClient((request) async {
+        requests += 1;
+        return http.Response(
+          '{"error":{"message":"Bearer sk-secret Cookie=session-secret"}}',
+          404,
+          headers: {'x-request-id': 'req-sensitive-trace'},
+        );
+      });
+      final provider = OpenAI(
+        _bot(model: 'gpt-5.6-sol'),
+        skillToolClient: client,
+      );
+
+      await expectLater(
+        provider.fetchModels(),
+        throwsA(
+          isA<ProviderFailure>()
+              .having(
+                (failure) => failure.kind,
+                'kind',
+                ProviderFailureKind.notFound,
+              )
+              .having((failure) => failure.retryable, 'retryable', isFalse)
+              .having(
+                (failure) => failure.toString(),
+                'safe string',
+                allOf(
+                  isNot(contains('sk-secret')),
+                  isNot(contains('session-secret')),
+                ),
+              ),
+        ),
+      );
+      expect(requests, 1);
+    },
+  );
+
+  test('rejects ChatGPT internal Base URLs before network access', () {
+    var requests = 0;
+    final client = MockClient((request) async {
+      requests += 1;
+      return http.Response('{}', 200);
+    });
+    final provider = OpenAI(
+      _bot(
+        model: 'gpt-5.6-sol',
+        baseURL: 'https://chatgpt.com/backend-api/codex/',
+      ),
+      skillToolClient: client,
+    );
+
+    expect(
+      () => provider.openModelSession(
+        ModelRequest(messages: [ChatMessage(role: 'user', content: 'hello')]),
+      ),
+      throwsA(
+        isA<ProviderFailure>()
+            .having(
+              (failure) => failure.kind,
+              'kind',
+              ProviderFailureKind.configuration,
+            )
+            .having(
+              (failure) => failure.code,
+              'code',
+              'openai_invalid_base_url',
+            )
+            .having(
+              (failure) => failure.endpointKind,
+              'endpoint',
+              ProviderEndpointKind.responses,
+            ),
+      ),
+    );
+    expect(requests, 0);
+  });
+
+  test(
     'Responses-only models stream text, reasoning, search, and usage',
     () async {
       Map<String, dynamic>? requestBody;
@@ -504,12 +585,16 @@ void main() {
 
 String _sse(Map<String, Object?> event) => 'data: ${jsonEncode(event)}\n\n';
 
-Bot _bot({required String model, String provider = 'OpenAI'}) => Bot(
+Bot _bot({
+  required String model,
+  String provider = 'OpenAI',
+  String baseURL = 'https://example.test/v1/',
+}) => Bot(
   id: 'bot-openai',
   name: 'OpenAI',
   avatar: '',
   provider: provider,
-  baseURL: 'https://example.test/v1/',
+  baseURL: baseURL,
   apiKey: 'test-key',
   apiType: Bot.apiTypeOpenAI,
   model: model,

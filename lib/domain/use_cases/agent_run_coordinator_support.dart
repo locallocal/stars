@@ -328,8 +328,9 @@ final class _FinalAnswerValidation {
 }
 
 final class _AgentModelFailure implements Exception {
-  const _AgentModelFailure(this.message, this.code);
+  const _AgentModelFailure(this.message, this.code, this.providerFailure);
 
   final String message;
   final String code;
+  final ProviderFailure? providerFailure;
 }

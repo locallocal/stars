@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:stars/data/services/ai/anthropic.dart';
 import 'package:stars/data/services/ai/openai.dart';
+import 'package:stars/data/services/ai/skill_tool_sessions.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 
@@ -368,6 +369,194 @@ void main() {
       events.whereType<ToolCallRequested>().single.name,
       'mcp.docs.search',
     );
+  });
+
+  test(
+    '404 fails once with no trusted text or sensitive response data',
+    () async {
+      var requests = 0;
+      final client = MockClient((request) async {
+        requests += 1;
+        return http.Response(
+          '{"error":{"message":"Authorization: Bearer sk-secret; Cookie=x"}}',
+          404,
+          headers: {'x-request-id': 'req-private-value'},
+        );
+      });
+      final provider = OpenAI(_bot, skillToolClient: client);
+      final session = provider.openModelSession(_modelRequest);
+      addTearDown(session.close);
+
+      final events = await session.start().toList();
+      final event = events.whereType<ModelTurnFailed>().single;
+      final failure = event.providerFailure!;
+
+      expect(requests, 1);
+      expect(events.whereType<TextDelta>(), isEmpty);
+      expect(event.error, 'provider_endpoint_not_found');
+      expect(failure.kind, ProviderFailureKind.notFound);
+      expect(failure.httpStatus, 404);
+      expect(failure.endpointKind, ProviderEndpointKind.chatCompletions);
+      expect(failure.retryable, isFalse);
+      expect(failure.requestTraceId, startsWith('trace_'));
+      expect('$event ${failure.toString()}', isNot(contains('sk-secret')));
+      expect('$event ${failure.toString()}', isNot(contains('Cookie=x')));
+    },
+  );
+
+  test('401 and 403 are classified without retrying', () async {
+    for (final (status, kind) in const [
+      (401, ProviderFailureKind.authentication),
+      (403, ProviderFailureKind.authorization),
+    ]) {
+      var requests = 0;
+      final client = MockClient((request) async {
+        requests += 1;
+        return http.Response('sensitive provider body', status);
+      });
+      final session = OpenAI(
+        _bot,
+        skillToolClient: client,
+      ).openModelSession(_modelRequest);
+
+      final events = await session.start().toList();
+      session.close();
+
+      expect(requests, 1, reason: 'HTTP $status');
+      expect(
+        events.whereType<ModelTurnFailed>().single.providerFailure?.kind,
+        kind,
+        reason: 'HTTP $status',
+      );
+    }
+  });
+
+  test('408, 429, and 5xx retry as distinct requests in one session', () async {
+    for (final (status, kind) in const [
+      (408, ProviderFailureKind.timeout),
+      (429, ProviderFailureKind.rateLimited),
+      (503, ProviderFailureKind.server),
+    ]) {
+      var requests = 0;
+      final client = MockClient((request) async {
+        requests += 1;
+        return http.Response('sensitive provider body', status);
+      });
+      final session = OpenAI(
+        _bot,
+        skillToolClient: client,
+      ).openModelSession(_modelRequest);
+
+      final events = await session.start().toList();
+      session.close();
+
+      expect(requests, 3, reason: 'HTTP $status');
+      final event = events.whereType<ModelTurnFailed>().single;
+      expect(event.providerFailure?.kind, kind, reason: 'HTTP $status');
+      expect(event.providerFailure?.retryable, isTrue, reason: 'HTTP $status');
+      expect(event.error, isNot(contains('sensitive provider body')));
+    }
+  });
+
+  test(
+    'quota exhaustion is distinguished from retryable rate limiting',
+    () async {
+      var requests = 0;
+      final client = MockClient((request) async {
+        requests += 1;
+        return http.Response(
+          jsonEncode({
+            'error': {
+              'code': 'insufficient_quota',
+              'message': 'account detail that must not be exposed',
+            },
+          }),
+          429,
+        );
+      });
+      final session = OpenAI(
+        _bot,
+        skillToolClient: client,
+      ).openModelSession(_modelRequest);
+      addTearDown(session.close);
+
+      final events = await session.start().toList();
+      final event = events.whereType<ModelTurnFailed>().single;
+
+      expect(requests, 1);
+      expect(event.error, 'provider_quota_exceeded');
+      expect(event.providerFailure?.kind, ProviderFailureKind.quotaExceeded);
+      expect(event.providerFailure?.retryable, isFalse);
+      expect(event.error, isNot(contains('account detail')));
+    },
+  );
+
+  test(
+    'a retryable failure can recover without publishing failure text',
+    () async {
+      var requests = 0;
+      final client = MockClient((request) async {
+        requests += 1;
+        if (requests == 1) return http.Response('try later', 429);
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {
+                'message': {'content': 'recovered'},
+                'finish_reason': 'stop',
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      final session = OpenAI(
+        _bot,
+        skillToolClient: client,
+      ).openModelSession(_modelRequest);
+      addTearDown(session.close);
+
+      final events = await session.start().toList();
+
+      expect(requests, 2);
+      expect(events.whereType<ModelTurnFailed>(), isEmpty);
+      expect(events.whereType<TextDelta>().single.text, 'recovered');
+    },
+  );
+
+  test('transport timeout becomes a structured Provider failure', () async {
+    var requests = 0;
+    final client = MockClient((request) async {
+      requests += 1;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      return http.Response('{}', 200);
+    });
+    final session = OpenAiSkillToolSession(
+      bot: _bot,
+      request: _request,
+      formattedMessages: const [],
+      uri: Uri.parse('https://example.test/v1/chat/completions'),
+      headers: const {'Authorization': 'Bearer secret'},
+      client: client,
+      closeClient: false,
+      decodeResponse: jsonDecode,
+      requestTimeout: const Duration(milliseconds: 1),
+    );
+    addTearDown(session.close);
+
+    await expectLater(
+      session.start(),
+      throwsA(
+        isA<ProviderFailure>()
+            .having(
+              (failure) => failure.kind,
+              'kind',
+              ProviderFailureKind.timeout,
+            )
+            .having((failure) => failure.retryable, 'retryable', isTrue),
+      ),
+    );
+    expect(requests, 3);
   });
 }
 

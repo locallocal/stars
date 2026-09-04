@@ -68,6 +68,7 @@ final class AgentRunResult {
     required this.tokenUsage,
     required List<ToolInvocationRecord> toolInvocations,
     this.error = '',
+    this.providerFailure,
   }) : toolInvocations = List<ToolInvocationRecord>.unmodifiable(
          toolInvocations,
        );
@@ -78,6 +79,7 @@ final class AgentRunResult {
   final ModelTokenUsage tokenUsage;
   final List<ToolInvocationRecord> toolInvocations;
   final String error;
+  final ProviderFailure? providerFailure;
 }
 
 typedef ModelEventObserver = void Function(ModelEvent event);
@@ -199,7 +201,11 @@ final class AgentRunCoordinator {
             case UsageReported():
               usage = usage + event.usage;
             case ModelTurnFailed():
-              throw _AgentModelFailure(event.error, event.code);
+              throw _AgentModelFailure(
+                event.error,
+                event.code,
+                event.providerFailure,
+              );
             case ToolCallStarted():
             case ToolCallArgumentsDelta():
             case ModelTurnCompleted():
@@ -337,12 +343,24 @@ final class AgentRunCoordinator {
         tokenUsage: usage,
         toolInvocations: invocations,
         error:
-            error.code.isEmpty
+            error.providerFailure?.code ??
+            (error.code.isEmpty
                 ? AppFailure.from(
                   error.message,
                   code: 'agent_model_failed',
                 ).code
-                : error.code,
+                : error.code),
+        providerFailure: error.providerFailure,
+      );
+    } on ProviderFailure catch (error) {
+      return AgentRunResult(
+        status: AgentRunStatus.failed,
+        text: '',
+        reasoning: reasoning,
+        tokenUsage: usage,
+        toolInvocations: invocations,
+        error: error.code,
+        providerFailure: error,
       );
     } catch (error) {
       return AgentRunResult(

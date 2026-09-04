@@ -105,10 +105,22 @@ final class ModelTurnCompleted extends ModelEvent {
 }
 
 final class ModelTurnFailed extends ModelEvent {
-  const ModelTurnFailed({required this.error, this.code = ''});
+  const ModelTurnFailed({
+    required this.error,
+    this.code = '',
+    this.providerFailure,
+  });
+
+  factory ModelTurnFailed.fromProvider(ProviderFailure failure) =>
+      ModelTurnFailed(
+        error: failure.code,
+        code: failure.code,
+        providerFailure: failure,
+      );
 
   final String error;
   final String code;
+  final ProviderFailure? providerFailure;
 }
 
 typedef StreamResponseCallback = void Function(String text);
