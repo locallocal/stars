@@ -923,5 +923,14 @@
     "databaseDowngradeNotSupported": "Cette base de données a été créée par une version plus récente de Stars. Mettez l’application à jour avant de l’ouvrir.",
     "databaseRecoveryFailed": "Le contrôle d’intégrité de la base de données a échoué et la restauration depuis la sauvegarde de cette version n’a pas abouti.",
     "durationMilliseconds": "{milliseconds} ms",
-    "durationSeconds": "{seconds} s"
+    "durationSeconds": "{seconds} s",
+    "answerTrustUnverified": "Non vérifié",
+    "answerTrustFailed": "Échec",
+    "answerTrustReasonNoTool": "Aucune preuve d'outil exploitable n'est disponible pour cette réponse.",
+    "answerTrustReasonProviderUnsupported": "Ce fournisseur ne prend pas en charge les outils de vérification.",
+    "answerTrustReasonToolRejected": "La demande d'outil de vérification a été refusée.",
+    "answerTrustReasonProviderFailed": "La requête au fournisseur a échoué avant que cette réponse puisse être vérifiée.",
+    "answerTrustReasonGateFailed": "Cette réponse n'a pas réussi le contrôle de confiance de l'application.",
+    "answerTrustReasonUnavailable": "La vérification de cette réponse n'a pas été effectuée.",
+    "answerTrustSemanticLabel": "{status}. {reason}"
 }

@@ -923,5 +923,14 @@
     "databaseDowngradeNotSupported": "Эта база данных создана более новой версией Stars. Обновите приложение, прежде чем открывать её.",
     "databaseRecoveryFailed": "Проверка целостности базы данных завершилась ошибкой, восстановить её из резервной копии этой версии не удалось.",
     "durationMilliseconds": "{milliseconds} мс",
-    "durationSeconds": "{seconds} с"
+    "durationSeconds": "{seconds} с",
+    "answerTrustUnverified": "Не проверено",
+    "answerTrustFailed": "Ошибка",
+    "answerTrustReasonNoTool": "Для этого ответа нет подходящих данных от инструментов.",
+    "answerTrustReasonProviderUnsupported": "Этот провайдер не поддерживает инструменты проверки.",
+    "answerTrustReasonToolRejected": "Запрос к инструменту проверки был отклонён.",
+    "answerTrustReasonProviderFailed": "Запрос к провайдеру завершился ошибкой до проверки этого ответа.",
+    "answerTrustReasonGateFailed": "Этот ответ не прошёл проверку доверия приложения.",
+    "answerTrustReasonUnavailable": "Проверка этого ответа не завершена.",
+    "answerTrustSemanticLabel": "{status}. {reason}"
 }

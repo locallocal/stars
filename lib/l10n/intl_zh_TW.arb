@@ -943,5 +943,14 @@
     "databaseDowngradeNotSupported": "資料庫由較新版本的 Stars 建立，請升級應用程式後再開啟。",
     "databaseRecoveryFailed": "資料庫完整性檢查失敗，且無法從目前版本的備份還原。",
     "durationMilliseconds": "{milliseconds} 毫秒",
-    "durationSeconds": "{seconds} 秒"
+    "durationSeconds": "{seconds} 秒",
+    "answerTrustUnverified": "未驗證",
+    "answerTrustFailed": "失敗",
+    "answerTrustReasonNoTool": "此回覆沒有可用的工具證據。",
+    "answerTrustReasonProviderUnsupported": "目前的 Provider 不支援驗證工具。",
+    "answerTrustReasonToolRejected": "驗證工具要求已遭拒絕。",
+    "answerTrustReasonProviderFailed": "Provider 要求失敗，無法驗證此回覆。",
+    "answerTrustReasonGateFailed": "此回覆未通過應用程式可信閘門。",
+    "answerTrustReasonUnavailable": "此回覆尚未完成驗證。",
+    "answerTrustSemanticLabel": "{status}。{reason}"
 }

@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -1510,7 +1509,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -4661,7 +4661,8 @@ class S {
     return Intl.message(
       'Starting…',
       name: 'startupStarting',
-      desc: 'Status shown while Stars loads the profile before the main application starts',
+      desc:
+          'Status shown while Stars loads the profile before the main application starts',
       args: [],
     );
   }
@@ -4701,7 +4702,8 @@ class S {
     return Intl.message(
       'This database was created by a newer version of Stars. Update the app before opening it.',
       name: 'databaseDowngradeNotSupported',
-      desc: 'Safe error shown when the local database is newer than the application',
+      desc:
+          'Safe error shown when the local database is newer than the application',
       args: [],
     );
   }
@@ -4711,7 +4713,8 @@ class S {
     return Intl.message(
       'The database integrity check failed, and recovery from this version\'s backup was unsuccessful.',
       name: 'databaseRecoveryFailed',
-      desc: 'Safe error shown when database validation and backup recovery both fail',
+      desc:
+          'Safe error shown when database validation and backup recovery both fail',
       args: [],
     );
   }
@@ -4733,6 +4736,97 @@ class S {
       name: 'durationSeconds',
       desc: 'Localized duration measured in seconds',
       args: [seconds],
+    );
+  }
+
+  /// `Unverified`
+  String get answerTrustUnverified {
+    return Intl.message(
+      'Unverified',
+      name: 'answerTrustUnverified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed`
+  String get answerTrustFailed {
+    return Intl.message(
+      'Failed',
+      name: 'answerTrustFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No usable tool evidence is available for this response.`
+  String get answerTrustReasonNoTool {
+    return Intl.message(
+      'No usable tool evidence is available for this response.',
+      name: 'answerTrustReasonNoTool',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This provider does not support verification tools.`
+  String get answerTrustReasonProviderUnsupported {
+    return Intl.message(
+      'This provider does not support verification tools.',
+      name: 'answerTrustReasonProviderUnsupported',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The verification tool request was rejected.`
+  String get answerTrustReasonToolRejected {
+    return Intl.message(
+      'The verification tool request was rejected.',
+      name: 'answerTrustReasonToolRejected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The provider request failed before this response could be verified.`
+  String get answerTrustReasonProviderFailed {
+    return Intl.message(
+      'The provider request failed before this response could be verified.',
+      name: 'answerTrustReasonProviderFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This response did not pass the application's trust gate.`
+  String get answerTrustReasonGateFailed {
+    return Intl.message(
+      'This response did not pass the application\'s trust gate.',
+      name: 'answerTrustReasonGateFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Verification was not completed for this response.`
+  String get answerTrustReasonUnavailable {
+    return Intl.message(
+      'Verification was not completed for this response.',
+      name: 'answerTrustReasonUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{status}. {reason}`
+  String answerTrustSemanticLabel(String status, String reason) {
+    return Intl.message(
+      '$status. $reason',
+      name: 'answerTrustSemanticLabel',
+      desc:
+          'Accessible label combining an assistant response trust status and its reason',
+      args: [status, reason],
     );
   }
 }

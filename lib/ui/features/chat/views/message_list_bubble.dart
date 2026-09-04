@@ -14,6 +14,7 @@ class _MessageBubble extends StatelessWidget {
   final String audio;
   final String music;
   final String video;
+  final MessageGrounding? grounding;
   final MessageTerminalOutcome? terminalOutcome;
   final bool hasPartialContent;
   final MessageActionViewModel? actionViewModel;
@@ -32,6 +33,7 @@ class _MessageBubble extends StatelessWidget {
     this.audio = '',
     this.music = '',
     this.video = '',
+    this.grounding,
     this.terminalOutcome,
     this.hasPartialContent = false,
     this.actionViewModel,
@@ -60,6 +62,7 @@ class _MessageBubble extends StatelessWidget {
                   content.isNotEmpty ||
                           _showProcessInfo ||
                           _hasStructuredMedia ||
+                          _showTrustStatus ||
                           _showTerminalStatus
                       ? 14
                       : 0,
@@ -220,13 +223,26 @@ class _MessageBubble extends StatelessWidget {
               child: VideoPlayerWidget(videoFilePath: video),
             ),
           ),
-        if (_showTerminalStatus)
+        if (_showTrustStatus)
           Padding(
             padding: EdgeInsets.only(
               top:
                   content.isNotEmpty ||
                           _hasStructuredMedia ||
                           _showsProcessInfoBeforeMedia
+                      ? 10
+                      : 0,
+            ),
+            child: _MessageTrustStatus(grounding: grounding!),
+          ),
+        if (_showTerminalStatus)
+          Padding(
+            padding: EdgeInsets.only(
+              top:
+                  content.isNotEmpty ||
+                          _hasStructuredMedia ||
+                          _showsProcessInfoBeforeMedia ||
+                          _showTrustStatus
                       ? 10
                       : 0,
             ),
@@ -241,6 +257,7 @@ class _MessageBubble extends StatelessWidget {
               top:
                   content.isNotEmpty ||
                           _hasStructuredMedia ||
+                          _showTrustStatus ||
                           _showTerminalStatus
                       ? 14
                       : 0,
@@ -304,6 +321,14 @@ class _MessageBubble extends StatelessWidget {
   bool get _showsProcessInfoBeforeMedia => _showProcessInfo && !isDesktop;
 
   bool get _showsProcessInfoAfterMessage => _showProcessInfo && isDesktop;
+
+  bool get _showTrustStatus {
+    if (isCurrentUser || isStreaming) return false;
+    return switch (grounding?.trustLevel) {
+      AnswerTrustLevel.unverified || AnswerTrustLevel.failed => true,
+      _ => false,
+    };
+  }
 
   bool get _showTerminalStatus =>
       terminalOutcome != null &&

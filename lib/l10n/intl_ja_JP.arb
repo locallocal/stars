@@ -923,5 +923,14 @@
     "databaseDowngradeNotSupported": "このデータベースは新しいバージョンの Stars で作成されています。アプリを更新してから開いてください。",
     "databaseRecoveryFailed": "データベースの整合性チェックに失敗し、このバージョンのバックアップからも復元できませんでした。",
     "durationMilliseconds": "{milliseconds} ミリ秒",
-    "durationSeconds": "{seconds} 秒"
+    "durationSeconds": "{seconds} 秒",
+    "answerTrustUnverified": "未検証",
+    "answerTrustFailed": "失敗",
+    "answerTrustReasonNoTool": "この回答に利用可能なツール証拠がありません。",
+    "answerTrustReasonProviderUnsupported": "このプロバイダーは検証ツールをサポートしていません。",
+    "answerTrustReasonToolRejected": "検証ツールのリクエストが拒否されました。",
+    "answerTrustReasonProviderFailed": "この回答を検証する前にプロバイダーへのリクエストが失敗しました。",
+    "answerTrustReasonGateFailed": "この回答はアプリの信頼性ゲートを通過しませんでした。",
+    "answerTrustReasonUnavailable": "この回答の検証は完了していません。",
+    "answerTrustSemanticLabel": "{status}。{reason}"
 }

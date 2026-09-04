@@ -15,6 +15,20 @@ void main() {
   test('supported locale catalogs have key and placeholder parity', () {
     final template = _readCatalog(File('lib/l10n/intl_en.arb'));
     final expectedKeys = _messageKeys(template);
+    expect(
+      expectedKeys,
+      containsAll(const {
+        'answerTrustUnverified',
+        'answerTrustFailed',
+        'answerTrustReasonNoTool',
+        'answerTrustReasonProviderUnsupported',
+        'answerTrustReasonToolRejected',
+        'answerTrustReasonProviderFailed',
+        'answerTrustReasonGateFailed',
+        'answerTrustReasonUnavailable',
+        'answerTrustSemanticLabel',
+      }),
+    );
 
     for (final entry in catalogs.entries) {
       expect(entry.value.existsSync(), isTrue, reason: entry.value.path);

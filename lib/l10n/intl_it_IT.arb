@@ -923,5 +923,14 @@
     "databaseDowngradeNotSupported": "Questo database è stato creato da una versione più recente di Stars. Aggiorna l’app prima di aprirlo.",
     "databaseRecoveryFailed": "Il controllo di integrità del database non è riuscito e non è stato possibile ripristinarlo dal backup di questa versione.",
     "durationMilliseconds": "{milliseconds} ms",
-    "durationSeconds": "{seconds} s"
+    "durationSeconds": "{seconds} s",
+    "answerTrustUnverified": "Non verificato",
+    "answerTrustFailed": "Non riuscito",
+    "answerTrustReasonNoTool": "Non sono disponibili prove utilizzabili dagli strumenti per questa risposta.",
+    "answerTrustReasonProviderUnsupported": "Questo provider non supporta gli strumenti di verifica.",
+    "answerTrustReasonToolRejected": "La richiesta dello strumento di verifica è stata rifiutata.",
+    "answerTrustReasonProviderFailed": "La richiesta al provider non è riuscita prima che questa risposta potesse essere verificata.",
+    "answerTrustReasonGateFailed": "Questa risposta non ha superato il controllo di attendibilità dell'applicazione.",
+    "answerTrustReasonUnavailable": "La verifica di questa risposta non è stata completata.",
+    "answerTrustSemanticLabel": "{status}. {reason}"
 }

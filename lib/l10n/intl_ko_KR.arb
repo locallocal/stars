@@ -923,5 +923,14 @@
     "databaseDowngradeNotSupported": "이 데이터베이스는 더 최신 버전의 Stars에서 생성되었습니다. 앱을 업데이트한 후 열어 주세요.",
     "databaseRecoveryFailed": "데이터베이스 무결성 검사에 실패했으며 현재 버전의 백업에서도 복구하지 못했습니다.",
     "durationMilliseconds": "{milliseconds}밀리초",
-    "durationSeconds": "{seconds}초"
+    "durationSeconds": "{seconds}초",
+    "answerTrustUnverified": "검증되지 않음",
+    "answerTrustFailed": "실패",
+    "answerTrustReasonNoTool": "이 응답에 사용할 수 있는 도구 증거가 없습니다.",
+    "answerTrustReasonProviderUnsupported": "이 제공자는 검증 도구를 지원하지 않습니다.",
+    "answerTrustReasonToolRejected": "검증 도구 요청이 거부되었습니다.",
+    "answerTrustReasonProviderFailed": "이 응답을 검증하기 전에 제공자 요청이 실패했습니다.",
+    "answerTrustReasonGateFailed": "이 응답은 앱의 신뢰성 검사를 통과하지 못했습니다.",
+    "answerTrustReasonUnavailable": "이 응답의 검증이 완료되지 않았습니다.",
+    "answerTrustSemanticLabel": "{status}. {reason}"
 }

@@ -1122,5 +1122,21 @@
         "placeholders": {
             "seconds": {"type": "String"}
         }
+    },
+    "answerTrustUnverified": "Unverified",
+    "answerTrustFailed": "Failed",
+    "answerTrustReasonNoTool": "No usable tool evidence is available for this response.",
+    "answerTrustReasonProviderUnsupported": "This provider does not support verification tools.",
+    "answerTrustReasonToolRejected": "The verification tool request was rejected.",
+    "answerTrustReasonProviderFailed": "The provider request failed before this response could be verified.",
+    "answerTrustReasonGateFailed": "This response did not pass the application's trust gate.",
+    "answerTrustReasonUnavailable": "Verification was not completed for this response.",
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "@answerTrustSemanticLabel": {
+        "description": "Accessible label combining an assistant response trust status and its reason",
+        "placeholders": {
+            "status": {"type": "String"},
+            "reason": {"type": "String"}
+        }
     }
 }
