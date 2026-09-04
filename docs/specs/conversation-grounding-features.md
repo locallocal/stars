@@ -211,7 +211,14 @@
 
 ### GRD-006 不可信历史正文隔离
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/use_cases/prepare_conversation_context.dart`、
+`lib/domain/use_cases/compose_chat_turn.dart` 和
+`lib/domain/use_cases/compose_chat_turn_skills.dart`；主路径、fallback 与显式续写回归测试：
+`test/domain/use_cases/prepare_conversation_context_test.dart`、
+`test/domain/use_cases/compose_chat_turn_test.dart` 和
+`test/domain/use_cases/compose_chat_turn_grounding_test.dart`。
 
 目标：防止失败、取消和 partial 回答被下一轮当作既成事实。
 

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
 import 'package:stars/domain/services/stars_system_prompt.dart';
@@ -132,7 +132,7 @@ void main() {
     );
   });
 
-  test('does not send empty assistant history entries to providers', () async {
+  test('omits turns without replayable assistant output', () async {
     final compose = ComposeChatTurn(
       skillRepository: _FakeSkillRepository(const {}),
       bindingRepository: _FakeBindingRepository(const []),
@@ -152,7 +152,7 @@ void main() {
     );
 
     expect(result.messages.map((message) => message.role), ['system', 'user']);
-    expect(result.messages.last.content, 'Failed question\nRetry question');
+    expect(result.messages.last.content, 'Retry question');
     expect(
       result.messages.every(
         (message) =>
@@ -163,6 +163,125 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'fallback isolates unsuccessful and partial history by default',
+    () async {
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(const {}),
+        bindingRepository: _FakeBindingRepository(const []),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        starsSystemPromptProvider: _testStarsSystemPrompt,
+      );
+      final history = [
+        _message(
+          messageId: 'user-failed',
+          turnId: 'turn-failed',
+          senderId: 'user-1',
+          content: 'failed question',
+        ),
+        _message(
+          messageId: 'assistant-failed',
+          turnId: 'turn-failed',
+          runId: 'run-failed',
+          senderId: 'bot-1',
+          content: 'failed secret',
+          terminalOutcome: MessageTerminalOutcome.failed,
+        ),
+        _message(
+          messageId: 'user-cancelled',
+          turnId: 'turn-cancelled',
+          senderId: 'user-1',
+          content: 'cancelled question',
+        ),
+        _message(
+          messageId: 'assistant-cancelled',
+          turnId: 'turn-cancelled',
+          runId: 'run-cancelled',
+          senderId: 'bot-1',
+          content: 'cancelled secret',
+          terminalOutcome: MessageTerminalOutcome.cancelled,
+        ),
+        _message(
+          messageId: 'user-empty',
+          turnId: 'turn-empty',
+          senderId: 'user-1',
+          content: 'empty question',
+        ),
+        _message(
+          messageId: 'assistant-empty',
+          turnId: 'turn-empty',
+          runId: 'run-empty',
+          senderId: 'bot-1',
+          content: 'empty response secret',
+          terminalOutcome: MessageTerminalOutcome.emptyResponse,
+        ),
+        _message(
+          messageId: 'user-partial',
+          turnId: 'turn-partial',
+          senderId: 'user-1',
+          content: 'partial question',
+        ),
+        _message(
+          messageId: 'assistant-partial',
+          turnId: 'turn-partial',
+          runId: 'run-partial',
+          senderId: 'bot-1',
+          content: 'partial secret',
+          terminalOutcome: MessageTerminalOutcome.completed,
+          hasPartialContent: true,
+        ),
+        _message(
+          messageId: 'user-completed',
+          turnId: 'turn-completed',
+          senderId: 'user-1',
+          content: 'completed question',
+        ),
+        _message(
+          messageId: 'assistant-completed',
+          turnId: 'turn-completed',
+          runId: 'run-completed',
+          senderId: 'bot-1',
+          content: 'completed answer',
+          terminalOutcome: MessageTerminalOutcome.completed,
+        ),
+      ];
+
+      final result = await compose(
+        bot: _bot(),
+        history: history,
+        userMessage: _message(
+          messageId: 'current',
+          turnId: 'turn-current',
+          senderId: 'user-1',
+          content: 'follow-up',
+        ),
+        currentUserId: 'user-1',
+      );
+
+      expect(result.messages.map((message) => message.role), [
+        'system',
+        'user',
+        'assistant',
+        'user',
+      ]);
+      final serialized = result.messages
+          .map((message) => message.content)
+          .join('\n');
+      expect(serialized, isNot(contains('failed secret')));
+      expect(serialized, isNot(contains('cancelled secret')));
+      expect(serialized, isNot(contains('empty response secret')));
+      expect(serialized, isNot(contains('partial secret')));
+      final assistant = result.messages.singleWhere(
+        (message) => message.role == 'assistant',
+      );
+      expect(assistant.content, contains('<assistant_history_output'));
+      expect(assistant.content, contains('run_id="run-completed"'));
+      expect(assistant.content, contains('terminal="completed"'));
+      expect(assistant.content, contains('trust="unverified"'));
+    },
+  );
 
   test(
     'omits the application prompt but localizes conversation context',
@@ -1097,13 +1216,29 @@ Bot _bot({String systemPrompt = '', Map<String, dynamic>? parameters}) => Bot(
 Message _message({
   required String senderId,
   required String content,
+  String messageId = '',
+  String turnId = '',
+  String runId = '',
   String reasoning = '',
+  MessageTerminalOutcome? terminalOutcome,
+  bool hasPartialContent = false,
+  MessageGrounding grounding = const MessageGrounding.unverified(),
+  List<String> images = const [],
+  List<String> files = const [],
 }) => Message(
+  messageId: messageId,
+  turnId: turnId,
+  runId: runId,
   chatId: 'chat-1',
   botId: 'bot-1',
   senderId: senderId,
   content: content,
   reasoning: reasoning,
+  terminalOutcome: terminalOutcome,
+  hasPartialContent: hasPartialContent,
+  grounding: grounding,
+  images: images,
+  files: files,
   timestamp: DateTime(2026, 7, 26),
 );
 

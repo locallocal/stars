@@ -127,6 +127,138 @@ void main() {
     );
   });
 
+  test(
+    'isolates unsuccessful and partial assistant output by default',
+    () async {
+      final useCase = PrepareConversationContext(
+        memoryRepository: _MemoryRepository(),
+        aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+      );
+      final history = [
+        _message(0, true, 'failed question'),
+        _message(
+          0,
+          false,
+          'failed secret',
+          runId: 'run-failed',
+          terminalOutcome: MessageTerminalOutcome.failed,
+        ),
+        _message(1, true, 'cancelled question'),
+        _message(
+          1,
+          false,
+          'cancelled secret',
+          runId: 'run-cancelled',
+          terminalOutcome: MessageTerminalOutcome.cancelled,
+        ),
+        _message(2, true, 'empty response question'),
+        _message(
+          2,
+          false,
+          'empty response secret',
+          runId: 'run-empty',
+          terminalOutcome: MessageTerminalOutcome.emptyResponse,
+        ),
+        _message(3, true, 'partial question'),
+        _message(
+          3,
+          false,
+          'partial secret',
+          runId: 'run-partial',
+          hasPartialContent: true,
+        ),
+        _message(4, true, 'completed question'),
+        _message(4, false, 'completed answer', runId: 'run-completed'),
+      ];
+
+      final result = await useCase(
+        bot: _bot(),
+        systemPrompt: '',
+        history: history,
+        userMessage: _current('follow-up'),
+        currentUserId: 'user_1',
+        providerSupportsHistoryLookup: true,
+      );
+
+      expect(result.report.includedTurnIds, ['turn_4']);
+      expect(
+        result.report.includedTurnIds,
+        isNot(containsAll(['turn_0', 'turn_1', 'turn_2', 'turn_3'])),
+      );
+      final serialized = result.messages
+          .map((message) => message.content)
+          .join('\n');
+      expect(serialized, isNot(contains('failed secret')));
+      expect(serialized, isNot(contains('cancelled secret')));
+      expect(serialized, isNot(contains('empty response secret')));
+      expect(serialized, isNot(contains('partial secret')));
+
+      final assistant = result.messages.singleWhere(
+        (message) => message.role == 'assistant',
+      );
+      expect(assistant.content, contains('<assistant_history_output'));
+      expect(assistant.content, contains('run_id="run-completed"'));
+      expect(assistant.content, contains('terminal="completed"'));
+      expect(assistant.content, contains('trust="unverified"'));
+      expect(
+        assistant.content,
+        contains('<content>completed answer</content>'),
+      );
+    },
+  );
+
+  test('wraps explicitly continued partial output as untrusted data', () async {
+    final useCase = PrepareConversationContext(
+      memoryRepository: _MemoryRepository(),
+      aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+    );
+
+    final result = await useCase(
+      bot: _bot(),
+      systemPrompt: '',
+      history: [
+        _message(0, true, 'continue the interrupted task'),
+        _message(
+          0,
+          false,
+          'partial <fact> & more',
+          reasoning: 'discarded reasoning',
+          runId: 'run-partial',
+          terminalOutcome: MessageTerminalOutcome.failed,
+          hasPartialContent: true,
+          grounding: MessageGrounding(
+            trustLevel: AnswerTrustLevel.failed,
+            reasonCode: 'provider_failed',
+          ),
+          images: const ['unsafe-image'],
+          files: const ['unsafe-file'],
+        ),
+      ],
+      userMessage: _current('resume'),
+      currentUserId: 'user_1',
+      providerSupportsHistoryLookup: true,
+      includeUntrustedPartialOutput: true,
+    );
+
+    expect(result.report.includedTurnIds, ['turn_0']);
+    final assistant = result.messages.singleWhere(
+      (message) => message.role == 'assistant',
+    );
+    expect(assistant.content, contains('<untrusted_partial_output'));
+    expect(assistant.content, contains('run_id="run-partial"'));
+    expect(assistant.content, contains('terminal="failed"'));
+    expect(assistant.content, contains('trust="failed"'));
+    expect(assistant.content, contains('reason_code="provider_failed"'));
+    expect(
+      assistant.content,
+      contains('<content>partial &lt;fact&gt; &amp; more</content>'),
+    );
+    expect(assistant.content, isNot(contains('partial <fact>')));
+    expect(assistant.reasoning, isEmpty);
+    expect(assistant.images, isEmpty);
+    expect(assistant.files, isEmpty);
+  });
+
   test('preserves assistant reasoning in prepared history', () async {
     final useCase = PrepareConversationContext(
       memoryRepository: _MemoryRepository(),
@@ -323,16 +455,26 @@ Message _message(
   bool user,
   String content, {
   String reasoning = '',
+  String runId = '',
   MessageTerminalOutcome terminalOutcome = MessageTerminalOutcome.completed,
+  bool hasPartialContent = false,
+  MessageGrounding grounding = const MessageGrounding.unverified(),
+  List<String> images = const [],
+  List<String> files = const [],
 }) => Message(
   messageId: 'message_${turn}_${user ? 'u' : 'a'}',
   turnId: 'turn_$turn',
+  runId: user ? '' : runId,
   chatId: 'chat_1',
   botId: 'bot_1',
   senderId: user ? 'user_1' : 'bot_1',
   content: content,
   reasoning: reasoning,
+  images: images,
+  files: files,
+  grounding: grounding,
   terminalOutcome: user ? null : terminalOutcome,
+  hasPartialContent: user ? false : hasPartialContent,
   timestamp: DateTime(2026, 8, 1).add(Duration(minutes: turn)),
 );
 
