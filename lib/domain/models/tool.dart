@@ -81,6 +81,35 @@ final class ToolDefinition {
   bool get producesEvidence => evidenceCapabilities.isNotEmpty;
 }
 
+const Set<EvidenceKind> basicVerificationEvidenceKinds = {
+  EvidenceKind.observation,
+  EvidenceKind.calculation,
+};
+
+/// Whether a Tool is safe to expose solely for application verification.
+///
+/// This check grants no execution permission. Eligible Tools still pass
+/// through [ToolPolicy] and normal approval handling when invoked.
+bool isEligibleVerificationTool(
+  ToolDefinition definition, {
+  Set<EvidenceKind> requiredEvidenceKinds = basicVerificationEvidenceKinds,
+}) {
+  if (definition.riskLevel != ToolRiskLevel.readOnly ||
+      definition.source == ToolSource.skillScript ||
+      !definition.producesEvidence ||
+      !definition.evidenceCapabilities.any(requiredEvidenceKinds.contains) ||
+      definition.capabilities.isEmpty) {
+    return false;
+  }
+  return !definition.capabilities.any(
+    const <ToolCapability>{
+      ToolCapability.localWrite,
+      ToolCapability.externalWrite,
+      ToolCapability.process,
+    }.contains,
+  );
+}
+
 final class ToolCallRequest {
   ToolCallRequest({
     required this.callId,
@@ -259,8 +288,10 @@ final class ToolPolicyContext {
     required this.chatId,
     required this.botId,
     Set<String> requestedToolNames = const {},
+    Set<String> verificationToolNames = const {},
     Set<String> approvalExemptToolNames = const {},
   }) : requestedToolNames = Set<String>.unmodifiable(requestedToolNames),
+       verificationToolNames = Set<String>.unmodifiable(verificationToolNames),
        approvalExemptToolNames = Set<String>.unmodifiable(
          approvalExemptToolNames,
        );
@@ -269,6 +300,7 @@ final class ToolPolicyContext {
   final String chatId;
   final String botId;
   final Set<String> requestedToolNames;
+  final Set<String> verificationToolNames;
   final Set<String> approvalExemptToolNames;
 }
 
@@ -303,9 +335,22 @@ final class DefaultToolPolicy implements ToolPolicy {
     ToolCallRequest call,
     ToolPolicyContext context,
   ) {
-    if (!context.requestedToolNames.contains(definition.name)) {
+    final requestedBySkill = context.requestedToolNames.contains(
+      definition.name,
+    );
+    final requestedForVerification = context.verificationToolNames.contains(
+      definition.name,
+    );
+    if (!requestedBySkill && !requestedForVerification) {
       return const ToolPolicyDecision.deny(
         reason: 'tool_not_requested_by_active_skill',
+      );
+    }
+    if (!requestedBySkill &&
+        requestedForVerification &&
+        !isEligibleVerificationTool(definition)) {
+      return const ToolPolicyDecision.deny(
+        reason: 'verification_tool_not_eligible',
       );
     }
     if (definition.source == ToolSource.mcp &&

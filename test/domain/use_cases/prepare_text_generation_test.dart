@@ -101,6 +101,70 @@ void main() {
       ]);
     },
   );
+
+  test('discovers a basic verifier without activating a Skill', () async {
+    final verifier = _VerificationTool();
+    final useCase = PrepareTextGeneration(
+      aiProviderRepository: _FakeProviderRepository(_FakeProvider(_bot)),
+      toolRegistry: StaticToolRegistry([verifier]),
+      verificationToolCandidateNames: {verifier.definition.name},
+      composeChatTurn:
+          ({
+            required bot,
+            required history,
+            required userMessage,
+            required currentUserId,
+            skillToolProvider,
+          }) async => PreparedChatTurn(messages: [], activatedSkills: const []),
+    );
+
+    final result = await useCase(
+      chatId: 'chat-1',
+      bot: _bot,
+      history: const [],
+      userMessage: _userMessage,
+      currentUserId: 'user-1',
+    );
+
+    expect(result.activatedSkills, isEmpty);
+    expect(result.requestedToolNames, isEmpty);
+    expect(result.verificationToolNames, {'verify_calculation'});
+    expect(result.verificationUnavailableReason, isEmpty);
+    expect(
+      () => result.verificationToolNames.add('mutate'),
+      throwsUnsupportedError,
+    );
+  });
+
+  test('records why configured verification Tools are unavailable', () async {
+    final useCase = PrepareTextGeneration(
+      aiProviderRepository: _FakeProviderRepository(_FakeProvider(_bot)),
+      toolRegistry: StaticToolRegistry([_PlainReadTool()]),
+      verificationToolCandidateNames: const {'plain_read'},
+      composeChatTurn:
+          ({
+            required bot,
+            required history,
+            required userMessage,
+            required currentUserId,
+            skillToolProvider,
+          }) async => PreparedChatTurn(messages: [], activatedSkills: const []),
+    );
+
+    final result = await useCase(
+      chatId: 'chat-1',
+      bot: _bot,
+      history: const [],
+      userMessage: _userMessage,
+      currentUserId: 'user-1',
+    );
+
+    expect(result.verificationToolNames, isEmpty);
+    expect(
+      result.verificationUnavailableReason,
+      'verification_tool_unavailable',
+    );
+  });
 }
 
 final _bot = Bot(
@@ -164,4 +228,55 @@ final class _UnusedSkillInventoryRepository
 final class _UnusedMcpInventoryRepository implements McpInventoryRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+final class _VerificationTool implements ExecutableTool {
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: 'verify_calculation',
+    description: 'Verify a calculation.',
+    inputSchema: const {'type': 'object'},
+    outputSchema: {
+      'type': 'object',
+      'properties': <String, Object?>{
+        'ok': {'type': 'boolean'},
+        ...toolEvidenceOutputSchemaProperties,
+      },
+      'required': ['ok', ...toolEvidenceOutputRequiredFields],
+      'additionalProperties': false,
+    },
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.readOnly,
+    capabilities: const {ToolCapability.compute},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.calculation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: 'calculation:test',
+      fixedScope: const {'operation': 'test'},
+    ),
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async => ToolResult(callId: call.callId, name: call.name, content: 'ok');
+}
+
+final class _PlainReadTool implements ExecutableTool {
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: 'plain_read',
+    description: 'Read without evidence.',
+    inputSchema: const {'type': 'object'},
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.readOnly,
+    capabilities: const {ToolCapability.localRead},
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async => ToolResult(callId: call.callId, name: call.name, content: 'ok');
 }

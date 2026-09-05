@@ -56,16 +56,21 @@ final class AgentRunCoordinator {
       runId: request.runId,
       observer: onRunEvent,
     )..transition(AgentRunPhase.planning);
+    final requestedExposureNames = <String>{
+      ...request.requestedToolNames,
+      ...request.verificationToolNames,
+    };
     final exposedTools =
-        request.requestedToolNames.isEmpty
+        requestedExposureNames.isEmpty
             ? const <ToolDefinition>[]
-            : _toolRegistry.list(allowedNames: request.requestedToolNames);
+            : _toolRegistry.list(allowedNames: requestedExposureNames);
     final exposedNames = exposedTools.map((tool) => tool.name).toSet();
     final policyContext = ToolPolicyContext(
       runId: request.runId,
       chatId: request.chatId,
       botId: request.botId,
       requestedToolNames: request.requestedToolNames,
+      verificationToolNames: request.verificationToolNames,
       approvalExemptToolNames: request.approvalExemptToolNames,
     );
     final supportsParallelToolCalls =
@@ -92,7 +97,8 @@ final class AgentRunCoordinator {
     var toolCallCount = 0;
     var pendingVerificationFeedback = '';
     var verificationRetryTurn = false;
-    var degradedReason = '';
+    var degradedReason = request.verificationUnavailableReason;
+    var verificationAuthorizationDenied = false;
     GroundedAnswerValidationResult? groundedValidation;
     AgentModelSession? session;
     final timeoutTimer = Timer(_limits.totalTimeout, () {
@@ -131,6 +137,11 @@ final class AgentRunCoordinator {
         persistence.record(invocation),
         request.cancellationToken,
       );
+      if (request.verificationToolNames.contains(invocation.name) &&
+          invocation.status == ToolInvocationStatus.denied) {
+        verificationAuthorizationDenied = true;
+        degradedReason = 'verification_tool_denied';
+      }
       final definition = _toolRegistry.find(invocation.name)?.definition;
       if (definition != null) {
         final plan = _postWriteVerificationPolicy.plan(
@@ -346,6 +357,7 @@ final class AgentRunCoordinator {
                       completedCalls: completedCalls,
                       invocationIdentities: invocationIdentities,
                       observeInvocation: observeInvocation,
+                      shouldContinue: () => !verificationAuthorizationDenied,
                     );
             results = List<ToolResult>.unmodifiable(nextResults);
             executedCalls = true;
@@ -363,7 +375,7 @@ final class AgentRunCoordinator {
           request.cancellationToken,
         );
         request.cancellationToken.throwIfCancelled();
-        if (executedCalls) continue;
+        if (executedCalls && !verificationAuthorizationDenied) continue;
 
         final hasObservationBudget =
             modelTurn + 1 < _limits.maxModelTurns &&

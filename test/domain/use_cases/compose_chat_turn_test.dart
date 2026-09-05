@@ -510,40 +510,47 @@ void main() {
     },
   );
 
-  test('unbound or disabled shell system Skill exposes no tool', () async {
-    final shellSkill = _systemShellSkill();
-    for (final bindings in <List<BotSkillBinding>>[
-      const [],
-      [_binding(shellCommandSkillId, enabled: false)],
-    ]) {
-      final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository(bindings),
-        conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
-        bundledSkillLoader: () async => [shellSkill],
-      );
+  test(
+    'unbound Skills leave the Skill tool channel empty for verification discovery',
+    () async {
+      final shellSkill = _systemShellSkill();
+      for (final bindings in <List<BotSkillBinding>>[
+        const [],
+        [_binding(shellCommandSkillId, enabled: false)],
+      ]) {
+        final compose = ComposeChatTurn(
+          skillRepository: _FakeSkillRepository(const {}),
+          bindingRepository: _FakeBindingRepository(bindings),
+          conversationArtifactsDirectoryProvider:
+              _testConversationArtifactsDirectory,
+          bundledSkillLoader: () async => [shellSkill],
+        );
 
-      final result = await compose(
-        bot: _bot(),
-        history: const [],
-        userMessage: _message(senderId: 'user-1', content: 'List local files'),
-        currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(const []),
-      );
+        final result = await compose(
+          bot: _bot(),
+          history: const [],
+          userMessage: _message(
+            senderId: 'user-1',
+            content: 'List local files',
+          ),
+          currentUserId: 'user-1',
+          skillToolProvider: _FakeSkillProvider(const []),
+        );
 
-      expect(result.requestedToolNames, isEmpty);
-      expect(result.activatedSkills, isEmpty);
-      expect(result.messages.map((message) => message.role), [
-        'system',
-        'user',
-      ]);
-      expect(
-        result.messages.first.content,
-        startsWith('<stars_application_context>'),
-      );
-    }
-  });
+        expect(result.requestedToolNames, isEmpty);
+        expect(result.approvalExemptToolNames, isEmpty);
+        expect(result.activatedSkills, isEmpty);
+        expect(result.messages.map((message) => message.role), [
+          'system',
+          'user',
+        ]);
+        expect(
+          result.messages.first.content,
+          startsWith('<stars_application_context>'),
+        );
+      }
+    },
+  );
 
   test(
     'bound local file system Skills expose native tools to Agent providers',

@@ -252,8 +252,10 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
 
 所有文本会话都应经过同一个终态门禁。Provider 不支持结构化工具、没有合适工具、用户拒绝
 授权或网络不可用时，结果应是 `unverified`/`failed`，不能回落到“看起来正常”的可信回答。
-基础只读事实工具的发现不应完全依赖 Skill 是否恰好激活；可以由应用维护最小、显式的
-`verificationToolNames`，仍然经过能力策略和用户授权。
+基础只读事实工具的发现不依赖 Skill 是否恰好激活：应用从受信的内建工具中生成显式候选
+白名单，按 evidence contract 去重得到最小 `verificationToolNames`，不枚举整个 MCP
+inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`；本地、外部和网络读取仍需
+用户审批。无合适工具或用户拒绝后，Loop 保存明确原因并降级，不再尝试更高权限的替代工具。
 
 ## 与现有代码的落地映射
 
@@ -267,6 +269,9 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
   原因。`MessageToolCall` 增加 `truncated`、`schemaValid`、`observedAt` 等最小投影。
 - `AgentRunCoordinator` 已接入独立 Loop 状态机、覆盖率验证和最终声明门禁；工具执行、限制与
   取消继续由协调器统一拥有。
+- `VerificationToolDiscovery` 只检查应用显式允许的候选名称，根据读风险、证据能力和
+  contract 去重生成独立的 `verificationToolNames`；`ToolPolicyContext` 保留 Skill 与验证两条
+  授权来源，发现本身不授予执行权。
 - `PostWriteVerificationPolicy` 只从本轮已暴露的只读工具中配对写后验证，MCP 配对还要求同一
   server；它不发现新工具或扩大权限。验证反馈轮拒绝所有写入和进程工具，幂等提示也不会放宽
   该限制。

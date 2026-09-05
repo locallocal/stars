@@ -110,6 +110,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   AnswerEvidenceState _answerEvidenceState = AnswerEvidenceState.none;
   AnswerTrustGateResult _answerTrustGateResult = AnswerTrustGateResult.notRun;
   List<String> _validatedEvidenceIds = const [];
+  String _verificationUnavailableReason = '';
 
   ChatGenerationSnapshot get snapshot => _snapshot;
   ContextAssemblyReport? get contextAssemblyReport => _contextAssemblyReport;
@@ -135,7 +136,9 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     List<MessageToolCall> skillToolCalls = const [],
     ModelTokenUsage preflightTokenUsage = ModelTokenUsage.empty,
     Set<String> requestedToolNames = const {},
+    Set<String> verificationToolNames = const {},
     Set<String> approvalExemptToolNames = const {},
+    String verificationUnavailableReason = '',
   }) => startTextWithPreparation(
     userMessage: userMessage,
     prepare:
@@ -147,7 +150,9 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
           skillToolCalls: skillToolCalls,
           preflightTokenUsage: preflightTokenUsage,
           requestedToolNames: requestedToolNames,
+          verificationToolNames: verificationToolNames,
           approvalExemptToolNames: approvalExemptToolNames,
+          verificationUnavailableReason: verificationUnavailableReason,
         ),
   );
 
@@ -184,6 +189,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _answerEvidenceState = AnswerEvidenceState.none;
     _answerTrustGateResult = AnswerTrustGateResult.notRun;
     _validatedEvidenceIds = const [];
+    _verificationUnavailableReason = '';
     _terminalCompleter = Completer<ChatRunLifecycle>();
     _preparingRuns.add(runId);
     _snapshot = ChatGenerationSnapshot(
@@ -227,6 +233,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _preflightTokenUsage = prepared.preflightTokenUsage;
     _contextAssemblyReport = prepared.contextAssemblyReport;
     _reliabilityPolicyEnabled = prepared.reliabilityPolicyEnabled;
+    _verificationUnavailableReason = prepared.verificationUnavailableReason;
     _snapshot = _snapshot.copyWith(
       supportsCancellation: provider.supportsCancellation,
       tokenUsage: prepared.preflightTokenUsage,
@@ -294,9 +301,14 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
               parent: _toolRegistry,
               overlayTools: prepared.runScopedTools,
             );
-    final agentTools = runToolRegistry.list(
-      allowedNames: prepared.requestedToolNames,
-    );
+    final agentToolNames = <String>{
+      ...prepared.requestedToolNames,
+      ...prepared.verificationToolNames,
+    };
+    final agentTools =
+        agentToolNames.isEmpty
+            ? const <ToolDefinition>[]
+            : runToolRegistry.list(allowedNames: agentToolNames);
     final usesNormalizedNativeTools =
         provider.getWebSearch() &&
         provider.capabilities.supportsNativeToolEvidence;
@@ -307,6 +319,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         provider: provider,
         messages: prepared.messages,
         requestedToolNames: prepared.requestedToolNames,
+        verificationToolNames: prepared.verificationToolNames,
         approvalExemptToolNames: prepared.approvalExemptToolNames,
         toolRegistry: runToolRegistry,
       );
@@ -693,6 +706,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         evidenceState: _answerEvidenceState,
         gateResult: _answerTrustGateResult,
         evidenceIds: _validatedEvidenceIds,
+        verificationUnavailableReason: _verificationUnavailableReason,
         criticalPersistenceSucceeded: criticalPersistenceSucceeded ?? true,
         failureReasonCode:
             failureReasonCode?.isNotEmpty ?? false ? failureReasonCode! : '',

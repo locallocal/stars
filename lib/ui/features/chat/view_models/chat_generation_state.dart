@@ -159,10 +159,12 @@ class PreparedTextGeneration {
     this.skillToolCalls = const [],
     this.preflightTokenUsage = ModelTokenUsage.empty,
     this.requestedToolNames = const {},
+    this.verificationToolNames = const {},
     this.approvalExemptToolNames = const {},
     this.runScopedTools = const [],
     this.contextAssemblyReport,
     this.reliabilityPolicyEnabled = true,
+    this.verificationUnavailableReason = '',
   });
 
   final Message userMessage;
@@ -172,8 +174,10 @@ class PreparedTextGeneration {
   final List<MessageToolCall> skillToolCalls;
   final ModelTokenUsage preflightTokenUsage;
   final Set<String> requestedToolNames;
+  final Set<String> verificationToolNames;
   final Set<String> approvalExemptToolNames;
   final List<ExecutableTool> runScopedTools;
   final ContextAssemblyReport? contextAssemblyReport;
   final bool reliabilityPolicyEnabled;
+  final String verificationUnavailableReason;
 }

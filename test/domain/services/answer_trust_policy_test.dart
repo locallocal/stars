@@ -73,6 +73,12 @@ void main() {
             input: _input(reliabilityPolicyEnabled: false),
             reason: 'reliability_policy_disabled',
           ),
+          'no eligible verification tool is available': (
+            input: _input(
+              verificationUnavailableReason: 'verification_tool_unavailable',
+            ),
+            reason: 'verification_tool_unavailable',
+          ),
           'no tools were called': (
             input: _input(toolCalls: const []),
             reason: 'no_tool_evidence',
@@ -196,6 +202,7 @@ AnswerTrustPolicyInput _input({
   List<String> evidenceIds = const ['evidence-1'],
   bool criticalPersistenceSucceeded = true,
   String failureReasonCode = '',
+  String verificationUnavailableReason = '',
 }) => AnswerTrustPolicyInput(
   terminalOutcome: terminalOutcome,
   providerSupportsAgentLoop: providerSupportsAgentLoop,
@@ -206,4 +213,5 @@ AnswerTrustPolicyInput _input({
   evidenceIds: evidenceIds,
   criticalPersistenceSucceeded: criticalPersistenceSucceeded,
   failureReasonCode: failureReasonCode,
+  verificationUnavailableReason: verificationUnavailableReason,
 );
