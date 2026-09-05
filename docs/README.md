@@ -12,7 +12,7 @@
 | 架构 | [应用架构](architecture.md) | 分层职责、依赖方向、代码规模门禁和 Review 清单 |
 | 桌面规范 | [桌面端界面规范](specs/desktop-ui.md) | 布局、断点、视觉、可访问性和验收基线 |
 | 桌面规范 | [桌面组件矩阵](specs/desktop-components.md) | 组件、主题 token、通知和视觉回归的唯一入口 |
-| 功能规范 | [会话事实化功能清单](specs/conversation-grounding-features.md) | 防幻觉能力的实施顺序、依赖、改动范围和验收标准 |
+| 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |
 | 实现参考 | [会话 Loop 的事实依据与防幻觉协议](reference/conversation-loop-grounding.md) | 工具证据、声明门禁、跨轮信任与落地验收标准 |
 
