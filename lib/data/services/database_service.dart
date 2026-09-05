@@ -91,12 +91,20 @@ class DatabaseService {
     final columns = await database.rawQuery('PRAGMA table_info(profile)');
     final columnNames =
         columns.map((column) => column['name']).whereType<String>().toSet();
-    if (columnNames.contains('inject_application_prompt')) return;
-    await database.execute('''
-      ALTER TABLE profile
-      ADD COLUMN inject_application_prompt INTEGER NOT NULL DEFAULT 1
-        CHECK (inject_application_prompt IN (0, 1))
-    ''');
+    if (!columnNames.contains('inject_application_prompt')) {
+      await database.execute('''
+        ALTER TABLE profile
+        ADD COLUMN inject_application_prompt INTEGER NOT NULL DEFAULT 1
+          CHECK (inject_application_prompt IN (0, 1))
+      ''');
+    }
+    if (!columnNames.contains('strict_grounding_mode')) {
+      await database.execute('''
+        ALTER TABLE profile
+        ADD COLUMN strict_grounding_mode INTEGER NOT NULL DEFAULT 0
+          CHECK (strict_grounding_mode IN (0, 1))
+      ''');
+    }
   }
 
   static Future<void> _ensureCompatibleMessageGroundingSchema(
@@ -479,6 +487,8 @@ class DatabaseService {
           CHECK (show_execution_status IN (0, 1)),
         inject_application_prompt INTEGER NOT NULL DEFAULT 1
           CHECK (inject_application_prompt IN (0, 1)),
+        strict_grounding_mode INTEGER NOT NULL DEFAULT 0
+          CHECK (strict_grounding_mode IN (0, 1)),
         create_timestamp INTEGER NOT NULL,
         modify_timestamp INTEGER NOT NULL
       )

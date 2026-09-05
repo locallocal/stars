@@ -466,6 +466,7 @@ void main() {
       expect(profile.fontSize, ProfileDefaults.desktopFontSize);
       expect(profile.showExecutionStatus, isTrue);
       expect(profile.injectApplicationPrompt, isTrue);
+      expect(profile.strictGroundingMode, isFalse);
       final updated = profile.copyWith(
         name: 'Earthwind',
         fontSize: 18,
@@ -473,6 +474,7 @@ void main() {
         language: 'en_US',
         showExecutionStatus: false,
         injectApplicationPrompt: false,
+        strictGroundingMode: true,
         modifyTimestamp: DateTime(2026, 7, 21),
       );
       await repository.updateProfile(updated);
@@ -482,6 +484,7 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single['show_execution_status'], 0);
       expect(rows.single['inject_application_prompt'], 0);
+      expect(rows.single['strict_grounding_mode'], 1);
       expect(await repository.getProfile(), same(updated));
       expect(changes, [updated]);
     },

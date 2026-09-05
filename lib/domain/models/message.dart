@@ -245,7 +245,7 @@ final class MessageGrounding {
     required this.claims,
   });
 
-  static const int currentProtocolVersion = 2;
+  static const int currentProtocolVersion = 3;
 
   final int protocolVersion;
   final AnswerTrustLevel trustLevel;

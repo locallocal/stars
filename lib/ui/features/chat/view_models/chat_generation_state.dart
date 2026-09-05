@@ -135,6 +135,7 @@ typedef MessagePersister = Future<Message> Function(Message message);
 typedef GroundedMessagePersister = Future<Message> Function(Message message);
 typedef LastMessageUpdater =
     Future<void> Function(String chatId, String content);
+typedef AssistantPreviewBuilder = Future<String> Function(Message message);
 typedef ProviderFactory = AiProvider Function(Bot bot);
 typedef MessageIdFactory = String Function(String prefix);
 typedef SkillActivationPersister =

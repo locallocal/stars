@@ -149,6 +149,7 @@ extension _ChatPageWorkspace on ChatPageState {
                   reasoningResponse: _reasoningResponse,
                   isDesktop: isDesktop,
                   showExecutionStatus: widget.showExecutionStatus,
+                  strictGroundingMode: widget.strictGroundingMode,
                   actionViewModel: _chatViewModel.messageActions,
                 ),
                 AssistantTypingIndicator(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -19,6 +20,7 @@ class ChatListBuilder extends StatelessWidget {
   final String? selectedChatId;
   final bool selectionVisible;
   final bool showExecutionStatus;
+  final bool strictGroundingMode;
   final ValueChanged<String> onChatDeleted;
   final void Function(String chatId, Bot bot) onChatSelected;
   final Future<void> Function(String chatId) onDeleteChat;
@@ -31,6 +33,7 @@ class ChatListBuilder extends StatelessWidget {
     this.selectedChatId,
     this.selectionVisible = true,
     this.showExecutionStatus = true,
+    this.strictGroundingMode = false,
     required this.onChatDeleted,
     required this.onChatSelected,
     required this.onDeleteChat,
@@ -86,6 +89,7 @@ class ChatListBuilder extends StatelessWidget {
                     id: chat.id,
                     bot: bot,
                     showExecutionStatus: showExecutionStatus,
+                    strictGroundingMode: strictGroundingMode,
                   ),
             ),
           );
@@ -235,19 +239,24 @@ class ChatListBuilder extends StatelessWidget {
         }
 
         ChatListItem buildListItem({Widget? trailing}) {
+          final storedPreview = chat.lastMessage;
+          final localizedPreview =
+              storedPreview == strictGroundingPreviewMarker
+                  ? S.of(context).strictGroundingUnableToVerify
+                  : storedPreview;
           return ChatListItem(
             bot: bot,
             isSelected:
                 isDesktop && selectionVisible && selectedChatId == chat.id,
             lastMessage:
-                chat.lastMessage.isEmpty
+                localizedPreview.isEmpty
                     ? desktopConversationText(
                       context,
                       S.of(context).startChatting,
                     )
-                    : chat.lastMessage.length > 25
-                    ? '${chat.lastMessage.substring(0, 25)}...'
-                    : chat.lastMessage,
+                    : localizedPreview.length > 25
+                    ? '${localizedPreview.substring(0, 25)}...'
+                    : localizedPreview,
             timestamp: formatTimestamp(context, chat.lastMessageTimestamp),
             trailing: trailing,
             onTap: () => openChat(refreshAfterClose: !isDesktop),

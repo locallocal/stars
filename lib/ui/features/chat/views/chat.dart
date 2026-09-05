@@ -33,12 +33,14 @@ class ChatPage extends StatefulWidget {
   final Bot bot;
   final String id;
   final bool showExecutionStatus;
+  final bool strictGroundingMode;
 
   const ChatPage({
     super.key,
     required this.id,
     required this.bot,
     this.showExecutionStatus = true,
+    this.strictGroundingMode = false,
   });
 
   @override

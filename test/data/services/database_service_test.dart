@@ -574,26 +574,24 @@ void main() {
       },
     );
 
-    test(
-      'adds the prompt preference to an existing current database',
-      () async {
-        final directory = await Directory.systemTemp.createTemp(
-          'stars_current_profile_upgrade_',
-        );
-        addTearDown(() => directory.delete(recursive: true));
-        final dataDirectory = _applicationDataDirectory(directory);
-        await dataDirectory.create(recursive: true);
-        final databasePath = path.join(dataDirectory.path, 'app.db');
-        final initialDatabase = await databaseFactoryFfi.openDatabase(
-          databasePath,
-          options: OpenDatabaseOptions(
-            version: DatabaseService.databaseVersion,
-            onConfigure: DatabaseService.configure,
-            onCreate: DatabaseService.createSchema,
-          ),
-        );
-        await initialDatabase.execute('DROP TABLE profile');
-        await initialDatabase.execute('''
+    test('adds current profile preferences to an existing database', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_current_profile_upgrade_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final dataDirectory = _applicationDataDirectory(directory);
+      await dataDirectory.create(recursive: true);
+      final databasePath = path.join(dataDirectory.path, 'app.db');
+      final initialDatabase = await databaseFactoryFfi.openDatabase(
+        databasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      await initialDatabase.execute('DROP TABLE profile');
+      await initialDatabase.execute('''
           CREATE TABLE profile (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -607,29 +605,29 @@ void main() {
             modify_timestamp INTEGER NOT NULL
           )
         ''');
-        await initialDatabase.insert('profile', <String, Object?>{
-          'name': 'Existing User',
-          'avatar': '',
-          'font_size': 14.0,
-          'theme_mode': 0,
-          'language': 'zh_CN',
-          'show_execution_status': 1,
-          'create_timestamp': 1,
-          'modify_timestamp': 1,
-        });
-        await initialDatabase.close();
+      await initialDatabase.insert('profile', <String, Object?>{
+        'name': 'Existing User',
+        'avatar': '',
+        'font_size': 14.0,
+        'theme_mode': 0,
+        'language': 'zh_CN',
+        'show_execution_status': 1,
+        'create_timestamp': 1,
+        'modify_timestamp': 1,
+      });
+      await initialDatabase.close();
 
-        final service = DatabaseService(
-          applicationDocumentsDirectoryProvider: () async => directory,
-        );
-        final migratedDatabase = await service.initDatabase();
-        addTearDown(migratedDatabase.close);
+      final service = DatabaseService(
+        applicationDocumentsDirectoryProvider: () async => directory,
+      );
+      final migratedDatabase = await service.initDatabase();
+      addTearDown(migratedDatabase.close);
 
-        final rows = await migratedDatabase.query('profile');
-        expect(rows.single['name'], 'Existing User');
-        expect(rows.single['inject_application_prompt'], 1);
-      },
-    );
+      final rows = await migratedDatabase.query('profile');
+      expect(rows.single['name'], 'Existing User');
+      expect(rows.single['inject_application_prompt'], 1);
+      expect(rows.single['strict_grounding_mode'], 0);
+    });
 
     test(
       'adds message grounding storage without deleting existing rows',
@@ -1129,6 +1127,7 @@ Future<void> _expectCurrentSchema(Database database) async {
       'language',
       'show_execution_status',
       'inject_application_prompt',
+      'strict_grounding_mode',
       'create_timestamp',
       'modify_timestamp',
     ]),
@@ -1138,6 +1137,12 @@ Future<void> _expectCurrentSchema(Database database) async {
       (column) => column['name'] == 'inject_application_prompt',
     )['dflt_value'],
     '1',
+  );
+  expect(
+    profileColumns.singleWhere(
+      (column) => column['name'] == 'strict_grounding_mode',
+    )['dflt_value'],
+    '0',
   );
 
   final mcpColumns = await database.rawQuery('PRAGMA table_info(mcp_servers)');

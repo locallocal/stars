@@ -136,12 +136,51 @@ class MessageLookup extends MessageLookupByLibrary {
       "Добавляет этот навык в каждый текстовый запрос.",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("Всегда включён"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "Строгий режим скрыл непроверенное фактическое утверждение.",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage(
+      "Показать сведения о доказательствах",
+    ),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage(
+      "Доказательство",
+    ),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Сведения о доказательстве недоступны.",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage(
+      "Причина доверия",
+    ),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage(
+      "Статус доверия",
+    ),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("Ошибка"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage(
+      "Причина сбоя",
+    ),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "Без проверки фактов",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage(
+      "Время наблюдения",
+    ),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "Частично проверено",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "Подтверждающее наблюдение устарело.",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "Этот ответ не прошёл проверку доверия приложения.",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "Для этого ответа нет подходящих данных от инструментов.",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "Это творческий контент или он не представлен как проверенный факт.",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "Только часть фактических утверждений подтверждена сохранёнными доказательствами.",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "Запрос к провайдеру завершился ошибкой до проверки этого ответа.",
@@ -156,10 +195,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "Проверка этого ответа не завершена.",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "Все фактические утверждения подтверждены сохранёнными доказательствами.",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("Источник"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("Инструмент"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage(
       "Не проверено",
     ),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("Проверено"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("Адрес API:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API ключ"),
     "apiType": MessageLookupByLibrary.simpleMessage("Тип API:"),
@@ -1032,6 +1077,15 @@ class MessageLookup extends MessageLookupByLibrary {
           "The partial response will be kept.",
         ),
     "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage(
+      "Строгий режим проверки",
+    ),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "Скрывает непроверенные фактические ответы, сохраняя сведения о проверке и сбоях инструментов.",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars не удалось проверить этот фактический ответ. Откройте доказательства или повторите проверку.",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Структурированная информация о процессе",
     ),
@@ -1065,6 +1119,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Размышление…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Использование токенов"),
     "tokens": MessageLookupByLibrary.simpleMessage("токенов"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage(
+      "Действие принято",
+    ),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage(
+      "Действие завершено",
+    ),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage(
+      "Действие не принято",
+    ),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage(
+      "Действие не завершено",
+    ),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage(
       "Разрешено один раз",
     ),
@@ -1079,6 +1145,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage(
       "Скрипт навыка",
+    ),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "Состояние не перечитано как проверенное",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "Состояние перечитано и проверено",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Всего токенов"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(

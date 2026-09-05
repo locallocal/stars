@@ -81,6 +81,36 @@ void main() {
     });
 
     test(
+      'assistant preview builder prevents raw unverified preview writes',
+      () async {
+        final harness = _ControllerHarness(
+          cancellable: true,
+          assistantPreviewBuilder:
+              (message) async => 'safe:${message.grounding.trustLevel.name}',
+        );
+        final controller = harness.controller;
+        addTearDown(controller.dispose);
+
+        await controller.startText(
+          userMessage: _userMessage(),
+          messages: [ChatMessage(role: 'user', content: 'Hello')],
+        );
+        harness.runProvider.emitToken('raw unverified fact');
+        harness.runProvider.emitTerminal(ProviderTerminalType.completed);
+        await _waitFor(
+          () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+        );
+
+        expect(
+          controller.snapshot.terminalMessage?.content,
+          'raw unverified fact',
+        );
+        expect(harness.lastMessages, ['Hello', 'safe:unverified']);
+        expect(harness.lastMessages, isNot(contains('raw unverified fact')));
+      },
+    );
+
+    test(
       'an empty Agent Tool registry cannot produce verified trust',
       () async {
         final harness = _ControllerHarness(
@@ -1174,6 +1204,7 @@ class _ControllerHarness {
   _ControllerHarness({
     required bool cancellable,
     bool supportsAgentLoop = false,
+    AssistantPreviewBuilder? assistantPreviewBuilder,
   }) : factory = _FakeProviderFactory(
          cancellable: cancellable,
          supportsAgentLoop: supportsAgentLoop,
@@ -1190,6 +1221,8 @@ class _ControllerHarness {
         expect(chatId, 'chat-1');
         lastMessages.add(content);
       },
+      assistantPreviewBuilder:
+          assistantPreviewBuilder ?? (message) async => message.content,
     );
   }
 

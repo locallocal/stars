@@ -71,6 +71,54 @@ void main() {
       expect(result.evidenceIds, isEmpty);
     });
 
+    test('no-tool answers retain factual claim failure details', () {
+      final claim = MessageClaimGrounding(
+        claim: AnswerClaim(
+          claimId: 'claim-unverified',
+          text: 'Production is healthy.',
+          kind: ClaimKind.currentFact,
+        ),
+        trustLevel: ClaimTrustLevel.unverified,
+        reasonCode: 'claimHasNoEvidence',
+      );
+
+      final result = policy.evaluate(
+        _input(
+          toolCalls: const [],
+          evidenceState: AnswerEvidenceState.none,
+          evidenceIds: const [],
+          claims: [claim],
+        ),
+      );
+
+      expect(result.reasonCode, 'no_tool_evidence');
+      expect(result.claims, [same(claim)]);
+    });
+
+    test('creative-only answers remain explicitly not fact checked', () {
+      final claim = MessageClaimGrounding(
+        claim: AnswerClaim(
+          claimId: 'non_factual_text',
+          text: 'A fictional story.',
+          kind: ClaimKind.nonFactual,
+        ),
+        trustLevel: ClaimTrustLevel.notVerifiable,
+        reasonCode: 'not_fact_checked',
+      );
+
+      final result = policy.evaluate(
+        _input(
+          toolCalls: const [],
+          evidenceState: AnswerEvidenceState.none,
+          evidenceIds: const [],
+          claims: [claim],
+        ),
+      );
+
+      expect(result.reasonCode, 'no_verifiable_claims');
+      expect(result.claims, [same(claim)]);
+    });
+
     test('duplicate reuse does not replace or downgrade a successful call', () {
       final grounding = policy.evaluate(
         _input(

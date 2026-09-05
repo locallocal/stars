@@ -140,10 +140,15 @@ class _MessageTimestamp extends StatelessWidget {
 }
 
 class _CopyableCodeBlockBuilder extends MarkdownElementBuilder {
-  _CopyableCodeBlockBuilder({required this.isDesktop, required this.textStyle});
+  _CopyableCodeBlockBuilder({
+    required this.isDesktop,
+    required this.textStyle,
+    required this.trustAnnotation,
+  });
 
   final bool isDesktop;
   final TextStyle textStyle;
+  final String trustAnnotation;
   String _language = '';
 
   @override
@@ -158,6 +163,7 @@ class _CopyableCodeBlockBuilder extends MarkdownElementBuilder {
       language: _language,
       isDesktop: isDesktop,
       textStyle: textStyle,
+      trustAnnotation: trustAnnotation,
     );
   }
 }
@@ -168,12 +174,14 @@ class _CopyableCodeBlock extends StatefulWidget {
     required this.language,
     required this.isDesktop,
     required this.textStyle,
+    required this.trustAnnotation,
   });
 
   final String source;
   final String language;
   final bool isDesktop;
   final TextStyle textStyle;
+  final String trustAnnotation;
 
   @override
   State<_CopyableCodeBlock> createState() => _CopyableCodeBlockState();
@@ -190,7 +198,11 @@ class _CopyableCodeBlockState extends State<_CopyableCodeBlock> {
 
   Future<void> _copyCode() async {
     if (widget.source.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: widget.source));
+    final copiedText = <String>[
+      widget.source,
+      if (widget.trustAnnotation.isNotEmpty) ...['---', widget.trustAnnotation],
+    ].join('\n\n');
+    await Clipboard.setData(ClipboardData(text: copiedText));
     if (!mounted) return;
     showStarsNotice(context, S.of(context).messageCopied);
   }

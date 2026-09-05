@@ -88,6 +88,7 @@ final class MessageClaimGrounding {
     required AnswerClaim claim,
     required ClaimTrustLevel trustLevel,
     List<String> acceptedEvidenceIds = const [],
+    String reasonCode = '',
   }) {
     final accepted = List<String>.unmodifiable(acceptedEvidenceIds);
     final proposed = claim.evidenceIds.toSet();
@@ -115,10 +116,20 @@ final class MessageClaimGrounding {
         'Only a verified claim can retain accepted evidence.',
       );
     }
+    final normalizedReasonCode = reasonCode.trim();
+    if (normalizedReasonCode.isNotEmpty &&
+        !RegExp(r'^[a-z][a-zA-Z0-9_]{0,63}$').hasMatch(normalizedReasonCode)) {
+      throw ArgumentError.value(
+        reasonCode,
+        'reasonCode',
+        'Claim reason codes must be normalized application identifiers.',
+      );
+    }
     return MessageClaimGrounding._(
       claim: claim,
       trustLevel: trustLevel,
       acceptedEvidenceIds: accepted,
+      reasonCode: normalizedReasonCode,
     );
   }
 
@@ -126,11 +137,13 @@ final class MessageClaimGrounding {
     required this.claim,
     required this.trustLevel,
     required this.acceptedEvidenceIds,
+    required this.reasonCode,
   });
 
   final AnswerClaim claim;
   final ClaimTrustLevel trustLevel;
   final List<String> acceptedEvidenceIds;
+  final String reasonCode;
 }
 
 /// A strictly parsed, Provider-independent answer ready for deterministic UI.

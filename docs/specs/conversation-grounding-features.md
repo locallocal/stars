@@ -650,7 +650,15 @@ trust envelope、verified-claim Memory 门禁、摘要来源/观测时间保留�
 
 ### GRD-019 证据详情 UI 与严格模式
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/services/strict_grounding_policy.dart`、
+`lib/ui/features/chat/views/message_list_trust.dart`、
+`lib/ui/features/chat/views/message_list_process.dart`、
+`lib/ui/features/profile/views/profile_settings_controls.dart`、
+`lib/ui/features/chats/views/chat_list_builder.dart` 和
+`lib/data/models/local_records.dart`；严格模式设置、声明失败原因与消息可信状态均持久化，证据详情
+按需从 `ToolEvidenceRepository` 读取。
 
 目标：让用户理解可信状态并控制未验证回答的展示策略。
 
@@ -668,7 +676,9 @@ trust envelope、verified-claim Memory 门禁、摘要来源/观测时间保留�
 - 严格模式不会隐藏工具失败原因，也不会把未验证正文写入聊天预览。
 - 重启后设置和每条消息状态保持一致。
 
-测试入口：Widget、语义、本地化和桌面视觉回归测试。
+测试入口：`strict_grounding_policy_test.dart`、`local_records_test.dart`、
+`message_list_test.dart`、`profile_strict_grounding_test.dart`、本地化契约测试和
+`desktop_visual_regression_test.dart`。
 
 ### GRD-020 恢复、指标和发布门禁
 

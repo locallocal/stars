@@ -121,12 +121,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "每次文本请求都会注入此技能。",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("始终启用"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "严格模式已隐藏未验证的事实声明。",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage("显示证据详情"),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage("证据"),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "证据详情不可用。",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage("可信原因"),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage("可信状态"),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("失败"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage("失败原因"),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "未进行事实核验",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage("观测时间"),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "部分已验证",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "支持该声明的观测已经过期。",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "此回复未通过应用可信门禁。",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "此回复没有可用的工具证据。",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "此内容属于创作或其他不作为已验证事实展示的内容。",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "仅部分事实声明有已持久化证据支持。",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "Provider 请求失败，无法验证此回复。",
@@ -139,8 +166,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "此回复尚未完成验证。",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "所有事实声明均有已持久化证据支持。",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("来源"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("工具"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage("未验证"),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("已验证"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("API地址"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API密钥"),
     "apiType": MessageLookupByLibrary.simpleMessage("API类型"),
@@ -750,6 +783,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "stopGenerationBeforeLeavingDescription":
         MessageLookupByLibrary.simpleMessage("已生成的部分回复会被保留。"),
     "stopping": MessageLookupByLibrary.simpleMessage("正在停止…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage("严格验证模式"),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "隐藏未验证的事实回答，同时保留验证详情和工具失败原因。",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars 无法验证此事实回答。请查看证据详情或重新进行验证。",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("结构化过程信息"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反馈"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("已摘要消息数"),
@@ -769,6 +809,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("正在思考…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Token 用量"),
     "tokens": MessageLookupByLibrary.simpleMessage("Token"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage("动作已接受"),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage("动作已完成"),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage("动作未接受"),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage("动作未完成"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage("已允许一次"),
     "toolApprovalDenied": MessageLookupByLibrary.simpleMessage("已拒绝"),
     "toolCalls": MessageLookupByLibrary.simpleMessage("工具调用"),
@@ -778,6 +822,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceBuiltIn": MessageLookupByLibrary.simpleMessage("内置"),
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage("技能脚本"),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "状态尚未回读验证",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "状态已回读验证",
+    ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Token 总量"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "试试其他关键词，或直接新建。",

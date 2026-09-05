@@ -131,12 +131,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "모든 텍스트 요청에 이 스킬을 삽입합니다.",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("항상 사용"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "엄격 모드에서 검증되지 않은 사실 주장을 숨겼습니다.",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage("증거 세부정보 표시"),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage("증거"),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "증거 세부정보를 사용할 수 없습니다.",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage("신뢰 이유"),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage("신뢰 상태"),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("실패"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage("실패 이유"),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "사실 확인 안 됨",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage("관측 시간"),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "일부 검증됨",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "근거 관측이 만료되었습니다.",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "이 응답은 앱의 신뢰성 검사를 통과하지 못했습니다.",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "이 응답에 사용할 수 있는 도구 증거가 없습니다.",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "이 콘텐츠는 창작물이거나 검증된 사실로 제시되지 않습니다.",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "일부 사실 주장만 저장된 증거로 뒷받침됩니다.",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "이 응답을 검증하기 전에 제공자 요청이 실패했습니다.",
@@ -149,8 +176,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "이 응답의 검증이 완료되지 않았습니다.",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "모든 사실 주장이 저장된 증거로 뒷받침됩니다.",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("출처"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("도구"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage("검증되지 않음"),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("검증됨"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("API 주소:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API 키"),
     "apiType": MessageLookupByLibrary.simpleMessage("API 유형:"),
@@ -869,6 +902,13 @@ class MessageLookup extends MessageLookupByLibrary {
           "The partial response will be kept.",
         ),
     "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage("엄격한 검증 모드"),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "검증되지 않은 사실 답변은 숨기고 검증 및 도구 실패 세부정보는 유지합니다.",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars가 이 사실 답변을 검증하지 못했습니다. 증거를 확인하거나 다시 검증하세요.",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "구조화된 프로세스 정보",
     ),
@@ -896,6 +936,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("생각 중…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("토큰 사용량"),
     "tokens": MessageLookupByLibrary.simpleMessage("토큰"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage("작업 수락됨"),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage("작업 완료됨"),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage("작업 수락 안 됨"),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage("작업 미완료"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage("한 번 허용"),
     "toolApprovalDenied": MessageLookupByLibrary.simpleMessage("거부됨"),
     "toolCalls": MessageLookupByLibrary.simpleMessage("도구 호출"),
@@ -905,6 +949,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceBuiltIn": MessageLookupByLibrary.simpleMessage("내장"),
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage("스킬 스크립트"),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "상태가 다시 읽혀 검증되지 않음",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "상태를 다시 읽고 검증함",
+    ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("총 토큰"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "다른 조건으로 검색하거나 새 항목을 만드세요.",

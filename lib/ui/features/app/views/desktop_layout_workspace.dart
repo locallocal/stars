@@ -187,6 +187,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
         id: widget.selectedChatId!,
         bot: widget.selectedChatBot!,
         showExecutionStatus: widget.showExecutionStatus,
+        strictGroundingMode: widget.strictGroundingMode,
       );
     }
     return DesktopEmptyStateCard(

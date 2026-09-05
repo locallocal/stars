@@ -1,11 +1,37 @@
 import 'package:stars/domain/models/app_failure.dart';
+import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
+import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 
 final class MessageActionViewModel {
-  const MessageActionViewModel({required MessageActionRepository repository})
-    : _repository = repository;
+  const MessageActionViewModel({
+    required MessageActionRepository repository,
+    ToolEvidenceRepository? evidenceRepository,
+  }) : _repository = repository,
+       _evidenceRepository = evidenceRepository;
 
   final MessageActionRepository _repository;
+  final ToolEvidenceRepository? _evidenceRepository;
+
+  Future<Map<String, ToolEvidenceRecord?>> loadEvidenceRecords(
+    Iterable<String> evidenceIds,
+  ) async {
+    final repository = _evidenceRepository;
+    final ids = evidenceIds.toSet().toList(growable: false);
+    if (repository == null || ids.isEmpty) return const {};
+    final entries = await Future.wait(
+      ids.map((id) async {
+        try {
+          return MapEntry(id, await repository.getById(id));
+        } on Object {
+          return MapEntry<String, ToolEvidenceRecord?>(id, null);
+        }
+      }),
+    );
+    return Map<String, ToolEvidenceRecord?>.unmodifiable(
+      Map<String, ToolEvidenceRecord?>.fromEntries(entries),
+    );
+  }
 
   Future<MediaExportResult> saveImage({
     required String sourcePath,

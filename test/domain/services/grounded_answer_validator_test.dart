@@ -595,6 +595,12 @@ void main() {
         expect(result.trustLevel, AnswerTrustLevel.unverified);
         expect(result.reasonCode, 'no_verifiable_claims');
         expect(repository.requestedIds, isEmpty);
+        final grounding = result.toMessageGrounding();
+        expect(grounding.claims, hasLength(2));
+        expect(grounding.claims.last.claim.claimId, 'non_factual_text');
+        expect(grounding.claims.last.claim.text, 'Happy to help.');
+        expect(grounding.claims.last.trustLevel, ClaimTrustLevel.notVerifiable);
+        expect(grounding.claims.last.reasonCode, 'not_fact_checked');
       },
     );
   });

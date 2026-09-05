@@ -99,7 +99,7 @@ void main() {
   });
 
   testWidgets(
-    'P0 does not show verified status or status below user messages',
+    'GRD-019 shows every assistant trust level but no status below users',
     (tester) async {
       await _pumpMessages(tester, [
         _assistant(
@@ -134,9 +134,10 @@ void main() {
 
       expect(
         find.byKey(const ValueKey<String>('message-trust-status')),
-        findsNothing,
+        findsNWidgets(2),
       );
-      expect(find.text('已验证'), findsNothing);
+      expect(find.text('已验证'), findsOneWidget);
+      expect(find.text('部分已验证'), findsOneWidget);
       expect(find.text('未验证'), findsNothing);
       expect(find.text('失败'), findsNothing);
     },

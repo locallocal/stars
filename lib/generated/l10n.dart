@@ -4769,6 +4769,261 @@ class S {
     );
   }
 
+  /// `Verified`
+  String get answerTrustVerified {
+    return Intl.message(
+      'Verified',
+      name: 'answerTrustVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Partially verified`
+  String get answerTrustPartiallyVerified {
+    return Intl.message(
+      'Partially verified',
+      name: 'answerTrustPartiallyVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not fact checked`
+  String get answerTrustNotFactChecked {
+    return Intl.message(
+      'Not fact checked',
+      name: 'answerTrustNotFactChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All factual claims are supported by persisted evidence.`
+  String get answerTrustReasonVerified {
+    return Intl.message(
+      'All factual claims are supported by persisted evidence.',
+      name: 'answerTrustReasonVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only some factual claims are supported by persisted evidence.`
+  String get answerTrustReasonPartiallyVerified {
+    return Intl.message(
+      'Only some factual claims are supported by persisted evidence.',
+      name: 'answerTrustReasonPartiallyVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This content is creative or otherwise not presented as a verified fact.`
+  String get answerTrustReasonNotFactChecked {
+    return Intl.message(
+      'This content is creative or otherwise not presented as a verified fact.',
+      name: 'answerTrustReasonNotFactChecked',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show evidence details`
+  String get answerTrustDetails {
+    return Intl.message(
+      'Show evidence details',
+      name: 'answerTrustDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Factual claim hidden by strict mode.`
+  String get answerTrustClaimHidden {
+    return Intl.message(
+      'Factual claim hidden by strict mode.',
+      name: 'answerTrustClaimHidden',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Evidence`
+  String get answerTrustEvidence {
+    return Intl.message(
+      'Evidence',
+      name: 'answerTrustEvidence',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tool`
+  String get answerTrustTool {
+    return Intl.message('Tool', name: 'answerTrustTool', desc: '', args: []);
+  }
+
+  /// `Source`
+  String get answerTrustSource {
+    return Intl.message(
+      'Source',
+      name: 'answerTrustSource',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Observed`
+  String get answerTrustObservedAt {
+    return Intl.message(
+      'Observed',
+      name: 'answerTrustObservedAt',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failure reason`
+  String get answerTrustFailureReason {
+    return Intl.message(
+      'Failure reason',
+      name: 'answerTrustFailureReason',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Evidence details are unavailable.`
+  String get answerTrustEvidenceUnavailable {
+    return Intl.message(
+      'Evidence details are unavailable.',
+      name: 'answerTrustEvidenceUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The supporting observation has expired.`
+  String get answerTrustReasonEvidenceExpired {
+    return Intl.message(
+      'The supporting observation has expired.',
+      name: 'answerTrustReasonEvidenceExpired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trust status`
+  String get answerTrustExportStatus {
+    return Intl.message(
+      'Trust status',
+      name: 'answerTrustExportStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Trust reason`
+  String get answerTrustExportReason {
+    return Intl.message(
+      'Trust reason',
+      name: 'answerTrustExportReason',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Strict verification mode`
+  String get strictGroundingMode {
+    return Intl.message(
+      'Strict verification mode',
+      name: 'strictGroundingMode',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide non-verified factual answers while preserving verification and tool failure details.`
+  String get strictGroundingModeDescription {
+    return Intl.message(
+      'Hide non-verified factual answers while preserving verification and tool failure details.',
+      name: 'strictGroundingModeDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Stars could not verify this factual answer. Check the evidence details or try a fresh verification.`
+  String get strictGroundingUnableToVerify {
+    return Intl.message(
+      'Stars could not verify this factual answer. Check the evidence details or try a fresh verification.',
+      name: 'strictGroundingUnableToVerify',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Action accepted`
+  String get toolActionAccepted {
+    return Intl.message(
+      'Action accepted',
+      name: 'toolActionAccepted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Action not accepted`
+  String get toolActionNotAccepted {
+    return Intl.message(
+      'Action not accepted',
+      name: 'toolActionNotAccepted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Action completed`
+  String get toolActionCompleted {
+    return Intl.message(
+      'Action completed',
+      name: 'toolActionCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Action not completed`
+  String get toolActionNotCompleted {
+    return Intl.message(
+      'Action not completed',
+      name: 'toolActionNotCompleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `State read back and verified`
+  String get toolStateReadBackVerified {
+    return Intl.message(
+      'State read back and verified',
+      name: 'toolStateReadBackVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `State not read back as verified`
+  String get toolStateNotReadBackVerified {
+    return Intl.message(
+      'State not read back as verified',
+      name: 'toolStateNotReadBackVerified',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `No usable tool evidence is available for this response.`
   String get answerTrustReasonNoTool {
     return Intl.message(

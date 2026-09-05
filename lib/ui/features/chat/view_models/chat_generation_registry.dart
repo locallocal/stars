@@ -5,6 +5,8 @@ class ChatGenerationRegistry {
     required MessagePersister messagePersister,
     GroundedMessagePersister? groundedMessagePersister,
     required LastMessageUpdater lastMessageUpdater,
+    AssistantPreviewBuilder assistantPreviewBuilder =
+        _defaultAssistantPreviewBuilder,
     required ProviderFactory providerFactory,
     MessageIdFactory messageIdFactory = _defaultMessageIdFactory,
     SkillActivationPersister? skillActivationPersister,
@@ -19,6 +21,7 @@ class ChatGenerationRegistry {
   }) : _messagePersister = messagePersister,
        _groundedMessagePersister = groundedMessagePersister,
        _lastMessageUpdater = lastMessageUpdater,
+       _assistantPreviewBuilder = assistantPreviewBuilder,
        _providerFactory = providerFactory,
        _messageIdFactory = messageIdFactory,
        _skillActivationPersister = skillActivationPersister,
@@ -36,6 +39,7 @@ class ChatGenerationRegistry {
   final MessagePersister _messagePersister;
   final GroundedMessagePersister? _groundedMessagePersister;
   final LastMessageUpdater _lastMessageUpdater;
+  final AssistantPreviewBuilder _assistantPreviewBuilder;
   final ProviderFactory _providerFactory;
   final MessageIdFactory _messageIdFactory;
   final SkillActivationPersister? _skillActivationPersister;
@@ -56,6 +60,7 @@ class ChatGenerationRegistry {
         messagePersister: _messagePersister,
         groundedMessagePersister: _groundedMessagePersister,
         lastMessageUpdater: _lastMessageUpdater,
+        assistantPreviewBuilder: _assistantPreviewBuilder,
         providerFactory: _providerFactory,
         messageIdFactory: _messageIdFactory,
         skillActivationPersister: _skillActivationPersister,

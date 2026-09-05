@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path_context;
 import 'package:intl/intl.dart' as intl;
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
+import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -30,6 +31,7 @@ part 'message_list_process.dart';
 part 'message_list_process_labels.dart';
 part 'message_list_reasoning.dart';
 part 'message_list_status.dart';
+part 'message_list_trust.dart';
 
 class MessageList extends StatefulWidget {
   final List<Message> messages;
@@ -44,6 +46,7 @@ class MessageList extends StatefulWidget {
   final String? reasoningResponse;
   final bool isDesktop;
   final bool showExecutionStatus;
+  final bool strictGroundingMode;
   final int messageRevision;
   final MessageActionViewModel? actionViewModel;
 
@@ -61,6 +64,7 @@ class MessageList extends StatefulWidget {
     this.reasoningResponse = '',
     this.isDesktop = false,
     this.showExecutionStatus = true,
+    this.strictGroundingMode = false,
     this.messageRevision = 0,
     this.actionViewModel,
   });
@@ -179,7 +183,11 @@ class _MessageListState extends State<MessageList> {
                   isDesktop: isDesktop,
                   isStreaming: true,
                   reasoning:
-                      deepThinking == true ? reasoningResponse ?? '' : '',
+                      widget.strictGroundingMode
+                          ? ''
+                          : deepThinking == true
+                          ? reasoningResponse ?? ''
+                          : '',
                   processInfo: _replaceSkillActivations(
                     _replaceToolCalls(
                       streamingProcessInfo,
@@ -195,9 +203,9 @@ class _MessageListState extends State<MessageList> {
                   ),
                   tokenUsage: streamingTokenUsage,
                   showExecutionStatus: showExecutionStatus,
-                  content: streamingResponse,
+                  content: widget.strictGroundingMode ? '' : streamingResponse,
                   files: _localFilesFromMarkdown(
-                    streamingResponse,
+                    widget.strictGroundingMode ? '' : streamingResponse,
                     widget.streamingFiles,
                   ),
                   actionViewModel: widget.actionViewModel,
@@ -210,23 +218,46 @@ class _MessageListState extends State<MessageList> {
               messages.length - 1 - index + (isStreaming ? 1 : 0);
           final message = messages[messageIndex];
           final isMe = message.senderId == currentUserId;
+          final strictPresentation =
+              !isMe && widget.strictGroundingMode
+                  ? const StrictGroundingPolicy().present(message)
+                  : null;
+          final displayedContent = _messageDisplayContent(
+            context,
+            message,
+            strictPresentation,
+          );
+          final exportContent = _messageExportText(
+            context,
+            message,
+            displayedContent: displayedContent,
+            isCurrentUser: isMe,
+            strictMode: widget.strictGroundingMode,
+          );
           final bubble = _MessageBubble(
             isCurrentUser: isMe,
             isDesktop: isDesktop,
-            reasoning: message.reasoning,
+            reasoning:
+                widget.strictGroundingMode && !isMe ? '' : message.reasoning,
             processInfo: _displayedProcessInfo[messageIndex],
             tokenUsage: message.tokenUsage,
             showExecutionStatus: showExecutionStatus && !isMe,
-            content: message.content,
+            content: displayedContent,
             images: message.images,
             files:
                 isMe
                     ? message.files
-                    : _localFilesFromMarkdown(message.content, message.files),
+                    : _localFilesFromMarkdown(displayedContent, message.files),
             audio: message.audio,
             music: message.music,
             video: message.video,
             grounding: message.grounding,
+            strictGroundingMode: widget.strictGroundingMode,
+            hasNotFactCheckedContent:
+                strictPresentation?.hasNotFactCheckedContent ??
+                _hasNotFactCheckedContent(message),
+            exportTrustAnnotation:
+                isMe ? '' : _messageTrustExportAnnotation(context, message),
             terminalOutcome: message.terminalOutcome,
             hasPartialContent: message.hasPartialContent,
             actionViewModel: widget.actionViewModel,
@@ -243,18 +274,18 @@ class _MessageListState extends State<MessageList> {
               bubble:
                   isDesktop
                       ? _DesktopMessageActions(
-                        content: message.content,
+                        content: exportContent,
                         isCurrentUser: isMe,
                         timestamp: message.timestamp,
                         child: bubble,
                       )
                       : GestureDetector(
                         onLongPress:
-                            message.content.isEmpty
+                            exportContent.isEmpty
                                 ? null
                                 : () {
                                   Clipboard.setData(
-                                    ClipboardData(text: message.content),
+                                    ClipboardData(text: exportContent),
                                   );
                                 },
                         child: bubble,
