@@ -750,6 +750,16 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     );
   }
 
+  List<String> _persistedEvidenceIds(List<ToolInvocationRecord> invocations) {
+    if (_toolInvocationPersister == null) return const [];
+    return List<String>.unmodifiable({
+      for (final invocation in invocations)
+        if (invocation.status == ToolInvocationStatus.succeeded &&
+            invocation.evidenceCandidate != null)
+          ToolEvidenceRecord.evidenceIdForAttempt(invocation.attemptId),
+    });
+  }
+
   void _completeTerminal(ChatRunLifecycle lifecycle) {
     final completer = _terminalCompleter;
     if (completer != null && !completer.isCompleted) {

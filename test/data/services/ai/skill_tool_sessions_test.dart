@@ -321,9 +321,20 @@ void main() {
           'choices': [
             {
               'message': {
-                'content': requests.length == 1 ? 'draft' : _groundedJson,
+                'content': requests.length == 1 ? null : _groundedJson,
+                if (requests.length == 1)
+                  'tool_calls': [
+                    {
+                      'id': 'provider-call-1',
+                      'type': 'function',
+                      'function': {
+                        'name': 'calculate',
+                        'arguments': '{"value":2}',
+                      },
+                    },
+                  ],
               },
-              'finish_reason': 'stop',
+              'finish_reason': requests.length == 1 ? 'tool_calls' : 'stop',
             },
           ],
         }),
@@ -338,11 +349,46 @@ void main() {
 
     await session.start().toList();
     final events =
-        await session.synthesizeGroundedAnswer(_groundedRequest).toList();
+        await session
+            .synthesizeGroundedAnswer(
+              _groundedRequest,
+              pendingToolResults: [
+                ToolResult(
+                  callId: 'provider-call-1',
+                  name: 'calculate',
+                  content: 'A verbose raw calculation payload: 4',
+                  evidenceId: _evidenceId,
+                  structuredContent: const {
+                    'result': 4,
+                    'raw': 'large payload',
+                  },
+                  schemaValid: true,
+                  evidenceKind: EvidenceKind.calculation,
+                  subject: 'calculation:basic-arithmetic',
+                  scope: const {'expression': '2+2'},
+              structuredFacts: [
+                StructuredFact(name: 'calculation.result', value: 4),
+              ],
+                ),
+              ],
+            )
+            .toList();
 
     _expectGroundedProtocol(events);
     expect(requests.last, isNot(contains('tools')));
     final messages = requests.last['messages']! as List<Object?>;
+    final compactToolMessage =
+        messages[messages.length - 2] as Map<Object?, Object?>;
+    final compactEnvelope =
+        jsonDecode(compactToolMessage['content']! as String)
+            as Map<String, Object?>;
+    expect(compactToolMessage['role'], 'tool');
+    expect(compactEnvelope, isNot(contains('content')));
+    expect(compactEnvelope, isNot(contains('structured_data')));
+    expect(compactEnvelope['evidence_id'], _evidenceId);
+    expect(compactEnvelope['facts'], [
+      {'name': 'calculation.result', 'value': 4},
+    ]);
     final prompt =
         (messages.last as Map<Object?, Object?>)['content']! as String;
     expect(prompt, contains(_evidenceId));

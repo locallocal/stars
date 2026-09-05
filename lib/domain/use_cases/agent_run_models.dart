@@ -6,9 +6,10 @@ final class AgentRunLimits {
     this.maxToolCalls = 12,
     this.maxSameCallRetries = 1,
     this.maxReliabilityRepairs = 1,
-    this.totalTimeout = const Duration(minutes: 3),
-    this.toolTimeout = const Duration(seconds: 30),
-    this.approvalTimeout = const Duration(minutes: 2),
+    this.totalTimeout = const Duration(minutes: 15),
+    this.synthesisTimeout = const Duration(minutes: 5),
+    this.toolTimeout = const Duration(minutes: 2),
+    this.approvalTimeout = const Duration(minutes: 10),
     this.maxToolOutputCharacters = 16000,
   }) : assert(maxModelTurns > 0),
        assert(maxToolCalls > 0),
@@ -20,7 +21,13 @@ final class AgentRunLimits {
   final int maxToolCalls;
   final int maxSameCallRetries;
   final int maxReliabilityRepairs;
+
+  /// Base deadline for planning, observation, and Tool execution.
+  ///
+  /// The deadline may be extended at synthesis entry so that the final
+  /// grounded-answer phase always receives at least [synthesisTimeout].
   final Duration totalTimeout;
+  final Duration synthesisTimeout;
   final Duration toolTimeout;
   final Duration approvalTimeout;
   final int maxToolOutputCharacters;

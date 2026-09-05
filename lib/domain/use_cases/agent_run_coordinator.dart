@@ -101,7 +101,7 @@ final class AgentRunCoordinator {
     var verificationAuthorizationDenied = false;
     GroundedAnswerValidationResult? groundedValidation;
     AgentModelSession? session;
-    final timeoutTimer = Timer(_limits.totalTimeout, () {
+    final deadline = _ExtendableDeadline(_limits.totalTimeout, () {
       timedOut = true;
       request.cancellationToken.cancel();
     });
@@ -376,7 +376,16 @@ final class AgentRunCoordinator {
           request.cancellationToken,
         );
         request.cancellationToken.throwIfCancelled();
-        if (executedCalls && !verificationAuthorizationDenied) continue;
+        final synthesizeFromToolResults =
+            executedCalls &&
+            !verificationAuthorizationDenied &&
+            coverage.isComplete &&
+            verificationRequirements.isNotEmpty;
+        if (executedCalls &&
+            !verificationAuthorizationDenied &&
+            !synthesizeFromToolResults) {
+          continue;
+        }
 
         final hasObservationBudget =
             modelTurn + 1 < _limits.maxModelTurns &&
@@ -400,10 +409,13 @@ final class AgentRunCoordinator {
           degradedReason = 'verification_budget_exhausted';
         }
 
+        deadline.ensureRemaining(_limits.synthesisTimeout);
         final synthesis = await _synthesizeValidatedAnswer(
           session: activeSession,
           draftText: turnText.toString(),
           invocations: invocations,
+          pendingToolResults:
+              synthesizeFromToolResults ? results : const <ToolResult>[],
           request: request,
           verificationRequirements: verificationRequirements,
           cancellationToken: request.cancellationToken,
@@ -461,7 +473,7 @@ final class AgentRunCoordinator {
         error: AppFailure.from(error, code: 'agent_run_failed').code,
       );
     } finally {
-      timeoutTimer.cancel();
+      deadline.dispose();
       session?.close();
     }
   }

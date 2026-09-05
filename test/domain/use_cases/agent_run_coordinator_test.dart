@@ -8,6 +8,15 @@ import 'package:stars/domain/use_cases/agent_run_coordinator.dart';
 
 void main() {
   group('AgentRunCoordinator', () {
+    test('uses production-safe default timeout budgets', () {
+      const limits = AgentRunLimits();
+
+      expect(limits.totalTimeout, const Duration(minutes: 15));
+      expect(limits.synthesisTimeout, const Duration(minutes: 5));
+      expect(limits.toolTimeout, const Duration(minutes: 2));
+      expect(limits.approvalTimeout, const Duration(minutes: 10));
+    });
+
     test('runs model, tool, and final model turn', () async {
       final tool = _FakeTool(name: 'calculate');
       final session = _FakeModelSession([
@@ -1170,8 +1179,9 @@ final class _FakeModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) async* {
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) async* {
     try {
       final candidate =
           groundedOutput == null
@@ -1217,8 +1227,9 @@ final class _HangingModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) => throw StateError('A hanging session cannot synthesize.');
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) => throw StateError('A hanging session cannot synthesize.');
 
   @override
   Future<void> cancel() async {

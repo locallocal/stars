@@ -98,6 +98,38 @@ void main() {
     }
   });
 
+  testWidgets('timeout uses execution semantics and keeps evidence details', (
+    tester,
+  ) async {
+    await _pumpMessage(
+      tester,
+      _assistant(
+        grounding: MessageGrounding(
+          trustLevel: AnswerTrustLevel.failed,
+          reasonCode: 'agent_run_timeout',
+          evidenceIds: const ['evidence-before-timeout'],
+        ),
+      ),
+    );
+
+    expect(find.text('已超时'), findsOneWidget);
+    expect(find.text('失败'), findsNothing);
+    expect(find.byIcon(LucideIcons.clock3), findsOneWidget);
+    expect(find.text('生成在最终回复完成验证前超时；已完成的工具证据仍可查看。'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('message-trust-details-toggle')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(
+        const ValueKey<String>('message-evidence-evidence-before-timeout'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'GRD-019 shows every assistant trust level but no status below users',
     (tester) async {

@@ -977,6 +977,7 @@
     "answerTrustReasonProviderUnsupported": "目前的 Provider 不支援驗證工具。",
     "answerTrustReasonToolRejected": "驗證工具要求已遭拒絕。",
     "answerTrustReasonProviderFailed": "Provider 要求失敗，無法驗證此回覆。",
+    "answerTrustReasonGenerationTimedOut": "生成在最終回覆完成驗證前逾時；已完成的工具證據仍可查看。",
     "answerTrustReasonGateFailed": "此回覆未通過應用程式可信閘門。",
     "answerTrustReasonUnavailable": "此回覆尚未完成驗證。",
     "answerTrustSemanticLabel": "{status}。{reason}"

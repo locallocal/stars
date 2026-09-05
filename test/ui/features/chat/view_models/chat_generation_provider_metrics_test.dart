@@ -98,8 +98,9 @@ final class _FailingAgentSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) => throw StateError('A failed turn cannot synthesize.');
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) => throw StateError('A failed turn cannot synthesize.');
 
   @override
   Future<void> cancel() async {}

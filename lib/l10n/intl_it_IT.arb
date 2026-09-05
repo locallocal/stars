@@ -957,6 +957,7 @@
     "answerTrustReasonProviderUnsupported": "Questo provider non supporta gli strumenti di verifica.",
     "answerTrustReasonToolRejected": "La richiesta dello strumento di verifica è stata rifiutata.",
     "answerTrustReasonProviderFailed": "La richiesta al provider non è riuscita prima che questa risposta potesse essere verificata.",
+    "answerTrustReasonGenerationTimedOut": "La generazione è scaduta prima della verifica della risposta finale. Le prove degli strumenti completate restano disponibili.",
     "answerTrustReasonGateFailed": "Questa risposta non ha superato il controllo di attendibilità dell'applicazione.",
     "answerTrustReasonUnavailable": "La verifica di questa risposta non è stata completata.",
     "answerTrustSemanticLabel": "{status}. {reason}"

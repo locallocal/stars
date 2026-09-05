@@ -1118,6 +1118,7 @@
     "answerTrustReasonProviderUnsupported": "当前 Provider 不支持验证工具。",
     "answerTrustReasonToolRejected": "验证工具请求已被拒绝。",
     "answerTrustReasonProviderFailed": "Provider 请求失败，无法验证此回复。",
+    "answerTrustReasonGenerationTimedOut": "生成在最终回复完成验证前超时；已完成的工具证据仍可查看。",
     "answerTrustReasonGateFailed": "此回复未通过应用可信门禁。",
     "answerTrustReasonUnavailable": "此回复尚未完成验证。",
     "answerTrustSemanticLabel": "{status}。{reason}"

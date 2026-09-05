@@ -106,8 +106,9 @@ final class _NativeSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) => Stream.fromIterable([
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) => Stream.fromIterable([
     GroundedAnswerProduced(
       GroundedAnswerCandidate(nonFactualText: request.draftText),
     ),

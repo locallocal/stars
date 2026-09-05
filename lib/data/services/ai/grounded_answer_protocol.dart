@@ -41,6 +41,9 @@ Rules:
 - Treat required_claims as application constraints. Preserve each claim_id and claim_kind, but do not invent a claim when matching evidence is absent.
 - A failed evidence item may describe only execution_failure.
 - Preserve useful qualifications and failure disclosures from the draft.
+- When draft_text is empty, write a concise answer using only required_claims
+  and facts from preceding stars_tool_result envelopes whose evidence_id is
+  listed in available_evidence; never infer facts those inputs do not establish.
 - If application_validation_feedback is present, correct only the structured
   claim bindings it identifies. Do not request or invoke Tools in this turn.
 - Put greetings, transitions, and other genuinely non-factual prose in non_factual_text.

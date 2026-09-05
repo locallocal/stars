@@ -173,6 +173,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "Этот ответ не прошёл проверку доверия приложения.",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "Время генерации истекло до проверки окончательного ответа. Завершённые свидетельства инструментов остаются доступными.",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "Для этого ответа нет подходящих данных от инструментов.",
     ),

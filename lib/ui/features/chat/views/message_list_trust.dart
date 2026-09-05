@@ -54,6 +54,7 @@ class _MessageTrustStatusState extends State<_MessageTrustStatus> {
       final actionViewModel = widget.actionViewModel;
       if (expanded && _evidence == null && actionViewModel != null) {
         _evidence = actionViewModel.loadEvidenceRecords(<String>{
+          ...widget.grounding.evidenceIds,
           for (final claim in widget.grounding.claims)
             ...claim.claim.evidenceIds,
         });
@@ -272,6 +273,34 @@ class _MessageTrustStatusState extends State<_MessageTrustStatus> {
   Widget _buildClaimDetails(BuildContext context) {
     final claims = widget.grounding.claims;
     if (claims.isEmpty) {
+      final evidenceIds = widget.grounding.evidenceIds;
+      if (evidenceIds.isNotEmpty) {
+        return FutureBuilder<Map<String, ToolEvidenceRecord?>>(
+          future: _evidence,
+          builder: (context, snapshot) {
+            final evidence =
+                snapshot.data ?? const <String, ToolEvidenceRecord?>{};
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _answerTrustReason(
+                    S.of(context),
+                    widget.grounding.reasonCode,
+                  ),
+                ),
+                for (final evidenceId in evidenceIds) ...[
+                  const SizedBox(height: 8),
+                  _EvidenceTrustDetails(
+                    evidenceId: evidenceId,
+                    record: evidence[evidenceId],
+                  ),
+                ],
+              ],
+            );
+          },
+        );
+      }
       return Align(
         alignment: AlignmentDirectional.centerStart,
         child: Text(
@@ -445,6 +474,13 @@ class _EvidenceTrustDetails extends StatelessWidget {
   final strings = S.of(context);
   final colors = Theme.of(context).colorScheme;
   final tokens = StarsDesktopTokens.of(context);
+  if (_isGenerationTimeout(grounding.reasonCode)) {
+    return (
+      foreground: colors.error,
+      icon: LucideIcons.clock3,
+      label: strings.statusTimedOut,
+    );
+  }
   if (grounding.trustLevel == AnswerTrustLevel.failed) {
     return (
       foreground: colors.error,
@@ -533,15 +569,24 @@ String _answerTrustLabel(
   S strings,
   MessageGrounding grounding,
   bool hasNotFactCheckedContent,
-) => switch (grounding.trustLevel) {
-  AnswerTrustLevel.verified => strings.answerTrustVerified,
-  AnswerTrustLevel.partiallyVerified => strings.answerTrustPartiallyVerified,
-  AnswerTrustLevel.failed => strings.answerTrustFailed,
-  AnswerTrustLevel.unverified =>
-    hasNotFactCheckedContent
-        ? strings.answerTrustNotFactChecked
-        : strings.answerTrustUnverified,
-};
+) {
+  if (_isGenerationTimeout(grounding.reasonCode)) {
+    return strings.statusTimedOut;
+  }
+  return switch (grounding.trustLevel) {
+    AnswerTrustLevel.verified => strings.answerTrustVerified,
+    AnswerTrustLevel.partiallyVerified => strings.answerTrustPartiallyVerified,
+    AnswerTrustLevel.failed => strings.answerTrustFailed,
+    AnswerTrustLevel.unverified =>
+      hasNotFactCheckedContent
+          ? strings.answerTrustNotFactChecked
+          : strings.answerTrustUnverified,
+  };
+}
+
+bool _isGenerationTimeout(String reasonCode) =>
+    reasonCode == 'agent_run_timeout' ||
+    reasonCode == 'agent_synthesis_timeout';
 
 String _claimTrustLabel(S strings, ClaimTrustLevel trustLevel) =>
     switch (trustLevel) {
@@ -588,6 +633,8 @@ String _answerTrustReason(S strings, String reasonCode) {
     'provider_tools_unsupported' =>
       strings.answerTrustReasonProviderUnsupported,
     'tool_rejected' => strings.answerTrustReasonToolRejected,
+    'agent_run_timeout' ||
+    'agent_synthesis_timeout' => strings.answerTrustReasonGenerationTimedOut,
     'provider_failed' ||
     'provider_generation_failed' ||
     'provider_authentication_failed' ||

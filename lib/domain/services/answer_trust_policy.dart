@@ -65,6 +65,7 @@ final class AnswerTrustPolicy {
       case MessageTerminalOutcome.failed:
         return _failed(
           _safeReasonCode(input.failureReasonCode, fallback: 'provider_failed'),
+          evidenceIds: input.evidenceIds,
         );
       case MessageTerminalOutcome.cancelled:
         return _unverified('generation_cancelled');
@@ -171,9 +172,13 @@ final class AnswerTrustPolicy {
     claims: claims,
   );
 
-  MessageGrounding _failed(String reasonCode) => MessageGrounding(
+  MessageGrounding _failed(
+    String reasonCode, {
+    List<String> evidenceIds = const [],
+  }) => MessageGrounding(
     trustLevel: AnswerTrustLevel.failed,
     reasonCode: reasonCode,
+    evidenceIds: evidenceIds,
   );
 
   bool _isSuccessfulToolCall(MessageToolCall call) =>

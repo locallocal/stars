@@ -447,8 +447,9 @@ abstract interface class AgentModelSession {
 
   /// Produces one schema-validated, Provider-independent answer candidate.
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  );
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  });
 
   Future<void> cancel();
 

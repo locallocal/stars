@@ -957,6 +957,7 @@
     "answerTrustReasonProviderUnsupported": "Dieser Provider unterstützt keine Verifizierungs-Tools.",
     "answerTrustReasonToolRejected": "Die Anfrage an das Verifizierungs-Tool wurde abgelehnt.",
     "answerTrustReasonProviderFailed": "Die Provider-Anfrage ist fehlgeschlagen, bevor diese Antwort verifiziert werden konnte.",
+    "answerTrustReasonGenerationTimedOut": "Die Generierung wurde vor Abschluss der Verifizierung der endgültigen Antwort wegen Zeitüberschreitung beendet. Abgeschlossene Tool-Belege bleiben verfügbar.",
     "answerTrustReasonGateFailed": "Diese Antwort hat die Vertrauensprüfung der Anwendung nicht bestanden.",
     "answerTrustReasonUnavailable": "Die Verifizierung dieser Antwort wurde nicht abgeschlossen.",
     "answerTrustSemanticLabel": "{status}. {reason}"

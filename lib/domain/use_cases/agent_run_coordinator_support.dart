@@ -1,5 +1,45 @@
 part of 'agent_run_coordinator.dart';
 
+final class _ExtendableDeadline {
+  _ExtendableDeadline(Duration initialDuration, this._onTimeout)
+    : _budget = initialDuration {
+    _arm(initialDuration);
+  }
+
+  final void Function() _onTimeout;
+  final Stopwatch _stopwatch = Stopwatch();
+  Duration _budget;
+  Timer? _timer;
+  bool _expired = false;
+
+  void ensureRemaining(Duration minimumRemaining) {
+    if (_expired) return;
+    final remaining = _budget - _stopwatch.elapsed;
+    if (remaining >= minimumRemaining) return;
+    _arm(minimumRemaining);
+  }
+
+  void dispose() {
+    _timer?.cancel();
+    _timer = null;
+    _stopwatch.stop();
+  }
+
+  void _arm(Duration duration) {
+    _timer?.cancel();
+    _budget = duration;
+    _stopwatch
+      ..reset()
+      ..start();
+    _timer = Timer(duration, () {
+      if (_expired) return;
+      _expired = true;
+      _stopwatch.stop();
+      _onTimeout();
+    });
+  }
+}
+
 extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
   Future<List<ToolResult>> _executeSequentially({
     required List<ToolCallRequest> calls,
