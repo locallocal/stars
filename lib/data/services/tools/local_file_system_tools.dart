@@ -9,6 +9,20 @@ import 'package:stars/domain/models/models.dart';
 part 'local_file_transfer_tools.dart';
 
 const _pathSchema = {'type': 'string', 'minLength': 1, 'maxLength': 4096};
+const _directoryListingSubject = 'directory:listing';
+const _directoryExistenceSubject = 'directory:existence';
+const _fileQuerySubject = 'file:query';
+const _fileCopySubject = 'file:copy';
+const _fileMoveSubject = 'file:move';
+const _fileExistenceSubject = 'file:existence';
+
+Map<String, Object?> _evidenceScopeFor(
+  ToolCallRequest call,
+  Iterable<String> argumentNames,
+) => <String, Object?>{
+  for (final name in argumentNames)
+    if (call.arguments.containsKey(name)) name: call.arguments[name],
+};
 
 List<ExecutableTool> createLocalFileSystemTools({
   String Function()? currentWorkingDirectory,
@@ -125,13 +139,31 @@ final class ListLocalDirectoryTool
           },
         },
         'truncated': {'type': 'boolean'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['path', 'recursive', 'entries', 'truncated'],
+      'required': [
+        'path',
+        'recursive',
+        'entries',
+        'truncated',
+        ...toolEvidenceOutputRequiredFields,
+      ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.readOnly,
     capabilities: const {ToolCapability.localRead},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.observation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _directoryListingSubject,
+      argumentToScope: const {
+        'path': 'path',
+        'recursive': 'recursive',
+        'max_entries': 'max_entries',
+      },
+    ),
+    defaultEvidenceValidity: const Duration(minutes: 1),
   );
 
   @override
@@ -197,11 +229,29 @@ final class ListLocalDirectoryTool
           right['relative_path']! as String,
         ),
       );
+      final scope = _evidenceScopeFor(call, const {
+        'path',
+        'recursive',
+        'max_entries',
+      });
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'directory.entry_count', value: entries.length),
+        StructuredFact(name: 'directory.listing_complete', value: !truncated),
+        StructuredFact(name: 'directory.recursive', value: recursive),
+      ];
+      final observedAt = DateTime.now().toUtc();
       final structured = <String, Object?>{
         'path': path,
         'recursive': recursive,
         'entries': entries,
         'truncated': truncated,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.observation,
+          subject: _directoryListingSubject,
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
       };
       return ToolResult(
         callId: call.callId,
@@ -210,6 +260,12 @@ final class ListLocalDirectoryTool
             '${entries.length} entr${entries.length == 1 ? 'y' : 'ies'} '
             'in $path${truncated ? ' (truncated)' : ''}.',
         structuredContent: structured,
+        truncated: truncated,
+        evidenceKind: EvidenceKind.observation,
+        subject: _directoryListingSubject,
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;
@@ -250,13 +306,21 @@ final class CreateLocalDirectoryTool
       'properties': {
         'path': {'type': 'string'},
         'created': {'type': 'boolean'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['path', 'created'],
+      'required': ['path', 'created', ...toolEvidenceOutputRequiredFields],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.write,
     capabilities: const {ToolCapability.localWrite},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.actionReceipt},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _directoryExistenceSubject,
+      argumentToScope: const {'path': 'path', 'recursive': 'recursive'},
+    ),
+    isIdempotent: true,
   );
 
   @override
@@ -274,11 +338,11 @@ final class CreateLocalDirectoryTool
     try {
       final type = await entityType(path);
       if (type == FileSystemEntityType.directory) {
-        return ToolResult(
-          callId: call.callId,
-          name: call.name,
+        return _successResult(
+          call,
+          path: path,
+          created: false,
           content: 'Directory already exists: $path',
-          structuredContent: {'path': path, 'created': false},
         );
       }
       if (type != FileSystemEntityType.notFound) {
@@ -292,17 +356,53 @@ final class CreateLocalDirectoryTool
         path,
       ).create(recursive: call.arguments['recursive'] != false);
       cancellationToken.throwIfCancelled();
-      return ToolResult(
-        callId: call.callId,
-        name: call.name,
+      return _successResult(
+        call,
+        path: path,
+        created: true,
         content: 'Created directory: $path',
-        structuredContent: {'path': path, 'created': true},
       );
     } on AgentRunCancelledException {
       rethrow;
     } on FileSystemException {
       return fileSystemError(call);
     }
+  }
+
+  ToolResult _successResult(
+    ToolCallRequest call, {
+    required String path,
+    required bool created,
+    required String content,
+  }) {
+    final scope = _evidenceScopeFor(call, const {'path', 'recursive'});
+    final facts = <StructuredFact>[
+      StructuredFact(name: 'action.completed', value: true),
+      StructuredFact(name: 'directory.created', value: created),
+      StructuredFact(name: 'directory.exists', value: true),
+    ];
+    final observedAt = DateTime.now().toUtc();
+    return ToolResult(
+      callId: call.callId,
+      name: call.name,
+      content: content,
+      structuredContent: {
+        'path': path,
+        'created': created,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.actionReceipt,
+          subject: _directoryExistenceSubject,
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
+      },
+      evidenceKind: EvidenceKind.actionReceipt,
+      subject: _directoryExistenceSubject,
+      scope: scope,
+      structuredFacts: facts,
+      observedAt: observedAt,
+    );
   }
 }
 
@@ -339,13 +439,25 @@ final class DeleteLocalDirectoryTool
         'path': {'type': 'string'},
         'deleted': {'type': 'boolean'},
         'recursive': {'type': 'boolean'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['path', 'deleted', 'recursive'],
+      'required': [
+        'path',
+        'deleted',
+        'recursive',
+        ...toolEvidenceOutputRequiredFields,
+      ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.destructive,
     capabilities: const {ToolCapability.localWrite},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.actionReceipt},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _directoryExistenceSubject,
+      argumentToScope: const {'path': 'path', 'recursive': 'recursive'},
+    ),
   );
 
   @override
@@ -395,6 +507,14 @@ final class DeleteLocalDirectoryTool
       }
       await Directory(path).delete(recursive: recursive);
       cancellationToken.throwIfCancelled();
+      final scope = _evidenceScopeFor(call, const {'path', 'recursive'});
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'action.completed', value: true),
+        StructuredFact(name: 'directory.deleted', value: true),
+        StructuredFact(name: 'directory.exists', value: false),
+        StructuredFact(name: 'directory.recursive', value: recursive),
+      ];
+      final observedAt = DateTime.now().toUtc();
       return ToolResult(
         callId: call.callId,
         name: call.name,
@@ -403,7 +523,19 @@ final class DeleteLocalDirectoryTool
           'path': path,
           'deleted': true,
           'recursive': recursive,
+          ...toolEvidenceOutputMetadata(
+            evidenceKind: EvidenceKind.actionReceipt,
+            subject: _directoryExistenceSubject,
+            scope: scope,
+            structuredFacts: facts,
+            observedAt: observedAt,
+          ),
         },
+        evidenceKind: EvidenceKind.actionReceipt,
+        subject: _directoryExistenceSubject,
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;
@@ -490,6 +622,7 @@ final class QueryLocalFilesTool
         },
         'scanned_entries': {'type': 'integer'},
         'truncated': {'type': 'boolean'},
+        ...toolEvidenceOutputSchemaProperties,
       },
       'required': [
         'root_path',
@@ -500,12 +633,28 @@ final class QueryLocalFilesTool
         'files',
         'scanned_entries',
         'truncated',
+        ...toolEvidenceOutputRequiredFields,
       ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.readOnly,
     capabilities: const {ToolCapability.localRead},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.observation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _fileQuerySubject,
+      argumentToScope: const {
+        'root_path': 'root_path',
+        'query': 'query',
+        'match_mode': 'match_mode',
+        'case_sensitive': 'case_sensitive',
+        'recursive': 'recursive',
+        'max_results': 'max_results',
+        'max_entries': 'max_entries',
+      },
+    ),
+    defaultEvidenceValidity: const Duration(minutes: 1),
   );
 
   @override
@@ -614,6 +763,21 @@ final class QueryLocalFilesTool
         });
       }
       final truncated = scanTruncated || resultsTruncated;
+      final scope = _evidenceScopeFor(call, const {
+        'root_path',
+        'query',
+        'match_mode',
+        'case_sensitive',
+        'recursive',
+        'max_results',
+        'max_entries',
+      });
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'file.match_count', value: files.length),
+        StructuredFact(name: 'file.query_complete', value: !truncated),
+        StructuredFact(name: 'file.scanned_entries', value: scannedEntries),
+      ];
+      final observedAt = DateTime.now().toUtc();
       final structured = <String, Object?>{
         'root_path': rootPath,
         'query': requestedQuery,
@@ -623,6 +787,13 @@ final class QueryLocalFilesTool
         'files': files,
         'scanned_entries': scannedEntries,
         'truncated': truncated,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.observation,
+          subject: _fileQuerySubject,
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
       };
       final content = switch ((files.length, truncated)) {
         (0, false) => 'No matching regular files found under $rootPath.',
@@ -644,6 +815,11 @@ final class QueryLocalFilesTool
         content: content,
         structuredContent: structured,
         truncated: truncated,
+        evidenceKind: EvidenceKind.observation,
+        subject: _fileQuerySubject,
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;

@@ -110,13 +110,30 @@ final class CopyLocalFileTool extends _TwoPathFileTool {
         'source_path': {'type': 'string'},
         'destination_path': {'type': 'string'},
         'bytes_copied': {'type': 'integer'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['source_path', 'destination_path', 'bytes_copied'],
+      'required': [
+        'source_path',
+        'destination_path',
+        'bytes_copied',
+        ...toolEvidenceOutputRequiredFields,
+      ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.destructive,
     capabilities: const {ToolCapability.localRead, ToolCapability.localWrite},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.actionReceipt},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _fileCopySubject,
+      argumentToScope: const {
+        'source_path': 'source_path',
+        'destination_path': 'destination_path',
+        'overwrite': 'overwrite',
+        'create_parents': 'create_parents',
+      },
+    ),
   );
 
   @override
@@ -138,6 +155,18 @@ final class CopyLocalFileTool extends _TwoPathFileTool {
       final copied = await File(resolved.source).copy(resolved.destination);
       cancellationToken.throwIfCancelled();
       final bytes = await copied.length();
+      final scope = _evidenceScopeFor(call, const {
+        'source_path',
+        'destination_path',
+        'overwrite',
+        'create_parents',
+      });
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'action.completed', value: true),
+        StructuredFact(name: 'file.bytes_copied', value: bytes, unit: 'bytes'),
+        StructuredFact(name: 'file.destination_exists', value: true),
+      ];
+      final observedAt = DateTime.now().toUtc();
       return ToolResult(
         callId: call.callId,
         name: call.name,
@@ -146,7 +175,19 @@ final class CopyLocalFileTool extends _TwoPathFileTool {
           'source_path': resolved.source,
           'destination_path': resolved.destination,
           'bytes_copied': bytes,
+          ...toolEvidenceOutputMetadata(
+            evidenceKind: EvidenceKind.actionReceipt,
+            subject: _fileCopySubject,
+            scope: scope,
+            structuredFacts: facts,
+            observedAt: observedAt,
+          ),
         },
+        evidenceKind: EvidenceKind.actionReceipt,
+        subject: _fileCopySubject,
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;
@@ -184,13 +225,30 @@ final class MoveLocalFileTool extends _TwoPathFileTool {
         'source_path': {'type': 'string'},
         'destination_path': {'type': 'string'},
         'bytes_moved': {'type': 'integer'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['source_path', 'destination_path', 'bytes_moved'],
+      'required': [
+        'source_path',
+        'destination_path',
+        'bytes_moved',
+        ...toolEvidenceOutputRequiredFields,
+      ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.destructive,
     capabilities: const {ToolCapability.localRead, ToolCapability.localWrite},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.actionReceipt},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _fileMoveSubject,
+      argumentToScope: const {
+        'source_path': 'source_path',
+        'destination_path': 'destination_path',
+        'overwrite': 'overwrite',
+        'create_parents': 'create_parents',
+      },
+    ),
   );
 
   @override
@@ -219,6 +277,19 @@ final class MoveLocalFileTool extends _TwoPathFileTool {
       }
       cancellationToken.throwIfCancelled();
       final bytes = await moved.length();
+      final scope = _evidenceScopeFor(call, const {
+        'source_path',
+        'destination_path',
+        'overwrite',
+        'create_parents',
+      });
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'action.completed', value: true),
+        StructuredFact(name: 'file.bytes_moved', value: bytes, unit: 'bytes'),
+        StructuredFact(name: 'file.source_exists', value: false),
+        StructuredFact(name: 'file.destination_exists', value: true),
+      ];
+      final observedAt = DateTime.now().toUtc();
       return ToolResult(
         callId: call.callId,
         name: call.name,
@@ -227,7 +298,19 @@ final class MoveLocalFileTool extends _TwoPathFileTool {
           'source_path': resolved.source,
           'destination_path': resolved.destination,
           'bytes_moved': bytes,
+          ...toolEvidenceOutputMetadata(
+            evidenceKind: EvidenceKind.actionReceipt,
+            subject: _fileMoveSubject,
+            scope: scope,
+            structuredFacts: facts,
+            observedAt: observedAt,
+          ),
         },
+        evidenceKind: EvidenceKind.actionReceipt,
+        subject: _fileMoveSubject,
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;
@@ -265,13 +348,20 @@ final class DeleteLocalFileTool
       'properties': {
         'path': {'type': 'string'},
         'deleted': {'type': 'boolean'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['path', 'deleted'],
+      'required': ['path', 'deleted', ...toolEvidenceOutputRequiredFields],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.destructive,
     capabilities: const {ToolCapability.localWrite},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.actionReceipt},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: _fileExistenceSubject,
+      argumentToScope: const {'path': 'path'},
+    ),
   );
 
   @override
@@ -304,11 +394,33 @@ final class DeleteLocalFileTool
       }
       await File(path).delete();
       cancellationToken.throwIfCancelled();
+      final scope = _evidenceScopeFor(call, const {'path'});
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'action.completed', value: true),
+        StructuredFact(name: 'file.deleted', value: true),
+        StructuredFact(name: 'file.exists', value: false),
+      ];
+      final observedAt = DateTime.now().toUtc();
       return ToolResult(
         callId: call.callId,
         name: call.name,
         content: 'Deleted file: $path',
-        structuredContent: {'path': path, 'deleted': true},
+        structuredContent: {
+          'path': path,
+          'deleted': true,
+          ...toolEvidenceOutputMetadata(
+            evidenceKind: EvidenceKind.actionReceipt,
+            subject: _fileExistenceSubject,
+            scope: scope,
+            structuredFacts: facts,
+            observedAt: observedAt,
+          ),
+        },
+        evidenceKind: EvidenceKind.actionReceipt,
+        subject: _fileExistenceSubject,
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;
