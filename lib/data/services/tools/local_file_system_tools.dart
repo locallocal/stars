@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as path_context;
 import 'package:stars/domain/models/models.dart';
 
@@ -697,6 +698,8 @@ final class ReadLocalFileTool
         'bytes_returned': {'type': 'integer'},
         'next_offset_bytes': {'type': 'integer'},
         'truncated': {'type': 'boolean'},
+        'sha256': {'type': 'string'},
+        ...toolEvidenceOutputSchemaProperties,
       },
       'required': [
         'path',
@@ -707,12 +710,21 @@ final class ReadLocalFileTool
         'bytes_returned',
         'next_offset_bytes',
         'truncated',
+        'sha256',
+        ...toolEvidenceOutputRequiredFields,
       ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.readOnly,
     capabilities: const {ToolCapability.localRead},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.observation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: 'file:content',
+      argumentToScope: const {'path': 'path'},
+    ),
+    defaultEvidenceValidity: const Duration(minutes: 5),
   );
 
   @override
@@ -796,6 +808,14 @@ final class ReadLocalFileTool
       }
       final nextOffset = start + bytes.length;
       final truncated = nextOffset < size;
+      final evidenceIncomplete = start != 0 || truncated;
+      final contentDigest = sha256.convert(bytes).toString();
+      final scope = <String, Object?>{'path': call.arguments['path']};
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'file.size_bytes', value: size),
+        StructuredFact(name: 'file.content_sha256', value: contentDigest),
+      ];
+      final observedAt = DateTime.now().toUtc();
       final structured = <String, Object?>{
         'path': path,
         'encoding': encoding,
@@ -805,13 +825,26 @@ final class ReadLocalFileTool
         'bytes_returned': bytes.length,
         'next_offset_bytes': nextOffset,
         'truncated': truncated,
+        'sha256': contentDigest,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.observation,
+          subject: 'file:content',
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
       };
       return ToolResult(
         callId: call.callId,
         name: call.name,
         content: content,
         structuredContent: structured,
-        truncated: truncated,
+        truncated: evidenceIncomplete,
+        evidenceKind: EvidenceKind.observation,
+        subject: 'file:content',
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;
@@ -886,13 +919,29 @@ final class WriteLocalFileTool
         'mode': {'type': 'string'},
         'bytes_written': {'type': 'integer'},
         'size_bytes': {'type': 'integer'},
+        'sha256': {'type': 'string'},
+        ...toolEvidenceOutputSchemaProperties,
       },
-      'required': ['path', 'mode', 'bytes_written', 'size_bytes'],
+      'required': [
+        'path',
+        'mode',
+        'bytes_written',
+        'size_bytes',
+        'sha256',
+        ...toolEvidenceOutputRequiredFields,
+      ],
       'additionalProperties': false,
     },
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.destructive,
     capabilities: const {ToolCapability.localWrite},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.actionReceipt},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: 'file:content',
+      argumentToScope: const {'path': 'path'},
+    ),
+    requiresReadAfterWrite: true,
   );
 
   @override
@@ -969,6 +1018,15 @@ final class WriteLocalFileTool
       );
       cancellationToken.throwIfCancelled();
       final size = await file.length();
+      final contentDigest =
+          (await sha256.bind(file.openRead()).first).toString();
+      final scope = <String, Object?>{'path': call.arguments['path']};
+      final facts = <StructuredFact>[
+        StructuredFact(name: 'action.completed', value: true),
+        StructuredFact(name: 'file.size_bytes', value: size),
+        StructuredFact(name: 'file.content_sha256', value: contentDigest),
+      ];
+      final observedAt = DateTime.now().toUtc();
       return ToolResult(
         callId: call.callId,
         name: call.name,
@@ -978,7 +1036,20 @@ final class WriteLocalFileTool
           'mode': mode,
           'bytes_written': bytes.length,
           'size_bytes': size,
+          'sha256': contentDigest,
+          ...toolEvidenceOutputMetadata(
+            evidenceKind: EvidenceKind.actionReceipt,
+            subject: 'file:content',
+            scope: scope,
+            structuredFacts: facts,
+            observedAt: observedAt,
+          ),
         },
+        evidenceKind: EvidenceKind.actionReceipt,
+        subject: 'file:content',
+        scope: scope,
+        structuredFacts: facts,
+        observedAt: observedAt,
       );
     } on AgentRunCancelledException {
       rethrow;

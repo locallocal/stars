@@ -541,7 +541,19 @@ DTO 协议、协调器仅提交结构化段落及未校验声明不升级可信�
 
 ### GRD-016 副作用写后验证
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/services/post_write_verification_policy.dart`、
+`lib/domain/services/grounded_answer_validator.dart`、
+`lib/domain/use_cases/agent_run_coordinator.dart`、
+`lib/domain/use_cases/agent_run_grounded_answer.dart`、
+`lib/data/services/tools/local_file_system_tools.dart` 和
+`lib/data/services/mcp/mcp_tool_adapter.dart`；动态后置声明约束、本地文件摘要回读、MCP 幂等提示与
+副作用隔离回归测试：`test/domain/services/post_write_verification_policy_test.dart`、
+`test/domain/use_cases/agent_run_loop_test.dart`、
+`test/domain/services/grounded_answer_validator_test.dart`、
+`test/data/services/tools/local_file_system_tools_test.dart` 和
+`test/data/services/mcp/mcp_tool_adapter_test.dart`。
 
 目标：区分“调用成功”“动作完成”和“最终状态已确认”。
 

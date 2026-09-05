@@ -39,6 +39,7 @@ final class ToolDefinition {
     this.evidenceScope,
     this.defaultEvidenceValidity,
     this.requiresReadAfterWrite = false,
+    this.isIdempotent = false,
   }) : inputSchema = Map<String, Object?>.unmodifiable(inputSchema),
        outputSchema =
            outputSchema == null
@@ -75,6 +76,7 @@ final class ToolDefinition {
   final ToolEvidenceScopeRule? evidenceScope;
   final Duration? defaultEvidenceValidity;
   final bool requiresReadAfterWrite;
+  final bool isIdempotent;
 
   bool get producesEvidence => evidenceCapabilities.isNotEmpty;
 }

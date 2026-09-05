@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:stars/domain/models/models.dart';
 
 class ChatMessage {
@@ -151,12 +153,48 @@ final class GroundedEvidenceReference {
 }
 
 /// Provider-independent input for the final structured answer turn.
+final class GroundedClaimSynthesisRequirement {
+  GroundedClaimSynthesisRequirement({
+    required this.claimId,
+    required this.claimKind,
+    this.subject = '',
+    Map<String, Object?> scope = const {},
+    Set<String> requiredFactNames = const {},
+    Map<String, Object?> requiredFactValues = const {},
+    this.toolName = '',
+    this.verificationAvailable = true,
+  }) : scope = _freezeGroundedJsonMap(scope),
+       requiredFactNames = Set<String>.unmodifiable(requiredFactNames),
+       requiredFactValues = _freezeGroundedJsonMap(requiredFactValues) {
+    if (claimId.trim().isEmpty) {
+      throw ArgumentError.value(
+        claimId,
+        'claimId',
+        'Claim ID cannot be empty.',
+      );
+    }
+  }
+
+  final String claimId;
+  final ClaimKind? claimKind;
+  final String subject;
+  final Map<String, Object?> scope;
+  final Set<String> requiredFactNames;
+  final Map<String, Object?> requiredFactValues;
+  final String toolName;
+  final bool verificationAvailable;
+}
+
 final class GroundedAnswerSynthesisRequest {
   GroundedAnswerSynthesisRequest({
     required this.draftText,
     List<GroundedEvidenceReference> evidence = const [],
+    List<GroundedClaimSynthesisRequirement> requiredClaims = const [],
     this.reliabilityFeedback = '',
-  }) : evidence = List<GroundedEvidenceReference>.unmodifiable(evidence) {
+  }) : evidence = List<GroundedEvidenceReference>.unmodifiable(evidence),
+       requiredClaims = List<GroundedClaimSynthesisRequirement>.unmodifiable(
+         requiredClaims,
+       ) {
     final evidenceIds = <String>{};
     for (final reference in this.evidence) {
       if (!evidenceIds.add(reference.evidenceId)) {
@@ -167,10 +205,21 @@ final class GroundedAnswerSynthesisRequest {
         );
       }
     }
+    final claimIds = <String>{};
+    for (final requirement in this.requiredClaims) {
+      if (!claimIds.add(requirement.claimId)) {
+        throw ArgumentError.value(
+          requirement.claimId,
+          'requiredClaims',
+          'Required claim IDs must be unique.',
+        );
+      }
+    }
   }
 
   final String draftText;
   final List<GroundedEvidenceReference> evidence;
+  final List<GroundedClaimSynthesisRequirement> requiredClaims;
 
   /// Application-authored correction constraints from a prior synthesis.
   /// Provider output is never copied into this field.
@@ -198,6 +247,22 @@ final class GroundedAnswerSynthesisRequest {
     return Map<String, String>.unmodifiable(aliases);
   }
 }
+
+Map<String, Object?> _freezeGroundedJsonMap(Map<String, Object?> value) {
+  final decoded = jsonDecode(jsonEncode(value)) as Map;
+  return _freezeGroundedJsonValue(decoded) as Map<String, Object?>;
+}
+
+Object? _freezeGroundedJsonValue(Object? value) => switch (value) {
+  final Map<Object?, Object?> values => Map<String, Object?>.unmodifiable({
+    for (final entry in values.entries)
+      entry.key.toString(): _freezeGroundedJsonValue(entry.value),
+  }),
+  final List<Object?> values => List<Object?>.unmodifiable(
+    values.map(_freezeGroundedJsonValue),
+  ),
+  _ => value,
+};
 
 /// A strictly parsed final answer. Raw Provider JSON is never exposed here.
 final class GroundedAnswerProduced extends ModelEvent {

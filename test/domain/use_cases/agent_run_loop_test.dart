@@ -360,6 +360,208 @@ void main() {
       },
     );
 
+    test('verifies a local write with a paired read observation', () async {
+      final write = _PostWriteEvidenceTool(
+        name: 'local_write',
+        source: ToolSource.builtIn,
+        riskLevel: ToolRiskLevel.write,
+        capabilities: const {ToolCapability.localWrite},
+      );
+      final read = _PostReadEvidenceTool(
+        name: 'local_read',
+        source: ToolSource.builtIn,
+        capabilities: const {ToolCapability.localRead},
+      );
+      final session = _LoopModelSession(
+        turns: [
+          [
+            ToolCallRequested(
+              callId: 'write-1',
+              name: write.definition.name,
+              arguments: const {'resource_id': 'item-1'},
+            ),
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [
+            const TextDelta('The write needs independent verification.'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+          [
+            ToolCallRequested(
+              callId: 'read-1',
+              name: read.definition.name,
+              arguments: const {'resource_id': 'item-1'},
+            ),
+            const ModelTurnCompleted(stopReason: 'tool_calls'),
+          ],
+          [
+            const TextDelta('The persisted resource is version 2.'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+        ],
+        synthesisCandidates: [
+          _postWriteCandidate(
+            actionEvidenceId: _evidenceId(1),
+            stateEvidenceId: _evidenceId(2),
+          ),
+        ],
+      );
+      final repository = _MemoryEvidenceRepository();
+      final coordinator = AgentRunCoordinator(
+        toolRegistry: StaticToolRegistry([write, read]),
+        toolPolicy: const _AllowToolPolicy(),
+        toolInvocationPersister: _EvidencePersister(repository).call,
+        groundedAnswerValidator: GroundedAnswerValidator(
+          evidenceRepository: repository,
+        ),
+      );
+
+      final result = await coordinator.run(
+        provider: _LoopProvider(session),
+        request: _request(
+          toolNames: {write.definition.name, read.definition.name},
+          requirements: const [],
+        ),
+      );
+
+      expect(result.status, AgentRunStatus.completed, reason: result.error);
+      expect(result.groundedValidation?.trustLevel, AnswerTrustLevel.verified);
+      expect(write.executions, 1);
+      expect(read.executions, 1);
+      expect(result.verificationRequirements, hasLength(2));
+      expect(session.reliabilityFeedback.single, contains('local_read'));
+      expect(session.synthesisRequests.single.requiredClaims, hasLength(2));
+    });
+
+    test('MCP read failure cannot verify the final state', () async {
+      for (final isIdempotent in <bool>[true, false]) {
+        final outcome = await _runMcpWriteVerification(
+          readFails: true,
+          runtimeReadSubject: 'resource:item',
+          isIdempotent: isIdempotent,
+        );
+
+        expect(outcome.result.status, AgentRunStatus.completed);
+        expect(
+          outcome.result.groundedValidation?.trustLevel,
+          AnswerTrustLevel.partiallyVerified,
+        );
+        expect(outcome.result.degradedReason, 'verification_budget_exhausted');
+        expect(outcome.write.definition.isIdempotent, isIdempotent);
+        expect(outcome.write.executions, 1);
+        expect(outcome.read.executions, 1);
+        expect(
+          outcome.result.groundedAnswer?.claims.single.kind,
+          ClaimKind.completedAction,
+        );
+      }
+    });
+
+    test('MCP read with a different subject cannot verify the write', () async {
+      final outcome = await _runMcpWriteVerification(
+        readFails: false,
+        runtimeReadSubject: 'resource:other',
+      );
+
+      expect(outcome.result.status, AgentRunStatus.completed);
+      expect(
+        outcome.result.groundedValidation?.trustLevel,
+        AnswerTrustLevel.partiallyVerified,
+      );
+      expect(outcome.write.executions, 1);
+      expect(outcome.read.executions, 1);
+      expect(
+        outcome.result.toolInvocations.last.errorCode,
+        'tool_evidence_scope_mismatch',
+      );
+    });
+
+    test(
+      'shell post-write repair reports only the receipt and never reruns',
+      () async {
+        final shell = _PostWriteEvidenceTool(
+          name: 'shell_write',
+          source: ToolSource.builtIn,
+          riskLevel: ToolRiskLevel.destructive,
+          capabilities: const {
+            ToolCapability.process,
+            ToolCapability.localWrite,
+          },
+        );
+        final actionId = _postWriteActionClaimId;
+        final stateId = _postWriteStateClaimId;
+        final receiptId = _evidenceId(1);
+        final session = _LoopModelSession(
+          turns: [
+            [
+              ToolCallRequested(
+                callId: 'shell-1',
+                name: shell.definition.name,
+                arguments: const {'resource_id': 'item-1'},
+              ),
+              const ModelTurnCompleted(stopReason: 'tool_calls'),
+            ],
+            [
+              const TextDelta('The command reported success.'),
+              const ModelTurnCompleted(stopReason: 'stop'),
+            ],
+          ],
+          synthesisCandidates: [
+            GroundedAnswerCandidate(
+              claims: [
+                AnswerClaim(
+                  claimId: stateId,
+                  text: 'The resource is definitely version 2.',
+                  kind: ClaimKind.currentFact,
+                  evidenceIds: [receiptId],
+                ),
+              ],
+            ),
+            GroundedAnswerCandidate(
+              claims: [
+                AnswerClaim(
+                  claimId: actionId,
+                  text: 'The shell tool reported that the action completed.',
+                  kind: ClaimKind.completedAction,
+                  evidenceIds: [receiptId],
+                ),
+              ],
+            ),
+          ],
+        );
+        final repository = _MemoryEvidenceRepository();
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([shell]),
+          toolPolicy: const _AllowToolPolicy(),
+          toolInvocationPersister: _EvidencePersister(repository).call,
+          groundedAnswerValidator: GroundedAnswerValidator(
+            evidenceRepository: repository,
+          ),
+        );
+
+        final result = await coordinator.run(
+          provider: _LoopProvider(session),
+          request: _request(
+            toolNames: {shell.definition.name},
+            requirements: const [],
+          ),
+        );
+
+        expect(result.status, AgentRunStatus.completed, reason: result.error);
+        expect(result.degradedReason, 'post_write_verification_unavailable');
+        expect(
+          result.groundedValidation?.trustLevel,
+          AnswerTrustLevel.partiallyVerified,
+        );
+        expect(
+          result.groundedAnswer?.claims.single.kind,
+          ClaimKind.completedAction,
+        );
+        expect(shell.executions, 1);
+        expect(session.synthesisRequests, hasLength(2));
+      },
+    );
+
     test('total timeout cancels a run blocked in verification', () async {
       final tool = _CalculationEvidenceTool();
       final session = _LoopModelSession(
@@ -464,6 +666,117 @@ GroundedAnswerCandidate _candidate({
     ),
   ],
 );
+
+const _postWriteActionClaimId = 'run-1:invocation:1:attempt:1:action';
+const _postWriteStateClaimId = 'run-1:invocation:1:attempt:1:state';
+
+GroundedAnswerCandidate _postWriteCandidate({
+  required String actionEvidenceId,
+  required String stateEvidenceId,
+}) => GroundedAnswerCandidate(
+  claims: [
+    AnswerClaim(
+      claimId: _postWriteActionClaimId,
+      text: 'The write tool reported that the action completed.',
+      kind: ClaimKind.completedAction,
+      evidenceIds: [actionEvidenceId],
+    ),
+    AnswerClaim(
+      claimId: _postWriteStateClaimId,
+      text: 'The independent read observed resource version 2.',
+      kind: ClaimKind.currentFact,
+      evidenceIds: [stateEvidenceId],
+    ),
+  ],
+);
+
+Future<
+  ({
+    AgentRunResult result,
+    _PostWriteEvidenceTool write,
+    _PostReadEvidenceTool read,
+  })
+>
+_runMcpWriteVerification({
+  required bool readFails,
+  required String runtimeReadSubject,
+  bool isIdempotent = false,
+}) async {
+  final write = _PostWriteEvidenceTool(
+    name: 'mcp_write',
+    source: ToolSource.mcp,
+    riskLevel: ToolRiskLevel.write,
+    capabilities: const {ToolCapability.network, ToolCapability.externalWrite},
+    mcpServerName: 'server-1',
+    isIdempotent: isIdempotent,
+  );
+  final read = _PostReadEvidenceTool(
+    name: 'mcp_read',
+    source: ToolSource.mcp,
+    capabilities: const {ToolCapability.network, ToolCapability.externalRead},
+    mcpServerName: 'server-1',
+    fails: readFails,
+    runtimeSubject: runtimeReadSubject,
+  );
+  final session = _LoopModelSession(
+    turns: [
+      [
+        ToolCallRequested(
+          callId: 'write-1',
+          name: write.definition.name,
+          arguments: const {'resource_id': 'item-1'},
+        ),
+        const ModelTurnCompleted(stopReason: 'tool_calls'),
+      ],
+      [
+        const TextDelta('The write needs verification.'),
+        const ModelTurnCompleted(stopReason: 'stop'),
+      ],
+      [
+        ToolCallRequested(
+          callId: 'read-1',
+          name: read.definition.name,
+          arguments: const {'resource_id': 'item-1'},
+        ),
+        const ModelTurnCompleted(stopReason: 'tool_calls'),
+      ],
+      [
+        const TextDelta('Only the action receipt remains supported.'),
+        const ModelTurnCompleted(stopReason: 'stop'),
+      ],
+    ],
+    synthesisCandidates: [
+      GroundedAnswerCandidate(
+        claims: [
+          AnswerClaim(
+            claimId: _postWriteActionClaimId,
+            text: 'The MCP tool reported that the action completed.',
+            kind: ClaimKind.completedAction,
+            evidenceIds: [_evidenceId(1)],
+          ),
+        ],
+      ),
+    ],
+  );
+  final repository = _MemoryEvidenceRepository();
+  final coordinator = AgentRunCoordinator(
+    toolRegistry: StaticToolRegistry([write, read]),
+    toolPolicy: const _AllowToolPolicy(),
+    limits: const AgentRunLimits(maxModelTurns: 4, maxReliabilityRepairs: 0),
+    toolInvocationPersister: _EvidencePersister(repository).call,
+    groundedAnswerValidator: GroundedAnswerValidator(
+      evidenceRepository: repository,
+    ),
+  );
+  final result = await coordinator.run(
+    provider: _LoopProvider(session),
+    request: _request(
+      toolNames: {write.definition.name, read.definition.name},
+      requirements: const [],
+    ),
+  );
+  return (result: result, write: write, read: read);
+}
 
 String _evidenceId(int invocation) =>
     'run-1:invocation:$invocation:attempt:1:evidence';
@@ -682,6 +995,183 @@ final class _ActionEvidenceTool implements ExecutableTool {
     );
   }
 }
+
+final class _PostWriteEvidenceTool implements ExecutableTool {
+  _PostWriteEvidenceTool({
+    required String name,
+    required ToolSource source,
+    required ToolRiskLevel riskLevel,
+    required Set<ToolCapability> capabilities,
+    String mcpServerName = '',
+    bool isIdempotent = false,
+  }) : definition = ToolDefinition(
+         name: name,
+         mcpServerName: mcpServerName,
+         description: 'Write a versioned resource.',
+         inputSchema: const {
+           'type': 'object',
+           'properties': {
+             'resource_id': {'type': 'string'},
+           },
+           'required': ['resource_id'],
+           'additionalProperties': false,
+         },
+         outputSchema: _postWriteEvidenceSchema,
+         source: source,
+         riskLevel: riskLevel,
+         capabilities: capabilities,
+         toolVersion: '1.0.0',
+         evidenceCapabilities: const {EvidenceKind.actionReceipt},
+         evidenceScope: ToolEvidenceScopeRule(
+           subject: 'resource:item',
+           argumentToScope: const {'resource_id': 'resource_id'},
+         ),
+         requiresReadAfterWrite: true,
+         isIdempotent: isIdempotent,
+       );
+
+  @override
+  final ToolDefinition definition;
+
+  int executions = 0;
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    executions += 1;
+    final scope = <String, Object?>{
+      'resource_id': call.arguments['resource_id'],
+    };
+    final facts = <StructuredFact>[
+      StructuredFact(name: 'action.completed', value: true),
+      StructuredFact(name: 'resource.version', value: 2),
+      StructuredFact(name: 'resource.digest', value: 'digest-2'),
+    ];
+    final observedAt = DateTime.now().toUtc().subtract(
+      const Duration(seconds: 1),
+    );
+    return ToolResult(
+      callId: call.callId,
+      name: call.name,
+      content: 'write completed',
+      structuredContent: {
+        'ok': true,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.actionReceipt,
+          subject: 'resource:item',
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
+      },
+      evidenceKind: EvidenceKind.actionReceipt,
+      subject: 'resource:item',
+      scope: scope,
+      structuredFacts: facts,
+      observedAt: observedAt,
+    );
+  }
+}
+
+final class _PostReadEvidenceTool implements ExecutableTool {
+  _PostReadEvidenceTool({
+    required String name,
+    required ToolSource source,
+    required Set<ToolCapability> capabilities,
+    String mcpServerName = '',
+    this.fails = false,
+    this.runtimeSubject = 'resource:item',
+  }) : definition = ToolDefinition(
+         name: name,
+         mcpServerName: mcpServerName,
+         description: 'Read a versioned resource.',
+         inputSchema: const {
+           'type': 'object',
+           'properties': {
+             'resource_id': {'type': 'string'},
+           },
+           'required': ['resource_id'],
+           'additionalProperties': false,
+         },
+         outputSchema: _postWriteEvidenceSchema,
+         source: source,
+         riskLevel: ToolRiskLevel.readOnly,
+         capabilities: capabilities,
+         toolVersion: '1.0.0',
+         evidenceCapabilities: const {EvidenceKind.observation},
+         evidenceScope: ToolEvidenceScopeRule(
+           subject: 'resource:item',
+           argumentToScope: const {'resource_id': 'resource_id'},
+         ),
+         defaultEvidenceValidity: const Duration(minutes: 5),
+       );
+
+  @override
+  final ToolDefinition definition;
+  final bool fails;
+  final String runtimeSubject;
+
+  int executions = 0;
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    executions += 1;
+    if (fails) {
+      return ToolResult(
+        callId: call.callId,
+        name: call.name,
+        content: 'read failed',
+        isError: true,
+        errorCode: 'read_failed',
+      );
+    }
+    final scope = <String, Object?>{
+      'resource_id': call.arguments['resource_id'],
+    };
+    final facts = <StructuredFact>[
+      StructuredFact(name: 'resource.version', value: 2),
+      StructuredFact(name: 'resource.digest', value: 'digest-2'),
+    ];
+    final observedAt = DateTime.now().toUtc().subtract(
+      const Duration(seconds: 1),
+    );
+    return ToolResult(
+      callId: call.callId,
+      name: call.name,
+      content: 'version 2',
+      structuredContent: {
+        'ok': true,
+        ...toolEvidenceOutputMetadata(
+          evidenceKind: EvidenceKind.observation,
+          subject: runtimeSubject,
+          scope: scope,
+          structuredFacts: facts,
+          observedAt: observedAt,
+        ),
+      },
+      evidenceKind: EvidenceKind.observation,
+      subject: runtimeSubject,
+      scope: scope,
+      structuredFacts: facts,
+      observedAt: observedAt,
+    );
+  }
+}
+
+const Map<String, Object?> _postWriteEvidenceSchema = {
+  'type': 'object',
+  'properties': {
+    'ok': {'type': 'boolean'},
+    ...toolEvidenceOutputSchemaProperties,
+  },
+  'required': ['ok', ...toolEvidenceOutputRequiredFields],
+  'additionalProperties': false,
+};
 
 final class _AllowToolPolicy implements ToolPolicy {
   const _AllowToolPolicy();

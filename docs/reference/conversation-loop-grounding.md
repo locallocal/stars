@@ -171,8 +171,10 @@ ToolEvidenceRecord
 - 只有终态记录能够成为证据；`requested`、`running` 和 `awaitingApproval` 只是审计事件。
 - 成功但为空、被截断、输出 Schema 无效或尚未持久化的结果不能支持业务事实。
 - 失败记录只支持“本次尝试失败/被拒绝/超时”，不能支持“目标不存在”“没有发生副作用”。
-- `actionReceipt` 只能证明工具接受或完成了动作。需要声称最终状态时，必须再执行独立读取，或
-  由工具返回具有明确原子语义和资源版本的验证回执。
+- `actionReceipt` 只能证明工具接受或完成了动作。`requiresReadAfterWrite` 写工具成功后，应用从
+  回执的资源版本、内容摘要等事实生成独立的 `completedAction` 与 `currentFact` 需求；后者必须
+  由同 subject、同 scope 且事实值完全一致的只读 `observation` 支持。无配对读取时只能发布动作
+  回执，不能把它提升为最终状态。
 - 外部可变状态必须带 `observedAt` 和领域相关的有效期；过期证据不能为“当前”陈述背书。
 - 自由文本结果默认只能作为未验证材料。只有显式声明证据能力、版本、作用域规则和
   `outputSchema` 的工具，才能在运行时 Schema 与输入作用域复核通过后产生业务证据候选；候选
@@ -265,6 +267,9 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
   原因。`MessageToolCall` 增加 `truncated`、`schemaValid`、`observedAt` 等最小投影。
 - `AgentRunCoordinator` 已接入独立 Loop 状态机、覆盖率验证和最终声明门禁；工具执行、限制与
   取消继续由协调器统一拥有。
+- `PostWriteVerificationPolicy` 只从本轮已暴露的只读工具中配对写后验证，MCP 配对还要求同一
+  server；它不发现新工具或扩大权限。验证反馈轮拒绝所有写入和进程工具，幂等提示也不会放宽
+  该限制。
 - `AnswerClaim`、`ClaimKind` 和 `GroundedAnswerCandidate` 已替代消息级
   `_validateFinalAnswer`；`GroundedAnswerValidator` 使用应用侧语义约束校验每条声明。旧
   `<stars_evidence ... />` 仅用于 adapter 迁移兼容，不能保存或授予 `verified`。
@@ -288,6 +293,8 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
 - Provider 适配器把原生 web search 等结果转换成统一的调用和证据事件。Provider HTTP 失败
   转换为结构化 `ProviderFailure`，保存安全字段：状态码、端点种类、请求追踪 ID、是否可重试；
   响应正文只进入脱敏诊断。
+- 本地文件写工具输出 `actionReceipt`，包含完成标记、最终字节数和 SHA-256；完整文件读取输出
+  独立 `observation`。分段或截断读取仍可作为不可信工具数据返回，但不能进入事实证据账本。
 
 ### Context 与 Memory
 

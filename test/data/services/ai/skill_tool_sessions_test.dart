@@ -346,6 +346,8 @@ void main() {
     final prompt =
         (messages.last as Map<Object?, Object?>)['content']! as String;
     expect(prompt, contains(_evidenceId));
+    expect(prompt, contains('required_claims'));
+    expect(prompt, contains('calculation.result'));
     expect(prompt, contains('Do not emit a legacy evidence footer'));
   });
 
@@ -788,6 +790,17 @@ final _groundedRequest = GroundedAnswerSynthesisRequest(
       providerCallId: 'provider-call-1',
       toolName: 'calculate',
       isError: false,
+    ),
+  ],
+  requiredClaims: [
+    GroundedClaimSynthesisRequirement(
+      claimId: 'claim-1',
+      claimKind: ClaimKind.externalFact,
+      subject: 'calculation:basic-arithmetic',
+      scope: const {'expression': '2+2'},
+      requiredFactNames: const {'calculation.result'},
+      requiredFactValues: const {'calculation.result': 4},
+      toolName: 'calculate',
     ),
   ],
 );

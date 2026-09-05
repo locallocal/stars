@@ -5,6 +5,21 @@ String _groundedAnswerSynthesisPrompt(GroundedAnswerSynthesisRequest request) {
     'draft_text': request.draftText,
     if (request.reliabilityFeedback.isNotEmpty)
       'application_validation_feedback': request.reliabilityFeedback,
+    'required_claims': [
+      for (final requirement in request.requiredClaims)
+        <String, Object?>{
+          'claim_id': requirement.claimId,
+          if (requirement.claimKind case final kind?)
+            'claim_kind': kind.wireName,
+          'subject': requirement.subject,
+          'scope': requirement.scope,
+          'required_fact_names': requirement.requiredFactNames.toList(),
+          'required_fact_values': requirement.requiredFactValues,
+          'verification_available': requirement.verificationAvailable,
+          if (requirement.toolName.isNotEmpty)
+            'verification_tool_name': requirement.toolName,
+        },
+    ],
     'available_evidence': [
       for (final reference in request.evidence)
         <String, Object?>{
@@ -23,6 +38,7 @@ Use exactly this schema:
 Rules:
 - Put every user-visible factual assertion in its own claims item.
 - Use only evidence_id values listed in available_evidence. Never output Provider call IDs.
+- Treat required_claims as application constraints. Preserve each claim_id and claim_kind, but do not invent a claim when matching evidence is absent.
 - A failed evidence item may describe only execution_failure.
 - Preserve useful qualifications and failure disclosures from the draft.
 - If application_validation_feedback is present, correct only the structured

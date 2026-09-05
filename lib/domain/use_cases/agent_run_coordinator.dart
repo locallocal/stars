@@ -6,6 +6,7 @@ import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/services/grounded_answer_validator.dart';
+import 'package:stars/domain/services/post_write_verification_policy.dart';
 
 part 'agent_run_coordinator_support.dart';
 part 'agent_run_evidence.dart';
@@ -24,13 +25,16 @@ final class AgentRunCoordinator {
     AgentRunLimits limits = const AgentRunLimits(),
     ToolInvocationPersister? toolInvocationPersister,
     GroundedAnswerValidator? groundedAnswerValidator,
+    PostWriteVerificationPolicy postWriteVerificationPolicy =
+        const PostWriteVerificationPolicy(),
   }) : _toolRegistry = toolRegistry,
        _toolPolicy = toolPolicy,
        _approvalHandler = approvalHandler,
        _schemaValidator = schemaValidator,
        _limits = limits,
        _toolInvocationPersister = toolInvocationPersister,
-       _groundedAnswerValidator = groundedAnswerValidator;
+       _groundedAnswerValidator = groundedAnswerValidator,
+       _postWriteVerificationPolicy = postWriteVerificationPolicy;
 
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
@@ -39,6 +43,7 @@ final class AgentRunCoordinator {
   final AgentRunLimits _limits;
   final ToolInvocationPersister? _toolInvocationPersister;
   final GroundedAnswerValidator? _groundedAnswerValidator;
+  final PostWriteVerificationPolicy _postWriteVerificationPolicy;
 
   Future<AgentRunResult> run({
     required AiProvider provider,
@@ -73,6 +78,13 @@ final class AgentRunCoordinator {
       request: request,
       persister: _toolInvocationPersister,
     );
+    final verificationRequirements = <ClaimEvidenceRequirement>[
+      ...request.verificationRequirements,
+    ];
+    final verificationRequirementIds =
+        verificationRequirements
+            .map((requirement) => requirement.claimId)
+            .toSet();
     var text = '';
     var reasoning = '';
     var usage = ModelTokenUsage.empty;
@@ -119,6 +131,27 @@ final class AgentRunCoordinator {
         persistence.record(invocation),
         request.cancellationToken,
       );
+      final definition = _toolRegistry.find(invocation.name)?.definition;
+      if (definition != null) {
+        final plan = _postWriteVerificationPolicy.plan(
+          invocation: invocation,
+          writeTool: definition,
+          exposedTools: exposedTools,
+          reservedClaimIds: verificationRequirementIds,
+        );
+        if (plan != null) {
+          for (final requirement in <ClaimEvidenceRequirement>[
+            plan.actionRequirement,
+            plan.stateRequirement,
+          ]) {
+            verificationRequirementIds.add(requirement.claimId);
+            verificationRequirements.add(requirement);
+          }
+          if (!plan.hasPairedRead && degradedReason.isEmpty) {
+            degradedReason = 'post_write_verification_unavailable';
+          }
+        }
+      }
       if (_terminalInvocationStatuses.contains(invocation.status)) {
         state.transition(AgentRunPhase.observing);
       }
@@ -145,6 +178,7 @@ final class AgentRunCoordinator {
         toolInvocations: invocations,
         groundedAnswer: groundedAnswer,
         groundedValidation: groundedValidation,
+        verificationRequirements: verificationRequirements,
         stateTransitions: state.history,
         degradedReason: degradedReason,
         error: error,
@@ -321,7 +355,11 @@ final class AgentRunCoordinator {
         state.transition(AgentRunPhase.observing);
         state.transition(AgentRunPhase.verifying);
         final coverage = await _raceCancellation(
-          _evaluateEvidenceCoverage(request: request, invocations: invocations),
+          _evaluateEvidenceCoverage(
+            runId: request.runId,
+            requirements: verificationRequirements,
+            invocations: invocations,
+          ),
           request.cancellationToken,
         );
         request.cancellationToken.throwIfCancelled();
@@ -335,7 +373,7 @@ final class AgentRunCoordinator {
             hasObservationBudget) {
           pendingVerificationFeedback = _missingEvidenceFeedback(
             runId: request.runId,
-            requirements: request.verificationRequirements,
+            requirements: verificationRequirements,
             missingRequirementIds: coverage.missingRequirementIds,
           );
           state.transition(
@@ -354,6 +392,7 @@ final class AgentRunCoordinator {
           draftText: turnText.toString(),
           invocations: invocations,
           request: request,
+          verificationRequirements: verificationRequirements,
           cancellationToken: request.cancellationToken,
           state: state,
           onModelEvent: onModelEvent,

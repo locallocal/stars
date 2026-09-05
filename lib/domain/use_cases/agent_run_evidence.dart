@@ -22,6 +22,11 @@ extension _AgentRunEvidence on AgentRunCoordinator {
     if (!definition.producesEvidence) {
       return _ValidatedToolResult(schemaValidated);
     }
+    if (schemaValidated.truncated) {
+      // A bounded result remains useful untrusted Tool data, but cannot become
+      // a business-fact evidence candidate.
+      return _ValidatedToolResult(schemaValidated);
+    }
     try {
       final candidate = validateToolEvidenceResult(
         definition,

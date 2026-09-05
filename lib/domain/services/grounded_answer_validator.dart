@@ -18,8 +18,10 @@ final class ClaimEvidenceRequirement {
     Map<String, Object?> scope = const {},
     Set<ToolCapability> requiredCapabilities = const {},
     Set<String> requiredFactNames = const {},
+    Map<String, Object?> requiredFactValues = const {},
     this.toolName = '',
     this.attemptId = '',
+    this.verificationAvailable = true,
   }) : claimId = _normalizedRequiredText(claimId, 'claimId'),
        allowedEvidenceKinds = Set<EvidenceKind>.unmodifiable(
          allowedEvidenceKinds,
@@ -28,10 +30,15 @@ final class ClaimEvidenceRequirement {
        requiredCapabilities = Set<ToolCapability>.unmodifiable(
          requiredCapabilities,
        ),
+       requiredFactValues = _freezeJsonMap(
+         requiredFactValues,
+         'requiredFactValues',
+       ),
        requiredFactNames = Set<String>.unmodifiable(
-         requiredFactNames.map(
-           (name) => _normalizedRequiredText(name, 'requiredFactNames'),
-         ),
+         <String>{
+           ...requiredFactNames,
+           ...requiredFactValues.keys,
+         }.map((name) => _normalizedRequiredText(name, 'requiredFactNames')),
        ) {
     _requireNormalizedOptionalText(subject, 'subject');
     _requireNormalizedOptionalText(toolName, 'toolName');
@@ -52,10 +59,15 @@ final class ClaimEvidenceRequirement {
   final Map<String, Object?> scope;
   final Set<ToolCapability> requiredCapabilities;
   final Set<String> requiredFactNames;
+  final Map<String, Object?> requiredFactValues;
 
-  /// Optional additional identity constraints for execution-failure claims.
+  /// Optional identity constraints for the exact supporting Tool attempt.
   final String toolName;
   final String attemptId;
+
+  /// False when policy requires a state claim to remain unverified because no
+  /// authorized verifier was available for this run.
+  final bool verificationAvailable;
 }
 
 /// A conservative semantic review performed after deterministic validation.
@@ -92,6 +104,8 @@ enum EvidenceRejectionReason {
   evidenceSchemaInvalid,
   evidenceTruncated,
   evidenceEmpty,
+  evidenceFactValueMismatch,
+  verificationUnavailable,
   executionFailureEvidenceMismatch,
   actionReceiptCannotSupportState,
   modelReviewRejected,
@@ -377,6 +391,19 @@ final class GroundedAnswerValidator {
         ],
       );
     }
+    if (!requirement.verificationAvailable) {
+      return ClaimValidationResult(
+        claim: claim,
+        trustLevel: ClaimTrustLevel.unverified,
+        issues: [
+          for (final evidenceId in claim.evidenceIds)
+            EvidenceValidationIssue(
+              evidenceId: evidenceId,
+              reason: EvidenceRejectionReason.verificationUnavailable,
+            ),
+        ],
+      );
+    }
 
     final acceptedIds = <String>[];
     final issues = <EvidenceValidationIssue>[];
@@ -501,6 +528,14 @@ final class GroundedAnswerValidator {
           evidence.structuredFacts.map((fact) => fact.name).toSet();
       if (!factNames.containsAll(requirement.requiredFactNames)) {
         return EvidenceRejectionReason.evidenceEmpty;
+      }
+      final factsByName = <String, Object?>{
+        for (final fact in evidence.structuredFacts) fact.name: fact.value,
+      };
+      for (final expected in requirement.requiredFactValues.entries) {
+        if (!_sameJson(factsByName[expected.key], expected.value)) {
+          return EvidenceRejectionReason.evidenceFactValueMismatch;
+        }
       }
     }
     return null;
