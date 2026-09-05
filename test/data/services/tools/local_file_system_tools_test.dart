@@ -260,6 +260,16 @@ void main() {
       );
       expect(writeResult.isError, isFalse);
       _expectValidOutput(writeTool, writeResult);
+      expect(writeTool.definition.requiresReadAfterWrite, isTrue);
+      expect(
+        validateToolEvidenceResult(writeTool.definition, const {
+          'path': 'notes/original.txt',
+          'content': 'hello',
+          'mode': 'create',
+          'create_parents': true,
+        }, writeResult.copyWith(schemaValid: true))?.evidenceKind,
+        EvidenceKind.actionReceipt,
+      );
 
       final appendResult = await writeTool.execute(
         _call(writeTool, {
@@ -283,6 +293,37 @@ void main() {
       expect(
         readResult.structuredContent,
         containsPair('next_offset_bytes', 5),
+      );
+
+      final verificationResult = await readTool.execute(
+        _call(readTool, {'path': 'notes/original.txt'}),
+        AgentCancellationToken(),
+      );
+      _expectValidOutput(readTool, verificationResult);
+      final observation = validateToolEvidenceResult(
+        readTool.definition,
+        const {'path': 'notes/original.txt'},
+        verificationResult.copyWith(schemaValid: true),
+      );
+      final receipt = validateToolEvidenceResult(writeTool.definition, const {
+        'path': 'notes/original.txt',
+        'content': ' world',
+        'mode': 'append',
+      }, appendResult.copyWith(schemaValid: true));
+      final observationFacts = {
+        for (final fact in observation!.structuredFacts) fact.name: fact.value,
+      };
+      final receiptFacts = {
+        for (final fact in receipt!.structuredFacts) fact.name: fact.value,
+      };
+      expect(observation.evidenceKind, EvidenceKind.observation);
+      expect(
+        observationFacts['file.content_sha256'],
+        receiptFacts['file.content_sha256'],
+      );
+      expect(
+        observationFacts['file.size_bytes'],
+        receiptFacts['file.size_bytes'],
       );
 
       final copyResult = await copyTool.execute(

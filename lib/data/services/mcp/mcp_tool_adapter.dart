@@ -41,6 +41,7 @@ final class McpToolAdapter implements ExecutableTool {
            else
              ToolCapability.externalWrite,
          },
+         isIdempotent: descriptor.annotations.idempotentHint,
        );
 
   final McpServer _server;

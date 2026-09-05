@@ -129,12 +129,16 @@ final class AgentRunResult {
     required List<ToolInvocationRecord> toolInvocations,
     this.groundedAnswer,
     this.groundedValidation,
+    List<ClaimEvidenceRequirement> verificationRequirements = const [],
     List<AgentRunStateChanged> stateTransitions = const [],
     this.degradedReason = '',
     this.error = '',
     this.providerFailure,
   }) : toolInvocations = List<ToolInvocationRecord>.unmodifiable(
          toolInvocations,
+       ),
+       verificationRequirements = List<ClaimEvidenceRequirement>.unmodifiable(
+         verificationRequirements,
        ),
        stateTransitions = List<AgentRunStateChanged>.unmodifiable(
          stateTransitions,
@@ -147,6 +151,7 @@ final class AgentRunResult {
   final List<ToolInvocationRecord> toolInvocations;
   final GroundedAnswerCandidate? groundedAnswer;
   final GroundedAnswerValidationResult? groundedValidation;
+  final List<ClaimEvidenceRequirement> verificationRequirements;
   final List<AgentRunStateChanged> stateTransitions;
   final String degradedReason;
   final String error;

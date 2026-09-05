@@ -5,6 +5,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     required AgentModelSession session,
     required String draftText,
     required List<ToolInvocationRecord> invocations,
+    required List<ClaimEvidenceRequirement> verificationRequirements,
     required AgentCancellationToken cancellationToken,
     required _AgentRunStateMachine state,
     String reliabilityFeedback = '',
@@ -13,6 +14,19 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     final request = GroundedAnswerSynthesisRequest(
       draftText: draftText,
       evidence: _groundedEvidenceReferences(invocations),
+      requiredClaims: [
+        for (final requirement in verificationRequirements)
+          GroundedClaimSynthesisRequirement(
+            claimId: requirement.claimId,
+            claimKind: requirement.claimKind,
+            subject: requirement.subject,
+            scope: requirement.scope,
+            requiredFactNames: requirement.requiredFactNames,
+            requiredFactValues: requirement.requiredFactValues,
+            toolName: requirement.toolName,
+            verificationAvailable: requirement.verificationAvailable,
+          ),
+      ],
       reliabilityFeedback: reliabilityFeedback,
     );
     GroundedAnswerCandidate? candidate;
@@ -73,6 +87,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     required String draftText,
     required List<ToolInvocationRecord> invocations,
     required AgentRunRequest request,
+    required List<ClaimEvidenceRequirement> verificationRequirements,
     required AgentCancellationToken cancellationToken,
     required _AgentRunStateMachine state,
     ModelEventObserver? onModelEvent,
@@ -95,6 +110,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
           session: session,
           draftText: draftText,
           invocations: invocations,
+          verificationRequirements: verificationRequirements,
           cancellationToken: cancellationToken,
           state: state,
           reliabilityFeedback: feedback,
@@ -109,14 +125,14 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
       usage = usage + synthesis.usage;
 
       final validator = _groundedAnswerValidator;
-      if (request.verificationRequirements.isEmpty || validator == null) {
+      if (verificationRequirements.isEmpty || validator == null) {
         return _ValidatedSynthesisResult(
           candidate: synthesis.candidate,
           validation: null,
           reasoning: reasoning,
           usage: usage,
           degradedReason:
-              request.verificationRequirements.isEmpty
+              verificationRequirements.isEmpty
                   ? ''
                   : 'grounded_validator_unavailable',
         );
@@ -126,7 +142,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
         validator.validate(
           runId: request.runId,
           candidate: synthesis.candidate,
-          requirements: request.verificationRequirements,
+          requirements: verificationRequirements,
           validatedAt: DateTime.now(),
         ),
         cancellationToken,
@@ -155,10 +171,10 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
   }
 
   Future<EvidenceRequirementCoverage> _evaluateEvidenceCoverage({
-    required AgentRunRequest request,
+    required String runId,
+    required List<ClaimEvidenceRequirement> requirements,
     required List<ToolInvocationRecord> invocations,
   }) {
-    final requirements = request.verificationRequirements;
     if (requirements.isEmpty) {
       return Future<EvidenceRequirementCoverage>.value(
         EvidenceRequirementCoverage(
@@ -181,7 +197,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
       );
     }
     return validator.evaluateCoverage(
-      runId: request.runId,
+      runId: runId,
       requirements: requirements,
       evidenceIds: _groundedEvidenceReferences(
         invocations,
@@ -235,6 +251,10 @@ String _missingEvidenceFeedback({
                 capability.name,
             ],
             'required_fact_names': requirement.requiredFactNames.toList(),
+            'required_fact_values': requirement.requiredFactValues,
+            'verification_available': requirement.verificationAvailable,
+            if (requirement.toolName.isNotEmpty)
+              'verification_tool_name': requirement.toolName,
           },
     ],
   });

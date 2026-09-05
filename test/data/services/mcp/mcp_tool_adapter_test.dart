@@ -11,6 +11,7 @@ void main() {
         annotations: const McpToolAnnotations(
           readOnlyHint: true,
           destructiveHint: false,
+          idempotentHint: true,
           openWorldHint: false,
         ),
       ),
@@ -22,6 +23,7 @@ void main() {
     expect(adapter.definition.mcpServerName, 'Example');
     expect(adapter.definition.source, ToolSource.mcp);
     expect(adapter.definition.producesEvidence, isFalse);
+    expect(adapter.definition.isIdempotent, isTrue);
     expect(adapter.definition.riskLevel, ToolRiskLevel.readOnly);
     expect(
       adapter.definition.capabilities,

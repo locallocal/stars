@@ -362,6 +362,60 @@ void main() {
       );
     });
 
+    test('post-write observations must match required fact values', () async {
+      final evidence = _observation(
+        validUntil: now.add(const Duration(hours: 1)),
+      );
+      final matching = _weatherRequirement(
+        requiredFactValues: const {'weather.temperature': 25},
+      );
+      final mismatching = _weatherRequirement(
+        requiredFactValues: const {'weather.temperature': 30},
+      );
+
+      final accepted = await _validate(
+        evidence: evidence,
+        now: now,
+        claim: _claim(),
+        requirement: matching,
+      );
+      final rejected = await _validate(
+        evidence: evidence,
+        now: now,
+        claim: _claim(),
+        requirement: mismatching,
+      );
+
+      expect(accepted.trustLevel, AnswerTrustLevel.verified);
+      expect(rejected.trustLevel, AnswerTrustLevel.unverified);
+      expect(
+        rejected.claims.single.issues.single.reason,
+        EvidenceRejectionReason.evidenceFactValueMismatch,
+      );
+    });
+
+    test(
+      'an unavailable post-write verifier cannot accept other evidence',
+      () async {
+        final evidence = _observation(
+          validUntil: now.add(const Duration(hours: 1)),
+        );
+
+        final result = await _validate(
+          evidence: evidence,
+          now: now,
+          claim: _claim(),
+          requirement: _weatherRequirement(verificationAvailable: false),
+        );
+
+        expect(result.trustLevel, AnswerTrustLevel.unverified);
+        expect(
+          result.claims.single.issues.single.reason,
+          EvidenceRejectionReason.verificationUnavailable,
+        );
+      },
+    );
+
     test('one covered and one uncovered claim is strictly partial', () async {
       final evidence = _observation(
         validUntil: now.add(const Duration(hours: 1)),
@@ -579,6 +633,8 @@ ClaimEvidenceRequirement _weatherRequirement({
   Set<EvidenceKind> allowedEvidenceKinds = const {EvidenceKind.observation},
   Set<ToolCapability> requiredCapabilities = const {ToolCapability.network},
   ClaimKind? claimKind,
+  Map<String, Object?> requiredFactValues = const {},
+  bool verificationAvailable = true,
 }) => ClaimEvidenceRequirement(
   claimId: 'claim-1',
   claimKind: claimKind,
@@ -587,6 +643,8 @@ ClaimEvidenceRequirement _weatherRequirement({
   scope: const {'city': 'Beijing'},
   requiredCapabilities: requiredCapabilities,
   requiredFactNames: const {'weather.temperature'},
+  requiredFactValues: requiredFactValues,
+  verificationAvailable: verificationAvailable,
 );
 
 ToolEvidenceRecord _observation({
