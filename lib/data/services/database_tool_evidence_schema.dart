@@ -2,9 +2,11 @@ part of 'database_service.dart';
 
 const int _toolEvidenceInitialDatabaseVersion = 18;
 const int _providerNativePreviousDatabaseVersion = 19;
+const int _groundingRecoveryPreviousDatabaseVersion = 20;
 const Set<int> _supportedPreviousDatabaseVersions = {
   _toolEvidenceInitialDatabaseVersion,
   _providerNativePreviousDatabaseVersion,
+  _groundingRecoveryPreviousDatabaseVersion,
 };
 
 Future<void> _upgradeToolEvidenceSchema(
@@ -20,13 +22,28 @@ Future<void> _upgradeToolEvidenceSchema(
   }
   if (oldVersion == _toolEvidenceInitialDatabaseVersion) {
     await _createToolEvidenceSchema(database);
-    return;
+  } else if (oldVersion == _providerNativePreviousDatabaseVersion) {
+    await _rebuildToolEvidenceSchema(database);
   }
-  await _rebuildToolEvidenceSchemaForProviderNative(database);
+  await _createGroundingReliabilitySchema(database);
 }
 
-Future<void> _ensureCompatibleToolEvidenceSchema(Database database) =>
-    _createToolEvidenceSchema(database);
+Future<void> _ensureCompatibleToolEvidenceSchema(Database database) async {
+  final rows = await database.rawQuery(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+    const ['tool_invocation_events'],
+  );
+  if (rows.isEmpty) {
+    await _createToolEvidenceSchema(database);
+    return;
+  }
+  final createSql = rows.single['sql']?.toString() ?? '';
+  if (!createSql.contains("'interrupted'")) {
+    await _rebuildToolEvidenceSchema(database);
+    return;
+  }
+  await _createToolEvidenceSchema(database);
+}
 
 Future<bool> _isSupportedPreviousDatabaseValid(
   String databasePath,
@@ -52,6 +69,7 @@ Future<bool> _isSupportedPreviousDatabaseValid(
             expectedVersion == _providerNativePreviousDatabaseVersion,
         allowMissingToolEvidenceSchema:
             expectedVersion == _toolEvidenceInitialDatabaseVersion,
+        allowMissingGroundingReliabilitySchema: true,
       );
       return true;
     } finally {
@@ -83,6 +101,8 @@ Future<void> _verifySupportedDatabaseFile(String databasePath) async {
       allowMissingToolEvidenceSchema:
           version == _toolEvidenceInitialDatabaseVersion ||
           version == DatabaseService.databaseVersion,
+      allowMissingGroundingReliabilitySchema:
+          version != DatabaseService.databaseVersion,
     );
   } finally {
     await database.close();
@@ -114,6 +134,7 @@ Future<void> _createToolEvidenceSchema(DatabaseExecutor database) async {
           'denied',
           'cancelled',
           'timedOut',
+          'interrupted',
           'duplicateReused',
           'duplicateConflict',
           'duplicate'
@@ -286,9 +307,7 @@ Future<void> _createToolEvidenceSchema(DatabaseExecutor database) async {
   ''');
 }
 
-Future<void> _rebuildToolEvidenceSchemaForProviderNative(
-  DatabaseExecutor database,
-) async {
+Future<void> _rebuildToolEvidenceSchema(DatabaseExecutor database) async {
   await database.execute('''
     CREATE TEMP TABLE grd012_invocation_events AS
     SELECT * FROM tool_invocation_events

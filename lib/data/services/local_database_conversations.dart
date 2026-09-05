@@ -57,6 +57,11 @@ extension LocalDatabaseConversations on LocalDatabaseService {
     final database = await _databaseProvider();
     await database.transaction((transaction) async {
       await transaction.delete(
+        'agent_run_answer_checkpoints',
+        where: 'chat_id = ?',
+        whereArgs: [id],
+      );
+      await transaction.delete(
         'tool_evidence_records',
         where: 'chat_id = ?',
         whereArgs: [id],

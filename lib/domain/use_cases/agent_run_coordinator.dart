@@ -119,6 +119,7 @@ final class AgentRunCoordinator {
         case ToolInvocationStatus.denied:
         case ToolInvocationStatus.cancelled:
         case ToolInvocationStatus.timedOut:
+        case ToolInvocationStatus.interrupted:
         case ToolInvocationStatus.duplicateReused:
         case ToolInvocationStatus.duplicateConflict:
         case ToolInvocationStatus.duplicate:

@@ -23,6 +23,8 @@ import 'package:stars/data/repositories/sqlite_skill_ecosystem_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_inventory_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_execution_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
+import 'package:stars/data/repositories/sqlite_agent_run_recovery_repository.dart';
+import 'package:stars/data/repositories/sqlite_grounding_metrics_repository.dart';
 import 'package:stars/data/services/feedback_service.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
 import 'package:stars/data/services/asset_text_service.dart';
@@ -85,6 +87,7 @@ import 'package:stars/domain/repositories/skill_run_repository.dart';
 import 'package:stars/domain/repositories/tool_execution_repository.dart';
 import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/services/grounded_answer_validator.dart';
+import 'package:stars/domain/services/grounding_metrics_service.dart';
 import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
@@ -94,6 +97,7 @@ import 'package:stars/domain/use_cases/generate_media_turn.dart';
 import 'package:stars/domain/use_cases/mcp_server_mutations.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/persist_tool_invocation.dart';
+import 'package:stars/domain/use_cases/recover_agent_runs.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
@@ -122,6 +126,7 @@ import 'package:stars/ui/features/profile/view_models/legal_document_view_model.
 import 'package:stars/ui/features/skills/view_models/skill_library_view_model.dart';
 
 part 'app_dependencies_chat.dart';
+part 'app_dependencies_startup.dart';
 
 /// Application composition root. Production implementations are assembled in
 /// one place; views only receive repositories through their ViewModels.
@@ -175,6 +180,7 @@ class AppDependencies {
     this.skillScriptCatalogService,
     this.skillCatalogService,
     this.skillOrganizationPolicyBundleService,
+    this.startupRecoveryInitializer,
   }) : conversationDraftRepository =
            conversationDraftRepository ?? MemoryConversationDraftRepository(),
        conversationDirectoryRepository =
@@ -356,6 +362,24 @@ class AppDependencies {
     final toolExecutionRepository = SqliteToolExecutionRepository(
       localDatabase: localDatabase,
     );
+    final groundingMetricsRepository = SqliteGroundingMetricsRepository(
+      localDatabase: localDatabase,
+    );
+    final groundingMetrics = GroundingMetricsService(
+      repository: groundingMetricsRepository,
+      evidenceRepository: toolEvidenceRepository,
+    );
+    final agentRunRecoveryRepository = SqliteAgentRunRecoveryRepository(
+      localDatabase: localDatabase,
+    );
+    final recoverAgentRuns = RecoverAgentRuns(
+      recoveryRepository: agentRunRecoveryRepository,
+      messageRepository: messageRepository,
+      groundedMessageRepository: messageRepository,
+      evidenceRepository: toolEvidenceRepository,
+      executionRepository: toolExecutionRepository,
+      onRecoveredMessage: groundingMetrics.recordTerminalMessage,
+    );
     final persistToolInvocation = PersistToolInvocation(
       evidenceRepository: toolEvidenceRepository,
       executionRepository: toolExecutionRepository,
@@ -502,6 +526,9 @@ class AppDependencies {
       generationRegistry: ChatGenerationRegistry(
         messagePersister: messageRepository.upsertMessage,
         groundedMessagePersister: messageRepository.upsertGroundedMessage,
+        answerRecoveryCheckpointPersister:
+            agentRunRecoveryRepository.stageAnswer,
+        answerRecoveryCheckpointClearer: agentRunRecoveryRepository.clearAnswer,
         lastMessageUpdater: chatRepository.updateLastMessage,
         assistantPreviewBuilder: (message) async {
           final profile = await profileRepository.getProfile();
@@ -519,6 +546,9 @@ class AppDependencies {
             await compactConversation(bot: bot, chatId: chatId);
           }
         },
+        providerFailureObserver: groundingMetrics.recordProviderFailure,
+        terminalGroundingMetricsObserver:
+            groundingMetrics.recordTerminalMessage,
         toolInvocationPersister: persistToolInvocation.call,
         groundedAnswerValidator: groundedAnswerValidator,
         toolRegistry: toolRegistry,
@@ -530,6 +560,9 @@ class AppDependencies {
       skillOrganizationPolicyBundleService:
           skillOrganizationPolicyBundleService,
       conversationDraftRepository: conversationDraftRepository,
+      startupRecoveryInitializer: () async {
+        await recoverAgentRuns();
+      },
     );
   }
 
@@ -583,99 +616,7 @@ class AppDependencies {
   final SkillCatalogService? skillCatalogService;
   final SkillOrganizationPolicyBundleService?
   skillOrganizationPolicyBundleService;
-
-  StartupViewModel createStartupViewModel() => StartupViewModel(
-    profileRepository: profileRepository,
-    capabilityInitializer: () async {
-      final statuses = <StartupCapabilityStatus>[];
-      Future<void> inspect(
-        String id, {
-        required bool required,
-        required Future<void> Function() initialize,
-      }) async {
-        try {
-          await initialize();
-          statuses.add(
-            StartupCapabilityStatus(
-              id: id,
-              required: required,
-              state: StartupCapabilityState.available,
-            ),
-          );
-        } on Object catch (error) {
-          final failure = AppFailure.from(
-            error,
-            code: '${id}_initialization_failed',
-          );
-          statuses.add(
-            StartupCapabilityStatus(
-              id: id,
-              required: required,
-              state:
-                  required
-                      ? StartupCapabilityState.failed
-                      : StartupCapabilityState.degraded,
-              diagnosticCode: failure.code,
-              retryable: failure.retryable,
-            ),
-          );
-        }
-      }
-
-      await inspect(
-        'conversation_history_skill',
-        required: true,
-        initialize: systemConversationHistorySkill.validate,
-      );
-      await inspect(
-        'directory_operations_skill',
-        required: true,
-        initialize: systemDirectoryOperationsSkill.validate,
-      );
-      await inspect(
-        'file_operations_skill',
-        required: true,
-        initialize: systemFileOperationsSkill.validate,
-      );
-      if (systemShellSkill case final shellSkill?) {
-        await inspect(
-          'shell_skill',
-          required: true,
-          initialize: shellSkill.validate,
-        );
-      }
-      await inspect(
-        'skill_installer',
-        required: true,
-        initialize: systemSkillInstallerSkill.validate,
-      );
-      await inspect(
-        'mcp_installer',
-        required: true,
-        initialize: systemMcpInstallerSkill.validate,
-      );
-      await inspect(
-        'mcp_catalog_cache',
-        required: false,
-        initialize: mcpCatalogService.hydrateFromCache,
-      );
-      if (skillScriptCatalogService case final scriptCatalog?) {
-        await inspect(
-          'skill_script_catalog',
-          required: false,
-          initialize: scriptCatalog.hydrateFromCache,
-        );
-      }
-      if (skillCatalogService case final onlineCatalog?) {
-        await inspect(
-          'online_skill_catalog',
-          required: false,
-          initialize: onlineCatalog.refreshConfiguredCatalogs,
-        );
-      }
-      return StartupCapabilitiesReport(List.unmodifiable(statuses));
-    },
-  );
+  final Future<void> Function()? startupRecoveryInitializer;
 
   AppViewModel createAppViewModel(Profile initialProfile) => AppViewModel(
     initialProfile: initialProfile,

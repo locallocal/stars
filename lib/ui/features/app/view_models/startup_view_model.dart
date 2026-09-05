@@ -7,11 +7,14 @@ import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
 class StartupViewModel extends DisposableChangeNotifier {
   StartupViewModel({
     required ProfileRepository profileRepository,
+    Future<void> Function()? recoveryInitializer,
     Future<StartupCapabilitiesReport> Function()? capabilityInitializer,
   }) : _profileRepository = profileRepository,
+       _recoveryInitializer = recoveryInitializer,
        _capabilityInitializer = capabilityInitializer;
 
   final ProfileRepository _profileRepository;
+  final Future<void> Function()? _recoveryInitializer;
   final Future<StartupCapabilitiesReport> Function()? _capabilityInitializer;
   Profile? _profile;
   AppFailure? _error;
@@ -35,6 +38,8 @@ class StartupViewModel extends DisposableChangeNotifier {
     notifyListeners();
     var profileLoaded = false;
     try {
+      await _recoveryInitializer?.call();
+      if (isDisposed || generation != _loadGeneration) return;
       final profile = await _profileRepository.getProfile();
       if (isDisposed || generation != _loadGeneration) return;
       _profile = profile;

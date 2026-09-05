@@ -667,6 +667,7 @@ enum ToolInvocationStatus {
   denied,
   cancelled,
   timedOut,
+  interrupted,
   duplicateReused,
   duplicateConflict,
 

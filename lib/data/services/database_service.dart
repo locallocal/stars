@@ -8,6 +8,7 @@ import 'package:stars/data/services/application_data_directory.dart';
 import 'package:stars/domain/models/app_failure.dart';
 
 part 'database_schema_verifier.dart';
+part 'database_grounding_reliability_schema.dart';
 part 'database_tool_execution_schema.dart';
 part 'database_tool_evidence_schema.dart';
 
@@ -25,7 +26,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 20;
+  static const int databaseVersion = 21;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -74,6 +75,7 @@ class DatabaseService {
       await _ensureCompatibleMessageGroundingSchema(database);
       await _ensureCompatibleToolExecutionSchema(database);
       await _ensureCompatibleToolEvidenceSchema(database);
+      await _createGroundingReliabilitySchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
       return database;
@@ -259,6 +261,7 @@ class DatabaseService {
         database,
         allowMissingToolExecutionSchema: true,
         allowMissingToolEvidenceSchema: true,
+        allowMissingGroundingReliabilitySchema: true,
       );
     } finally {
       await database.close();
@@ -468,6 +471,7 @@ class DatabaseService {
     await db.execute('CREATE INDEX messages_bot_id_index ON messages(bot_id)');
     await _createToolExecutionSchema(db);
     await _createToolEvidenceSchema(db);
+    await _createGroundingReliabilitySchema(db);
     await _createTokenUsageSchema(db);
     await _createSkillSchema(db);
     await _createSkillEcosystemSchema(db);

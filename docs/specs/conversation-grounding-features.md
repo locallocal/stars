@@ -682,7 +682,15 @@ trust envelope、verified-claim Memory 门禁、摘要来源/观测时间保留�
 
 ### GRD-020 恢复、指标和发布门禁
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/use_cases/recover_agent_runs.dart`、
+`lib/data/repositories/sqlite_agent_run_recovery_repository.dart`、
+`lib/domain/services/grounding_metrics_service.dart` 和
+`lib/domain/models/grounding_metrics.dart`；恢复与发布回归测试：
+`test/data/repositories/agent_run_recovery_integration_test.dart`、
+`test/domain/services/grounding_metrics_service_test.dart`、
+`test/architecture/release_configuration_test.dart`。
 
 目标：让可信不变量在崩溃、升级和生产运行中可持续验证。
 

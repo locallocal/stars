@@ -127,6 +127,7 @@ const Set<ToolInvocationStatus> _terminalInvocationStatuses = {
   ToolInvocationStatus.denied,
   ToolInvocationStatus.cancelled,
   ToolInvocationStatus.timedOut,
+  ToolInvocationStatus.interrupted,
   ToolInvocationStatus.duplicateReused,
   ToolInvocationStatus.duplicateConflict,
   ToolInvocationStatus.duplicate,

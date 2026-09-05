@@ -133,6 +133,9 @@ class ChatGenerationSnapshot {
 
 typedef MessagePersister = Future<Message> Function(Message message);
 typedef GroundedMessagePersister = Future<Message> Function(Message message);
+typedef AnswerRecoveryCheckpointPersister =
+    Future<void> Function(Message message);
+typedef AnswerRecoveryCheckpointClearer = Future<void> Function(String runId);
 typedef LastMessageUpdater =
     Future<void> Function(String chatId, String content);
 typedef AssistantPreviewBuilder = Future<String> Function(Message message);
@@ -147,6 +150,10 @@ typedef TerminalMessageObserver =
       Message message,
       ContextAssemblyReport? report,
     );
+typedef ProviderFailureObserver =
+    Future<void> Function(ProviderFailure failure);
+typedef TerminalGroundingMetricsObserver =
+    Future<void> Function(Message message);
 typedef TextGenerationPreparer =
     Future<PreparedTextGeneration> Function(Message identifiedUserMessage);
 

@@ -40,6 +40,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     required Bot bot,
     required MessagePersister messagePersister,
     GroundedMessagePersister? groundedMessagePersister,
+    AnswerRecoveryCheckpointPersister? answerRecoveryCheckpointPersister,
+    AnswerRecoveryCheckpointClearer? answerRecoveryCheckpointClearer,
     required LastMessageUpdater lastMessageUpdater,
     AssistantPreviewBuilder assistantPreviewBuilder =
         _defaultAssistantPreviewBuilder,
@@ -48,6 +50,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     SkillActivationPersister? skillActivationPersister,
     ToolInvocationPersister? toolInvocationPersister,
     TerminalMessageObserver? terminalMessageObserver,
+    ProviderFailureObserver? providerFailureObserver,
+    TerminalGroundingMetricsObserver? terminalGroundingMetricsObserver,
     ToolRegistry? toolRegistry,
     ToolPolicy toolPolicy = const DefaultToolPolicy(),
     AgentRunLimits agentRunLimits = const AgentRunLimits(),
@@ -59,12 +63,16 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
        _messagePersister = messagePersister,
        _groundedMessagePersister = groundedMessagePersister ?? messagePersister,
        _hasDedicatedGroundedMessagePersister = groundedMessagePersister != null,
+       _answerRecoveryCheckpointPersister = answerRecoveryCheckpointPersister,
+       _answerRecoveryCheckpointClearer = answerRecoveryCheckpointClearer,
        _lastMessageUpdater = lastMessageUpdater,
        _assistantPreviewBuilder = assistantPreviewBuilder,
        _messageIdFactory = messageIdFactory,
        _skillActivationPersister = skillActivationPersister,
        _toolInvocationPersister = toolInvocationPersister,
        _terminalMessageObserver = terminalMessageObserver,
+       _providerFailureObserver = providerFailureObserver,
+       _terminalGroundingMetricsObserver = terminalGroundingMetricsObserver,
        _toolRegistry = toolRegistry ?? StaticToolRegistry(const []),
        _toolPolicy = toolPolicy,
        _agentRunLimits = agentRunLimits,
@@ -79,12 +87,16 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   final MessagePersister _messagePersister;
   final GroundedMessagePersister _groundedMessagePersister;
   final bool _hasDedicatedGroundedMessagePersister;
+  final AnswerRecoveryCheckpointPersister? _answerRecoveryCheckpointPersister;
+  final AnswerRecoveryCheckpointClearer? _answerRecoveryCheckpointClearer;
   final LastMessageUpdater _lastMessageUpdater;
   final AssistantPreviewBuilder _assistantPreviewBuilder;
   final MessageIdFactory _messageIdFactory;
   final SkillActivationPersister? _skillActivationPersister;
   final ToolInvocationPersister? _toolInvocationPersister;
   final TerminalMessageObserver? _terminalMessageObserver;
+  final ProviderFailureObserver? _providerFailureObserver;
+  final TerminalGroundingMetricsObserver? _terminalGroundingMetricsObserver;
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
   final AgentRunLimits _agentRunLimits;
@@ -349,6 +361,9 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     try {
       generation = provider.generateText(prepared.messages);
     } catch (error) {
+      if (error is ProviderFailure && !_hasGeneratedContent) {
+        _recordProviderFailureSafely(error);
+      }
       await _finalizeRun(
         runId,
         ProviderTerminalType.failed,
@@ -366,6 +381,9 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
           })
           .catchError((Object error, StackTrace stackTrace) {
             if (_isActiveRun(runId) && !_finalizingRuns.contains(runId)) {
+              if (error is ProviderFailure && !_hasGeneratedContent) {
+                _recordProviderFailureSafely(error);
+              }
               unawaited(
                 _finalizeRun(
                   runId,
@@ -548,6 +566,16 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
               code: 'provider_generation_failed',
             ).code;
     unawaited(_finalizeRun(runId, event.type, error: error));
+  }
+
+  void _recordProviderFailureSafely(ProviderFailure failure) {
+    final observer = _providerFailureObserver;
+    if (observer == null) return;
+    unawaited(
+      observer(failure).catchError((Object error, StackTrace stackTrace) {
+        debugPrint('Failed to record Provider failure metric: $error');
+      }),
+    );
   }
 
   Future<void> _finalizeRun(

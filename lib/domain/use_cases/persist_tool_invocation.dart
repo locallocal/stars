@@ -175,6 +175,7 @@ String _safeErrorCode(ToolExecutionRecord record) {
     ToolInvocationStatus.denied => 'tool_execution_denied',
     ToolInvocationStatus.cancelled => 'tool_execution_cancelled',
     ToolInvocationStatus.timedOut => 'tool_execution_timed_out',
+    ToolInvocationStatus.interrupted => 'agent_run_interrupted',
     _ => '',
   };
 }

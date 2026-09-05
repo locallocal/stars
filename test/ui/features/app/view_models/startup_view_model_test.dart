@@ -99,22 +99,75 @@ void main() {
       'online_skill_catalog',
     );
   });
+
+  test(
+    'awaits required Agent Run recovery before loading the profile',
+    () async {
+      final recovery = Completer<void>();
+      var profileLoads = 0;
+      final viewModel = StartupViewModel(
+        profileRepository: _ProfileRepository(
+          onLoad: () {
+            profileLoads += 1;
+          },
+        ),
+        recoveryInitializer: () => recovery.future,
+      );
+      addTearDown(viewModel.dispose);
+
+      final load = viewModel.load();
+      await Future<void>.delayed(Duration.zero);
+      expect(viewModel.isLoading, isTrue);
+      expect(profileLoads, 0);
+
+      recovery.complete();
+      await load;
+      expect(profileLoads, 1);
+      expect(viewModel.profile, isNotNull);
+    },
+  );
+
+  test('fails startup closed when Agent Run recovery fails', () async {
+    var profileLoads = 0;
+    final viewModel = StartupViewModel(
+      profileRepository: _ProfileRepository(
+        onLoad: () {
+          profileLoads += 1;
+        },
+      ),
+      recoveryInitializer: () => Future<void>.error(StateError('corrupt')),
+    );
+    addTearDown(viewModel.dispose);
+
+    await viewModel.load();
+
+    expect(profileLoads, 0);
+    expect(viewModel.profile, isNull);
+    expect(viewModel.error?.code, 'startup_required_failed');
+  });
 }
 
 final class _ProfileRepository implements ProfileRepository {
+  _ProfileRepository({this.onLoad});
+
+  final void Function()? onLoad;
+
   @override
   Stream<Profile> get changes => const Stream.empty();
 
   @override
-  Future<Profile> getProfile() async => Profile(
-    name: 'Tester',
-    avatar: '',
-    fontSize: 16,
-    themeMode: 0,
-    language: 'en',
-    createTimestamp: DateTime(2026),
-    modifyTimestamp: DateTime(2026),
-  );
+  Future<Profile> getProfile() async {
+    onLoad?.call();
+    return Profile(
+      name: 'Tester',
+      avatar: '',
+      fontSize: 16,
+      themeMode: 0,
+      language: 'en',
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+  }
 
   @override
   Future<void> updateProfile(Profile profile) async {}

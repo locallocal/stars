@@ -18,6 +18,8 @@ String _statusLabel(S strings, String status) {
       return strings.statusAwaitingApproval;
     case 'cancelled':
       return strings.statusCancelled;
+    case 'interrupted':
+      return strings.reasoningInterrupted;
     case 'denied':
       return strings.statusDenied;
     case 'timedOut':

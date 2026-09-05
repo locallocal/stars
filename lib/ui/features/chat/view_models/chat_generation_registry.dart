@@ -4,6 +4,8 @@ class ChatGenerationRegistry {
   ChatGenerationRegistry({
     required MessagePersister messagePersister,
     GroundedMessagePersister? groundedMessagePersister,
+    AnswerRecoveryCheckpointPersister? answerRecoveryCheckpointPersister,
+    AnswerRecoveryCheckpointClearer? answerRecoveryCheckpointClearer,
     required LastMessageUpdater lastMessageUpdater,
     AssistantPreviewBuilder assistantPreviewBuilder =
         _defaultAssistantPreviewBuilder,
@@ -13,6 +15,8 @@ class ChatGenerationRegistry {
     ToolInvocationPersister? toolInvocationPersister,
     GroundedAnswerValidator? groundedAnswerValidator,
     TerminalMessageObserver? terminalMessageObserver,
+    ProviderFailureObserver? providerFailureObserver,
+    TerminalGroundingMetricsObserver? terminalGroundingMetricsObserver,
     ToolRegistry? toolRegistry,
     ToolPolicy toolPolicy = const DefaultToolPolicy(),
     AgentRunLimits agentRunLimits = const AgentRunLimits(),
@@ -20,6 +24,8 @@ class ChatGenerationRegistry {
         ChatGenerationViewModel.defaultPartialPersistenceInterval,
   }) : _messagePersister = messagePersister,
        _groundedMessagePersister = groundedMessagePersister,
+       _answerRecoveryCheckpointPersister = answerRecoveryCheckpointPersister,
+       _answerRecoveryCheckpointClearer = answerRecoveryCheckpointClearer,
        _lastMessageUpdater = lastMessageUpdater,
        _assistantPreviewBuilder = assistantPreviewBuilder,
        _providerFactory = providerFactory,
@@ -28,6 +34,8 @@ class ChatGenerationRegistry {
        _toolInvocationPersister = toolInvocationPersister,
        _groundedAnswerValidator = groundedAnswerValidator,
        _terminalMessageObserver = terminalMessageObserver,
+       _providerFailureObserver = providerFailureObserver,
+       _terminalGroundingMetricsObserver = terminalGroundingMetricsObserver,
        _toolRegistry = toolRegistry ?? StaticToolRegistry(const []),
        _toolPolicy = toolPolicy,
        _agentRunLimits = agentRunLimits,
@@ -38,6 +46,8 @@ class ChatGenerationRegistry {
   final Map<String, Future<bool> Function()> _externalRunCancellers = {};
   final MessagePersister _messagePersister;
   final GroundedMessagePersister? _groundedMessagePersister;
+  final AnswerRecoveryCheckpointPersister? _answerRecoveryCheckpointPersister;
+  final AnswerRecoveryCheckpointClearer? _answerRecoveryCheckpointClearer;
   final LastMessageUpdater _lastMessageUpdater;
   final AssistantPreviewBuilder _assistantPreviewBuilder;
   final ProviderFactory _providerFactory;
@@ -46,6 +56,8 @@ class ChatGenerationRegistry {
   final ToolInvocationPersister? _toolInvocationPersister;
   final GroundedAnswerValidator? _groundedAnswerValidator;
   final TerminalMessageObserver? _terminalMessageObserver;
+  final ProviderFailureObserver? _providerFailureObserver;
+  final TerminalGroundingMetricsObserver? _terminalGroundingMetricsObserver;
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
   final AgentRunLimits _agentRunLimits;
@@ -59,6 +71,8 @@ class ChatGenerationRegistry {
         bot: bot,
         messagePersister: _messagePersister,
         groundedMessagePersister: _groundedMessagePersister,
+        answerRecoveryCheckpointPersister: _answerRecoveryCheckpointPersister,
+        answerRecoveryCheckpointClearer: _answerRecoveryCheckpointClearer,
         lastMessageUpdater: _lastMessageUpdater,
         assistantPreviewBuilder: _assistantPreviewBuilder,
         providerFactory: _providerFactory,
@@ -67,6 +81,8 @@ class ChatGenerationRegistry {
         toolInvocationPersister: _toolInvocationPersister,
         groundedAnswerValidator: _groundedAnswerValidator,
         terminalMessageObserver: _terminalMessageObserver,
+        providerFailureObserver: _providerFailureObserver,
+        terminalGroundingMetricsObserver: _terminalGroundingMetricsObserver,
         toolRegistry: _toolRegistry,
         toolPolicy: _toolPolicy,
         agentRunLimits: _agentRunLimits,
