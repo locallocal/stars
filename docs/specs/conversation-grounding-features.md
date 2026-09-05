@@ -612,7 +612,22 @@ DTO 协议、协调器仅提交结构化段落及未校验声明不升级可信�
 
 ### GRD-018 声明级历史与 Memory 传播
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/models/message.dart`、
+`lib/domain/repositories/context_summarizer.dart`、
+`lib/domain/use_cases/conversation_history_projection.dart`、
+`lib/domain/use_cases/prepare_conversation_context.dart`、
+`lib/domain/use_cases/compact_conversation.dart`、
+`lib/data/services/ai/provider_context_summarizer.dart`、
+`lib/data/models/local_records.dart`、
+`lib/data/repositories/sqlite_message_repository.dart` 和
+`lib/data/repositories/sqlite_conversation_memory_repository.dart`；声明级 grounding 持久化、历史
+trust envelope、verified-claim Memory 门禁、摘要来源/观测时间保留及过期 current claim
+重新观测需求测试：
+`test/data/services/ai/provider_context_summarizer_test.dart`、
+`test/domain/use_cases/prepare_conversation_context_test.dart` 和
+`test/domain/use_cases/compact_conversation_test.dart`。
 
 目标：让可信性边界在后续会话和压缩摘要中保持不变。
 

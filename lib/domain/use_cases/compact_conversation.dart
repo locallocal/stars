@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:stars/domain/models/app_failure.dart';
 import 'package:stars/domain/models/conversation_memory.dart';
+import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/repositories/context_summarizer.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
+import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/services/token_estimator.dart';
 
 typedef ContextSummarizerFactory = ContextSummarizer Function(Bot bot);
@@ -32,6 +35,7 @@ final class CompactConversation {
   CompactConversation({
     required MessageRepository messageRepository,
     required ConversationMemoryRepository memoryRepository,
+    ToolEvidenceRepository? toolEvidenceRepository,
     required ContextSummarizerFactory summarizerFactory,
     TokenEstimator tokenEstimator = const ConservativeTokenEstimator(),
     CompactionClock? clock,
@@ -40,6 +44,7 @@ final class CompactConversation {
     this.maximumTurnsPerSegment = 12,
   }) : _messageRepository = messageRepository,
        _memoryRepository = memoryRepository,
+       _toolEvidenceRepository = toolEvidenceRepository,
        _summarizerFactory = summarizerFactory,
        _tokenEstimator = tokenEstimator,
        _usagePersister = usagePersister,
@@ -47,6 +52,7 @@ final class CompactConversation {
 
   final MessageRepository _messageRepository;
   final ConversationMemoryRepository _memoryRepository;
+  final ToolEvidenceRepository? _toolEvidenceRepository;
   final ContextSummarizerFactory _summarizerFactory;
   final TokenEstimator _tokenEstimator;
   final CompactionClock _clock;
@@ -163,11 +169,21 @@ final class CompactConversation {
     final messageById = {
       for (final message in messages) message.messageId: message,
     };
+    final evidenceById = await _loadContextEvidence([
+      for (final id in allowedSourceIds)
+        if (messageById[id] case final message?) message,
+    ]);
     final sourceEvidence = [
       for (final id in allowedSourceIds)
         if (messageById[id] case final message?)
-          ContextSourceEvidence.fromMessage(message),
+          ContextSourceEvidence.fromMessage(
+            message,
+            evidenceById: evidenceById,
+          ),
     ];
+    final sourceEvidenceByMessageId = {
+      for (final source in sourceEvidence) source.messageId: source,
+    };
     final result = await _summarizerFactory(bot).summarize(
       ContextSummaryRequest(
         chatId: chatId,
@@ -176,6 +192,7 @@ final class CompactConversation {
         sourceEvidence: sourceEvidence,
         previousSummary: previousSummary,
         targetTokens: 2048,
+        evaluatedAt: now,
       ),
     );
     final usagePersister = _usagePersister;
@@ -187,9 +204,12 @@ final class CompactConversation {
         result.usage,
       );
     }
-    if (!_validResult(result, allowedSourceIds, {
-      for (final evidence in sourceEvidence) evidence.messageId: evidence,
-    })) {
+    if (!_validResult(
+      result,
+      allowedSourceIds,
+      sourceEvidenceByMessageId,
+      now,
+    )) {
       return ConversationCompactionResult.invalidSummary;
     }
     final profile = ModelContextProfile(
@@ -214,6 +234,36 @@ final class CompactConversation {
                       'content': message.content,
                       'terminal': message.terminalOutcome?.name,
                       'partial': message.hasPartialContent,
+                      'grounding': {
+                        'trust': message.grounding.trustLevel.name,
+                        'claims': [
+                          for (final grounding in message.grounding.claims)
+                            {
+                              'claim_id': grounding.claim.claimId,
+                              'kind': grounding.claim.kind.wireName,
+                              'trust': grounding.trustLevel.name,
+                              'evidence_ids': grounding.acceptedEvidenceIds,
+                            },
+                        ],
+                      },
+                      'claim_evidence': [
+                        if (sourceEvidenceByMessageId[message.messageId]
+                            case final source?)
+                          for (final claim in source.claims)
+                            {
+                              'claim_id': claim.claimId,
+                              'evidence': [
+                                for (final evidence in claim.evidence)
+                                  {
+                                    'evidence_id': evidence.evidenceId,
+                                    'observed_at':
+                                        evidence.observedAt.toIso8601String(),
+                                    'valid_until':
+                                        evidence.validUntil?.toIso8601String(),
+                                  },
+                              ],
+                            },
+                      ],
                     },
                 ]),
               ),
@@ -223,7 +273,7 @@ final class CompactConversation {
       id: summaryId,
       chatId: chatId,
       fileName: '$summaryId.md',
-      markdownSchemaVersion: 2,
+      markdownSchemaVersion: 3,
       contentDigest: '',
       sourceStartMessageId:
           previousSummary?.metadata.sourceStartMessageId ??
@@ -237,7 +287,7 @@ final class CompactConversation {
       ),
       provider: result.provider,
       model: result.model,
-      promptVersion: 2,
+      promptVersion: 3,
       baseRevision: state.revision,
       createdAt: now,
       updatedAt: now,
@@ -296,6 +346,7 @@ final class CompactConversation {
     ContextSummaryResult result,
     Set<String> sourceIds,
     Map<String, ContextSourceEvidence> evidenceById,
+    DateTime evaluatedAt,
   ) {
     if (result.markdown.trim().isEmpty || result.markdown.length > 200000) {
       return false;
@@ -314,10 +365,46 @@ final class CompactConversation {
         item.kind,
         item.sourceMessageIds,
         evidenceById,
+        sourceClaimIds: item.sourceClaimIds,
+        evaluatedAt: evaluatedAt,
       )) {
         return false;
       }
     }
     return true;
+  }
+
+  Future<Map<String, ToolEvidenceRecord>> _loadContextEvidence(
+    List<Message> messages,
+  ) async {
+    final repository = _toolEvidenceRepository;
+    if (repository == null) return const {};
+    final ownerByEvidenceId = <String, Message>{
+      for (final message in messages)
+        for (final claim in message.grounding.claims)
+          for (final evidenceId in claim.acceptedEvidenceIds)
+            evidenceId: message,
+    };
+    final loaded = await Future.wait(
+      ownerByEvidenceId.entries.map((entry) async {
+        try {
+          final record = await repository.getById(entry.key);
+          if (record == null ||
+              !record.persisted ||
+              record.messageId != entry.value.messageId ||
+              record.chatId != entry.value.chatId ||
+              !await repository.verifyDigest(entry.key)) {
+            return null;
+          }
+          return record;
+        } on Object {
+          return null;
+        }
+      }),
+    );
+    return {
+      for (final record in loaded)
+        if (record != null) record.evidenceId: record,
+    };
   }
 }

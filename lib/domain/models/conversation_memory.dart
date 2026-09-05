@@ -238,6 +238,7 @@ final class ConversationSummaryDocument {
 
 enum ConversationMemoryKind {
   fact,
+  userAssertion,
   preference,
   decision,
   openTask,
@@ -268,11 +269,13 @@ final class ConversationMemoryItem {
     this.importance = 0.5,
     this.confidence = 0.5,
     List<String> sourceMessageIds = const [],
+    List<String> sourceClaimIds = const [],
     this.sourceDigest = '',
     this.expiresAt,
     required this.createdAt,
     required this.updatedAt,
   }) : sourceMessageIds = List.unmodifiable(sourceMessageIds),
+       sourceClaimIds = List.unmodifiable(sourceClaimIds),
        assert(importance >= 0 && importance <= 1),
        assert(confidence >= 0 && confidence <= 1);
 
@@ -286,15 +289,18 @@ final class ConversationMemoryItem {
   final double importance;
   final double confidence;
   final List<String> sourceMessageIds;
+  final List<String> sourceClaimIds;
   final String sourceDigest;
   final DateTime? expiresAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  bool get isRecallable =>
+  bool get isRecallable => isRecallableAt(DateTime.now());
+
+  bool isRecallableAt(DateTime instant) =>
       (state == ConversationMemoryItemState.active ||
           state == ConversationMemoryItemState.pinned) &&
-      (expiresAt == null || expiresAt!.isAfter(DateTime.now())) &&
+      (expiresAt == null || expiresAt!.isAfter(instant)) &&
       (state == ConversationMemoryItemState.pinned || confidence >= 0.5);
 
   ConversationMemoryItem copyWith({
@@ -315,6 +321,7 @@ final class ConversationMemoryItem {
     importance: importance ?? this.importance,
     confidence: confidence ?? this.confidence,
     sourceMessageIds: sourceMessageIds,
+    sourceClaimIds: sourceClaimIds,
     sourceDigest: sourceDigest,
     expiresAt: expiresAt,
     createdAt: createdAt,

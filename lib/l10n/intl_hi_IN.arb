@@ -710,6 +710,7 @@
     "compactionFailed": "विफल",
     "idle": "निष्क्रिय",
     "memoryFact": "तथ्य",
+    "memoryUserAssertion": "उपयोगकर्ता कथन",
     "memoryPreference": "पसंद",
     "memoryDecision": "निर्णय",
     "memoryTask": "कार्य",

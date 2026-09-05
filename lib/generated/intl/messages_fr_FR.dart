@@ -668,6 +668,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryPreference": MessageLookupByLibrary.simpleMessage("Préférence"),
     "memoryQuestion": MessageLookupByLibrary.simpleMessage("Question ouverte"),
     "memoryTask": MessageLookupByLibrary.simpleMessage("Tâche"),
+    "memoryUserAssertion": MessageLookupByLibrary.simpleMessage(
+      "Déclaration de l’utilisateur",
+    ),
     "messageCopied": MessageLookupByLibrary.simpleMessage(
       "Message copied to clipboard",
     ),

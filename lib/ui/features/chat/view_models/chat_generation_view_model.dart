@@ -110,6 +110,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   AnswerEvidenceState _answerEvidenceState = AnswerEvidenceState.none;
   AnswerTrustGateResult _answerTrustGateResult = AnswerTrustGateResult.notRun;
   List<String> _validatedEvidenceIds = const [];
+  List<MessageClaimGrounding> _validatedClaims = const [];
   String _verificationUnavailableReason = '';
 
   ChatGenerationSnapshot get snapshot => _snapshot;
@@ -189,6 +190,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _answerEvidenceState = AnswerEvidenceState.none;
     _answerTrustGateResult = AnswerTrustGateResult.notRun;
     _validatedEvidenceIds = const [];
+    _validatedClaims = const [];
     _verificationUnavailableReason = '';
     _terminalCompleter = Completer<ChatRunLifecycle>();
     _preparingRuns.add(runId);
@@ -706,6 +708,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         evidenceState: _answerEvidenceState,
         gateResult: _answerTrustGateResult,
         evidenceIds: _validatedEvidenceIds,
+        claims: _validatedClaims,
         verificationUnavailableReason: _verificationUnavailableReason,
         criticalPersistenceSucceeded: criticalPersistenceSucceeded ?? true,
         failureReasonCode:

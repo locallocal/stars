@@ -107,6 +107,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
               final validation = result.groundedValidation;
               if (validation != null) {
                 _validatedEvidenceIds = validation.evidenceIds;
+                _validatedClaims = validation.toMessageGrounding().claims;
                 _answerEvidenceState = switch (validation.trustLevel) {
                   AnswerTrustLevel.verified =>
                     AnswerEvidenceState.fullyValidated,

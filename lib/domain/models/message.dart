@@ -1,3 +1,5 @@
+import 'package:stars/domain/models/grounded_answer.dart';
+
 class MessageToolCall {
   const MessageToolCall({
     this.executionId = '',
@@ -156,6 +158,7 @@ final class MessageGrounding {
     AnswerTrustLevel trustLevel = AnswerTrustLevel.unverified,
     String reasonCode = '',
     List<String> evidenceIds = const [],
+    List<MessageClaimGrounding> claims = const [],
   }) {
     if (protocolVersion < 0) {
       throw ArgumentError.value(
@@ -164,7 +167,25 @@ final class MessageGrounding {
         'Grounding protocol version cannot be negative.',
       );
     }
-    final copiedEvidenceIds = List<String>.unmodifiable(evidenceIds);
+    final copiedClaims = List<MessageClaimGrounding>.unmodifiable(claims);
+    final claimIds = <String>{};
+    for (final claim in copiedClaims) {
+      if (!claimIds.add(claim.claim.claimId)) {
+        throw ArgumentError.value(
+          claims,
+          'claims',
+          'Claim identifiers must be unique within one message.',
+        );
+      }
+    }
+    final acceptedClaimEvidenceIds = <String>{
+      for (final claim in copiedClaims) ...claim.acceptedEvidenceIds,
+    };
+    final effectiveEvidenceIds =
+        evidenceIds.isEmpty && acceptedClaimEvidenceIds.isNotEmpty
+            ? acceptedClaimEvidenceIds.toList(growable: false)
+            : evidenceIds;
+    final copiedEvidenceIds = List<String>.unmodifiable(effectiveEvidenceIds);
     final uniqueEvidenceIds = <String>{};
     for (final evidenceId in copiedEvidenceIds) {
       if (evidenceId.isEmpty || evidenceId.trim() != evidenceId) {
@@ -191,11 +212,21 @@ final class MessageGrounding {
         'A verified trust state requires evidence.',
       );
     }
+    if (copiedClaims.isNotEmpty &&
+        (copiedEvidenceIds.toSet().length != acceptedClaimEvidenceIds.length ||
+            !copiedEvidenceIds.toSet().containsAll(acceptedClaimEvidenceIds))) {
+      throw ArgumentError.value(
+        evidenceIds,
+        'evidenceIds',
+        'Message evidence must exactly match accepted claim evidence.',
+      );
+    }
     return MessageGrounding._(
       protocolVersion: protocolVersion,
       trustLevel: trustLevel,
       reasonCode: reasonCode,
       evidenceIds: copiedEvidenceIds,
+      claims: copiedClaims,
     );
   }
 
@@ -203,33 +234,38 @@ final class MessageGrounding {
     : protocolVersion = currentProtocolVersion,
       trustLevel = AnswerTrustLevel.unverified,
       reasonCode = '',
-      evidenceIds = const [];
+      evidenceIds = const [],
+      claims = const [];
 
   const MessageGrounding._({
     required this.protocolVersion,
     required this.trustLevel,
     required this.reasonCode,
     required this.evidenceIds,
+    required this.claims,
   });
 
-  static const int currentProtocolVersion = 1;
+  static const int currentProtocolVersion = 2;
 
   final int protocolVersion;
   final AnswerTrustLevel trustLevel;
   final String reasonCode;
   final List<String> evidenceIds;
+  final List<MessageClaimGrounding> claims;
 
   MessageGrounding copyWith({
     int? protocolVersion,
     AnswerTrustLevel? trustLevel,
     String? reasonCode,
     List<String>? evidenceIds,
+    List<MessageClaimGrounding>? claims,
   }) {
     return MessageGrounding(
       protocolVersion: protocolVersion ?? this.protocolVersion,
       trustLevel: trustLevel ?? this.trustLevel,
       reasonCode: reasonCode ?? this.reasonCode,
       evidenceIds: evidenceIds ?? this.evidenceIds,
+      claims: claims ?? this.claims,
     );
   }
 }

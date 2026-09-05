@@ -710,6 +710,7 @@
     "compactionFailed": "Ошибка",
     "idle": "Ожидание",
     "memoryFact": "Факт",
+    "memoryUserAssertion": "Утверждение пользователя",
     "memoryPreference": "Предпочтение",
     "memoryDecision": "Решение",
     "memoryTask": "Задача",

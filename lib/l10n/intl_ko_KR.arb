@@ -710,6 +710,7 @@
     "compactionFailed": "실패",
     "idle": "유휴",
     "memoryFact": "사실",
+    "memoryUserAssertion": "사용자 진술",
     "memoryPreference": "환경 설정",
     "memoryDecision": "결정",
     "memoryTask": "작업",

@@ -203,6 +203,9 @@ class AppDependencies {
     final messageRepository = SqliteMessageRepository(
       localDatabase: localDatabase,
     );
+    final toolEvidenceRepository = SqliteToolEvidenceRepository(
+      localDatabase: localDatabase,
+    );
     final conversationHistoryRepository = SqliteConversationHistoryRepository(
       messageRepository: messageRepository,
     );
@@ -271,6 +274,7 @@ class AppDependencies {
     final compactConversation = CompactConversation(
       messageRepository: messageRepository,
       memoryRepository: conversationMemoryRepository,
+      toolEvidenceRepository: toolEvidenceRepository,
       summarizerFactory:
           (bot) => ProviderContextSummarizer(
             bot: bot,
@@ -349,9 +353,6 @@ class AppDependencies {
     final toolExecutionRepository = SqliteToolExecutionRepository(
       localDatabase: localDatabase,
     );
-    final toolEvidenceRepository = SqliteToolEvidenceRepository(
-      localDatabase: localDatabase,
-    );
     final persistToolInvocation = PersistToolInvocation(
       evidenceRepository: toolEvidenceRepository,
       executionRepository: toolExecutionRepository,
@@ -384,6 +385,7 @@ class AppDependencies {
       prepareConversationContext: PrepareConversationContext(
         memoryRepository: conversationMemoryRepository,
         aiProviderRepository: aiProviderRepository,
+        toolEvidenceRepository: toolEvidenceRepository,
         historySkillAvailable: () => systemConversationHistorySkill.isValid,
       ),
       compactConversation: compactConversation,

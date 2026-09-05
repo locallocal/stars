@@ -175,6 +175,7 @@ void main() {
       expect(messages.single.grounding.trustLevel, AnswerTrustLevel.verified);
       final claims = await database.query('answer_claim_evidence');
       expect(claims, hasLength(1));
+      expect(claims.single['claim_id'], 'claim-answer');
       expect(claims.single['evidence_id'], _evidenceId);
     },
   );
@@ -445,7 +446,18 @@ Message _verifiedAnswer(
   grounding: MessageGrounding(
     trustLevel: AnswerTrustLevel.verified,
     reasonCode: 'all_evidence_validated',
-    evidenceIds: evidenceIds,
+    claims: [
+      MessageClaimGrounding(
+        claim: AnswerClaim(
+          claimId: 'claim-answer',
+          text: 'The resource exists.',
+          kind: ClaimKind.externalFact,
+          evidenceIds: evidenceIds,
+        ),
+        trustLevel: ClaimTrustLevel.verified,
+        acceptedEvidenceIds: evidenceIds,
+      ),
+    ],
   ),
   terminalOutcome: MessageTerminalOutcome.completed,
   hasPartialContent: false,

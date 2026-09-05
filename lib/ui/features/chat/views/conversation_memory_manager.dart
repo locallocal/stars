@@ -539,6 +539,8 @@ String _statusLabel(
 String _kindLabel(BuildContext context, ConversationMemoryKind kind) =>
     switch (kind) {
       ConversationMemoryKind.fact => S.of(context).memoryFact,
+      ConversationMemoryKind.userAssertion =>
+        S.of(context).memoryUserAssertion,
       ConversationMemoryKind.preference => S.of(context).memoryPreference,
       ConversationMemoryKind.decision => S.of(context).memoryDecision,
       ConversationMemoryKind.openTask => S.of(context).memoryTask,

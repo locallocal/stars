@@ -1076,6 +1076,7 @@
     "compactionFailed": "Failed",
     "idle": "Idle",
     "memoryFact": "Fact",
+    "memoryUserAssertion": "User assertion",
     "memoryPreference": "Preference",
     "memoryDecision": "Decision",
     "memoryTask": "Task",

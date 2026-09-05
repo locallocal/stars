@@ -47,6 +47,30 @@ void main() {
       expect(grounding.evidenceIds, isEmpty);
     });
 
+    test('fully unverified validation preserves claim boundaries', () {
+      final claim = MessageClaimGrounding(
+        claim: AnswerClaim(
+          claimId: 'claim-unverified',
+          text: 'Production is healthy.',
+          kind: ClaimKind.currentFact,
+        ),
+        trustLevel: ClaimTrustLevel.unverified,
+      );
+
+      final result = policy.evaluate(
+        _input(
+          evidenceState: AnswerEvidenceState.none,
+          evidenceIds: const [],
+          claims: [claim],
+        ),
+      );
+
+      expect(result.trustLevel, AnswerTrustLevel.unverified);
+      expect(result.reasonCode, 'no_usable_evidence');
+      expect(result.claims, [same(claim)]);
+      expect(result.evidenceIds, isEmpty);
+    });
+
     test('duplicate reuse does not replace or downgrade a successful call', () {
       final grounding = policy.evaluate(
         _input(
@@ -200,6 +224,7 @@ AnswerTrustPolicyInput _input({
   AnswerEvidenceState evidenceState = AnswerEvidenceState.fullyValidated,
   AnswerTrustGateResult gateResult = AnswerTrustGateResult.passed,
   List<String> evidenceIds = const ['evidence-1'],
+  List<MessageClaimGrounding> claims = const [],
   bool criticalPersistenceSucceeded = true,
   String failureReasonCode = '',
   String verificationUnavailableReason = '',
@@ -211,6 +236,7 @@ AnswerTrustPolicyInput _input({
   evidenceState: evidenceState,
   gateResult: gateResult,
   evidenceIds: evidenceIds,
+  claims: claims,
   criticalPersistenceSucceeded: criticalPersistenceSucceeded,
   failureReasonCode: failureReasonCode,
   verificationUnavailableReason: verificationUnavailableReason,

@@ -1071,6 +1071,7 @@
     "compactionFailed": "失败",
     "idle": "空闲",
     "memoryFact": "事实",
+    "memoryUserAssertion": "用户陈述",
     "memoryPreference": "偏好",
     "memoryDecision": "决策",
     "memoryTask": "待办",

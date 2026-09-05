@@ -710,6 +710,7 @@
     "compactionFailed": "失敗",
     "idle": "待機中",
     "memoryFact": "事実",
+    "memoryUserAssertion": "ユーザーの申告",
     "memoryPreference": "設定",
     "memoryDecision": "決定",
     "memoryTask": "タスク",
