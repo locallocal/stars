@@ -78,10 +78,10 @@ final class AnswerTrustPolicy {
       return _failed('answer_trust_gate_failed');
     }
     if (!input.providerSupportsAgentLoop) {
-      return _unverified('provider_tools_unsupported');
+      return _unverified('provider_tools_unsupported', claims: input.claims);
     }
     if (!input.reliabilityPolicyEnabled) {
-      return _unverified('reliability_policy_disabled');
+      return _unverified('reliability_policy_disabled', claims: input.claims);
     }
     if (input.verificationUnavailableReason.isNotEmpty) {
       return _unverified(
@@ -89,25 +89,32 @@ final class AnswerTrustPolicy {
           input.verificationUnavailableReason,
           fallback: 'verification_tool_unavailable',
         ),
+        claims: input.claims,
       );
     }
+    if (input.claims.isNotEmpty &&
+        input.claims.every(
+          (claim) => claim.trustLevel == ClaimTrustLevel.notVerifiable,
+        )) {
+      return _unverified('no_verifiable_claims', claims: input.claims);
+    }
     if (input.toolCalls.isEmpty) {
-      return _unverified('no_tool_evidence');
+      return _unverified('no_tool_evidence', claims: input.claims);
     }
     if (input.toolCalls.any(_isUnavailableToolCall)) {
-      return _unverified('tool_unavailable');
+      return _unverified('tool_unavailable', claims: input.claims);
     }
     if (input.toolCalls.any(_isRejectedToolCall)) {
-      return _unverified('tool_rejected');
+      return _unverified('tool_rejected', claims: input.claims);
     }
     if (input.toolCalls.any(_isFailedToolCall)) {
-      return _unverified('tool_failed');
+      return _unverified('tool_failed', claims: input.claims);
     }
     if (input.toolCalls.any((call) => !_isSuccessfulToolCall(call))) {
-      return _unverified('incomplete_tool_execution');
+      return _unverified('incomplete_tool_execution', claims: input.claims);
     }
     if (input.gateResult == AnswerTrustGateResult.notRun) {
-      return _unverified('trust_gate_not_run');
+      return _unverified('trust_gate_not_run', claims: input.claims);
     }
 
     return switch (input.evidenceState) {

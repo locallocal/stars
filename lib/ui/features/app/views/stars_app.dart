@@ -377,6 +377,7 @@ class _MyAppState extends State<MyApp> {
       },
       home: MainPage(
         showExecutionStatus: _viewModel.showExecutionStatus,
+        strictGroundingMode: _viewModel.strictGroundingMode,
         startupCapabilitiesReport: widget.startupCapabilitiesReport,
         onRetryStartupCapabilities: widget.onRetryStartupCapabilities,
       ),
@@ -440,6 +441,7 @@ class _MyAppState extends State<MyApp> {
           },
           home: MainPage(
             showExecutionStatus: _viewModel.showExecutionStatus,
+            strictGroundingMode: _viewModel.strictGroundingMode,
             startupCapabilitiesReport: widget.startupCapabilitiesReport,
             onRetryStartupCapabilities: widget.onRetryStartupCapabilities,
           ),
@@ -453,11 +455,13 @@ class MainPage extends StatefulWidget {
   const MainPage({
     super.key,
     this.showExecutionStatus = true,
+    this.strictGroundingMode = false,
     this.startupCapabilitiesReport = StartupCapabilitiesReport.empty,
     this.onRetryStartupCapabilities,
   });
 
   final bool showExecutionStatus;
+  final bool strictGroundingMode;
   final StartupCapabilitiesReport startupCapabilitiesReport;
   final Future<void> Function()? onRetryStartupCapabilities;
 
@@ -524,6 +528,7 @@ class _MainPageState extends State<MainPage> {
         key: _chatListKey,
         viewModel: _chatListViewModel,
         showExecutionStatus: widget.showExecutionStatus,
+        strictGroundingMode: widget.strictGroundingMode,
         sidebarMode: isDesktopOrTablet,
         selectedChatId: _viewModel.selectedChatId,
         selectionVisible: _viewModel.isChatSelectionVisible,
@@ -561,6 +566,7 @@ class _MainPageState extends State<MainPage> {
               selectedBot: _viewModel.selectedBot,
               isEditingBot: _viewModel.isEditingSelectedBot,
               showExecutionStatus: widget.showExecutionStatus,
+              strictGroundingMode: widget.strictGroundingMode,
               selectedProfileSection: _viewModel.selectedProfileSection,
               onProfileSectionChanged: _viewModel.selectProfileSection,
               onCreateChat: _requestCreateChat,

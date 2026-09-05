@@ -83,7 +83,9 @@ import 'package:stars/domain/repositories/skill_ecosystem_repository.dart';
 import 'package:stars/domain/repositories/skill_inventory_repository.dart';
 import 'package:stars/domain/repositories/skill_run_repository.dart';
 import 'package:stars/domain/repositories/tool_execution_repository.dart';
+import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/services/grounded_answer_validator.dart';
+import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -144,6 +146,7 @@ class AppDependencies {
     required this.conversationHistoryRepository,
     required this.skillRunRepository,
     required this.toolExecutionRepository,
+    required this.toolEvidenceRepository,
     required this.mcpServerRepository,
     required this.mcpInventoryRepository,
     required this.mcpCredentialStore,
@@ -475,6 +478,7 @@ class AppDependencies {
       conversationHistoryRepository: conversationHistoryRepository,
       skillRunRepository: skillRunRepository,
       toolExecutionRepository: toolExecutionRepository,
+      toolEvidenceRepository: toolEvidenceRepository,
       mcpServerRepository: mcpServerRepository,
       mcpInventoryRepository: mcpInventoryRepository,
       mcpCredentialStore: mcpCredentialStore,
@@ -499,6 +503,11 @@ class AppDependencies {
         messagePersister: messageRepository.upsertMessage,
         groundedMessagePersister: messageRepository.upsertGroundedMessage,
         lastMessageUpdater: chatRepository.updateLastMessage,
+        assistantPreviewBuilder: (message) async {
+          final profile = await profileRepository.getProfile();
+          if (!profile.strictGroundingMode) return message.content;
+          return const StrictGroundingPolicy().previewFor(message);
+        },
         providerFactory: aiProviderRepository.create,
         messageIdFactory: messageRepository.createId,
         skillActivationPersister: skillRunRepository.saveActivations,
@@ -545,6 +554,7 @@ class AppDependencies {
   final ConversationHistoryRepository conversationHistoryRepository;
   final SkillRunRepository skillRunRepository;
   final ToolExecutionRepository toolExecutionRepository;
+  final ToolEvidenceRepository toolEvidenceRepository;
   final McpServerRepository mcpServerRepository;
   final McpInventoryRepository mcpInventoryRepository;
   final McpCredentialStore mcpCredentialStore;

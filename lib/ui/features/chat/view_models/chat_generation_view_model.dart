@@ -41,6 +41,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     required MessagePersister messagePersister,
     GroundedMessagePersister? groundedMessagePersister,
     required LastMessageUpdater lastMessageUpdater,
+    AssistantPreviewBuilder assistantPreviewBuilder =
+        _defaultAssistantPreviewBuilder,
     required ProviderFactory providerFactory,
     MessageIdFactory messageIdFactory = _defaultMessageIdFactory,
     SkillActivationPersister? skillActivationPersister,
@@ -58,6 +60,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
        _groundedMessagePersister = groundedMessagePersister ?? messagePersister,
        _hasDedicatedGroundedMessagePersister = groundedMessagePersister != null,
        _lastMessageUpdater = lastMessageUpdater,
+       _assistantPreviewBuilder = assistantPreviewBuilder,
        _messageIdFactory = messageIdFactory,
        _skillActivationPersister = skillActivationPersister,
        _toolInvocationPersister = toolInvocationPersister,
@@ -77,6 +80,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   final GroundedMessagePersister _groundedMessagePersister;
   final bool _hasDedicatedGroundedMessagePersister;
   final LastMessageUpdater _lastMessageUpdater;
+  final AssistantPreviewBuilder _assistantPreviewBuilder;
   final MessageIdFactory _messageIdFactory;
   final SkillActivationPersister? _skillActivationPersister;
   final ToolInvocationPersister? _toolInvocationPersister;
@@ -648,7 +652,8 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
       if (!_isActiveRun(runId)) return;
       if (terminalPersisted && terminalMessage.content.isNotEmpty) {
         try {
-          await _lastMessageUpdater(chatId, terminalMessage.content);
+          final preview = await _assistantPreviewBuilder(terminalMessage);
+          await _lastMessageUpdater(chatId, preview);
         } catch (lastMessageError) {
           debugPrint(
             'Failed to update chat preview for $chatId: $lastMessageError',
@@ -764,3 +769,6 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     }
   }
 }
+
+Future<String> _defaultAssistantPreviewBuilder(Message message) async =>
+    message.content;

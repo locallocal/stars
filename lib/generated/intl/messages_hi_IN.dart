@@ -136,12 +136,47 @@ class MessageLookup extends MessageLookupByLibrary {
       "हर टेक्स्ट अनुरोध में यह कौशल जोड़ें।",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("हमेशा चालू"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "सख्त मोड ने असत्यापित तथ्यात्मक दावा छिपा दिया।",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage(
+      "साक्ष्य विवरण दिखाएँ",
+    ),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage("साक्ष्य"),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "साक्ष्य विवरण उपलब्ध नहीं है।",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage(
+      "विश्वास कारण",
+    ),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage(
+      "विश्वास स्थिति",
+    ),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("विफल"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage(
+      "विफलता का कारण",
+    ),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "तथ्य-जाँच नहीं हुई",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage("देखा गया"),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "आंशिक रूप से सत्यापित",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "समर्थन देने वाला अवलोकन समाप्त हो गया है।",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "यह उत्तर ऐप की विश्वसनीयता जाँच में सफल नहीं हुआ।",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "इस उत्तर के लिए उपयोग योग्य टूल साक्ष्य उपलब्ध नहीं है।",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "यह सामग्री रचनात्मक है या सत्यापित तथ्य के रूप में प्रस्तुत नहीं की गई है।",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "केवल कुछ तथ्यात्मक दावे सहेजे गए साक्ष्य से समर्थित हैं।",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "इस उत्तर के सत्यापित होने से पहले प्रोवाइडर अनुरोध विफल हो गया।",
@@ -156,8 +191,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "इस उत्तर का सत्यापन पूरा नहीं हुआ।",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "सभी तथ्यात्मक दावे सहेजे गए साक्ष्य से समर्थित हैं।",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("स्रोत"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("टूल"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage("असत्यापित"),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("सत्यापित"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("API पता:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API कुंजी"),
     "apiType": MessageLookupByLibrary.simpleMessage("API प्रकार:"),
@@ -1006,6 +1047,15 @@ class MessageLookup extends MessageLookupByLibrary {
           "The partial response will be kept.",
         ),
     "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage(
+      "सख्त सत्यापन मोड",
+    ),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "असत्यापित तथ्यात्मक उत्तर छिपाएँ और सत्यापन व टूल विफलता विवरण बनाए रखें।",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars इस तथ्यात्मक उत्तर को सत्यापित नहीं कर सका। साक्ष्य देखें या फिर से सत्यापित करें।",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "संरचित प्रक्रिया जानकारी",
     ),
@@ -1037,6 +1087,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("सोच रहा है…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("टोकन उपयोग"),
     "tokens": MessageLookupByLibrary.simpleMessage("टोकन"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage(
+      "कार्रवाई स्वीकार हुई",
+    ),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage(
+      "कार्रवाई पूरी हुई",
+    ),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage(
+      "कार्रवाई स्वीकार नहीं हुई",
+    ),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage(
+      "कार्रवाई पूरी नहीं हुई",
+    ),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage(
       "एक बार अनुमति",
     ),
@@ -1051,6 +1113,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage(
       "स्किल स्क्रिप्ट",
+    ),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "स्थिति पढ़कर सत्यापित नहीं हुई",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "स्थिति पढ़कर सत्यापित की गई",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("कुल टोकन"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(

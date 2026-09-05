@@ -142,6 +142,7 @@ final class GroundedAnswerValidationResult {
     required this.reasonCode,
     required List<ClaimValidationResult> claims,
     required List<String> evidenceIds,
+    this.nonFactualText = '',
     List<String> unmatchedRequirementIds = const [],
   }) : claims = List<ClaimValidationResult>.unmodifiable(claims),
        evidenceIds = List<String>.unmodifiable(evidenceIds),
@@ -152,6 +153,7 @@ final class GroundedAnswerValidationResult {
   final AnswerTrustLevel trustLevel;
   final String reasonCode;
   final List<ClaimValidationResult> claims;
+  final String nonFactualText;
 
   /// Only deterministically accepted, actually referenced evidence IDs.
   final List<String> evidenceIds;
@@ -167,9 +169,41 @@ final class GroundedAnswerValidationResult {
           claim: result.claim,
           trustLevel: result.trustLevel,
           acceptedEvidenceIds: result.acceptedEvidenceIds,
+          reasonCode: _claimValidationReason(result),
+        ),
+      if (nonFactualText.isNotEmpty)
+        MessageClaimGrounding(
+          claim: AnswerClaim(
+            claimId: _nonFactualClaimId(claims),
+            text: nonFactualText,
+            kind: ClaimKind.nonFactual,
+          ),
+          trustLevel: ClaimTrustLevel.notVerifiable,
+          reasonCode: 'not_fact_checked',
         ),
     ],
   );
+}
+
+String _nonFactualClaimId(List<ClaimValidationResult> claims) {
+  final claimIds = claims.map((result) => result.claim.claimId).toSet();
+  var suffix = 1;
+  var candidate = 'non_factual_text';
+  while (claimIds.contains(candidate)) {
+    suffix += 1;
+    candidate = 'non_factual_text_$suffix';
+  }
+  return candidate;
+}
+
+String _claimValidationReason(ClaimValidationResult result) {
+  if (result.trustLevel == ClaimTrustLevel.verified) {
+    return 'evidence_accepted';
+  }
+  if (result.trustLevel == ClaimTrustLevel.notVerifiable) {
+    return 'not_fact_checked';
+  }
+  return result.issues.firstOrNull?.reason.name ?? 'verification_unavailable';
 }
 
 final class EvidenceRequirementCoverage {
@@ -274,6 +308,7 @@ final class GroundedAnswerValidator {
       reasonCode: reasonCode,
       claims: claimResults,
       evidenceIds: acceptedIds.toList(growable: false),
+      nonFactualText: candidate.nonFactualText,
       unmatchedRequirementIds: unmatchedRequirementIds,
     );
   }

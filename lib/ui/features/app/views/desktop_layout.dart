@@ -45,6 +45,7 @@ class DesktopLayout extends StatefulWidget {
   final Bot? selectedBot;
   final bool isEditingBot;
   final bool showExecutionStatus;
+  final bool strictGroundingMode;
   final int selectedProfileSection;
   final ValueChanged<int>? onProfileSectionChanged;
   final VoidCallback? onCreateChat;
@@ -64,6 +65,7 @@ class DesktopLayout extends StatefulWidget {
     this.selectedBot,
     this.isEditingBot = false,
     this.showExecutionStatus = true,
+    this.strictGroundingMode = false,
     this.selectedProfileSection = 0,
     this.onProfileSectionChanged,
     this.onCreateChat,

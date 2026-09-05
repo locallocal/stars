@@ -205,6 +205,7 @@ void main() {
       language: 'zh_CN',
       showExecutionStatus: false,
       injectApplicationPrompt: false,
+      strictGroundingMode: true,
       createTimestamp: timestamp,
       modifyTimestamp: timestamp,
     );
@@ -225,6 +226,7 @@ void main() {
     expect(restoredProfile.fontSize, 18);
     expect(restoredProfile.showExecutionStatus, isFalse);
     expect(restoredProfile.injectApplicationPrompt, isFalse);
+    expect(restoredProfile.strictGroundingMode, isTrue);
 
     final legacyProfileValues = Map<String, Object?>.from(
       ProfileRecord.fromDomain(profile).values,
@@ -232,6 +234,11 @@ void main() {
     expect(
       ProfileRecord(legacyProfileValues).toDomain().injectApplicationPrompt,
       isTrue,
+    );
+    legacyProfileValues.remove('strict_grounding_mode');
+    expect(
+      ProfileRecord(legacyProfileValues).toDomain().strictGroundingMode,
+      isFalse,
     );
   });
 
@@ -259,6 +266,7 @@ void main() {
               ),
               trustLevel: ClaimTrustLevel.verified,
               acceptedEvidenceIds: const ['evidence-1'],
+              reasonCode: 'evidence_accepted',
             ),
             MessageClaimGrounding(
               claim: AnswerClaim(
@@ -267,6 +275,7 @@ void main() {
                 kind: ClaimKind.currentFact,
               ),
               trustLevel: ClaimTrustLevel.unverified,
+              reasonCode: 'claimHasNoEvidence',
             ),
           ],
         ),
@@ -290,6 +299,7 @@ void main() {
             'proposed_evidence_ids': <String>['evidence-1'],
             'trust_level': 'verified',
             'accepted_evidence_ids': <String>['evidence-1'],
+            'reason_code': 'evidence_accepted',
           },
           <String, Object?>{
             'claim_id': 'claim-unverified',
@@ -298,6 +308,7 @@ void main() {
             'proposed_evidence_ids': <String>[],
             'trust_level': 'unverified',
             'accepted_evidence_ids': <String>[],
+            'reason_code': 'claimHasNoEvidence',
           },
         ],
       },
@@ -318,6 +329,7 @@ void main() {
       restored.grounding.claims.last.trustLevel,
       ClaimTrustLevel.unverified,
     );
+    expect(restored.grounding.claims.last.reasonCode, 'claimHasNoEvidence');
   });
 
   test('legacy message records remain unverified despite successful tools', () {
@@ -505,6 +517,53 @@ void main() {
             'requested_tools_json': '[1]',
           }).toDomain(),
       throwsFormatException,
+    );
+  });
+
+  test('protocol v2 claim records remain readable without reason codes', () {
+    final current = MessageRecord.fromDomain(
+      Message(
+        messageId: 'message-v2',
+        turnId: 'turn-v2',
+        runId: 'run-v2',
+        chatId: 'chat-v2',
+        botId: 'bot-v2',
+        senderId: 'bot-v2',
+        content: 'Unchecked claim.',
+        grounding: MessageGrounding(
+          claims: [
+            MessageClaimGrounding(
+              claim: AnswerClaim(
+                claimId: 'claim-v2',
+                text: 'Unchecked claim.',
+                kind: ClaimKind.currentFact,
+              ),
+              trustLevel: ClaimTrustLevel.unverified,
+              reasonCode: 'claimHasNoEvidence',
+            ),
+          ],
+        ),
+        timestamp: DateTime.fromMillisecondsSinceEpoch(1),
+      ),
+    );
+    final grounding =
+        jsonDecode(current.values['grounding_json']! as String)
+            as Map<String, Object?>;
+    grounding['protocol_version'] = 2;
+    for (final rawClaim in grounding['claims']! as List<Object?>) {
+      (rawClaim! as Map<String, Object?>).remove('reason_code');
+    }
+    final restored =
+        MessageRecord({
+          ...current.values,
+          'grounding_json': jsonEncode(grounding),
+        }).toDomain();
+
+    expect(restored.grounding.protocolVersion, 2);
+    expect(restored.grounding.claims.single.reasonCode, isEmpty);
+    expect(
+      restored.grounding.claims.single.trustLevel,
+      ClaimTrustLevel.unverified,
     );
   });
 }

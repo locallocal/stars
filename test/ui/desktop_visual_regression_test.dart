@@ -323,37 +323,68 @@ class _DesktopVisualGalleryState extends State<_DesktopVisualGallery> {
                       : 'Check the desktop visual matrix.',
               timestamp: DateTime(2026, 8, 12, 9, 40),
             ),
+            Message(
+              messageId: 'assistant-message',
+              turnId: 'visual-turn',
+              runId: 'visual-run',
+              chatId: 'chat-1',
+              botId: bot.id,
+              senderId: bot.id,
+              content: assistantText,
+              processInfo: const MessageProcessInfo(
+                durationMs: 1480,
+                reasoningStatus: 'completed',
+                toolCalls: [
+                  MessageToolCall(
+                    callId: 'tool-1',
+                    attemptId: 'visual-run:attempt:1',
+                    name: 'search_docs',
+                    title: 'Search documentation',
+                    source: 'mcp',
+                    status: 'succeeded',
+                    resultSummary: '6 references',
+                    durationMs: 320,
+                  ),
+                ],
+                commandExecutions: [
+                  MessageCommandExecution(
+                    callId: 'command-1',
+                    command: 'flutter test',
+                    status: 'succeeded',
+                    durationMs: 910,
+                  ),
+                ],
+              ),
+              tokenUsage: const ModelTokenUsage(
+                inputTokens: 820,
+                outputTokens: 1460,
+              ),
+              grounding: MessageGrounding(
+                trustLevel: AnswerTrustLevel.verified,
+                reasonCode: 'all_evidence_validated',
+                claims: [
+                  MessageClaimGrounding(
+                    claim: AnswerClaim(
+                      claimId: 'visual-claim',
+                      text: assistantText,
+                      kind: ClaimKind.externalFact,
+                      evidenceIds: const ['visual-run:attempt:1:evidence'],
+                    ),
+                    trustLevel: ClaimTrustLevel.verified,
+                    acceptedEvidenceIds: const [
+                      'visual-run:attempt:1:evidence',
+                    ],
+                    reasonCode: 'evidence_accepted',
+                  ),
+                ],
+              ),
+              terminalOutcome: MessageTerminalOutcome.completed,
+              timestamp: DateTime(2026, 8, 12, 9, 42),
+            ),
           ],
           scrollController: _messageScrollController,
-          isStreaming: true,
-          streamingResponse: assistantText,
-          streamingProcessInfo: const MessageProcessInfo(
-            durationMs: 1480,
-            reasoningStatus: 'completed',
-            toolCalls: [
-              MessageToolCall(
-                callId: 'tool-1',
-                name: 'search_docs',
-                title: 'Search documentation',
-                source: 'mcp',
-                status: 'succeeded',
-                resultSummary: '6 references',
-                durationMs: 320,
-              ),
-            ],
-            commandExecutions: [
-              MessageCommandExecution(
-                callId: 'command-1',
-                command: 'flutter test',
-                status: 'succeeded',
-                durationMs: 910,
-              ),
-            ],
-          ),
-          streamingTokenUsage: const ModelTokenUsage(
-            inputTokens: 820,
-            outputTokens: 1460,
-          ),
+          isStreaming: false,
+          streamingResponse: '',
           currentUserId: 'me',
           isDesktop: true,
         ),

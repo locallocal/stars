@@ -58,6 +58,7 @@ class SqliteProfileRepository implements ProfileRepository {
         language: 'zh_CN',
         showExecutionStatus: true,
         injectApplicationPrompt: true,
+        strictGroundingMode: false,
         createTimestamp: now,
         modifyTimestamp: now,
       );

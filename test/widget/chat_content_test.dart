@@ -1,9 +1,9 @@
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/app/view_models/main_shell_view_model.dart';
 import 'package:stars/ui/features/app/views/desktop_layout.dart';
@@ -105,6 +105,67 @@ void main() {
     viewModel.clearSelectedBot();
     expect(viewModel.selectedBot, isNull);
     expect(viewModel.isEditingSelectedBot, isFalse);
+  });
+
+  testWidgets('strict grounding preview marker is localized without raw text', (
+    tester,
+  ) async {
+    await withDesktopPlatform(() async {
+      final registry = ChatGenerationRegistry(
+        messagePersister: (message) async => message,
+        lastMessageUpdater: (_, _) async {},
+        providerFactory: (_) => throw StateError('Provider is not expected'),
+      );
+      addTearDown(registry.clear);
+      final timestamp = DateTime(2026);
+      final bot = Bot(
+        id: 'bot-strict-preview',
+        name: '可信助手',
+        avatar: '',
+        provider: 'OpenAI',
+        baseURL: '',
+        apiKey: '',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: '',
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+      final chat = Chat(
+        id: 'chat-strict-preview',
+        botId: bot.id,
+        lastMessage: strictGroundingPreviewMarker,
+        lastMessageTimestamp: timestamp,
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: SizedBox(
+                  width: 320,
+                  height: 240,
+                  child: ChatListBuilder(
+                    chatList: [chat],
+                    bots: [bot],
+                    strictGroundingMode: true,
+                    generationRegistry: registry,
+                    onChatDeleted: (_) {},
+                    onDeleteChat: (_) async {},
+                    onChatSelected: (_, _) {},
+                  ),
+                ),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Stars 无法验证此事实回答'), findsOneWidget);
+      expect(find.textContaining(strictGroundingPreviewMarker), findsNothing);
+    });
   });
 
   testWidgets('desktop message content uses its full available page width', (
@@ -530,11 +591,12 @@ void main() {
       await tester.tap(executionStatus);
       await tester.pumpAndSettle();
 
-      expect(find.text('release-notes').hitTestable(), findsNWidgets(2));
+      expect(find.text('release-notes'), findsNWidgets(2));
+      expect(find.text('release-notes').hitTestable(), findsOneWidget);
       expect(find.text('activate_skill').hitTestable(), findsOneWidget);
       expect(find.text('文档服务 · 搜索文档').hitTestable(), findsOneWidget);
       expect(find.text('read_file').hitTestable(), findsOneWidget);
-      expect(find.text('按消息启用 · abc123').hitTestable(), findsOneWidget);
+      expect(find.text('按消息启用 · abc123'), findsOneWidget);
       expect(find.text('MCP · 只读').hitTestable(), findsOneWidget);
       expect(find.text('内置 · 写入 · 失败 · 已允许一次').hitTestable(), findsOneWidget);
       expect(find.text('等待确认').hitTestable(), findsOneWidget);
@@ -1095,5 +1157,4 @@ void main() {
 
     expect(rowButton().hoverBackgroundColor, isNull);
   });
-
 }

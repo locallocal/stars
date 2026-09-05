@@ -292,6 +292,71 @@ extension _ProfileSettingsControls on _ProfilePageState {
     );
   }
 
+  Widget _buildStrictGroundingControl(
+    BuildContext context, {
+    required bool desktop,
+  }) {
+    final control =
+        desktop
+            ? ShadSwitch(
+              key: const ValueKey<String>('profile-strict-grounding-switch'),
+              value: _strictGroundingMode,
+              onChanged: _updateStrictGroundingMode,
+            )
+            : Switch.adaptive(
+              key: const ValueKey<String>('profile-strict-grounding-switch'),
+              value: _strictGroundingMode,
+              onChanged: _updateStrictGroundingMode,
+            );
+    return MergeSemantics(
+      child: Padding(
+        padding:
+            desktop
+                ? const EdgeInsets.symmetric(vertical: 14, horizontal: 8)
+                : const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            SizedBox(
+              width:
+                  desktop ? StarsDesktopThemeSpec.settingsRowIconSlotWidth : 32,
+              child: Icon(
+                desktop ? LucideIcons.shieldCheck : Icons.shield_outlined,
+                size: desktop ? StarsDesktopThemeSpec.settingsRowIconSize : 22,
+                color: StarsDesktopThemeSpec.mutedText(context),
+              ),
+            ),
+            if (desktop)
+              const SizedBox(width: StarsDesktopThemeSpec.settingsRowIconGap),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    S.of(context).strictGroundingMode,
+                    style:
+                        desktop
+                            ? StarsDesktopThemeSpec.bodyStyle(context)
+                            : Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    S.of(context).strictGroundingModeDescription,
+                    style:
+                        desktop
+                            ? StarsDesktopThemeSpec.metaStyle(context)
+                            : Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            control,
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildApplicationInjectedPrompt(
     BuildContext context, {
     required bool desktop,
@@ -462,6 +527,17 @@ extension _ProfileSettingsControls on _ProfilePageState {
     setState(() {
       _profile = _profile!.copyWith(
         injectApplicationPrompt: value,
+        modifyTimestamp: DateTime.now(),
+      );
+    });
+    await _saveProfile();
+  }
+
+  Future<void> _updateStrictGroundingMode(bool value) async {
+    if (_profile == null || _strictGroundingMode == value) return;
+    setState(() {
+      _profile = _profile!.copyWith(
+        strictGroundingMode: value,
         modifyTimestamp: DateTime.now(),
       );
     });

@@ -26,6 +26,7 @@ class ProcessInfoSection extends StatefulWidget {
   final bool isDesktop;
   final bool isStreaming;
   final bool hasReasoningContent;
+  final MessageGrounding? grounding;
 
   const ProcessInfoSection({
     super.key,
@@ -34,6 +35,7 @@ class ProcessInfoSection extends StatefulWidget {
     this.isDesktop = false,
     this.isStreaming = false,
     this.hasReasoningContent = false,
+    this.grounding,
   });
 
   static const desktopDetailsMaxHeight = 320.0;
@@ -187,6 +189,11 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
                     titleBuilder: _toolCallTitle,
                     subtitleBuilder: (item) => _toolCallSubtitle(strings, item),
                     statusBuilder: (item) => item.status,
+                    itemDetailsBuilder:
+                        (item) => _ToolLifecycleStages(
+                          toolCall: item,
+                          grounding: widget.grounding,
+                        ),
                   ),
                 ],
                 if (widget.processInfo.commandExecutions.isNotEmpty) ...[
@@ -443,6 +450,7 @@ class _ProcessListCard<T> extends StatelessWidget {
   final String Function(T item) titleBuilder;
   final String Function(T item) subtitleBuilder;
   final String Function(T item) statusBuilder;
+  final Widget Function(T item)? itemDetailsBuilder;
 
   const _ProcessListCard({
     required this.title,
@@ -451,6 +459,7 @@ class _ProcessListCard<T> extends StatelessWidget {
     required this.titleBuilder,
     required this.subtitleBuilder,
     required this.statusBuilder,
+    this.itemDetailsBuilder,
   });
 
   @override
@@ -508,6 +517,10 @@ class _ProcessListCard<T> extends StatelessWidget {
                             ),
                           ),
                         ],
+                        if (itemDetailsBuilder != null) ...[
+                          const SizedBox(height: 6),
+                          itemDetailsBuilder!(item),
+                        ],
                       ],
                     ),
                   ),
@@ -521,6 +534,98 @@ class _ProcessListCard<T> extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ToolLifecycleStages extends StatelessWidget {
+  const _ToolLifecycleStages({required this.toolCall, this.grounding});
+
+  final MessageToolCall toolCall;
+  final MessageGrounding? grounding;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = S.of(context);
+    final accepted = _toolActionAccepted(toolCall);
+    final completed = _toolActionCompleted(toolCall);
+    final readBackVerified = _toolStateReadBackVerified(toolCall, grounding);
+    final stages = <(bool, String)>[
+      (
+        accepted,
+        accepted ? strings.toolActionAccepted : strings.toolActionNotAccepted,
+      ),
+      (
+        completed,
+        completed
+            ? strings.toolActionCompleted
+            : strings.toolActionNotCompleted,
+      ),
+      (
+        readBackVerified,
+        readBackVerified
+            ? strings.toolStateReadBackVerified
+            : strings.toolStateNotReadBackVerified,
+      ),
+    ];
+    return Semantics(
+      container: true,
+      label: stages.map((stage) => stage.$2).join('. '),
+      child: ExcludeSemantics(
+        child: Wrap(
+          key: ValueKey<String>(
+            'tool-lifecycle-${toolCall.attemptId.isEmpty ? toolCall.callId : toolCall.attemptId}',
+          ),
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final stage in stages)
+              ShadBadge.outline(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      stage.$1 ? LucideIcons.checkCircle : LucideIcons.circleX,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(stage.$2),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+bool _toolActionAccepted(MessageToolCall call) {
+  if (call.approvalStatus == 'deny' ||
+      call.status == 'denied' ||
+      call.status == 'rejected') {
+    return false;
+  }
+  if (call.approvalStatus == 'allowOnce') return true;
+  return call.status.isNotEmpty &&
+      call.status != 'requested' &&
+      call.status != 'awaitingApproval';
+}
+
+bool _toolActionCompleted(MessageToolCall call) =>
+    call.status == 'succeeded' ||
+    call.status == 'completed' ||
+    call.status == 'duplicateReused';
+
+bool _toolStateReadBackVerified(
+  MessageToolCall call,
+  MessageGrounding? grounding,
+) {
+  if (call.attemptId.isEmpty || grounding == null) return false;
+  final evidenceId = '${call.attemptId}:evidence';
+  return grounding.claims.any(
+    (claim) =>
+        claim.trustLevel == ClaimTrustLevel.verified &&
+        claim.acceptedEvidenceIds.contains(evidenceId),
+  );
 }
 
 class _StatusBadge extends StatelessWidget {

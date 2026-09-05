@@ -15,6 +15,9 @@ class _MessageBubble extends StatelessWidget {
   final String music;
   final String video;
   final MessageGrounding? grounding;
+  final bool strictGroundingMode;
+  final bool hasNotFactCheckedContent;
+  final String exportTrustAnnotation;
   final MessageTerminalOutcome? terminalOutcome;
   final bool hasPartialContent;
   final MessageActionViewModel? actionViewModel;
@@ -34,6 +37,9 @@ class _MessageBubble extends StatelessWidget {
     this.music = '',
     this.video = '',
     this.grounding,
+    this.strictGroundingMode = false,
+    this.hasNotFactCheckedContent = false,
+    this.exportTrustAnnotation = '',
     this.terminalOutcome,
     this.hasPartialContent = false,
     this.actionViewModel,
@@ -85,6 +91,7 @@ class _MessageBubble extends StatelessWidget {
                     : <String, MarkdownElementBuilder>{
                       'pre': _CopyableCodeBlockBuilder(
                         isDesktop: isDesktop,
+                        trustAnnotation: exportTrustAnnotation,
                         textStyle: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
                           fontFamily: 'monospace',
@@ -117,6 +124,7 @@ class _MessageBubble extends StatelessWidget {
               isDesktop: isDesktop,
               isStreaming: isStreaming,
               hasReasoningContent: reasoning.isNotEmpty,
+              grounding: grounding,
             ),
           ),
         if (images.isNotEmpty)
@@ -233,7 +241,13 @@ class _MessageBubble extends StatelessWidget {
                       ? 10
                       : 0,
             ),
-            child: _MessageTrustStatus(grounding: grounding!),
+            child: _MessageTrustStatus(
+              grounding: grounding!,
+              isDesktop: isDesktop,
+              strictMode: strictGroundingMode,
+              hasNotFactCheckedContent: hasNotFactCheckedContent,
+              actionViewModel: actionViewModel,
+            ),
           ),
         if (_showTerminalStatus)
           Padding(
@@ -268,6 +282,7 @@ class _MessageBubble extends StatelessWidget {
               isDesktop: isDesktop,
               isStreaming: isStreaming,
               hasReasoningContent: reasoning.isNotEmpty,
+              grounding: grounding,
             ),
           ),
       ],
@@ -324,10 +339,7 @@ class _MessageBubble extends StatelessWidget {
 
   bool get _showTrustStatus {
     if (isCurrentUser || isStreaming) return false;
-    return switch (grounding?.trustLevel) {
-      AnswerTrustLevel.unverified || AnswerTrustLevel.failed => true,
-      _ => false,
-    };
+    return grounding != null;
   }
 
   bool get _showTerminalStatus =>
@@ -347,7 +359,12 @@ class _MessageBubble extends StatelessWidget {
       key: ValueKey<String>('message-image-preview-$imagePath'),
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        _showImageDialog(context, imagePath, actionViewModel);
+        _showImageDialog(
+          context,
+          imagePath,
+          actionViewModel,
+          trustAnnotation: exportTrustAnnotation,
+        );
       },
       child: ClipRRect(
         borderRadius:

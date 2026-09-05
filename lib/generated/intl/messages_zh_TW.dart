@@ -123,12 +123,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "每次文字請求都會注入此技能。",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("始終啟用"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "嚴格模式已隱藏未驗證的事實聲明。",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage("顯示證據詳情"),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage("證據"),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "證據詳情不可用。",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage("可信原因"),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage("可信狀態"),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("失敗"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage("失敗原因"),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "未進行事實核驗",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage("觀測時間"),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "部分已驗證",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "支持此聲明的觀測已過期。",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "此回覆未通過應用程式可信閘門。",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "此回覆沒有可用的工具證據。",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "此內容屬於創作或其他不作為已驗證事實展示的內容。",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "只有部分事實聲明有已保存的證據支持。",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "Provider 要求失敗，無法驗證此回覆。",
@@ -141,8 +168,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "此回覆尚未完成驗證。",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "所有事實聲明均有已保存的證據支持。",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("來源"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("工具"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage("未驗證"),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("已驗證"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("API地址:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API密鑰"),
     "apiType": MessageLookupByLibrary.simpleMessage("API類型:"),
@@ -796,6 +829,13 @@ class MessageLookup extends MessageLookupByLibrary {
           "The partial response will be kept.",
         ),
     "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage("嚴格驗證模式"),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "隱藏未驗證的事實回答，同時保留驗證詳情與工具失敗原因。",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars 無法驗證此事實回答。請查看證據詳情或重新驗證。",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("結構化過程資訊"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反饋"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("已摘要訊息數"),
@@ -815,6 +855,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("正在思考…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Token 用量"),
     "tokens": MessageLookupByLibrary.simpleMessage("Token"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage("動作已接受"),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage("動作已完成"),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage("動作未接受"),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage("動作未完成"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage("已允許一次"),
     "toolApprovalDenied": MessageLookupByLibrary.simpleMessage("已拒絕"),
     "toolCalls": MessageLookupByLibrary.simpleMessage("工具呼叫"),
@@ -824,6 +868,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceBuiltIn": MessageLookupByLibrary.simpleMessage("內建"),
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage("技能指令碼"),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "狀態尚未回讀驗證",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "狀態已回讀驗證",
+    ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Token 總量"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "請嘗試其他搜尋條件，或建立新項目。",

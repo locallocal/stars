@@ -3,8 +3,9 @@ part of 'message_list.dart';
 void _showImageDialog(
   BuildContext context,
   String imagePath,
-  MessageActionViewModel? actions,
-) {
+  MessageActionViewModel? actions, {
+  String trustAnnotation = '',
+}) {
   final isDesktop = isDesktopPlatform(context);
 
   Future<void> saveImage(BuildContext dialogContext) async {
@@ -45,7 +46,10 @@ void _showImageDialog(
     try {
       await actions?.shareImage(
         sourcePath: imagePath,
-        text: S.of(dialogContext).sharedImageFromStars,
+        text: <String>[
+          S.of(dialogContext).sharedImageFromStars,
+          if (trustAnnotation.isNotEmpty) trustAnnotation,
+        ].join('\n\n'),
       );
     } catch (error) {
       if (dialogContext.mounted) {

@@ -151,7 +151,13 @@ final class MessageGroundingRecord {
       'reason_code': grounding.reasonCode,
       'evidence_ids': grounding.evidenceIds,
       if (grounding.protocolVersion >= 2)
-        'claims': [for (final claim in grounding.claims) _claimToMap(claim)],
+        'claims': [
+          for (final claim in grounding.claims)
+            _claimToMap(
+              claim,
+              includeReasonCode: grounding.protocolVersion >= 3,
+            ),
+        ],
     });
   }
 
@@ -210,6 +216,7 @@ final class MessageGroundingRecord {
     }
     if (protocolVersion != 0 &&
         protocolVersion != 1 &&
+        protocolVersion != 2 &&
         protocolVersion != MessageGrounding.currentProtocolVersion) {
       return _unverifiedGrounding(unsupportedReasonCode);
     }
@@ -243,7 +250,10 @@ final class MessageGroundingRecord {
         trustLevel: trustLevel,
         reasonCode: reasonCode,
         evidenceIds: rawEvidenceIds.cast<String>(),
-        claims: [for (final value in rawClaims) _claimFromValue(value)],
+        claims: [
+          for (final value in rawClaims)
+            _claimFromValue(value, includeReasonCode: protocolVersion >= 3),
+        ],
       );
     } on Object {
       return _unverifiedGrounding(invalidReasonCode);
@@ -251,24 +261,32 @@ final class MessageGroundingRecord {
   }
 }
 
-Map<String, Object?> _claimToMap(MessageClaimGrounding grounding) => {
+Map<String, Object?> _claimToMap(
+  MessageClaimGrounding grounding, {
+  required bool includeReasonCode,
+}) => {
   'claim_id': grounding.claim.claimId,
   'text': grounding.claim.text,
   'kind': grounding.claim.kind.wireName,
   'proposed_evidence_ids': grounding.claim.evidenceIds,
   'trust_level': grounding.trustLevel.name,
   'accepted_evidence_ids': grounding.acceptedEvidenceIds,
+  if (includeReasonCode) 'reason_code': grounding.reasonCode,
 };
 
-MessageClaimGrounding _claimFromValue(Object? raw) {
+MessageClaimGrounding _claimFromValue(
+  Object? raw, {
+  required bool includeReasonCode,
+}) {
   final values = _requiredStringMap(raw, 'Message claim grounding');
-  const fields = <String>{
+  final fields = <String>{
     'claim_id',
     'text',
     'kind',
     'proposed_evidence_ids',
     'trust_level',
     'accepted_evidence_ids',
+    if (includeReasonCode) 'reason_code',
   };
   if (!_setsEqual(values.keys.toSet(), fields)) {
     throw const FormatException('Message claim grounding fields are invalid.');
@@ -277,12 +295,14 @@ MessageClaimGrounding _claimFromValue(Object? raw) {
   final text = values['text'];
   final proposed = values['proposed_evidence_ids'];
   final accepted = values['accepted_evidence_ids'];
+  final reasonCode = includeReasonCode ? values['reason_code'] : '';
   if (claimId is! String ||
       text is! String ||
       proposed is! List<Object?> ||
       proposed.any((value) => value is! String) ||
       accepted is! List<Object?> ||
-      accepted.any((value) => value is! String)) {
+      accepted.any((value) => value is! String) ||
+      reasonCode is! String) {
     throw const FormatException('Message claim grounding values are invalid.');
   }
   final kind = _claimKind(values['kind']);
@@ -299,6 +319,7 @@ MessageClaimGrounding _claimFromValue(Object? raw) {
     ),
     trustLevel: trustLevel,
     acceptedEvidenceIds: accepted.cast<String>(),
+    reasonCode: reasonCode,
   );
 }
 
@@ -415,6 +436,7 @@ final class ProfileRecord {
       'language': profile.language,
       'show_execution_status': profile.showExecutionStatus ? 1 : 0,
       'inject_application_prompt': profile.injectApplicationPrompt ? 1 : 0,
+      'strict_grounding_mode': profile.strictGroundingMode ? 1 : 0,
       'create_timestamp': profile.createTimestamp.millisecondsSinceEpoch,
       'modify_timestamp': profile.modifyTimestamp.millisecondsSinceEpoch,
     });
@@ -433,6 +455,10 @@ final class ProfileRecord {
       injectApplicationPrompt: _storageBoolOrDefault(
         values['inject_application_prompt'],
         defaultValue: true,
+      ),
+      strictGroundingMode: _storageBoolOrDefault(
+        values['strict_grounding_mode'],
+        defaultValue: false,
       ),
       createTimestamp: _timestamp(values['create_timestamp']),
       modifyTimestamp: _timestamp(values['modify_timestamp']),

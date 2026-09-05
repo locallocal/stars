@@ -133,12 +133,39 @@ class MessageLookup extends MessageLookupByLibrary {
       "各テキストリクエストにこのスキルを挿入します。",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("常に有効"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "厳格モードにより未検証の事実主張を非表示にしました。",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage("証拠の詳細を表示"),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage("証拠"),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "証拠の詳細を利用できません。",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage("信頼理由"),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage("信頼状態"),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("失敗"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage("失敗理由"),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "ファクトチェック未実施",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage("観測日時"),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "一部検証済み",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "裏付けとなる観測は期限切れです。",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "この回答はアプリの信頼性ゲートを通過しませんでした。",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "この回答に利用可能なツール証拠がありません。",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "この内容は創作、または検証済みの事実として提示されていません。",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "一部の事実主張のみ保存済みの証拠で裏付けられています。",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "この回答を検証する前にプロバイダーへのリクエストが失敗しました。",
@@ -151,8 +178,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "この回答の検証は完了していません。",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "すべての事実主張は保存済みの証拠で裏付けられています。",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("出典"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("ツール"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage("未検証"),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("検証済み"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("APIアドレス:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("APIキー"),
     "apiType": MessageLookupByLibrary.simpleMessage("APIタイプ:"),
@@ -873,6 +906,13 @@ class MessageLookup extends MessageLookupByLibrary {
           "The partial response will be kept.",
         ),
     "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage("厳格な検証モード"),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "未検証の事実回答を隠し、検証とツール失敗の詳細は保持します。",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars はこの事実回答を検証できませんでした。証拠の詳細を確認するか、再検証してください。",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("構造化された処理情報"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("フィードバックを送信"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("要約済みメッセージ"),
@@ -898,6 +938,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("思考中…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("トークン使用量"),
     "tokens": MessageLookupByLibrary.simpleMessage("トークン"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage("操作を受理"),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage("操作が完了"),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage("操作は未受理"),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage("操作は未完了"),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage("1回のみ許可"),
     "toolApprovalDenied": MessageLookupByLibrary.simpleMessage("拒否"),
     "toolCalls": MessageLookupByLibrary.simpleMessage("ツール呼び出し"),
@@ -907,6 +951,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceBuiltIn": MessageLookupByLibrary.simpleMessage("組み込み"),
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage("スキルスクリプト"),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "状態は再読込検証されていません",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "状態を再読込して検証済み",
+    ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("合計トークン"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "別の条件で検索するか、新しい項目を作成してください。",

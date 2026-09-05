@@ -12,6 +12,7 @@ class Profile {
     required this.language,
     this.showExecutionStatus = true,
     this.injectApplicationPrompt = true,
+    this.strictGroundingMode = false,
     required this.createTimestamp,
     required this.modifyTimestamp,
   });
@@ -23,6 +24,7 @@ class Profile {
   final String language;
   final bool showExecutionStatus;
   final bool injectApplicationPrompt;
+  final bool strictGroundingMode;
   final DateTime createTimestamp;
   final DateTime modifyTimestamp;
 
@@ -34,6 +36,7 @@ class Profile {
     String? language,
     bool? showExecutionStatus,
     bool? injectApplicationPrompt,
+    bool? strictGroundingMode,
     DateTime? createTimestamp,
     DateTime? modifyTimestamp,
   }) {
@@ -46,6 +49,7 @@ class Profile {
       showExecutionStatus: showExecutionStatus ?? this.showExecutionStatus,
       injectApplicationPrompt:
           injectApplicationPrompt ?? this.injectApplicationPrompt,
+      strictGroundingMode: strictGroundingMode ?? this.strictGroundingMode,
       createTimestamp: createTimestamp ?? this.createTimestamp,
       modifyTimestamp: modifyTimestamp ?? this.modifyTimestamp,
     );

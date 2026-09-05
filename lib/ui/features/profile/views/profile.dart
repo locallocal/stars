@@ -95,6 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool get _showExecutionStatus => _profile?.showExecutionStatus ?? true;
   bool get _injectApplicationPrompt =>
       _profile?.injectApplicationPrompt ?? true;
+  bool get _strictGroundingMode => _profile?.strictGroundingMode ?? false;
   String get _applicationInjectedPrompt =>
       (widget.applicationPromptProvider?.call(_language) ??
               currentStarsSystemPrompt(_language))
@@ -219,6 +220,7 @@ class _ProfilePageState extends State<ProfilePage> {
       language: _language,
       showExecutionStatus: _showExecutionStatus,
       injectApplicationPrompt: _injectApplicationPrompt,
+      strictGroundingMode: _strictGroundingMode,
       modifyTimestamp: DateTime.now(),
     );
     final onProfileSaved = widget.onProfileSaved;
@@ -354,6 +356,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   key: const ValueKey<String>('profile-mcp-servers'),
                 ),
                 const SizedBox(height: 12),
+                _buildStrictGroundingControl(context, desktop: false),
+                const SizedBox(height: 12),
                 _buildApplicationInjectedPrompt(context, desktop: false),
               ],
             ),
@@ -465,6 +469,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onTap: widget.onOpenMcpServers,
                     ),
                     _buildDesktopExecutionStatusControl(context),
+                    _buildStrictGroundingControl(context, desktop: true),
                     _buildApplicationInjectedPrompt(context, desktop: true),
                   ],
                 ),

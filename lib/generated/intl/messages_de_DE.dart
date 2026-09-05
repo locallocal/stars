@@ -137,12 +137,47 @@ class MessageLookup extends MessageLookupByLibrary {
       "Diese Fähigkeit wird in jede Textanfrage eingefügt.",
     ),
     "alwaysOn": MessageLookupByLibrary.simpleMessage("Immer aktiv"),
+    "answerTrustClaimHidden": MessageLookupByLibrary.simpleMessage(
+      "Die Tatsachenbehauptung wurde im strengen Modus ausgeblendet.",
+    ),
+    "answerTrustDetails": MessageLookupByLibrary.simpleMessage(
+      "Nachweisdetails anzeigen",
+    ),
+    "answerTrustEvidence": MessageLookupByLibrary.simpleMessage("Nachweis"),
+    "answerTrustEvidenceUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Nachweisdetails sind nicht verfügbar.",
+    ),
+    "answerTrustExportReason": MessageLookupByLibrary.simpleMessage(
+      "Vertrauensgrund",
+    ),
+    "answerTrustExportStatus": MessageLookupByLibrary.simpleMessage(
+      "Vertrauensstatus",
+    ),
     "answerTrustFailed": MessageLookupByLibrary.simpleMessage("Fehlgeschlagen"),
+    "answerTrustFailureReason": MessageLookupByLibrary.simpleMessage(
+      "Fehlergrund",
+    ),
+    "answerTrustNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "Nicht faktengeprüft",
+    ),
+    "answerTrustObservedAt": MessageLookupByLibrary.simpleMessage("Beobachtet"),
+    "answerTrustPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "Teilweise verifiziert",
+    ),
+    "answerTrustReasonEvidenceExpired": MessageLookupByLibrary.simpleMessage(
+      "Die unterstützende Beobachtung ist abgelaufen.",
+    ),
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "Diese Antwort hat die Vertrauensprüfung der Anwendung nicht bestanden.",
     ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "Für diese Antwort sind keine nutzbaren Tool-Belege verfügbar.",
+    ),
+    "answerTrustReasonNotFactChecked": MessageLookupByLibrary.simpleMessage(
+      "Dieser Inhalt ist kreativ oder wird nicht als verifizierte Tatsache dargestellt.",
+    ),
+    "answerTrustReasonPartiallyVerified": MessageLookupByLibrary.simpleMessage(
+      "Nur einige Tatsachenbehauptungen werden durch gespeicherte Nachweise gestützt.",
     ),
     "answerTrustReasonProviderFailed": MessageLookupByLibrary.simpleMessage(
       "Die Provider-Anfrage ist fehlgeschlagen, bevor diese Antwort verifiziert werden konnte.",
@@ -157,10 +192,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonUnavailable": MessageLookupByLibrary.simpleMessage(
       "Die Verifizierung dieser Antwort wurde nicht abgeschlossen.",
     ),
+    "answerTrustReasonVerified": MessageLookupByLibrary.simpleMessage(
+      "Alle Tatsachenbehauptungen werden durch gespeicherte Nachweise gestützt.",
+    ),
     "answerTrustSemanticLabel": m0,
+    "answerTrustSource": MessageLookupByLibrary.simpleMessage("Quelle"),
+    "answerTrustTool": MessageLookupByLibrary.simpleMessage("Werkzeug"),
     "answerTrustUnverified": MessageLookupByLibrary.simpleMessage(
       "Nicht verifiziert",
     ),
+    "answerTrustVerified": MessageLookupByLibrary.simpleMessage("Verifiziert"),
     "apiAddress": MessageLookupByLibrary.simpleMessage("API-Adresse:"),
     "apiKey": MessageLookupByLibrary.simpleMessage("API-Schlüssel"),
     "apiType": MessageLookupByLibrary.simpleMessage("API-Typ:"),
@@ -1059,6 +1100,15 @@ class MessageLookup extends MessageLookupByLibrary {
           "The partial response will be kept.",
         ),
     "stopping": MessageLookupByLibrary.simpleMessage("Stopping…"),
+    "strictGroundingMode": MessageLookupByLibrary.simpleMessage(
+      "Strenger Verifizierungsmodus",
+    ),
+    "strictGroundingModeDescription": MessageLookupByLibrary.simpleMessage(
+      "Blendet nicht verifizierte Tatsachenantworten aus und erhält Verifizierungs- und Werkzeugfehlerdetails.",
+    ),
+    "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
+      "Stars konnte diese Tatsachenantwort nicht verifizieren. Prüfen Sie die Nachweisdetails oder verifizieren Sie erneut.",
+    ),
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Strukturierte Prozessinformationen",
     ),
@@ -1096,6 +1146,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Denkt nach…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Token-Nutzung"),
     "tokens": MessageLookupByLibrary.simpleMessage("Token"),
+    "toolActionAccepted": MessageLookupByLibrary.simpleMessage(
+      "Aktion akzeptiert",
+    ),
+    "toolActionCompleted": MessageLookupByLibrary.simpleMessage(
+      "Aktion abgeschlossen",
+    ),
+    "toolActionNotAccepted": MessageLookupByLibrary.simpleMessage(
+      "Aktion nicht akzeptiert",
+    ),
+    "toolActionNotCompleted": MessageLookupByLibrary.simpleMessage(
+      "Aktion nicht abgeschlossen",
+    ),
     "toolApprovalAllowOnce": MessageLookupByLibrary.simpleMessage(
       "Einmal erlaubt",
     ),
@@ -1110,6 +1172,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "toolSourceMcp": MessageLookupByLibrary.simpleMessage("MCP"),
     "toolSourceSkillScript": MessageLookupByLibrary.simpleMessage(
       "Skill-Skript",
+    ),
+    "toolStateNotReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "Status nicht verifiziert zurückgelesen",
+    ),
+    "toolStateReadBackVerified": MessageLookupByLibrary.simpleMessage(
+      "Status zurückgelesen und verifiziert",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Token insgesamt"),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(

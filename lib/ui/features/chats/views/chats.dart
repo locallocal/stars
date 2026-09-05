@@ -19,6 +19,7 @@ class ChatListPage extends StatefulWidget {
   final bool sidebarMode;
   final bool selectionVisible;
   final bool showExecutionStatus;
+  final bool strictGroundingMode;
   final ChatListViewModel viewModel;
   const ChatListPage({
     super.key,
@@ -29,6 +30,7 @@ class ChatListPage extends StatefulWidget {
     this.sidebarMode = false,
     this.selectionVisible = true,
     this.showExecutionStatus = true,
+    this.strictGroundingMode = false,
   });
 
   @override
@@ -210,6 +212,7 @@ class ChatListPageState extends State<ChatListPage> {
       selectedChatId: widget.selectedChatId,
       selectionVisible: widget.selectionVisible,
       showExecutionStatus: widget.showExecutionStatus,
+      strictGroundingMode: widget.strictGroundingMode,
       generationRegistry: AppScope.of(context).generationRegistry,
       onDeleteChat: widget.viewModel.deleteChat,
       onChatDeleted: (String id) {
