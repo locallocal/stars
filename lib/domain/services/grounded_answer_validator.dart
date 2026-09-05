@@ -1,0 +1,580 @@
+import 'dart:convert';
+
+import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/tool_evidence_repository.dart';
+
+/// Application-owned semantic constraints for one answer claim.
+///
+/// These constraints must be derived from the verification request or a typed
+/// rendering template, never copied from model output. This is what lets the
+/// validator compare a claim with an evidence subject and scope without
+/// guessing semantics from prose.
+final class ClaimEvidenceRequirement {
+  ClaimEvidenceRequirement({
+    required String claimId,
+    required Set<EvidenceKind> allowedEvidenceKinds,
+    this.subject = '',
+    Map<String, Object?> scope = const {},
+    Set<ToolCapability> requiredCapabilities = const {},
+    Set<String> requiredFactNames = const {},
+    this.toolName = '',
+    this.attemptId = '',
+  }) : claimId = _normalizedRequiredText(claimId, 'claimId'),
+       allowedEvidenceKinds = Set<EvidenceKind>.unmodifiable(
+         allowedEvidenceKinds,
+       ),
+       scope = _freezeJsonMap(scope, 'scope'),
+       requiredCapabilities = Set<ToolCapability>.unmodifiable(
+         requiredCapabilities,
+       ),
+       requiredFactNames = Set<String>.unmodifiable(
+         requiredFactNames.map(
+           (name) => _normalizedRequiredText(name, 'requiredFactNames'),
+         ),
+       ) {
+    _requireNormalizedOptionalText(subject, 'subject');
+    _requireNormalizedOptionalText(toolName, 'toolName');
+    _requireNormalizedOptionalText(attemptId, 'attemptId');
+    if (this.allowedEvidenceKinds.isEmpty) {
+      throw ArgumentError.value(
+        allowedEvidenceKinds,
+        'allowedEvidenceKinds',
+        'A claim requirement must allow at least one evidence kind.',
+      );
+    }
+  }
+
+  final String claimId;
+  final Set<EvidenceKind> allowedEvidenceKinds;
+  final String subject;
+  final Map<String, Object?> scope;
+  final Set<ToolCapability> requiredCapabilities;
+  final Set<String> requiredFactNames;
+
+  /// Optional additional identity constraints for execution-failure claims.
+  final String toolName;
+  final String attemptId;
+}
+
+/// A conservative semantic review performed after deterministic validation.
+///
+/// Returning false can reject an otherwise valid binding. Returning true can
+/// never rescue a binding rejected by the deterministic checks.
+abstract interface class ClaimEvidenceReviewer {
+  Future<bool> supports({
+    required AnswerClaim claim,
+    required ToolEvidenceRecord evidence,
+  });
+}
+
+enum ClaimTrustLevel { verified, unverified, notVerifiable }
+
+enum EvidenceRejectionReason {
+  claimDoesNotAcceptEvidence,
+  claimHasNoEvidence,
+  claimRequirementMissing,
+  claimRequirementInvalid,
+  evidenceNotFound,
+  evidenceLedgerUnavailable,
+  evidenceRunMismatch,
+  evidenceNotPersisted,
+  evidenceIntegrityInvalid,
+  evidenceTerminalStatusInvalid,
+  evidenceKindMismatch,
+  evidenceCapabilityMismatch,
+  evidenceSubjectMismatch,
+  evidenceScopeMismatch,
+  evidenceNotYetObserved,
+  evidenceValidityMissing,
+  evidenceExpired,
+  evidenceSchemaInvalid,
+  evidenceTruncated,
+  evidenceEmpty,
+  executionFailureEvidenceMismatch,
+  actionReceiptCannotSupportState,
+  modelReviewRejected,
+}
+
+final class EvidenceValidationIssue {
+  const EvidenceValidationIssue({
+    required this.evidenceId,
+    required this.reason,
+  });
+
+  final String evidenceId;
+  final EvidenceRejectionReason reason;
+}
+
+final class ClaimValidationResult {
+  ClaimValidationResult({
+    required this.claim,
+    required this.trustLevel,
+    List<String> acceptedEvidenceIds = const [],
+    List<EvidenceValidationIssue> issues = const [],
+  }) : acceptedEvidenceIds = List<String>.unmodifiable(acceptedEvidenceIds),
+       issues = List<EvidenceValidationIssue>.unmodifiable(issues);
+
+  final AnswerClaim claim;
+  final ClaimTrustLevel trustLevel;
+  final List<String> acceptedEvidenceIds;
+  final List<EvidenceValidationIssue> issues;
+}
+
+final class GroundedAnswerValidationResult {
+  GroundedAnswerValidationResult({
+    required this.trustLevel,
+    required this.reasonCode,
+    required List<ClaimValidationResult> claims,
+    required List<String> evidenceIds,
+  }) : claims = List<ClaimValidationResult>.unmodifiable(claims),
+       evidenceIds = List<String>.unmodifiable(evidenceIds);
+
+  final AnswerTrustLevel trustLevel;
+  final String reasonCode;
+  final List<ClaimValidationResult> claims;
+
+  /// Only deterministically accepted, actually referenced evidence IDs.
+  final List<String> evidenceIds;
+
+  MessageGrounding toMessageGrounding() => MessageGrounding(
+    trustLevel: trustLevel,
+    reasonCode: reasonCode,
+    evidenceIds: evidenceIds,
+  );
+}
+
+/// Validates model-proposed claim bindings against the persisted fact ledger.
+final class GroundedAnswerValidator {
+  const GroundedAnswerValidator({
+    required ToolEvidenceRepository evidenceRepository,
+    ClaimEvidenceReviewer? reviewer,
+  }) : _evidenceRepository = evidenceRepository,
+       _reviewer = reviewer;
+
+  final ToolEvidenceRepository _evidenceRepository;
+  final ClaimEvidenceReviewer? _reviewer;
+
+  Future<GroundedAnswerValidationResult> validate({
+    required String runId,
+    required GroundedAnswerCandidate candidate,
+    required Iterable<ClaimEvidenceRequirement> requirements,
+    required DateTime validatedAt,
+  }) async {
+    final normalizedRunId = _normalizedRequiredText(runId, 'runId');
+    final instant = validatedAt.toUtc();
+    final requirementByClaim = <String, ClaimEvidenceRequirement>{};
+    for (final requirement in requirements) {
+      if (requirementByClaim.containsKey(requirement.claimId)) {
+        throw ArgumentError.value(
+          requirement.claimId,
+          'requirements',
+          'Claim requirements must have unique claim IDs.',
+        );
+      }
+      requirementByClaim[requirement.claimId] = requirement;
+    }
+
+    final loadedEvidence = <String, Future<_LedgerEvidence>>{};
+    Future<_LedgerEvidence> loadEvidence(String evidenceId) =>
+        loadedEvidence.putIfAbsent(evidenceId, () => _load(evidenceId));
+
+    final claimResults = <ClaimValidationResult>[];
+    for (final claim in candidate.claims) {
+      claimResults.add(
+        await _validateClaim(
+          claim: claim,
+          requirement: requirementByClaim[claim.claimId],
+          runId: normalizedRunId,
+          validatedAt: instant,
+          loadEvidence: loadEvidence,
+        ),
+      );
+    }
+
+    final verifiableClaims = claimResults.where(
+      (result) => result.trustLevel != ClaimTrustLevel.notVerifiable,
+    );
+    final verifiedCount =
+        verifiableClaims
+            .where((result) => result.trustLevel == ClaimTrustLevel.verified)
+            .length;
+    final verifiableCount = verifiableClaims.length;
+    final trustLevel =
+        verifiableCount == 0 || verifiedCount == 0
+            ? AnswerTrustLevel.unverified
+            : verifiedCount == verifiableCount
+            ? AnswerTrustLevel.verified
+            : AnswerTrustLevel.partiallyVerified;
+    final reasonCode = switch (trustLevel) {
+      AnswerTrustLevel.verified => 'all_claims_verified',
+      AnswerTrustLevel.partiallyVerified => 'some_claims_verified',
+      AnswerTrustLevel.unverified when verifiableCount == 0 =>
+        'no_verifiable_claims',
+      AnswerTrustLevel.unverified => 'no_claims_verified',
+      AnswerTrustLevel.failed => 'evidence_validation_failed',
+    };
+    final acceptedIds = <String>{};
+    for (final result in claimResults) {
+      acceptedIds.addAll(result.acceptedEvidenceIds);
+    }
+    return GroundedAnswerValidationResult(
+      trustLevel: trustLevel,
+      reasonCode: reasonCode,
+      claims: claimResults,
+      evidenceIds: acceptedIds.toList(growable: false),
+    );
+  }
+
+  Future<ClaimValidationResult> _validateClaim({
+    required AnswerClaim claim,
+    required ClaimEvidenceRequirement? requirement,
+    required String runId,
+    required DateTime validatedAt,
+    required Future<_LedgerEvidence> Function(String evidenceId) loadEvidence,
+  }) async {
+    if (!_requiresEvidence(claim.kind)) {
+      return ClaimValidationResult(
+        claim: claim,
+        trustLevel: ClaimTrustLevel.notVerifiable,
+        issues: [
+          for (final evidenceId in claim.evidenceIds)
+            EvidenceValidationIssue(
+              evidenceId: evidenceId,
+              reason: EvidenceRejectionReason.claimDoesNotAcceptEvidence,
+            ),
+        ],
+      );
+    }
+    if (claim.evidenceIds.isEmpty) {
+      return ClaimValidationResult(
+        claim: claim,
+        trustLevel: ClaimTrustLevel.unverified,
+        issues: const [
+          EvidenceValidationIssue(
+            evidenceId: '',
+            reason: EvidenceRejectionReason.claimHasNoEvidence,
+          ),
+        ],
+      );
+    }
+    if (requirement == null) {
+      return ClaimValidationResult(
+        claim: claim,
+        trustLevel: ClaimTrustLevel.unverified,
+        issues: [
+          for (final evidenceId in claim.evidenceIds)
+            EvidenceValidationIssue(
+              evidenceId: evidenceId,
+              reason: EvidenceRejectionReason.claimRequirementMissing,
+            ),
+        ],
+      );
+    }
+    if (!_isRequirementValidForClaim(requirement, claim.kind)) {
+      return ClaimValidationResult(
+        claim: claim,
+        trustLevel: ClaimTrustLevel.unverified,
+        issues: [
+          for (final evidenceId in claim.evidenceIds)
+            EvidenceValidationIssue(
+              evidenceId: evidenceId,
+              reason: EvidenceRejectionReason.claimRequirementInvalid,
+            ),
+        ],
+      );
+    }
+
+    final acceptedIds = <String>[];
+    final issues = <EvidenceValidationIssue>[];
+    for (final evidenceId in claim.evidenceIds) {
+      final ledgerEvidence = await loadEvidence(evidenceId);
+      final reason = _rejectDeterministically(
+        ledgerEvidence: ledgerEvidence,
+        claim: claim,
+        requirement: requirement,
+        runId: runId,
+        validatedAt: validatedAt,
+      );
+      if (reason != null) {
+        issues.add(
+          EvidenceValidationIssue(evidenceId: evidenceId, reason: reason),
+        );
+        continue;
+      }
+      final evidence = ledgerEvidence.record!;
+      final reviewer = _reviewer;
+      if (reviewer != null) {
+        var supported = false;
+        try {
+          supported = await reviewer.supports(claim: claim, evidence: evidence);
+        } on Object {
+          supported = false;
+        }
+        if (!supported) {
+          issues.add(
+            EvidenceValidationIssue(
+              evidenceId: evidenceId,
+              reason: EvidenceRejectionReason.modelReviewRejected,
+            ),
+          );
+          continue;
+        }
+      }
+      acceptedIds.add(evidenceId);
+    }
+    return ClaimValidationResult(
+      claim: claim,
+      trustLevel:
+          acceptedIds.isEmpty
+              ? ClaimTrustLevel.unverified
+              : ClaimTrustLevel.verified,
+      acceptedEvidenceIds: acceptedIds,
+      issues: issues,
+    );
+  }
+
+  EvidenceRejectionReason? _rejectDeterministically({
+    required _LedgerEvidence ledgerEvidence,
+    required AnswerClaim claim,
+    required ClaimEvidenceRequirement requirement,
+    required String runId,
+    required DateTime validatedAt,
+  }) {
+    if (ledgerEvidence.unavailable) {
+      return EvidenceRejectionReason.evidenceLedgerUnavailable;
+    }
+    final evidence = ledgerEvidence.record;
+    if (evidence == null) return EvidenceRejectionReason.evidenceNotFound;
+    if (evidence.runId != runId) {
+      return EvidenceRejectionReason.evidenceRunMismatch;
+    }
+    if (!evidence.persisted) {
+      return EvidenceRejectionReason.evidenceNotPersisted;
+    }
+    if (!ledgerEvidence.integrityValid) {
+      return EvidenceRejectionReason.evidenceIntegrityInvalid;
+    }
+    final hardKindFailure = _hardKindFailure(claim.kind, evidence.evidenceKind);
+    if (hardKindFailure != null) return hardKindFailure;
+    if (!_hasCompatibleTerminalStatus(claim.kind, evidence)) {
+      return EvidenceRejectionReason.evidenceTerminalStatusInvalid;
+    }
+    if (!requirement.allowedEvidenceKinds.contains(evidence.evidenceKind)) {
+      return EvidenceRejectionReason.evidenceKindMismatch;
+    }
+    if (!_capabilitiesSupportKind(evidence) ||
+        !evidence.capabilities.containsAll(requirement.requiredCapabilities)) {
+      return EvidenceRejectionReason.evidenceCapabilityMismatch;
+    }
+    if (requirement.toolName.isNotEmpty &&
+        evidence.toolName != requirement.toolName) {
+      return EvidenceRejectionReason.evidenceSubjectMismatch;
+    }
+    if (requirement.attemptId.isNotEmpty &&
+        evidence.attemptId != requirement.attemptId) {
+      return EvidenceRejectionReason.evidenceSubjectMismatch;
+    }
+    if (evidence.evidenceKind != EvidenceKind.executionFailure) {
+      if (evidence.subject != requirement.subject) {
+        return EvidenceRejectionReason.evidenceSubjectMismatch;
+      }
+      if (!_sameJson(evidence.scope, requirement.scope)) {
+        return EvidenceRejectionReason.evidenceScopeMismatch;
+      }
+    }
+    if (validatedAt.isBefore(evidence.observedAt.toUtc())) {
+      return EvidenceRejectionReason.evidenceNotYetObserved;
+    }
+    if (claim.kind == ClaimKind.currentFact && evidence.validUntil == null) {
+      return EvidenceRejectionReason.evidenceValidityMissing;
+    }
+    final validUntil = evidence.validUntil?.toUtc();
+    if (validUntil != null && !validatedAt.isBefore(validUntil)) {
+      return EvidenceRejectionReason.evidenceExpired;
+    }
+    if (evidence.evidenceKind != EvidenceKind.executionFailure) {
+      if (!evidence.schemaValid) {
+        return EvidenceRejectionReason.evidenceSchemaInvalid;
+      }
+      if (evidence.truncated) {
+        return EvidenceRejectionReason.evidenceTruncated;
+      }
+      if (evidence.resultSummary.trim().isEmpty ||
+          evidence.structuredFacts.isEmpty) {
+        return EvidenceRejectionReason.evidenceEmpty;
+      }
+      final factNames =
+          evidence.structuredFacts.map((fact) => fact.name).toSet();
+      if (!factNames.containsAll(requirement.requiredFactNames)) {
+        return EvidenceRejectionReason.evidenceEmpty;
+      }
+    }
+    return null;
+  }
+
+  Future<_LedgerEvidence> _load(String evidenceId) async {
+    try {
+      final record = await _evidenceRepository.getById(evidenceId);
+      if (record == null) return const _LedgerEvidence();
+      if (!record.persisted) return _LedgerEvidence(record: record);
+      final integrityValid = await _evidenceRepository.verifyDigest(evidenceId);
+      return _LedgerEvidence(record: record, integrityValid: integrityValid);
+    } on Object {
+      return const _LedgerEvidence(unavailable: true);
+    }
+  }
+}
+
+final class _LedgerEvidence {
+  const _LedgerEvidence({
+    this.record,
+    this.integrityValid = false,
+    this.unavailable = false,
+  });
+
+  final ToolEvidenceRecord? record;
+  final bool integrityValid;
+  final bool unavailable;
+}
+
+bool _requiresEvidence(ClaimKind kind) => switch (kind) {
+  ClaimKind.externalFact ||
+  ClaimKind.currentFact ||
+  ClaimKind.completedAction ||
+  ClaimKind.executionFailure => true,
+  ClaimKind.userAssertion || ClaimKind.nonFactual => false,
+};
+
+bool _isRequirementValidForClaim(
+  ClaimEvidenceRequirement requirement,
+  ClaimKind kind,
+) {
+  if (kind == ClaimKind.executionFailure) {
+    return requirement.allowedEvidenceKinds.length == 1 &&
+        requirement.allowedEvidenceKinds.contains(
+          EvidenceKind.executionFailure,
+        ) &&
+        (requirement.toolName.isNotEmpty || requirement.attemptId.isNotEmpty);
+  }
+  return requirement.subject.isNotEmpty &&
+      requirement.scope.isNotEmpty &&
+      requirement.requiredCapabilities.isNotEmpty &&
+      requirement.requiredFactNames.isNotEmpty;
+}
+
+bool _hasCompatibleTerminalStatus(ClaimKind kind, ToolEvidenceRecord evidence) {
+  if (kind == ClaimKind.executionFailure) {
+    return const <ToolInvocationStatus>{
+      ToolInvocationStatus.failed,
+      ToolInvocationStatus.denied,
+      ToolInvocationStatus.cancelled,
+      ToolInvocationStatus.timedOut,
+    }.contains(evidence.terminalStatus);
+  }
+  return evidence.terminalStatus == ToolInvocationStatus.succeeded;
+}
+
+EvidenceRejectionReason? _hardKindFailure(
+  ClaimKind claimKind,
+  EvidenceKind evidenceKind,
+) {
+  if (evidenceKind == EvidenceKind.executionFailure ||
+      claimKind == ClaimKind.executionFailure) {
+    return evidenceKind == EvidenceKind.executionFailure &&
+            claimKind == ClaimKind.executionFailure
+        ? null
+        : EvidenceRejectionReason.executionFailureEvidenceMismatch;
+  }
+  if (evidenceKind == EvidenceKind.actionReceipt &&
+      claimKind != ClaimKind.completedAction) {
+    return EvidenceRejectionReason.actionReceiptCannotSupportState;
+  }
+  return switch (claimKind) {
+    ClaimKind.currentFact when evidenceKind != EvidenceKind.observation =>
+      EvidenceRejectionReason.evidenceKindMismatch,
+    ClaimKind.completedAction when evidenceKind != EvidenceKind.actionReceipt =>
+      EvidenceRejectionReason.evidenceKindMismatch,
+    ClaimKind.externalFact ||
+    ClaimKind.userAssertion ||
+    ClaimKind.nonFactual => null,
+    ClaimKind.currentFact ||
+    ClaimKind.completedAction ||
+    ClaimKind.executionFailure => null,
+  };
+}
+
+bool _capabilitiesSupportKind(ToolEvidenceRecord evidence) {
+  const read = <ToolCapability>{
+    ToolCapability.localRead,
+    ToolCapability.externalRead,
+    ToolCapability.network,
+  };
+  const write = <ToolCapability>{
+    ToolCapability.localWrite,
+    ToolCapability.externalWrite,
+  };
+  final hasRead = evidence.capabilities.any(read.contains);
+  final hasWrite = evidence.capabilities.any(write.contains);
+  return switch (evidence.evidenceKind) {
+    EvidenceKind.observation => hasRead && !hasWrite,
+    EvidenceKind.calculation =>
+      evidence.capabilities.contains(ToolCapability.compute) &&
+          !hasRead &&
+          !hasWrite,
+    EvidenceKind.actionReceipt => hasWrite,
+    EvidenceKind.executionFailure => true,
+  };
+}
+
+String _normalizedRequiredText(String value, String name) {
+  if (value.isEmpty || value.trim() != value) {
+    throw ArgumentError.value(
+      value,
+      name,
+      'Value must be non-empty and normalized.',
+    );
+  }
+  return value;
+}
+
+void _requireNormalizedOptionalText(String value, String name) {
+  if (value.trim() != value) {
+    throw ArgumentError.value(value, name, 'Value must be normalized.');
+  }
+}
+
+Map<String, Object?> _freezeJsonMap(Map<String, Object?> value, String name) {
+  try {
+    final decoded = jsonDecode(jsonEncode(value));
+    if (decoded is! Map<String, Object?>) throw const FormatException();
+    return Map<String, Object?>.unmodifiable(
+      decoded.map((key, item) => MapEntry(key, _freezeJsonValue(item))),
+    );
+  } on Object catch (error) {
+    throw ArgumentError.value(value, name, 'Value must be JSON-safe: $error');
+  }
+}
+
+Object? _freezeJsonValue(Object? value) => switch (value) {
+  final Map<String, Object?> map => Map<String, Object?>.unmodifiable(
+    map.map((key, item) => MapEntry(key, _freezeJsonValue(item))),
+  ),
+  final List<Object?> list => List<Object?>.unmodifiable(
+    list.map(_freezeJsonValue),
+  ),
+  _ => value,
+};
+
+bool _sameJson(Object? left, Object? right) =>
+    _canonicalJson(left) == _canonicalJson(right);
+
+String _canonicalJson(Object? value) => jsonEncode(switch (value) {
+  final Map<String, Object?> map => <String, Object?>{
+    for (final key in (map.keys.toList()..sort()))
+      key: jsonDecode(_canonicalJson(map[key])),
+  },
+  final List<Object?> list => [
+    for (final item in list) jsonDecode(_canonicalJson(item)),
+  ],
+  _ => value,
+});

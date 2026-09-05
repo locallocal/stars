@@ -74,7 +74,8 @@ PrepareTextGeneration
 - 写工具的成功回执是否足以证明写入后的最终状态。
 
 因此任意一次成功调用仍可能被用于“证据漂白”。GRD-013 已停止从整条自由文本和页脚推测可信
-关系，但声明与证据的语义匹配仍需 GRD-014 的确定性门禁封闭。
+关系。GRD-014 已提供确定性门禁，按应用侧声明要求复核 kind、能力、subject、scope、时效与
+账本状态；将它接入完整 Observe–Verify–Synthesize 状态机属于 GRD-015。
 
 ### 3. 内存判定与持久化事实源曾经分离
 
@@ -261,7 +262,7 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
 - 将 `AgentRunCoordinator` 拆为 Loop 状态机、工具执行器、证据策略和最终声明门禁；限制与取消
   继续由协调器统一拥有。
 - `AnswerClaim`、`ClaimKind` 和 `GroundedAnswerCandidate` 已替代消息级
-  `_validateFinalAnswer`；后续由 `GroundedAnswerValidator` 校验每条声明。旧
+  `_validateFinalAnswer`；`GroundedAnswerValidator` 使用应用侧语义约束校验每条声明。旧
   `<stars_evidence ... />` 仅用于 adapter 迁移兼容，不能保存或授予 `verified`。
 
 ### Data
@@ -274,8 +275,9 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
 - 当前 P1 提交边界由运行协调器拥有：所有调用事件按尝试内单调序号排队，终态会等待事实账本
   提交并使用同一幂等身份重试，重试不会重新执行工具。账本成功后才允许进入回答提交。
 - 最终回答与 claim-evidence 关系在一个本地数据库事务中写入；事务前保存的 `unverified` 部分
-  检查点使“证据已提交、回答未提交”的中断状态可在重启后安全重试。自由文本工具在完成
-  完成 GRD-014 前仍只能得到 `unverified`，不能因提交成功提前升级为 `verified`。
+  检查点使“证据已提交、回答未提交”的中断状态可在重启后安全重试。自由文本工具以及尚未在
+  GRD-015 状态机中通过声明级门禁的回答仍只能得到 `unverified`，不能因提交成功提前升级为
+  `verified`。
 - 不再吞掉关键证据持久化异常。UI 增量快照写失败可以降级，但最终事实账本写失败必须让运行
   进入明确失败状态。
 - Provider 适配器把原生 web search 等结果转换成统一的调用和证据事件。Provider HTTP 失败
