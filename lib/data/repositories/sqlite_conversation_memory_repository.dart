@@ -257,6 +257,7 @@ Map<String, Object?> _summaryToRow(ConversationSummaryMetadata metadata) => {
 
 ConversationMemoryItem _itemFromRow(Map<String, Object?> row) {
   final expiresAt = _nullableInt(row['expires_at']);
+  final sources = _memoryItemSources(row['source_message_ids']);
   return ConversationMemoryItem(
     id: _text(row['id'], 'id'),
     chatId: _text(row['chat_id'], 'chat_id'),
@@ -279,7 +280,8 @@ ConversationMemoryItem _itemFromRow(Map<String, Object?> row) {
     ),
     importance: _double(row['importance']),
     confidence: _double(row['confidence']),
-    sourceMessageIds: _stringList(row['source_message_ids']),
+    sourceMessageIds: sources.messageIds,
+    sourceClaimIds: sources.claimIds,
     sourceDigest: _text(row['source_digest'], 'source_digest'),
     expiresAt:
         expiresAt == null
@@ -300,12 +302,51 @@ Map<String, Object?> _itemToRow(ConversationMemoryItem item) => {
   'origin': item.origin.name,
   'importance': item.importance,
   'confidence': item.confidence,
-  'source_message_ids': jsonEncode(item.sourceMessageIds),
+  'source_message_ids': jsonEncode(<String, Object?>{
+    'message_ids': item.sourceMessageIds,
+    'claim_ids': item.sourceClaimIds,
+  }),
   'source_digest': item.sourceDigest,
   'expires_at': item.expiresAt?.millisecondsSinceEpoch,
   'created_at': item.createdAt.millisecondsSinceEpoch,
   'updated_at': item.updatedAt.millisecondsSinceEpoch,
 };
+
+({List<String> messageIds, List<String> claimIds}) _memoryItemSources(
+  Object? value,
+) {
+  if (value is! String) {
+    throw const FormatException('Memory source ids must be JSON text.');
+  }
+  final decoded = jsonDecode(value);
+  if (decoded is List<Object?>) {
+    return (messageIds: _checkedStringList(decoded), claimIds: const []);
+  }
+  if (decoded is! Map<Object?, Object?> ||
+      decoded.keys.toSet().difference(const {
+        'message_ids',
+        'claim_ids',
+      }).isNotEmpty ||
+      decoded.length != 2) {
+    throw const FormatException('Memory source ids are invalid.');
+  }
+  final messageIds = decoded['message_ids'];
+  final claimIds = decoded['claim_ids'];
+  if (messageIds is! List<Object?> || claimIds is! List<Object?>) {
+    throw const FormatException('Memory source id lists are invalid.');
+  }
+  return (
+    messageIds: _checkedStringList(messageIds),
+    claimIds: _checkedStringList(claimIds),
+  );
+}
+
+List<String> _checkedStringList(List<Object?> values) {
+  if (values.any((item) => item is! String)) {
+    throw const FormatException('Memory source ids must be string lists.');
+  }
+  return List<String>.unmodifiable(values.cast<String>());
+}
 
 int _int(Object? value) => switch (value) {
   final int number => number,

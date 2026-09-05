@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
+import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/use_cases/context_budgeter.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 
@@ -368,7 +369,7 @@ void main() {
             id: 'relevant',
             chatId: 'chat_1',
             memoryKey: 'project.deadline',
-            kind: ConversationMemoryKind.fact,
+            kind: ConversationMemoryKind.userAssertion,
             content: '项目截止日期是九月十日',
             confidence: 0.9,
             importance: 0.8,
@@ -407,13 +408,14 @@ void main() {
       (message) => message.content.contains('<conversation_memory'),
     );
     expect(memory.content, contains('key="project.deadline"'));
+    expect(memory.content, contains('kind="userAssertion"'));
     expect(memory.content, contains('confidence="0.9"'));
     expect(memory.content, contains('source_message_ids="message_0_u"'));
     expect(memory.content, isNot(contains('午餐喜欢吃面条')));
   });
 
   test(
-    'does not recall an assistant fact without successful tool evidence',
+    'does not recall a pinned assistant fact without verified claim evidence',
     () async {
       final assistant = _message(0, false, '服务器状态是健康');
       final now = DateTime(2026, 8, 8);
@@ -426,6 +428,7 @@ void main() {
               memoryKey: 'server.health',
               kind: ConversationMemoryKind.fact,
               content: '服务器状态是健康',
+              state: ConversationMemoryItemState.pinned,
               confidence: 0.9,
               sourceMessageIds: [assistant.messageId],
               createdAt: now,
@@ -448,6 +451,169 @@ void main() {
       expect(result.report.includedMemoryIds, isEmpty);
     },
   );
+
+  test(
+    'marks an expired current claim for fresh verification with provenance',
+    () async {
+      final observedAt = DateTime.utc(2026, 9, 5, 10);
+      final validUntil = DateTime.utc(2026, 9, 5, 11);
+      final evaluatedAt = DateTime.utc(2026, 9, 5, 12);
+      final evidence = _currentStatusEvidence(
+        observedAt: observedAt,
+        validUntil: validUntil,
+      );
+      final assistant = _statusAssistant(evidence);
+      final useCase = PrepareConversationContext(
+        memoryRepository: _MemoryRepository(
+          items: [
+            ConversationMemoryItem(
+              id: 'expired-health',
+              chatId: 'chat_1',
+              memoryKey: 'production.health',
+              kind: ConversationMemoryKind.fact,
+              content: 'Production is healthy.',
+              confidence: 1,
+              sourceMessageIds: const ['message_status_a'],
+              sourceClaimIds: const ['message_status_a#claim-health'],
+              expiresAt: validUntil,
+              createdAt: observedAt,
+              updatedAt: observedAt,
+            ),
+          ],
+        ),
+        aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+        toolEvidenceRepository: _EvidenceRepository({
+          evidence.evidenceId: evidence,
+        }),
+        clock: () => evaluatedAt,
+      );
+
+      final result = await useCase(
+        bot: _bot(),
+        systemPrompt: '',
+        history: [
+          Message(
+            messageId: 'message_status_u',
+            turnId: 'turn_status',
+            chatId: 'chat_1',
+            botId: 'bot_1',
+            senderId: 'user_1',
+            content: 'Check production.',
+            timestamp: observedAt,
+          ),
+          assistant,
+        ],
+        userMessage: _current('What is the production status now?'),
+        currentUserId: 'user_1',
+        providerSupportsHistoryLookup: true,
+      );
+
+      expect(result.report.includedMemoryIds, isEmpty);
+      final history = result.messages.singleWhere(
+        (message) => message.role == 'assistant',
+      );
+      expect(history.content, contains('terminal="completed"'));
+      expect(history.content, contains('id="claim-health"'));
+      expect(
+        history.content,
+        contains(
+          'kind="current_fact" trust="unverified" '
+          'requires_reverification="true"',
+        ),
+      );
+      expect(history.content, contains('tool="status.read"'));
+      expect(history.content, contains('source="builtIn"'));
+      expect(
+        history.content,
+        contains('observed_at="2026-09-05T10:00:00.000Z"'),
+      );
+      expect(history.content, contains('Production was healthy at 10:00Z.'));
+      expect(history.content, contains('<verification_requirements>'));
+      expect(
+        history.content,
+        contains('reason="historical_observation_expired"'),
+      );
+      final verification = result.messages.singleWhere(
+        (message) => message.content.startsWith('<conversation_memory'),
+      );
+      expect(verification.content, contains('<verification_requirements>'));
+      expect(
+        verification.content,
+        contains('claim_ref="message_status_a#claim-health"'),
+      );
+      expect(verification.content, contains('A fresh observation is required'));
+    },
+  );
+
+  test('recalls a fresh fact Memory with nested evidence provenance', () async {
+    final observedAt = DateTime.utc(2026, 9, 5, 10);
+    final validUntil = DateTime.utc(2026, 9, 5, 11);
+    final evaluatedAt = DateTime.utc(2026, 9, 5, 10, 30);
+    final evidence = _currentStatusEvidence(
+      observedAt: observedAt,
+      validUntil: validUntil,
+    );
+    final assistant = _statusAssistant(evidence);
+    final useCase = PrepareConversationContext(
+      memoryRepository: _MemoryRepository(
+        items: [
+          ConversationMemoryItem(
+            id: 'fresh-health',
+            chatId: 'chat_1',
+            memoryKey: 'production.health',
+            kind: ConversationMemoryKind.fact,
+            content: 'Production is healthy.',
+            confidence: 1,
+            sourceMessageIds: const ['message_status_a'],
+            sourceClaimIds: const ['message_status_a#claim-health'],
+            expiresAt: validUntil,
+            createdAt: observedAt,
+            updatedAt: observedAt,
+          ),
+        ],
+      ),
+      aiProviderRepository: _AiRepository(contextWindow: 4096, output: 512),
+      toolEvidenceRepository: _EvidenceRepository({
+        evidence.evidenceId: evidence,
+      }),
+      clock: () => evaluatedAt,
+    );
+
+    final result = await useCase(
+      bot: _bot(),
+      systemPrompt: '',
+      history: [
+        Message(
+          messageId: 'message_status_u',
+          turnId: 'turn_status',
+          chatId: 'chat_1',
+          botId: 'bot_1',
+          senderId: 'user_1',
+          content: 'Check production.',
+          timestamp: observedAt,
+        ),
+        assistant,
+      ],
+      userMessage: _current('What is the production health?'),
+      currentUserId: 'user_1',
+      providerSupportsHistoryLookup: true,
+    );
+
+    expect(result.report.includedMemoryIds, ['fresh-health']);
+    final memory = result.messages.singleWhere(
+      (message) => message.content.startsWith('<conversation_memory'),
+    );
+    expect(memory.content, contains('<conversation_memory version="3"'));
+    expect(
+      memory.content,
+      contains('<claim ref="message_status_a#claim-health"'),
+    );
+    expect(memory.content, contains('trust="verified"'));
+    expect(memory.content, contains('requires_reverification="false"'));
+    expect(memory.content, contains('tool="status.read"'));
+    expect(memory.content, contains('observed_at="2026-09-05T10:00:00.000Z"'));
+    expect(memory.content, contains('Production was healthy at 10:00Z.'));
+  });
 }
 
 Message _message(
@@ -567,3 +733,81 @@ final class _AiRepository implements AiProviderRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+final class _EvidenceRepository implements ToolEvidenceRepository {
+  const _EvidenceRepository(this.records);
+
+  final Map<String, ToolEvidenceRecord> records;
+
+  @override
+  Future<ToolEvidenceRecord?> getById(String evidenceId) async =>
+      records[evidenceId];
+
+  @override
+  Future<bool> verifyDigest(String evidenceId) async =>
+      records.containsKey(evidenceId);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+Message _statusAssistant(ToolEvidenceRecord evidence) => Message(
+  messageId: 'message_status_a',
+  turnId: 'turn_status',
+  runId: 'run-status',
+  chatId: 'chat_1',
+  botId: 'bot_1',
+  senderId: 'bot_1',
+  content: 'Production is healthy.',
+  grounding: MessageGrounding(
+    trustLevel: AnswerTrustLevel.verified,
+    reasonCode: 'all_evidence_validated',
+    claims: [
+      MessageClaimGrounding(
+        claim: AnswerClaim(
+          claimId: 'claim-health',
+          text: 'Production is healthy.',
+          kind: ClaimKind.currentFact,
+          evidenceIds: [evidence.evidenceId],
+        ),
+        trustLevel: ClaimTrustLevel.verified,
+        acceptedEvidenceIds: [evidence.evidenceId],
+      ),
+    ],
+  ),
+  terminalOutcome: MessageTerminalOutcome.completed,
+  timestamp: evidence.observedAt,
+);
+
+ToolEvidenceRecord _currentStatusEvidence({
+  required DateTime observedAt,
+  required DateTime validUntil,
+}) => ToolEvidenceRecord(
+  evidenceId: 'attempt-status:evidence',
+  runId: 'run-status',
+  turnId: 'turn_status',
+  chatId: 'chat_1',
+  messageId: 'message_status_a',
+  invocationId: 'invocation-status',
+  attemptId: 'attempt-status',
+  toolName: 'status.read',
+  toolVersion: '1.0.0',
+  source: ToolSource.builtIn,
+  capabilities: const {ToolCapability.externalRead},
+  terminalStatus: ToolInvocationStatus.succeeded,
+  evidenceKind: EvidenceKind.observation,
+  subject: 'service:production',
+  scope: const {'service': 'production'},
+  resultSummary: 'Production was healthy at 10:00Z.',
+  argumentsDigest: _digestA,
+  resultDigest: _digestB,
+  structuredFacts: [StructuredFact(name: 'service.health', value: 'healthy')],
+  observedAt: observedAt,
+  validUntil: validUntil,
+  persisted: true,
+);
+
+const _digestA =
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const _digestB =
+    'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';

@@ -781,6 +781,7 @@
     "compactionFailed": "失敗",
     "idle": "閒置",
     "memoryFact": "事實",
+    "memoryUserAssertion": "使用者陳述",
     "memoryPreference": "偏好",
     "memoryDecision": "決策",
     "memoryTask": "待辦",

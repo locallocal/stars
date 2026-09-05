@@ -3,23 +3,25 @@ part of 'local_database_service.dart';
 extension LocalDatabaseToolEvidence on LocalDatabaseService {
   Future<void> upsertGroundedMessage(
     Map<String, Object?> values, {
-    required Iterable<String> evidenceIds,
+    required Map<String, Iterable<String>> claimEvidenceIds,
   }) async {
     final messageId = values['message_id']?.toString() ?? '';
     if (messageId.isEmpty) {
       throw ArgumentError('Grounded messages require an identity.');
     }
-    final identifiers = evidenceIds.toSet().toList(growable: false)..sort();
     final database = await _databaseProvider();
     await database.transaction((transaction) async {
       await _upsertMessageAndTokenUsage(transaction, values);
-      for (final evidenceId in identifiers) {
-        await transaction.insert('answer_claim_evidence', <String, Object?>{
-          'message_id': messageId,
-          'claim_id': '$messageId:answer',
-          'evidence_id': evidenceId,
-          'created_at': values['timestamp'] ?? 0,
-        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      for (final entry in claimEvidenceIds.entries) {
+        final identifiers = entry.value.toSet().toList(growable: false)..sort();
+        for (final evidenceId in identifiers) {
+          await transaction.insert('answer_claim_evidence', <String, Object?>{
+            'message_id': messageId,
+            'claim_id': entry.key,
+            'evidence_id': evidenceId,
+            'created_at': values['timestamp'] ?? 0,
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
       }
     });
     final chatId = values['chat_id']?.toString() ?? '';

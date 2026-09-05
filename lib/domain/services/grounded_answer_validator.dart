@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 
+export 'package:stars/domain/models/grounded_answer.dart' show ClaimTrustLevel;
+
 /// Application-owned semantic constraints for one answer claim.
 ///
 /// These constraints must be derived from the verification request or a typed
@@ -80,8 +82,6 @@ abstract interface class ClaimEvidenceReviewer {
     required ToolEvidenceRecord evidence,
   });
 }
-
-enum ClaimTrustLevel { verified, unverified, notVerifiable }
 
 enum EvidenceRejectionReason {
   claimDoesNotAcceptEvidence,
@@ -161,6 +161,14 @@ final class GroundedAnswerValidationResult {
     trustLevel: trustLevel,
     reasonCode: reasonCode,
     evidenceIds: evidenceIds,
+    claims: [
+      for (final result in claims)
+        MessageClaimGrounding(
+          claim: result.claim,
+          trustLevel: result.trustLevel,
+          acceptedEvidenceIds: result.acceptedEvidenceIds,
+        ),
+    ],
   );
 }
 

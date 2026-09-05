@@ -23,11 +23,13 @@ final class AnswerTrustPolicyInput {
     this.evidenceState = AnswerEvidenceState.none,
     this.gateResult = AnswerTrustGateResult.notRun,
     List<String> evidenceIds = const [],
+    List<MessageClaimGrounding> claims = const [],
     this.criticalPersistenceSucceeded = true,
     this.failureReasonCode = '',
     this.verificationUnavailableReason = '',
   }) : toolCalls = List<MessageToolCall>.unmodifiable(toolCalls),
-       evidenceIds = List<String>.unmodifiable(evidenceIds);
+       evidenceIds = List<String>.unmodifiable(evidenceIds),
+       claims = List<MessageClaimGrounding>.unmodifiable(claims);
 
   final MessageTerminalOutcome terminalOutcome;
   final bool providerSupportsAgentLoop;
@@ -36,6 +38,7 @@ final class AnswerTrustPolicyInput {
   final AnswerEvidenceState evidenceState;
   final AnswerTrustGateResult gateResult;
   final List<String> evidenceIds;
+  final List<MessageClaimGrounding> claims;
   final bool criticalPersistenceSucceeded;
   final String failureReasonCode;
   final String verificationUnavailableReason;
@@ -108,7 +111,10 @@ final class AnswerTrustPolicy {
     }
 
     return switch (input.evidenceState) {
-      AnswerEvidenceState.none => _unverified('no_usable_evidence'),
+      AnswerEvidenceState.none => _unverified(
+        'no_usable_evidence',
+        claims: input.claims,
+      ),
       AnswerEvidenceState.legacyFormatOnly => _unverified(
         'legacy_evidence_unverified',
       ),
@@ -120,11 +126,13 @@ final class AnswerTrustPolicy {
         trustLevel: AnswerTrustLevel.partiallyVerified,
         reasonCode: 'partial_evidence_validated',
         evidenceIds: input.evidenceIds,
+        claims: input.claims,
       ),
       AnswerEvidenceState.fullyValidated => _validated(
         trustLevel: AnswerTrustLevel.verified,
         reasonCode: 'all_evidence_validated',
         evidenceIds: input.evidenceIds,
+        claims: input.claims,
       ),
     };
   }
@@ -133,21 +141,27 @@ final class AnswerTrustPolicy {
     required AnswerTrustLevel trustLevel,
     required String reasonCode,
     required List<String> evidenceIds,
+    required List<MessageClaimGrounding> claims,
   }) {
     try {
       return MessageGrounding(
         trustLevel: trustLevel,
         reasonCode: reasonCode,
         evidenceIds: evidenceIds,
+        claims: claims,
       );
     } on ArgumentError {
       return _failed('evidence_validation_failed');
     }
   }
 
-  MessageGrounding _unverified(String reasonCode) => MessageGrounding(
+  MessageGrounding _unverified(
+    String reasonCode, {
+    List<MessageClaimGrounding> claims = const [],
+  }) => MessageGrounding(
     trustLevel: AnswerTrustLevel.unverified,
     reasonCode: reasonCode,
+    claims: claims,
   );
 
   MessageGrounding _failed(String reasonCode) => MessageGrounding(

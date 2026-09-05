@@ -10,6 +10,9 @@ enum ClaimKind {
   nonFactual,
 }
 
+/// Application-computed trust for one structured answer claim.
+enum ClaimTrustLevel { verified, unverified, notVerifiable }
+
 extension ClaimKindWireName on ClaimKind {
   String get wireName => switch (this) {
     ClaimKind.externalFact => 'external_fact',
@@ -73,6 +76,61 @@ final class AnswerClaim {
     'kind': kind.wireName,
     'evidence_ids': evidenceIds,
   };
+}
+
+/// Immutable claim-level grounding persisted with an assistant message.
+///
+/// [acceptedEvidenceIds] contains only evidence accepted by the deterministic
+/// gate. Model-proposed but rejected IDs remain on [claim.evidenceIds] for
+/// auditability and can never become trusted through history replay.
+final class MessageClaimGrounding {
+  factory MessageClaimGrounding({
+    required AnswerClaim claim,
+    required ClaimTrustLevel trustLevel,
+    List<String> acceptedEvidenceIds = const [],
+  }) {
+    final accepted = List<String>.unmodifiable(acceptedEvidenceIds);
+    final proposed = claim.evidenceIds.toSet();
+    final unique = <String>{};
+    for (final evidenceId in accepted) {
+      if (!proposed.contains(evidenceId) || !unique.add(evidenceId)) {
+        throw ArgumentError.value(
+          acceptedEvidenceIds,
+          'acceptedEvidenceIds',
+          'Accepted evidence must be unique and proposed by the claim.',
+        );
+      }
+    }
+    if (trustLevel == ClaimTrustLevel.verified && accepted.isEmpty) {
+      throw ArgumentError.value(
+        trustLevel,
+        'trustLevel',
+        'A verified claim requires accepted evidence.',
+      );
+    }
+    if (trustLevel != ClaimTrustLevel.verified && accepted.isNotEmpty) {
+      throw ArgumentError.value(
+        acceptedEvidenceIds,
+        'acceptedEvidenceIds',
+        'Only a verified claim can retain accepted evidence.',
+      );
+    }
+    return MessageClaimGrounding._(
+      claim: claim,
+      trustLevel: trustLevel,
+      acceptedEvidenceIds: accepted,
+    );
+  }
+
+  const MessageClaimGrounding._({
+    required this.claim,
+    required this.trustLevel,
+    required this.acceptedEvidenceIds,
+  });
+
+  final AnswerClaim claim;
+  final ClaimTrustLevel trustLevel;
+  final List<String> acceptedEvidenceIds;
 }
 
 /// A strictly parsed, Provider-independent answer ready for deterministic UI.

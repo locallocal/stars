@@ -185,7 +185,7 @@ class SqliteMessageRepository
     } else {
       await _localDatabase.upsertGroundedMessage(
         values,
-        evidenceIds: identified.grounding.evidenceIds,
+        claimEvidenceIds: _claimEvidenceIds(identified),
       );
     }
     _publishPersistedMessage(identified);
@@ -197,7 +197,7 @@ class SqliteMessageRepository
     final identified = _ensureIdentity(message);
     await _localDatabase.upsertGroundedMessage(
       MessageRecord.fromDomain(identified).values,
-      evidenceIds: identified.grounding.evidenceIds,
+      claimEvidenceIds: _claimEvidenceIds(identified),
     );
     _publishPersistedMessage(identified);
     return identified;
@@ -317,6 +317,21 @@ class SqliteMessageRepository
     await _changes.close();
     await _botMetricChanges.close();
   }
+}
+
+Map<String, Iterable<String>> _claimEvidenceIds(Message message) {
+  final claims = message.grounding.claims;
+  if (claims.isNotEmpty) {
+    return {
+      for (final claim in claims)
+        if (claim.acceptedEvidenceIds.isNotEmpty)
+          claim.claim.claimId: claim.acceptedEvidenceIds,
+    };
+  }
+  return {
+    if (message.grounding.evidenceIds.isNotEmpty)
+      '${message.messageId}:answer': message.grounding.evidenceIds,
+  };
 }
 
 class _CachedMessagePage {

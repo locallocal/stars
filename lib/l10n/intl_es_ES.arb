@@ -710,6 +710,7 @@
     "compactionFailed": "Error",
     "idle": "Inactivo",
     "memoryFact": "Hecho",
+    "memoryUserAssertion": "Afirmación del usuario",
     "memoryPreference": "Preferencia",
     "memoryDecision": "Decisión",
     "memoryTask": "Tarea",

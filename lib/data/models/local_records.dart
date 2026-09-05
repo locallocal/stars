@@ -150,6 +150,8 @@ final class MessageGroundingRecord {
       'trust_level': grounding.trustLevel.name,
       'reason_code': grounding.reasonCode,
       'evidence_ids': grounding.evidenceIds,
+      if (grounding.protocolVersion >= 2)
+        'claims': [for (final claim in grounding.claims) _claimToMap(claim)],
     });
   }
 
@@ -182,11 +184,15 @@ final class MessageGroundingRecord {
   static const String invalidReasonCode = 'invalid_grounding_metadata';
   static const String unsupportedReasonCode = 'unsupported_grounding_protocol';
 
-  static const Set<String> _fields = <String>{
+  static const Set<String> _legacyFields = <String>{
     'protocol_version',
     'trust_level',
     'reason_code',
     'evidence_ids',
+  };
+  static const Set<String> _currentFields = <String>{
+    ..._legacyFields,
+    'claims',
   };
 
   final Map<String, Object?> values;
@@ -203,20 +209,26 @@ final class MessageGroundingRecord {
       return _unverifiedGrounding(invalidReasonCode);
     }
     if (protocolVersion != 0 &&
+        protocolVersion != 1 &&
         protocolVersion != MessageGrounding.currentProtocolVersion) {
       return _unverifiedGrounding(unsupportedReasonCode);
     }
-    if (!_setsEqual(values.keys.toSet(), _fields)) {
+    final expectedFields =
+        protocolVersion >= 2 ? _currentFields : _legacyFields;
+    if (!_setsEqual(values.keys.toSet(), expectedFields)) {
       return _unverifiedGrounding(invalidReasonCode);
     }
 
     final trustLevel = _answerTrustLevel(values['trust_level']);
     final reasonCode = values['reason_code'];
     final rawEvidenceIds = values['evidence_ids'];
+    final rawClaims =
+        protocolVersion >= 2 ? values['claims'] : const <Object?>[];
     if (trustLevel == null ||
         reasonCode is! String ||
         rawEvidenceIds is! List<Object?> ||
-        rawEvidenceIds.any((evidenceId) => evidenceId is! String)) {
+        rawEvidenceIds.any((evidenceId) => evidenceId is! String) ||
+        rawClaims is! List<Object?>) {
       return _unverifiedGrounding(invalidReasonCode);
     }
     if (protocolVersion == 0 &&
@@ -231,12 +243,78 @@ final class MessageGroundingRecord {
         trustLevel: trustLevel,
         reasonCode: reasonCode,
         evidenceIds: rawEvidenceIds.cast<String>(),
+        claims: [for (final value in rawClaims) _claimFromValue(value)],
       );
-    } on ArgumentError {
+    } on Object {
       return _unverifiedGrounding(invalidReasonCode);
     }
   }
 }
+
+Map<String, Object?> _claimToMap(MessageClaimGrounding grounding) => {
+  'claim_id': grounding.claim.claimId,
+  'text': grounding.claim.text,
+  'kind': grounding.claim.kind.wireName,
+  'proposed_evidence_ids': grounding.claim.evidenceIds,
+  'trust_level': grounding.trustLevel.name,
+  'accepted_evidence_ids': grounding.acceptedEvidenceIds,
+};
+
+MessageClaimGrounding _claimFromValue(Object? raw) {
+  final values = _requiredStringMap(raw, 'Message claim grounding');
+  const fields = <String>{
+    'claim_id',
+    'text',
+    'kind',
+    'proposed_evidence_ids',
+    'trust_level',
+    'accepted_evidence_ids',
+  };
+  if (!_setsEqual(values.keys.toSet(), fields)) {
+    throw const FormatException('Message claim grounding fields are invalid.');
+  }
+  final claimId = values['claim_id'];
+  final text = values['text'];
+  final proposed = values['proposed_evidence_ids'];
+  final accepted = values['accepted_evidence_ids'];
+  if (claimId is! String ||
+      text is! String ||
+      proposed is! List<Object?> ||
+      proposed.any((value) => value is! String) ||
+      accepted is! List<Object?> ||
+      accepted.any((value) => value is! String)) {
+    throw const FormatException('Message claim grounding values are invalid.');
+  }
+  final kind = _claimKind(values['kind']);
+  final trustLevel = _claimTrustLevel(values['trust_level']);
+  if (kind == null || trustLevel == null) {
+    throw const FormatException('Message claim grounding enum is invalid.');
+  }
+  return MessageClaimGrounding(
+    claim: AnswerClaim(
+      claimId: claimId,
+      text: text,
+      kind: kind,
+      evidenceIds: proposed.cast<String>(),
+    ),
+    trustLevel: trustLevel,
+    acceptedEvidenceIds: accepted.cast<String>(),
+  );
+}
+
+ClaimKind? _claimKind(Object? raw) {
+  for (final value in ClaimKind.values) {
+    if (value.wireName == raw) return value;
+  }
+  return null;
+}
+
+ClaimTrustLevel? _claimTrustLevel(Object? raw) => switch (raw) {
+  'verified' => ClaimTrustLevel.verified,
+  'unverified' => ClaimTrustLevel.unverified,
+  'notVerifiable' => ClaimTrustLevel.notVerifiable,
+  _ => null,
+};
 
 /// SQLite representation of a [Message].
 final class MessageRecord {

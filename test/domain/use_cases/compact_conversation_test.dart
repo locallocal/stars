@@ -5,6 +5,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/context_summarizer.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
+import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
 
 void main() {
@@ -106,6 +107,27 @@ void main() {
 
   test('preserves original evidence ids across rolling summaries', () async {
     final previous = _previousSummary();
+    final history = _history(10);
+    final evidence = _preservedEvidence();
+    history[1] = history[1].copyWith(
+      runId: 'run-preserved',
+      grounding: MessageGrounding(
+        trustLevel: AnswerTrustLevel.verified,
+        reasonCode: 'all_evidence_validated',
+        claims: [
+          MessageClaimGrounding(
+            claim: AnswerClaim(
+              claimId: 'claim-preserved',
+              text: 'The deployment target is production.',
+              kind: ClaimKind.externalFact,
+              evidenceIds: [evidence.evidenceId],
+            ),
+            trustLevel: ClaimTrustLevel.verified,
+            acceptedEvidenceIds: [evidence.evidenceId],
+          ),
+        ],
+      ),
+    );
     final memory = _MemoryRepository(
       previousSummary: previous,
       state: ConversationMemoryState(
@@ -118,31 +140,40 @@ void main() {
     );
     late ContextSummaryRequest captured;
     final useCase = CompactConversation(
-      messageRepository: _MessageRepository(_history(10)),
+      messageRepository: _MessageRepository(history),
       memoryRepository: memory,
+      toolEvidenceRepository: _EvidenceRepository({
+        evidence.evidenceId: evidence,
+      }),
       summarizerFactory:
           (_) => _Summarizer((request) {
             captured = request;
             final now = DateTime(2026);
             return ContextSummaryResult(
               markdown:
-                  '# 会话摘要\n\n- preserved\n'
-                  '  <!-- sources: message_0_u -->',
+                  '# 会话摘要\n\n- The deployment target is production.\n'
+                  '  <!-- sources: message_0_a -->\n'
+                  '  <!-- claim_sources: message_0_a#claim-preserved -->\n'
+                  '  <!-- evidence: id=attempt-preserved:evidence '
+                  'tool=deployment.read source=mcp '
+                  'observed_at=2026-08-08T09:00:00.000Z '
+                  'valid_until=2026-08-10T09:00:00.000Z -->',
               items: [
                 ConversationMemoryItem(
                   id: 'preserved',
                   chatId: request.chatId,
                   memoryKey: 'fact.preserved',
                   kind: ConversationMemoryKind.fact,
-                  content: 'preserved',
-                  sourceMessageIds: const ['message_0_u'],
+                  content: 'The deployment target is production.',
+                  sourceMessageIds: const ['message_0_a'],
+                  sourceClaimIds: const ['message_0_a#claim-preserved'],
                   createdAt: now,
                   updatedAt: now,
                 ),
               ],
             );
           }),
-      clock: () => DateTime(2026, 8, 9),
+      clock: () => DateTime.utc(2026, 8, 9),
     );
 
     final result = await useCase(bot: _bot(), chatId: 'chat_1');
@@ -151,16 +182,31 @@ void main() {
     expect(captured.previousSummary, same(previous));
     expect(
       captured.sourceEvidence.map((item) => item.messageId),
-      contains('message_0_u'),
+      contains('message_0_a'),
     );
+    final preservedSource = captured.sourceEvidence.singleWhere(
+      (source) => source.messageId == 'message_0_a',
+    );
+    expect(preservedSource.claims.single.claimId, 'claim-preserved');
+    expect(preservedSource.claims.single.trustLevel, ClaimTrustLevel.verified);
+    expect(
+      preservedSource.claims.single.evidence.single.observedAt,
+      DateTime.utc(2026, 8, 8, 9),
+    );
+    expect(captured.evaluatedAt, DateTime.utc(2026, 8, 9));
     expect(memory.committed?.metadata.sourceStartMessageId, 'message_0_u');
     expect(memory.committed?.metadata.sourceEndMessageId, 'message_5_a');
     expect(
       memory.committed?.metadata.sourceMessageIds,
       containsAll(['message_0_u', 'message_3_u', 'message_5_a']),
     );
-    expect(memory.committed?.metadata.markdownSchemaVersion, 2);
-    expect(memory.committed?.metadata.promptVersion, 2);
+    expect(memory.committed?.metadata.markdownSchemaVersion, 3);
+    expect(memory.committed?.metadata.promptVersion, 3);
+    expect(memory.committed?.markdown, contains('attempt-preserved:evidence'));
+    expect(memory.committed?.markdown, contains('2026-08-08T09:00:00.000Z'));
+    expect(memory.committedItems?.single.sourceClaimIds, [
+      'message_0_a#claim-preserved',
+    ]);
   });
 }
 
@@ -197,7 +243,7 @@ ContextSummaryResult _validResult(ContextSummaryRequest request) {
         id: '${request.summaryId}_memory',
         chatId: request.chatId,
         memoryKey: 'fact.saved',
-        kind: ConversationMemoryKind.fact,
+        kind: ConversationMemoryKind.userAssertion,
         content: 'saved',
         sourceMessageIds: [request.sourceMessages.first.messageId],
         createdAt: now,
@@ -245,6 +291,7 @@ final class _MemoryRepository implements ConversationMemoryRepository {
   final ConversationSummaryDocument? previousSummary;
   final ConversationMemoryState state;
   ConversationSummaryDocument? committed;
+  List<ConversationMemoryItem>? committedItems;
   int? expectedRevision;
   final List<ConversationCompactionStatus> statuses = [];
 
@@ -260,6 +307,7 @@ final class _MemoryRepository implements ConversationMemoryRepository {
   }) async {
     this.expectedRevision = expectedRevision;
     committed = summary;
+    committedItems = List.unmodifiable(items);
     return true;
   }
 
@@ -282,6 +330,55 @@ final class _MemoryRepository implements ConversationMemoryRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+final class _EvidenceRepository implements ToolEvidenceRepository {
+  const _EvidenceRepository(this.records);
+
+  final Map<String, ToolEvidenceRecord> records;
+
+  @override
+  Future<ToolEvidenceRecord?> getById(String evidenceId) async =>
+      records[evidenceId];
+
+  @override
+  Future<bool> verifyDigest(String evidenceId) async =>
+      records.containsKey(evidenceId);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+ToolEvidenceRecord _preservedEvidence() => ToolEvidenceRecord(
+  evidenceId: 'attempt-preserved:evidence',
+  runId: 'run-preserved',
+  turnId: 'turn_0',
+  chatId: 'chat_1',
+  messageId: 'message_0_a',
+  invocationId: 'invocation-preserved',
+  attemptId: 'attempt-preserved',
+  toolName: 'deployment.read',
+  toolVersion: '1.0.0',
+  source: ToolSource.mcp,
+  capabilities: const {ToolCapability.externalRead},
+  terminalStatus: ToolInvocationStatus.succeeded,
+  evidenceKind: EvidenceKind.observation,
+  subject: 'deployment:production',
+  scope: const {'environment': 'production'},
+  resultSummary: 'Deployment target is production.',
+  argumentsDigest: _digestA,
+  resultDigest: _digestB,
+  structuredFacts: [
+    StructuredFact(name: 'deployment.target', value: 'production'),
+  ],
+  observedAt: DateTime.utc(2026, 8, 8, 9),
+  validUntil: DateTime.utc(2026, 8, 10, 9),
+  persisted: true,
+);
+
+const _digestA =
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const _digestB =
+    'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
 ConversationSummaryDocument _previousSummary() {
   final now = DateTime(2026, 8, 8);

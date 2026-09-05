@@ -68,6 +68,7 @@ void main() {
       kind: ConversationMemoryKind.openTask,
       content: '完成实现',
       sourceMessageIds: const ['message_1'],
+      sourceClaimIds: const ['message_1#claim-task'],
       createdAt: now,
       updatedAt: now,
     );
@@ -86,7 +87,10 @@ void main() {
       (await repository.getActiveSummary('chat_1'))?.markdown,
       contains('完成实现'),
     );
-    expect(await repository.getItems('chat_1'), hasLength(1));
+    final restoredItems = await repository.getItems('chat_1');
+    expect(restoredItems, hasLength(1));
+    expect(restoredItems.single.sourceMessageIds, ['message_1']);
+    expect(restoredItems.single.sourceClaimIds, ['message_1#claim-task']);
     final rows = await database.query('conversation_summary_segments');
     expect(rows.single.keys, isNot(contains('narrative_summary')));
     expect(rows.single.values, isNot(contains(summary.markdown)));

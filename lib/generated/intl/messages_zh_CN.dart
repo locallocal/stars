@@ -492,6 +492,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "memoryPreference": MessageLookupByLibrary.simpleMessage("偏好"),
     "memoryQuestion": MessageLookupByLibrary.simpleMessage("未决问题"),
     "memoryTask": MessageLookupByLibrary.simpleMessage("待办"),
+    "memoryUserAssertion": MessageLookupByLibrary.simpleMessage("用户陈述"),
     "messageCopied": MessageLookupByLibrary.simpleMessage("消息已复制到剪贴板"),
     "messageHint": MessageLookupByLibrary.simpleMessage("输入消息..."),
     "messageSkills": MessageLookupByLibrary.simpleMessage("技能"),

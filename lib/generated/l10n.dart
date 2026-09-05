@@ -4611,6 +4611,16 @@ class S {
     return Intl.message('Fact', name: 'memoryFact', desc: '', args: []);
   }
 
+  /// `User assertion`
+  String get memoryUserAssertion {
+    return Intl.message(
+      'User assertion',
+      name: 'memoryUserAssertion',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Preference`
   String get memoryPreference {
     return Intl.message(

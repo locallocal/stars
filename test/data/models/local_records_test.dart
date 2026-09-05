@@ -249,7 +249,26 @@ void main() {
         grounding: MessageGrounding(
           trustLevel: AnswerTrustLevel.partiallyVerified,
           reasonCode: 'some_claims_ungrounded',
-          evidenceIds: const ['evidence-1', 'evidence-2'],
+          claims: [
+            MessageClaimGrounding(
+              claim: AnswerClaim(
+                claimId: 'claim-verified',
+                text: 'The resource exists.',
+                kind: ClaimKind.externalFact,
+                evidenceIds: const ['evidence-1'],
+              ),
+              trustLevel: ClaimTrustLevel.verified,
+              acceptedEvidenceIds: const ['evidence-1'],
+            ),
+            MessageClaimGrounding(
+              claim: AnswerClaim(
+                claimId: 'claim-unverified',
+                text: 'The resource is current.',
+                kind: ClaimKind.currentFact,
+              ),
+              trustLevel: ClaimTrustLevel.unverified,
+            ),
+          ],
         ),
         terminalOutcome: MessageTerminalOutcome.completed,
         timestamp: timestamp,
@@ -262,7 +281,25 @@ void main() {
         'protocol_version': MessageGrounding.currentProtocolVersion,
         'trust_level': 'partiallyVerified',
         'reason_code': 'some_claims_ungrounded',
-        'evidence_ids': <String>['evidence-1', 'evidence-2'],
+        'evidence_ids': <String>['evidence-1'],
+        'claims': <Object?>[
+          <String, Object?>{
+            'claim_id': 'claim-verified',
+            'text': 'The resource exists.',
+            'kind': 'external_fact',
+            'proposed_evidence_ids': <String>['evidence-1'],
+            'trust_level': 'verified',
+            'accepted_evidence_ids': <String>['evidence-1'],
+          },
+          <String, Object?>{
+            'claim_id': 'claim-unverified',
+            'text': 'The resource is current.',
+            'kind': 'current_fact',
+            'proposed_evidence_ids': <String>[],
+            'trust_level': 'unverified',
+            'accepted_evidence_ids': <String>[],
+          },
+        ],
       },
     );
 
@@ -273,7 +310,14 @@ void main() {
     );
     expect(restored.grounding.trustLevel, AnswerTrustLevel.partiallyVerified);
     expect(restored.grounding.reasonCode, 'some_claims_ungrounded');
-    expect(restored.grounding.evidenceIds, ['evidence-1', 'evidence-2']);
+    expect(restored.grounding.evidenceIds, ['evidence-1']);
+    expect(restored.grounding.claims, hasLength(2));
+    expect(restored.grounding.claims.first.claim.claimId, 'claim-verified');
+    expect(restored.grounding.claims.first.acceptedEvidenceIds, ['evidence-1']);
+    expect(
+      restored.grounding.claims.last.trustLevel,
+      ClaimTrustLevel.unverified,
+    );
   });
 
   test('legacy message records remain unverified despite successful tools', () {
