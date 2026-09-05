@@ -100,7 +100,7 @@ class _StatusCardSection extends StatelessWidget {
     if (isDesktop) {
       return ShadCard(
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         backgroundColor: StarsDesktopTokens.of(context).controlFill,
         radius: BorderRadius.circular(radius),
         border: ShadBorder.all(color: StarsDesktopTokens.of(context).separator),
@@ -127,6 +127,8 @@ class _StatusCardHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget? subtitleContent;
+  final Key? iconKey;
+  final Color? iconColor;
 
   const _StatusCardHeader({
     required this.isDesktop,
@@ -134,6 +136,8 @@ class _StatusCardHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.subtitleContent,
+    this.iconKey = const ValueKey<String>('execution-status-icon'),
+    this.iconColor,
   });
 
   @override
@@ -141,12 +145,12 @@ class _StatusCardHeader extends StatelessWidget {
     return Row(
       children: [
         _StatusHeaderIcon(
-          key: const ValueKey<String>('execution-status-icon'),
+          key: iconKey,
           isDesktop: isDesktop,
           child: Icon(
             icon,
             size: 16,
-            color: Theme.of(context).colorScheme.primary,
+            color: iconColor ?? Theme.of(context).colorScheme.primary,
           ),
         ),
         const SizedBox(width: 10),
