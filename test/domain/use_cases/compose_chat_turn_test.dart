@@ -496,7 +496,10 @@ void main() {
       final result = await compose(
         bot: _bot(),
         history: const [],
-        userMessage: _message(senderId: 'user-1', content: 'List local files'),
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Run flutter test for this project',
+        ),
         currentUserId: 'user-1',
         skillToolProvider: _FakeSkillProvider(const []),
       );
@@ -593,6 +596,68 @@ void main() {
         contains(directorySkill.instructions),
       );
       expect(result.messages.first.content, contains(fileSkill.instructions));
+    },
+  );
+
+  test(
+    'routes enabled system Skills before composing the model context',
+    () async {
+      final shellSkill = _systemShellSkill();
+      final directorySkill = _systemLocalFileSystemSkill(directory: true);
+      final fileSkill = _systemLocalFileSystemSkill(directory: false);
+      final installerSkill = _systemSkillInstallerSkill();
+      final mcpInstallerSkill = _systemMcpInstallerSkill();
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(const {}),
+        bindingRepository: _FakeBindingRepository([
+          _binding(shellCommandSkillId),
+          _binding(directoryOperationsSkillId),
+          _binding(fileOperationsSkillId),
+          _binding(skillInstallerSkillId),
+          _binding(mcpInstallerSkillId),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        bundledSkillLoader:
+            () async => [
+              shellSkill,
+              directorySkill,
+              fileSkill,
+              installerSkill,
+              mcpInstallerSkill,
+            ],
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Save this HTML file locally',
+        ),
+        currentUserId: 'user-1',
+        skillToolProvider: _FakeSkillProvider(const []),
+      );
+
+      expect(result.requestedToolNames, fileOperationsToolNames);
+      expect(result.activatedSkills.single.id, fileOperationsSkillId);
+      expect(result.messages.first.content, contains(fileSkill.instructions));
+      expect(
+        result.messages.first.content,
+        isNot(contains(shellSkill.instructions)),
+      );
+      expect(
+        result.messages.first.content,
+        isNot(contains(directorySkill.instructions)),
+      );
+      expect(
+        result.messages.first.content,
+        isNot(contains(installerSkill.instructions)),
+      );
+      expect(
+        result.messages.first.content,
+        isNot(contains(mcpInstallerSkill.instructions)),
+      );
     },
   );
 

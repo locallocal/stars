@@ -169,6 +169,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "यह उत्तर ऐप की विश्वसनीयता जाँच में सफल नहीं हुआ।",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "अंतिम उत्तर सत्यापित होने से पहले जनरेशन का समय समाप्त हो गया। पूर्ण किए गए टूल साक्ष्य उपलब्ध हैं।",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "इस उत्तर के लिए उपयोग योग्य टूल साक्ष्य उपलब्ध नहीं है।",
     ),

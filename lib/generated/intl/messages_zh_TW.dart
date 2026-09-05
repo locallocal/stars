@@ -148,6 +148,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "此回覆未通過應用程式可信閘門。",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "生成在最終回覆完成驗證前逾時；已完成的工具證據仍可查看。",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "此回覆沒有可用的工具證據。",
     ),

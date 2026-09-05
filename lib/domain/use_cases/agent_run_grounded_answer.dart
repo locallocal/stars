@@ -6,6 +6,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     required String draftText,
     required List<ToolInvocationRecord> invocations,
     required List<ClaimEvidenceRequirement> verificationRequirements,
+    List<ToolResult> pendingToolResults = const [],
     required AgentCancellationToken cancellationToken,
     required _AgentRunStateMachine state,
     String reliabilityFeedback = '',
@@ -35,7 +36,10 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     var completed = false;
     var invalidEvent = false;
     await _consumeEvents(
-      session.synthesizeGroundedAnswer(request),
+      session.synthesizeGroundedAnswer(
+        request,
+        pendingToolResults: pendingToolResults,
+      ),
       cancellationToken,
       (event) {
         state.modelEvent(event);
@@ -86,6 +90,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     required AgentModelSession session,
     required String draftText,
     required List<ToolInvocationRecord> invocations,
+    List<ToolResult> pendingToolResults = const [],
     required AgentRunRequest request,
     required List<ClaimEvidenceRequirement> verificationRequirements,
     required AgentCancellationToken cancellationToken,
@@ -111,6 +116,8 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
           draftText: draftText,
           invocations: invocations,
           verificationRequirements: verificationRequirements,
+          pendingToolResults:
+              attempt == 0 ? pendingToolResults : const <ToolResult>[],
           cancellationToken: cancellationToken,
           state: state,
           reliabilityFeedback: feedback,

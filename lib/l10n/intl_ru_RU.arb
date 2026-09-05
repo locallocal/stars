@@ -957,6 +957,7 @@
     "answerTrustReasonProviderUnsupported": "Этот провайдер не поддерживает инструменты проверки.",
     "answerTrustReasonToolRejected": "Запрос к инструменту проверки был отклонён.",
     "answerTrustReasonProviderFailed": "Запрос к провайдеру завершился ошибкой до проверки этого ответа.",
+    "answerTrustReasonGenerationTimedOut": "Время генерации истекло до проверки окончательного ответа. Завершённые свидетельства инструментов остаются доступными.",
     "answerTrustReasonGateFailed": "Этот ответ не прошёл проверку доверия приложения.",
     "answerTrustReasonUnavailable": "Проверка этого ответа не завершена.",
     "answerTrustSemanticLabel": "{status}. {reason}"

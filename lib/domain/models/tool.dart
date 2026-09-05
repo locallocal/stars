@@ -225,7 +225,10 @@ final class ToolResult {
 
 /// Encodes a tool result with explicit reliability and provenance metadata.
 /// Provider adapters must send this envelope instead of bare tool text.
-String encodeToolResultForModel(ToolResult result) {
+String encodeToolResultForModel(
+  ToolResult result, {
+  bool includePayload = true,
+}) {
   Object? structured;
   if (result.structuredContent != null) {
     try {
@@ -259,8 +262,8 @@ String encodeToolResultForModel(ToolResult result) {
     'facts': [
       for (final fact in result.structuredFacts) _structuredFactJson(fact),
     ],
-    'content': result.content,
-    if (structured != null) 'structured_data': structured,
+    if (includePayload) 'content': result.content,
+    if (includePayload && structured != null) 'structured_data': structured,
   });
 }
 

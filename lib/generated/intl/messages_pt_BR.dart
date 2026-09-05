@@ -170,6 +170,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "Esta resposta não passou pela verificação de confiabilidade do aplicativo.",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "A geração expirou antes da verificação da resposta final. As evidências de ferramentas concluídas continuam disponíveis.",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "Não há evidências de ferramenta utilizáveis para esta resposta.",
     ),

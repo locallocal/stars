@@ -156,6 +156,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "이 응답은 앱의 신뢰성 검사를 통과하지 못했습니다.",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "최종 응답 검증이 완료되기 전에 생성 시간이 초과되었습니다. 완료된 도구 증거는 계속 확인할 수 있습니다.",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "이 응답에 사용할 수 있는 도구 증거가 없습니다.",
     ),

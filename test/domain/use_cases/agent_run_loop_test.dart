@@ -430,6 +430,12 @@ void main() {
       expect(read.executions, 1);
       expect(result.verificationRequirements, hasLength(2));
       expect(session.reliabilityFeedback.single, contains('local_read'));
+      expect(session.continuations, hasLength(1));
+      expect(session.synthesisPendingToolResults, hasLength(1));
+      expect(
+        session.synthesisPendingToolResults.single.single.name,
+        read.definition.name,
+      );
       expect(session.synthesisRequests.single.requiredClaims, hasLength(2));
     });
 
@@ -796,6 +802,8 @@ final class _LoopModelSession implements AgentModelSession {
   final List<String> reliabilityFeedback = <String>[];
   final List<GroundedAnswerSynthesisRequest> synthesisRequests =
       <GroundedAnswerSynthesisRequest>[];
+  final List<List<ToolResult>> synthesisPendingToolResults =
+      <List<ToolResult>>[];
   var _turnIndex = 0;
   var _synthesisIndex = 0;
   bool cancelled = false;
@@ -817,9 +825,11 @@ final class _LoopModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) async* {
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) async* {
     synthesisRequests.add(request);
+    synthesisPendingToolResults.add(List<ToolResult>.of(pendingToolResults));
     final candidate = _synthesisCandidates[_synthesisIndex++];
     yield GroundedAnswerProduced(candidate);
     yield const ModelTurnCompleted(stopReason: 'stop');

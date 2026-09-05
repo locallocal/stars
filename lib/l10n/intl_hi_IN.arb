@@ -957,6 +957,7 @@
     "answerTrustReasonProviderUnsupported": "यह प्रोवाइडर सत्यापन टूल का समर्थन नहीं करता।",
     "answerTrustReasonToolRejected": "सत्यापन टूल अनुरोध अस्वीकार कर दिया गया।",
     "answerTrustReasonProviderFailed": "इस उत्तर के सत्यापित होने से पहले प्रोवाइडर अनुरोध विफल हो गया।",
+    "answerTrustReasonGenerationTimedOut": "अंतिम उत्तर सत्यापित होने से पहले जनरेशन का समय समाप्त हो गया। पूर्ण किए गए टूल साक्ष्य उपलब्ध हैं।",
     "answerTrustReasonGateFailed": "यह उत्तर ऐप की विश्वसनीयता जाँच में सफल नहीं हुआ।",
     "answerTrustReasonUnavailable": "इस उत्तर का सत्यापन पूरा नहीं हुआ।",
     "answerTrustSemanticLabel": "{status}। {reason}"

@@ -169,6 +169,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "Questa risposta non ha superato il controllo di attendibilità dell\'applicazione.",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "La generazione è scaduta prima della verifica della risposta finale. Le prove degli strumenti completate restano disponibili.",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "Non sono disponibili prove utilizzabili dagli strumenti per questa risposta.",
     ),

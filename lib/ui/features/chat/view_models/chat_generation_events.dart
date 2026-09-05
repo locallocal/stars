@@ -137,6 +137,12 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
               _answerTrustGateResult = AnswerTrustGateResult.failed;
               _answerEvidenceState = AnswerEvidenceState.invalid;
             }
+            if (result.status != AgentRunStatus.completed) {
+              _validatedEvidenceIds = _persistedEvidenceIds(
+                result.toolInvocations,
+              );
+              _validatedClaims = const [];
+            }
             final providerFailure = result.providerFailure;
             if (providerFailure != null && !_hasGeneratedContent) {
               _recordProviderFailureSafely(providerFailure);

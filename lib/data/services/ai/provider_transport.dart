@@ -5,6 +5,66 @@ import 'package:stars/domain/models/provider_failure.dart';
 
 typedef ProviderRetryDelay = Future<void> Function(Duration duration);
 
+/// Default wall-clock budget for one generation or Skill-model request.
+///
+/// Agent runs can contain several model turns, so this remains bounded below
+/// the run-level deadline while allowing slower reasoning providers to finish.
+const Duration defaultProviderGenerationTimeout = Duration(minutes: 5);
+
+/// Applies one wall-clock deadline to an entire response stream.
+///
+/// [Stream.timeout] restarts its timer after every event and therefore only
+/// detects idle gaps. Provider generation needs a total body deadline as well,
+/// otherwise a slow but active stream can outlive the request budget forever.
+Stream<T> withProviderStreamTimeout<T>(Stream<T> source, Duration timeout) {
+  late final StreamController<T> controller;
+  StreamSubscription<T>? subscription;
+  Timer? timer;
+  var closed = false;
+
+  Future<void> close() async {
+    if (closed) return;
+    closed = true;
+    timer?.cancel();
+    timer = null;
+    await controller.close();
+  }
+
+  controller = StreamController<T>(
+    sync: true,
+    onListen: () {
+      timer = Timer(timeout, () {
+        if (closed) return;
+        controller.addError(
+          TimeoutException('Provider response stream timed out.'),
+        );
+        unawaited(subscription?.cancel());
+        unawaited(close());
+      });
+      subscription = source.listen(
+        (event) {
+          if (!closed) controller.add(event);
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (closed) return;
+          controller.addError(error, stackTrace);
+          unawaited(close());
+        },
+        onDone: () => unawaited(close()),
+      );
+    },
+    onPause: () => subscription?.pause(),
+    onResume: () => subscription?.resume(),
+    onCancel: () async {
+      closed = true;
+      timer?.cancel();
+      timer = null;
+      await subscription?.cancel();
+    },
+  );
+  return controller.stream;
+}
+
 final class ProviderRetryPolicy {
   const ProviderRetryPolicy({
     this.maxAttempts = 3,

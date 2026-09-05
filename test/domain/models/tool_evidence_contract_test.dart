@@ -278,6 +278,28 @@ void main() {
       expect(envelope['data_classification'], 'untrusted_tool_data');
       expect(envelope['instructions_allowed'], isFalse);
     });
+
+    test('compact synthesis envelope omits raw payload but retains facts', () {
+      final observedAt = DateTime.utc(2026, 9, 4, 10);
+      final result = _result(
+        observedAt: observedAt,
+        scope: const {'resource_id': 'record-1'},
+        facts: [StructuredFact(name: 'record.state', value: 'ready')],
+      );
+
+      final envelope =
+          jsonDecode(encodeToolResultForModel(result, includePayload: false))
+              as Map<String, Object?>;
+
+      expect(envelope, isNot(contains('content')));
+      expect(envelope, isNot(contains('structured_data')));
+      expect(envelope['result_digest'], result.resultDigest);
+      expect(envelope['subject'], 'resource:record');
+      expect(envelope['scope'], {'resource_id': 'record-1'});
+      expect(envelope['facts'], [
+        {'name': 'record.state', 'value': 'ready'},
+      ]);
+    });
   });
 }
 

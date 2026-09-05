@@ -38,6 +38,7 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
     required bool closeClient,
     required ProviderResponseDecoder decodeResponse,
     String? reasoningEffort,
+    Duration requestTimeout = defaultProviderGenerationTimeout,
   }) : _bot = bot,
        _request = request,
        _toolNames = _ProviderToolNameCodec(request.tools),
@@ -50,7 +51,8 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
        _client = client,
        _closeClient = closeClient,
        _decodeResponse = decodeResponse,
-       _reasoningEffort = reasoningEffort;
+       _reasoningEffort = reasoningEffort,
+       _requestTimeout = requestTimeout;
 
   final Bot _bot;
   final ModelRequest _request;
@@ -62,6 +64,7 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
   final bool _closeClient;
   final ProviderResponseDecoder _decodeResponse;
   final String? _reasoningEffort;
+  final Duration _requestTimeout;
   final DateTime Function() _now = DateTime.now;
   bool _started = false;
   bool _closed = false;
@@ -78,13 +81,7 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
     if (!_started) {
       throw StateError('Agent model session has not started.');
     }
-    for (final result in results) {
-      _input.add({
-        'type': 'function_call_output',
-        'call_id': result.callId,
-        'output': encodeToolResultForModel(result),
-      });
-    }
+    _appendToolResults(results);
     return _send();
   }
 
@@ -104,11 +101,13 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) {
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) {
     if (!_started) {
       throw StateError('Agent model session has not started.');
     }
+    _appendToolResults(pendingToolResults, includePayload: false);
     _input.add({
       'role': 'user',
       'content': [
@@ -116,6 +115,22 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
       ],
     });
     return _send(groundedRequest: request);
+  }
+
+  void _appendToolResults(
+    List<ToolResult> results, {
+    bool includePayload = true,
+  }) {
+    for (final result in results) {
+      _input.add({
+        'type': 'function_call_output',
+        'call_id': result.callId,
+        'output': encodeToolResultForModel(
+          result,
+          includePayload: includePayload,
+        ),
+      });
+    }
   }
 
   Stream<ModelEvent> _send({
@@ -149,7 +164,7 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
               }),
             ),
         endpointKind: ProviderEndpointKind.responses,
-        timeout: const Duration(seconds: 60),
+        timeout: _requestTimeout,
       );
     } on ProviderFailure catch (failure) {
       yield ModelTurnFailed.fromProvider(failure);
@@ -290,6 +305,7 @@ final class AnthropicAgentModelSession implements AgentModelSession {
     required http.Client client,
     required bool closeClient,
     required ProviderResponseDecoder decodeResponse,
+    Duration requestTimeout = defaultProviderGenerationTimeout,
   }) : _bot = bot,
        _request = request,
        _toolNames = _ProviderToolNameCodec(request.tools),
@@ -303,7 +319,8 @@ final class AnthropicAgentModelSession implements AgentModelSession {
        _maxTokens = maxTokens,
        _client = client,
        _closeClient = closeClient,
-       _decodeResponse = decodeResponse;
+       _decodeResponse = decodeResponse,
+       _requestTimeout = requestTimeout;
 
   final Bot _bot;
   final ModelRequest _request;
@@ -316,6 +333,7 @@ final class AnthropicAgentModelSession implements AgentModelSession {
   final http.Client _client;
   final bool _closeClient;
   final ProviderResponseDecoder _decodeResponse;
+  final Duration _requestTimeout;
   bool _started = false;
   bool _closed = false;
 
@@ -333,18 +351,7 @@ final class AnthropicAgentModelSession implements AgentModelSession {
     if (!_started) {
       throw StateError('Agent model session has not started.');
     }
-    _messages.add({
-      'role': 'user',
-      'content': [
-        for (final result in results)
-          {
-            'type': 'tool_result',
-            'tool_use_id': result.callId,
-            'content': encodeToolResultForModel(result),
-            'is_error': result.isError,
-          },
-      ],
-    });
+    _appendToolResults(results);
     return _send();
   }
 
@@ -359,16 +366,40 @@ final class AnthropicAgentModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) {
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) {
     if (!_started) {
       throw StateError('Agent model session has not started.');
     }
+    _appendToolResults(pendingToolResults, includePayload: false);
     _messages.add({
       'role': 'user',
       'content': _groundedAnswerSynthesisPrompt(request),
     });
     return _send(groundedRequest: request);
+  }
+
+  void _appendToolResults(
+    List<ToolResult> results, {
+    bool includePayload = true,
+  }) {
+    if (results.isEmpty) return;
+    _messages.add({
+      'role': 'user',
+      'content': [
+        for (final result in results)
+          {
+            'type': 'tool_result',
+            'tool_use_id': result.callId,
+            'content': encodeToolResultForModel(
+              result,
+              includePayload: includePayload,
+            ),
+            'is_error': result.isError,
+          },
+      ],
+    });
   }
 
   Stream<ModelEvent> _send({
@@ -396,7 +427,7 @@ final class AnthropicAgentModelSession implements AgentModelSession {
               }),
             ),
         endpointKind: ProviderEndpointKind.messages,
-        timeout: const Duration(seconds: 60),
+        timeout: _requestTimeout,
       );
     } on ProviderFailure catch (failure) {
       yield ModelTurnFailed.fromProvider(failure);

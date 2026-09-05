@@ -5064,6 +5064,16 @@ class S {
     );
   }
 
+  /// `Generation timed out before the final response could be verified. Completed tool evidence remains available.`
+  String get answerTrustReasonGenerationTimedOut {
+    return Intl.message(
+      'Generation timed out before the final response could be verified. Completed tool evidence remains available.',
+      name: 'answerTrustReasonGenerationTimedOut',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `This response did not pass the application's trust gate.`
   String get answerTrustReasonGateFailed {
     return Intl.message(

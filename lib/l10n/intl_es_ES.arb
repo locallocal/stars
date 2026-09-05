@@ -957,6 +957,7 @@
     "answerTrustReasonProviderUnsupported": "Este proveedor no admite herramientas de verificación.",
     "answerTrustReasonToolRejected": "La solicitud de la herramienta de verificación fue rechazada.",
     "answerTrustReasonProviderFailed": "La solicitud al proveedor falló antes de que se pudiera verificar esta respuesta.",
+    "answerTrustReasonGenerationTimedOut": "La generación agotó el tiempo antes de verificar la respuesta final. La evidencia de herramientas completada sigue disponible.",
     "answerTrustReasonGateFailed": "Esta respuesta no superó la comprobación de confianza de la aplicación.",
     "answerTrustReasonUnavailable": "No se completó la verificación de esta respuesta.",
     "answerTrustSemanticLabel": "{status}. {reason}"

@@ -327,8 +327,9 @@ final class _FakeModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) => Stream.fromIterable([
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) => Stream.fromIterable([
     GroundedAnswerProduced(
       GroundedAnswerCandidate.parseProviderOutput(
         request.draftText,

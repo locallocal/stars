@@ -167,6 +167,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "answerTrustReasonGateFailed": MessageLookupByLibrary.simpleMessage(
       "This response did not pass the application\'s trust gate.",
     ),
+    "answerTrustReasonGenerationTimedOut": MessageLookupByLibrary.simpleMessage(
+      "Generation timed out before the final response could be verified. Completed tool evidence remains available.",
+    ),
     "answerTrustReasonNoTool": MessageLookupByLibrary.simpleMessage(
       "No usable tool evidence is available for this response.",
     ),

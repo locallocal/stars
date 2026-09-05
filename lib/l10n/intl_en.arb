@@ -1156,6 +1156,7 @@
     "answerTrustReasonProviderUnsupported": "This provider does not support verification tools.",
     "answerTrustReasonToolRejected": "The verification tool request was rejected.",
     "answerTrustReasonProviderFailed": "The provider request failed before this response could be verified.",
+    "answerTrustReasonGenerationTimedOut": "Generation timed out before the final response could be verified. Completed tool evidence remains available.",
     "answerTrustReasonGateFailed": "This response did not pass the application's trust gate.",
     "answerTrustReasonUnavailable": "Verification was not completed for this response.",
     "answerTrustSemanticLabel": "{status}. {reason}",

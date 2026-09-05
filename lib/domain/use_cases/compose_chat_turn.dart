@@ -8,6 +8,7 @@ import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
 import 'package:stars/domain/services/stars_system_prompt.dart';
+import 'package:stars/domain/services/system_skill_routing_policy.dart';
 import 'package:stars/domain/use_cases/skill_catalog.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
@@ -90,6 +91,8 @@ final class ComposeChatTurn {
     McpServerRepository? mcpServerRepository,
     SkillCatalog skillCatalog = const SkillCatalog(),
     SkillContextBudget budget = const SkillContextBudget(),
+    SystemSkillRoutingPolicy systemSkillRoutingPolicy =
+        const SystemSkillRoutingPolicy(),
     PrepareConversationContext? prepareConversationContext,
     CompactConversation? compactConversation,
     BundledSkillLoader? bundledSkillLoader,
@@ -106,6 +109,7 @@ final class ComposeChatTurn {
        _mcpServerRepository = mcpServerRepository,
        _skillCatalog = skillCatalog,
        _budget = budget,
+       _systemSkillRoutingPolicy = systemSkillRoutingPolicy,
        _prepareConversationContext = prepareConversationContext,
        _compactConversation = compactConversation,
        _bundledSkillLoader = bundledSkillLoader,
@@ -120,6 +124,7 @@ final class ComposeChatTurn {
   final McpServerRepository? _mcpServerRepository;
   final SkillCatalog _skillCatalog;
   final SkillContextBudget _budget;
+  final SystemSkillRoutingPolicy _systemSkillRoutingPolicy;
   final PrepareConversationContext? _prepareConversationContext;
   final CompactConversation? _compactConversation;
   final BundledSkillLoader? _bundledSkillLoader;
@@ -163,6 +168,10 @@ final class ComposeChatTurn {
     final provider = skillToolProvider;
     final enabledSkillIds =
         enabledBindings.map((binding) => binding.skillId).toSet();
+    final routedSystemSkillIds = _systemSkillRoutingPolicy.select(
+      query: userMessage.content,
+      enabledSkillIds: enabledSkillIds,
+    );
     final autoBindings = enabledBindings.where(
       (binding) =>
           descriptors.containsKey(binding.skillId) &&
@@ -246,7 +255,7 @@ final class ComposeChatTurn {
     final systemShellSkill = _loadSystemShellSkill(
       provider,
       state,
-      enabledSkillIds,
+      routedSystemSkillIds,
     );
     final systemShellSkillTokens =
         systemShellSkill == null
@@ -255,7 +264,7 @@ final class ComposeChatTurn {
     final systemDirectoryOperationsSkill = _loadSystemDirectoryOperationsSkill(
       provider,
       state,
-      enabledSkillIds,
+      routedSystemSkillIds,
       reservedTokens: systemShellSkillTokens,
     );
     final systemDirectoryOperationsTokens =
@@ -265,7 +274,7 @@ final class ComposeChatTurn {
     final systemFileOperationsSkill = _loadSystemFileOperationsSkill(
       provider,
       state,
-      enabledSkillIds,
+      routedSystemSkillIds,
       reservedTokens: systemShellSkillTokens + systemDirectoryOperationsTokens,
     );
     final systemFileOperationsTokens =
@@ -275,7 +284,7 @@ final class ComposeChatTurn {
     final systemSkillInstallerSkill = _loadSystemSkillInstallerSkill(
       provider,
       state,
-      enabledSkillIds,
+      routedSystemSkillIds,
       reservedTokens:
           systemShellSkillTokens +
           systemDirectoryOperationsTokens +
@@ -293,7 +302,7 @@ final class ComposeChatTurn {
     final systemMcpInstallerSkill = _loadSystemMcpInstallerSkill(
       provider,
       state,
-      enabledSkillIds,
+      routedSystemSkillIds,
       reservedTokens:
           systemShellSkillTokens +
           systemDirectoryOperationsTokens +

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
@@ -23,7 +24,7 @@ final class OpenAiSkillToolSession implements SkillToolSession {
     required http.Client client,
     required bool closeClient,
     required ProviderResponseDecoder decodeResponse,
-    Duration requestTimeout = const Duration(minutes: 2),
+    Duration requestTimeout = defaultProviderGenerationTimeout,
     Map<String, Object?> additionalBody = const {},
   }) : _bot = bot,
        _request = request,
@@ -147,7 +148,7 @@ final class OpenAiResponsesSkillToolSession implements SkillToolSession {
     required http.Client client,
     required bool closeClient,
     required ProviderResponseDecoder decodeResponse,
-    Duration requestTimeout = const Duration(seconds: 60),
+    Duration requestTimeout = defaultProviderGenerationTimeout,
   }) : _bot = bot,
        _request = request,
        _input =
@@ -250,6 +251,7 @@ final class AnthropicSkillToolSession implements SkillToolSession {
     required http.Client client,
     required bool closeClient,
     required ProviderResponseDecoder decodeResponse,
+    Duration requestTimeout = defaultProviderGenerationTimeout,
   }) : _bot = bot,
        _request = request,
        _system = system,
@@ -262,7 +264,8 @@ final class AnthropicSkillToolSession implements SkillToolSession {
        _maxTokens = maxTokens,
        _client = client,
        _closeClient = closeClient,
-       _decodeResponse = decodeResponse;
+       _decodeResponse = decodeResponse,
+       _requestTimeout = requestTimeout;
 
   final Bot _bot;
   final SkillToolSessionRequest _request;
@@ -274,6 +277,7 @@ final class AnthropicSkillToolSession implements SkillToolSession {
   final http.Client _client;
   final bool _closeClient;
   final ProviderResponseDecoder _decodeResponse;
+  final Duration _requestTimeout;
   bool _started = false;
 
   @override
@@ -318,7 +322,7 @@ final class AnthropicSkillToolSession implements SkillToolSession {
             }),
           ),
       endpointKind: ProviderEndpointKind.messages,
-      timeout: const Duration(seconds: 30),
+      timeout: _requestTimeout,
     );
     final decoded = _decodeResponse(utf8.decode(response.bodyBytes));
     final root = _objectMap(decoded);
@@ -362,6 +366,7 @@ final class OpenAiAgentModelSession implements AgentModelSession {
     String? reasoningEffort,
     bool streamResponses = false,
     Map<String, Object?> additionalBody = const {},
+    Duration requestTimeout = defaultProviderGenerationTimeout,
   }) : _bot = bot,
        _request = request,
        _toolNames = _ProviderToolNameCodec(request.tools),
@@ -376,7 +381,8 @@ final class OpenAiAgentModelSession implements AgentModelSession {
        _decodeResponse = decodeResponse,
        _reasoningEffort = reasoningEffort,
        _streamResponses = streamResponses,
-       _additionalBody = Map<String, Object?>.unmodifiable(additionalBody);
+       _additionalBody = Map<String, Object?>.unmodifiable(additionalBody),
+       _requestTimeout = requestTimeout;
 
   final Bot _bot;
   final ModelRequest _request;
@@ -390,6 +396,7 @@ final class OpenAiAgentModelSession implements AgentModelSession {
   final String? _reasoningEffort;
   final bool _streamResponses;
   final Map<String, Object?> _additionalBody;
+  final Duration _requestTimeout;
   bool _started = false;
   bool _closed = false;
 
@@ -407,13 +414,7 @@ final class OpenAiAgentModelSession implements AgentModelSession {
     if (!_started) {
       throw StateError('Agent model session has not started.');
     }
-    for (final result in results) {
-      _messages.add({
-        'role': 'tool',
-        'tool_call_id': result.callId,
-        'content': encodeToolResultForModel(result),
-      });
-    }
+    _appendToolResults(results);
     return _send();
   }
 
@@ -428,16 +429,34 @@ final class OpenAiAgentModelSession implements AgentModelSession {
 
   @override
   Stream<ModelEvent> synthesizeGroundedAnswer(
-    GroundedAnswerSynthesisRequest request,
-  ) {
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) {
     if (!_started) {
       throw StateError('Agent model session has not started.');
     }
+    _appendToolResults(pendingToolResults, includePayload: false);
     _messages.add({
       'role': 'user',
       'content': _groundedAnswerSynthesisPrompt(request),
     });
     return _send(groundedRequest: request);
+  }
+
+  void _appendToolResults(
+    List<ToolResult> results, {
+    bool includePayload = true,
+  }) {
+    for (final result in results) {
+      _messages.add({
+        'role': 'tool',
+        'tool_call_id': result.callId,
+        'content': encodeToolResultForModel(
+          result,
+          includePayload: includePayload,
+        ),
+      });
+    }
   }
 
   Stream<ModelEvent> _send({
@@ -465,7 +484,7 @@ final class OpenAiAgentModelSession implements AgentModelSession {
               ),
             ),
         endpointKind: ProviderEndpointKind.chatCompletions,
-        timeout: const Duration(seconds: 60),
+        timeout: _requestTimeout,
       );
     } on ProviderFailure catch (failure) {
       yield ModelTurnFailed.fromProvider(failure);
@@ -541,6 +560,7 @@ final class OpenAiAgentModelSession implements AgentModelSession {
   }
 
   Stream<ModelEvent> _sendStreaming() async* {
+    final requestStopwatch = Stopwatch()..start();
     late final http.StreamedResponse response;
     try {
       response = await sendProviderStreamRequest(
@@ -552,7 +572,7 @@ final class OpenAiAgentModelSession implements AgentModelSession {
           return _client.send(request);
         },
         endpointKind: ProviderEndpointKind.chatCompletions,
-        timeout: const Duration(seconds: 60),
+        timeout: _requestTimeout,
       );
     } on ProviderFailure catch (failure) {
       yield ModelTurnFailed.fromProvider(failure);
@@ -566,53 +586,79 @@ final class OpenAiAgentModelSession implements AgentModelSession {
     var finishReason = '';
     var receivedDone = false;
 
-    await for (final source in _sseData(response.stream)) {
-      if (source == '[DONE]') {
-        receivedDone = true;
-        break;
-      }
-
-      final root = _objectMap(_decodeResponse(source));
-      if (root['error'] != null) {
-        yield ModelTurnFailed.fromProvider(
-          ProviderFailure.invalidResponse(
-            endpointKind: ProviderEndpointKind.chatCompletions,
-            code: 'provider_stream_error',
-          ),
-        );
-        return;
-      }
-      usage = usage.merge(_openAiUsage(root, _bot.model));
-
-      final choices = _objectList(root['choices']);
-      if (choices.isEmpty) continue;
-      final choice = _objectMap(choices.first);
-      usage = usage.merge(_openAiUsage(choice, _bot.model));
-      final nextFinishReason = choice['finish_reason']?.toString() ?? '';
-      if (nextFinishReason.isNotEmpty) finishReason = nextFinishReason;
-
-      final delta = _objectMap(choice['delta']);
-      final reasoningDelta = _streamedText(
-        delta['reasoning_content'] ?? delta['reasoning'],
+    final remaining = _requestTimeout - requestStopwatch.elapsed;
+    if (remaining <= Duration.zero) {
+      yield ModelTurnFailed.fromProvider(
+        ProviderFailure.timeout(
+          endpointKind: ProviderEndpointKind.chatCompletions,
+        ),
       );
-      if (reasoningDelta.isNotEmpty) {
-        reasoning.write(reasoningDelta);
-        yield ReasoningDelta(reasoningDelta);
-      }
-      final contentDelta = _streamedText(delta['content']);
-      if (contentDelta.isNotEmpty) {
-        content.write(contentDelta);
-        yield TextDelta(contentDelta);
-      }
+      return;
+    }
 
-      final rawCalls = _objectList(delta['tool_calls']);
-      for (var position = 0; position < rawCalls.length; position++) {
-        final rawCall = _objectMap(rawCalls[position]);
-        final index = _integer(rawCall['index'], fallback: position);
-        toolCalls
-            .putIfAbsent(index, _OpenAiStreamedToolCallBuilder.new)
-            .append(rawCall);
+    try {
+      await for (final source in withProviderStreamTimeout(
+        _sseData(response.stream),
+        remaining,
+      )) {
+        if (requestStopwatch.elapsed >= _requestTimeout) {
+          throw TimeoutException('Provider response stream timed out.');
+        }
+        if (source == '[DONE]') {
+          receivedDone = true;
+          break;
+        }
+
+        final root = _objectMap(_decodeResponse(source));
+        if (root['error'] != null) {
+          yield ModelTurnFailed.fromProvider(
+            ProviderFailure.invalidResponse(
+              endpointKind: ProviderEndpointKind.chatCompletions,
+              code: 'provider_stream_error',
+            ),
+          );
+          return;
+        }
+        usage = usage.merge(_openAiUsage(root, _bot.model));
+
+        final choices = _objectList(root['choices']);
+        if (choices.isEmpty) continue;
+        final choice = _objectMap(choices.first);
+        usage = usage.merge(_openAiUsage(choice, _bot.model));
+        final nextFinishReason = choice['finish_reason']?.toString() ?? '';
+        if (nextFinishReason.isNotEmpty) finishReason = nextFinishReason;
+
+        final delta = _objectMap(choice['delta']);
+        final reasoningDelta = _streamedText(
+          delta['reasoning_content'] ?? delta['reasoning'],
+        );
+        if (reasoningDelta.isNotEmpty) {
+          reasoning.write(reasoningDelta);
+          yield ReasoningDelta(reasoningDelta);
+        }
+        final contentDelta = _streamedText(delta['content']);
+        if (contentDelta.isNotEmpty) {
+          content.write(contentDelta);
+          yield TextDelta(contentDelta);
+        }
+
+        final rawCalls = _objectList(delta['tool_calls']);
+        for (var position = 0; position < rawCalls.length; position++) {
+          final rawCall = _objectMap(rawCalls[position]);
+          final index = _integer(rawCall['index'], fallback: position);
+          toolCalls
+              .putIfAbsent(index, _OpenAiStreamedToolCallBuilder.new)
+              .append(rawCall);
+        }
       }
+    } on Object catch (error) {
+      yield ModelTurnFailed.fromProvider(
+        classifyProviderTransportFailure(
+          error,
+          endpointKind: ProviderEndpointKind.chatCompletions,
+        ),
+      );
+      return;
     }
 
     if (!receivedDone) {

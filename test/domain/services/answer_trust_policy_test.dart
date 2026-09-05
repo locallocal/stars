@@ -229,6 +229,19 @@ void main() {
       }
     });
 
+    test('failed generation retains already persisted evidence', () {
+      final grounding = policy.evaluate(
+        _input(
+          terminalOutcome: MessageTerminalOutcome.failed,
+          failureReasonCode: 'agent_run_timeout',
+        ),
+      );
+
+      expect(grounding.trustLevel, AnswerTrustLevel.failed);
+      expect(grounding.reasonCode, 'agent_run_timeout');
+      expect(grounding.evidenceIds, ['evidence-1']);
+    });
+
     test('gate and critical persistence failures produce failed trust', () {
       final gateFailure = policy.evaluate(
         _input(gateResult: AnswerTrustGateResult.failed),

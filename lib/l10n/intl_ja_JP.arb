@@ -957,6 +957,7 @@
     "answerTrustReasonProviderUnsupported": "このプロバイダーは検証ツールをサポートしていません。",
     "answerTrustReasonToolRejected": "検証ツールのリクエストが拒否されました。",
     "answerTrustReasonProviderFailed": "この回答を検証する前にプロバイダーへのリクエストが失敗しました。",
+    "answerTrustReasonGenerationTimedOut": "最終回答の検証が完了する前に生成がタイムアウトしました。完了済みのツール証拠は引き続き確認できます。",
     "answerTrustReasonGateFailed": "この回答はアプリの信頼性ゲートを通過しませんでした。",
     "answerTrustReasonUnavailable": "この回答の検証は完了していません。",
     "answerTrustSemanticLabel": "{status}。{reason}"
