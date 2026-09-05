@@ -35,11 +35,14 @@ final class AgentRunRequest {
     this.messageId = '',
     required List<ChatMessage> messages,
     required Set<String> requestedToolNames,
+    Set<String> verificationToolNames = const {},
     Set<String> approvalExemptToolNames = const {},
     List<ClaimEvidenceRequirement> verificationRequirements = const [],
     AgentCancellationToken? cancellationToken,
+    this.verificationUnavailableReason = '',
   }) : messages = List<ChatMessage>.unmodifiable(messages),
        requestedToolNames = Set<String>.unmodifiable(requestedToolNames),
+       verificationToolNames = Set<String>.unmodifiable(verificationToolNames),
        approvalExemptToolNames = Set<String>.unmodifiable(
          approvalExemptToolNames,
        ),
@@ -55,9 +58,11 @@ final class AgentRunRequest {
   final String messageId;
   final List<ChatMessage> messages;
   final Set<String> requestedToolNames;
+  final Set<String> verificationToolNames;
   final Set<String> approvalExemptToolNames;
   final List<ClaimEvidenceRequirement> verificationRequirements;
   final AgentCancellationToken cancellationToken;
+  final String verificationUnavailableReason;
 }
 
 enum AgentRunStatus { completed, cancelled, failed, timedOut, limitExceeded }

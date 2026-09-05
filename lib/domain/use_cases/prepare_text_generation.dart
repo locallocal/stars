@@ -4,6 +4,7 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/conversation_history_repository.dart';
 import 'package:stars/domain/repositories/mcp_inventory_repository.dart';
 import 'package:stars/domain/repositories/skill_inventory_repository.dart';
+import 'package:stars/domain/services/verification_tool_discovery.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/conversation_history_tools.dart';
 import 'package:stars/domain/use_cases/mcp_inventory_tools.dart';
@@ -27,10 +28,12 @@ final class PreparedChatGeneration {
     required List<MessageToolCall> skillToolCalls,
     required this.preflightTokenUsage,
     required Set<String> requestedToolNames,
+    Set<String> verificationToolNames = const {},
     required Set<String> approvalExemptToolNames,
     required List<ExecutableTool> runScopedTools,
     required this.contextAssemblyReport,
     this.reliabilityPolicyEnabled = true,
+    this.verificationUnavailableReason = '',
   }) : messages = List<ChatMessage>.unmodifiable(messages),
        activatedSkills = List<ActivatedSkill>.unmodifiable(activatedSkills),
        activationAttempts = List<SkillActivationAttempt>.unmodifiable(
@@ -38,6 +41,7 @@ final class PreparedChatGeneration {
        ),
        skillToolCalls = List<MessageToolCall>.unmodifiable(skillToolCalls),
        requestedToolNames = Set<String>.unmodifiable(requestedToolNames),
+       verificationToolNames = Set<String>.unmodifiable(verificationToolNames),
        approvalExemptToolNames = Set<String>.unmodifiable(
          approvalExemptToolNames,
        ),
@@ -50,31 +54,45 @@ final class PreparedChatGeneration {
   final List<MessageToolCall> skillToolCalls;
   final ModelTokenUsage preflightTokenUsage;
   final Set<String> requestedToolNames;
+  final Set<String> verificationToolNames;
   final Set<String> approvalExemptToolNames;
   final List<ExecutableTool> runScopedTools;
   final ContextAssemblyReport contextAssemblyReport;
   final bool reliabilityPolicyEnabled;
+  final String verificationUnavailableReason;
 }
 
 /// Prepares a text generation request and its run-scoped tools.
 final class PrepareTextGeneration {
-  const PrepareTextGeneration({
+  PrepareTextGeneration({
     required ChatTurnComposer composeChatTurn,
     required AiProviderRepository aiProviderRepository,
     ConversationHistoryRepository? conversationHistoryRepository,
     McpInventoryRepository? mcpInventoryRepository,
     SkillInventoryRepository? skillInventoryRepository,
+    ToolRegistry? toolRegistry,
+    Set<String> verificationToolCandidateNames = const {},
+    VerificationToolDiscovery verificationToolDiscovery =
+        const VerificationToolDiscovery(),
   }) : _composeChatTurn = composeChatTurn,
        _aiProviderRepository = aiProviderRepository,
        _conversationHistoryRepository = conversationHistoryRepository,
        _mcpInventoryRepository = mcpInventoryRepository,
-       _skillInventoryRepository = skillInventoryRepository;
+       _skillInventoryRepository = skillInventoryRepository,
+       _toolRegistry = toolRegistry,
+       _verificationToolCandidateNames = Set<String>.unmodifiable(
+         verificationToolCandidateNames,
+       ),
+       _verificationToolDiscovery = verificationToolDiscovery;
 
   final ChatTurnComposer _composeChatTurn;
   final AiProviderRepository _aiProviderRepository;
   final ConversationHistoryRepository? _conversationHistoryRepository;
   final McpInventoryRepository? _mcpInventoryRepository;
   final SkillInventoryRepository? _skillInventoryRepository;
+  final ToolRegistry? _toolRegistry;
+  final Set<String> _verificationToolCandidateNames;
+  final VerificationToolDiscovery _verificationToolDiscovery;
 
   Future<PreparedChatTurn> prepareTurn({
     required Bot bot,
@@ -137,6 +155,14 @@ final class PrepareTextGeneration {
               chatId: chatId,
             ).createTools()
             : const <ExecutableTool>[];
+    final verificationTools =
+        preparedTurn.reliabilityPolicyEnabled
+            ? _verificationToolDiscovery.discover(
+              registry: _toolRegistry,
+              candidateToolNames: _verificationToolCandidateNames,
+              requestedToolNames: preparedTurn.requestedToolNames,
+            )
+            : VerificationToolDiscoveryResult();
 
     return PreparedChatGeneration(
       userMessage: userMessage,
@@ -146,6 +172,7 @@ final class PrepareTextGeneration {
       skillToolCalls: preparedTurn.skillToolCalls,
       preflightTokenUsage: preparedTurn.preflightTokenUsage,
       requestedToolNames: preparedTurn.requestedToolNames,
+      verificationToolNames: verificationTools.toolNames,
       approvalExemptToolNames: preparedTurn.approvalExemptToolNames,
       runScopedTools: [
         ...historyTools,
@@ -154,6 +181,7 @@ final class PrepareTextGeneration {
       ],
       contextAssemblyReport: preparedTurn.contextAssemblyReport,
       reliabilityPolicyEnabled: preparedTurn.reliabilityPolicyEnabled,
+      verificationUnavailableReason: verificationTools.unavailableReason,
     );
   }
 }

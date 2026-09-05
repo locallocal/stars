@@ -25,6 +25,7 @@ final class AnswerTrustPolicyInput {
     List<String> evidenceIds = const [],
     this.criticalPersistenceSucceeded = true,
     this.failureReasonCode = '',
+    this.verificationUnavailableReason = '',
   }) : toolCalls = List<MessageToolCall>.unmodifiable(toolCalls),
        evidenceIds = List<String>.unmodifiable(evidenceIds);
 
@@ -37,6 +38,7 @@ final class AnswerTrustPolicyInput {
   final List<String> evidenceIds;
   final bool criticalPersistenceSucceeded;
   final String failureReasonCode;
+  final String verificationUnavailableReason;
 }
 
 /// Computes trust exclusively from application-observed terminal facts.
@@ -77,6 +79,14 @@ final class AnswerTrustPolicy {
     }
     if (!input.reliabilityPolicyEnabled) {
       return _unverified('reliability_policy_disabled');
+    }
+    if (input.verificationUnavailableReason.isNotEmpty) {
+      return _unverified(
+        _safeReasonCode(
+          input.verificationUnavailableReason,
+          fallback: 'verification_tool_unavailable',
+        ),
+      );
     }
     if (input.toolCalls.isEmpty) {
       return _unverified('no_tool_evidence');

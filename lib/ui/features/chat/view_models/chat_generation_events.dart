@@ -62,6 +62,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
     required AiProvider provider,
     required List<ChatMessage> messages,
     required Set<String> requestedToolNames,
+    required Set<String> verificationToolNames,
     required Set<String> approvalExemptToolNames,
     required ToolRegistry toolRegistry,
   }) async {
@@ -87,7 +88,9 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
         messageId: '$runId:assistant',
         messages: messages,
         requestedToolNames: requestedToolNames,
+        verificationToolNames: verificationToolNames,
         approvalExemptToolNames: approvalExemptToolNames,
+        verificationUnavailableReason: _verificationUnavailableReason,
         cancellationToken: cancellationToken,
       ),
       onModelEvent: (event) => _onAgentModelEvent(runId, event),

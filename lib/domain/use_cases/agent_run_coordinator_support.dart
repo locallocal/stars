@@ -10,9 +10,11 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     required Map<String, _CompletedCall> completedCalls,
     required _InvocationIdentityRegistry invocationIdentities,
     required Future<void> Function(ToolInvocationRecord) observeInvocation,
+    bool Function()? shouldContinue,
   }) async {
     final results = <ToolResult>[];
     for (final call in calls) {
+      if (shouldContinue != null && !shouldContinue()) break;
       cancellationToken.throwIfCancelled();
       results.add(
         await _executeToolCall(

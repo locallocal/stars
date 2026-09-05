@@ -149,6 +149,39 @@ void main() {
       },
     );
 
+    test(
+      'exposes an eligible verifier independently from Skill tools',
+      () async {
+        final verifier = _EvidenceCalculationTool();
+        final session = _FakeModelSession([
+          [
+            const TextDelta('No calculation was needed.'),
+            const ModelTurnCompleted(stopReason: 'stop'),
+          ],
+        ]);
+        final provider = _FakeProvider(session);
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([verifier]),
+          toolPolicy: const DefaultToolPolicy(),
+        );
+
+        final result = await coordinator.run(
+          provider: provider,
+          request: _request(
+            toolNames: const {},
+            verificationToolNames: {verifier.definition.name},
+          ),
+        );
+
+        expect(result.status, AgentRunStatus.completed, reason: result.error);
+        expect(
+          provider.lastRequest?.tools.single.name,
+          verifier.definition.name,
+        );
+        expect(result.toolInvocations, isEmpty);
+      },
+    );
+
     test('reuses duplicate call id without repeating side effects', () async {
       final tool = _FakeTool(name: 'calculate');
       final repeated = ToolCallRequested(
@@ -399,6 +432,72 @@ void main() {
         ToolApprovalDecision.deny.name,
       );
     });
+
+    test(
+      'stops after verification denial without trying a write fallback',
+      () async {
+        final verificationRead = _VerificationReadTool();
+        final write = _FakeTool(
+          name: 'save_note',
+          riskLevel: ToolRiskLevel.write,
+          capabilities: const {ToolCapability.localWrite},
+        );
+        final session = _FakeModelSession(
+          [
+            [
+              const TextDelta('The requested verification was denied.'),
+              ToolCallRequested(
+                callId: 'read-1',
+                name: verificationRead.definition.name,
+                arguments: const {'value': 2},
+              ),
+              ToolCallRequested(
+                callId: 'write-1',
+                name: write.definition.name,
+                arguments: const {'value': 2},
+              ),
+              const ModelTurnCompleted(stopReason: 'tool_calls'),
+            ],
+          ],
+          groundedOutput:
+              '{"schema_version":1,"claims":[],"non_factual_text":"Verification was denied."}',
+        );
+        final provider = _FakeProvider(session);
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([verificationRead, write]),
+          toolPolicy: const DefaultToolPolicy(),
+          approvalHandler: const _FixedApprovalHandler(
+            ToolApprovalDecision.deny,
+          ),
+        );
+
+        final result = await coordinator.run(
+          provider: provider,
+          request: _request(
+            toolNames: {write.definition.name},
+            verificationToolNames: {verificationRead.definition.name},
+          ),
+        );
+
+        expect(result.status, AgentRunStatus.completed, reason: result.error);
+        expect(result.degradedReason, 'verification_tool_denied');
+        expect(verificationRead.executions, 0);
+        expect(write.executions, 0);
+        expect(result.toolInvocations, hasLength(1));
+        expect(
+          result.toolInvocations.single.status,
+          ToolInvocationStatus.denied,
+        );
+        expect(session.continuations, isEmpty);
+        expect(
+          provider.lastRequest?.tools.map((definition) => definition.name),
+          containsAll({
+            verificationRead.definition.name,
+            write.definition.name,
+          }),
+        );
+      },
+    );
 
     test('runs an approval-exempt MCP Tool without prompting', () async {
       final tool = _FakeTool(
@@ -856,6 +955,7 @@ void main() {
 
 AgentRunRequest _request({
   required Set<String> toolNames,
+  Set<String> verificationToolNames = const {},
   Set<String> approvalExemptToolNames = const {},
   AgentCancellationToken? cancellationToken,
 }) {
@@ -865,6 +965,7 @@ AgentRunRequest _request({
     botId: 'bot-1',
     messages: [ChatMessage(role: 'user', content: 'help')],
     requestedToolNames: toolNames,
+    verificationToolNames: verificationToolNames,
     approvalExemptToolNames: approvalExemptToolNames,
     cancellationToken: cancellationToken,
   );
@@ -994,6 +1095,51 @@ final class _EvidenceCalculationTool implements ExecutableTool {
       structuredFacts: facts,
       observedAt: observedAt,
     );
+  }
+}
+
+final class _VerificationReadTool implements ExecutableTool {
+  int executions = 0;
+
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: 'verify_file',
+    description: 'Read a file for verification.',
+    inputSchema: const {
+      'type': 'object',
+      'properties': {
+        'value': {'type': 'integer'},
+      },
+      'required': ['value'],
+      'additionalProperties': false,
+    },
+    outputSchema: const {
+      'type': 'object',
+      'properties': {
+        'result': {'type': 'integer'},
+        ...toolEvidenceOutputSchemaProperties,
+      },
+      'required': ['result', ...toolEvidenceOutputRequiredFields],
+      'additionalProperties': false,
+    },
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.readOnly,
+    capabilities: const {ToolCapability.localRead},
+    toolVersion: '1.0.0',
+    evidenceCapabilities: const {EvidenceKind.observation},
+    evidenceScope: ToolEvidenceScopeRule(
+      subject: 'file:content',
+      argumentToScope: const {'value': 'value'},
+    ),
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    executions += 1;
+    return ToolResult(callId: call.callId, name: call.name, content: 'read');
   }
 }
 

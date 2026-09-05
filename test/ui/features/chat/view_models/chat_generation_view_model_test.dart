@@ -106,6 +106,30 @@ void main() {
       },
     );
 
+    test('persists an explicit unavailable verification reason', () async {
+      final harness = _ControllerHarness(
+        cancellable: true,
+        supportsAgentLoop: true,
+      );
+      final controller = harness.controller;
+      addTearDown(controller.dispose);
+
+      await controller.startText(
+        userMessage: _userMessage(),
+        messages: [ChatMessage(role: 'user', content: 'Hello')],
+        verificationUnavailableReason: 'verification_tool_unavailable',
+      );
+      harness.runProvider.emitToken('answer');
+      harness.runProvider.emitTerminal(ProviderTerminalType.completed);
+      await _waitFor(
+        () => controller.snapshot.lifecycle == ChatRunLifecycle.completed,
+      );
+
+      final grounding = controller.snapshot.terminalMessage!.grounding;
+      expect(grounding.trustLevel, AnswerTrustLevel.unverified);
+      expect(grounding.reasonCode, 'verification_tool_unavailable');
+    });
+
     test(
       'application trust gate remains active when prompt is disabled',
       () async {

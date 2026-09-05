@@ -575,7 +575,20 @@ DTO 协议、协调器仅提交结构化段落及未校验声明不升级可信�
 
 ### GRD-017 基础验证工具发现与授权
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/services/verification_tool_discovery.dart`、
+`lib/domain/use_cases/prepare_text_generation.dart`、
+`lib/domain/use_cases/agent_run_coordinator.dart`、
+`lib/domain/models/tool.dart` 和
+`lib/ui/core/dependency_injection/app_dependencies.dart`；独立发现通道、最小候选集、审批保留、
+拒绝降级与 UI 原因传播回归测试：
+`test/domain/services/verification_tool_discovery_test.dart`、
+`test/domain/models/tool_policy_test.dart`、
+`test/domain/use_cases/prepare_text_generation_test.dart`、
+`test/domain/use_cases/compose_chat_turn_test.dart`、
+`test/domain/use_cases/agent_run_coordinator_test.dart` 和
+`test/ui/features/chat/view_models/chat_generation_view_model_test.dart`。
 
 目标：避免事实验证完全取决于 Skill 是否偶然激活。
 

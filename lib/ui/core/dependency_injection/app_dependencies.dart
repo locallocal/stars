@@ -396,18 +396,24 @@ class AppDependencies {
       starsSystemPromptLanguageProvider:
           () async => (await profileRepository.getProfile()).language,
     );
+    final builtInTools = createBuiltInTools();
+    final toolRegistry = DynamicToolRegistry([
+      ...builtInTools,
+      if (shellCommandTool != null) shellCommandTool,
+      skillInstallerTool,
+    ]);
     final prepareTextGeneration = PrepareTextGeneration(
       composeChatTurn: composeChatTurn.call,
       aiProviderRepository: aiProviderRepository,
       conversationHistoryRepository: conversationHistoryRepository,
       mcpInventoryRepository: mcpInventoryRepository,
       skillInventoryRepository: skillInventoryRepository,
+      toolRegistry: toolRegistry,
+      verificationToolCandidateNames: {
+        for (final tool in builtInTools)
+          if (isEligibleVerificationTool(tool.definition)) tool.definition.name,
+      },
     );
-    final toolRegistry = DynamicToolRegistry([
-      ...createBuiltInTools(),
-      if (shellCommandTool != null) shellCommandTool,
-      skillInstallerTool,
-    ]);
     final mcpCatalogService = McpCatalogService(
       repository: mcpServerRepository,
       client: mcpClient,

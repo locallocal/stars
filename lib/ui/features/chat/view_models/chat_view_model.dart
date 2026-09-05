@@ -161,10 +161,12 @@ class ChatViewModel extends DisposableChangeNotifier {
       skillToolCalls: prepared.skillToolCalls,
       preflightTokenUsage: prepared.preflightTokenUsage,
       requestedToolNames: prepared.requestedToolNames,
+      verificationToolNames: prepared.verificationToolNames,
       approvalExemptToolNames: prepared.approvalExemptToolNames,
       runScopedTools: prepared.runScopedTools,
       contextAssemblyReport: prepared.contextAssemblyReport,
       reliabilityPolicyEnabled: prepared.reliabilityPolicyEnabled,
+      verificationUnavailableReason: prepared.verificationUnavailableReason,
     );
   }
 
