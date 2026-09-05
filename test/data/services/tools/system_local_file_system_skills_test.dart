@@ -36,6 +36,9 @@ void main() {
       expect(content.instructions, contains('status: error'));
       expect(content.instructions, contains('created: false'));
       expect(content.instructions, contains('deleted: true'));
+      expect(content.instructions, contains('host-implemented'));
+      expect(content.instructions, contains('actionReceipt'));
+      expect(content.instructions, contains('directory_not_empty'));
       expect(content.instructions, contains('stayed unchanged'));
       expect(content.files, ['SKILL.md']);
     },
@@ -67,6 +70,9 @@ void main() {
     expect(content.instructions, contains('read_local_file'));
     expect(content.instructions, contains('next_offset_bytes'));
     expect(content.instructions, contains('bytes_written'));
+    expect(content.instructions, contains('host-implemented'));
+    expect(content.instructions, contains('actionReceipt'));
+    expect(content.instructions, contains('file_already_exists'));
     expect(content.instructions, contains('stayed unchanged'));
     expect(content.files, ['SKILL.md']);
   });

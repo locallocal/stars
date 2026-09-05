@@ -1,7 +1,7 @@
 const directoryOperationsSkillId = 'system:directory-operations';
-const directoryOperationsSkillPromptVersion = 3;
+const directoryOperationsSkillPromptVersion = 4;
 const directoryOperationsSkillContentDigest =
-    '7b35ba5980954dd75f7aa8d268e69ce57a10f044a8763d44eccde948faed1d1f';
+    '269c00840d3e20c4044b091f3cf7a11798448473f8b7c744cfb8afba5ca5fc83';
 
 const listLocalDirectoryToolName = 'list_local_directory';
 const createLocalDirectoryToolName = 'create_local_directory';
@@ -13,9 +13,9 @@ const directoryOperationsToolNames = {
 };
 
 const fileOperationsSkillId = 'system:file-operations';
-const fileOperationsSkillPromptVersion = 4;
+const fileOperationsSkillPromptVersion = 5;
 const fileOperationsSkillContentDigest =
-    'bc175cb154df95b9b5d02eebee067e0954aa158239e52c6268d3fbaa5bc4ccb1';
+    'a300413f482e84395498c82983931fcdfcbf97e7fb42e2fc8f99a8236d7bea42';
 
 const queryLocalFilesToolName = 'query_local_files';
 const readLocalFileToolName = 'read_local_file';

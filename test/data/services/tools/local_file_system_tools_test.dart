@@ -32,19 +32,29 @@ void main() {
     });
 
     test('creates, lists, and recursively deletes native paths', () async {
+      const createArguments = {'path': 'docs/archive'};
       final createResult = await createTool.execute(
-        _call(createTool, {'path': 'docs/archive'}),
+        _call(createTool, createArguments),
         AgentCancellationToken(),
       );
       expect(createResult.isError, isFalse);
       _expectValidOutput(createTool, createResult);
       expect(createResult.structuredContent, containsPair('created', true));
+      expect(
+        _validatedEvidence(
+          createTool,
+          createArguments,
+          createResult,
+        ).evidenceKind,
+        EvidenceKind.actionReceipt,
+      );
       await File(
         path_context.join(sandbox.path, 'docs', 'note.txt'),
       ).writeAsString('hello');
 
+      const listArguments = {'path': 'docs', 'recursive': true};
       final listResult = await listTool.execute(
-        _call(listTool, {'path': 'docs', 'recursive': true}),
+        _call(listTool, listArguments),
         AgentCancellationToken(),
       );
       expect(listResult.isError, isFalse);
@@ -58,6 +68,16 @@ void main() {
         ),
         containsAll([('archive', 'directory'), ('note.txt', 'file')]),
       );
+      final listingEvidence = _validatedEvidence(
+        listTool,
+        listArguments,
+        listResult,
+      );
+      expect(listingEvidence.evidenceKind, EvidenceKind.observation);
+      expect(
+        _factsByName(listingEvidence)['directory.listing_complete'],
+        isTrue,
+      );
 
       final safeDeleteResult = await deleteTool.execute(
         _call(deleteTool, {'path': 'docs'}),
@@ -69,12 +89,20 @@ void main() {
         isTrue,
       );
 
+      const deleteArguments = {'path': 'docs', 'recursive': true};
       final recursiveDeleteResult = await deleteTool.execute(
-        _call(deleteTool, {'path': 'docs', 'recursive': true}),
+        _call(deleteTool, deleteArguments),
         AgentCancellationToken(),
       );
       expect(recursiveDeleteResult.isError, isFalse);
       _expectValidOutput(deleteTool, recursiveDeleteResult);
+      final deletionEvidence = _validatedEvidence(
+        deleteTool,
+        deleteArguments,
+        recursiveDeleteResult,
+      );
+      expect(deletionEvidence.evidenceKind, EvidenceKind.actionReceipt);
+      expect(_factsByName(deletionEvidence)['directory.exists'], isFalse);
       expect(
         await Directory(path_context.join(sandbox.path, 'docs')).exists(),
         isFalse,
@@ -97,6 +125,7 @@ void main() {
       final structured = result.structuredContent! as Map<String, Object?>;
       expect((structured['entries']! as List<Object?>), hasLength(2));
       expect(structured['truncated'], isTrue);
+      expect(result.truncated, isTrue);
     });
 
     test(
@@ -174,8 +203,9 @@ void main() {
           path_context.join(sandbox.path, 'docs', 'archive', 'notes.txt'),
         ).writeAsString('notes');
 
+        const exactArguments = {'root_path': 'docs', 'query': 'report.md'};
         final exactResult = await queryTool.execute(
-          _call(queryTool, {'root_path': 'docs', 'query': 'report.md'}),
+          _call(queryTool, exactArguments),
           AgentCancellationToken(),
         );
 
@@ -194,6 +224,13 @@ void main() {
           path_context.isAbsolute(exactFiles.single['path']! as String),
           isTrue,
         );
+        final queryEvidence = _validatedEvidence(
+          queryTool,
+          exactArguments,
+          exactResult,
+        );
+        expect(queryEvidence.evidenceKind, EvidenceKind.observation);
+        expect(_factsByName(queryEvidence)['file.match_count'], 1);
 
         final partialResult = await queryTool.execute(
           _call(queryTool, {
@@ -342,6 +379,17 @@ void main() {
         ).readAsString(),
         'hello world',
       );
+      expect(copyResult.evidenceKind, EvidenceKind.actionReceipt);
+      expect(
+        _factsByName(
+          _validatedEvidence(copyTool, const {
+            'source_path': 'notes/original.txt',
+            'destination_path': 'copies/copied.txt',
+            'create_parents': true,
+          }, copyResult),
+        )['file.bytes_copied'],
+        11,
+      );
 
       final protectedCopyResult = await copyTool.execute(
         _call(copyTool, {
@@ -371,6 +419,13 @@ void main() {
         await File(path_context.join(sandbox.path, 'moved.txt')).exists(),
         isTrue,
       );
+      expect(
+        _validatedEvidence(moveTool, const {
+          'source_path': 'copies/copied.txt',
+          'destination_path': 'moved.txt',
+        }, moveResult).evidenceKind,
+        EvidenceKind.actionReceipt,
+      );
 
       final deleteResult = await deleteTool.execute(
         _call(deleteTool, {'path': 'moved.txt'}),
@@ -382,6 +437,11 @@ void main() {
         await File(path_context.join(sandbox.path, 'moved.txt')).exists(),
         isFalse,
       );
+      final deleteEvidence = _validatedEvidence(deleteTool, const {
+        'path': 'moved.txt',
+      }, deleteResult);
+      expect(deleteEvidence.evidenceKind, EvidenceKind.actionReceipt);
+      expect(_factsByName(deleteEvidence)['file.exists'], isFalse);
     });
 
     test(
@@ -436,6 +496,8 @@ void main() {
     for (final definition in byName.values) {
       expect(validator.supports(definition.inputSchema), isTrue);
       expect(validator.supports(definition.outputSchema!), isTrue);
+      expect(definition.producesEvidence, isTrue, reason: definition.name);
+      expect(definition.toolVersion, '1.0.0', reason: definition.name);
     }
 
     expect(byName.keys, containsAll(directoryOperationsToolNames));
@@ -500,3 +562,18 @@ void _expectValidOutput(ExecutableTool tool, ToolResult result) {
     isEmpty,
   );
 }
+
+ToolEvidenceCandidate _validatedEvidence(
+  ExecutableTool tool,
+  Map<String, Object?> arguments,
+  ToolResult result,
+) =>
+    validateToolEvidenceResult(
+      tool.definition,
+      arguments,
+      result.copyWith(schemaValid: true),
+    )!;
+
+Map<String, Object> _factsByName(ToolEvidenceCandidate evidence) => {
+  for (final fact in evidence.structuredFacts) fact.name: fact.value,
+};
