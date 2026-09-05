@@ -16,7 +16,9 @@
 
 ## FUT-GRD-001 扩展 Provider 原生工具证据归一化
 
-状态：未来规划，未排期。
+状态：设计完成，等待实施。
+
+[详细设计与实施计划](provider-native-tool-evidence-normalization.md)
 
 当前边界：只有 OpenAI Responses 的原生 web search 会转换为 `ProviderNativeToolResult`、统一调用
 事件和 observation 证据。Anthropic、Moonshot 及其他 Provider 即使能够执行原生搜索，在缺少

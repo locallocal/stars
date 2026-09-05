@@ -13,6 +13,7 @@
 | 桌面规范 | [桌面端界面规范](specs/desktop-ui.md) | 布局、断点、视觉、可访问性和验收基线 |
 | 桌面规范 | [桌面组件矩阵](specs/desktop-components.md) | 组件、主题 token、通知和视觉回归的唯一入口 |
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
+| 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |
 | 实现参考 | [会话 Loop 的事实依据与防幻觉协议](reference/conversation-loop-grounding.md) | 工具证据、声明门禁、跨轮信任与落地验收标准 |
 
