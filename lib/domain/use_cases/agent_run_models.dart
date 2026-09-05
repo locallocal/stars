@@ -13,7 +13,7 @@ final class AgentRunLimits {
   }) : assert(maxModelTurns > 0),
        assert(maxToolCalls > 0),
        assert(maxSameCallRetries >= 0),
-       assert(maxReliabilityRepairs >= 0),
+       assert(maxReliabilityRepairs >= 0 && maxReliabilityRepairs <= 1),
        assert(maxToolOutputCharacters > 0);
 
   final int maxModelTurns;
@@ -36,11 +36,15 @@ final class AgentRunRequest {
     required List<ChatMessage> messages,
     required Set<String> requestedToolNames,
     Set<String> approvalExemptToolNames = const {},
+    List<ClaimEvidenceRequirement> verificationRequirements = const [],
     AgentCancellationToken? cancellationToken,
   }) : messages = List<ChatMessage>.unmodifiable(messages),
        requestedToolNames = Set<String>.unmodifiable(requestedToolNames),
        approvalExemptToolNames = Set<String>.unmodifiable(
          approvalExemptToolNames,
+       ),
+       verificationRequirements = List<ClaimEvidenceRequirement>.unmodifiable(
+         verificationRequirements,
        ),
        cancellationToken = cancellationToken ?? AgentCancellationToken();
 
@@ -52,10 +56,69 @@ final class AgentRunRequest {
   final List<ChatMessage> messages;
   final Set<String> requestedToolNames;
   final Set<String> approvalExemptToolNames;
+  final List<ClaimEvidenceRequirement> verificationRequirements;
   final AgentCancellationToken cancellationToken;
 }
 
 enum AgentRunStatus { completed, cancelled, failed, timedOut, limitExceeded }
+
+enum AgentRunPhase {
+  planning,
+  awaitingApproval,
+  executing,
+  observing,
+  verifying,
+  synthesizing,
+  committing,
+  completed,
+  cancelled,
+  failed,
+  timedOut,
+  limitExceeded,
+}
+
+sealed class AgentRunEvent {
+  const AgentRunEvent({required this.runId, required this.occurredAt});
+
+  final String runId;
+  final DateTime occurredAt;
+}
+
+final class AgentRunStateChanged extends AgentRunEvent {
+  AgentRunStateChanged({
+    required super.runId,
+    required super.occurredAt,
+    required this.phase,
+    required this.sequence,
+    this.reasonCode = '',
+    List<String> missingRequirementIds = const [],
+  }) : missingRequirementIds = List<String>.unmodifiable(missingRequirementIds);
+
+  final AgentRunPhase phase;
+  final int sequence;
+  final String reasonCode;
+  final List<String> missingRequirementIds;
+}
+
+final class AgentRunModelEventObserved extends AgentRunEvent {
+  const AgentRunModelEventObserved({
+    required super.runId,
+    required super.occurredAt,
+    required this.event,
+  });
+
+  final ModelEvent event;
+}
+
+final class AgentRunToolInvocationObserved extends AgentRunEvent {
+  const AgentRunToolInvocationObserved({
+    required super.runId,
+    required super.occurredAt,
+    required this.invocation,
+  });
+
+  final ToolInvocationRecord invocation;
+}
 
 final class AgentRunResult {
   AgentRunResult({
@@ -65,10 +128,16 @@ final class AgentRunResult {
     required this.tokenUsage,
     required List<ToolInvocationRecord> toolInvocations,
     this.groundedAnswer,
+    this.groundedValidation,
+    List<AgentRunStateChanged> stateTransitions = const [],
+    this.degradedReason = '',
     this.error = '',
     this.providerFailure,
   }) : toolInvocations = List<ToolInvocationRecord>.unmodifiable(
          toolInvocations,
+       ),
+       stateTransitions = List<AgentRunStateChanged>.unmodifiable(
+         stateTransitions,
        );
 
   final AgentRunStatus status;
@@ -77,9 +146,13 @@ final class AgentRunResult {
   final ModelTokenUsage tokenUsage;
   final List<ToolInvocationRecord> toolInvocations;
   final GroundedAnswerCandidate? groundedAnswer;
+  final GroundedAnswerValidationResult? groundedValidation;
+  final List<AgentRunStateChanged> stateTransitions;
+  final String degradedReason;
   final String error;
   final ProviderFailure? providerFailure;
 }
 
 typedef ModelEventObserver = void Function(ModelEvent event);
 typedef ToolInvocationObserver = void Function(ToolInvocationRecord invocation);
+typedef AgentRunEventObserver = void Function(AgentRunEvent event);

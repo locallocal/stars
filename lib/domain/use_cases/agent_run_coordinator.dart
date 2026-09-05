@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
+import 'package:stars/domain/services/grounded_answer_validator.dart';
 
 part 'agent_run_coordinator_support.dart';
 part 'agent_run_evidence.dart';
@@ -12,6 +13,7 @@ part 'agent_run_grounded_answer.dart';
 part 'agent_run_models.dart';
 part 'agent_run_persistence.dart';
 part 'agent_run_provider_tools.dart';
+part 'agent_run_state_machine.dart';
 
 final class AgentRunCoordinator {
   const AgentRunCoordinator({
@@ -21,12 +23,14 @@ final class AgentRunCoordinator {
     JsonSchemaValidator schemaValidator = const JsonSchemaValidator(),
     AgentRunLimits limits = const AgentRunLimits(),
     ToolInvocationPersister? toolInvocationPersister,
+    GroundedAnswerValidator? groundedAnswerValidator,
   }) : _toolRegistry = toolRegistry,
        _toolPolicy = toolPolicy,
        _approvalHandler = approvalHandler,
        _schemaValidator = schemaValidator,
        _limits = limits,
-       _toolInvocationPersister = toolInvocationPersister;
+       _toolInvocationPersister = toolInvocationPersister,
+       _groundedAnswerValidator = groundedAnswerValidator;
 
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
@@ -34,13 +38,19 @@ final class AgentRunCoordinator {
   final JsonSchemaValidator _schemaValidator;
   final AgentRunLimits _limits;
   final ToolInvocationPersister? _toolInvocationPersister;
+  final GroundedAnswerValidator? _groundedAnswerValidator;
 
   Future<AgentRunResult> run({
     required AiProvider provider,
     required AgentRunRequest request,
     ModelEventObserver? onModelEvent,
     ToolInvocationObserver? onToolInvocation,
+    AgentRunEventObserver? onRunEvent,
   }) async {
+    final state = _AgentRunStateMachine(
+      runId: request.runId,
+      observer: onRunEvent,
+    )..transition(AgentRunPhase.planning);
     final exposedTools =
         request.requestedToolNames.isEmpty
             ? const <ToolDefinition>[]
@@ -68,6 +78,10 @@ final class AgentRunCoordinator {
     var usage = ModelTokenUsage.empty;
     var timedOut = false;
     var toolCallCount = 0;
+    var pendingVerificationFeedback = '';
+    var verificationRetryTurn = false;
+    var degradedReason = '';
+    GroundedAnswerValidationResult? groundedValidation;
     AgentModelSession? session;
     final timeoutTimer = Timer(_limits.totalTimeout, () {
       timedOut = true;
@@ -75,6 +89,23 @@ final class AgentRunCoordinator {
     });
 
     Future<void> observeInvocation(ToolInvocationRecord invocation) async {
+      if (state.isTerminal || invocation.runId != request.runId) return;
+      switch (invocation.status) {
+        case ToolInvocationStatus.awaitingApproval:
+          state.transition(AgentRunPhase.awaitingApproval);
+        case ToolInvocationStatus.running:
+          state.transition(AgentRunPhase.executing);
+        case ToolInvocationStatus.requested:
+        case ToolInvocationStatus.succeeded:
+        case ToolInvocationStatus.failed:
+        case ToolInvocationStatus.denied:
+        case ToolInvocationStatus.cancelled:
+        case ToolInvocationStatus.timedOut:
+        case ToolInvocationStatus.duplicateReused:
+        case ToolInvocationStatus.duplicateConflict:
+        case ToolInvocationStatus.duplicate:
+          break;
+      }
       final existingIndex = invocationIndexes[invocation.attemptId];
       if (existingIndex == null) {
         invocationIndexes[invocation.attemptId] = invocations.length;
@@ -82,8 +113,43 @@ final class AgentRunCoordinator {
       } else {
         invocations[existingIndex] = invocation;
       }
+      state.toolInvocation(invocation);
       onToolInvocation?.call(invocation);
-      await persistence.record(invocation);
+      await _raceCancellation(
+        persistence.record(invocation),
+        request.cancellationToken,
+      );
+      if (_terminalInvocationStatuses.contains(invocation.status)) {
+        state.transition(AgentRunPhase.observing);
+      }
+    }
+
+    AgentRunResult finish(
+      AgentRunStatus status, {
+      GroundedAnswerCandidate? groundedAnswer,
+      String error = '',
+      ProviderFailure? providerFailure,
+    }) {
+      if (status == AgentRunStatus.completed) {
+        state.transition(AgentRunPhase.committing);
+      }
+      state.transition(
+        _phaseForStatus(status),
+        reasonCode: error.isNotEmpty ? error : degradedReason,
+      );
+      return AgentRunResult(
+        status: status,
+        text: text,
+        reasoning: reasoning,
+        tokenUsage: usage,
+        toolInvocations: invocations,
+        groundedAnswer: groundedAnswer,
+        groundedValidation: groundedValidation,
+        stateTransitions: state.history,
+        degradedReason: degradedReason,
+        error: error,
+        providerFailure: providerFailure,
+      );
     }
 
     try {
@@ -117,11 +183,26 @@ final class AgentRunCoordinator {
         final calls = <ToolCallRequested>[];
         final providerToolResults = <ProviderNativeToolResult>[];
         final turnText = StringBuffer();
+        state.transition(
+          AgentRunPhase.planning,
+          reasonCode:
+              pendingVerificationFeedback.isEmpty
+                  ? ''
+                  : 'missing_evidence_retry',
+        );
         final events =
             modelTurn == 0
                 ? activeSession.start()
+                : pendingVerificationFeedback.isNotEmpty
+                ? activeSession.continueWithReliabilityFeedback(
+                  pendingVerificationFeedback,
+                )
                 : activeSession.continueWith(results);
+        verificationRetryTurn = pendingVerificationFeedback.isNotEmpty;
+        pendingVerificationFeedback = '';
+        results = const <ToolResult>[];
         await _consumeEvents(events, request.cancellationToken, (event) {
+          state.modelEvent(event);
           if (event is! TextDelta) onModelEvent?.call(event);
           switch (event) {
             case TextDelta():
@@ -155,6 +236,7 @@ final class AgentRunCoordinator {
 
         for (final providerToolResult in providerToolResults) {
           await _recordProviderNativeToolResult(
+            runId: request.runId,
             event: providerToolResult,
             completedCalls: completedCalls,
             invocationIdentities: invocationIdentities,
@@ -163,85 +245,66 @@ final class AgentRunCoordinator {
         }
         toolCallCount += providerToolResults.length;
         if (toolCallCount > _limits.maxToolCalls) {
-          return AgentRunResult(
-            status: AgentRunStatus.limitExceeded,
-            text: text,
-            reasoning: reasoning,
-            tokenUsage: usage,
-            toolInvocations: invocations,
+          return finish(
+            AgentRunStatus.limitExceeded,
             error: 'tool_call_limit_reached',
           );
         }
 
-        if (calls.isEmpty) {
-          final synthesis = await _synthesizeGroundedAnswer(
-            session: activeSession,
-            draftText: turnText.toString(),
-            invocations: invocations,
-            cancellationToken: request.cancellationToken,
-            onModelEvent: onModelEvent,
-          );
-          reasoning += synthesis.reasoning;
-          usage = usage + synthesis.usage;
-          text = synthesis.candidate.renderedText;
-          if (text.isNotEmpty) onModelEvent?.call(TextDelta(text));
-          return AgentRunResult(
-            status: AgentRunStatus.completed,
-            text: text,
-            reasoning: reasoning,
-            tokenUsage: usage,
-            toolInvocations: invocations,
-            groundedAnswer: synthesis.candidate,
-          );
-        }
         if (calls.any(
           (call) => call.callId.trim().isEmpty || call.name.trim().isEmpty,
         )) {
-          return AgentRunResult(
-            status: AgentRunStatus.failed,
-            text: text,
-            reasoning: reasoning,
-            tokenUsage: usage,
-            toolInvocations: invocations,
+          return finish(
+            AgentRunStatus.failed,
             error: 'invalid_provider_tool_call',
           );
         }
-        if (modelTurn + 1 >= _limits.maxModelTurns) {
-          return AgentRunResult(
-            status: AgentRunStatus.limitExceeded,
-            text: text,
-            reasoning: reasoning,
-            tokenUsage: usage,
-            toolInvocations: invocations,
+        if (calls.isNotEmpty && modelTurn + 1 >= _limits.maxModelTurns) {
+          return finish(
+            AgentRunStatus.limitExceeded,
             error: 'model_turn_limit_reached',
           );
         }
 
         if (toolCallCount + calls.length > _limits.maxToolCalls) {
-          return AgentRunResult(
-            status: AgentRunStatus.limitExceeded,
-            text: text,
-            reasoning: reasoning,
-            tokenUsage: usage,
-            toolInvocations: invocations,
+          return finish(
+            AgentRunStatus.limitExceeded,
             error: 'tool_call_limit_reached',
           );
         }
         toolCallCount += calls.length;
-        final callRequests =
-            calls.map((event) => event.toToolCallRequest()).toList();
-        final canRunInParallel =
-            supportsParallelToolCalls &&
-            callRequests.length > 1 &&
-            callRequests.map((call) => call.callId).toSet().length ==
-                callRequests.length &&
-            callRequests.every(_isParallelSafe);
-        final nextResults =
-            canRunInParallel
-                ? await Future.wait([
-                  for (final call in callRequests)
-                    _executeToolCall(
-                      call: call,
+        var executedCalls = false;
+        if (calls.isNotEmpty) {
+          final callRequests =
+              calls.map((event) => event.toToolCallRequest()).toList();
+          if (verificationRetryTurn &&
+              callRequests.any((call) => !_isVerificationRetrySafe(call))) {
+            degradedReason = 'verification_retry_side_effect_blocked';
+          } else {
+            state.transition(AgentRunPhase.executing);
+            final canRunInParallel =
+                supportsParallelToolCalls &&
+                callRequests.length > 1 &&
+                callRequests.map((call) => call.callId).toSet().length ==
+                    callRequests.length &&
+                callRequests.every(_isParallelSafe);
+            final nextResults =
+                canRunInParallel
+                    ? await Future.wait([
+                      for (final call in callRequests)
+                        _executeToolCall(
+                          call: call,
+                          runId: request.runId,
+                          exposedNames: exposedNames,
+                          policyContext: policyContext,
+                          cancellationToken: request.cancellationToken,
+                          completedCalls: completedCalls,
+                          invocationIdentities: invocationIdentities,
+                          observeInvocation: observeInvocation,
+                        ),
+                    ])
+                    : await _executeSequentially(
+                      calls: callRequests,
                       runId: request.runId,
                       exposedNames: exposedNames,
                       policyContext: policyContext,
@@ -249,72 +312,100 @@ final class AgentRunCoordinator {
                       completedCalls: completedCalls,
                       invocationIdentities: invocationIdentities,
                       observeInvocation: observeInvocation,
-                    ),
-                ])
-                : await _executeSequentially(
-                  calls: callRequests,
-                  runId: request.runId,
-                  exposedNames: exposedNames,
-                  policyContext: policyContext,
-                  cancellationToken: request.cancellationToken,
-                  completedCalls: completedCalls,
-                  invocationIdentities: invocationIdentities,
-                  observeInvocation: observeInvocation,
-                );
-        results = List<ToolResult>.unmodifiable(nextResults);
+                    );
+            results = List<ToolResult>.unmodifiable(nextResults);
+            executedCalls = true;
+          }
+        }
+
+        state.transition(AgentRunPhase.observing);
+        state.transition(AgentRunPhase.verifying);
+        final coverage = await _raceCancellation(
+          _evaluateEvidenceCoverage(request: request, invocations: invocations),
+          request.cancellationToken,
+        );
+        request.cancellationToken.throwIfCancelled();
+        if (executedCalls) continue;
+
+        final hasObservationBudget =
+            modelTurn + 1 < _limits.maxModelTurns &&
+            toolCallCount < _limits.maxToolCalls;
+        if (!coverage.isComplete &&
+            degradedReason.isEmpty &&
+            hasObservationBudget) {
+          pendingVerificationFeedback = _missingEvidenceFeedback(
+            runId: request.runId,
+            requirements: request.verificationRequirements,
+            missingRequirementIds: coverage.missingRequirementIds,
+          );
+          state.transition(
+            AgentRunPhase.planning,
+            reasonCode: 'missing_evidence',
+            missingRequirementIds: coverage.missingRequirementIds,
+          );
+          continue;
+        }
+        if (!coverage.isComplete && degradedReason.isEmpty) {
+          degradedReason = 'verification_budget_exhausted';
+        }
+
+        final synthesis = await _synthesizeValidatedAnswer(
+          session: activeSession,
+          draftText: turnText.toString(),
+          invocations: invocations,
+          request: request,
+          cancellationToken: request.cancellationToken,
+          state: state,
+          onModelEvent: onModelEvent,
+        );
+        reasoning += synthesis.reasoning;
+        usage = usage + synthesis.usage;
+        groundedValidation = synthesis.validation;
+        if (degradedReason.isEmpty && synthesis.degradedReason.isNotEmpty) {
+          degradedReason = synthesis.degradedReason;
+        }
+        text = synthesis.candidate.renderedText;
+        if (text.isNotEmpty) {
+          final event = TextDelta(text);
+          state.modelEvent(event);
+          onModelEvent?.call(event);
+        }
+        return finish(
+          AgentRunStatus.completed,
+          groundedAnswer: synthesis.candidate,
+        );
       }
 
-      return AgentRunResult(
-        status: AgentRunStatus.limitExceeded,
-        text: text,
-        reasoning: reasoning,
-        tokenUsage: usage,
-        toolInvocations: invocations,
+      return finish(
+        AgentRunStatus.limitExceeded,
         error: 'model_turn_limit_reached',
       );
     } on AgentRunCancelledException {
-      return AgentRunResult(
-        status: timedOut ? AgentRunStatus.timedOut : AgentRunStatus.cancelled,
-        text: text,
-        reasoning: reasoning,
-        tokenUsage: usage,
-        toolInvocations: invocations,
+      return finish(
+        timedOut ? AgentRunStatus.timedOut : AgentRunStatus.cancelled,
         error: timedOut ? 'agent_run_timeout' : '',
       );
     } on _AgentModelFailure catch (error) {
-      return AgentRunResult(
-        status: AgentRunStatus.failed,
-        text: text,
-        reasoning: reasoning,
-        tokenUsage: usage,
-        toolInvocations: invocations,
-        error:
-            error.providerFailure?.code ??
-            (error.code.isEmpty
-                ? AppFailure.from(
-                  error.message,
-                  code: 'agent_model_failed',
-                ).code
-                : error.code),
+      final reason =
+          error.providerFailure?.code ??
+          (error.code.isEmpty
+              ? AppFailure.from(error.message, code: 'agent_model_failed').code
+              : error.code);
+      return finish(
+        AgentRunStatus.failed,
+        error: reason,
         providerFailure: error.providerFailure,
       );
     } on ProviderFailure catch (error) {
-      return AgentRunResult(
-        status: AgentRunStatus.failed,
-        text: '',
-        reasoning: reasoning,
-        tokenUsage: usage,
-        toolInvocations: invocations,
+      text = '';
+      return finish(
+        AgentRunStatus.failed,
         error: error.code,
         providerFailure: error,
       );
     } catch (error) {
-      return AgentRunResult(
-        status: AgentRunStatus.failed,
-        text: text,
-        reasoning: reasoning,
-        tokenUsage: usage,
-        toolInvocations: invocations,
+      return finish(
+        AgentRunStatus.failed,
         error: AppFailure.from(error, code: 'agent_run_failed').code,
       );
     } finally {
@@ -346,6 +437,7 @@ final class AgentRunCoordinator {
       final now = DateTime.now();
       await observeInvocation(
         ToolInvocationRecord(
+          runId: runId,
           invocationId: invocationId,
           attemptId: attemptId,
           providerCallId: call.callId,
@@ -381,6 +473,7 @@ final class AgentRunCoordinator {
       const errorCode = 'tool_retry_limit_reached';
       await observeInvocation(
         ToolInvocationRecord(
+          runId: runId,
           invocationId: invocationId,
           attemptId: attemptId,
           providerCallId: call.callId,
@@ -415,6 +508,7 @@ final class AgentRunCoordinator {
       final now = DateTime.now();
       await observeInvocation(
         ToolInvocationRecord(
+          runId: runId,
           invocationId: invocationId,
           attemptId: attemptId,
           providerCallId: call.callId,
@@ -450,6 +544,7 @@ final class AgentRunCoordinator {
       );
       await observeInvocation(
         ToolInvocationRecord(
+          runId: runId,
           invocationId: invocationId,
           attemptId: attemptId,
           providerCallId: call.callId,
@@ -473,6 +568,7 @@ final class AgentRunCoordinator {
     final definition = tool.definition;
     final startedAt = DateTime.now();
     var record = ToolInvocationRecord(
+      runId: runId,
       invocationId: invocationId,
       attemptId: attemptId,
       providerCallId: call.callId,

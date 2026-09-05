@@ -155,6 +155,7 @@ final class GroundedAnswerSynthesisRequest {
   GroundedAnswerSynthesisRequest({
     required this.draftText,
     List<GroundedEvidenceReference> evidence = const [],
+    this.reliabilityFeedback = '',
   }) : evidence = List<GroundedEvidenceReference>.unmodifiable(evidence) {
     final evidenceIds = <String>{};
     for (final reference in this.evidence) {
@@ -170,6 +171,10 @@ final class GroundedAnswerSynthesisRequest {
 
   final String draftText;
   final List<GroundedEvidenceReference> evidence;
+
+  /// Application-authored correction constraints from a prior synthesis.
+  /// Provider output is never copied into this field.
+  final String reliabilityFeedback;
 
   Set<String> get allowedEvidenceIds => Set<String>.unmodifiable(
     evidence.map((reference) => reference.evidenceId),

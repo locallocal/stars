@@ -629,6 +629,7 @@ enum ToolInvocationStatus {
 
 final class ToolInvocationRecord {
   ToolInvocationRecord({
+    this.runId = '',
     String invocationId = '',
     String attemptId = '',
     String providerCallId = '',
@@ -652,6 +653,9 @@ final class ToolInvocationRecord {
        attemptId = attemptId.isEmpty ? executionId : attemptId,
        providerCallId = providerCallId.isEmpty ? callId : providerCallId,
        arguments = Map<String, Object?>.unmodifiable(arguments);
+
+  /// Run identity assigned by the application coordinator.
+  final String runId;
 
   /// Application-owned identity for one logical tool invocation.
   final String invocationId;
@@ -692,6 +696,7 @@ final class ToolInvocationRecord {
     ToolEvidenceCandidate? evidenceCandidate,
   }) {
     return ToolInvocationRecord(
+      runId: runId,
       invocationId: invocationId,
       attemptId: attemptId,
       providerCallId: providerCallId,

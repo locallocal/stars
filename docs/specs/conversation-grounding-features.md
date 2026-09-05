@@ -508,7 +508,16 @@ DTO 协议、协调器仅提交结构化段落及未校验声明不升级可信�
 
 ### GRD-015 Observe–Verify–Synthesize Loop
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/use_cases/agent_run_coordinator.dart`、
+`lib/domain/use_cases/agent_run_state_machine.dart`、
+`lib/domain/use_cases/agent_run_grounded_answer.dart`、
+`lib/domain/use_cases/agent_run_models.dart` 和
+`lib/domain/services/grounded_answer_validator.dart`；证据提交屏障、覆盖率续跑、预算降级、合成修复、
+副作用隔离、run ID 事件与超时回归测试：
+`test/domain/use_cases/agent_run_loop_test.dart` 和
+`test/domain/services/grounded_answer_validator_test.dart`。
 
 目标：把工具执行、证据覆盖和回答合成连接成显式状态机。
 

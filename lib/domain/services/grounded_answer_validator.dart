@@ -13,6 +13,7 @@ final class ClaimEvidenceRequirement {
   ClaimEvidenceRequirement({
     required String claimId,
     required Set<EvidenceKind> allowedEvidenceKinds,
+    this.claimKind,
     this.subject = '',
     Map<String, Object?> scope = const {},
     Set<ToolCapability> requiredCapabilities = const {},
@@ -45,6 +46,7 @@ final class ClaimEvidenceRequirement {
   }
 
   final String claimId;
+  final ClaimKind? claimKind;
   final Set<EvidenceKind> allowedEvidenceKinds;
   final String subject;
   final Map<String, Object?> scope;
@@ -126,8 +128,12 @@ final class GroundedAnswerValidationResult {
     required this.reasonCode,
     required List<ClaimValidationResult> claims,
     required List<String> evidenceIds,
+    List<String> unmatchedRequirementIds = const [],
   }) : claims = List<ClaimValidationResult>.unmodifiable(claims),
-       evidenceIds = List<String>.unmodifiable(evidenceIds);
+       evidenceIds = List<String>.unmodifiable(evidenceIds),
+       unmatchedRequirementIds = List<String>.unmodifiable(
+         unmatchedRequirementIds,
+       );
 
   final AnswerTrustLevel trustLevel;
   final String reasonCode;
@@ -135,12 +141,29 @@ final class GroundedAnswerValidationResult {
 
   /// Only deterministically accepted, actually referenced evidence IDs.
   final List<String> evidenceIds;
+  final List<String> unmatchedRequirementIds;
 
   MessageGrounding toMessageGrounding() => MessageGrounding(
     trustLevel: trustLevel,
     reasonCode: reasonCode,
     evidenceIds: evidenceIds,
   );
+}
+
+final class EvidenceRequirementCoverage {
+  EvidenceRequirementCoverage({
+    required List<String> coveredRequirementIds,
+    required List<String> missingRequirementIds,
+    required List<String> evidenceIds,
+  }) : coveredRequirementIds = List<String>.unmodifiable(coveredRequirementIds),
+       missingRequirementIds = List<String>.unmodifiable(missingRequirementIds),
+       evidenceIds = List<String>.unmodifiable(evidenceIds);
+
+  final List<String> coveredRequirementIds;
+  final List<String> missingRequirementIds;
+  final List<String> evidenceIds;
+
+  bool get isComplete => missingRequirementIds.isEmpty;
 }
 
 /// Validates model-proposed claim bindings against the persisted fact ledger.
@@ -191,6 +214,12 @@ final class GroundedAnswerValidator {
       );
     }
 
+    final claimIds = candidate.claims.map((claim) => claim.claimId).toSet();
+    final unmatchedRequirementIds = [
+      for (final requirement in requirementByClaim.values)
+        if (!claimIds.contains(requirement.claimId)) requirement.claimId,
+    ];
+
     final verifiableClaims = claimResults.where(
       (result) => result.trustLevel != ClaimTrustLevel.notVerifiable,
     );
@@ -198,7 +227,8 @@ final class GroundedAnswerValidator {
         verifiableClaims
             .where((result) => result.trustLevel == ClaimTrustLevel.verified)
             .length;
-    final verifiableCount = verifiableClaims.length;
+    final verifiableCount =
+        verifiableClaims.length + unmatchedRequirementIds.length;
     final trustLevel =
         verifiableCount == 0 || verifiedCount == 0
             ? AnswerTrustLevel.unverified
@@ -222,6 +252,69 @@ final class GroundedAnswerValidator {
       reasonCode: reasonCode,
       claims: claimResults,
       evidenceIds: acceptedIds.toList(growable: false),
+      unmatchedRequirementIds: unmatchedRequirementIds,
+    );
+  }
+
+  /// Checks whether persisted evidence covers application-authored needs
+  /// before any final answer is synthesized.
+  Future<EvidenceRequirementCoverage> evaluateCoverage({
+    required String runId,
+    required Iterable<ClaimEvidenceRequirement> requirements,
+    required Iterable<String> evidenceIds,
+    required DateTime validatedAt,
+  }) async {
+    final normalizedRunId = _normalizedRequiredText(runId, 'runId');
+    final ids = List<String>.unmodifiable(evidenceIds.toSet());
+    final loadedEvidence = <String, Future<_LedgerEvidence>>{};
+    Future<_LedgerEvidence> loadEvidence(String evidenceId) =>
+        loadedEvidence.putIfAbsent(evidenceId, () => _load(evidenceId));
+    final covered = <String>[];
+    final missing = <String>[];
+    final acceptedEvidenceIds = <String>{};
+    final seenRequirements = <String>{};
+
+    for (final requirement in requirements) {
+      if (!seenRequirements.add(requirement.claimId)) {
+        throw ArgumentError.value(
+          requirement.claimId,
+          'requirements',
+          'Claim requirements must have unique claim IDs.',
+        );
+      }
+      final claimKind = requirement.claimKind;
+      if (claimKind == null || !_requiresEvidence(claimKind)) {
+        throw ArgumentError.value(
+          claimKind,
+          'requirements',
+          'Coverage requirements need an evidence-bearing claim kind.',
+        );
+      }
+      final claim = AnswerClaim(
+        claimId: requirement.claimId,
+        text: 'Verification requirement ${requirement.claimId}.',
+        kind: claimKind,
+        evidenceIds: ids,
+      );
+      final result = await _validateClaim(
+        claim: claim,
+        requirement: requirement,
+        runId: normalizedRunId,
+        validatedAt: validatedAt.toUtc(),
+        loadEvidence: loadEvidence,
+        applyReviewer: false,
+      );
+      if (result.trustLevel == ClaimTrustLevel.verified) {
+        covered.add(requirement.claimId);
+        acceptedEvidenceIds.addAll(result.acceptedEvidenceIds);
+      } else {
+        missing.add(requirement.claimId);
+      }
+    }
+    return EvidenceRequirementCoverage(
+      coveredRequirementIds: covered,
+      missingRequirementIds: missing,
+      evidenceIds: acceptedEvidenceIds.toList(growable: false),
     );
   }
 
@@ -231,6 +324,7 @@ final class GroundedAnswerValidator {
     required String runId,
     required DateTime validatedAt,
     required Future<_LedgerEvidence> Function(String evidenceId) loadEvidence,
+    bool applyReviewer = true,
   }) async {
     if (!_requiresEvidence(claim.kind)) {
       return ClaimValidationResult(
@@ -302,7 +396,7 @@ final class GroundedAnswerValidator {
         continue;
       }
       final evidence = ledgerEvidence.record!;
-      final reviewer = _reviewer;
+      final reviewer = applyReviewer ? _reviewer : null;
       if (reviewer != null) {
         var supported = false;
         try {
@@ -449,6 +543,9 @@ bool _isRequirementValidForClaim(
   ClaimEvidenceRequirement requirement,
   ClaimKind kind,
 ) {
+  if (requirement.claimKind != null && requirement.claimKind != kind) {
+    return false;
+  }
   if (kind == ClaimKind.executionFailure) {
     return requirement.allowedEvidenceKinds.length == 1 &&
         requirement.allowedEvidenceKinds.contains(

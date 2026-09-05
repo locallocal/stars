@@ -41,6 +41,20 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
         );
   }
 
+  bool _isVerificationRetrySafe(ToolCallRequest call) {
+    final definition = _toolRegistry.find(call.name)?.definition;
+    if (definition == null || definition.riskLevel != ToolRiskLevel.readOnly) {
+      return false;
+    }
+    return !definition.capabilities.any(
+      const <ToolCapability>{
+        ToolCapability.localWrite,
+        ToolCapability.externalWrite,
+        ToolCapability.process,
+      }.contains,
+    );
+  }
+
   Future<void> _consumeEvents(
     Stream<ModelEvent> events,
     AgentCancellationToken cancellationToken,
@@ -163,6 +177,14 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     return '${String.fromCharCodes(value.runes.take(maxCharacters - 1))}…';
   }
 }
+
+AgentRunPhase _phaseForStatus(AgentRunStatus status) => switch (status) {
+  AgentRunStatus.completed => AgentRunPhase.completed,
+  AgentRunStatus.cancelled => AgentRunPhase.cancelled,
+  AgentRunStatus.failed => AgentRunPhase.failed,
+  AgentRunStatus.timedOut => AgentRunPhase.timedOut,
+  AgentRunStatus.limitExceeded => AgentRunPhase.limitExceeded,
+};
 
 final class _CompletedCall {
   const _CompletedCall(this.result);
