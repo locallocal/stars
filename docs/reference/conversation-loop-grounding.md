@@ -75,7 +75,7 @@ PrepareTextGeneration
 
 因此任意一次成功调用仍可能被用于“证据漂白”。GRD-013 已停止从整条自由文本和页脚推测可信
 关系。GRD-014 已提供确定性门禁，按应用侧声明要求复核 kind、能力、subject、scope、时效与
-账本状态；将它接入完整 Observe–Verify–Synthesize 状态机属于 GRD-015。
+账本状态；GRD-015 已将该门禁接入完整 Observe–Verify–Synthesize 状态机。
 
 ### 3. 内存判定与持久化事实源曾经分离
 
@@ -244,6 +244,10 @@ Loop 状态应显式建模为 `planning -> awaitingApproval -> executing -> obse
 verifying -> synthesizing -> committing -> completed`。Provider 文本、工具结果和持久化事件都
 必须携带 `runId`；迟到事件只能归档，不能改变已结束或更新一轮的状态。
 
+当前协调器按上述状态发布应用事件。终态工具证据提交完成后才计算验证需求覆盖率；缺失证据只
+能在模型轮数、工具调用数和总时限内触发应用生成的只读观测反馈。预算耗尽时回答降级。结构化
+合成最多修复一次，修复只重做声明绑定，不重新执行已成功或产生副作用的工具。
+
 所有文本会话都应经过同一个终态门禁。Provider 不支持结构化工具、没有合适工具、用户拒绝
 授权或网络不可用时，结果应是 `unverified`/`failed`，不能回落到“看起来正常”的可信回答。
 基础只读事实工具的发现不应完全依赖 Skill 是否恰好激活；可以由应用维护最小、显式的
@@ -259,8 +263,8 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
   是否需要写后读。
 - 在 `lib/domain/models/message.dart` 增加消息可信等级、结构化 claims、证据引用和门禁失败
   原因。`MessageToolCall` 增加 `truncated`、`schemaValid`、`observedAt` 等最小投影。
-- 将 `AgentRunCoordinator` 拆为 Loop 状态机、工具执行器、证据策略和最终声明门禁；限制与取消
-  继续由协调器统一拥有。
+- `AgentRunCoordinator` 已接入独立 Loop 状态机、覆盖率验证和最终声明门禁；工具执行、限制与
+  取消继续由协调器统一拥有。
 - `AnswerClaim`、`ClaimKind` 和 `GroundedAnswerCandidate` 已替代消息级
   `_validateFinalAnswer`；`GroundedAnswerValidator` 使用应用侧语义约束校验每条声明。旧
   `<stars_evidence ... />` 仅用于 adapter 迁移兼容，不能保存或授予 `verified`。
@@ -272,10 +276,11 @@ verifying -> synthesizing -> committing -> completed`。Provider 文本、工具
 - “工具终态 + 证据 + 最终消息 + 声明关系”至少要有可恢复的提交协议。若无法跨外部调用使用
   单一数据库事务，则先提交证据，再提交回答；回答提交失败可重试，证据提交失败则不得发布
   `verified`。
-- 当前 P1 提交边界由运行协调器拥有：所有调用事件按尝试内单调序号排队，终态会等待事实账本
-  提交并使用同一幂等身份重试，重试不会重新执行工具。账本成功后才允许进入回答提交。
+- 当前提交边界由运行协调器拥有：所有调用事件按尝试内单调序号排队，终态会等待事实账本提交
+  并使用同一幂等身份重试，重试不会重新执行工具。账本成功且验证需求覆盖率已计算后才允许进入
+  回答合成与提交。
 - 最终回答与 claim-evidence 关系在一个本地数据库事务中写入；事务前保存的 `unverified` 部分
-  检查点使“证据已提交、回答未提交”的中断状态可在重启后安全重试。自由文本工具以及尚未在
+  检查点使“证据已提交、回答未提交”的中断状态可在重启后安全重试。自由文本工具以及未在
   GRD-015 状态机中通过声明级门禁的回答仍只能得到 `unverified`，不能因提交成功提前升级为
   `verified`。
 - 不再吞掉关键证据持久化异常。UI 增量快照写失败可以降级，但最终事实账本写失败必须让运行

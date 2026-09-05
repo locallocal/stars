@@ -9,6 +9,7 @@ class ChatGenerationRegistry {
     MessageIdFactory messageIdFactory = _defaultMessageIdFactory,
     SkillActivationPersister? skillActivationPersister,
     ToolInvocationPersister? toolInvocationPersister,
+    GroundedAnswerValidator? groundedAnswerValidator,
     TerminalMessageObserver? terminalMessageObserver,
     ToolRegistry? toolRegistry,
     ToolPolicy toolPolicy = const DefaultToolPolicy(),
@@ -22,6 +23,7 @@ class ChatGenerationRegistry {
        _messageIdFactory = messageIdFactory,
        _skillActivationPersister = skillActivationPersister,
        _toolInvocationPersister = toolInvocationPersister,
+       _groundedAnswerValidator = groundedAnswerValidator,
        _terminalMessageObserver = terminalMessageObserver,
        _toolRegistry = toolRegistry ?? StaticToolRegistry(const []),
        _toolPolicy = toolPolicy,
@@ -38,6 +40,7 @@ class ChatGenerationRegistry {
   final MessageIdFactory _messageIdFactory;
   final SkillActivationPersister? _skillActivationPersister;
   final ToolInvocationPersister? _toolInvocationPersister;
+  final GroundedAnswerValidator? _groundedAnswerValidator;
   final TerminalMessageObserver? _terminalMessageObserver;
   final ToolRegistry _toolRegistry;
   final ToolPolicy _toolPolicy;
@@ -57,6 +60,7 @@ class ChatGenerationRegistry {
         messageIdFactory: _messageIdFactory,
         skillActivationPersister: _skillActivationPersister,
         toolInvocationPersister: _toolInvocationPersister,
+        groundedAnswerValidator: _groundedAnswerValidator,
         terminalMessageObserver: _terminalMessageObserver,
         toolRegistry: _toolRegistry,
         toolPolicy: _toolPolicy,

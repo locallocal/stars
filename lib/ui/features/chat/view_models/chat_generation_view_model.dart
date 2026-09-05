@@ -7,6 +7,7 @@ import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/services/answer_trust_policy.dart';
+import 'package:stars/domain/services/grounded_answer_validator.dart';
 import 'package:stars/domain/use_cases/agent_run_coordinator.dart';
 import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
 
@@ -49,6 +50,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     ToolPolicy toolPolicy = const DefaultToolPolicy(),
     AgentRunLimits agentRunLimits = const AgentRunLimits(),
     AnswerTrustPolicy answerTrustPolicy = const AnswerTrustPolicy(),
+    GroundedAnswerValidator? groundedAnswerValidator,
     Duration partialPersistenceInterval = defaultPartialPersistenceInterval,
   }) : _bot = bot,
        _providerFactory = providerFactory,
@@ -64,6 +66,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
        _toolPolicy = toolPolicy,
        _agentRunLimits = agentRunLimits,
        _answerTrustPolicy = answerTrustPolicy,
+       _groundedAnswerValidator = groundedAnswerValidator,
        _partialPersistenceInterval = partialPersistenceInterval,
        _capabilityProvider = providerFactory(bot),
        _snapshot = ChatGenerationSnapshot(chatId: chatId);
@@ -82,6 +85,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   final ToolPolicy _toolPolicy;
   final AgentRunLimits _agentRunLimits;
   final AnswerTrustPolicy _answerTrustPolicy;
+  final GroundedAnswerValidator? _groundedAnswerValidator;
   final Duration _partialPersistenceInterval;
 
   Bot _bot;
@@ -105,6 +109,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
   bool _reliabilityPolicyEnabled = true;
   AnswerEvidenceState _answerEvidenceState = AnswerEvidenceState.none;
   AnswerTrustGateResult _answerTrustGateResult = AnswerTrustGateResult.notRun;
+  List<String> _validatedEvidenceIds = const [];
 
   ChatGenerationSnapshot get snapshot => _snapshot;
   ContextAssemblyReport? get contextAssemblyReport => _contextAssemblyReport;
@@ -178,6 +183,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _reliabilityPolicyEnabled = true;
     _answerEvidenceState = AnswerEvidenceState.none;
     _answerTrustGateResult = AnswerTrustGateResult.notRun;
+    _validatedEvidenceIds = const [];
     _terminalCompleter = Completer<ChatRunLifecycle>();
     _preparingRuns.add(runId);
     _snapshot = ChatGenerationSnapshot(
@@ -686,6 +692,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         toolCalls: _snapshot.toolCalls,
         evidenceState: _answerEvidenceState,
         gateResult: _answerTrustGateResult,
+        evidenceIds: _validatedEvidenceIds,
         criticalPersistenceSucceeded: criticalPersistenceSucceeded ?? true,
         failureReasonCode:
             failureReasonCode?.isNotEmpty ?? false ? failureReasonCode! : '',

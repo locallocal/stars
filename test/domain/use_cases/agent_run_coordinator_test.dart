@@ -480,6 +480,11 @@ void main() {
         result.toolInvocations.single.status,
         ToolInvocationStatus.cancelled,
       );
+      expect(
+        result.stateTransitions.map((event) => event.phase),
+        contains(AgentRunPhase.awaitingApproval),
+      );
+      expect(result.stateTransitions.last.phase, AgentRunPhase.cancelled);
     });
 
     test('stops at configured tool call limit', () async {
@@ -532,6 +537,8 @@ void main() {
       expect(result.status, AgentRunStatus.timedOut);
       expect(result.error, 'agent_run_timeout');
       expect(session.cancelled, isTrue);
+      expect(result.stateTransitions.first.phase, AgentRunPhase.planning);
+      expect(result.stateTransitions.last.phase, AgentRunPhase.timedOut);
     });
 
     test('commits only the structured synthesis candidate', () async {

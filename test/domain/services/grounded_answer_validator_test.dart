@@ -450,6 +450,73 @@ void main() {
     });
 
     test(
+      'coverage uses persisted deterministic evidence before synthesis',
+      () async {
+        final evidence = _observation(
+          validUntil: now.add(const Duration(hours: 1)),
+        );
+        final repository = _FakeEvidenceRepository([evidence]);
+        final reviewer = _Reviewer(false);
+        final validator = GroundedAnswerValidator(
+          evidenceRepository: repository,
+          reviewer: reviewer,
+        );
+
+        final covered = await validator.evaluateCoverage(
+          runId: 'run-1',
+          requirements: [_weatherRequirement(claimKind: ClaimKind.currentFact)],
+          evidenceIds: [evidence.evidenceId],
+          validatedAt: now,
+        );
+        final missing = await validator.evaluateCoverage(
+          runId: 'run-1',
+          requirements: [_weatherRequirement(claimKind: ClaimKind.currentFact)],
+          evidenceIds: const [],
+          validatedAt: now,
+        );
+
+        expect(covered.isComplete, isTrue);
+        expect(covered.coveredRequirementIds, ['claim-1']);
+        expect(covered.evidenceIds, [evidence.evidenceId]);
+        expect(missing.isComplete, isFalse);
+        expect(missing.missingRequirementIds, ['claim-1']);
+        expect(reviewer.calls, 0);
+      },
+    );
+
+    test(
+      'omitted required claim fails closed during final validation',
+      () async {
+        final evidence = _observation(
+          validUntil: now.add(const Duration(hours: 1)),
+        );
+        final repository = _FakeEvidenceRepository([evidence]);
+        final missingRequirement = ClaimEvidenceRequirement(
+          claimId: 'claim-2',
+          claimKind: ClaimKind.externalFact,
+          allowedEvidenceKinds: const {EvidenceKind.calculation},
+          subject: 'calculation:basic-arithmetic',
+          scope: const {'expression': '2+2'},
+          requiredCapabilities: const {ToolCapability.compute},
+          requiredFactNames: const {'calculation.result'},
+        );
+
+        final result = await GroundedAnswerValidator(
+          evidenceRepository: repository,
+        ).validate(
+          runId: 'run-1',
+          candidate: GroundedAnswerCandidate(claims: [_claim()]),
+          requirements: [_weatherRequirement(), missingRequirement],
+          validatedAt: now,
+        );
+
+        expect(result.trustLevel, AnswerTrustLevel.partiallyVerified);
+        expect(result.unmatchedRequirementIds, ['claim-2']);
+        expect(result.evidenceIds, [evidence.evidenceId]);
+      },
+    );
+
+    test(
       'non-factual and user assertions never make a message verified',
       () async {
         final repository = _FakeEvidenceRepository(const []);
@@ -511,8 +578,10 @@ AnswerClaim _claim({ClaimKind kind = ClaimKind.currentFact}) => AnswerClaim(
 ClaimEvidenceRequirement _weatherRequirement({
   Set<EvidenceKind> allowedEvidenceKinds = const {EvidenceKind.observation},
   Set<ToolCapability> requiredCapabilities = const {ToolCapability.network},
+  ClaimKind? claimKind,
 }) => ClaimEvidenceRequirement(
   claimId: 'claim-1',
+  claimKind: claimKind,
   allowedEvidenceKinds: allowedEvidenceKinds,
   subject: 'weather:current',
   scope: const {'city': 'Beijing'},

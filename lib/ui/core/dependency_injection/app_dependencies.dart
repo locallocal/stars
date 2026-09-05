@@ -83,6 +83,7 @@ import 'package:stars/domain/repositories/skill_ecosystem_repository.dart';
 import 'package:stars/domain/repositories/skill_inventory_repository.dart';
 import 'package:stars/domain/repositories/skill_run_repository.dart';
 import 'package:stars/domain/repositories/tool_execution_repository.dart';
+import 'package:stars/domain/services/grounded_answer_validator.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -356,6 +357,9 @@ class AppDependencies {
       executionRepository: toolExecutionRepository,
       complianceRepository: skillEcosystemRepository,
     );
+    final groundedAnswerValidator = GroundedAnswerValidator(
+      evidenceRepository: toolEvidenceRepository,
+    );
     final conversationSkillPinRepository = SqliteConversationSkillPinRepository(
       localDatabase: localDatabase,
     );
@@ -499,6 +503,7 @@ class AppDependencies {
           }
         },
         toolInvocationPersister: persistToolInvocation.call,
+        groundedAnswerValidator: groundedAnswerValidator,
         toolRegistry: toolRegistry,
         toolPolicy: toolPolicy,
       ),

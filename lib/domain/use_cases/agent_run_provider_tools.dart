@@ -2,6 +2,7 @@ part of 'agent_run_coordinator.dart';
 
 extension _AgentRunProviderTools on AgentRunCoordinator {
   Future<void> _recordProviderNativeToolResult({
+    required String runId,
     required ProviderNativeToolResult event,
     required Map<String, _CompletedCall> completedCalls,
     required _InvocationIdentityRegistry invocationIdentities,
@@ -19,6 +20,7 @@ extension _AgentRunProviderTools on AgentRunCoordinator {
         _providerNativeTerminalRecord(
           event,
           identity,
+          runId: runId,
           status: ToolInvocationStatus.duplicateConflict,
           resultSummary: 'duplicate_call_id_conflict',
           errorCode: 'duplicate_call_id_conflict',
@@ -31,6 +33,7 @@ extension _AgentRunProviderTools on AgentRunCoordinator {
         _providerNativeTerminalRecord(
           event,
           identity,
+          runId: runId,
           status: ToolInvocationStatus.duplicateReused,
           resultSummary: 'duplicate_call_reused',
         ),
@@ -39,6 +42,7 @@ extension _AgentRunProviderTools on AgentRunCoordinator {
     }
 
     var record = ToolInvocationRecord(
+      runId: runId,
       invocationId: identity.invocationId,
       attemptId: identity.attemptId,
       providerCallId: call.callId,
@@ -79,10 +83,12 @@ extension _AgentRunProviderTools on AgentRunCoordinator {
   ToolInvocationRecord _providerNativeTerminalRecord(
     ProviderNativeToolResult event,
     _AttemptIdentity identity, {
+    required String runId,
     required ToolInvocationStatus status,
     required String resultSummary,
     String errorCode = '',
   }) => ToolInvocationRecord(
+    runId: runId,
     invocationId: identity.invocationId,
     attemptId: identity.attemptId,
     providerCallId: event.call.callId,

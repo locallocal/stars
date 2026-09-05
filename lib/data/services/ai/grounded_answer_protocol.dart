@@ -3,6 +3,8 @@ part of 'skill_tool_sessions.dart';
 String _groundedAnswerSynthesisPrompt(GroundedAnswerSynthesisRequest request) {
   final envelope = jsonEncode(<String, Object?>{
     'draft_text': request.draftText,
+    if (request.reliabilityFeedback.isNotEmpty)
+      'application_validation_feedback': request.reliabilityFeedback,
     'available_evidence': [
       for (final reference in request.evidence)
         <String, Object?>{
@@ -23,6 +25,8 @@ Rules:
 - Use only evidence_id values listed in available_evidence. Never output Provider call IDs.
 - A failed evidence item may describe only execution_failure.
 - Preserve useful qualifications and failure disclosures from the draft.
+- If application_validation_feedback is present, correct only the structured
+  claim bindings it identifies. Do not request or invoke Tools in this turn.
 - Put greetings, transitions, and other genuinely non-factual prose in non_factual_text.
 - Do not emit a legacy evidence footer; it is a deprecated input format.
 

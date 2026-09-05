@@ -75,6 +75,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
       approvalHandler: this,
       limits: _agentRunLimits,
       toolInvocationPersister: _toolInvocationPersister,
+      groundedAnswerValidator: _groundedAnswerValidator,
     );
     final generation = coordinator.run(
       provider: provider,
@@ -100,12 +101,25 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
             }
             if (result.status == AgentRunStatus.completed) {
               _answerTrustGateResult = AnswerTrustGateResult.passed;
-              _answerEvidenceState =
-                  result.toolInvocations.isEmpty
-                      ? AnswerEvidenceState.none
-                      : result.groundedAnswer?.isLegacy ?? true
-                      ? AnswerEvidenceState.legacyFormatOnly
-                      : AnswerEvidenceState.structuredUnvalidated;
+              final validation = result.groundedValidation;
+              if (validation != null) {
+                _validatedEvidenceIds = validation.evidenceIds;
+                _answerEvidenceState = switch (validation.trustLevel) {
+                  AnswerTrustLevel.verified =>
+                    AnswerEvidenceState.fullyValidated,
+                  AnswerTrustLevel.partiallyVerified =>
+                    AnswerEvidenceState.partiallyValidated,
+                  AnswerTrustLevel.unverified => AnswerEvidenceState.none,
+                  AnswerTrustLevel.failed => AnswerEvidenceState.invalid,
+                };
+              } else {
+                _answerEvidenceState =
+                    result.toolInvocations.isEmpty
+                        ? AnswerEvidenceState.none
+                        : result.groundedAnswer?.isLegacy ?? true
+                        ? AnswerEvidenceState.legacyFormatOnly
+                        : AnswerEvidenceState.structuredUnvalidated;
+              }
             } else if (const <String>{
               'invalid_grounded_json',
               'invalid_grounded_answer',
