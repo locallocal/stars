@@ -20,8 +20,18 @@ class _MessageTrustStatus extends StatefulWidget {
 }
 
 class _MessageTrustStatusState extends State<_MessageTrustStatus> {
+  static const _itemValue = 'message-trust';
+
+  late final ShadAccordionController<String> _controller;
   Future<Map<String, ToolEvidenceRecord?>>? _evidence;
   bool _expanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        ShadAccordionController<String>()..addListener(_handleAccordionChanged);
+  }
 
   @override
   void didUpdateWidget(covariant _MessageTrustStatus oldWidget) {
@@ -29,19 +39,34 @@ class _MessageTrustStatusState extends State<_MessageTrustStatus> {
     if (!identical(oldWidget.grounding, widget.grounding)) {
       _evidence = null;
       _expanded = false;
+      _controller
+        ..removeListener(_handleAccordionChanged)
+        ..value = const <String>[]
+        ..addListener(_handleAccordionChanged);
     }
   }
 
-  void _handleExpansion(bool expanded) {
+  void _handleAccordionChanged() {
+    final expanded = _controller.value.contains(_itemValue);
+    if (_expanded == expanded) return;
     setState(() {
       _expanded = expanded;
-      if (expanded && _evidence == null) {
-        _evidence = widget.actionViewModel?.loadEvidenceRecords(<String>{
+      final actionViewModel = widget.actionViewModel;
+      if (expanded && _evidence == null && actionViewModel != null) {
+        _evidence = actionViewModel.loadEvidenceRecords(<String>{
           for (final claim in widget.grounding.claims)
             ...claim.claim.evidenceIds,
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ..removeListener(_handleAccordionChanged)
+      ..dispose();
+    super.dispose();
   }
 
   @override
@@ -57,6 +82,12 @@ class _MessageTrustStatusState extends State<_MessageTrustStatus> {
       visual.label,
       reason,
     );
+    final details = _buildExpandedDetails(
+      context,
+      showNotFactCheckedBadge:
+          widget.hasNotFactCheckedContent &&
+          visual.label != strings.answerTrustNotFactChecked,
+    );
 
     return Semantics(
       key: const ValueKey<String>('message-trust-status'),
@@ -65,55 +96,176 @@ class _MessageTrustStatusState extends State<_MessageTrustStatus> {
       expanded: _expanded,
       label: semanticLabel,
       hint: strings.answerTrustDetails,
-      child: Material(
-        color: visual.background,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              widget.isDesktop
-                  ? StarsDesktopThemeSpec.statusRadius
-                  : const BorderRadius.all(Radius.circular(10)),
-          side: BorderSide(color: visual.border, width: 1.2),
-        ),
-        child: ExpansionTile(
-          key: const ValueKey<String>('message-trust-details-toggle'),
-          initiallyExpanded: false,
-          onExpansionChanged: _handleExpansion,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-          leading: Icon(visual.icon, size: 16, color: visual.foreground),
-          title: Text(
-            visual.label,
-            style: TextStyle(
-              color: visual.foreground,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          subtitle: Text(
-            reason,
-            style: TextStyle(
-              color: visual.foreground,
-              fontSize: 12,
-              height: 1.35,
-            ),
-          ),
-          children: [
-            if (widget.hasNotFactCheckedContent &&
-                visual.label != strings.answerTrustNotFactChecked)
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: ShadBadge.outline(
-                  child: Text(strings.answerTrustNotFactChecked),
-                ),
+      onTap: _toggleExpansion,
+      child:
+          widget.isDesktop
+              ? _buildDesktopStatusCard(
+                context,
+                icon: visual.icon,
+                iconColor: visual.foreground,
+                title: visual.label,
+                subtitle: reason,
+                details: details,
+              )
+              : _buildMobileStatusCard(
+                context,
+                icon: visual.icon,
+                iconColor: visual.foreground,
+                title: visual.label,
+                subtitle: reason,
+                details: details,
               ),
-            if (widget.hasNotFactCheckedContent &&
-                visual.label != strings.answerTrustNotFactChecked)
-              const SizedBox(height: 8),
-            _buildClaimDetails(context),
-          ],
-        ),
+    );
+  }
+
+  void _toggleExpansion() => _controller.toggle(_itemValue);
+
+  Widget _buildDesktopStatusCard(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required Widget details,
+  }) {
+    final tokens = StarsDesktopTokens.of(context);
+    final duration =
+        MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180);
+    return ShadCard(
+      key: const ValueKey<String>('message-trust-card'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      backgroundColor: tokens.controlFill,
+      radius: StarsDesktopThemeSpec.statusRadius,
+      border: ShadBorder.all(color: tokens.separator),
+      child: ShadAccordion<String>(
+        controller: _controller,
+        children: [
+          ShadAccordionItem<String>(
+            key: const ValueKey<String>('message-trust-details-toggle'),
+            value: _itemValue,
+            separator: const SizedBox.shrink(),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            duration: duration,
+            underlineTitleOnHover: false,
+            iconData: LucideIcons.chevronDown,
+            title: _buildHeader(
+              isDesktop: true,
+              icon: icon,
+              iconColor: iconColor,
+              title: title,
+              subtitle: subtitle,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: details,
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildMobileStatusCard(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required Widget details,
+  }) {
+    final tokens = StarsDesktopTokens.of(context);
+    final duration =
+        MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180);
+    return Container(
+      key: const ValueKey<String>('message-trust-card'),
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: tokens.controlFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tokens.separator),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            key: const ValueKey<String>('message-trust-details-toggle'),
+            onTap: _toggleExpansion,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildHeader(
+                      isDesktop: false,
+                      icon: icon,
+                      iconColor: iconColor,
+                      title: title,
+                      subtitle: subtitle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    duration: duration,
+                    turns: _expanded ? 0.5 : 0,
+                    child: const Icon(LucideIcons.chevronDown, size: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedSize(
+            duration: duration,
+            child:
+                _expanded
+                    ? Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: details,
+                    )
+                    : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader({
+    required bool isDesktop,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+  }) {
+    return _StatusCardHeader(
+      isDesktop: isDesktop,
+      icon: icon,
+      iconKey: const ValueKey<String>('message-trust-status-icon'),
+      iconColor: iconColor,
+      title: title,
+      subtitle: subtitle,
+    );
+  }
+
+  Widget _buildExpandedDetails(
+    BuildContext context, {
+    required bool showNotFactCheckedBadge,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showNotFactCheckedBadge) ...[
+          ShadBadge.outline(
+            child: Text(S.of(context).answerTrustNotFactChecked),
+          ),
+          const SizedBox(height: 8),
+        ],
+        _buildClaimDetails(context),
+      ],
     );
   }
 
@@ -285,14 +437,7 @@ class _EvidenceTrustDetails extends StatelessWidget {
   }
 }
 
-({
-  Color foreground,
-  Color background,
-  Color border,
-  IconData icon,
-  String label,
-})
-_trustVisual(
+({Color foreground, IconData icon, String label}) _trustVisual(
   BuildContext context,
   MessageGrounding grounding,
   bool hasNotFactCheckedContent,
@@ -303,8 +448,6 @@ _trustVisual(
   if (grounding.trustLevel == AnswerTrustLevel.failed) {
     return (
       foreground: colors.error,
-      background: colors.errorContainer.withValues(alpha: 0.35),
-      border: colors.error.withValues(alpha: 0.65),
       icon: LucideIcons.triangleAlert,
       label: strings.answerTrustFailed,
     );
@@ -312,8 +455,6 @@ _trustVisual(
   if (grounding.trustLevel == AnswerTrustLevel.verified) {
     return (
       foreground: colors.primary,
-      background: colors.primaryContainer.withValues(alpha: 0.28),
-      border: colors.primary.withValues(alpha: 0.6),
       icon: LucideIcons.shieldCheck,
       label: strings.answerTrustVerified,
     );
@@ -321,16 +462,12 @@ _trustVisual(
   if (grounding.trustLevel == AnswerTrustLevel.partiallyVerified) {
     return (
       foreground: colors.tertiary,
-      background: colors.tertiaryContainer.withValues(alpha: 0.3),
-      border: colors.tertiary.withValues(alpha: 0.65),
       icon: LucideIcons.shieldAlert,
       label: strings.answerTrustPartiallyVerified,
     );
   }
   return (
     foreground: tokens.secondaryText,
-    background: tokens.controlFill,
-    border: tokens.separator,
     icon: hasNotFactCheckedContent ? LucideIcons.info : LucideIcons.shieldAlert,
     label:
         hasNotFactCheckedContent

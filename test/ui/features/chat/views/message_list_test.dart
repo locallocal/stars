@@ -286,6 +286,93 @@ void main() => print('done');
     },
   );
 
+  testWidgets('desktop trust status aligns with the execution status card', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 900);
+    addTearDown(tester.view.reset);
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    final message = _groundedMessage(
+      id: 'aligned-trust-message',
+      trust: AnswerTrustLevel.verified,
+      claimTrust: ClaimTrustLevel.verified,
+      evidenceIds: const [_evidenceId],
+      reasonCode: 'all_evidence_validated',
+      processInfo: const MessageProcessInfo(
+        toolCalls: [
+          MessageToolCall(
+            callId: 'aligned-tool',
+            name: 'inventory.read',
+            status: 'succeeded',
+          ),
+        ],
+      ),
+    );
+
+    await tester.pumpWidget(
+      _harness(
+        isStreaming: false,
+        disableAnimations: true,
+        body: Column(
+          children: [
+            MessageList(
+              messages: [message],
+              scrollController: controller,
+              isStreaming: false,
+              streamingResponse: '',
+              currentUserId: 'me',
+              isDesktop: true,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final executionCardFinder = find.byKey(
+      const ValueKey<String>('desktop-execution-status'),
+    );
+    final trustCardFinder = find.byKey(
+      const ValueKey<String>('message-trust-card'),
+    );
+    final executionCard = tester.widget<ShadCard>(executionCardFinder);
+    final trustCard = tester.widget<ShadCard>(trustCardFinder);
+
+    expect(
+      tester.getSize(trustCardFinder).height,
+      tester.getSize(executionCardFinder).height,
+    );
+    expect(trustCard.padding, executionCard.padding);
+    expect(trustCard.backgroundColor, executionCard.backgroundColor);
+    expect(trustCard.radius, executionCard.radius);
+    expect(trustCard.border?.top?.color, executionCard.border?.top?.color);
+    expect(trustCard.border?.top?.width, executionCard.border?.top?.width);
+
+    final executionIcon = find.byKey(
+      const ValueKey<String>('execution-status-icon'),
+    );
+    final trustIcon = find.byKey(
+      const ValueKey<String>('message-trust-status-icon'),
+    );
+    expect(tester.getSize(trustIcon), const Size.square(28));
+    expect(tester.getSize(trustIcon), tester.getSize(executionIcon));
+    expect(
+      tester.getTopLeft(trustIcon).dx,
+      closeTo(tester.getTopLeft(executionIcon).dx, 0.01),
+    );
+
+    final executionIconBackground = tester.widget<DecoratedBox>(
+      find.descendant(of: executionIcon, matching: find.byType(DecoratedBox)),
+    );
+    final trustIconBackground = tester.widget<DecoratedBox>(
+      find.descendant(of: trustIcon, matching: find.byType(DecoratedBox)),
+    );
+    expect(trustIconBackground.decoration, executionIconBackground.decoration);
+    expect(find.byIcon(LucideIcons.shieldCheck), findsOneWidget);
+  });
+
   testWidgets(
     'execution durations use localized units and decimal separators',
     (tester) async {
