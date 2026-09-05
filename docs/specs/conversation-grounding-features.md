@@ -479,7 +479,11 @@ DTO 协议、协调器仅提交结构化段落及未校验声明不升级可信�
 
 ### GRD-014 声明级确定性证据门禁
 
-状态：待实现。
+状态：已完成。
+
+实现入口：`lib/domain/services/grounded_answer_validator.dart`；应用侧声明语义约束、逐证据账本
+复验、声明可信等级与消息级聚合、保守模型复核和表驱动拒绝原因测试：
+`test/domain/services/grounded_answer_validator_test.dart`。
 
 目标：阻止任意成功工具调用为无关事实背书。
 
