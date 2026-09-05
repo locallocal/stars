@@ -1,15 +1,15 @@
 # 会话 Loop 的事实依据与防幻觉协议
 
-[返回文档导航](../README.md) | [实施功能清单](../specs/conversation-grounding-features.md)
+[返回文档导航](../README.md) | [后续工作](../specs/conversation-grounding-future-work.md)
 
-本文定义 Stars 文本会话的长期可信性边界和演进方案。目标不是依靠更强的提示词让模型“少
+本文定义 Stars 文本会话当前实现的长期可信性边界。目标不是依靠更强的提示词让模型“少
 犯错”，而是让应用能够机械地回答三个问题：一条陈述依据了哪次工具观测、该观测是否有效，
 以及没有依据时为什么仍允许展示或为何拒绝展示。
 
 本协议中的“可信”只表示陈述可追溯到符合策略的工具观测，不表示外部世界绝对真实。工具本身
 可能返回错误、过期或不完整的数据，因此来源、时间、作用域和完整性也必须成为证据的一部分。
 
-## 现有流程与已有保护
+## 当前流程与稳定保护
 
 当前文本生成链路如下：
 
@@ -18,7 +18,8 @@ PrepareTextGeneration
   -> ComposeChatTurn / PrepareConversationContext
   -> ChatGenerationViewModel
        |-- Provider 不支持 Agent Loop，或本轮没有可用工具
-       |     -> provider.generateText（直接接受自由文本）
+       |     -> provider.generateText
+       |     -> AnswerTrustPolicy（只能 unverified / failed）
        |
        `-- Provider 支持 Agent Loop，且本轮有应用工具或已归一化的原生工具
              -> AgentRunCoordinator
@@ -34,7 +35,7 @@ PrepareTextGeneration
              -> 发布 UI 终态
 ```
 
-以下机制已经存在，应在改造中保留：
+以下机制构成稳定协议，后续改动必须保留：
 
 - `AgentRunCoordinator` 对模型轮数、工具次数、同一调用重试、总超时、工具超时和审批超时设有
   上限，并支持取消。
@@ -48,66 +49,47 @@ PrepareTextGeneration
   或脱敏。
 - OpenAI Responses 的原生 web search 会归一化为应用统一的调用生命周期和 observation 证据；
   未实现该适配的 Provider 仍保持 `unverified`。
-- 会话摘要不会把完全没有成功工具记录的助手消息当作自动事实来源。
+- 会话摘要和 Memory 只接收 verified claim，并保留来源与观测时间；消息中其他声明不会随之
+  获得信任。
 
-这些措施已经阻止了伪造 `call_id`、把空结果或截断结果当作成功以及重复执行部分副作用，但
-还不能满足“没有工具验证的回复不可信”这一产品约束。
+这些措施共同保证：没有合格工具证据的回复不会被授予 `verified`，空、截断、跨运行或未持久化
+的证据不能为声明背书，修复轮也不会重复执行副作用。
 
-## 现有实现的可信性缺口
+## 关键可信性不变量
 
-### 1. 无工具路径完全绕过可信性门禁
+### 无工具路径统一降级
 
-`ChatGenerationViewModel.startTextWithPreparation` 只有在 Provider 支持 Agent Loop 且
-`agentTools.isNotEmpty` 时才进入 `AgentRunCoordinator`，否则直接调用
-`provider.generateText`。这条路径可以把任何自由文本保存为 `completed`。
+Agent Loop、legacy Provider 和无工具路径都经过 `AnswerTrustPolicy`。`completed` 只表示生成
+结束；没有合格证据时最多保存为 `unverified`，Provider、门禁或关键持久化失败时保存为
+`failed`。模型输出不能自行指定可信等级。
 
-即使进入协调器，`_validateFinalAnswer` 在 `completedCalls.isEmpty` 时也允许没有证据页脚的
-回答。因此“没有工具调用”目前等价于“无需校验”，而不是“不可信”。
+### 声明必须由相关证据支持
 
-### 2. 引用了成功调用，不代表陈述被结果支持
+最终回答使用 `GroundedAnswerCandidate` 和声明级 evidence ID。`GroundedAnswerValidator` 按
+kind、能力、subject、scope、有效期、Schema、完整性和持久化状态逐项复核；未被声明使用的
+成功调用不影响可信等级。写动作回执只能支持动作声明，最终状态还需配对只读观测。
 
-当前门禁只验证页脚中的 ID 是否属于本轮成功、非空、未截断的 `ToolResult`。它没有验证：
+### 证据和回答采用可恢复提交协议
 
-- 陈述是否真的能从该工具结果推出；
-- 工具查询的对象、时间范围和回答中的对象、时间是否相同；
-- 一个成功的计算调用是否被拿来为无关的天气、文件或执行结果背书；
-- 写工具的成功回执是否足以证明写入后的最终状态。
+调用事件、不可变证据、claim-evidence 关系和最终消息遵守“证据先于回答”的提交顺序。最终
+消息与声明关系在同一数据库事务中写入；关键证据失败会关闭运行。独立 final answer checkpoint
+允许启动恢复只重试本地提交，不重新连接模型或执行工具。
 
-因此任意一次成功调用仍可能被用于“证据漂白”。GRD-013 已停止从整条自由文本和页脚推测可信
-关系。GRD-014 已提供确定性门禁，按应用侧声明要求复核 kind、能力、subject、scope、时效与
-账本状态；GRD-015 已将该门禁接入完整 Observe–Verify–Synthesize 状态机。
+### 调用、尝试和证据身份独立
 
-### 3. 内存判定与持久化事实源曾经分离
+应用分别生成 `invocationId`、`attemptId` 和 evidence ID，Provider `callId` 只用于关联。相同
+参数的重复调用复用首次结果并追加审计事件，不覆盖首次成功；冲突参数生成独立失败尝试，也不
+执行副作用。
 
-GRD-010 已把工具审计回调提升为协调器依赖：生命周期事件排队写入，终态提交必须成功后才
-继续最终回答；关键写入失败会使运行失败，不能只打印日志后发布可信终态。回答与
-claim-evidence 关系也在一个事务中提交，回答失败时保留未验证恢复检查点和已提交证据。
+### 跨轮上下文保留声明边界
 
-GRD-013 已将声明支持关系改为 `GroundedAnswerCandidate` 中的应用 evidence ID；旧页脚只允许在
-Provider adapter 内迁移解析，移除后才可发布或保存，并且迁移候选及尚未经过 GRD-014 声明级
-校验的新候选都只能产生 `unverified`。应用重启后的自动扫描与恢复编排属于 GRD-020。
+历史回放注入应用生成的 trust envelope，携带终态、逐声明可信等级、证据摘要和观测时间。
+失败、取消和 partial 正文默认隔离；Memory 只接收 verified claim，过期的 current fact 必须
+重新观测，不能因摘要压缩丢失来源边界。
 
-当前数据库只保存最多 512 字符的脱敏摘要。对于大多数非纯计算工具，成功摘要只是
-`completed`，无法证明具体答案。审计记录适合说明“调用发生过”，还不是可重放的事实账本。
+### Provider 原生工具按 adapter 明确授予证据资格
 
-### 4. 同一 `call_id` 的生命周期会覆盖证据语义
-
-同一 ID 再次出现时，`observeInvocation` 会用 `duplicate` 状态替换原来的成功记录；但
-`completedCalls` 仍可能复用第一次的成功结果。于是运行时门禁认为证据有效，最终数据库记录却
-可能只显示 `duplicate`。调用尝试、执行生命周期和事实证据需要分开建模。
-
-### 5. 跨轮上下文丢失证据边界
-
-`PrepareConversationContext._turnsToMessages` 和 `ComposeChatTurn._composeHistory` 回放历史时
-只构造普通的 assistant 正文，不携带终态、可信等级或证据引用。失败、取消但有部分正文的消息
-也可能进入后续上下文。模型无法区分已验证事实、未验证陈述和失败运行的残留文本。
-
-摘要侧的 `tool_grounded` 也是消息级布尔值：只要助手消息存在一个成功调用，该消息中的所有
-事实就可能一起获得信任。这仍然存在证据漂白。
-
-### 6. Provider 原生工具按 adapter 明确授予证据资格
-
-GRD-012 已把 OpenAI Responses 的 `web_search_call` 和 `url_citation` 归一化为
+OpenAI Responses 的 `web_search_call` 和 `url_citation` 已归一化为
 `ProviderNativeToolResult`，再由协调器生成统一的 requested、running 和终态事件，并按 GRD-011
 契约复核后进入同一事实账本。请求会显式取得 action sources；只有已完成且引用能绑定到来源的
 结果才能产生 observation。查询正文只保留摘要，URL 去除凭据、query 和 fragment，引用正文、
@@ -115,16 +97,16 @@ GRD-012 已把 OpenAI Responses 的 `web_search_call` 和 `url_citation` 归一�
 的 evidence ID 仍由 attempt ID 推导，两类身份不会混用。
 
 Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获得此能力标志，其搜索正文只能
-保持 `unverified`。传输失败由 GRD-005 的 `ProviderFailure` 保存状态码、端点类别、请求追踪 ID
-和可重试性等安全诊断字段，响应正文不进入回答或普通日志。
+保持 `unverified`；扩展计划见[会话事实化后续工作](../specs/conversation-grounding-future-work.md)。
+传输失败由 `ProviderFailure` 保存状态码、端点类别、请求追踪 ID 和可重试性等安全诊断字段，
+响应正文不进入回答或普通日志。
 
-### 7. 错误记录也是事实，但不是业务事实
+### 错误证据与业务事实分离
 
-当前所有 `isError` 结果都不能作为证据。这能防止把失败说成成功，但也导致“调用超时”“用户
-拒绝了写入”这类执行事实只能使用空证据页脚。错误记录可以证明一次尝试的终态，却不能证明
-被查询对象不存在或目标状态未改变；两类事实应分别建模。
+失败、拒绝、超时和取消可以生成 `executionFailure` 证据，只支持描述该次尝试的终态。它们不
+能证明查询对象不存在、目标状态未改变或动作成功。
 
-## 目标可信模型
+## 可信模型
 
 ### 回答可信等级
 
@@ -141,7 +123,7 @@ Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获�
 `unverified` 或单独的 `notFactChecked`，不能因为“不需要工具”而获得 `verified`。用户偏好和
 用户决策应标记为 `userAssertion`，表示“用户确实这样说过”，不等价于外部事实。
 
-产品可提供严格模式：当最终等级不是 `verified` 时，不展示模型生成的事实答案，只展示应用
+产品提供严格模式：当最终等级不是 `verified` 时，不展示模型生成的事实答案，只展示应用
 生成的“无法验证”状态和原因。默认模式可以展示未验证内容，但视觉、持久化和后续召回都必须
 保留该标签。
 
@@ -184,8 +166,9 @@ ToolEvidenceRecord
   禁止执行结果文本中的指令。
 
 完整结果可能包含隐私或凭据，不能为了可追溯性无条件明文落库。默认保存规范化事实、摘要和
-摘要哈希；确需复验原文时使用加密 payload、最小权限读取和保留期限。日志与 UI 不显示密钥、
-Cookie、Authorization 或原始私有命令。
+摘要哈希；领域与数据库契约只接受带保留期限的加密 payload 引用，生产快照后端属于
+[可选后续工作](../specs/conversation-grounding-future-work.md)。日志与 UI 不显示密钥、Cookie、
+Authorization 或原始私有命令。
 
 ### 声明与证据绑定
 
@@ -216,11 +199,12 @@ Cookie、Authorization 或原始私有命令。
 6. 声明列表校验成功后，由应用从已校验字段渲染正文和来源标记；不再从自由文本中猜测句子
    边界。
 
-仅靠字符串页脚无法确定语义蕴含关系。可增加一个独立模型做“证据是否支持声明”的保守复核，
-但它只能拒绝或降级，不能单独把回答升级为 `verified`。严格场景应优先使用领域工具返回的类型
-化事实，并由确定性模板生成关键结论。
+仅靠字符串页脚无法确定语义蕴含关系。`ClaimEvidenceReviewer` 契约允许在确定性检查之后增加
+保守复核，但它只能拒绝或降级，不能把回答升级为 `verified`；生产复核器属于
+[可选后续工作](../specs/conversation-grounding-future-work.md)。严格场景优先使用领域工具返回的
+类型化事实，并由确定性模板生成关键结论。
 
-## 目标 Loop
+## 会话 Loop
 
 ```text
 接收用户消息
@@ -242,7 +226,7 @@ Cookie、Authorization 或原始私有命令。
   -> 发布终态
 ```
 
-Loop 状态应显式建模为 `planning -> awaitingApproval -> executing -> observing ->
+Loop 状态显式建模为 `planning -> awaitingApproval -> executing -> observing ->
 verifying -> synthesizing -> committing -> completed`。Provider 文本、工具结果和持久化事件都
 必须携带 `runId`；迟到事件只能归档，不能改变已结束或更新一轮的状态。
 
@@ -281,11 +265,10 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 
 ### Data
 
-- 保留 `tool_execution_records` 作为当前状态投影，新增 append-only 的调用事件表、终态证据表和
-  claim-evidence 关联表；证据写入应具备幂等键和摘要校验。
-- “工具终态 + 证据 + 最终消息 + 声明关系”至少要有可恢复的提交协议。若无法跨外部调用使用
-  单一数据库事务，则先提交证据，再提交回答；回答提交失败可重试，证据提交失败则不得发布
-  `verified`。
+- `tool_execution_records` 保留为当前状态投影；append-only 调用事件表、终态证据表和
+  claim-evidence 关联表使用幂等键和摘要校验。
+- “工具终态 + 证据 + 最终消息 + 声明关系”使用可恢复提交协议。外部调用结束后先提交证据，再
+  提交回答；回答提交失败可重试，证据提交失败则不得发布 `verified`。
 - 当前提交边界由运行协调器拥有：所有调用事件按尝试内单调序号排队，终态会等待事实账本提交
   并使用同一幂等身份重试，重试不会重新执行工具。账本成功且验证需求覆盖率已计算后才允许进入
   回答合成与提交。
@@ -320,6 +303,8 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
   声明到证据的映射。
 - 工具卡区分“动作已接受”“动作已完成”“状态已回读验证”，避免统一显示为成功。
 - 错误界面显示安全、可操作的分类，不把 Provider 错误正文当作模型回答。
+- 严格模式用应用生成的拒绝提示替代未验证事实正文；复制、分享、导出和聊天预览继续保留可信
+  边界，设置及逐消息状态可在重启后恢复。
 
 ## 404 与 Provider 错误的处理边界
 
@@ -339,42 +324,28 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 败、停止事实合成并给出配置诊断；不得重用缓存文本或生成“操作已完成”。404 通常不应进行同
 一端点的盲目重试，只有端点发现或配置被纠正后才发起新运行。
 
-## 分阶段实施
+## 已交付能力矩阵
 
-### P0：封闭错误信任路径
+原实施清单 GRD-001 至 GRD-020 已全部完成。稳定能力按层次归纳如下；具体行为以本协议、代码和
+自动化测试为准，不再维护已完成任务的排期文档。
 
-1. 给所有助手消息增加应用计算的可信等级；无工具路径一律为 `unverified`。
-2. 所有 Provider 路径统一经过终态门禁；工具、Provider 或持久化失败不能产生
-   `completed + verified`。
-3. 修复 duplicate 覆盖成功记录的问题，区分 invocation、attempt 和 evidence ID。
-4. 历史上下文排除失败/取消/partial 正文，或用不可信数据 envelope 包装。
-5. 将 HTTP 状态码和可重试性结构化；404 不做盲目重试。
+| 层次 | 已交付编号 | 稳定能力 |
+| --- | --- | --- |
+| P0 | GRD-001–007 | 消息可信模型与兼容序列化、统一终态门禁、调用身份分离、Provider 失败分类、不可信历史隔离和最小可信状态 UI |
+| P1 | GRD-008–012 | 不可变事实账本、可恢复提交、证据型工具契约，以及 OpenAI Responses 原生搜索与本地/MCP 工具的统一证据协议 |
+| P2 | GRD-013–017 | 结构化 claims、确定性证据门禁、Observe–Verify–Synthesize 状态机、写后验证和最小权限验证工具发现 |
+| P3 | GRD-018–020 | 声明级历史与 Memory、证据详情和严格模式、启动恢复、脱敏指标及发布门禁 |
 
-### P1：建立持久化事实账本
+运行可靠性遵守以下固定约束：
 
-1. 新增不可变证据表和 claim-evidence 表，定义迁移与清理策略。
-2. 证据先于回答持久化，关键写入失败时 fail closed。
-3. 证据型工具强制输出 Schema、作用域、观测时间和结果摘要哈希。
-4. 原生 web search 与 MCP 结果进入同一证据协议。
-
-### P2：声明级门禁
-
-1. Provider 输出结构化 claims；应用验证并渲染最终正文。
-2. 引入 claim kind 与 tool evidence capability 的确定性匹配。
-3. 写操作增加 read-after-write 或强语义回执策略。
-4. 证据不足时继续观测；达到预算后明确降级，不让合成修复触发重复副作用。
-
-### P3：跨轮可信性与体验
-
-1. 历史、摘要和 Memory 保留声明级来源、时间和可信等级。
-2. 增加证据详情 UI、严格模式和部分验证展示。
-3. 建立只接受应用枚举和计数的脱敏指标：unsupported claim 通过数、证据引用解析率、verified
-   证据持久化率、重复副作用数、门禁拒绝类别和 Provider 失败类别。指标边界不得接受消息正文、
-   工具原文、URL、请求参数、凭据或异常文本。
-4. 启动完成前执行本地恢复；恢复过程只有追加审计终态、重试 final answer 本地事务和生成安全
-   失败状态三种写入能力，不持有工具执行或模型会话依赖。相同数据库状态重复恢复必须是幂等的。
-5. 发布门禁固定检查：unsupported claim 通过数为零、verified 证据持久化率为 100%、重复副
-   作用数为零；任一不变量失败必须使发布测试失败。
+1. 启动完成前执行本地恢复。恢复只允许追加 `interrupted` 审计终态、重试 final answer 本地事务
+   或生成安全失败状态，不持有工具执行器或模型会话依赖；对同一数据库状态重复执行必须幂等。
+2. 指标只接受应用枚举、脱敏类别和计数，不接受消息正文、工具原文、URL、请求参数、凭据或
+   异常文本。
+3. 发布门禁固定检查三个不变量：unsupported claim 通过数为零、verified 证据持久化率为
+   100%、重复副作用数为零；任一不变量失败必须使发布测试失败。
+4. 尚未交付的可选扩展统一记录在[会话事实化后续工作](../specs/conversation-grounding-future-work.md)，
+   未完成前不得改变现有降级语义。
 
 ## 验收标准
 
@@ -392,9 +363,9 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 - 失败、取消和 partial assistant 消息不会在下一轮或摘要中被当作事实。
 - 同一助手消息中，一条有证据、一条无证据时只能是 `partiallyVerified`，不能整条升级。
 
-测试应以领域门禁和持久化不变量为主，模型评分只作为补充。核心发布指标至少包括：未支持事实
-通过数必须为零、证据引用可解析率为 100%、`verified` 消息的证据持久化率为 100%，以及副
-作用工具在修复轮中的重复执行数为零。
+测试以领域门禁和持久化不变量为主，模型评分只作为补充。指标持续观测证据引用解析率、门禁
+拒绝分类和 Provider 失败分类；硬发布门禁只采用上节三个不变量，避免把诊断指标误当作授权
+信号。
 
 ## 不采用的捷径
 
@@ -404,6 +375,6 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 - 把所有成功工具结果永久明文保存：会扩大凭据、隐私和受管数据的泄露面。
 - 把用户陈述直接当作外部事实：应保留“用户说过”与“世界状态已验证”的区别。
 
-完成上述改造后，工具调用记录才从“供 UI 展示的过程日志”提升为“回答可信等级的唯一应用侧
-事实依据”；任何没有合格工具证据的内容仍可按产品策略展示，但系统不会再把它包装成已验证
-事实，也不会让它在后续会话中无声升级为事实。
+当前实现已将工具调用记录从“供 UI 展示的过程日志”提升为“回答可信等级的唯一应用侧事实
+依据”；任何没有合格工具证据的内容仍可按产品策略展示，但系统不会把它包装成已验证事实，
+也不会让它在后续会话中无声升级为事实。
