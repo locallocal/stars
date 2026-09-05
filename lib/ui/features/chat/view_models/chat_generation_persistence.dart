@@ -77,10 +77,18 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
       return _groundedMessagePersister(draft);
     }
     await _persistRecoveryCheckpointSafely(draft);
+    final recoveryPersister = _answerRecoveryCheckpointPersister;
+    if (draft.grounding.evidenceIds.isNotEmpty && recoveryPersister != null) {
+      await recoveryPersister(draft);
+    }
     Object? lastError;
     for (var attempt = 0; attempt < 2; attempt += 1) {
       try {
-        return await _groundedMessagePersister(draft);
+        final persisted = await _groundedMessagePersister(draft);
+        if (await _recordGroundingMetricsSafely(persisted)) {
+          await _clearAnswerRecoveryCheckpointSafely(draft.runId);
+        }
+        return persisted;
       } on Object catch (error) {
         lastError = error;
       }
@@ -89,6 +97,32 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
       'generation_response_persist_failed',
       cause: lastError,
     );
+  }
+
+  Future<void> _clearAnswerRecoveryCheckpointSafely(String runId) async {
+    final clearer = _answerRecoveryCheckpointClearer;
+    if (clearer == null) return;
+    try {
+      await clearer(runId);
+    } catch (error) {
+      debugPrint(
+        'Failed to clear answer recovery checkpoint for $runId: $error',
+      );
+    }
+  }
+
+  Future<bool> _recordGroundingMetricsSafely(Message message) async {
+    final observer = _terminalGroundingMetricsObserver;
+    if (observer == null) return true;
+    try {
+      await observer(message);
+      return true;
+    } catch (error) {
+      debugPrint(
+        'Failed to record grounding metrics for ${message.messageId}: $error',
+      );
+      return false;
+    }
   }
 
   Future<void> _persistRecoveryCheckpointSafely(Message draft) async {

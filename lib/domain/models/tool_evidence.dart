@@ -426,6 +426,7 @@ const Set<ToolInvocationStatus> _evidenceTerminalStatuses = {
 
 const Set<ToolInvocationStatus> _auditTerminalStatuses = {
   ..._evidenceTerminalStatuses,
+  ToolInvocationStatus.interrupted,
   ToolInvocationStatus.duplicateReused,
   ToolInvocationStatus.duplicateConflict,
   ToolInvocationStatus.duplicate,

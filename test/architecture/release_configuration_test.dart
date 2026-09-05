@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/services/bot_api_key_cipher.dart';
 import 'package:stars/data/services/mcp/secure_mcp_credential_store.dart';
+import 'package:stars/domain/models/grounding_metrics.dart';
 
 void main() {
   const applicationId = 'io.github.locallocal.stars';
@@ -97,5 +98,50 @@ void main() {
     expect(connectFirstFrame, greaterThan(addView));
     expect(realizeView, greaterThan(connectFirstFrame));
     expect(registerPlugins, greaterThan(realizeView));
+  });
+
+  test('grounding reliability invariants block a release', () {
+    final healthy = GroundingMetricsSnapshot({
+      GroundingMetricName.unsupportedClaimPass: const {'': 0},
+      GroundingMetricName.verifiedEvidenceRequired: const {'': 5},
+      GroundingMetricName.verifiedEvidencePersisted: const {'': 5},
+      GroundingMetricName.duplicateSideEffect: const {'': 0},
+    });
+    const gate = GroundingReleaseGate();
+
+    expect(gate.evaluate(healthy).passes, isTrue);
+    for (final failing in <GroundingMetricsSnapshot>[
+      GroundingMetricsSnapshot({
+        GroundingMetricName.unsupportedClaimPass: const {'': 1},
+      }),
+      GroundingMetricsSnapshot({
+        GroundingMetricName.verifiedEvidenceRequired: const {'': 2},
+        GroundingMetricName.verifiedEvidencePersisted: const {'': 1},
+      }),
+      GroundingMetricsSnapshot({
+        GroundingMetricName.duplicateSideEffect: const {'': 1},
+      }),
+    ]) {
+      final result = gate.evaluate(failing);
+      expect(result.passes, isFalse);
+      expect(result.requirePass, throwsStateError);
+    }
+  });
+
+  test('grounding metrics reject content-bearing categories', () {
+    for (final unsafe in const [
+      'https://provider.test/path?token=secret',
+      'user supplied sentence',
+      'authorization:bearer_secret',
+      'raw-tool-output!',
+    ]) {
+      expect(
+        () => GroundingMetricDelta(
+          name: GroundingMetricName.gateRejection,
+          category: unsafe,
+        ),
+        throwsArgumentError,
+      );
+    }
   });
 }

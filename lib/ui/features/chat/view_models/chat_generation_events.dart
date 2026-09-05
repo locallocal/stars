@@ -137,6 +137,10 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
               _answerTrustGateResult = AnswerTrustGateResult.failed;
               _answerEvidenceState = AnswerEvidenceState.invalid;
             }
+            final providerFailure = result.providerFailure;
+            if (providerFailure != null && !_hasGeneratedContent) {
+              _recordProviderFailureSafely(providerFailure);
+            }
             final terminal = switch (result.status) {
               AgentRunStatus.completed => ProviderTerminalType.completed,
               AgentRunStatus.cancelled => ProviderTerminalType.cancelled,

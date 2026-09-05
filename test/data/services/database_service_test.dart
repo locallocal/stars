@@ -438,7 +438,10 @@ void main() {
       final upgradedDatabase = await service.initDatabase();
       addTearDown(upgradedDatabase.close);
 
-      expect(await upgradedDatabase.getVersion(), 20);
+      expect(
+        await upgradedDatabase.getVersion(),
+        DatabaseService.databaseVersion,
+      );
       expect(
         await upgradedDatabase.query('tool_invocation_events'),
         hasLength(1),
@@ -462,6 +465,67 @@ void main() {
         );
         expect(schema.single['sql'], contains("'providerNative'"));
       }
+    });
+
+    test('upgrades version 20 with recovery and metric storage', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_grounding_recovery_upgrade_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final dataDirectory = _applicationDataDirectory(directory);
+      await dataDirectory.create(recursive: true);
+      final databasePath = path.join(dataDirectory.path, 'app.db');
+      final previousDatabase = await databaseFactoryFfi.openDatabase(
+        databasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      await previousDatabase.insert('bots', _botRow('recovery-upgrade-bot'));
+      await previousDatabase.execute('DROP TABLE grounding_metric_counters');
+      await previousDatabase.execute(
+        'DROP TABLE grounding_metric_observations',
+      );
+      await previousDatabase.execute('DROP TABLE agent_run_answer_checkpoints');
+      await previousDatabase.setVersion(20);
+      await previousDatabase.close();
+
+      final service = DatabaseService(
+        applicationDocumentsDirectoryProvider: () async => directory,
+      );
+      final upgradedDatabase = await service.initDatabase();
+      addTearDown(upgradedDatabase.close);
+
+      expect(
+        await upgradedDatabase.getVersion(),
+        DatabaseService.databaseVersion,
+      );
+      expect(
+        await upgradedDatabase.query(
+          'bots',
+          where: 'id = ?',
+          whereArgs: const ['recovery-upgrade-bot'],
+        ),
+        hasLength(1),
+      );
+      for (final table in const [
+        'agent_run_answer_checkpoints',
+        'grounding_metric_counters',
+        'grounding_metric_observations',
+      ]) {
+        final rows = await upgradedDatabase.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+          [table],
+        );
+        expect(rows, hasLength(1));
+      }
+      final invocationSchema = await upgradedDatabase.rawQuery(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+        const ['tool_invocation_events'],
+      );
+      expect(invocationSchema.single['sql'], contains("'interrupted'"));
     });
 
     test(
@@ -890,6 +954,9 @@ Future<void> _expectCurrentSchema(Database database) async {
       'tool_invocation_events',
       'tool_evidence_records',
       'answer_claim_evidence',
+      'agent_run_answer_checkpoints',
+      'grounding_metric_counters',
+      'grounding_metric_observations',
       'token_usage_records',
       'skills',
       'bot_skill_bindings',

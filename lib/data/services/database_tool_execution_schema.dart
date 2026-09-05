@@ -25,7 +25,11 @@ Future<void> _ensureCompatibleToolExecutionSchema(Database database) async {
       createSql.contains("'duplicateReused'") &&
       createSql.contains("'duplicateConflict'");
   final hasProviderNativeSource = createSql.contains("'providerNative'");
-  if (hasSeparatedIdentities && hasAttemptStatuses && hasProviderNativeSource) {
+  final hasInterruptedStatus = createSql.contains("'interrupted'");
+  if (hasSeparatedIdentities &&
+      hasAttemptStatuses &&
+      hasProviderNativeSource &&
+      hasInterruptedStatus) {
     return;
   }
 
@@ -151,6 +155,7 @@ Future<void> _createToolExecutionSchema(DatabaseExecutor database) async {
           'denied',
           'cancelled',
           'timedOut',
+          'interrupted',
           'duplicateReused',
           'duplicateConflict',
           'duplicate'

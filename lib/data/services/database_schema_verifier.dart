@@ -4,6 +4,7 @@ Future<void> _verifyCurrentDatabaseSchema(
   Database database, {
   bool allowMissingToolExecutionSchema = false,
   bool allowMissingToolEvidenceSchema = false,
+  bool allowMissingGroundingReliabilitySchema = false,
 }) async {
   final tables = await database.rawQuery('''
     SELECT name
@@ -15,6 +16,7 @@ Future<void> _verifyCurrentDatabaseSchema(
   if (!_matchesSchemaNames(tableNames, _currentTableNames, [
     if (allowMissingToolExecutionSchema) const {'tool_execution_records'},
     if (allowMissingToolEvidenceSchema) _toolEvidenceTableNames,
+    if (allowMissingGroundingReliabilitySchema) _groundingReliabilityTableNames,
   ])) {
     throw const FormatException(
       'Database tables do not match the current Stars schema.',
@@ -129,6 +131,9 @@ const Set<String> _currentTableNames = <String>{
   'tool_invocation_events',
   'tool_evidence_records',
   'answer_claim_evidence',
+  'agent_run_answer_checkpoints',
+  'grounding_metric_counters',
+  'grounding_metric_observations',
   'token_usage_records',
   'skills',
   'bot_skill_bindings',
@@ -177,6 +182,12 @@ const Set<String> _toolEvidenceTableNames = <String>{
   'tool_invocation_events',
   'tool_evidence_records',
   'answer_claim_evidence',
+};
+
+const Set<String> _groundingReliabilityTableNames = <String>{
+  'agent_run_answer_checkpoints',
+  'grounding_metric_counters',
+  'grounding_metric_observations',
 };
 
 const Set<String> _toolExecutionIndexNames = <String>{
