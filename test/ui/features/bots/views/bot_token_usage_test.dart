@@ -186,13 +186,25 @@ void main() {
       tester.getTopLeft(inputSection).dy,
       lessThan(tester.getTopLeft(outputSection).dy),
     );
+    final inputCard = find.descendant(
+      of: inputSection,
+      matching: find.byType(ShadCard),
+    );
+    final outputCard = find.descendant(
+      of: outputSection,
+      matching: find.byType(ShadCard),
+    );
+    expect(inputCard, findsOneWidget);
+    expect(outputCard, findsOneWidget);
+    final expectedPreviewBackground =
+        ShadTheme.of(tester.element(inputSection)).colorScheme.secondary;
     expect(
-      find.descendant(of: inputSection, matching: find.byType(ShadCard)),
-      findsOneWidget,
+      tester.widget<ShadCard>(inputCard).backgroundColor,
+      expectedPreviewBackground,
     );
     expect(
-      find.descendant(of: outputSection, matching: find.byType(ShadCard)),
-      findsOneWidget,
+      tester.widget<ShadCard>(outputCard).backgroundColor,
+      expectedPreviewBackground,
     );
     expect(
       find.descendant(of: inputSection, matching: find.text('输入 Token')),
