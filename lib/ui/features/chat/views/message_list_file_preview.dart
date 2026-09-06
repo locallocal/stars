@@ -341,10 +341,11 @@ void _showLocalFileDialog(
       context: context,
       builder: (dialogContext) {
         final strings = S.of(dialogContext);
+        final viewport = MediaQuery.sizeOf(dialogContext);
         final previewHeight =
-            (MediaQuery.heightOf(dialogContext) * 0.55)
-                .clamp(160.0, 680.0)
-                .toDouble();
+            (viewport.height * 0.66).clamp(220.0, 760.0).toDouble();
+        final dialogWidth =
+            (viewport.width - 32).clamp(280.0, 1040.0).toDouble();
         return ShadDialog(
           key: const ValueKey<String>('message-local-file-dialog'),
           closeIcon: StarsDesktopIconAction(
@@ -365,26 +366,32 @@ void _showLocalFileDialog(
             overflow: TextOverflow.ellipsis,
             style: StarsDesktopThemeSpec.pageTitleStyle(dialogContext),
           ),
-          description: SelectableText(descriptor.path, maxLines: 2),
-          constraints: const BoxConstraints(maxWidth: 860),
+          description: Row(
+            children: [
+              ShadBadge.outline(child: Text(descriptor.typeLabel)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SelectableText(
+                  descriptor.path,
+                  maxLines: 2,
+                  style: StarsDesktopThemeSpec.metaStyle(dialogContext),
+                ),
+              ),
+            ],
+          ),
+          constraints: BoxConstraints(maxWidth: dialogWidth),
           actions: [
             if (actions != null)
               ShadButton(
                 key: const ValueKey<String>('message-local-file-open-external'),
+                leading: const Icon(Icons.open_in_new_rounded, size: 17),
                 onPressed: () async {
                   final opened = await actions.openLocalFile(descriptor.path);
                   if (!opened && dialogContext.mounted) {
                     showStarsNotice(dialogContext, strings.fileOpenFailed);
                   }
                 },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.open_in_new_rounded, size: 18),
-                    const SizedBox(width: 8),
-                    Text(strings.openWithSystem),
-                  ],
-                ),
+                child: Text(strings.openWithSystem),
               ),
             ShadButton.outline(
               key: const ValueKey<String>('message-local-file-close'),
@@ -453,7 +460,7 @@ class _LocalFilePreview extends StatelessWidget {
         markdown: true,
         actionViewModel: actionViewModel,
       ),
-      _LocalFileKind.html => _LocalHtmlFilePreview(file: file),
+      _LocalFileKind.html => LocalHtmlFilePreview(file: file),
       _LocalFileKind.text => _LocalTextFilePreview(
         key: const ValueKey<String>('message-local-file-text-preview'),
         file: file,
@@ -479,393 +486,6 @@ class _LocalFilePreview extends StatelessWidget {
     };
   }
 }
-
-final class _LocalHtmlPreviewData {
-  const _LocalHtmlPreviewData({
-    required this.source,
-    required this.title,
-    required this.description,
-    required this.text,
-  });
-
-  final String source;
-  final String title;
-  final String description;
-  final String text;
-}
-
-class _LocalHtmlFilePreview extends StatefulWidget {
-  const _LocalHtmlFilePreview({required this.file});
-
-  final File file;
-
-  @override
-  State<_LocalHtmlFilePreview> createState() => _LocalHtmlFilePreviewState();
-}
-
-class _LocalHtmlFilePreviewState extends State<_LocalHtmlFilePreview> {
-  late Future<_LocalHtmlPreviewData> _preview;
-  var _showSource = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _preview = _readLocalHtmlPreview(widget.file);
-  }
-
-  @override
-  void didUpdateWidget(covariant _LocalHtmlFilePreview oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.file.path != widget.file.path) {
-      _preview = _readLocalHtmlPreview(widget.file);
-      _showSource = false;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<_LocalHtmlPreviewData>(
-      future: _preview,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _LocalFilePreviewPlaceholder(
-            icon: LucideIcons.fileWarning,
-            message: S.of(context).filePreviewUnavailable,
-          );
-        }
-        final preview = snapshot.data;
-        if (preview == null) {
-          return const Center(child: CircularProgressIndicator.adaptive());
-        }
-        return _LocalHtmlPreviewSurface(
-          preview: preview,
-          showSource: _showSource,
-          onModeChanged: (showSource) {
-            if (_showSource == showSource) return;
-            setState(() => _showSource = showSource);
-          },
-        );
-      },
-    );
-  }
-}
-
-class _LocalHtmlPreviewSurface extends StatelessWidget {
-  const _LocalHtmlPreviewSurface({
-    required this.preview,
-    required this.showSource,
-    required this.onModeChanged,
-  });
-
-  final _LocalHtmlPreviewData preview;
-  final bool showSource;
-  final ValueChanged<bool> onModeChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final strings = S.of(context);
-    final theme = ShadTheme.of(context);
-    final title = preview.title.isEmpty ? strings.htmlPreview : preview.title;
-    return DecoratedBox(
-      key: const ValueKey<String>('message-local-file-html-preview'),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.card,
-        borderRadius: theme.radius,
-        border: Border.all(color: theme.colorScheme.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final identity = _HtmlPreviewIdentity(
-                  title: title,
-                  description: preview.description,
-                );
-                final controls = _HtmlPreviewModeControls(
-                  showSource: showSource,
-                  previewLabel: strings.preview,
-                  sourceLabel: strings.sourceCode,
-                  onModeChanged: onModeChanged,
-                );
-                if (constraints.maxWidth < 520) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      identity,
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: controls,
-                      ),
-                    ],
-                  );
-                }
-                return Row(
-                  children: [
-                    Expanded(child: identity),
-                    const SizedBox(width: 12),
-                    controls,
-                  ],
-                );
-              },
-            ),
-          ),
-          Divider(height: 1, thickness: 1, color: theme.colorScheme.border),
-          Expanded(
-            child: SingleChildScrollView(
-              key: ValueKey<String>(
-                showSource
-                    ? 'message-local-html-source'
-                    : 'message-local-html-content',
-              ),
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: SelectableText(
-                  showSource ? preview.source : preview.text,
-                  style:
-                      showSource
-                          ? theme.textTheme.p.copyWith(
-                            color: theme.colorScheme.cardForeground,
-                            fontFamily: 'monospace',
-                            fontSize: 13,
-                            height: 1.55,
-                          )
-                          : theme.textTheme.p.copyWith(
-                            color: theme.colorScheme.cardForeground,
-                            height: 1.65,
-                          ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HtmlPreviewIdentity extends StatelessWidget {
-  const _HtmlPreviewIdentity({required this.title, required this.description});
-
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.secondary,
-            borderRadius: theme.radius,
-          ),
-          child: SizedBox.square(
-            dimension: 36,
-            child: Icon(
-              LucideIcons.fileCode2,
-              size: 18,
-              color: theme.colorScheme.secondaryForeground,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.h4,
-              ),
-              if (description.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.muted,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HtmlPreviewModeControls extends StatelessWidget {
-  const _HtmlPreviewModeControls({
-    required this.showSource,
-    required this.previewLabel,
-    required this.sourceLabel,
-    required this.onModeChanged,
-  });
-
-  final bool showSource;
-  final String previewLabel;
-  final String sourceLabel;
-  final ValueChanged<bool> onModeChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      alignment: WrapAlignment.end,
-      children: [
-        _HtmlPreviewModeButton(
-          selected: !showSource,
-          label: previewLabel,
-          onPressed: () => onModeChanged(false),
-        ),
-        _HtmlPreviewModeButton(
-          selected: showSource,
-          label: sourceLabel,
-          onPressed: () => onModeChanged(true),
-        ),
-      ],
-    );
-  }
-}
-
-class _HtmlPreviewModeButton extends StatelessWidget {
-  const _HtmlPreviewModeButton({
-    required this.selected,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final bool selected;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return ShadButton.ghost(
-      size: ShadButtonSize.sm,
-      backgroundColor:
-          selected ? theme.colorScheme.secondary : Colors.transparent,
-      foregroundColor:
-          selected
-              ? theme.colorScheme.secondaryForeground
-              : theme.colorScheme.mutedForeground,
-      onPressed: onPressed,
-      child: Text(label),
-    );
-  }
-}
-
-Future<_LocalHtmlPreviewData> _readLocalHtmlPreview(File file) =>
-    Future.microtask(() {
-      // Local artifacts may contain active scripts. Keep the in-app preview
-      // inert by extracting metadata and readable text instead of executing
-      // the document in a browser surface. Source reads remain capped at 1 MB.
-      final source = _readLocalText(file);
-      final document = html_parser.parse(source);
-      final title = document.querySelector('title')?.text.trim() ?? '';
-      final description =
-          document
-              .querySelectorAll('meta')
-              .where(
-                (element) =>
-                    element.attributes['name']?.toLowerCase() == 'description',
-              )
-              .firstOrNull
-              ?.attributes['content']
-              ?.trim() ??
-          '';
-      final buffer = StringBuffer();
-      final body = document.body;
-      if (body != null) _writeHtmlPreviewText(body, buffer);
-      final text = _normalizeHtmlPreviewText(buffer.toString());
-      return _LocalHtmlPreviewData(
-        source: source,
-        title: title,
-        description: description,
-        text: text.isEmpty ? description : text,
-      );
-    });
-
-const _htmlHiddenElements = {
-  'head',
-  'script',
-  'style',
-  'template',
-  'noscript',
-  'svg',
-};
-
-const _htmlBlockElements = {
-  'address',
-  'article',
-  'aside',
-  'blockquote',
-  'div',
-  'dl',
-  'fieldset',
-  'figcaption',
-  'figure',
-  'footer',
-  'form',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'header',
-  'hr',
-  'li',
-  'main',
-  'nav',
-  'ol',
-  'p',
-  'pre',
-  'section',
-  'table',
-  'tr',
-  'ul',
-};
-
-void _writeHtmlPreviewText(html_dom.Node node, StringBuffer buffer) {
-  if (node is html_dom.Text) {
-    var text = node.data.replaceAll(RegExp(r'\s+'), ' ');
-    if (text.trim().isEmpty) return;
-    if (buffer.isEmpty) text = text.trimLeft();
-    buffer.write(text);
-    return;
-  }
-  if (node is! html_dom.Element) return;
-  final tag = node.localName;
-  if (_htmlHiddenElements.contains(tag)) return;
-  if (tag == 'br') {
-    buffer.writeln();
-    return;
-  }
-  final isBlock = _htmlBlockElements.contains(tag);
-  if (isBlock && buffer.isNotEmpty) buffer.writeln();
-  for (final child in node.nodes) {
-    _writeHtmlPreviewText(child, buffer);
-  }
-  if (isBlock) buffer.writeln();
-}
-
-String _normalizeHtmlPreviewText(String source) =>
-    source
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .join('\n\n')
-        .trim();
 
 class _LocalTextFilePreview extends StatefulWidget {
   const _LocalTextFilePreview({

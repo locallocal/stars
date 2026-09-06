@@ -250,7 +250,7 @@ cat "${file.path}"
     expect(find.byType(VideoPlayerWidget), findsOneWidget);
   });
 
-  testWidgets('local HTML exposes a safe content preview and source mode', (
+  testWidgets('local HTML keeps a readable fallback and source mode', (
     tester,
   ) async {
     final directory = Directory.systemTemp.createTempSync(
@@ -282,6 +282,7 @@ cat "${file.path}"
       find.byKey(ValueKey<String>('message-local-file-${file.path}')),
     );
     await _pumpDialog(tester);
+    await _finishHtmlBackgroundWork(tester);
     await tester.pump();
 
     expect(
@@ -435,6 +436,14 @@ Future<void> _pumpFileMessage(
 Future<void> _pumpDialog(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
+}
+
+Future<void> _finishHtmlBackgroundWork(WidgetTester tester) async {
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 100)),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 1));
 }
 
 final class _FakeMessageActionRepository implements MessageActionRepository {

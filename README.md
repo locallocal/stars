@@ -45,8 +45,9 @@ The complete provider registry is available in
 - A configured desktop or mobile Flutter toolchain for your target platform
 - An API key for your chosen cloud provider, or a reachable local service such
   as Ollama
-- On Linux, the `libsecret-1-dev` build package and `libsecret-1-0` runtime
-  package for secure MCP credential storage
+- On Linux, the `libsecret-1-dev` and `libwebkit2gtk-4.1-dev` build packages,
+  plus their `libsecret-1-0` and `libwebkit2gtk-4.1-0` runtime packages, for
+  secure credential storage and live HTML artifact previews
 
 ### Run the application
 
