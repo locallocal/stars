@@ -163,7 +163,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Stars 无法验证此事实回答'), findsOneWidget);
+      expect(find.textContaining('我暂时没有获得足够可靠的证据'), findsOneWidget);
       expect(find.textContaining(strictGroundingPreviewMarker), findsNothing);
     });
   });

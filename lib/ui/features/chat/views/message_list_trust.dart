@@ -518,12 +518,24 @@ String _messageDisplayContent(
   StrictGroundingPresentation? presentation,
 ) {
   if (presentation == null) return message.content;
+  final strings = S.of(context);
+  final refusal =
+      presentation.userQuestion.isEmpty
+          ? strings.strictGroundingUnableToVerify
+          : strings.strictGroundingUnableToVerifyForQuestion(
+            _markdownSafeInline(presentation.userQuestion),
+            _answerTrustReason(strings, message.grounding.reasonCode),
+          );
   return <String>[
     if (presentation.content.isNotEmpty) presentation.content,
-    if (presentation.suppressedFacts)
-      S.of(context).strictGroundingUnableToVerify,
+    if (presentation.suppressedFacts) refusal,
   ].join('\n\n');
 }
+
+String _markdownSafeInline(String source) => source.replaceAllMapped(
+  RegExp(r'[\\`*_\[\]<>]'),
+  (match) => '\\${match.group(0)}',
+);
 
 String _messageExportText(
   BuildContext context,

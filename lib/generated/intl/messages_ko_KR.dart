@@ -102,9 +102,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "스킬을 가져올 수 없습니다: ${error}";
 
-  static String m38(duration) => "생각 완료 · ${duration}";
+  static String m38(question, reason) =>
+      "“${question}”에 대해 신뢰할 수 있는 사실 답변을 제공할 수 없어 추측으로 답하지 않겠습니다.\n\n검증 상태: ${reason}\n\n증거 세부 정보를 확인하거나 신뢰할 수 있는 출처를 제공하거나 다시 검증해 달라고 요청할 수 있습니다.";
 
-  static String m39(error) => "동영상 재생 오류: ${error}";
+  static String m39(duration) => "생각 완료 · ${duration}";
+
+  static String m40(error) => "동영상 재생 오류: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -910,8 +913,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "검증되지 않은 사실 답변은 숨기고 검증 및 도구 실패 세부정보는 유지합니다.",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars가 이 사실 답변을 검증하지 못했습니다. 증거를 확인하거나 다시 검증하세요.",
+      "신뢰할 수 있는 사실 답변을 제공할 충분한 증거가 없어 추측으로 답하지 않겠습니다. 증거 세부 정보를 확인하거나 신뢰할 수 있는 출처를 제공하거나 다시 검증해 달라고 요청해 주세요.",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "구조화된 프로세스 정보",
     ),
@@ -935,7 +939,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "themeSettings": MessageLookupByLibrary.simpleMessage("테마 설정"),
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("생각 완료"),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("생각 중…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("토큰 사용량"),
     "tokens": MessageLookupByLibrary.simpleMessage("토큰"),
@@ -985,7 +989,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "version": MessageLookupByLibrary.simpleMessage("버전 1.0.0"),
     "videoGenerated": MessageLookupByLibrary.simpleMessage("Video generated"),
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage("동영상을 불러올 수 없습니다"),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("요약 보기"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

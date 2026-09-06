@@ -27,6 +27,7 @@ void main() {
         'answerTrustReasonGateFailed',
         'answerTrustReasonUnavailable',
         'answerTrustSemanticLabel',
+        'strictGroundingUnableToVerifyForQuestion',
       }),
     );
 

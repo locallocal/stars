@@ -103,9 +103,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "Impossible d’importer la compétence : ${error}";
 
-  static String m38(duration) => "Réflexion terminée · ${duration}";
+  static String m38(question, reason) =>
+      "Je ne peux pas répondre de manière factuelle et fiable à « ${question} », je préfère donc ne pas deviner.\n\nÉtat de la vérification : ${reason}\n\nVous pouvez consulter les détails des preuves, fournir une source fiable ou me demander de vérifier à nouveau.";
 
-  static String m39(error) => "Erreur de lecture vidéo : ${error}";
+  static String m39(duration) => "Réflexion terminée · ${duration}";
+
+  static String m40(error) => "Erreur de lecture vidéo : ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1119,8 +1122,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Masque les réponses factuelles non vérifiées tout en conservant les détails de vérification et d\'échec des outils.",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars n\'a pas pu vérifier cette réponse factuelle. Consultez les preuves ou relancez une vérification.",
+      "Je ne dispose pas de preuves suffisamment fiables pour donner une réponse factuelle, je préfère donc ne pas deviner. Consultez les détails des preuves, fournissez une source fiable ou demandez-moi de vérifier à nouveau.",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Informations structurées sur le processus",
     ),
@@ -1154,7 +1158,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage(
       "Réflexion terminée",
     ),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage(
       "Réflexion en cours…",
     ),
@@ -1224,7 +1228,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage(
       "Impossible de charger la vidéo",
     ),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("Voir le résumé"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

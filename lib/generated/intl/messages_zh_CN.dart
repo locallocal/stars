@@ -96,9 +96,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "技能导入失败：${error}";
 
-  static String m38(duration) => "思考完成 · ${duration}";
+  static String m38(question, reason) =>
+      "关于“${question}”，我暂时无法给出可靠的事实结论，因此不会猜测。\n\n验证情况：${reason}\n\n你可以查看证据详情、补充可靠来源，或让我重新验证。";
 
-  static String m39(error) => "视频播放错误：${error}";
+  static String m39(duration) => "思考完成 · ${duration}";
+
+  static String m40(error) => "视频播放错误：${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -791,8 +794,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "隐藏未验证的事实回答，同时保留验证详情和工具失败原因。",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars 无法验证此事实回答。请查看证据详情或重新进行验证。",
+      "我暂时没有获得足够可靠的证据，因此不会给出可能不准确的事实结论。你可以查看证据详情、补充可靠来源，或让我重新验证。",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("结构化过程信息"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反馈"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("已摘要消息数"),
@@ -808,7 +812,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "themeSetToSystem": MessageLookupByLibrary.simpleMessage("已设置为跟随系统主题"),
     "themeSettings": MessageLookupByLibrary.simpleMessage("主题设置"),
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("思考完成"),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("正在思考…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Token 用量"),
     "tokens": MessageLookupByLibrary.simpleMessage("Token"),
@@ -852,7 +856,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "version": MessageLookupByLibrary.simpleMessage("版本 1.0.0"),
     "videoGenerated": MessageLookupByLibrary.simpleMessage("视频已生成"),
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage("无法加载视频"),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("视频结果"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("查看摘要"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

@@ -529,6 +529,16 @@ void main() => print('done');
       );
       final controller = ScrollController();
       addTearDown(controller.dispose);
+      final userMessage = Message(
+        messageId: 'strict-question',
+        turnId: 'turn-1',
+        runId: 'run-1',
+        chatId: 'chat-1',
+        botId: 'bot-1',
+        senderId: 'me',
+        content: '这颗卫星什么时候发射？',
+        timestamp: DateTime(2026, 9, 5),
+      );
       final message = _groundedMessage(
         id: 'strict-message',
         trust: AnswerTrustLevel.unverified,
@@ -556,7 +566,7 @@ void main() => print('done');
           body: Column(
             children: [
               MessageList(
-                messages: [message],
+                messages: [userMessage, message],
                 scrollController: controller,
                 isStreaming: false,
                 streamingResponse: '',
@@ -572,8 +582,10 @@ void main() => print('done');
 
       expect(find.text('Secret unverified factual answer.'), findsNothing);
       expect(find.text('Secret unverified reasoning.'), findsNothing);
-      final notice = find.textContaining('Stars 无法验证此事实回答');
+      final notice = find.textContaining('关于“这颗卫星什么时候发射？”');
       expect(notice, findsOneWidget);
+      expect(find.textContaining('因此不会猜测'), findsOneWidget);
+      expect(find.textContaining('此回复没有可用的工具证据'), findsWidgets);
       await tester.tap(find.text('执行状态'));
       await tester.pumpAndSettle();
       expect(find.textContaining('permission denied'), findsOneWidget);
@@ -591,13 +603,20 @@ void main() => print('done');
       await mouse.moveTo(tester.getCenter(notice));
       await tester.pumpAndSettle();
       await tester.tap(
-        find.byKey(const ValueKey<String>('desktop-message-copy-action')),
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('strict-message')),
+          matching: find.byKey(
+            const ValueKey<String>('desktop-message-copy-action'),
+          ),
+        ),
       );
       await tester.pump();
       expect(clipboardWrites, hasLength(1));
       final copied =
           (clipboardWrites.single.arguments as Map)['text'] as String;
       expect(copied, isNot(contains('Secret unverified factual answer.')));
+      expect(copied, contains('这颗卫星什么时候发射？'));
+      expect(copied, contains('此回复没有可用的工具证据'));
       expect(copied, contains('可信状态: 未验证'));
     },
   );

@@ -75,6 +75,7 @@ class MessageList extends StatefulWidget {
 
 class _MessageListState extends State<MessageList> {
   late List<MessageProcessInfo> _displayedProcessInfo;
+  late List<String> _userContextByMessage;
   List<MessageSkillActivation> _streamingSkillActivations = const [];
   List<MessageToolCall> _streamingSkillToolCalls = const [];
 
@@ -110,10 +111,12 @@ class _MessageListState extends State<MessageList> {
     final displayedProcessInfo = <MessageProcessInfo>[
       for (final message in messages) message.processInfo,
     ];
+    final userContextByMessage = List<String>.filled(messages.length, '');
     var streamingSkillActivations = const <MessageSkillActivation>[];
     var streamingSkillToolCalls = const <MessageToolCall>[];
 
     Message? pendingUserMessage;
+    Message? contextUserMessage;
     var pendingSkillActivations = const <MessageSkillActivation>[];
     var pendingSkillToolCalls = const <MessageToolCall>[];
 
@@ -123,6 +126,7 @@ class _MessageListState extends State<MessageList> {
 
       if (isCurrentUser) {
         pendingUserMessage = message;
+        contextUserMessage = message;
         pendingSkillActivations = message.processInfo.skillActivations;
         pendingSkillToolCalls = _skillToolCalls(message.processInfo.toolCalls);
         displayedProcessInfo[index] = _replaceSkillActivations(
@@ -130,6 +134,11 @@ class _MessageListState extends State<MessageList> {
           const [],
         );
         continue;
+      }
+
+      if (contextUserMessage != null &&
+          _messagesBelongToSameTurn(contextUserMessage, message)) {
+        userContextByMessage[index] = contextUserMessage.content;
       }
 
       if (pendingUserMessage != null &&
@@ -155,6 +164,7 @@ class _MessageListState extends State<MessageList> {
     streamingSkillActivations = pendingSkillActivations;
     streamingSkillToolCalls = pendingSkillToolCalls;
     _displayedProcessInfo = displayedProcessInfo;
+    _userContextByMessage = userContextByMessage;
     _streamingSkillActivations = streamingSkillActivations;
     _streamingSkillToolCalls = streamingSkillToolCalls;
   }
@@ -220,7 +230,10 @@ class _MessageListState extends State<MessageList> {
           final isMe = message.senderId == currentUserId;
           final strictPresentation =
               !isMe && widget.strictGroundingMode
-                  ? const StrictGroundingPolicy().present(message)
+                  ? const StrictGroundingPolicy().present(
+                    message,
+                    userMessage: _userContextByMessage[messageIndex],
+                  )
                   : null;
           final displayedContent = _messageDisplayContent(
             context,

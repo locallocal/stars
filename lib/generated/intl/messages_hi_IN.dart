@@ -103,9 +103,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "कौशल आयात नहीं हो सका: ${error}";
 
-  static String m38(duration) => "सोचना पूर्ण · ${duration}";
+  static String m38(question, reason) =>
+      "मैं “${question}” का विश्वसनीय तथ्यात्मक उत्तर नहीं दे सकता, इसलिए अनुमान नहीं लगाऊँगा।\n\nसत्यापन स्थिति: ${reason}\n\nआप प्रमाण का विवरण देख सकते हैं, कोई विश्वसनीय स्रोत दे सकते हैं या मुझसे दोबारा सत्यापन करने को कह सकते हैं।";
 
-  static String m39(error) => "वीडियो चलाने में त्रुटि: ${error}";
+  static String m39(duration) => "सोचना पूर्ण · ${duration}";
+
+  static String m40(error) => "वीडियो चलाने में त्रुटि: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1057,8 +1060,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "असत्यापित तथ्यात्मक उत्तर छिपाएँ और सत्यापन व टूल विफलता विवरण बनाए रखें।",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars इस तथ्यात्मक उत्तर को सत्यापित नहीं कर सका। साक्ष्य देखें या फिर से सत्यापित करें।",
+      "विश्वसनीय तथ्यात्मक उत्तर देने के लिए मेरे पास पर्याप्त प्रमाण नहीं हैं, इसलिए मैं अनुमान नहीं लगाऊँगा। प्रमाण का विवरण देखें, कोई विश्वसनीय स्रोत दें या मुझसे दोबारा सत्यापन करने को कहें।",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "संरचित प्रक्रिया जानकारी",
     ),
@@ -1086,7 +1090,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "themeSettings": MessageLookupByLibrary.simpleMessage("थीम सेटिंग्स"),
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("सोचना पूर्ण"),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("सोच रहा है…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("टोकन उपयोग"),
     "tokens": MessageLookupByLibrary.simpleMessage("टोकन"),
@@ -1156,7 +1160,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage(
       "वीडियो लोड नहीं हो सका",
     ),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("सारांश देखें"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

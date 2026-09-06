@@ -104,9 +104,12 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m37(error) =>
       "Fähigkeit konnte nicht importiert werden: ${error}";
 
-  static String m38(duration) => "Denken abgeschlossen · ${duration}";
+  static String m38(question, reason) =>
+      "Ich kann „${question}“ nicht zuverlässig faktisch beantworten und werde daher nicht raten.\n\nVerifizierungsstatus: ${reason}\n\nSie können die Nachweisdetails prüfen, eine verlässliche Quelle angeben oder mich um eine erneute Verifizierung bitten.";
 
-  static String m39(error) => "Fehler bei der Videowiedergabe: ${error}";
+  static String m39(duration) => "Denken abgeschlossen · ${duration}";
+
+  static String m40(error) => "Fehler bei der Videowiedergabe: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1110,8 +1113,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Blendet nicht verifizierte Tatsachenantworten aus und erhält Verifizierungs- und Werkzeugfehlerdetails.",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars konnte diese Tatsachenantwort nicht verifizieren. Prüfen Sie die Nachweisdetails oder verifizieren Sie erneut.",
+      "Mir liegen nicht genügend verlässliche Belege für eine faktische Antwort vor, daher werde ich nicht raten. Prüfen Sie die Nachweisdetails, geben Sie eine verlässliche Quelle an oder bitten Sie mich um eine erneute Verifizierung.",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Strukturierte Prozessinformationen",
     ),
@@ -1145,7 +1149,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage(
       "Denken abgeschlossen",
     ),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Denkt nach…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Token-Nutzung"),
     "tokens": MessageLookupByLibrary.simpleMessage("Token"),
@@ -1217,7 +1221,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage(
       "Video konnte nicht geladen werden",
     ),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage(
       "Zusammenfassung anzeigen",

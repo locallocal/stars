@@ -103,9 +103,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "No se pudo importar la habilidad: ${error}";
 
-  static String m38(duration) => "Pensamiento completado · ${duration}";
+  static String m38(question, reason) =>
+      "No puedo dar una respuesta factual fiable a «${question}», así que no voy a adivinar.\n\nEstado de la verificación: ${reason}\n\nPuedes revisar los detalles de la evidencia, aportar una fuente fiable o pedirme que lo verifique de nuevo.";
 
-  static String m39(error) => "Error de reproducción de vídeo: ${error}";
+  static String m39(duration) => "Pensamiento completado · ${duration}";
+
+  static String m40(error) => "Error de reproducción de vídeo: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1107,8 +1110,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Oculta respuestas factuales no verificadas y conserva los detalles de verificación y fallos de herramientas.",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars no pudo verificar esta respuesta factual. Revisa la evidencia o realiza una nueva verificación.",
+      "No dispongo de pruebas fiables suficientes para dar una respuesta factual, así que no voy a adivinar. Revisa los detalles de la evidencia, aporta una fuente fiable o pídeme que lo verifique de nuevo.",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Información estructurada del proceso",
     ),
@@ -1140,7 +1144,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage(
       "Pensamiento completado",
     ),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Pensando…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Uso de tokens"),
     "tokens": MessageLookupByLibrary.simpleMessage("tokens"),
@@ -1208,7 +1212,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage(
       "No se pudo cargar el vídeo",
     ),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("Ver resumen"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

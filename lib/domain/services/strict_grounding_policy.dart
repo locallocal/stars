@@ -13,28 +13,43 @@ final class StrictGroundingPresentation {
     required this.content,
     required this.suppressedFacts,
     required this.hasNotFactCheckedContent,
+    required this.userQuestion,
   });
 
   final String content;
   final bool suppressedFacts;
   final bool hasNotFactCheckedContent;
+
+  /// A normalized, bounded excerpt of the user message for a safe refusal.
+  ///
+  /// This is deliberately derived only from user-authored text. Unverified
+  /// assistant output must never be used to explain what was suppressed.
+  final String userQuestion;
 }
 
 /// Removes non-verified factual claims without mutating the audit record.
 final class StrictGroundingPolicy {
   const StrictGroundingPolicy();
 
-  StrictGroundingPresentation present(Message message) {
+  static const int maxUserQuestionRunes = 120;
+
+  StrictGroundingPresentation present(
+    Message message, {
+    String userMessage = '',
+  }) {
     final grounding = message.grounding;
     final claims = grounding.claims;
     if (claims.isEmpty) {
       final isDeclaredNonFactual =
           grounding.reasonCode == 'no_verifiable_claims';
+      final suppressedFacts =
+          message.content.isNotEmpty && !isDeclaredNonFactual;
       return StrictGroundingPresentation(
         content: isDeclaredNonFactual ? message.content : '',
-        suppressedFacts: message.content.isNotEmpty && !isDeclaredNonFactual,
+        suppressedFacts: suppressedFacts,
         hasNotFactCheckedContent:
             message.content.isNotEmpty && isDeclaredNonFactual,
+        userQuestion: suppressedFacts ? _userQuestionExcerpt(userMessage) : '',
       );
     }
 
@@ -64,6 +79,7 @@ final class StrictGroundingPolicy {
       content: safeSegments.join('\n\n'),
       suppressedFacts: suppressedFacts,
       hasNotFactCheckedContent: hasNotFactCheckedContent,
+      userQuestion: suppressedFacts ? _userQuestionExcerpt(userMessage) : '',
     );
   }
 
@@ -72,6 +88,17 @@ final class StrictGroundingPolicy {
     if (presentation.suppressedFacts) return strictGroundingPreviewMarker;
     return presentation.content;
   }
+}
+
+String _userQuestionExcerpt(String source) {
+  final normalized = source.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (normalized.isEmpty) return '';
+
+  final runes = normalized.runes;
+  if (runes.length <= StrictGroundingPolicy.maxUserQuestionRunes) {
+    return normalized;
+  }
+  return '${String.fromCharCodes(runes.take(StrictGroundingPolicy.maxUserQuestionRunes - 1))}…';
 }
 
 bool _requiresVerification(ClaimKind kind) => switch (kind) {
