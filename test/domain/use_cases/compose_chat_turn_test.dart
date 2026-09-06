@@ -103,7 +103,11 @@ void main() {
     expect(systemPrompt, contains('Selected instructions.'));
     expect(systemPrompt, isNot(contains('Always instructions.')));
     expect(systemPrompt, isNot(contains('Ignored secret.')));
-    expect(systemPrompt, contains('Scripts and commands'));
+    expect(
+      systemPrompt,
+      contains('A Skill is available only after model activation'),
+    );
+    expect(systemPrompt, contains('policy checks'));
     expect(result.activatedSkills.map((skill) => skill.id), ['user:selected']);
     expect(result.activatedSkills.single.trigger, SkillActivationTrigger.model);
     expect(provider.session.request?.catalog.map((skill) => skill.id), [
@@ -131,6 +135,54 @@ void main() {
       'Earlier reasoning',
     );
   });
+
+  test(
+    'does not prefilter a large Skill catalog before model selection',
+    () async {
+      final skills = <String, SkillContent>{
+        for (var index = 0; index < 20; index++)
+          'user:filler-$index': _skill(
+            'user:filler-$index',
+            'filler-$index',
+            'Unrelated instructions $index.',
+          ),
+        'user:file': _skill(
+          'user:file',
+          'file-operations',
+          'Save research results to a local file.',
+        ),
+      };
+      final provider = _FakeSkillProvider(
+        _activationTurns(['file-operations']),
+      );
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(skills),
+        bindingRepository: _FakeBindingRepository([
+          for (var index = 0; index < 20; index++)
+            _binding('user:filler-$index', priority: 100 - index),
+          _binding('user:file'),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        starsSystemPromptProvider: _testStarsSystemPrompt,
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(senderId: 'user-1', content: '再调研一次'),
+        currentUserId: 'user-1',
+        skillToolProvider: provider,
+      );
+
+      expect(provider.session.request?.catalog, hasLength(21));
+      expect(
+        provider.session.request?.catalog.map((entry) => entry.id),
+        contains('user:file'),
+      );
+      expect(result.activatedSkills.map((skill) => skill.id), ['user:file']);
+    },
+  );
 
   test('omits turns without replayable assistant output', () async {
     final compose = ComposeChatTurn(
@@ -480,7 +532,7 @@ void main() {
   });
 
   test(
-    'desktop shell system Skill exposes its tool to Agent providers',
+    'model-selected shell system Skill exposes its tool to Agent providers',
     () async {
       final shellSkill = _systemShellSkill();
       final compose = ComposeChatTurn(
@@ -501,15 +553,55 @@ void main() {
           content: 'Run flutter test for this project',
         ),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(const []),
+        skillToolProvider: _FakeSkillProvider(
+          _activationTurns(const ['shell-command']),
+        ),
       );
 
       expect(result.requestedToolNames, shellCommandToolNames);
       expect(result.approvalExemptToolNames, isEmpty);
       expect(result.activatedSkills.single.id, shellCommandSkillId);
       expect(result.messages.first.role, 'system');
-      expect(result.messages.first.content, contains('every command requires'));
+      expect(result.messages.first.content, contains('model activation'));
       expect(result.messages.first.content, contains(shellSkill.instructions));
+    },
+  );
+
+  test(
+    'does not expose a bound system Skill without model activation',
+    () async {
+      final fileSkill = _systemLocalFileSystemSkill(directory: false);
+      final provider = _FakeSkillProvider([SkillToolTurn(isComplete: true)]);
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(const {}),
+        bindingRepository: _FakeBindingRepository([
+          _binding(fileOperationsSkillId),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        bundledSkillLoader: () async => [fileSkill],
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Save this HTML file locally',
+        ),
+        currentUserId: 'user-1',
+        skillToolProvider: provider,
+      );
+
+      expect(provider.session.request?.catalog.map((skill) => skill.id), [
+        fileOperationsSkillId,
+      ]);
+      expect(result.activatedSkills, isEmpty);
+      expect(result.requestedToolNames, isEmpty);
+      expect(
+        result.messages.first.content,
+        isNot(contains(fileSkill.instructions)),
+      );
     },
   );
 
@@ -555,58 +647,61 @@ void main() {
     },
   );
 
+  test('model-selected local file system Skills expose native tools', () async {
+    final directorySkill = _systemLocalFileSystemSkill(directory: true);
+    final fileSkill = _systemLocalFileSystemSkill(directory: false);
+    final compose = ComposeChatTurn(
+      skillRepository: _FakeSkillRepository(const {}),
+      bindingRepository: _FakeBindingRepository([
+        _binding(directoryOperationsSkillId),
+        _binding(fileOperationsSkillId),
+      ]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
+      bundledSkillLoader: () async => [directorySkill, fileSkill],
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: const [],
+      userMessage: _message(
+        senderId: 'user-1',
+        content: 'Read a file and list its parent directory',
+      ),
+      currentUserId: 'user-1',
+      skillToolProvider: _FakeSkillProvider(
+        _activationTurns(const ['directory-operations', 'file-operations']),
+      ),
+    );
+
+    expect(result.requestedToolNames, {
+      ...directoryOperationsToolNames,
+      ...fileOperationsToolNames,
+    });
+    expect(result.approvalExemptToolNames, isEmpty);
+    expect(result.activatedSkills.map((skill) => skill.id), {
+      directoryOperationsSkillId,
+      fileOperationsSkillId,
+    });
+    expect(
+      result.messages.first.content,
+      contains(directorySkill.instructions),
+    );
+    expect(result.messages.first.content, contains(fileSkill.instructions));
+  });
+
   test(
-    'bound local file system Skills expose native tools to Agent providers',
-    () async {
-      final directorySkill = _systemLocalFileSystemSkill(directory: true);
-      final fileSkill = _systemLocalFileSystemSkill(directory: false);
-      final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository([
-          _binding(directoryOperationsSkillId),
-          _binding(fileOperationsSkillId),
-        ]),
-        conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
-        bundledSkillLoader: () async => [directorySkill, fileSkill],
-      );
-
-      final result = await compose(
-        bot: _bot(),
-        history: const [],
-        userMessage: _message(
-          senderId: 'user-1',
-          content: 'Read a file and list its parent directory',
-        ),
-        currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(const []),
-      );
-
-      expect(result.requestedToolNames, {
-        ...directoryOperationsToolNames,
-        ...fileOperationsToolNames,
-      });
-      expect(result.approvalExemptToolNames, isEmpty);
-      expect(result.activatedSkills.map((skill) => skill.id), {
-        directoryOperationsSkillId,
-        fileOperationsSkillId,
-      });
-      expect(
-        result.messages.first.content,
-        contains(directorySkill.instructions),
-      );
-      expect(result.messages.first.content, contains(fileSkill.instructions));
-    },
-  );
-
-  test(
-    'routes enabled system Skills before composing the model context',
+    'model decides which enabled system Skills enter the final context',
     () async {
       final shellSkill = _systemShellSkill();
       final directorySkill = _systemLocalFileSystemSkill(directory: true);
       final fileSkill = _systemLocalFileSystemSkill(directory: false);
       final installerSkill = _systemSkillInstallerSkill();
       final mcpInstallerSkill = _systemMcpInstallerSkill();
+      final historySkill = _systemConversationHistorySkill();
+      final provider = _FakeSkillProvider(
+        _activationTurns(const ['file-operations']),
+      );
       final compose = ComposeChatTurn(
         skillRepository: _FakeSkillRepository(const {}),
         bindingRepository: _FakeBindingRepository([
@@ -615,6 +710,7 @@ void main() {
           _binding(fileOperationsSkillId),
           _binding(skillInstallerSkillId),
           _binding(mcpInstallerSkillId),
+          _binding(conversationHistorySkillId),
         ]),
         conversationArtifactsDirectoryProvider:
             _testConversationArtifactsDirectory,
@@ -625,6 +721,7 @@ void main() {
               fileSkill,
               installerSkill,
               mcpInstallerSkill,
+              historySkill,
             ],
       );
 
@@ -636,11 +733,22 @@ void main() {
           content: 'Save this HTML file locally',
         ),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(const []),
+        skillToolProvider: provider,
       );
 
       expect(result.requestedToolNames, fileOperationsToolNames);
       expect(result.activatedSkills.single.id, fileOperationsSkillId);
+      expect(
+        provider.session.request?.catalog.map((skill) => skill.id),
+        unorderedEquals([
+          shellCommandSkillId,
+          directoryOperationsSkillId,
+          fileOperationsSkillId,
+          skillInstallerSkillId,
+          mcpInstallerSkillId,
+          conversationHistorySkillId,
+        ]),
+      );
       expect(result.messages.first.content, contains(fileSkill.instructions));
       expect(
         result.messages.first.content,
@@ -658,8 +766,49 @@ void main() {
         result.messages.first.content,
         isNot(contains(mcpInstallerSkill.instructions)),
       );
+      expect(
+        result.messages.first.content,
+        isNot(contains(historySkill.instructions)),
+      );
     },
   );
+
+  test('model can select a system Skill for an elliptical follow-up', () async {
+    final fileSkill = _systemLocalFileSystemSkill(directory: false);
+    final provider = _FakeSkillProvider(
+      _activationTurns(const ['file-operations']),
+    );
+    final compose = ComposeChatTurn(
+      skillRepository: _FakeSkillRepository(const {}),
+      bindingRepository: _FakeBindingRepository([
+        _binding(fileOperationsSkillId),
+      ]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
+      bundledSkillLoader: () async => [fileSkill],
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: [
+        _message(senderId: 'user-1', content: '详细调研 Transformer 架构，将结果写入本地'),
+        _message(senderId: 'bot-1', content: '报告已写入本地。'),
+      ],
+      userMessage: _message(senderId: 'user-1', content: '再调研一次'),
+      currentUserId: 'user-1',
+      skillToolProvider: provider,
+    );
+
+    expect(provider.session.request?.catalog.map((skill) => skill.id), [
+      fileOperationsSkillId,
+    ]);
+    expect(
+      provider.session.request?.messages.map((message) => message.content),
+      contains('详细调研 Transformer 架构，将结果写入本地'),
+    );
+    expect(result.activatedSkills.single.id, fileOperationsSkillId);
+    expect(result.requestedToolNames, fileOperationsToolNames);
+  });
 
   test(
     'bound Skill installer exposes install and SQLite inventory tools',
@@ -683,7 +832,9 @@ void main() {
           content: 'Install this Skill from GitHub',
         ),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(const []),
+        skillToolProvider: _FakeSkillProvider(
+          _activationTurns(const ['skill-installer']),
+        ),
       );
 
       expect(result.requestedToolNames, skillInstallerToolNames);
@@ -716,7 +867,9 @@ void main() {
         content: 'Add this Streamable HTTP MCP server',
       ),
       currentUserId: 'user-1',
-      skillToolProvider: _FakeSkillProvider(const []),
+      skillToolProvider: _FakeSkillProvider(
+        _activationTurns(const ['mcp-installer']),
+      ),
     );
 
     expect(result.requestedToolNames, mcpInstallerToolNames);
@@ -1148,6 +1301,20 @@ SkillContent _skill(
   );
 }
 
+List<SkillToolTurn> _activationTurns(List<String> skillNames) => [
+  SkillToolTurn(
+    calls: [
+      for (final (index, name) in skillNames.indexed)
+        SkillToolCall(
+          callId: 'activate-$index',
+          name: 'activate_skill',
+          arguments: {'name': name},
+        ),
+    ],
+  ),
+  SkillToolTurn(isComplete: true),
+];
+
 SkillContent _systemShellSkill() {
   final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
   return SkillContent(
@@ -1250,6 +1417,30 @@ SkillContent _systemMcpInstallerSkill() {
     ),
     instructions:
         'Use add_mcp_server only with user-provided connection details.',
+    files: const ['SKILL.md'],
+  );
+}
+
+SkillContent _systemConversationHistorySkill() {
+  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+  return SkillContent(
+    descriptor: SkillDescriptor(
+      id: conversationHistorySkillId,
+      name: 'conversation-history',
+      description: 'Search and read exact persisted conversation messages.',
+      version: '$conversationHistorySkillPromptVersion',
+      scope: SkillScope.bundled,
+      sourceUri: 'asset:///conversation-history/SKILL.md',
+      rootPath: 'assets/skills/system/conversation-history',
+      contentDigest: conversationHistorySkillContentDigest,
+      trustState: SkillTrustState.bundledTrusted,
+      validationStatus: SkillValidationStatus.valid,
+      compatibility: 'Stars',
+      requestedToolNames: conversationHistoryToolNames,
+      installedAt: timestamp,
+      updatedAt: timestamp,
+    ),
+    instructions: 'Use history tools only for exact persisted messages.',
     files: const ['SKILL.md'],
   );
 }

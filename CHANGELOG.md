@@ -16,6 +16,10 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Unified bundled and installed Skill activation under model selection, so
+  follow-up requests can use conversation context instead of hard-coded keyword
+  routing or lexical catalog preselection, while application-side Tool policy,
+  activation budgets, and approval checks remain in force.
 - Localized the per-conversation runtime system prompt using the selected
   interface language, including the read-only conversation prompt preview.
 - Delayed the Linux window until Flutter renders its first frame, preventing
