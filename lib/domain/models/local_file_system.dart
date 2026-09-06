@@ -13,9 +13,9 @@ const directoryOperationsToolNames = {
 };
 
 const fileOperationsSkillId = 'system:file-operations';
-const fileOperationsSkillPromptVersion = 5;
+const fileOperationsSkillPromptVersion = 6;
 const fileOperationsSkillContentDigest =
-    'a300413f482e84395498c82983931fcdfcbf97e7fb42e2fc8f99a8236d7bea42';
+    '410e45eb4bcbeacd313e29f0a8b1de1159ceb9815231e221a54e449f12a94247';
 
 const queryLocalFilesToolName = 'query_local_files';
 const readLocalFileToolName = 'read_local_file';

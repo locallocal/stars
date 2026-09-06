@@ -123,7 +123,7 @@ final class AddMcpServerTool implements ExecutableTool {
         );
       }
 
-      final transportType = call.arguments['transport_type']?.toString();
+      final transportType = call.arguments['transport_type'];
       final transport = switch (transportType) {
         'streamable_http' => _httpTransport(call.arguments),
         'stdio' => _stdioTransport(call.arguments),
@@ -143,38 +143,29 @@ final class AddMcpServerTool implements ExecutableTool {
         createdAt: timestamp,
         updatedAt: timestamp,
       );
-      try {
-        cancellationToken.throwIfCancelled();
-        if (credential == null) {
-          await _credentialStore.delete(id);
-        } else {
+      if (credential != null) {
+        try {
+          cancellationToken.throwIfCancelled();
           await _credentialStore.write(id, credential);
+        } on AgentRunCancelledException {
+          rethrow;
+        } on Object {
+          return _error(
+            call,
+            'The MCP credential could not be stored securely.',
+            'mcp_credential_store_failed',
+          );
         }
-      } on AgentRunCancelledException {
-        rethrow;
-      } on Object {
-        return _error(
-          call,
-          'The MCP credential could not be stored securely.',
-          'mcp_credential_store_failed',
-        );
       }
 
       try {
         cancellationToken.throwIfCancelled();
         await _repository.saveServer(server);
       } on AgentRunCancelledException {
-        try {
-          await _credentialStore.delete(id);
-        } on Object {
-          // Cancellation remains authoritative; a later secure-store cleanup
-          // can remove this application-generated, unreferenced key.
-        }
+        await _rollbackCredential(id, credential);
         rethrow;
       } on Object {
-        try {
-          await _credentialStore.delete(id);
-        } on Object {
+        if (!await _rollbackCredential(id, credential)) {
           return _error(
             call,
             'The MCP credential rollback failed.',
@@ -201,6 +192,9 @@ final class AddMcpServerTool implements ExecutableTool {
       try {
         cancellationToken.throwIfCancelled();
         final connected = await _connector(id, cancellationToken);
+        if (connected.id != id) {
+          throw const McpException('mcp_connection_identity_mismatch');
+        }
         final tools = await _repository.getTools(id);
         return _success(
           call,
@@ -211,15 +205,14 @@ final class AddMcpServerTool implements ExecutableTool {
       } on AgentRunCancelledException {
         rethrow;
       } on Object catch (error) {
-        final retained = await _repository.getServer(id) ?? server;
         final code =
             error is McpException && error.code.isNotEmpty
                 ? error.code
                 : 'mcp_connection_failed';
         return _success(
           call,
-          server: retained,
-          toolCount: (await _repository.getTools(id)).length,
+          server: await _retainedServer(id, fallback: server),
+          toolCount: await _retainedToolCount(id),
           credentialStored: credential != null,
           connectionError: code,
         );
@@ -266,7 +259,7 @@ final class AddMcpServerTool implements ExecutableTool {
         'A Streamable HTTP MCP endpoint must be an absolute HTTPS URI.',
       );
     }
-    final authType = switch (arguments['auth_type']?.toString() ?? 'none') {
+    final authType = switch (arguments['auth_type'] ?? 'none') {
       'none' => McpAuthType.none,
       'oauth_access_token' => McpAuthType.oauthAccessToken,
       _ =>
@@ -275,7 +268,15 @@ final class AddMcpServerTool implements ExecutableTool {
           'MCP auth_type must be none or oauth_access_token.',
         ),
     };
-    final accessToken = arguments['access_token']?.toString().trim() ?? '';
+    final accessTokenValue = arguments['access_token'];
+    if (accessTokenValue != null && accessTokenValue is! String) {
+      throw const _AddMcpServerException(
+        'mcp_invalid_credential',
+        'The MCP access token is invalid.',
+      );
+    }
+    final accessToken =
+        accessTokenValue is String ? accessTokenValue.trim() : '';
     if (accessToken.length > 16384) {
       throw const _AddMcpServerException(
         'mcp_invalid_credential',
@@ -364,7 +365,7 @@ final class AddMcpServerTool implements ExecutableTool {
         authType: McpAuthType.oauthAccessToken,
       ) =>
         McpCredential(
-          accessToken: arguments['access_token']!.toString().trim(),
+          accessToken: (arguments['access_token']! as String).trim(),
         ),
       McpStreamableHttpServerTransport() => null,
       McpStdioServerTransport() => switch (_environment(
@@ -388,9 +389,10 @@ final class AddMcpServerTool implements ExecutableTool {
     }
     final environment = <String, String>{};
     for (final entry in value.entries) {
-      final key = entry.key.toString();
+      final key = entry.key;
       final item = entry.value;
-      if (!RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(key) ||
+      if (key is! String ||
+          !RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(key) ||
           item is! String ||
           item.length > 16384) {
         throw const _AddMcpServerException(
@@ -431,6 +433,38 @@ final class AddMcpServerTool implements ExecutableTool {
         'connect must be a boolean.',
       ),
   };
+
+  Future<bool> _rollbackCredential(
+    String serverId,
+    McpCredential? credential,
+  ) async {
+    if (credential == null) return true;
+    try {
+      await _credentialStore.delete(serverId);
+      return true;
+    } on Object {
+      return false;
+    }
+  }
+
+  Future<McpServer> _retainedServer(
+    String serverId, {
+    required McpServer fallback,
+  }) async {
+    try {
+      return await _repository.getServer(serverId) ?? fallback;
+    } on Object {
+      return fallback;
+    }
+  }
+
+  Future<int> _retainedToolCount(String serverId) async {
+    try {
+      return (await _repository.getTools(serverId)).length;
+    } on Object {
+      return 0;
+    }
+  }
 
   String _uniqueId(List<McpServer> existing, DateTime timestamp) {
     final usedIds = existing.map((server) => server.id).toSet();

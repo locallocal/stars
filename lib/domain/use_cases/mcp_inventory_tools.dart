@@ -19,10 +19,18 @@ final class McpInventoryToolSession {
 
   Future<ToolResult> listInstalled(ToolCallRequest call) async {
     try {
-      final query = call.arguments['query']?.toString().trim() ?? '';
-      if (query.length > 128) throw ArgumentError.value(query, 'query');
+      final queryValue = call.arguments['query'];
+      if (queryValue != null &&
+          (queryValue is! String || queryValue.length > 128)) {
+        throw ArgumentError.value(queryValue, 'query');
+      }
+      final query = queryValue is String ? queryValue.trim() : '';
       final rawLimit = call.arguments['limit'];
-      final limit = rawLimit == null ? 50 : rawLimit as int;
+      if (rawLimit != null &&
+          (rawLimit is! int || rawLimit < 1 || rawLimit > 100)) {
+        throw ArgumentError.value(rawLimit, 'limit');
+      }
+      final limit = rawLimit is int ? rawLimit : 50;
       final page = await _repository
           .listInstalled(query: query, limit: limit)
           .timeout(const Duration(seconds: 2));
@@ -37,6 +45,7 @@ final class McpInventoryToolSession {
           'truncated': page.truncated,
           'servers': servers,
         },
+        truncated: page.truncated,
       );
     } on TimeoutException {
       return _error(call, 'mcp_inventory_timeout', 'MCP 服务器查询超时。');
@@ -49,6 +58,9 @@ final class McpInventoryToolSession {
 
   Future<ToolResult> listCurrentConversation(ToolCallRequest call) async {
     try {
+      if (call.arguments.isNotEmpty) {
+        throw ArgumentError.value(call.arguments, 'arguments');
+      }
       final inventory = await _repository
           .listForConversation(chatId)
           .timeout(const Duration(seconds: 2));
@@ -77,6 +89,8 @@ final class McpInventoryToolSession {
       );
     } on TimeoutException {
       return _error(call, 'mcp_inventory_timeout', '会话 MCP 查询超时。');
+    } on ArgumentError {
+      return _error(call, 'invalid_mcp_inventory_query', 'MCP 查询参数无效。');
     } on Object {
       return _error(call, 'mcp_inventory_failed', '无法查询当前会话的 MCP 配置。');
     }

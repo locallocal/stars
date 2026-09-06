@@ -31,6 +31,30 @@ void main() {
       expect(selected, {directoryOperationsSkillId, fileOperationsSkillId});
     });
 
+    test('recognizes explicit local paths without routing web URLs', () {
+      expect(
+        policy.select(
+          query: 'Copy /tmp/source to /tmp/destination',
+          enabledSkillIds: allSystemSkills,
+        ),
+        {fileOperationsSkillId},
+      );
+      expect(
+        policy.select(
+          query: 'Read https://example.com/reference',
+          enabledSkillIds: allSystemSkills,
+        ),
+        isEmpty,
+      );
+      expect(
+        policy.select(
+          query: 'Explain the JSON data format',
+          enabledSkillIds: allSystemSkills,
+        ),
+        isEmpty,
+      );
+    });
+
     test('routes process and installer requests independently', () {
       expect(
         policy.select(
@@ -53,7 +77,41 @@ void main() {
         ),
         {mcpInstallerSkillId},
       );
+      expect(
+        policy.select(
+          query: 'List installed Skills',
+          enabledSkillIds: allSystemSkills,
+        ),
+        {skillInstallerSkillId},
+      );
+      expect(
+        policy.select(
+          query: 'Which MCP servers are enabled?',
+          enabledSkillIds: allSystemSkills,
+        ),
+        {mcpInstallerSkillId},
+      );
     });
+
+    test(
+      'routes bare process requests without exposing shell for tutorials',
+      () {
+        expect(
+          policy.select(
+            query: 'Run the tests',
+            enabledSkillIds: allSystemSkills,
+          ),
+          {shellCommandSkillId},
+        );
+        expect(
+          policy.select(
+            query: 'Explain how Flutter widgets rebuild',
+            enabledSkillIds: allSystemSkills,
+          ),
+          isEmpty,
+        );
+      },
+    );
 
     test('never selects a disabled system Skill', () {
       final selected = policy.select(

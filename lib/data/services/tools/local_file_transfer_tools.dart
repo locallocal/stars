@@ -28,7 +28,7 @@ abstract base class _TwoPathFileTool
     String source,
     String destination,
   ) async {
-    if (source == destination) {
+    if (path_context.equals(source, destination)) {
       return error(
         call,
         'Source and destination must be different.',
@@ -63,6 +63,14 @@ abstract base class _TwoPathFileTool
         'file_already_exists',
       );
     }
+    if (destinationType == FileSystemEntityType.file &&
+        await FileSystemEntity.identical(source, destination)) {
+      return error(
+        call,
+        'Source and destination refer to the same file.',
+        'same_file_path',
+      );
+    }
     return null;
   }
 
@@ -74,10 +82,6 @@ abstract base class _TwoPathFileTool
       await Directory(
         path_context.dirname(destination),
       ).create(recursive: true);
-    }
-    if (call.arguments['overwrite'] == true &&
-        await File(destination).exists()) {
-      await File(destination).delete();
     }
   }
 }

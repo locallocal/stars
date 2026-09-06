@@ -19,12 +19,18 @@ final class SkillInventoryToolSession {
 
   Future<ToolResult> listInstalled(ToolCallRequest call) async {
     try {
-      final query = call.arguments['query']?.toString().trim() ?? '';
-      if (query.length > 128) {
-        throw ArgumentError.value(query, 'query');
+      final queryValue = call.arguments['query'];
+      if (queryValue != null &&
+          (queryValue is! String || queryValue.length > 128)) {
+        throw ArgumentError.value(queryValue, 'query');
       }
+      final query = queryValue is String ? queryValue.trim() : '';
       final rawLimit = call.arguments['limit'];
-      final limit = rawLimit == null ? 50 : rawLimit as int;
+      if (rawLimit != null &&
+          (rawLimit is! int || rawLimit < 1 || rawLimit > 100)) {
+        throw ArgumentError.value(rawLimit, 'limit');
+      }
+      final limit = rawLimit is int ? rawLimit : 50;
       final page = await _repository
           .listInstalled(query: query, limit: limit)
           .timeout(const Duration(seconds: 2));
@@ -40,6 +46,7 @@ final class SkillInventoryToolSession {
           'truncated': page.truncated,
           'skills': skills,
         },
+        truncated: page.truncated,
       );
     } on TimeoutException {
       return _error(call, 'skill_inventory_timeout', 'Skill 查询超时。');
@@ -52,6 +59,9 @@ final class SkillInventoryToolSession {
 
   Future<ToolResult> listCurrentConversation(ToolCallRequest call) async {
     try {
+      if (call.arguments.isNotEmpty) {
+        throw ArgumentError.value(call.arguments, 'arguments');
+      }
       final items = await _repository
           .listForConversation(chatId)
           .timeout(const Duration(seconds: 2));
@@ -68,6 +78,8 @@ final class SkillInventoryToolSession {
       );
     } on TimeoutException {
       return _error(call, 'skill_inventory_timeout', '会话 Skill 查询超时。');
+    } on ArgumentError {
+      return _error(call, 'invalid_skill_inventory_query', 'Skill 查询参数无效。');
     } on Object {
       return _error(call, 'skill_inventory_failed', '无法查询当前会话的 Skill。');
     }

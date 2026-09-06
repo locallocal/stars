@@ -1,82 +1,28 @@
-import 'dart:convert';
-
-import 'package:crypto/crypto.dart';
-import 'package:flutter/services.dart';
+import 'package:stars/data/services/tools/bundled_system_skill.dart';
 import 'package:stars/domain/models/models.dart';
 
-final class SystemMcpInstallerSkill {
-  static const assetRoot = 'assets/skills/system/mcp-installer';
-  static const assetPath = 'assets/skills/system/mcp-installer/SKILL.md';
-
-  bool _isValid = false;
-  SkillContent? _content;
-
-  bool get isValid => _isValid;
-  String get contentDigest => mcpInstallerSkillContentDigest;
-  int get promptVersion => mcpInstallerSkillPromptVersion;
-
-  Future<void> validate({AssetBundle? bundle}) async {
-    await loadContent(bundle: bundle, forceRefresh: true);
-  }
-
-  Future<SkillContent> loadContent({
-    AssetBundle? bundle,
-    bool forceRefresh = false,
-  }) async {
-    if (!forceRefresh && bundle == null && _content != null) {
-      return _content!;
-    }
-    _isValid = false;
-    final source = await (bundle ?? rootBundle).loadString(
-      assetPath,
-      cache: false,
-    );
-    final digest = sha256.convert(utf8.encode(source)).toString();
-    if (digest != mcpInstallerSkillContentDigest) {
-      throw const FormatException(
-        'Built-in MCP installer Skill failed integrity validation.',
-      );
-    }
-    final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-    final content = SkillContent(
-      descriptor: SkillDescriptor(
-        id: mcpInstallerSkillId,
+final class SystemMcpInstallerSkill extends BundledSystemSkill {
+  SystemMcpInstallerSkill()
+    : super(
+        bundledAssetRoot: assetRoot,
+        bundledAssetPath: assetPath,
+        expectedDigest: mcpInstallerSkillContentDigest,
+        promptVersion: mcpInstallerSkillPromptVersion,
+        skillId: mcpInstallerSkillId,
         name: 'mcp-installer',
         description:
-            'Install Stars MCP servers and inspect installed or '
-            'current-conversation MCP configuration from SQLite.',
-        version: '$mcpInstallerSkillPromptVersion',
-        scope: SkillScope.bundled,
-        sourceUri: 'asset:///$assetPath',
-        rootPath: assetRoot,
-        contentDigest: mcpInstallerSkillContentDigest,
-        trustState: SkillTrustState.bundledTrusted,
-        validationStatus: SkillValidationStatus.valid,
+            'Install Stars MCP servers and query installed servers or the '
+            'current conversation Bot\'s enabled MCP servers and Tools from '
+            'SQLite. Use when the user asks to add, configure, register, or '
+            'install an MCP server, list installed MCP servers, or inspect '
+            'which MCP servers and Tools are enabled for the current '
+            'conversation.',
         compatibility: 'Stars desktop',
         requestedToolNames: mcpInstallerToolNames,
-        publisherId: 'stars',
-        publisherName: 'Stars',
-        installedAt: timestamp,
-        updatedAt: timestamp,
-      ),
-      instructions: _instructions(source),
-      files: const ['SKILL.md'],
-    );
-    if (bundle == null) _content = content;
-    _isValid = true;
-    return content;
-  }
+        integrityError:
+            'Built-in MCP installer Skill failed integrity validation.',
+      );
 
-  String _instructions(String source) {
-    final normalized = source.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-    final lines = normalized.split('\n');
-    if (lines.isEmpty || lines.first.trim() != '---') {
-      throw const FormatException('Built-in Skill frontmatter is missing.');
-    }
-    final closingIndex = lines.indexWhere((line) => line.trim() == '---', 1);
-    if (closingIndex < 0) {
-      throw const FormatException('Built-in Skill frontmatter is incomplete.');
-    }
-    return lines.sublist(closingIndex + 1).join('\n').trim();
-  }
+  static const assetRoot = 'assets/skills/system/mcp-installer';
+  static const assetPath = 'assets/skills/system/mcp-installer/SKILL.md';
 }

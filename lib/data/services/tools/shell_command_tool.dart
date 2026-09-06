@@ -284,10 +284,28 @@ final class ShellCommandTool implements ExecutableTool {
     this.maxOutputBytesPerStream = 7000,
   }) : _runner = runner ?? LocalShellCommandRunner(platform: platform),
        _currentWorkingDirectory =
-           currentWorkingDirectory ?? (() => Directory.current.path);
+           currentWorkingDirectory ?? (() => Directory.current.path) {
+    if (defaultTimeout < const Duration(seconds: 1) ||
+        defaultTimeout > const Duration(seconds: maxTimeoutSeconds)) {
+      throw ArgumentError.value(
+        defaultTimeout,
+        'defaultTimeout',
+        'Must be between 1 and $maxTimeoutSeconds seconds.',
+      );
+    }
+    if (maxOutputBytesPerStream < 1 ||
+        maxOutputBytesPerStream > maxOutputBytes) {
+      throw ArgumentError.value(
+        maxOutputBytesPerStream,
+        'maxOutputBytesPerStream',
+        'Must be between 1 and $maxOutputBytes bytes.',
+      );
+    }
+  }
 
   static const maxCommandCharacters = 8192;
   static const maxTimeoutSeconds = 25;
+  static const maxOutputBytes = 262144;
 
   final ShellCommandRunner _runner;
   final String Function() _currentWorkingDirectory;
@@ -381,26 +399,50 @@ final class ShellCommandTool implements ExecutableTool {
     AgentCancellationToken cancellationToken,
   ) async {
     cancellationToken.throwIfCancelled();
-    final command = call.arguments['command']?.toString() ?? '';
-    if (command.trim().isEmpty ||
-        command.runes.length > maxCommandCharacters ||
-        command.contains('\u0000')) {
+    final commandValue = call.arguments['command'];
+    if (commandValue is! String ||
+        commandValue.trim().isEmpty ||
+        commandValue.runes.length > maxCommandCharacters ||
+        commandValue.contains('\u0000')) {
       return _error(
         call,
         'The shell command is empty or exceeds the allowed size.',
         'invalid_shell_command',
       );
     }
+    final command = commandValue;
+    final directoryValue = call.arguments['working_directory'];
+    if (directoryValue != null &&
+        (directoryValue is! String ||
+            directoryValue.trim().isEmpty ||
+            directoryValue.length > 4096 ||
+            directoryValue.contains('\u0000'))) {
+      return _error(
+        call,
+        'The shell working directory is invalid.',
+        'invalid_shell_working_directory',
+      );
+    }
     final requestedDirectory =
-        call.arguments['working_directory']?.toString().trim() ?? '';
+        directoryValue is String ? directoryValue.trim() : '';
     final workingDirectory =
         requestedDirectory.isEmpty
             ? _currentWorkingDirectory()
             : requestedDirectory;
     final requestedTimeout = call.arguments['timeout_seconds'];
-    final timeoutSeconds =
-        requestedTimeout is int ? requestedTimeout : defaultTimeout.inSeconds;
-    if (timeoutSeconds < 1 || timeoutSeconds > maxTimeoutSeconds) {
+    if (requestedTimeout != null && requestedTimeout is! int) {
+      return _error(
+        call,
+        'The shell command timeout is outside the allowed range.',
+        'invalid_shell_timeout',
+      );
+    }
+    final timeout =
+        requestedTimeout is int
+            ? Duration(seconds: requestedTimeout)
+            : defaultTimeout;
+    if (timeout < const Duration(seconds: 1) ||
+        timeout > const Duration(seconds: maxTimeoutSeconds)) {
       return _error(
         call,
         'The shell command timeout is outside the allowed range.',
@@ -413,7 +455,7 @@ final class ShellCommandTool implements ExecutableTool {
         ShellCommandExecutionRequest(
           command: command,
           workingDirectory: workingDirectory,
-          timeout: Duration(seconds: timeoutSeconds),
+          timeout: timeout,
           maxOutputBytesPerStream: maxOutputBytesPerStream,
         ),
         cancellationToken,

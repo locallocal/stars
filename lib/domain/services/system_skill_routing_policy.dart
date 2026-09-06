@@ -28,7 +28,7 @@ final class SystemSkillRoutingPolicy {
       directoryOperationsSkillId,
       _containsAny(normalized, _directoryTerms),
     );
-    includeWhen(fileOperationsSkillId, _containsAny(normalized, _fileTerms));
+    includeWhen(fileOperationsSkillId, _matchesFileIntent(normalized));
     includeWhen(skillInstallerSkillId, _matchesSkillIntent(normalized));
     includeWhen(mcpInstallerSkillId, _matchesMcpIntent(normalized));
     return Set<String>.unmodifiable(selected);
@@ -36,11 +36,20 @@ final class SystemSkillRoutingPolicy {
 
   bool _matchesShellIntent(String query) =>
       _containsAny(query, _shellTerms) ||
-      (_containsAny(query, _codeTerms) &&
+      ((_containsAny(query, _codeTerms) ||
+              _containsAny(query, _toolchainTerms) ||
+              _containsAny(query, _processObjectTerms)) &&
           _containsAny(query, _processActionTerms));
 
+  bool _matchesFileIntent(String query) =>
+      _containsAny(query, _fileTerms) ||
+      ((_containsAny(query, _fileFormatTerms) || _containsLocalPath(query)) &&
+          _containsAny(query, _fileActionTerms));
+
   bool _matchesSkillIntent(String query) =>
-      _containsAny(query, _skillTerms) && _containsAny(query, _managementTerms);
+      _containsAny(query, _skillTerms) &&
+      (_containsAny(query, _managementTerms) ||
+          _containsAny(query, _inspectionTerms));
 
   bool _matchesMcpIntent(String query) =>
       _containsAny(query, _mcpTerms) &&
@@ -60,6 +69,16 @@ final class SystemSkillRoutingPolicy {
   }
 
   bool _containsCjk(String value) => RegExp(r'[\u3400-\u9fff]').hasMatch(value);
+
+  bool _containsLocalPath(String value) {
+    final withoutUris = value.replaceAll(
+      RegExp(r'\b[a-z][a-z0-9+.-]*://\S+'),
+      '',
+    );
+    return RegExp(
+      r'(^|[\s"`])(?:\.{0,2}[/\\]|[/\\]|[a-z]:[/\\]|~[/\\])\S+',
+    ).hasMatch(withoutUris);
+  }
 
   static const Set<String> _directoryTerms = {
     'directory',
@@ -83,15 +102,6 @@ final class SystemSkillRoutingPolicy {
     'documents',
     'filename',
     'filepath',
-    'html',
-    'css',
-    'json',
-    'yaml',
-    'yml',
-    'markdown',
-    'csv',
-    'xml',
-    'resume',
     'save locally',
     'save to disk',
     '文件',
@@ -110,19 +120,66 @@ final class SystemSkillRoutingPolicy {
     '파일',
   };
 
+  static const Set<String> _fileFormatTerms = {
+    'html',
+    'css',
+    'json',
+    'yaml',
+    'yml',
+    'markdown',
+    'csv',
+    'xml',
+    'readme',
+    'pubspec',
+  };
+
+  static const Set<String> _fileActionTerms = {
+    'find',
+    'read',
+    'show',
+    'open',
+    'create',
+    'write',
+    'save',
+    'append',
+    'overwrite',
+    'copy',
+    'move',
+    'rename',
+    'delete',
+    'remove',
+    'edit',
+    '查找',
+    '读取',
+    '讀取',
+    '查看',
+    '打开',
+    '開啟',
+    '创建',
+    '建立',
+    '写入',
+    '寫入',
+    '保存',
+    '儲存',
+    '追加',
+    '覆盖',
+    '覆寫',
+    '复制',
+    '複製',
+    '移动',
+    '移動',
+    '重命名',
+    '刪除',
+    '删除',
+    '编辑',
+    '編輯',
+  };
+
   static const Set<String> _shellTerms = {
     'shell',
     'terminal',
     'command line',
     'cli',
-    'git',
-    'npm',
-    'pnpm',
-    'yarn',
-    'flutter',
-    'dart',
-    'cargo',
-    'gradle',
     '命令',
     '终端',
     '終端',
@@ -134,6 +191,30 @@ final class SystemSkillRoutingPolicy {
     '新分支',
     'コマンド',
     '터미널',
+  };
+
+  static const Set<String> _toolchainTerms = {
+    'git',
+    'npm',
+    'pnpm',
+    'yarn',
+    'flutter',
+    'dart',
+    'cargo',
+    'gradle',
+  };
+
+  static const Set<String> _processObjectTerms = {
+    'build',
+    'test',
+    'tests',
+    'analyzer',
+    'formatter',
+    'lint',
+    '构建',
+    '建置',
+    '测试',
+    '測試',
   };
 
   static const Set<String> _codeTerms = {
@@ -152,6 +233,12 @@ final class SystemSkillRoutingPolicy {
     'analyze',
     'compile',
     'run',
+    'format',
+    'lint',
+    'check',
+    'commit',
+    'checkout',
+    'upgrade',
     '构建',
     '建置',
     '测试',
@@ -161,6 +248,9 @@ final class SystemSkillRoutingPolicy {
     '編譯',
     '运行',
     '執行',
+    '格式化',
+    '检查',
+    '檢查',
   };
 
   static const Set<String> _skillTerms = {'skill', 'skills', '技能', 'スキル', '스킬'};
@@ -191,6 +281,7 @@ final class SystemSkillRoutingPolicy {
     'inspect',
     'show',
     'status',
+    'which',
     '列表',
     '查看',
     '检查',

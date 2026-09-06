@@ -129,10 +129,15 @@ final class SqliteConversationHistoryRepository
       throw ArgumentError.value(surroundingTurns, 'surroundingTurns');
     }
     final normalizedReferences = references.toSet().toList()..sort();
-    if (normalizedReferences.any(
-      (reference) =>
-          !reference.startsWith('turn:') && !reference.startsWith('message:'),
-    )) {
+    if (normalizedReferences.any((reference) {
+      if (reference.startsWith('turn:')) {
+        return reference.length == 'turn:'.length;
+      }
+      if (reference.startsWith('message:')) {
+        return reference.length == 'message:'.length;
+      }
+      return true;
+    })) {
       throw ArgumentError('References must use turn: or message: prefixes.');
     }
     final fingerprint = _fingerprint(

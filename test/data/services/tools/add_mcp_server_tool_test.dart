@@ -225,6 +225,27 @@ void main() {
     expect(credentials.values, isEmpty);
   });
 
+  test('rejects non-string credential values before persisting', () async {
+    final result = await createTool().execute(
+      ToolCallRequest(
+        callId: 'bad-token',
+        name: addMcpServerToolName,
+        arguments: const {
+          'name': 'Remote',
+          'transport_type': 'streamable_http',
+          'endpoint': 'https://remote.example.com/mcp',
+          'auth_type': 'oauth_access_token',
+          'access_token': 42,
+        },
+      ),
+      AgentCancellationToken(),
+    );
+
+    expect(result.errorCode, 'mcp_invalid_credential');
+    expect(repository.servers, isEmpty);
+    expect(credentials.values, isEmpty);
+  });
+
   test('keeps an added server when immediate connection fails', () async {
     final result = await createTool(
       connector: (serverId, cancellationToken) async {
@@ -307,6 +328,61 @@ void main() {
     expect(repository.servers, isEmpty);
     expect(credentials.values, isEmpty);
   });
+
+  test(
+    'credential-free servers do not depend on secure-store cleanup',
+    () async {
+      credentials.deleteError = StateError('secure storage unavailable');
+
+      final result = await createTool().execute(
+        ToolCallRequest(
+          callId: 'no-credential',
+          name: addMcpServerToolName,
+          arguments: const {
+            'name': 'Public server',
+            'transport_type': 'streamable_http',
+            'endpoint': 'https://public.example.com/mcp',
+            'connect': false,
+          },
+        ),
+        AgentCancellationToken(),
+      );
+
+      expect(result.isError, isFalse);
+      expect(credentials.deleteCalls, 0);
+      expect(await repository.getServers(), hasLength(1));
+    },
+  );
+
+  test('reports a retained server when post-connect reads fail', () async {
+    final result = await createTool(
+      connector: (serverId, cancellationToken) async {
+        repository.getServerError = StateError('database read failed');
+        repository.getToolsError = StateError('catalog read failed');
+        throw const McpException('mcp_connection_failed');
+      },
+    ).execute(
+      ToolCallRequest(
+        callId: 'post-connect-read-failure',
+        name: addMcpServerToolName,
+        arguments: const {
+          'name': 'Retained server',
+          'transport_type': 'streamable_http',
+          'endpoint': 'https://retained.example.com/mcp',
+        },
+      ),
+      AgentCancellationToken(),
+    );
+
+    expect(result.isError, isFalse);
+    expect(
+      result.structuredContent,
+      containsPair('server_id', 'mcp-generated'),
+    );
+    expect(result.structuredContent, containsPair('tool_count', 0));
+    expect(result.content, contains('remains configured'));
+    expect(repository.servers, hasLength(1));
+  });
 }
 
 McpToolDescriptor _tool(String serverId, DateTime timestamp) =>
@@ -323,6 +399,8 @@ final class _MemoryMcpServerRepository implements McpServerRepository {
   final Map<String, McpServer> servers = {};
   final Map<String, List<McpToolDescriptor>> tools = {};
   Object? saveError;
+  Object? getServerError;
+  Object? getToolsError;
 
   @override
   Stream<List<McpServer>> get changes => const Stream.empty();
@@ -334,15 +412,20 @@ final class _MemoryMcpServerRepository implements McpServerRepository {
   }
 
   @override
-  Future<McpServer?> getServer(String id) async => servers[id];
+  Future<McpServer?> getServer(String id) async {
+    if (getServerError case final error?) throw error;
+    return servers[id];
+  }
 
   @override
   Future<List<McpServer>> getServers() async =>
       List<McpServer>.unmodifiable(servers.values);
 
   @override
-  Future<List<McpToolDescriptor>> getTools(String serverId) async =>
-      List<McpToolDescriptor>.unmodifiable(tools[serverId] ?? const []);
+  Future<List<McpToolDescriptor>> getTools(String serverId) async {
+    if (getToolsError case final error?) throw error;
+    return List<McpToolDescriptor>.unmodifiable(tools[serverId] ?? const []);
+  }
 
   @override
   Future<void> replaceCatalog(
@@ -363,9 +446,15 @@ final class _MemoryMcpServerRepository implements McpServerRepository {
 final class _MemoryMcpCredentialStore implements McpCredentialStore {
   final Map<String, McpCredential> values = {};
   Object? writeError;
+  Object? deleteError;
+  int deleteCalls = 0;
 
   @override
-  Future<void> delete(String serverId) async => values.remove(serverId);
+  Future<void> delete(String serverId) async {
+    deleteCalls += 1;
+    if (deleteError case final error?) throw error;
+    values.remove(serverId);
+  }
 
   @override
   Future<McpCredential?> read(String serverId) async => values[serverId];
