@@ -153,6 +153,77 @@ void main() {
       expect(failed.isError, isTrue);
       expect(failed.errorCode, 'shell_command_failed');
     });
+
+    test(
+      'rejects invalid runtime arguments before invoking the runner',
+      () async {
+        final runner = _FakeShellCommandRunner();
+        final tool = ShellCommandTool(
+          platform: NativeShellPlatform.linux,
+          runner: runner,
+        );
+
+        final invalidCommand = await tool.execute(
+          ToolCallRequest(
+            callId: 'invalid-command',
+            name: shellCommandToolName,
+            arguments: const {'command': 42},
+          ),
+          AgentCancellationToken(),
+        );
+        final invalidDirectory = await tool.execute(
+          ToolCallRequest(
+            callId: 'invalid-directory',
+            name: shellCommandToolName,
+            arguments: const {'command': 'pwd', 'working_directory': 42},
+          ),
+          AgentCancellationToken(),
+        );
+        final invalidTimeout = await tool.execute(
+          ToolCallRequest(
+            callId: 'invalid-timeout',
+            name: shellCommandToolName,
+            arguments: const {'command': 'pwd', 'timeout_seconds': 1.5},
+          ),
+          AgentCancellationToken(),
+        );
+
+        expect(invalidCommand.errorCode, 'invalid_shell_command');
+        expect(invalidDirectory.errorCode, 'invalid_shell_working_directory');
+        expect(invalidTimeout.errorCode, 'invalid_shell_timeout');
+        expect(runner.request, isNull);
+      },
+    );
+
+    test(
+      'validates construction limits and preserves a precise default timeout',
+      () async {
+        expect(
+          () => ShellCommandTool(
+            platform: NativeShellPlatform.linux,
+            maxOutputBytesPerStream: 0,
+          ),
+          throwsArgumentError,
+        );
+        final runner = _FakeShellCommandRunner();
+        final tool = ShellCommandTool(
+          platform: NativeShellPlatform.linux,
+          runner: runner,
+          defaultTimeout: const Duration(milliseconds: 1500),
+        );
+
+        await tool.execute(
+          ToolCallRequest(
+            callId: 'default-timeout',
+            name: shellCommandToolName,
+            arguments: const {'command': 'pwd'},
+          ),
+          AgentCancellationToken(),
+        );
+
+        expect(runner.request?.timeout, const Duration(milliseconds: 1500));
+      },
+    );
   });
 
   test(

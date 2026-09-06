@@ -308,6 +308,22 @@ void main() {
         EvidenceKind.actionReceipt,
       );
 
+      final duplicateCreate = await writeTool.execute(
+        _call(writeTool, {
+          'path': 'notes/original.txt',
+          'content': 'replacement',
+          'mode': 'create',
+        }),
+        AgentCancellationToken(),
+      );
+      expect(duplicateCreate.errorCode, 'file_already_exists');
+      expect(
+        await File(
+          path_context.join(sandbox.path, 'notes', 'original.txt'),
+        ).readAsString(),
+        'hello',
+      );
+
       final appendResult = await writeTool.execute(
         _call(writeTool, {
           'path': 'notes/original.txt',
@@ -450,6 +466,13 @@ void main() {
         await File(
           path_context.join(sandbox.path, 'unicode.txt'),
         ).writeAsString('你好');
+
+        final tooSmallResult = await readTool.execute(
+          _call(readTool, {'path': 'unicode.txt', 'max_bytes': 1}),
+          AgentCancellationToken(),
+        );
+        expect(tooSmallResult.errorCode, 'file_utf8_range_too_small');
+        expect(tooSmallResult.content, contains('Increase max_bytes'));
 
         final textResult = await readTool.execute(
           _call(readTool, {'path': 'unicode.txt', 'max_bytes': 4}),

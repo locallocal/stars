@@ -19,60 +19,34 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     AiProvider? provider,
     _TurnSkillState state,
     Set<String> enabledSkillIds,
-  ) {
-    if (provider?.capabilities.supportsAgentLoop != true ||
-        !enabledSkillIds.contains(shellCommandSkillId)) {
-      return null;
-    }
-    final content = state.bundledContents[shellCommandSkillId];
-    if (content == null ||
-        content.descriptor.id != shellCommandSkillId ||
-        !content.descriptor.isUsable ||
-        !content.descriptor.requestedToolNames.contains(shellCommandToolName)) {
-      return null;
-    }
-    final tokens = _estimateTokens(content.instructions);
-    if (tokens > _budget.maxTokensPerSkill ||
-        state.skillTokens + tokens > _budget.maxSkillContextTokens) {
-      return null;
-    }
-    return content;
-  }
+  ) => _loadSystemSkill(
+    provider,
+    state,
+    enabledSkillIds,
+    skillId: shellCommandSkillId,
+    requestedToolNames: shellCommandToolNames,
+  );
 
   SkillContent? _loadSystemSkillInstallerSkill(
     AiProvider? provider,
     _TurnSkillState state,
     Set<String> enabledSkillIds, {
     required int reservedTokens,
-  }) {
-    if (provider?.capabilities.supportsAgentLoop != true ||
-        !enabledSkillIds.contains(skillInstallerSkillId)) {
-      return null;
-    }
-    final content = state.bundledContents[skillInstallerSkillId];
-    if (content == null ||
-        content.descriptor.id != skillInstallerSkillId ||
-        !content.descriptor.isUsable ||
-        !content.descriptor.requestedToolNames.containsAll(
-          skillInstallerToolNames,
-        )) {
-      return null;
-    }
-    final tokens = _estimateTokens(content.instructions);
-    if (tokens > _budget.maxTokensPerSkill ||
-        state.skillTokens + reservedTokens + tokens >
-            _budget.maxSkillContextTokens) {
-      return null;
-    }
-    return content;
-  }
+  }) => _loadSystemSkill(
+    provider,
+    state,
+    enabledSkillIds,
+    skillId: skillInstallerSkillId,
+    requestedToolNames: skillInstallerToolNames,
+    reservedTokens: reservedTokens,
+  );
 
   SkillContent? _loadSystemDirectoryOperationsSkill(
     AiProvider? provider,
     _TurnSkillState state,
     Set<String> enabledSkillIds, {
     required int reservedTokens,
-  }) => _loadSystemLocalFileSystemSkill(
+  }) => _loadSystemSkill(
     provider,
     state,
     enabledSkillIds,
@@ -86,7 +60,7 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     _TurnSkillState state,
     Set<String> enabledSkillIds, {
     required int reservedTokens,
-  }) => _loadSystemLocalFileSystemSkill(
+  }) => _loadSystemSkill(
     provider,
     state,
     enabledSkillIds,
@@ -95,13 +69,13 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     reservedTokens: reservedTokens,
   );
 
-  SkillContent? _loadSystemLocalFileSystemSkill(
+  SkillContent? _loadSystemSkill(
     AiProvider? provider,
     _TurnSkillState state,
     Set<String> enabledSkillIds, {
     required String skillId,
     required Set<String> requestedToolNames,
-    required int reservedTokens,
+    int reservedTokens = 0,
   }) {
     if (provider?.capabilities.supportsAgentLoop != true ||
         !enabledSkillIds.contains(skillId)) {
@@ -130,28 +104,14 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     _TurnSkillState state,
     Set<String> enabledSkillIds, {
     required int reservedTokens,
-  }) {
-    if (provider?.capabilities.supportsAgentLoop != true ||
-        !enabledSkillIds.contains(mcpInstallerSkillId)) {
-      return null;
-    }
-    final content = state.bundledContents[mcpInstallerSkillId];
-    if (content == null ||
-        content.descriptor.id != mcpInstallerSkillId ||
-        !content.descriptor.isUsable ||
-        !content.descriptor.requestedToolNames.containsAll(
-          mcpInstallerToolNames,
-        )) {
-      return null;
-    }
-    final tokens = _estimateTokens(content.instructions);
-    if (tokens > _budget.maxTokensPerSkill ||
-        state.skillTokens + reservedTokens + tokens >
-            _budget.maxSkillContextTokens) {
-      return null;
-    }
-    return content;
-  }
+  }) => _loadSystemSkill(
+    provider,
+    state,
+    enabledSkillIds,
+    skillId: mcpInstallerSkillId,
+    requestedToolNames: mcpInstallerToolNames,
+    reservedTokens: reservedTokens,
+  );
 
   bool _isValidConversationHistorySkill(SkillContent? content) {
     return content != null &&

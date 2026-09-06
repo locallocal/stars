@@ -70,6 +70,7 @@ final class SkillInstallerTool implements ExecutableTool {
     ToolCallRequest call,
     AgentCancellationToken cancellationToken,
   ) async {
+    cancellationToken.throwIfCancelled();
     final sourceType = switch (call.arguments['source_type']) {
       'github' => SkillInstallSourceType.github,
       'zip_url' => SkillInstallSourceType.zipUrl,
@@ -81,13 +82,33 @@ final class SkillInstallerTool implements ExecutableTool {
       return _error(call, 'Skill 安装来源类型无效。', 'invalid_skill_source');
     }
     try {
+      final source = _requiredString(
+        call.arguments['source'],
+        field: 'source',
+        maximumLength: 4096,
+      );
+      final ref = _optionalString(
+        call.arguments['ref'],
+        field: 'ref',
+        maximumLength: 255,
+      );
+      final subdirectory = _optionalString(
+        call.arguments['subdirectory'],
+        field: 'subdirectory',
+        maximumLength: 1024,
+      );
+      final archiveSha256 = _optionalString(
+        call.arguments['archive_sha256'],
+        field: 'archive_sha256',
+        maximumLength: 64,
+      );
       final installed = await _installation.install(
         SkillInstallationRequest(
           sourceType: sourceType,
-          source: call.arguments['source']?.toString() ?? '',
-          ref: call.arguments['ref']?.toString() ?? '',
-          subdirectory: call.arguments['subdirectory']?.toString() ?? '',
-          archiveSha256: call.arguments['archive_sha256']?.toString() ?? '',
+          source: source,
+          ref: ref,
+          subdirectory: subdirectory,
+          archiveSha256: archiveSha256,
         ),
         cancellationToken,
       );
@@ -112,11 +133,41 @@ final class SkillInstallerTool implements ExecutableTool {
       );
     } on AgentRunCancelledException {
       rethrow;
+    } on ArgumentError {
+      return _error(call, 'Skill 安装参数无效。', 'invalid_skill_source');
     } on SkillInstallException catch (error) {
       return _error(call, error.message, 'skill_install_rejected');
     } on Object {
       return _error(call, 'Skill 安装失败。', 'skill_install_failed');
     }
+  }
+
+  String _requiredString(
+    Object? value, {
+    required String field,
+    required int maximumLength,
+  }) {
+    if (value is! String ||
+        value.trim().isEmpty ||
+        value.length > maximumLength ||
+        value.contains('\u0000')) {
+      throw ArgumentError.value(value, field);
+    }
+    return value.trim();
+  }
+
+  String _optionalString(
+    Object? value, {
+    required String field,
+    required int maximumLength,
+  }) {
+    if (value == null) return '';
+    if (value is! String ||
+        value.length > maximumLength ||
+        value.contains('\u0000')) {
+      throw ArgumentError.value(value, field);
+    }
+    return value.trim();
   }
 
   ToolResult _error(ToolCallRequest call, String message, String code) =>

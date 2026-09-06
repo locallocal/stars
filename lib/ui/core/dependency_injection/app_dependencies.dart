@@ -52,6 +52,7 @@ import 'package:stars/data/services/skills/skill_script_manifest_parser.dart';
 import 'package:stars/data/services/skills/skill_signature_service.dart';
 import 'package:stars/data/services/tools/built_in_tools.dart';
 import 'package:stars/data/services/tools/add_mcp_server_tool.dart';
+import 'package:stars/data/services/tools/bundled_system_skill.dart';
 import 'package:stars/data/services/tools/shell_command_tool.dart';
 import 'package:stars/data/services/tools/skill_installer_tool.dart';
 import 'package:stars/data/services/tools/system_conversation_history_skill.dart';
@@ -242,40 +243,23 @@ class AppDependencies {
     final shellCommandTool = createHostShellCommandTool();
     final systemShellSkill =
         shellCommandTool == null ? null : SystemShellSkill();
+    final bundledSystemSkills = <BundledSystemSkill>[
+      systemConversationHistorySkill,
+      systemDirectoryOperationsSkill,
+      systemFileOperationsSkill,
+      if (systemShellSkill != null) systemShellSkill,
+      systemSkillInstallerSkill,
+      systemMcpInstallerSkill,
+    ];
     Future<List<SkillContent>> loadBundledSkills() async {
       final contents = <SkillContent>[];
-      try {
-        contents.add(await systemConversationHistorySkill.loadContent());
-      } on Object {
-        // A damaged built-in Skill is omitted while other Skills stay usable.
-      }
-      try {
-        contents.add(await systemDirectoryOperationsSkill.loadContent());
-      } on Object {
-        // Directory operations fail closed if their Skill is damaged.
-      }
-      try {
-        contents.add(await systemFileOperationsSkill.loadContent());
-      } on Object {
-        // File operations fail closed if their Skill is damaged.
-      }
-      try {
-        final shellSkill = systemShellSkill;
-        if (shellSkill != null) {
-          contents.add(await shellSkill.loadContent());
+      for (final skill in bundledSystemSkills) {
+        try {
+          contents.add(await skill.loadContent());
+        } on Object {
+          // Each damaged built-in Skill fails closed without disabling the
+          // independent capabilities that still pass integrity validation.
         }
-      } on Object {
-        // Shell execution fails closed if its built-in Skill is damaged.
-      }
-      try {
-        contents.add(await systemSkillInstallerSkill.loadContent());
-      } on Object {
-        // Skill installation fails closed if its built-in Skill is damaged.
-      }
-      try {
-        contents.add(await systemMcpInstallerSkill.loadContent());
-      } on Object {
-        // MCP installation fails closed if its built-in Skill is damaged.
       }
       return List<SkillContent>.unmodifiable(contents);
     }

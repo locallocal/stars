@@ -972,6 +972,14 @@ final class ReadLocalFileTool
       } else {
         try {
           final decoded = _decodeUtf8Prefix(bytes, start + bytes.length < size);
+          if (bytes.isNotEmpty && decoded.byteLength == 0) {
+            return error(
+              call,
+              'The requested byte range is too small to contain one complete '
+                  'UTF-8 character. Increase max_bytes or read it as base64.',
+              'file_utf8_range_too_small',
+            );
+          }
           content = decoded.text;
           bytes = bytes.sublist(0, decoded.byteLength);
         } on FormatException {
@@ -1187,6 +1195,20 @@ final class WriteLocalFileTool
         await Directory(path_context.dirname(path)).create(recursive: true);
       }
       final file = File(path);
+      if (mode == 'create') {
+        try {
+          await file.create(exclusive: true);
+        } on FileSystemException {
+          if (await entityType(path) == FileSystemEntityType.file) {
+            return error(
+              call,
+              'The destination file already exists.',
+              'file_already_exists',
+            );
+          }
+          rethrow;
+        }
+      }
       await file.writeAsBytes(
         bytes,
         mode: mode == 'append' ? FileMode.append : FileMode.write,

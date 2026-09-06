@@ -14,7 +14,15 @@ final class ConversationHistoryToolSession {
     this.resultTokenBudget = 4096,
     Set<String> initiallyAllowedReferences = const {},
   }) : _repository = repository,
-       _allowedReferences = {...initiallyAllowedReferences};
+       _allowedReferences = {...initiallyAllowedReferences} {
+    if (resultTokenBudget < 1) {
+      throw ArgumentError.value(
+        resultTokenBudget,
+        'resultTokenBudget',
+        'Must be positive.',
+      );
+    }
+  }
 
   final ConversationHistoryRepository _repository;
   final String chatId;
@@ -69,8 +77,12 @@ final class ConversationHistoryToolSession {
           )
           .timeout(const Duration(seconds: 2));
       for (final hit in page.hits) {
-        _allowedReferences.add('turn:${hit.turnId}');
-        _allowedReferences.add('message:${hit.messageId}');
+        if (hit.turnId.isNotEmpty) {
+          _allowedReferences.add('turn:${hit.turnId}');
+        }
+        if (hit.messageId.isNotEmpty) {
+          _allowedReferences.add('message:${hit.messageId}');
+        }
       }
       if (page.nextCursor != null) _allowedCursors.add(page.nextCursor!);
       final body = _searchEnvelope(page);
@@ -82,8 +94,18 @@ final class ConversationHistoryToolSession {
       });
     } on TimeoutException {
       return _error(call, 'history_timeout', 'History search timed out.');
-    } on Object catch (error) {
-      return _error(call, 'invalid_history_query', error.toString());
+    } on ArgumentError {
+      return _error(
+        call,
+        'invalid_history_query',
+        'The history search parameters are invalid.',
+      );
+    } on Object {
+      return _error(
+        call,
+        'history_search_failed',
+        'History search could not be completed.',
+      );
     }
   }
 
@@ -106,8 +128,15 @@ final class ConversationHistoryToolSession {
           rawReferences.length > 8) {
         throw ArgumentError('references must contain 1-8 values.');
       }
-      final references =
-          rawReferences.map((value) => value.toString()).toList();
+      final references = <String>[];
+      for (final value in rawReferences) {
+        if (value is! String ||
+            value.length > 256 ||
+            !_isValidHistoryReference(value)) {
+          throw ArgumentError.value(value, 'references');
+        }
+        references.add(value);
+      }
       if (references.any(
         (reference) => !_allowedReferences.contains(reference),
       )) {
@@ -135,8 +164,18 @@ final class ConversationHistoryToolSession {
       });
     } on TimeoutException {
       return _error(call, 'history_timeout', 'History read timed out.');
-    } on Object catch (error) {
-      return _error(call, 'invalid_history_reference', error.toString());
+    } on ArgumentError {
+      return _error(
+        call,
+        'invalid_history_reference',
+        'The history references or read parameters are invalid.',
+      );
+    } on Object {
+      return _error(
+        call,
+        'history_read_failed',
+        'History messages could not be read.',
+      );
     }
   }
 
@@ -150,6 +189,8 @@ final class ConversationHistoryToolSession {
       structuredContent: cached.structuredContent,
       isError: cached.isError,
       errorCode: cached.errorCode,
+      truncated: cached.truncated,
+      schemaValid: cached.schemaValid,
     );
   }
 
@@ -166,22 +207,23 @@ final class ConversationHistoryToolSession {
         'History result budget exhausted.',
       );
     }
-    final maximumCharacters = remaining * 3;
-    final truncatedByBudget = content.runes.length > maximumCharacters;
-    final bounded =
-        truncatedByBudget
-            ? '${String.fromCharCodes(content.runes.take(maximumCharacters))}\n'
-                '<truncated />'
-            : content;
-    _resultTokens += (bounded.length + 2) ~/ 3;
+    final resultTokens = (content.runes.length + 2) ~/ 3;
+    if (resultTokens > remaining) {
+      return _error(
+        call,
+        'history_result_budget',
+        'The exact history result exceeds the remaining result budget. '
+            'Use narrower search terms or fewer references.',
+      );
+    }
+    _resultTokens += resultTokens;
+    final truncated = structured['truncated'] == true;
     final result = ToolResult(
       callId: call.callId,
       name: call.name,
-      content: bounded,
-      structuredContent: {
-        ...structured,
-        'truncated': structured['truncated'] == true || truncatedByBudget,
-      },
+      content: content,
+      structuredContent: structured,
+      truncated: truncated,
     );
     _cache[_cacheKey(call)] = result;
     return result;
@@ -277,6 +319,7 @@ final class SearchConversationHistoryTool implements ExecutableTool {
       'required': ['query'],
       'additionalProperties': false,
     },
+    outputSchema: _historyResultSchema,
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.readOnly,
     capabilities: const {ToolCapability.localRead},
@@ -310,7 +353,7 @@ final class ReadConversationHistoryTool implements ExecutableTool {
           'type': 'array',
           'minItems': 1,
           'maxItems': 8,
-          'items': {'type': 'string'},
+          'items': {'type': 'string', 'maxLength': 256},
           'description':
               'Required 1-8 turn:<turn_id> or message:<message_id> values '
               'returned by this run\'s search.',
@@ -331,6 +374,7 @@ final class ReadConversationHistoryTool implements ExecutableTool {
       'required': ['references'],
       'additionalProperties': false,
     },
+    outputSchema: _historyResultSchema,
     source: ToolSource.builtIn,
     riskLevel: ToolRiskLevel.readOnly,
     capabilities: const {ToolCapability.localRead},
@@ -345,6 +389,23 @@ final class ReadConversationHistoryTool implements ExecutableTool {
     return _session.read(call);
   }
 }
+
+const Map<String, Object?> _historyResultSchema = {
+  'type': 'object',
+  'properties': {
+    'count': {'type': 'integer'},
+    'truncated': {'type': 'boolean'},
+    'next_cursor': {
+      'type': ['string', 'null'],
+    },
+    'message_ids': {
+      'type': 'array',
+      'items': {'type': 'string'},
+    },
+  },
+  'required': ['count', 'truncated', 'next_cursor', 'message_ids'],
+  'additionalProperties': false,
+};
 
 String _searchEnvelope(ConversationHistoryPage page) {
   final buffer = StringBuffer(
@@ -399,6 +460,16 @@ String _xml(String value) => value
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&apos;');
+
+bool _isValidHistoryReference(String value) {
+  if (value.startsWith('turn:')) {
+    return value.length > 'turn:'.length;
+  }
+  if (value.startsWith('message:')) {
+    return value.length > 'message:'.length;
+  }
+  return false;
+}
 
 String _requiredString(
   Map<String, Object?> values,

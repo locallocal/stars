@@ -105,6 +105,23 @@ void main() {
     expect(result.errorCode, 'skill_install_rejected');
     expect(result.content, 'Package rejected.');
   });
+
+  test('rejects arguments that do not satisfy the public schema', () async {
+    final gateway = _FakeInstallationGateway();
+    final tool = SkillInstallerTool(installation: gateway);
+
+    final result = await tool.execute(
+      ToolCallRequest(
+        callId: 'invalid-source',
+        name: installSkillToolName,
+        arguments: const {'source_type': 'github', 'source': 42},
+      ),
+      AgentCancellationToken(),
+    );
+
+    expect(result.errorCode, 'invalid_skill_source');
+    expect(gateway.request, isNull);
+  });
 }
 
 final class _FakeInstallationGateway implements SkillInstallationGateway {

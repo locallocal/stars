@@ -146,12 +146,45 @@ void main() {
       expect(exemptDecision.reason, 'application_inventory_read_only_exempt');
     }
   });
+
+  test('validates query arguments and propagates truncation', () async {
+    final installed = tools[listInstalledSkillsToolName]!;
+    final current = tools[listCurrentConversationSkillsToolName]!;
+
+    final invalidLimit = await installed.execute(
+      ToolCallRequest(
+        callId: 'invalid-limit',
+        name: listInstalledSkillsToolName,
+        arguments: const {'limit': '50'},
+      ),
+      AgentCancellationToken(),
+    );
+    final invalidCurrent = await current.execute(
+      ToolCallRequest(
+        callId: 'invalid-current',
+        name: listCurrentConversationSkillsToolName,
+        arguments: const {'chat_id': 'another-chat'},
+      ),
+      AgentCancellationToken(),
+    );
+    repository.installedTruncated = true;
+    final truncated = await installed.execute(
+      ToolCallRequest(callId: 'truncated', name: listInstalledSkillsToolName),
+      AgentCancellationToken(),
+    );
+
+    expect(invalidLimit.errorCode, 'invalid_skill_inventory_query');
+    expect(invalidCurrent.errorCode, 'invalid_skill_inventory_query');
+    expect(truncated.truncated, isTrue);
+    expect(truncated.structuredContent, containsPair('truncated', true));
+  });
 }
 
 final class _FakeSkillInventoryRepository implements SkillInventoryRepository {
   String query = '';
   int limit = 0;
   String chatId = '';
+  bool installedTruncated = false;
 
   @override
   Future<InstalledSkillInventoryPage> listInstalled({
@@ -178,7 +211,7 @@ final class _FakeSkillInventoryRepository implements SkillInventoryRepository {
           updatedAt: now,
         ),
       ],
-      truncated: false,
+      truncated: installedTruncated,
     );
   }
 

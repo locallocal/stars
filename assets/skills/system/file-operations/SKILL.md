@@ -4,7 +4,7 @@ description: Find, inspect, create, append, overwrite, copy, move, or delete ind
 allowed-tools: query_local_files read_local_file write_local_file copy_local_file move_local_file delete_local_file
 metadata:
   scope: system
-  prompt-version: 5
+  prompt-version: 6
 ---
 
 # Work with local files
@@ -83,6 +83,9 @@ checks. Their availability in the prompt is not proof that a call ran, and
 - Continue a truncated read from the returned `next_offset_bytes`. Do not
   calculate the next offset from character count because UTF-8 characters can
   span multiple bytes.
+- If a UTF-8 range is too small to contain even one complete character, the
+  Tool returns `file_utf8_range_too_small`; increase `max_bytes` or read the
+  same range as `base64`. Never retry from an unchanged offset indefinitely.
 
 ### Write
 
@@ -150,7 +153,8 @@ checks. Their availability in the prompt is not proof that a call ran, and
 
 Common failures are intentionally specific: `file_not_found`,
 `file_already_exists`, `file_not_utf8`, `local_path_type_mismatch`,
-`invalid_file_range`, `invalid_file_encoding`, and `invalid_local_path`.
+`file_utf8_range_too_small`, `invalid_file_range`, `invalid_file_encoding`, and
+`invalid_local_path`.
 Report the returned code and stop dependent mutations; do not reinterpret one
 failure as another.
 

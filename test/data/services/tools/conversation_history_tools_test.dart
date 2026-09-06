@@ -137,6 +137,33 @@ void main() {
     },
   );
 
+  test('read rejects empty and non-string history references', () async {
+    final session = ConversationHistoryToolSession(
+      repository: SqliteConversationHistoryRepository(
+        messageRepository: messages,
+      ),
+      chatId: 'chat_1',
+      runId: 'run_1',
+      initiallyAllowedReferences: const {'turn:', 'message:42'},
+    );
+    final read = session.createTools().last;
+
+    for (final references in <List<Object?>>[
+      ['turn:'],
+      [42],
+    ]) {
+      final result = await read.execute(
+        ToolCallRequest(
+          callId: 'invalid-$references',
+          name: readConversationHistoryToolName,
+          arguments: {'references': references},
+        ),
+        AgentCancellationToken(),
+      );
+      expect(result.errorCode, 'invalid_history_reference');
+    }
+  });
+
   test('tool schemas describe SQLite lookup fields explicitly', () {
     final session = ConversationHistoryToolSession(
       repository: SqliteConversationHistoryRepository(
@@ -151,6 +178,10 @@ void main() {
     };
     final search = definitions[searchConversationHistoryToolName]!;
     final read = definitions[readConversationHistoryToolName]!;
+
+    const validator = JsonSchemaValidator();
+    expect(validator.supports(search.outputSchema!), isTrue);
+    expect(validator.supports(read.outputSchema!), isTrue);
 
     expect(search.description, contains('parameterized SQLite'));
     expect(read.description, contains('persisted messages'));
@@ -240,6 +271,81 @@ void main() {
 
       expect(cached.isError, isFalse);
       expect(cached.callId, 'third');
+    },
+  );
+
+  test('cached history results preserve their truncation contract', () async {
+    await messages.upsertMessage(
+      _message(
+        id: 'message_3',
+        turn: 'turn_2',
+        chat: 'chat_1',
+        sender: 'user_1',
+        content: 'A second launch date was discussed.',
+        timestamp: DateTime(2026, 8, 3),
+      ),
+    );
+    final search =
+        ConversationHistoryToolSession(
+          repository: SqliteConversationHistoryRepository(
+            messageRepository: messages,
+          ),
+          chatId: 'chat_1',
+          runId: 'run_1',
+        ).createTools().first;
+    final token = AgentCancellationToken();
+    final arguments = const {'query': 'launch date', 'limit': 1};
+
+    final first = await search.execute(
+      ToolCallRequest(
+        callId: 'first',
+        name: searchConversationHistoryToolName,
+        arguments: arguments,
+      ),
+      token,
+    );
+    final cached = await search.execute(
+      ToolCallRequest(
+        callId: 'cached',
+        name: searchConversationHistoryToolName,
+        arguments: arguments,
+      ),
+      token,
+    );
+
+    expect(first.truncated, isTrue);
+    expect(cached.truncated, isTrue);
+    expect(cached.structuredContent, containsPair('truncated', true));
+  });
+
+  test(
+    'history budget fails closed instead of returning partial XML',
+    () async {
+      final read =
+          ConversationHistoryToolSession(
+            repository: SqliteConversationHistoryRepository(
+              messageRepository: messages,
+            ),
+            chatId: 'chat_1',
+            runId: 'run_1',
+            resultTokenBudget: 10,
+            initiallyAllowedReferences: const {'turn:turn_1'},
+          ).createTools().last;
+
+      final result = await read.execute(
+        ToolCallRequest(
+          callId: 'read',
+          name: readConversationHistoryToolName,
+          arguments: const {
+            'references': ['turn:turn_1'],
+          },
+        ),
+        AgentCancellationToken(),
+      );
+
+      expect(result.errorCode, 'history_result_budget');
+      expect(result.content, isNot(contains('<truncated')));
+      expect(result.structuredContent, isNull);
     },
   );
 }

@@ -210,9 +210,18 @@ final class SkillInstallationService implements SkillInstallationGateway {
         ),
       );
     } finally {
+      await _deleteTemporaryBestEffort(temporary);
+    }
+  }
+
+  Future<void> _deleteTemporaryBestEffort(Directory temporary) async {
+    try {
       if (await temporary.exists()) {
         await temporary.delete(recursive: true);
       }
+    } on FileSystemException {
+      // Installation has already reached a durable outcome. A temporary-file
+      // cleanup failure must not turn that outcome into a misleading failure.
     }
   }
 

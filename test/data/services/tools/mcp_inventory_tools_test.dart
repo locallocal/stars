@@ -120,12 +120,48 @@ void main() {
       expect(exemptDecision.reason, 'application_inventory_read_only_exempt');
     }
   });
+
+  test('validates query arguments and propagates truncation', () async {
+    final installed = tools[listInstalledMcpServersToolName]!;
+    final current = tools[listCurrentConversationMcpToolName]!;
+
+    final invalidLimit = await installed.execute(
+      ToolCallRequest(
+        callId: 'invalid-limit',
+        name: listInstalledMcpServersToolName,
+        arguments: const {'limit': 0},
+      ),
+      AgentCancellationToken(),
+    );
+    final invalidCurrent = await current.execute(
+      ToolCallRequest(
+        callId: 'invalid-current',
+        name: listCurrentConversationMcpToolName,
+        arguments: const {'bot_id': 'another-bot'},
+      ),
+      AgentCancellationToken(),
+    );
+    repository.installedTruncated = true;
+    final truncated = await installed.execute(
+      ToolCallRequest(
+        callId: 'truncated',
+        name: listInstalledMcpServersToolName,
+      ),
+      AgentCancellationToken(),
+    );
+
+    expect(invalidLimit.errorCode, 'invalid_mcp_inventory_query');
+    expect(invalidCurrent.errorCode, 'invalid_mcp_inventory_query');
+    expect(truncated.truncated, isTrue);
+    expect(truncated.structuredContent, containsPair('truncated', true));
+  });
 }
 
 final class _FakeMcpInventoryRepository implements McpInventoryRepository {
   String query = '';
   int limit = 0;
   String chatId = '';
+  bool installedTruncated = false;
 
   @override
   Future<InstalledMcpServerInventoryPage> listInstalled({
@@ -151,7 +187,7 @@ final class _FakeMcpInventoryRepository implements McpInventoryRepository {
           updatedAt: now,
         ),
       ],
-      truncated: false,
+      truncated: installedTruncated,
     );
   }
 
