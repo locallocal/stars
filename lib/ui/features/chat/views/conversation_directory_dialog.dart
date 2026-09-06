@@ -99,6 +99,10 @@ final class _ConversationDirectoryDialogState
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
+    final viewport = MediaQuery.sizeOf(context);
+    final dialogHeight =
+        (viewport.height * 0.68).clamp(360.0, 680.0).toDouble();
+    final dialogWidth = (viewport.width - 32).clamp(280.0, 920.0).toDouble();
     return ShadDialog(
       key: const ValueKey<String>('conversation-directory-dialog'),
       title: Text(
@@ -106,7 +110,7 @@ final class _ConversationDirectoryDialogState
         style: StarsDesktopThemeSpec.pageTitleStyle(context),
       ),
       description: Text(strings.conversationDirectoryDescription),
-      constraints: const BoxConstraints(maxWidth: 760),
+      constraints: BoxConstraints(maxWidth: dialogWidth),
       closeIcon: StarsDesktopIconAction(
         key: const ValueKey<String>('conversation-directory-header-close'),
         icon: LucideIcons.x,
@@ -123,40 +127,29 @@ final class _ConversationDirectoryDialogState
       child: Padding(
         padding: const EdgeInsets.only(top: 16),
         child: SizedBox(
-          height: 520,
+          height: dialogHeight,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _DirectoryPath(
+              _DirectoryToolbar(
                 path: widget.viewModel.directoryPath,
                 canNavigateUp: widget.viewModel.canNavigateUp,
                 loading: widget.viewModel.loading,
                 onNavigateUp: () => unawaited(widget.viewModel.navigateUp()),
+                searchController: _searchController,
+                searchFocusNode: _searchFocusNode,
+                query: widget.viewModel.query,
+                onSearch: widget.viewModel.search,
+                onClearSearch: _clearSearch,
               ),
               const SizedBox(height: 12),
-              StarsSearchField(
-                key: const ValueKey<String>('conversation-directory-search'),
-                hintText: strings.searchConversationFiles,
-                semanticLabel: strings.searchConversationFiles,
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                onChanged: widget.viewModel.search,
-                insetFocusRing: true,
-                suffixIcon:
-                    widget.viewModel.query.isEmpty
-                        ? null
-                        : StarsDesktopIconAction(
-                          key: const ValueKey<String>(
-                            'conversation-directory-clear-search',
-                          ),
-                          icon: LucideIcons.x,
-                          label: strings.clearSearch,
-                          iconSize: 16,
-                          onPressed: _clearSearch,
-                        ),
+              Expanded(
+                child: _DirectoryEntriesPanel(
+                  count: widget.viewModel.visibleEntries.length,
+                  loading: widget.viewModel.loading,
+                  child: _buildContents(context),
+                ),
               ),
-              const SizedBox(height: 12),
-              Expanded(child: _buildContents(context)),
             ],
           ),
         ),
@@ -210,6 +203,128 @@ final class _ConversationDirectoryDialogState
                     ),
           );
         },
+      ),
+    );
+  }
+}
+
+final class _DirectoryToolbar extends StatelessWidget {
+  const _DirectoryToolbar({
+    required this.path,
+    required this.canNavigateUp,
+    required this.loading,
+    required this.onNavigateUp,
+    required this.searchController,
+    required this.searchFocusNode,
+    required this.query,
+    required this.onSearch,
+    required this.onClearSearch,
+  });
+
+  final String path;
+  final bool canNavigateUp;
+  final bool loading;
+  final VoidCallback onNavigateUp;
+  final TextEditingController searchController;
+  final FocusNode searchFocusNode;
+  final String query;
+  final ValueChanged<String> onSearch;
+  final VoidCallback onClearSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = S.of(context);
+    final pathField = _DirectoryPath(
+      path: path,
+      canNavigateUp: canNavigateUp,
+      loading: loading,
+      onNavigateUp: onNavigateUp,
+    );
+    final searchField = StarsSearchField(
+      key: const ValueKey<String>('conversation-directory-search'),
+      hintText: strings.searchConversationFiles,
+      semanticLabel: strings.searchConversationFiles,
+      controller: searchController,
+      focusNode: searchFocusNode,
+      onChanged: onSearch,
+      insetFocusRing: true,
+      suffixIcon:
+          query.isEmpty
+              ? null
+              : StarsDesktopIconAction(
+                key: const ValueKey<String>(
+                  'conversation-directory-clear-search',
+                ),
+                icon: LucideIcons.x,
+                label: strings.clearSearch,
+                iconSize: 16,
+                onPressed: onClearSearch,
+              ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 680) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [pathField, const SizedBox(height: 10), searchField],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: pathField),
+            const SizedBox(width: 12),
+            SizedBox(width: 280, child: searchField),
+          ],
+        );
+      },
+    );
+  }
+}
+
+final class _DirectoryEntriesPanel extends StatelessWidget {
+  const _DirectoryEntriesPanel({
+    required this.count,
+    required this.loading,
+    required this.child,
+  });
+
+  final int count;
+  final bool loading;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.card,
+        borderRadius: theme.radius,
+        border: Border.all(color: theme.colorScheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  LucideIcons.files,
+                  size: 16,
+                  color: theme.colorScheme.mutedForeground,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  S.of(context).fileCount(count.toString()),
+                  style: theme.textTheme.muted,
+                ),
+              ],
+            ),
+          ),
+          if (loading) const ShadProgress(),
+          const ShadSeparator.horizontal(),
+          Expanded(child: child),
+        ],
       ),
     );
   }

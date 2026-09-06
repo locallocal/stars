@@ -30,8 +30,9 @@ Stars 是一款使用 Flutter 构建的跨平台 AI 聊天客户端。它为桌�
   （包含 Dart 3.7 或更高版本）
 - 为目标平台配置好 Flutter 桌面端或移动端开发环境
 - 准备所选云服务商的 API 密钥，或一个可以访问的 Ollama 等本地服务
-- Linux 还需安装用于安全存储 MCP 凭据的 `libsecret-1-dev` 构建依赖和
-  `libsecret-1-0` 运行时依赖
+- Linux 还需安装 `libsecret-1-dev`、`libwebkit2gtk-4.1-dev` 构建依赖，
+  以及对应的 `libsecret-1-0`、`libwebkit2gtk-4.1-0` 运行时依赖，分别用于
+  安全存储 MCP 凭据和运行 HTML 产物预览
 
 ### 运行应用
 

@@ -203,8 +203,14 @@ void main() {
       addTearDown(() {
         if (directory.existsSync()) directory.deleteSync(recursive: true);
       });
-      final file = File('${directory.path}/notes.txt');
-      file.writeAsStringSync('Preview from the conversation directory');
+      final file = File('${directory.path}/dashboard.html');
+      file.writeAsStringSync('''
+<!doctype html>
+<html>
+  <head><title>Conversation dashboard</title></head>
+  <body><h1>Preview from the conversation directory</h1></body>
+</html>
+''');
       final viewModel = ConversationDirectoryViewModel(
         chatId: 'chat-1',
         repository: _DirectoryRepository({
@@ -213,8 +219,8 @@ void main() {
             relativePath: '',
             entries: [
               ConversationDirectoryEntry(
-                name: 'notes.txt',
-                relativePath: 'notes.txt',
+                name: 'dashboard.html',
+                relativePath: 'dashboard.html',
                 isDirectory: false,
                 modifiedAt: DateTime.utc(2026, 9, 2, 12),
                 sizeBytes: file.lengthSync(),
@@ -250,7 +256,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final fileRow = find.byKey(
-        const ValueKey<String>('conversation-directory-notes.txt'),
+        const ValueKey<String>('conversation-directory-dashboard.html'),
       );
       expect(fileRow.hitTestable(), findsOneWidget);
       expect(find.byIcon(LucideIcons.eye), findsNothing);
@@ -258,17 +264,23 @@ void main() {
       await tester.tap(fileRow);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
 
       expect(
         find.byKey(const ValueKey<String>('message-local-file-dialog')),
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey<String>('message-local-file-text-preview')),
+        find.byKey(const ValueKey<String>('message-local-file-html-preview')),
         findsOneWidget,
       );
+      expect(find.text('Conversation dashboard'), findsOneWidget);
       expect(
-        find.text('Preview from the conversation directory'),
+        find.textContaining('Preview from the conversation directory'),
         findsOneWidget,
       );
 
@@ -294,6 +306,76 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     },
   );
+
+  testWidgets('stacks path and search controls on a narrow viewport', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(520, 700);
+    addTearDown(tester.view.reset);
+    final viewModel = ConversationDirectoryViewModel(
+      chatId: 'chat-narrow',
+      repository: _DirectoryRepository({
+        '': ConversationDirectorySnapshot(
+          path: '/data/chats/chat-narrow',
+          relativePath: '',
+          entries: [
+            ConversationDirectoryEntry(
+              name: 'dashboard.html',
+              relativePath: 'dashboard.html',
+              isDirectory: false,
+              modifiedAt: DateTime.utc(2026, 9, 6, 12),
+              sizeBytes: 512,
+            ),
+          ],
+        ),
+      }),
+    );
+
+    await tester.pumpWidget(
+      shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed:
+                      () => unawaited(
+                        showConversationDirectoryDialog(
+                          context: context,
+                          viewModel: viewModel,
+                        ),
+                      ),
+                  child: const Text('Open narrow directory'),
+                ),
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open narrow directory'));
+    await tester.pumpAndSettle();
+
+    final path = find.byKey(
+      const ValueKey<String>('conversation-directory-path'),
+    );
+    final search = find.byKey(
+      const ValueKey<String>('conversation-directory-search'),
+    );
+    expect(path, findsOneWidget);
+    expect(search, findsOneWidget);
+    expect(
+      tester.getTopLeft(search).dy,
+      greaterThan(tester.getTopLeft(path).dy),
+    );
+    expect(find.text('dashboard.html'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('conversation-directory-close')),
+    );
+    await tester.pumpAndSettle();
+  });
 }
 
 final class _DirectoryRepository implements ConversationDirectoryRepository {
