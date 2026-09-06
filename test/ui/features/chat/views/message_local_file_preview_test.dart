@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
@@ -150,6 +151,50 @@ cat "${file.path}"
       findsOneWidget,
     );
     expect(find.text('A local text artifact'), findsOneWidget);
+
+    final dialog = find.byKey(
+      const ValueKey<String>('message-local-file-dialog'),
+    );
+    final maximize = find.byKey(
+      const ValueKey<String>('message-local-file-maximize'),
+    );
+    final normalConstraints = tester.widget<ShadDialog>(dialog).constraints!;
+    expect(normalConstraints.isTight, isTrue);
+    expect(normalConstraints.maxWidth, 1040);
+    expect(normalConstraints.maxHeight, closeTo(731, 0.001));
+    expect(
+      find.descendant(
+        of: maximize,
+        matching: find.byIcon(LucideIcons.maximize2),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(maximize);
+    await tester.pump();
+
+    var maximizedDialog = tester.widget<ShadDialog>(dialog);
+    expect(maximizedDialog.constraints!.biggest, const Size(1100, 850));
+    expect(maximizedDialog.radius, BorderRadius.zero);
+    expect(
+      find.descendant(
+        of: maximize,
+        matching: find.byIcon(LucideIcons.minimize2),
+      ),
+      findsOneWidget,
+    );
+
+    tester.view.physicalSize = const Size(1280, 900);
+    await tester.pump();
+    maximizedDialog = tester.widget<ShadDialog>(dialog);
+    expect(maximizedDialog.constraints!.biggest, const Size(1280, 900));
+
+    await tester.tap(maximize);
+    await tester.pump();
+
+    final restoredConstraints = tester.widget<ShadDialog>(dialog).constraints!;
+    expect(restoredConstraints.maxWidth, 1040);
+    expect(restoredConstraints.maxHeight, closeTo(774, 0.001));
 
     await tester.tap(
       find.byKey(const ValueKey<String>('message-local-file-close')),

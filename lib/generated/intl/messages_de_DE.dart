@@ -595,6 +595,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "Wählen Sie die Fähigkeit bei Bedarf im Nachrichtenfeld aus.",
     ),
+    "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",
     ),
@@ -908,6 +909,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "responseError": m34,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("Wiederherstellen"),
+    "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Beibehaltene letzte Runden",
     ),

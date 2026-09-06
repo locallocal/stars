@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "La génération a expiré avant la vérification de la réponse finale. Les preuves d’outils terminées restent disponibles.",
     "answerTrustReasonGateFailed": "Cette réponse n'a pas réussi le contrôle de confiance de l'application.",
     "answerTrustReasonUnavailable": "La vérification de cette réponse n'a pas été effectuée.",
-    "answerTrustSemanticLabel": "{status}. {reason}"
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }

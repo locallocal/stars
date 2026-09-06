@@ -434,6 +434,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "需要时从消息输入框选择技能。",
     ),
+    "maximizePreview": MessageLookupByLibrary.simpleMessage("最大化预览"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / Bearer 访问令牌",
     ),
@@ -661,6 +662,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "resetToDefault": MessageLookupByLibrary.simpleMessage("恢复默认"),
     "responseError": m34,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("恢复"),
+    "restorePreview": MessageLookupByLibrary.simpleMessage("还原预览"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage("保留的最近轮次"),
     "retry": MessageLookupByLibrary.simpleMessage("重试"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage("运行测试"),

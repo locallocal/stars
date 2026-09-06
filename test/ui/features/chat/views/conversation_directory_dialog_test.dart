@@ -285,6 +285,17 @@ void main() {
       );
 
       await tester.tap(
+        find.byKey(const ValueKey<String>('message-local-file-maximize')),
+      );
+      await tester.pump();
+
+      final maximizedPreview = tester.widget<ShadDialog>(
+        find.byKey(const ValueKey<String>('message-local-file-dialog')),
+      );
+      expect(maximizedPreview.constraints!.biggest, const Size(900, 800));
+      expect(find.byIcon(LucideIcons.minimize2), findsOneWidget);
+
+      await tester.tap(
         find.byKey(const ValueKey<String>('message-local-file-close')),
       );
       await tester.pump();

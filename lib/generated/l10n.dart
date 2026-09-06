@@ -2116,6 +2116,26 @@ class S {
     return Intl.message('Source code', name: 'sourceCode', desc: '', args: []);
   }
 
+  /// `Maximize preview`
+  String get maximizePreview {
+    return Intl.message(
+      'Maximize preview',
+      name: 'maximizePreview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Restore preview`
+  String get restorePreview {
+    return Intl.message(
+      'Restore preview',
+      name: 'restorePreview',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Open file`
   String get openFile {
     return Intl.message('Open file', name: 'openFile', desc: '', args: []);

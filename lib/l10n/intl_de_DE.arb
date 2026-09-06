@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "Die Generierung wurde vor Abschluss der Verifizierung der endgültigen Antwort wegen Zeitüberschreitung beendet. Abgeschlossene Tool-Belege bleiben verfügbar.",
     "answerTrustReasonGateFailed": "Diese Antwort hat die Vertrauensprüfung der Anwendung nicht bestanden.",
     "answerTrustReasonUnavailable": "Die Verifizierung dieser Antwort wurde nicht abgeschlossen.",
-    "answerTrustSemanticLabel": "{status}. {reason}"
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }
