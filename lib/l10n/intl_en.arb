@@ -1145,7 +1145,15 @@
     "answerTrustExportReason": "Trust reason",
     "strictGroundingMode": "Strict verification mode",
     "strictGroundingModeDescription": "Hide non-verified factual answers while preserving verification and tool failure details.",
-    "strictGroundingUnableToVerify": "Stars could not verify this factual answer. Check the evidence details or try a fresh verification.",
+    "strictGroundingUnableToVerify": "I don't have enough reliable evidence to give a factual answer, so I won't guess. Review the evidence details, provide a reliable source, or ask me to verify again.",
+    "strictGroundingUnableToVerifyForQuestion": "I can't give a reliable factual answer to “{question}”, so I won't guess.\n\nVerification status: {reason}\n\nYou can review the evidence details, provide a reliable source, or ask me to verify again.",
+    "@strictGroundingUnableToVerifyForQuestion": {
+        "description": "Safe strict-mode refusal tailored to the current user question and verification reason",
+        "placeholders": {
+            "question": {"type": "String"},
+            "reason": {"type": "String"}
+        }
+    },
     "toolActionAccepted": "Action accepted",
     "toolActionNotAccepted": "Action not accepted",
     "toolActionCompleted": "Action completed",

@@ -47,11 +47,26 @@ void main() {
   test('strict mode fails closed for legacy content without claim bounds', () {
     final result = policy.present(
       _message(content: 'Possibly factual legacy answer.'),
+      userMessage: '  What is the launch date?\nPlease verify it.  ',
     );
 
     expect(result.content, isEmpty);
     expect(result.suppressedFacts, isTrue);
     expect(result.hasNotFactCheckedContent, isFalse);
+    expect(result.userQuestion, 'What is the launch date? Please verify it.');
+  });
+
+  test('strict mode bounds refusal context on Unicode scalar boundaries', () {
+    final userMessage = '${List.filled(119, '问').join()}🛰️超出范围';
+
+    final result = policy.present(
+      _message(content: 'Unverified answer.'),
+      userMessage: userMessage,
+    );
+
+    expect(result.userQuestion.runes.length, 120);
+    expect(result.userQuestion, endsWith('…'));
+    expect(result.userQuestion, isNot(contains('🛰️')));
   });
 
   test('strict mode never exposes content outside structured claims', () {
@@ -103,6 +118,7 @@ void main() {
     expect(result.content, message.content);
     expect(result.suppressedFacts, isFalse);
     expect(result.hasNotFactCheckedContent, isTrue);
+    expect(result.userQuestion, isEmpty);
     expect(policy.previewFor(message), message.content);
   });
 }

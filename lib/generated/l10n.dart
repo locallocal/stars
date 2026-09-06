@@ -4954,13 +4954,27 @@ class S {
     );
   }
 
-  /// `Stars could not verify this factual answer. Check the evidence details or try a fresh verification.`
+  /// `I don't have enough reliable evidence to give a factual answer, so I won't guess. Review the evidence details, provide a reliable source, or ask me to verify again.`
   String get strictGroundingUnableToVerify {
     return Intl.message(
-      'Stars could not verify this factual answer. Check the evidence details or try a fresh verification.',
+      'I don\'t have enough reliable evidence to give a factual answer, so I won\'t guess. Review the evidence details, provide a reliable source, or ask me to verify again.',
       name: 'strictGroundingUnableToVerify',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `I can't give a reliable factual answer to “{question}”, so I won't guess.\n\nVerification status: {reason}\n\nYou can review the evidence details, provide a reliable source, or ask me to verify again.`
+  String strictGroundingUnableToVerifyForQuestion(
+    String question,
+    String reason,
+  ) {
+    return Intl.message(
+      'I can\'t give a reliable factual answer to “$question”, so I won\'t guess.\n\nVerification status: $reason\n\nYou can review the evidence details, provide a reliable source, or ask me to verify again.',
+      name: 'strictGroundingUnableToVerifyForQuestion',
+      desc:
+          'Safe strict-mode refusal tailored to the current user question and verification reason',
+      args: [question, reason],
     );
   }
 

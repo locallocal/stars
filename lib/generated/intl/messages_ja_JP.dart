@@ -102,9 +102,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "スキルをインポートできませんでした：${error}";
 
-  static String m38(duration) => "思考完了 · ${duration}";
+  static String m38(question, reason) =>
+      "「${question}」について信頼できる事実回答を示せないため、推測では回答しません。\n\n検証状況：${reason}\n\n証拠の詳細を確認するか、信頼できる情報源を追加するか、再検証を依頼してください。";
 
-  static String m39(error) => "動画の再生エラー: ${error}";
+  static String m39(duration) => "思考完了 · ${duration}";
+
+  static String m40(error) => "動画の再生エラー: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -914,8 +917,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "未検証の事実回答を隠し、検証とツール失敗の詳細は保持します。",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars はこの事実回答を検証できませんでした。証拠の詳細を確認するか、再検証してください。",
+      "信頼できる事実回答を示すための十分な証拠がないため、推測では回答しません。証拠の詳細を確認するか、信頼できる情報源を追加するか、再検証を依頼してください。",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("構造化された処理情報"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("フィードバックを送信"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("要約済みメッセージ"),
@@ -937,7 +941,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "themeSettings": MessageLookupByLibrary.simpleMessage("テーマ設定"),
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("思考完了"),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("思考中…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("トークン使用量"),
     "tokens": MessageLookupByLibrary.simpleMessage("トークン"),
@@ -987,7 +991,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "version": MessageLookupByLibrary.simpleMessage("バージョン 1.0.0"),
     "videoGenerated": MessageLookupByLibrary.simpleMessage("Video generated"),
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage("動画を読み込めません"),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("要約を表示"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

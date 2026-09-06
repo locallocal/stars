@@ -103,9 +103,12 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m37(error) => "Could not import Skill: ${error}";
 
-  static String m38(duration) => "Thinking complete · ${duration}";
+  static String m38(question, reason) =>
+      "I can\'t give a reliable factual answer to “${question}”, so I won\'t guess.\n\nVerification status: ${reason}\n\nYou can review the evidence details, provide a reliable source, or ask me to verify again.";
 
-  static String m39(error) => "Video playback error: ${error}";
+  static String m39(duration) => "Thinking complete · ${duration}";
+
+  static String m40(error) => "Video playback error: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -1045,8 +1048,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Hide non-verified factual answers while preserving verification and tool failure details.",
     ),
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
-      "Stars could not verify this factual answer. Check the evidence details or try a fresh verification.",
+      "I don\'t have enough reliable evidence to give a factual answer, so I won\'t guess. Review the evidence details, provide a reliable source, or ask me to verify again.",
     ),
+    "strictGroundingUnableToVerifyForQuestion": m38,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Structured process information",
     ),
@@ -1076,7 +1080,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage(
       "Thinking complete",
     ),
-    "thinkingCompletedWithDuration": m38,
+    "thinkingCompletedWithDuration": m39,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Thinking…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Token usage"),
     "tokens": MessageLookupByLibrary.simpleMessage("tokens"),
@@ -1140,7 +1144,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage(
       "Unable to load video",
     ),
-    "videoPlaybackError": m39,
+    "videoPlaybackError": m40,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("View summary"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(
