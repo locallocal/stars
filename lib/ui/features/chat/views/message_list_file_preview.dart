@@ -339,83 +339,146 @@ void _showLocalFileDialog(
   unawaited(
     showChatShadDialog<void>(
       context: context,
-      builder: (dialogContext) {
-        final strings = S.of(dialogContext);
-        final viewport = MediaQuery.sizeOf(dialogContext);
-        final previewHeight =
-            (viewport.height * 0.66).clamp(220.0, 760.0).toDouble();
-        final dialogWidth =
-            (viewport.width - 32).clamp(280.0, 1040.0).toDouble();
-        return ShadDialog(
-          key: const ValueKey<String>('message-local-file-dialog'),
-          closeIcon: StarsDesktopIconAction(
+      builder:
+          (dialogContext) =>
+              _LocalFilePreviewDialog(descriptor: descriptor, actions: actions),
+    ),
+  );
+}
+
+class _LocalFilePreviewDialog extends StatefulWidget {
+  const _LocalFilePreviewDialog({
+    required this.descriptor,
+    required this.actions,
+  });
+
+  final _LocalFileDescriptor descriptor;
+  final MessageActionViewModel? actions;
+
+  @override
+  State<_LocalFilePreviewDialog> createState() =>
+      _LocalFilePreviewDialogState();
+}
+
+class _LocalFilePreviewDialogState extends State<_LocalFilePreviewDialog> {
+  static const _dialogInset = 16.0;
+  static const _normalWidth = 1040.0;
+  static const _normalHeight = 900.0;
+  static const _normalHeightFactor = 0.86;
+
+  var _maximized = false;
+
+  void _toggleMaximized() {
+    setState(() => _maximized = !_maximized);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = S.of(context);
+    final viewport = MediaQuery.sizeOf(context);
+    final dialogSize = _maximized ? viewport : _normalDialogSize(viewport);
+    final closeLabel = MaterialLocalizations.of(context).closeButtonTooltip;
+
+    return ShadDialog(
+      key: const ValueKey<String>('message-local-file-dialog'),
+      constraints: BoxConstraints.tight(dialogSize),
+      scrollable: false,
+      radius: _maximized ? BorderRadius.zero : null,
+      shadows: _maximized ? const [] : null,
+      closeIcon: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StarsDesktopIconAction(
+            key: const ValueKey<String>('message-local-file-maximize'),
+            icon: _maximized ? LucideIcons.minimize2 : LucideIcons.maximize2,
+            iconSize: 18,
+            label:
+                _maximized ? strings.restorePreview : strings.maximizePreview,
+            selected: _maximized,
+            onPressed: _toggleMaximized,
+          ),
+          StarsDesktopIconAction(
             key: const ValueKey<String>('message-local-file-close-icon'),
             icon: LucideIcons.x,
             iconSize: 18,
-            label: MaterialLocalizations.of(dialogContext).closeButtonTooltip,
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            label: closeLabel,
+            onPressed: () => Navigator.of(context).pop(),
           ),
-          closeIconPosition: ShadPosition.directional(
-            top: 12,
-            end: 8,
-            textDirection: Directionality.of(dialogContext),
-          ),
-          title: Text(
-            descriptor.fileName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: StarsDesktopThemeSpec.pageTitleStyle(dialogContext),
-          ),
-          description: Row(
-            children: [
-              ShadBadge.outline(child: Text(descriptor.typeLabel)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SelectableText(
-                  descriptor.path,
-                  maxLines: 2,
-                  style: StarsDesktopThemeSpec.metaStyle(dialogContext),
-                ),
-              ),
-            ],
-          ),
-          constraints: BoxConstraints(maxWidth: dialogWidth),
-          actions: [
-            if (actions != null)
-              ShadButton(
-                key: const ValueKey<String>('message-local-file-open-external'),
-                leading: const Icon(Icons.open_in_new_rounded, size: 17),
-                onPressed: () async {
-                  final opened = await actions.openLocalFile(descriptor.path);
-                  if (!opened && dialogContext.mounted) {
-                    showStarsNotice(dialogContext, strings.fileOpenFailed);
-                  }
-                },
-                child: Text(strings.openWithSystem),
-              ),
-            ShadButton.outline(
-              key: const ValueKey<String>('message-local-file-close'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                MaterialLocalizations.of(dialogContext).closeButtonLabel,
-              ),
-            ),
-          ],
-          child: Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: SizedBox(
-              height: previewHeight,
-              width: double.infinity,
-              child: _LocalFilePreview(
-                descriptor: descriptor,
-                actionViewModel: actions,
-              ),
+        ],
+      ),
+      closeIconPosition: ShadPosition.directional(
+        top: 8,
+        end: 8,
+        textDirection: Directionality.of(context),
+      ),
+      title: Padding(
+        padding: const EdgeInsetsDirectional.only(end: 96),
+        child: Text(
+          widget.descriptor.fileName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: StarsDesktopThemeSpec.pageTitleStyle(context),
+        ),
+      ),
+      description: Row(
+        children: [
+          ShadBadge.outline(child: Text(widget.descriptor.typeLabel)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SelectableText(
+              widget.descriptor.path,
+              maxLines: 2,
+              style: StarsDesktopThemeSpec.metaStyle(context),
             ),
           ),
-        );
-      },
-    ),
-  );
+        ],
+      ),
+      actions: [
+        if (widget.actions != null)
+          ShadButton(
+            key: const ValueKey<String>('message-local-file-open-external'),
+            leading: const Icon(Icons.open_in_new_rounded, size: 17),
+            onPressed: _openWithSystem,
+            child: Text(strings.openWithSystem),
+          ),
+        ShadButton.outline(
+          key: const ValueKey<String>('message-local-file-close'),
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: SizedBox.expand(
+          child: _LocalFilePreview(
+            descriptor: widget.descriptor,
+            actionViewModel: widget.actions,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Size _normalDialogSize(Size viewport) {
+    final availableWidth = math.max(0.0, viewport.width - _dialogInset * 2);
+    final availableHeight = math.max(0.0, viewport.height - _dialogInset * 2);
+    return Size(
+      math.min(_normalWidth, availableWidth),
+      math.min(
+        _normalHeight,
+        math.min(availableHeight, viewport.height * _normalHeightFactor),
+      ),
+    );
+  }
+
+  Future<void> _openWithSystem() async {
+    final actions = widget.actions;
+    if (actions == null) return;
+    final opened = await actions.openLocalFile(widget.descriptor.path);
+    if (!opened && mounted) {
+      showStarsNotice(context, S.of(context).fileOpenFailed);
+    }
+  }
 }
 
 class _LocalFilePreview extends StatelessWidget {

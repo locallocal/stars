@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "La generazione è scaduta prima della verifica della risposta finale. Le prove degli strumenti completate restano disponibili.",
     "answerTrustReasonGateFailed": "Questa risposta non ha superato il controllo di attendibilità dell'applicazione.",
     "answerTrustReasonUnavailable": "La verifica di questa risposta non è stata completata.",
-    "answerTrustSemanticLabel": "{status}. {reason}"
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }

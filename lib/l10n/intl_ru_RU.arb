@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "Время генерации истекло до проверки окончательного ответа. Завершённые свидетельства инструментов остаются доступными.",
     "answerTrustReasonGateFailed": "Этот ответ не прошёл проверку доверия приложения.",
     "answerTrustReasonUnavailable": "Проверка этого ответа не завершена.",
-    "answerTrustSemanticLabel": "{status}. {reason}"
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }

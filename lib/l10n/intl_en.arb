@@ -706,6 +706,8 @@
     "htmlPreview": "HTML preview",
     "preview": "Preview",
     "sourceCode": "Source code",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview",
     "openFile": "Open file",
     "openWithSystem": "Open with system app",
     "filePreviewUnavailable": "Preview is not available for this file type. Open it with a system app.",

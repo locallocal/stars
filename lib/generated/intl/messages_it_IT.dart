@@ -594,6 +594,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "Se necessario, seleziona la competenza nel campo del messaggio.",
     ),
+    "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",
     ),
@@ -913,6 +914,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "responseError": m34,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("Ripristina"),
+    "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Turni recenti mantenuti",
     ),

@@ -588,6 +588,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "При необходимости выберите навык в поле сообщения.",
     ),
+    "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",
     ),
@@ -899,6 +900,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "responseError": m34,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("Восстановить"),
+    "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Сохранённые последние ходы",
     ),

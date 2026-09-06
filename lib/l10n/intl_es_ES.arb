@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "La generación agotó el tiempo antes de verificar la respuesta final. La evidencia de herramientas completada sigue disponible.",
     "answerTrustReasonGateFailed": "Esta respuesta no superó la comprobación de confianza de la aplicación.",
     "answerTrustReasonUnavailable": "No se completó la verificación de esta respuesta.",
-    "answerTrustSemanticLabel": "{status}. {reason}"
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }

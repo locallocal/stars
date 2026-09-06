@@ -566,6 +566,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "Select the Skill from the message composer when needed.",
     ),
+    "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",
     ),
@@ -869,6 +870,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "resetToDefault": MessageLookupByLibrary.simpleMessage("Reset to Default"),
     "responseError": m34,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("Restore"),
+    "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Recent turns retained",
     ),

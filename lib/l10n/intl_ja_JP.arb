@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "最終回答の検証が完了する前に生成がタイムアウトしました。完了済みのツール証拠は引き続き確認できます。",
     "answerTrustReasonGateFailed": "この回答はアプリの信頼性ゲートを通過しませんでした。",
     "answerTrustReasonUnavailable": "この回答の検証は完了していません。",
-    "answerTrustSemanticLabel": "{status}。{reason}"
+    "answerTrustSemanticLabel": "{status}。{reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }

@@ -961,5 +961,7 @@
     "answerTrustReasonGenerationTimedOut": "A geração expirou antes da verificação da resposta final. As evidências de ferramentas concluídas continuam disponíveis.",
     "answerTrustReasonGateFailed": "Esta resposta não passou pela verificação de confiabilidade do aplicativo.",
     "answerTrustReasonUnavailable": "A verificação desta resposta não foi concluída.",
-    "answerTrustSemanticLabel": "{status}. {reason}"
+    "answerTrustSemanticLabel": "{status}. {reason}",
+    "maximizePreview": "Maximize preview",
+    "restorePreview": "Restore preview"
 }
