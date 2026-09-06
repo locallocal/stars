@@ -191,7 +191,7 @@ class _TokenUsageSeriesCard extends StatelessWidget {
       child: ShadCard(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
-        backgroundColor: tokens.raisedSurface,
+        backgroundColor: shadTheme.colorScheme.secondary,
         radius: StarsDesktopThemeSpec.containerRadius,
         border: ShadBorder.all(color: tokens.separator, width: 1),
         columnCrossAxisAlignment: CrossAxisAlignment.stretch,
