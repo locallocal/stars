@@ -26,7 +26,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 21;
+  static const int databaseVersion = 22;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -73,6 +73,7 @@ class DatabaseService {
     try {
       await _ensureCompatibleProfileSchema(database);
       await _ensureCompatibleMessageGroundingSchema(database);
+      await _ensureCompatibleBotSkillBindingSchema(database);
       await _ensureCompatibleToolExecutionSchema(database);
       await _ensureCompatibleToolEvidenceSchema(database);
       await _createGroundingReliabilitySchema(database);
@@ -119,6 +120,22 @@ class DatabaseService {
     await database.execute('''
       ALTER TABLE messages
       ADD COLUMN grounding_json TEXT NOT NULL DEFAULT ''
+    ''');
+  }
+
+  static Future<void> _ensureCompatibleBotSkillBindingSchema(
+    Database database,
+  ) async {
+    final columns = await database.rawQuery(
+      'PRAGMA table_info(bot_skill_bindings)',
+    );
+    final columnNames =
+        columns.map((column) => column['name']).whereType<String>().toSet();
+    if (columnNames.contains('requires_approval')) return;
+    await database.execute('''
+      ALTER TABLE bot_skill_bindings
+      ADD COLUMN requires_approval INTEGER NOT NULL DEFAULT 1
+        CHECK (requires_approval IN (0, 1))
     ''');
   }
 
@@ -558,6 +575,8 @@ class DatabaseService {
         bot_id TEXT NOT NULL,
         skill_id TEXT NOT NULL,
         enabled INTEGER NOT NULL DEFAULT 1,
+        requires_approval INTEGER NOT NULL DEFAULT 1
+          CHECK (requires_approval IN (0, 1)),
         activation_mode TEXT NOT NULL DEFAULT 'auto',
         priority INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL,

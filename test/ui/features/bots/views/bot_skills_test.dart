@@ -74,6 +74,22 @@ void main() {
         expect(find.text('Skill 06'), findsOneWidget);
         expect(find.text('2 / 2'), findsOneWidget);
 
+        final approvalSwitch = find.byKey(
+          const ValueKey<String>('bot-skill-no-approval-user:Skill 06'),
+        );
+        await tester.ensureVisible(approvalSwitch);
+        expect(tester.widget<ShadSwitch>(approvalSwitch).value, isFalse);
+        final approvalRect = tester.getRect(approvalSwitch);
+        await tester.tapAt(
+          Offset(approvalRect.left + 16, approvalRect.center.dy),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          bindingRepository.bindingFor('user:Skill 06')?.requiresApproval,
+          isFalse,
+        );
+
         final skillToggle = find.byKey(
           const ValueKey<String>('bot-skill-toggle-user:Skill 06'),
         );
@@ -83,8 +99,19 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(bindingRepository.bindingFor('user:Skill 06')?.enabled, isFalse);
-        expect(find.text('已开启'), findsNothing);
-        expect(find.text('已关闭'), findsNothing);
+        expect(
+          bindingRepository.bindingFor('user:Skill 06')?.requiresApproval,
+          isFalse,
+        );
+        expect(tester.widget<ShadSwitch>(approvalSwitch).enabled, isFalse);
+        expect(tester.widget<ShadSwitch>(approvalSwitch).value, isTrue);
+        expect(
+          find.descendant(
+            of: find.byKey(const ValueKey<String>('bot-skill-user:Skill 06')),
+            matching: find.text('已关闭'),
+          ),
+          findsOneWidget,
+        );
         expect(find.text('Skill 06'), findsOneWidget);
 
         final removeSkill = find.byKey(
@@ -245,12 +272,15 @@ void main() {
         const ValueKey<String>('bot-skill-user:release-notes'),
       );
       expect(
-        find.descendant(of: skillRow, matching: find.text('自动激活')),
-        findsNothing,
+        find.descendant(of: skillRow, matching: find.text('已开启')),
+        findsOneWidget,
       );
-      expect(find.text('已开启'), findsNothing);
-      expect(find.text('已关闭'), findsNothing);
-      expect(find.bySemanticsLabel('自动激活'), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('bot-skill-no-approval-user:release-notes'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('按消息启用'), findsNothing);
       expect(find.text('始终启用'), findsNothing);
       expect(
@@ -359,6 +389,12 @@ void main() {
       final skillToggle = find.byKey(
         const ValueKey<String>('bot-skill-toggle-user:release-notes'),
       );
+      final approvalSwitch = find.byKey(
+        const ValueKey<String>('bot-skill-no-approval-user:release-notes'),
+      );
+      final skillRow = find.byKey(
+        const ValueKey<String>('bot-skill-user:release-notes'),
+      );
       await tester.ensureVisible(skillToggle);
 
       expect(find.byKey(const ValueKey<String>('add-bot-skill')), findsNothing);
@@ -369,9 +405,11 @@ void main() {
         findsNothing,
       );
       expect(tester.widget<ShadSwitch>(skillToggle).enabled, isFalse);
-      expect(find.text('已开启'), findsNothing);
-      expect(find.text('已关闭'), findsNothing);
-      expect(find.bySemanticsLabel('自动激活'), findsOneWidget);
+      expect(tester.widget<ShadSwitch>(approvalSwitch).enabled, isFalse);
+      expect(
+        find.descendant(of: skillRow, matching: find.text('已开启')),
+        findsOneWidget,
+      );
 
       await tester.tap(skillToggle, warnIfMissed: false);
       await tester.pumpAndSettle();

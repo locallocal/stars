@@ -362,6 +362,9 @@ final class DefaultToolPolicy implements ToolPolicy {
         reason: 'bot_mcp_tool_approval_exempt',
       );
     }
+    final skillApprovalExempt =
+        requestedBySkill &&
+        context.approvalExemptToolNames.contains(definition.name);
     const historyTools = {
       'search_conversation_history',
       'read_conversation_history',
@@ -391,25 +394,51 @@ final class DefaultToolPolicy implements ToolPolicy {
       );
     }
     if (definition.source == ToolSource.skillScript) {
-      return allowSkillScripts
-          ? const ToolPolicyDecision.requireApproval(
-            reason: 'skill_script_requires_approval',
+      if (!allowSkillScripts) {
+        return const ToolPolicyDecision.deny(
+          reason: 'process_execution_disabled',
+        );
+      }
+      return skillApprovalExempt
+          ? const ToolPolicyDecision.allow(
+            reason: 'bot_skill_tool_approval_exempt',
           )
-          : const ToolPolicyDecision.deny(reason: 'process_execution_disabled');
+          : const ToolPolicyDecision.requireApproval(
+            reason: 'skill_script_requires_approval',
+          );
     }
     if (definition.capabilities.contains(ToolCapability.process)) {
-      return allowProcessExecution
-          ? const ToolPolicyDecision.requireApproval(
-            reason: 'process_execution_requires_approval',
+      if (!allowProcessExecution) {
+        return const ToolPolicyDecision.deny(
+          reason: 'process_execution_disabled',
+        );
+      }
+      return skillApprovalExempt
+          ? const ToolPolicyDecision.allow(
+            reason: 'bot_skill_tool_approval_exempt',
           )
-          : const ToolPolicyDecision.deny(reason: 'process_execution_disabled');
+          : const ToolPolicyDecision.requireApproval(
+            reason: 'process_execution_requires_approval',
+          );
     }
     if (definition.riskLevel == ToolRiskLevel.destructive) {
-      return allowDestructiveWithApproval
-          ? const ToolPolicyDecision.requireApproval(
-            reason: 'destructive_write_requires_approval',
+      if (!allowDestructiveWithApproval) {
+        return const ToolPolicyDecision.deny(
+          reason: 'destructive_tools_disabled',
+        );
+      }
+      return skillApprovalExempt
+          ? const ToolPolicyDecision.allow(
+            reason: 'bot_skill_tool_approval_exempt',
           )
-          : const ToolPolicyDecision.deny(reason: 'destructive_tools_disabled');
+          : const ToolPolicyDecision.requireApproval(
+            reason: 'destructive_write_requires_approval',
+          );
+    }
+    if (skillApprovalExempt) {
+      return const ToolPolicyDecision.allow(
+        reason: 'bot_skill_tool_approval_exempt',
+      );
     }
     if (definition.capabilities.isEmpty) {
       return const ToolPolicyDecision.requireApproval(

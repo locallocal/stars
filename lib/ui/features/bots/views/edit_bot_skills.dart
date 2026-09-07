@@ -160,30 +160,61 @@ extension _EditBotSkills on _EditAIBotPageState {
     final strings = S.of(context);
     final binding = viewModel.bindingFor(skill.id);
     final enabled = binding?.enabled ?? false;
-    final switchWidget = Semantics(
-      label: strings.autoActivation,
-      toggled: enabled,
-      enabled: !widget.readOnly,
-      child:
-          widget.embedded
-              ? ShadSwitch(
-                key: ValueKey<String>('bot-skill-toggle-${skill.id}'),
-                value: enabled,
-                enabled: !widget.readOnly,
-                onChanged:
-                    widget.readOnly
-                        ? null
-                        : (value) => _setSkillEnabled(skill.id, value),
-              )
-              : Switch(
-                key: ValueKey<String>('bot-skill-toggle-${skill.id}'),
-                value: enabled,
-                onChanged:
-                    widget.readOnly
-                        ? null
-                        : (value) => _setSkillEnabled(skill.id, value),
-              ),
-    );
+    final approvalExempt = binding?.requiresApproval == false;
+    final enabledStatus =
+        enabled ? strings.skillEnabled : strings.skillDisabled;
+    final enableSwitch =
+        widget.embedded
+            ? ShadSwitch(
+              key: ValueKey<String>('bot-skill-toggle-${skill.id}'),
+              value: enabled,
+              enabled: !widget.readOnly,
+              onChanged:
+                  widget.readOnly
+                      ? null
+                      : (value) => _setSkillEnabled(skill.id, value),
+              label: Text(enabledStatus),
+            )
+            : Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(enabledStatus),
+                Switch(
+                  key: ValueKey<String>('bot-skill-toggle-${skill.id}'),
+                  value: enabled,
+                  onChanged:
+                      widget.readOnly
+                          ? null
+                          : (value) => _setSkillEnabled(skill.id, value),
+                ),
+              ],
+            );
+    final approvalSwitch =
+        widget.embedded
+            ? ShadSwitch(
+              key: ValueKey<String>('bot-skill-no-approval-${skill.id}'),
+              value: approvalExempt,
+              enabled: enabled && !widget.readOnly,
+              onChanged:
+                  enabled && !widget.readOnly
+                      ? (value) => _setSkillApprovalExempt(skill.id, value)
+                      : null,
+              label: Text(strings.mcpNoApprovalRequired),
+            )
+            : Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(strings.mcpNoApprovalRequired),
+                Switch(
+                  key: ValueKey<String>('bot-skill-no-approval-${skill.id}'),
+                  value: approvalExempt,
+                  onChanged:
+                      enabled && !widget.readOnly
+                          ? (value) => _setSkillApprovalExempt(skill.id, value)
+                          : null,
+                ),
+              ],
+            );
     final removeButton =
         widget.embedded
             ? StarsDesktopIconAction(
@@ -206,37 +237,38 @@ extension _EditBotSkills on _EditAIBotPageState {
     return Padding(
       key: ValueKey<String>('bot-skill-${skill.id}'),
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final details = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      skill.name,
-                      style:
-                          widget.embedded
-                              ? ShadTheme.of(context).textTheme.small
-                              : Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      skill.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style:
-                          widget.embedded
-                              ? StarsDesktopThemeSpec.metaStyle(context)
-                              : Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+              Text(
+                skill.name,
+                style:
+                    widget.embedded
+                        ? ShadTheme.of(context).textTheme.small
+                        : Theme.of(context).textTheme.titleSmall,
               ),
-              const SizedBox(width: 12),
-              if (enabled && viewModel.supportsAutoActivation) ...[
+              const SizedBox(height: 3),
+              Text(
+                skill.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    widget.embedded
+                        ? StarsDesktopThemeSpec.metaStyle(context)
+                        : Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          );
+          final controls = Wrap(
+            key: ValueKey<String>('bot-skill-controls-${skill.id}'),
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              if (enabled && viewModel.supportsAutoActivation)
                 ShadButton.ghost(
                   key: ValueKey<String>('test-skill-description-${skill.id}'),
                   size: ShadButtonSize.sm,
@@ -245,13 +277,33 @@ extension _EditBotSkills on _EditAIBotPageState {
                   leading: const Icon(LucideIcons.flaskConical, size: 14),
                   child: Text(strings.testSkill),
                 ),
-                const SizedBox(width: 8),
-              ],
-              switchWidget,
-              if (!widget.readOnly) ...[const SizedBox(width: 8), removeButton],
+              enableSwitch,
+              approvalSwitch,
+              if (!widget.readOnly) removeButton,
             ],
-          ),
-        ],
+          );
+          if (constraints.maxWidth < 720) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                details,
+                const SizedBox(height: 10),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: controls,
+                ),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: details),
+              const SizedBox(width: 16),
+              controls,
+            ],
+          );
+        },
       ),
     );
   }
@@ -556,6 +608,18 @@ extension _EditBotSkills on _EditAIBotPageState {
     if (widget.readOnly) return;
     try {
       await _skillViewModel?.setEnabled(skillId, enabled);
+    } catch (error) {
+      if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
+    }
+  }
+
+  Future<void> _setSkillApprovalExempt(
+    String skillId,
+    bool approvalExempt,
+  ) async {
+    if (widget.readOnly) return;
+    try {
+      await _skillViewModel?.setApprovalExempt(skillId, approvalExempt);
     } catch (error) {
       if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
     }

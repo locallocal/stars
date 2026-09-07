@@ -103,6 +103,7 @@ final class BotSkillBindingRecord {
       'bot_id': binding.botId,
       'skill_id': binding.skillId,
       'enabled': binding.enabled ? 1 : 0,
+      'requires_approval': binding.requiresApproval ? 1 : 0,
       'activation_mode': binding.activationMode.name,
       'priority': binding.priority,
       'created_at': binding.createdAt.millisecondsSinceEpoch,
@@ -117,6 +118,7 @@ final class BotSkillBindingRecord {
       botId: _requiredText(values['bot_id'], 'bot_id'),
       skillId: _requiredText(values['skill_id'], 'skill_id'),
       enabled: _bool(values['enabled'], 'enabled'),
+      requiresApproval: _bool(values['requires_approval'], 'requires_approval'),
       activationMode: _enumValue(
         SkillActivationMode.values,
         _requiredText(values['activation_mode'], 'activation_mode'),

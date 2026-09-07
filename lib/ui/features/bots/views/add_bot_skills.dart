@@ -138,35 +138,50 @@ class _AddBotSkillsState extends State<AddBotSkills> {
     final strings = S.of(context);
     final binding = viewModel.bindingFor(skill.id);
     final enabled = binding?.enabled ?? false;
+    final approvalExempt = binding?.requiresApproval == false;
+    final enabledStatus =
+        enabled ? strings.skillEnabled : strings.skillDisabled;
+    final enableSwitch = ShadSwitch(
+      key: ValueKey<String>('add-bot-skill-toggle-${skill.id}'),
+      value: enabled,
+      onChanged: (value) => _setEnabled(skill.id, value),
+      label: Text(enabledStatus),
+    );
+    final approvalSwitch = ShadSwitch(
+      key: ValueKey<String>('add-bot-skill-no-approval-${skill.id}'),
+      value: approvalExempt,
+      enabled: enabled,
+      onChanged:
+          enabled ? (value) => _setApprovalExempt(skill.id, value) : null,
+      label: Text(strings.mcpNoApprovalRequired),
+    );
 
     return Padding(
       key: ValueKey<String>('add-bot-selected-skill-${skill.id}'),
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final details = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      skill.name,
-                      style: ShadTheme.of(context).textTheme.small,
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      skill.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: StarsDesktopThemeSpec.metaStyle(context),
-                    ),
-                  ],
-                ),
+              Text(skill.name, style: ShadTheme.of(context).textTheme.small),
+              const SizedBox(height: 3),
+              Text(
+                skill.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: StarsDesktopThemeSpec.metaStyle(context),
               ),
-              const SizedBox(width: 12),
-              if (enabled && viewModel.supportsAutoActivation) ...[
+            ],
+          );
+          final controls = Wrap(
+            key: ValueKey<String>('add-bot-skill-controls-${skill.id}'),
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              if (enabled && viewModel.supportsAutoActivation)
                 ShadButton.ghost(
                   key: ValueKey<String>(
                     'test-add-bot-skill-description-${skill.id}',
@@ -177,18 +192,8 @@ class _AddBotSkillsState extends State<AddBotSkills> {
                   leading: const Icon(LucideIcons.flaskConical, size: 14),
                   child: Text(strings.testSkill),
                 ),
-                const SizedBox(width: 8),
-              ],
-              Semantics(
-                label: strings.autoActivation,
-                toggled: enabled,
-                child: ShadSwitch(
-                  key: ValueKey<String>('add-bot-skill-toggle-${skill.id}'),
-                  value: enabled,
-                  onChanged: (value) => _setEnabled(skill.id, value),
-                ),
-              ),
-              const SizedBox(width: 8),
+              enableSwitch,
+              approvalSwitch,
               StarsDesktopIconAction(
                 key: ValueKey<String>('remove-add-bot-skill-${skill.id}'),
                 icon: LucideIcons.trash2,
@@ -197,8 +202,29 @@ class _AddBotSkillsState extends State<AddBotSkills> {
                 onPressed: () => _removeSkill(skill.id),
               ),
             ],
-          ),
-        ],
+          );
+          if (constraints.maxWidth < 720) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                details,
+                const SizedBox(height: 10),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: controls,
+                ),
+              ],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: details),
+              const SizedBox(width: 16),
+              controls,
+            ],
+          );
+        },
       ),
     );
   }
@@ -424,6 +450,14 @@ class _AddBotSkillsState extends State<AddBotSkills> {
   Future<void> _setEnabled(String skillId, bool enabled) async {
     try {
       await viewModel.setEnabled(skillId, enabled);
+    } catch (error) {
+      if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
+    }
+  }
+
+  Future<void> _setApprovalExempt(String skillId, bool approvalExempt) async {
+    try {
+      await viewModel.setApprovalExempt(skillId, approvalExempt);
     } catch (error) {
       if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
     }

@@ -667,6 +667,7 @@ void main() {
     final binding = BotSkillBinding(
       botId: bot.id,
       skillId: 'user:release-notes',
+      requiresApproval: false,
       priority: 12,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -678,6 +679,7 @@ void main() {
     expect(restored, hasLength(1));
     expect(restored.single.skillId, binding.skillId);
     expect(restored.single.activationMode, SkillActivationMode.auto);
+    expect(restored.single.requiresApproval, isFalse);
     expect(restored.single.priority, 12);
 
     await botRepository.deleteBot(bot.id);

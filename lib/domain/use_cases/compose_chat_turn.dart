@@ -145,6 +145,9 @@ final class ComposeChatTurn {
     final enabledBindings =
         bindings.where((binding) => binding.enabled).toList()
           ..sort(_compareBindings);
+    final enabledBindingsBySkillId = {
+      for (final binding in enabledBindings) binding.skillId: binding,
+    };
     final descriptors = <String, SkillDescriptor>{};
     for (final binding in enabledBindings) {
       final descriptor =
@@ -317,6 +320,12 @@ final class ComposeChatTurn {
           ...conversationHistoryToolNames,
       },
       approvalExemptToolNames: {
+        for (final entry in state.contents.values)
+          if (entry.content.descriptor.id != conversationHistorySkillId &&
+              enabledBindingsBySkillId[entry.content.descriptor.id]
+                      ?.requiresApproval ==
+                  false)
+            ...entry.content.descriptor.requestedToolNames,
         if (state.contents.containsKey(skillInstallerSkillId))
           ...skillInventoryToolNames,
         if (state.contents.containsKey(mcpInstallerSkillId))

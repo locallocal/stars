@@ -193,6 +193,7 @@ final class BotSkillBinding {
     required this.botId,
     required this.skillId,
     this.enabled = true,
+    this.requiresApproval = true,
     this.activationMode = SkillActivationMode.auto,
     this.priority = 0,
     required this.createdAt,
@@ -202,6 +203,7 @@ final class BotSkillBinding {
   final String botId;
   final String skillId;
   final bool enabled;
+  final bool requiresApproval;
   final SkillActivationMode activationMode;
   final int priority;
   final DateTime createdAt;
@@ -209,6 +211,7 @@ final class BotSkillBinding {
 
   BotSkillBinding copyWith({
     bool? enabled,
+    bool? requiresApproval,
     SkillActivationMode? activationMode,
     int? priority,
     DateTime? updatedAt,
@@ -217,6 +220,7 @@ final class BotSkillBinding {
       botId: botId,
       skillId: skillId,
       enabled: enabled ?? this.enabled,
+      requiresApproval: requiresApproval ?? this.requiresApproval,
       activationMode: activationMode ?? this.activationMode,
       priority: priority ?? this.priority,
       createdAt: createdAt,

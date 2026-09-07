@@ -220,43 +220,52 @@ void main() {
     },
   );
 
-  test('bot Skills can be added, disabled, enabled, and removed', () async {
-    final skillRepository = _FakeSkillRepository([_skill('one')]);
-    final bindingRepository = _FakeBindingRepository();
-    final viewModel = BotSkillViewModel(
-      botId: 'bot-1',
-      skillRepository: skillRepository,
-      bindingRepository: bindingRepository,
-      supportsAutoActivation: true,
-    );
-    addTearDown(viewModel.dispose);
-    await viewModel.load();
+  test(
+    'bot Skills can be added, configured, disabled, enabled, and removed',
+    () async {
+      final skillRepository = _FakeSkillRepository([_skill('one')]);
+      final bindingRepository = _FakeBindingRepository();
+      final viewModel = BotSkillViewModel(
+        botId: 'bot-1',
+        skillRepository: skillRepository,
+        bindingRepository: bindingRepository,
+        supportsAutoActivation: true,
+      );
+      addTearDown(viewModel.dispose);
+      await viewModel.load();
 
-    expect(viewModel.addedSkills, isEmpty);
-    expect(viewModel.availableSkills.map((skill) => skill.id), ['user:one']);
+      expect(viewModel.addedSkills, isEmpty);
+      expect(viewModel.availableSkills.map((skill) => skill.id), ['user:one']);
 
-    await viewModel.addSkill('user:one');
-    await Future<void>.delayed(Duration.zero);
-    expect(viewModel.addedSkills.map((skill) => skill.id), ['user:one']);
-    expect(
-      bindingRepository.bindings.single.activationMode,
-      SkillActivationMode.auto,
-    );
+      await viewModel.addSkill('user:one');
+      await Future<void>.delayed(Duration.zero);
+      expect(viewModel.addedSkills.map((skill) => skill.id), ['user:one']);
+      expect(
+        bindingRepository.bindings.single.activationMode,
+        SkillActivationMode.auto,
+      );
+      expect(bindingRepository.bindings.single.requiresApproval, isTrue);
 
-    await viewModel.setEnabled('user:one', false);
-    await Future<void>.delayed(Duration.zero);
-    expect(bindingRepository.bindings, hasLength(1));
-    expect(bindingRepository.bindings.single.enabled, isFalse);
-    expect(viewModel.bindingFor('user:one')?.enabled, isFalse);
+      await viewModel.setApprovalExempt('user:one', true);
+      await Future<void>.delayed(Duration.zero);
+      expect(bindingRepository.bindings.single.requiresApproval, isFalse);
+      expect(viewModel.bindingFor('user:one')?.requiresApproval, isFalse);
 
-    await viewModel.setEnabled('user:one', true);
+      await viewModel.setEnabled('user:one', false);
+      await Future<void>.delayed(Duration.zero);
+      expect(bindingRepository.bindings, hasLength(1));
+      expect(bindingRepository.bindings.single.enabled, isFalse);
+      expect(viewModel.bindingFor('user:one')?.enabled, isFalse);
 
-    await viewModel.removeSkill('user:one');
-    await Future<void>.delayed(Duration.zero);
-    expect(bindingRepository.bindings, isEmpty);
-    expect(viewModel.addedSkills, isEmpty);
-    expect(viewModel.availableSkills.map((skill) => skill.id), ['user:one']);
-  });
+      await viewModel.setEnabled('user:one', true);
+
+      await viewModel.removeSkill('user:one');
+      await Future<void>.delayed(Duration.zero);
+      expect(bindingRepository.bindings, isEmpty);
+      expect(viewModel.addedSkills, isEmpty);
+      expect(viewModel.availableSkills.map((skill) => skill.id), ['user:one']);
+    },
+  );
 
   test(
     'bundled bot Skills can be added, disabled, enabled, and removed',

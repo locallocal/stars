@@ -568,6 +568,38 @@ void main() {
   );
 
   test(
+    'active Skill configured for no confirmation exempts its requested tools',
+    () async {
+      final shellSkill = _systemShellSkill();
+      final compose = ComposeChatTurn(
+        skillRepository: _FakeSkillRepository(const {}),
+        bindingRepository: _FakeBindingRepository([
+          _binding(shellCommandSkillId, requiresApproval: false),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        bundledSkillLoader: () async => [shellSkill],
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Run flutter test for this project',
+        ),
+        currentUserId: 'user-1',
+        skillToolProvider: _FakeSkillProvider(
+          _activationTurns(const ['shell-command']),
+        ),
+      );
+
+      expect(result.requestedToolNames, shellCommandToolNames);
+      expect(result.approvalExemptToolNames, shellCommandToolNames);
+    },
+  );
+
+  test(
     'does not expose a bound system Skill without model activation',
     () async {
       final fileSkill = _systemLocalFileSystemSkill(directory: false);
@@ -1449,12 +1481,14 @@ BotSkillBinding _binding(
   String skillId, {
   int priority = 0,
   bool enabled = true,
+  bool requiresApproval = true,
 }) {
   final now = DateTime(2026, 7, 26);
   return BotSkillBinding(
     botId: 'bot-1',
     skillId: skillId,
     enabled: enabled,
+    requiresApproval: requiresApproval,
     priority: priority,
     createdAt: now,
     updatedAt: now,

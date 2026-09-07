@@ -564,6 +564,25 @@ void main() {
       expect(decision.outcome, ToolPolicyOutcome.requireApproval);
       expect(decision.reason, 'local_read_requires_approval');
     }
+
+    final writeApprovalExempt = const DefaultToolPolicy(
+      allowDestructiveWithApproval: true,
+    ).evaluate(
+      byName[writeLocalFileToolName]!,
+      ToolCallRequest(
+        callId: 'write-local-file-no-approval',
+        name: writeLocalFileToolName,
+      ),
+      ToolPolicyContext(
+        runId: 'run-1',
+        chatId: 'chat-1',
+        botId: 'bot-1',
+        requestedToolNames: {writeLocalFileToolName},
+        approvalExemptToolNames: {writeLocalFileToolName},
+      ),
+    );
+    expect(writeApprovalExempt.outcome, ToolPolicyOutcome.allow);
+    expect(writeApprovalExempt.reason, 'bot_skill_tool_approval_exempt');
   });
 }
 
