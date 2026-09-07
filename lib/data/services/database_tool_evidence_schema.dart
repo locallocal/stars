@@ -3,10 +3,12 @@ part of 'database_service.dart';
 const int _toolEvidenceInitialDatabaseVersion = 18;
 const int _providerNativePreviousDatabaseVersion = 19;
 const int _groundingRecoveryPreviousDatabaseVersion = 20;
+const int _skillApprovalPreviousDatabaseVersion = 21;
 const Set<int> _supportedPreviousDatabaseVersions = {
   _toolEvidenceInitialDatabaseVersion,
   _providerNativePreviousDatabaseVersion,
   _groundingRecoveryPreviousDatabaseVersion,
+  _skillApprovalPreviousDatabaseVersion,
 };
 
 Future<void> _upgradeToolEvidenceSchema(
@@ -25,6 +27,7 @@ Future<void> _upgradeToolEvidenceSchema(
   } else if (oldVersion == _providerNativePreviousDatabaseVersion) {
     await _rebuildToolEvidenceSchema(database);
   }
+  await DatabaseService._ensureCompatibleBotSkillBindingSchema(database);
   await _createGroundingReliabilitySchema(database);
 }
 

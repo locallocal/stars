@@ -158,6 +158,18 @@ final class BotSkillViewModel extends DisposableChangeNotifier {
     );
   }
 
+  Future<void> setApprovalExempt(String skillId, bool approvalExempt) async {
+    if (isDisposed) return;
+    final existing = _bindings[skillId];
+    if (existing == null) return;
+    await _saveBinding(
+      existing.copyWith(
+        requiresApproval: !approvalExempt,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
   void updateSupportsAutoActivation(bool supported) {
     if (_supportsAutoActivation == supported) return;
     _supportsAutoActivation = supported;

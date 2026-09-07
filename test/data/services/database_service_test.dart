@@ -750,6 +750,60 @@ void main() {
     );
 
     test(
+      'adds Skill approval preferences without deleting existing bindings',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'stars_skill_approval_upgrade_',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final dataDirectory = _applicationDataDirectory(directory);
+        await dataDirectory.create(recursive: true);
+        final databasePath = path.join(dataDirectory.path, 'app.db');
+        final initialDatabase = await databaseFactoryFfi.openDatabase(
+          databasePath,
+          options: OpenDatabaseOptions(
+            version: DatabaseService.databaseVersion,
+            onConfigure: DatabaseService.configure,
+            onCreate: DatabaseService.createSchema,
+          ),
+        );
+        await initialDatabase.insert('bots', _botRow('bot-skill-upgrade'));
+        await initialDatabase.insert('bot_skill_bindings', <String, Object?>{
+          'bot_id': 'bot-skill-upgrade',
+          'skill_id': 'system:shell-command',
+          'enabled': 1,
+          'activation_mode': 'auto',
+          'priority': 0,
+          'created_at': 1,
+          'updated_at': 1,
+        });
+        await initialDatabase.execute(
+          'ALTER TABLE bot_skill_bindings DROP COLUMN requires_approval',
+        );
+        await initialDatabase.setVersion(DatabaseService.databaseVersion - 1);
+        await initialDatabase.close();
+
+        final service = DatabaseService(
+          applicationDocumentsDirectoryProvider: () async => directory,
+        );
+        final migratedDatabase = await service.initDatabase();
+        addTearDown(migratedDatabase.close);
+
+        final columns = await migratedDatabase.rawQuery(
+          'PRAGMA table_info(bot_skill_bindings)',
+        );
+        final rows = await migratedDatabase.query('bot_skill_bindings');
+        expect(
+          columns.map((column) => column['name']),
+          contains('requires_approval'),
+        );
+        expect(rows, hasLength(1));
+        expect(rows.single['skill_id'], 'system:shell-command');
+        expect(rows.single['requires_approval'], 1);
+      },
+    );
+
+    test(
       'deletes any non-current database before creating the current schema',
       () async {
         final directory = await Directory.systemTemp.createTemp(
@@ -1050,6 +1104,29 @@ Future<void> _expectCurrentSchema(Database database) async {
       (column) => column['name'] == 'grounding_json',
     )['dflt_value'],
     "''",
+  );
+
+  final bindingColumns = await database.rawQuery(
+    'PRAGMA table_info(bot_skill_bindings)',
+  );
+  expect(
+    bindingColumns.map((column) => column['name']),
+    orderedEquals(<String>[
+      'bot_id',
+      'skill_id',
+      'enabled',
+      'requires_approval',
+      'activation_mode',
+      'priority',
+      'created_at',
+      'updated_at',
+    ]),
+  );
+  expect(
+    bindingColumns.singleWhere(
+      (column) => column['name'] == 'requires_approval',
+    )['dflt_value'],
+    '1',
   );
 
   final toolExecutionColumns = await database.rawQuery(

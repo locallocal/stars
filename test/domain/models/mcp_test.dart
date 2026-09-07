@@ -219,6 +219,22 @@ void main() {
     ).evaluate(definition, call, context);
     expect(enabled.outcome, ToolPolicyOutcome.requireApproval);
     expect(enabled.reason, 'skill_script_requires_approval');
+
+    final approvalExempt = const DefaultToolPolicy(
+      allowSkillScripts: true,
+    ).evaluate(
+      definition,
+      call,
+      ToolPolicyContext(
+        runId: 'run-1',
+        chatId: 'chat-1',
+        botId: 'bot-1',
+        requestedToolNames: {definition.name},
+        approvalExemptToolNames: {definition.name},
+      ),
+    );
+    expect(approvalExempt.outcome, ToolPolicyOutcome.allow);
+    expect(approvalExempt.reason, 'bot_skill_tool_approval_exempt');
   });
 
   test('an explicitly exempt MCP Tool bypasses approval', () {

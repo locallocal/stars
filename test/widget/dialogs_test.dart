@@ -329,12 +329,9 @@ void main() {
         const ValueKey<String>('add-bot-selected-skill-user:Release Notes'),
       );
       expect(
-        find.descendant(of: selectedSkill, matching: find.text('自动激活')),
-        findsNothing,
+        find.descendant(of: selectedSkill, matching: find.text('已开启')),
+        findsOneWidget,
       );
-      expect(find.text('已开启'), findsNothing);
-      expect(find.text('已关闭'), findsNothing);
-      expect(find.bySemanticsLabel('自动激活'), findsOneWidget);
       expect(find.text('按消息启用'), findsNothing);
       expect(find.text('始终启用'), findsNothing);
       final testSkill = find.byKey(
@@ -344,6 +341,21 @@ void main() {
       );
       final skillToggle = find.byKey(
         const ValueKey<String>('add-bot-skill-toggle-user:Release Notes'),
+      );
+      final approvalSwitch = find.byKey(
+        const ValueKey<String>('add-bot-skill-no-approval-user:Release Notes'),
+      );
+      expect(tester.widget<ShadSwitch>(approvalSwitch).value, isFalse);
+      await tester.ensureVisible(approvalSwitch);
+      await tester.pumpAndSettle();
+      final approvalRect = tester.getRect(approvalSwitch);
+      await tester.tapAt(
+        Offset(approvalRect.left + 16, approvalRect.center.dy),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        skillViewModel.bindingFor('user:Release Notes')?.requiresApproval,
+        isFalse,
       );
       expect(
         find.descendant(of: selectedSkill, matching: find.text('测试')),
