@@ -40,7 +40,7 @@ final class _ConversationMemoryPanelState
     super.initState();
     widget.viewModel.addListener(_changed);
     widget.generationViewModel?.addListener(_changed);
-    unawaited(widget.viewModel.load());
+    _scheduleLoad(widget.viewModel);
   }
 
   @override
@@ -49,7 +49,7 @@ final class _ConversationMemoryPanelState
     if (oldWidget.viewModel != widget.viewModel) {
       oldWidget.viewModel.removeListener(_changed);
       widget.viewModel.addListener(_changed);
-      unawaited(widget.viewModel.load());
+      _scheduleLoad(widget.viewModel);
     }
     if (oldWidget.generationViewModel != widget.generationViewModel) {
       oldWidget.generationViewModel?.removeListener(_changed);
@@ -66,6 +66,13 @@ final class _ConversationMemoryPanelState
 
   void _changed() {
     if (mounted) setState(() {});
+  }
+
+  void _scheduleLoad(ConversationMemoryViewModel viewModel) {
+    scheduleMicrotask(() {
+      if (!mounted || !identical(widget.viewModel, viewModel)) return;
+      unawaited(viewModel.load());
+    });
   }
 
   @override

@@ -56,9 +56,7 @@ void main() {
     expect(itemsSnapshot, hasLength(1));
   });
 
-  testWidgets('shows summary, memory controls, and opens the manager', (
-    tester,
-  ) async {
+  testWidgets('defers initial load during parent build', (tester) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -804,9 +802,13 @@ Widget _harness(ConversationMemoryViewModel viewModel) {
             body: SingleChildScrollView(
               child: SizedBox(
                 width: 248,
-                child: ConversationMemoryPanel(
-                  viewModel: viewModel,
-                  generationViewModel: null,
+                child: ListenableBuilder(
+                  listenable: viewModel,
+                  builder:
+                      (context, child) => ConversationMemoryPanel(
+                        viewModel: viewModel,
+                        generationViewModel: null,
+                      ),
                 ),
               ),
             ),
