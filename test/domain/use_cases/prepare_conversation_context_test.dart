@@ -12,7 +12,7 @@ void main() {
   test(
     'keeps whole recent turns and registers bounded history lookup',
     () async {
-      final memory = _MemoryRepository(summary: _summary());
+      final memory = _MemoryRepository(summary: _summary(), maxModelTurns: 23);
       final useCase = PrepareConversationContext(
         memoryRepository: memory,
         aiProviderRepository: _AiRepository(contextWindow: 1800, output: 200),
@@ -54,6 +54,7 @@ void main() {
       );
 
       expect(result.report.includedTurnIds, isNotEmpty);
+      expect(result.maxModelTurns, 23);
       expect(result.report.omittedTurnIds, isNotEmpty);
       expect(
         result.report.includedTurnIds.length +
@@ -691,10 +692,15 @@ ConversationSummaryDocument _summary() {
 }
 
 final class _MemoryRepository implements ConversationMemoryRepository {
-  _MemoryRepository({this.summary, this.items = const []});
+  _MemoryRepository({
+    this.summary,
+    this.items = const [],
+    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
+  });
 
   final ConversationSummaryDocument? summary;
   final List<ConversationMemoryItem> items;
+  final int maxModelTurns;
 
   @override
   Stream<String> get changes => const Stream.empty();
@@ -708,7 +714,11 @@ final class _MemoryRepository implements ConversationMemoryRepository {
 
   @override
   Future<ConversationMemoryState> getState(String chatId) async =>
-      ConversationMemoryState(chatId: chatId, updatedAt: DateTime(2026));
+      ConversationMemoryState(
+        chatId: chatId,
+        maxModelTurns: maxModelTurns,
+        updatedAt: DateTime(2026),
+      );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

@@ -126,6 +126,13 @@ final class ConversationMemoryViewModel extends DisposableChangeNotifier {
     await load();
   }
 
+  Future<void> setMaxModelTurns(int maxModelTurns) async {
+    if (isDisposed) return;
+    await _repository.setMaxModelTurns(chatId, maxModelTurns);
+    if (isDisposed) return;
+    await load();
+  }
+
   Future<void> saveItem(
     ConversationMemoryItem item, {
     String? content,

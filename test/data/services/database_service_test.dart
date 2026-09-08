@@ -804,6 +804,61 @@ void main() {
     );
 
     test(
+      'adds the conversation model turn limit with a default of 15',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'stars_conversation_turn_limit_upgrade_',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final dataDirectory = _applicationDataDirectory(directory);
+        await dataDirectory.create(recursive: true);
+        final databasePath = path.join(dataDirectory.path, 'app.db');
+        final initialDatabase = await databaseFactoryFfi.openDatabase(
+          databasePath,
+          options: OpenDatabaseOptions(
+            version: DatabaseService.databaseVersion,
+            onConfigure: DatabaseService.configure,
+            onCreate: DatabaseService.createSchema,
+          ),
+        );
+        await initialDatabase.insert('bots', _botRow('bot-turn-limit'));
+        await initialDatabase.insert(
+          'chats',
+          _chatRow('chat-turn-limit', 'bot-turn-limit'),
+        );
+        await initialDatabase.insert('conversation_memory_state', {
+          'chat_id': 'chat-turn-limit',
+          'updated_at': 1,
+        });
+        await initialDatabase.execute(
+          'ALTER TABLE conversation_memory_state DROP COLUMN max_model_turns',
+        );
+        await initialDatabase.setVersion(DatabaseService.databaseVersion - 1);
+        await initialDatabase.close();
+
+        final service = DatabaseService(
+          applicationDocumentsDirectoryProvider: () async => directory,
+        );
+        final migratedDatabase = await service.initDatabase();
+        addTearDown(migratedDatabase.close);
+
+        final columns = await migratedDatabase.rawQuery(
+          'PRAGMA table_info(conversation_memory_state)',
+        );
+        final rows = await migratedDatabase.query(
+          'conversation_memory_state',
+          where: 'chat_id = ?',
+          whereArgs: ['chat-turn-limit'],
+        );
+        expect(
+          columns.map((column) => column['name']),
+          contains('max_model_turns'),
+        );
+        expect(rows.single['max_model_turns'], 15);
+      },
+    );
+
+    test(
       'deletes any non-current database before creating the current schema',
       () async {
         final directory = await Directory.systemTemp.createTemp(

@@ -26,7 +26,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 22;
+  static const int databaseVersion = 23;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -76,6 +76,7 @@ class DatabaseService {
       await _ensureCompatibleBotSkillBindingSchema(database);
       await _ensureCompatibleToolExecutionSchema(database);
       await _ensureCompatibleToolEvidenceSchema(database);
+      await _ensureCompatibleConversationMemorySchema(database);
       await _createGroundingReliabilitySchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
@@ -120,6 +121,22 @@ class DatabaseService {
     await database.execute('''
       ALTER TABLE messages
       ADD COLUMN grounding_json TEXT NOT NULL DEFAULT ''
+    ''');
+  }
+
+  static Future<void> _ensureCompatibleConversationMemorySchema(
+    Database database,
+  ) async {
+    final columns = await database.rawQuery(
+      'PRAGMA table_info(conversation_memory_state)',
+    );
+    final columnNames =
+        columns.map((column) => column['name']).whereType<String>().toSet();
+    if (columnNames.contains('max_model_turns')) return;
+    await database.execute('''
+      ALTER TABLE conversation_memory_state
+      ADD COLUMN max_model_turns INTEGER NOT NULL DEFAULT 15
+        CHECK (max_model_turns BETWEEN 1 AND 50)
     ''');
   }
 
@@ -713,6 +730,8 @@ class DatabaseService {
         active_summary_id TEXT NOT NULL DEFAULT '',
         covered_through_message_id TEXT NOT NULL DEFAULT '',
         auto_memory_enabled INTEGER NOT NULL DEFAULT 1,
+        max_model_turns INTEGER NOT NULL DEFAULT 15
+          CHECK (max_model_turns BETWEEN 1 AND 50),
         compaction_status TEXT NOT NULL DEFAULT 'idle',
         last_error TEXT NOT NULL DEFAULT '',
         last_compacted_at INTEGER,

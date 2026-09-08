@@ -78,7 +78,9 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
     }
     await _persistRecoveryCheckpointSafely(draft);
     final recoveryPersister = _answerRecoveryCheckpointPersister;
-    if (draft.grounding.evidenceIds.isNotEmpty && recoveryPersister != null) {
+    if (draft.terminalOutcome == MessageTerminalOutcome.completed &&
+        draft.grounding.evidenceIds.isNotEmpty &&
+        recoveryPersister != null) {
       await recoveryPersister(draft);
     }
     Object? lastError;
@@ -123,6 +125,39 @@ extension _ChatGenerationPersistence on ChatGenerationViewModel {
       );
       return false;
     }
+  }
+
+  MessageGrounding _evaluateGrounding(
+    MessageTerminalOutcome terminalOutcome, {
+    String? failureReasonCode,
+    bool? criticalPersistenceSucceeded,
+  }) {
+    return _answerTrustPolicy.evaluate(
+      AnswerTrustPolicyInput(
+        terminalOutcome: terminalOutcome,
+        providerSupportsAgentLoop: _providerSupportsAgentLoop,
+        reliabilityPolicyEnabled: _reliabilityPolicyEnabled,
+        toolCalls: _snapshot.toolCalls,
+        evidenceState: _answerEvidenceState,
+        gateResult: _answerTrustGateResult,
+        evidenceIds: _validatedEvidenceIds,
+        claims: _validatedClaims,
+        verificationUnavailableReason: _verificationUnavailableReason,
+        criticalPersistenceSucceeded: criticalPersistenceSucceeded ?? true,
+        failureReasonCode:
+            failureReasonCode?.isNotEmpty ?? false ? failureReasonCode! : '',
+      ),
+    );
+  }
+
+  List<String> _persistedEvidenceIds(List<ToolInvocationRecord> invocations) {
+    if (_toolInvocationPersister == null) return const [];
+    return List<String>.unmodifiable({
+      for (final invocation in invocations)
+        if (invocation.status == ToolInvocationStatus.succeeded &&
+            invocation.evidenceCandidate != null)
+          ToolEvidenceRecord.evidenceIdForAttempt(invocation.attemptId),
+    });
   }
 
   Future<void> _persistRecoveryCheckpointSafely(Message draft) async {

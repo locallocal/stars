@@ -4,11 +4,13 @@ const int _toolEvidenceInitialDatabaseVersion = 18;
 const int _providerNativePreviousDatabaseVersion = 19;
 const int _groundingRecoveryPreviousDatabaseVersion = 20;
 const int _skillApprovalPreviousDatabaseVersion = 21;
+const int _conversationRunSettingsPreviousDatabaseVersion = 22;
 const Set<int> _supportedPreviousDatabaseVersions = {
   _toolEvidenceInitialDatabaseVersion,
   _providerNativePreviousDatabaseVersion,
   _groundingRecoveryPreviousDatabaseVersion,
   _skillApprovalPreviousDatabaseVersion,
+  _conversationRunSettingsPreviousDatabaseVersion,
 };
 
 Future<void> _upgradeToolEvidenceSchema(
@@ -28,6 +30,7 @@ Future<void> _upgradeToolEvidenceSchema(
     await _rebuildToolEvidenceSchema(database);
   }
   await DatabaseService._ensureCompatibleBotSkillBindingSchema(database);
+  await DatabaseService._ensureCompatibleConversationMemorySchema(database);
   await _createGroundingReliabilitySchema(database);
 }
 

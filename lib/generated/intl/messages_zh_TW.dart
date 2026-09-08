@@ -454,6 +454,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "需要時從訊息輸入框選擇技能。",
     ),
+    "maxToolRequestRounds": MessageLookupByLibrary.simpleMessage("工具請求回合上限"),
+    "maxToolRequestRoundsDescription": MessageLookupByLibrary.simpleMessage(
+      "單次回覆中允許模型請求工具的最大回合數。此設定僅套用於目前對話。",
+    ),
+    "maxToolRequestRoundsRange": MessageLookupByLibrary.simpleMessage(
+      "請輸入 1 至 50 之間的整數。",
+    ),
+    "maxToolRequestRoundsSaved": MessageLookupByLibrary.simpleMessage(
+      "工具請求回合上限已更新。",
+    ),
     "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / Bearer 存取權杖",

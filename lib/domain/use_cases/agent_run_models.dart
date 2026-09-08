@@ -2,7 +2,7 @@ part of 'agent_run_coordinator.dart';
 
 final class AgentRunLimits {
   const AgentRunLimits({
-    this.maxModelTurns = 6,
+    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
     this.maxToolCalls = 12,
     this.maxSameCallRetries = 1,
     this.maxConsecutiveToolFailures = 2,
@@ -34,6 +34,19 @@ final class AgentRunLimits {
   final Duration toolTimeout;
   final Duration approvalTimeout;
   final int maxToolOutputCharacters;
+
+  AgentRunLimits copyWith({int? maxModelTurns}) => AgentRunLimits(
+    maxModelTurns: maxModelTurns ?? this.maxModelTurns,
+    maxToolCalls: maxToolCalls,
+    maxSameCallRetries: maxSameCallRetries,
+    maxConsecutiveToolFailures: maxConsecutiveToolFailures,
+    maxReliabilityRepairs: maxReliabilityRepairs,
+    totalTimeout: totalTimeout,
+    synthesisTimeout: synthesisTimeout,
+    toolTimeout: toolTimeout,
+    approvalTimeout: approvalTimeout,
+    maxToolOutputCharacters: maxToolOutputCharacters,
+  );
 }
 
 final class AgentRunRequest {

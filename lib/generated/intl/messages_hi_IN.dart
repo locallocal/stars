@@ -576,6 +576,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "ज़रूरत होने पर संदेश लिखने की जगह से कौशल चुनें।",
     ),
+    "maxToolRequestRounds": MessageLookupByLibrary.simpleMessage(
+      "टूल अनुरोध राउंड सीमा",
+    ),
+    "maxToolRequestRoundsDescription": MessageLookupByLibrary.simpleMessage(
+      "एक उत्तर में टूल का अनुरोध करने वाले मॉडल राउंड की अधिकतम संख्या। यह सेटिंग केवल इस बातचीत पर लागू होती है।",
+    ),
+    "maxToolRequestRoundsRange": MessageLookupByLibrary.simpleMessage(
+      "1 से 50 तक की पूर्ण संख्या दर्ज करें।",
+    ),
+    "maxToolRequestRoundsSaved": MessageLookupByLibrary.simpleMessage(
+      "टूल अनुरोध राउंड सीमा अपडेट की गई।",
+    ),
     "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",

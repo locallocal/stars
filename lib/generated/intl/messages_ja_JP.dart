@@ -487,6 +487,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "必要なときにメッセージ入力欄からスキルを選択します。",
     ),
+    "maxToolRequestRounds": MessageLookupByLibrary.simpleMessage("ツール要求ラウンド上限"),
+    "maxToolRequestRoundsDescription": MessageLookupByLibrary.simpleMessage(
+      "1 回の応答でモデルがツールを要求できる最大ラウンド数です。この設定は現在の会話にのみ適用されます。",
+    ),
+    "maxToolRequestRoundsRange": MessageLookupByLibrary.simpleMessage(
+      "1 から 50 までの整数を入力してください。",
+    ),
+    "maxToolRequestRoundsSaved": MessageLookupByLibrary.simpleMessage(
+      "ツール要求ラウンド上限を更新しました。",
+    ),
     "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",

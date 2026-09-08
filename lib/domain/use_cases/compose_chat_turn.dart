@@ -25,6 +25,7 @@ final class PreparedChatTurn {
     this.reliabilityPolicyEnabled = true,
     this.estimatedSkillContextTokens = 0,
     this.preflightTokenUsage = ModelTokenUsage.empty,
+    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
     ContextAssemblyReport? contextAssemblyReport,
     Set<String> historySummaryReferences = const {},
   }) : messages = List<ChatMessage>.unmodifiable(messages),
@@ -50,6 +51,7 @@ final class PreparedChatTurn {
   final bool reliabilityPolicyEnabled;
   final int estimatedSkillContextTokens;
   final ModelTokenUsage preflightTokenUsage;
+  final int maxModelTurns;
   final ContextAssemblyReport contextAssemblyReport;
   final Set<String> historySummaryReferences;
 }
@@ -337,6 +339,9 @@ final class ComposeChatTurn {
       reliabilityPolicyEnabled: injectApplicationPrompt,
       estimatedSkillContextTokens: totalSkillTokens,
       preflightTokenUsage: state.preflightTokenUsage,
+      maxModelTurns:
+          preparedContext?.maxModelTurns ??
+          ConversationMemoryState.defaultMaxModelTurns,
       contextAssemblyReport: preparedContext?.report,
       historySummaryReferences: preparedContext?.summaryReferences ?? const {},
     );

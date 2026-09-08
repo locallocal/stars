@@ -65,6 +65,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
     required Set<String> verificationToolNames,
     required Set<String> approvalExemptToolNames,
     required ToolRegistry toolRegistry,
+    required int maxModelTurns,
   }) async {
     final cancellationToken = AgentCancellationToken();
     _agentCancellationToken = cancellationToken;
@@ -74,7 +75,7 @@ extension _ChatGenerationEvents on ChatGenerationViewModel {
       toolRegistry: toolRegistry,
       toolPolicy: _toolPolicy,
       approvalHandler: this,
-      limits: _agentRunLimits,
+      limits: _agentRunLimits.copyWith(maxModelTurns: maxModelTurns),
       toolInvocationPersister: _toolInvocationPersister,
       groundedAnswerValidator: _groundedAnswerValidator,
     );

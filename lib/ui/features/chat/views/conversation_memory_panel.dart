@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/services/stars_system_prompt.dart';
@@ -138,6 +139,13 @@ final class _ConversationMemoryPanelState
             onChanged:
                 (value) => unawaited(_setAutoMemoryEnabled(context, value)),
           ),
+          _MaxModelTurnsRow(
+            enabled: !viewModel.loading,
+            value:
+                state?.maxModelTurns ??
+                ConversationMemoryState.defaultMaxModelTurns,
+            onPressed: () => unawaited(_editMaxModelTurns(context)),
+          ),
           const SizedBox(height: 10),
           _MemoryActions(
             compacting: viewModel.compacting,
@@ -199,6 +207,31 @@ final class _ConversationMemoryPanelState
   Future<void> _setAutoMemoryEnabled(BuildContext context, bool enabled) async {
     try {
       await widget.viewModel.setAutoMemoryEnabled(enabled);
+    } on Object catch (error) {
+      if (context.mounted) {
+        _showNotice(
+          context,
+          safeFailureMessage(context, error),
+          destructive: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _editMaxModelTurns(BuildContext context) async {
+    final current =
+        widget.viewModel.state?.maxModelTurns ??
+        ConversationMemoryState.defaultMaxModelTurns;
+    final value = await showChatShadDialog<int>(
+      context: context,
+      builder: (dialogContext) => _MaxModelTurnsDialog(initialValue: current),
+    );
+    if (value == null || !context.mounted) return;
+    try {
+      await widget.viewModel.setMaxModelTurns(value);
+      if (context.mounted) {
+        _showNotice(context, S.of(context).maxToolRequestRoundsSaved);
+      }
     } on Object catch (error) {
       if (context.mounted) {
         _showNotice(

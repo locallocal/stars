@@ -170,6 +170,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
           verificationToolNames: verificationToolNames,
           approvalExemptToolNames: approvalExemptToolNames,
           verificationUnavailableReason: verificationUnavailableReason,
+          maxModelTurns: _agentRunLimits.maxModelTurns,
         ),
   );
 
@@ -340,6 +341,7 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
         verificationToolNames: prepared.verificationToolNames,
         approvalExemptToolNames: prepared.approvalExemptToolNames,
         toolRegistry: runToolRegistry,
+        maxModelTurns: prepared.maxModelTurns,
       );
     }
 
@@ -725,39 +727,6 @@ class ChatGenerationViewModel extends DisposableChangeNotifier
     _applyPendingBot();
     _finalizingRuns.remove(runId);
     notifyListeners();
-  }
-
-  MessageGrounding _evaluateGrounding(
-    MessageTerminalOutcome terminalOutcome, {
-    String? failureReasonCode,
-    bool? criticalPersistenceSucceeded,
-  }) {
-    return _answerTrustPolicy.evaluate(
-      AnswerTrustPolicyInput(
-        terminalOutcome: terminalOutcome,
-        providerSupportsAgentLoop: _providerSupportsAgentLoop,
-        reliabilityPolicyEnabled: _reliabilityPolicyEnabled,
-        toolCalls: _snapshot.toolCalls,
-        evidenceState: _answerEvidenceState,
-        gateResult: _answerTrustGateResult,
-        evidenceIds: _validatedEvidenceIds,
-        claims: _validatedClaims,
-        verificationUnavailableReason: _verificationUnavailableReason,
-        criticalPersistenceSucceeded: criticalPersistenceSucceeded ?? true,
-        failureReasonCode:
-            failureReasonCode?.isNotEmpty ?? false ? failureReasonCode! : '',
-      ),
-    );
-  }
-
-  List<String> _persistedEvidenceIds(List<ToolInvocationRecord> invocations) {
-    if (_toolInvocationPersister == null) return const [];
-    return List<String>.unmodifiable({
-      for (final invocation in invocations)
-        if (invocation.status == ToolInvocationStatus.succeeded &&
-            invocation.evidenceCandidate != null)
-          ToolEvidenceRecord.evidenceIdForAttempt(invocation.attemptId),
-    });
   }
 
   void _completeTerminal(ChatRunLifecycle lifecycle) {

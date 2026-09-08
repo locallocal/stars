@@ -566,6 +566,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "Select the Skill from the message composer when needed.",
     ),
+    "maxToolRequestRounds": MessageLookupByLibrary.simpleMessage(
+      "Tool request round limit",
+    ),
+    "maxToolRequestRoundsDescription": MessageLookupByLibrary.simpleMessage(
+      "Maximum model turns that may request tools in a single reply. This setting applies only to this conversation.",
+    ),
+    "maxToolRequestRoundsRange": MessageLookupByLibrary.simpleMessage(
+      "Enter a whole number from 1 to 50.",
+    ),
+    "maxToolRequestRoundsSaved": MessageLookupByLibrary.simpleMessage(
+      "Tool request round limit updated.",
+    ),
     "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",
