@@ -11,10 +11,16 @@ void main() {
     test('uses production-safe default timeout budgets', () {
       const limits = AgentRunLimits();
 
+      expect(limits.maxModelTurns, 15);
       expect(limits.totalTimeout, const Duration(minutes: 15));
       expect(limits.synthesisTimeout, const Duration(minutes: 5));
       expect(limits.toolTimeout, const Duration(minutes: 2));
       expect(limits.approvalTimeout, const Duration(minutes: 10));
+      expect(limits.copyWith(maxModelTurns: 24).maxModelTurns, 24);
+      expect(
+        limits.copyWith(maxModelTurns: 24).maxToolCalls,
+        limits.maxToolCalls,
+      );
     });
 
     test('runs model, tool, and final model turn', () async {

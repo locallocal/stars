@@ -4481,6 +4481,46 @@ class S {
     );
   }
 
+  /// `Tool request round limit`
+  String get maxToolRequestRounds {
+    return Intl.message(
+      'Tool request round limit',
+      name: 'maxToolRequestRounds',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum model turns that may request tools in a single reply. This setting applies only to this conversation.`
+  String get maxToolRequestRoundsDescription {
+    return Intl.message(
+      'Maximum model turns that may request tools in a single reply. This setting applies only to this conversation.',
+      name: 'maxToolRequestRoundsDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a whole number from 1 to 50.`
+  String get maxToolRequestRoundsRange {
+    return Intl.message(
+      'Enter a whole number from 1 to 50.',
+      name: 'maxToolRequestRoundsRange',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Tool request round limit updated.`
+  String get maxToolRequestRoundsSaved {
+    return Intl.message(
+      'Tool request round limit updated.',
+      name: 'maxToolRequestRoundsSaved',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `View summary`
   String get viewSummary {
     return Intl.message(

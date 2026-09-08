@@ -594,6 +594,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "manualActivationDescription": MessageLookupByLibrary.simpleMessage(
       "Se necessario, seleziona la competenza nel campo del messaggio.",
     ),
+    "maxToolRequestRounds": MessageLookupByLibrary.simpleMessage(
+      "Limite turni richieste strumenti",
+    ),
+    "maxToolRequestRoundsDescription": MessageLookupByLibrary.simpleMessage(
+      "Numero massimo di turni del modello che possono richiedere strumenti in una risposta. Questa impostazione si applica solo a questa conversazione.",
+    ),
+    "maxToolRequestRoundsRange": MessageLookupByLibrary.simpleMessage(
+      "Inserisci un numero intero da 1 a 50.",
+    ),
+    "maxToolRequestRoundsSaved": MessageLookupByLibrary.simpleMessage(
+      "Limite dei turni per le richieste di strumenti aggiornato.",
+    ),
     "maximizePreview": MessageLookupByLibrary.simpleMessage("Maximize preview"),
     "mcpAccessToken": MessageLookupByLibrary.simpleMessage(
       "OAuth / bearer access token",

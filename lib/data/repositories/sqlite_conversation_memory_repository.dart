@@ -137,6 +137,20 @@ final class SqliteConversationMemoryRepository
   }
 
   @override
+  Future<void> setMaxModelTurns(String chatId, int maxModelTurns) async {
+    if (!ConversationMemoryState.isValidMaxModelTurns(maxModelTurns)) {
+      throw RangeError.range(
+        maxModelTurns,
+        ConversationMemoryState.minimumMaxModelTurns,
+        ConversationMemoryState.maximumMaxModelTurns,
+        'maxModelTurns',
+      );
+    }
+    await _localDatabase.setConversationMaxModelTurns(chatId, maxModelTurns);
+    _emit(chatId);
+  }
+
+  @override
   Future<void> setCompactionStatus(
     String chatId,
     ConversationCompactionStatus status, {
@@ -187,6 +201,7 @@ ConversationMemoryState _stateFromRow(Map<String, Object?> row) {
       'covered_through_message_id',
     ),
     autoMemoryEnabled: _bool(row['auto_memory_enabled']),
+    maxModelTurns: _int(row['max_model_turns']),
     compactionStatus: _enumByName(
       ConversationCompactionStatus.values,
       _text(row['compaction_status'], 'compaction_status'),

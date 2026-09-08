@@ -139,17 +139,29 @@ final class ConversationMemoryState {
     this.activeSummaryId = '',
     this.coveredThroughMessageId = '',
     this.autoMemoryEnabled = true,
+    this.maxModelTurns = defaultMaxModelTurns,
     this.compactionStatus = ConversationCompactionStatus.idle,
     this.lastError = '',
     this.lastCompactedAt,
     required this.updatedAt,
-  });
+  }) : assert(
+         maxModelTurns >= minimumMaxModelTurns &&
+             maxModelTurns <= maximumMaxModelTurns,
+       );
+
+  static const int defaultMaxModelTurns = 15;
+  static const int minimumMaxModelTurns = 1;
+  static const int maximumMaxModelTurns = 50;
+
+  static bool isValidMaxModelTurns(int value) =>
+      value >= minimumMaxModelTurns && value <= maximumMaxModelTurns;
 
   final String chatId;
   final int revision;
   final String activeSummaryId;
   final String coveredThroughMessageId;
   final bool autoMemoryEnabled;
+  final int maxModelTurns;
   final ConversationCompactionStatus compactionStatus;
   final String lastError;
   final DateTime? lastCompactedAt;

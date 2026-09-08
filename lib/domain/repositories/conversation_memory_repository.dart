@@ -18,6 +18,7 @@ abstract interface class ConversationMemoryRepository {
   Future<void> forgetItem(String chatId, String itemId);
   Future<void> restoreItem(String chatId, String itemId);
   Future<void> setAutoMemoryEnabled(String chatId, bool enabled);
+  Future<void> setMaxModelTurns(String chatId, int maxModelTurns);
   Future<void> setCompactionStatus(
     String chatId,
     ConversationCompactionStatus status, {

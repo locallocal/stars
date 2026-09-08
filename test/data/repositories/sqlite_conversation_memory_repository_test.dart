@@ -73,6 +73,7 @@ void main() {
       updatedAt: now,
     );
 
+    await repository.setMaxModelTurns('chat_1', 24);
     expect(
       await repository.commitCompaction(
         chatId: 'chat_1',
@@ -82,7 +83,9 @@ void main() {
       ),
       isTrue,
     );
-    expect((await repository.getState('chat_1')).revision, 1);
+    final state = await repository.getState('chat_1');
+    expect(state.revision, 1);
+    expect(state.maxModelTurns, 24);
     expect(
       (await repository.getActiveSummary('chat_1'))?.markdown,
       contains('完成实现'),
@@ -150,7 +153,28 @@ void main() {
       indexes.map((row) => row['name']),
       contains('messages_chat_timestamp_message_index'),
     );
+    expect(
+      (await repository.getState('chat_1')).maxModelTurns,
+      ConversationMemoryState.defaultMaxModelTurns,
+    );
   });
+
+  test(
+    'validates and persists a conversation-specific model turn limit',
+    () async {
+      await repository.setMaxModelTurns('chat_1', 31);
+
+      expect((await repository.getState('chat_1')).maxModelTurns, 31);
+      await expectLater(
+        repository.setMaxModelTurns('chat_1', 0),
+        throwsRangeError,
+      );
+      await expectLater(
+        repository.setMaxModelTurns('chat_1', 51),
+        throwsRangeError,
+      );
+    },
+  );
 
   test('persists manager changes and clears only automatic memory', () async {
     final now = DateTime(2026, 8, 8);

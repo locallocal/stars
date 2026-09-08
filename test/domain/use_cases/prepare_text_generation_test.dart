@@ -32,6 +32,7 @@ void main() {
             messages: [ChatMessage(role: 'user', content: 'hello')],
             activatedSkills: const [],
             requestedToolNames: const {'unavailable_tool'},
+            maxModelTurns: 23,
             reliabilityPolicyEnabled: false,
           );
         },
@@ -49,6 +50,7 @@ void main() {
       expect(result.userMessage, same(_userMessage));
       expect(result.messages.single.content, 'hello');
       expect(result.requestedToolNames, {'unavailable_tool'});
+      expect(result.maxModelTurns, 23);
       expect(result.runScopedTools, isEmpty);
       expect(result.reliabilityPolicyEnabled, isFalse);
       expect(

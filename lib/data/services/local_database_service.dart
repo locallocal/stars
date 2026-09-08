@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:stars/domain/models/conversation_memory.dart';
 
 part 'local_database_mcp_skills.dart';
 part 'local_database_conversations.dart';

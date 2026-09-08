@@ -171,6 +171,7 @@ class PreparedTextGeneration {
     this.approvalExemptToolNames = const {},
     this.runScopedTools = const [],
     this.contextAssemblyReport,
+    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
     this.reliabilityPolicyEnabled = true,
     this.verificationUnavailableReason = '',
   });
@@ -186,6 +187,7 @@ class PreparedTextGeneration {
   final Set<String> approvalExemptToolNames;
   final List<ExecutableTool> runScopedTools;
   final ContextAssemblyReport? contextAssemblyReport;
+  final int maxModelTurns;
   final bool reliabilityPolicyEnabled;
   final String verificationUnavailableReason;
 }
