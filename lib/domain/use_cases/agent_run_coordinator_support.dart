@@ -51,23 +51,24 @@ extension _AgentRunCoordinatorSupport on AgentRunCoordinator {
     required _InvocationIdentityRegistry invocationIdentities,
     required Future<void> Function(ToolInvocationRecord) observeInvocation,
     bool Function()? shouldContinue,
+    void Function(ToolResult result)? onResult,
   }) async {
     final results = <ToolResult>[];
     for (final call in calls) {
       if (shouldContinue != null && !shouldContinue()) break;
       cancellationToken.throwIfCancelled();
-      results.add(
-        await _executeToolCall(
-          call: call,
-          runId: runId,
-          exposedNames: exposedNames,
-          policyContext: policyContext,
-          cancellationToken: cancellationToken,
-          completedCalls: completedCalls,
-          invocationIdentities: invocationIdentities,
-          observeInvocation: observeInvocation,
-        ),
+      final result = await _executeToolCall(
+        call: call,
+        runId: runId,
+        exposedNames: exposedNames,
+        policyContext: policyContext,
+        cancellationToken: cancellationToken,
+        completedCalls: completedCalls,
+        invocationIdentities: invocationIdentities,
+        observeInvocation: observeInvocation,
       );
+      results.add(result);
+      onResult?.call(result);
     }
     return results;
   }

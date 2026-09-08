@@ -528,6 +528,7 @@
     "statusRunning": "実行中",
     "statusCancelled": "キャンセル済み",
     "statusFailed": "失敗",
+    "modelTurnLimitReached": "モデルの処理ターン上限に達しました。依頼を簡潔にして再試行してください。",
     "statusRecorded": "記録済み",
     "statusRequested": "リクエスト済み",
     "statusAwaitingApproval": "承認待ち",

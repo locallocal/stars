@@ -201,10 +201,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "시스템 프롬프트",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -621,6 +620,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelContextWindow": MessageLookupByLibrary.simpleMessage("모델 컨텍스트 크기"),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("입력"),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("출력"),
+    "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
+      "모델이 처리 턴 한도에 도달했습니다. 요청을 단순화한 후 다시 시도하세요.",
+    ),
     "modelsRetrievedSuccess": m29,
     "modificationTime": MessageLookupByLibrary.simpleMessage("수정 시간"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),

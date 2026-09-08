@@ -772,6 +772,7 @@
     "statusRunning": "Running",
     "statusCancelled": "Cancelled",
     "statusFailed": "Failed",
+    "modelTurnLimitReached": "The model reached its processing-turn limit. Simplify the request and try again.",
     "statusRecorded": "Recorded",
     "statusRequested": "Requested",
     "statusAwaitingApproval": "Awaiting approval",

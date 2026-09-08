@@ -528,6 +528,7 @@
     "statusRunning": "Wird ausgeführt",
     "statusCancelled": "Abgebrochen",
     "statusFailed": "Fehlgeschlagen",
+    "modelTurnLimitReached": "Das Modell hat sein Verarbeitungslimit erreicht. Vereinfachen Sie die Anfrage und versuchen Sie es erneut.",
     "statusRecorded": "Erfasst",
     "statusRequested": "Angefordert",
     "statusAwaitingApproval": "Wartet auf Bestätigung",

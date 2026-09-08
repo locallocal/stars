@@ -4,10 +4,12 @@ class _MessageTerminalStatus extends StatelessWidget {
   const _MessageTerminalStatus({
     required this.outcome,
     required this.hasPartialContent,
+    required this.reasonCode,
   });
 
   final MessageTerminalOutcome outcome;
   final bool hasPartialContent;
+  final String reasonCode;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,9 @@ class _MessageTerminalStatus extends StatelessWidget {
       ),
       MessageTerminalOutcome.failed => (
         LucideIcons.triangleAlert,
-        hasPartialContent
+        reasonCode == 'model_turn_limit_reached'
+            ? S.of(context).modelTurnLimitReached
+            : hasPartialContent
             ? S.of(context).generationFailedPartial
             : S.of(context).generationFailed,
         ShadBadgeVariant.destructive,
@@ -54,7 +58,7 @@ class _MessageTerminalStatus extends StatelessWidget {
             children: [
               Icon(icon, size: 14),
               const SizedBox(width: 6),
-              Text(label),
+              Flexible(child: Text(label)),
             ],
           ),
         ),

@@ -221,10 +221,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt do sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Gerenciado pelo Stars. Quando ativado, o conteúdo abaixo é adicionado às solicitações do modelo da conversa; quando desativado, ele é omitido. O contexto de execução necessário não é afetado. O conteúdo não pode ser editado.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Gerenciado pelo Stars. Quando ativado, o conteúdo abaixo é adicionado às solicitações do modelo da conversa; quando desativado, ele é omitido. O contexto de execução necessário não é afetado. O conteúdo não pode ser editado.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -739,6 +738,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("Entrada"),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Saída"),
+    "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
+      "O modelo atingiu o limite de turnos de processamento. Simplifique a solicitação e tente novamente.",
+    ),
     "modelsRetrievedSuccess": m29,
     "modificationTime": MessageLookupByLibrary.simpleMessage(
       "Data de modificação",

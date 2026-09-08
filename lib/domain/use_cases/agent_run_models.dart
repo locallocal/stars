@@ -5,6 +5,7 @@ final class AgentRunLimits {
     this.maxModelTurns = 6,
     this.maxToolCalls = 12,
     this.maxSameCallRetries = 1,
+    this.maxConsecutiveToolFailures = 2,
     this.maxReliabilityRepairs = 1,
     this.totalTimeout = const Duration(minutes: 15),
     this.synthesisTimeout = const Duration(minutes: 5),
@@ -14,12 +15,14 @@ final class AgentRunLimits {
   }) : assert(maxModelTurns > 0),
        assert(maxToolCalls > 0),
        assert(maxSameCallRetries >= 0),
+       assert(maxConsecutiveToolFailures > 0),
        assert(maxReliabilityRepairs >= 0 && maxReliabilityRepairs <= 1),
        assert(maxToolOutputCharacters > 0);
 
   final int maxModelTurns;
   final int maxToolCalls;
   final int maxSameCallRetries;
+  final int maxConsecutiveToolFailures;
   final int maxReliabilityRepairs;
 
   /// Base deadline for planning, observation, and Tool execution.

@@ -95,9 +95,10 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     required List<ClaimEvidenceRequirement> verificationRequirements,
     required AgentCancellationToken cancellationToken,
     required _AgentRunStateMachine state,
+    String initialReliabilityFeedback = '',
     ModelEventObserver? onModelEvent,
   }) async {
-    var feedback = '';
+    var feedback = initialReliabilityFeedback;
     var reasoning = '';
     var usage = ModelTokenUsage.empty;
     for (
@@ -294,6 +295,25 @@ String _groundedClaimRepairFeedback(
         },
   ],
 });
+
+String _consecutiveToolFailureFeedback(List<ToolResult> failures) =>
+    jsonEncode(<String, Object?>{
+      'type': 'stars_tool_failure_circuit_open',
+      'version': 1,
+      'reason':
+          failures.any(
+                (failure) => failure.errorCode == 'shell_dependency_missing',
+              )
+              ? 'dependency_missing'
+              : 'consecutive_tool_failures',
+      'instructions':
+          'Do not request or invoke more Tools. Explain that execution stopped '
+          'after consecutive Tool failures. If a result reports a missing '
+          'dependency, name it and explain that it must be installed or made '
+          'available before retrying. Do not claim that the requested action '
+          'completed.',
+      'failure_codes': [for (final failure in failures) failure.errorCode],
+    });
 
 bool _canReferenceAsEvidence(ToolInvocationRecord invocation) {
   if (invocation.attemptId.isEmpty) return false;

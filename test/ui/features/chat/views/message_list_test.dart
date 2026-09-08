@@ -54,6 +54,48 @@ void main() {
     expect(scrollController.offset, 0);
   });
 
+  testWidgets('shows a clear model turn limit failure message', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 600);
+    addTearDown(tester.view.reset);
+    final scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+    final message = Message(
+      messageId: 'model-turn-limit',
+      chatId: 'chat-1',
+      botId: 'bot-1',
+      senderId: 'bot-1',
+      content: '',
+      grounding: MessageGrounding(
+        trustLevel: AnswerTrustLevel.failed,
+        reasonCode: 'model_turn_limit_reached',
+      ),
+      terminalOutcome: MessageTerminalOutcome.failed,
+      timestamp: DateTime(2026, 9, 8),
+    );
+
+    await tester.pumpWidget(
+      _harness(
+        isStreaming: false,
+        body: Column(
+          children: [
+            MessageList(
+              messages: [message],
+              scrollController: scrollController,
+              isStreaming: false,
+              streamingResponse: '',
+              currentUserId: 'me',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('模型已达到处理轮次上限，请简化请求后重试。'), findsOneWidget);
+    expect(find.text('生成失败'), findsNothing);
+  });
+
   testWidgets('assistant code block copies retain the trust boundary', (
     tester,
   ) async {

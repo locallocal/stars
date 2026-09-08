@@ -528,6 +528,7 @@
     "statusRunning": "चल रहा है",
     "statusCancelled": "रद्द",
     "statusFailed": "विफल",
+    "modelTurnLimitReached": "मॉडल अपनी प्रोसेसिंग-टर्न सीमा तक पहुँच गया। अनुरोध को सरल करके फिर प्रयास करें।",
     "statusRecorded": "दर्ज",
     "statusRequested": "अनुरोधित",
     "statusAwaitingApproval": "स्वीकृति की प्रतीक्षा",
