@@ -94,7 +94,7 @@ void main() {
     expect(find.text('查看摘要'), findsOneWidget);
     expect(find.text('管理记忆'), findsOneWidget);
     expect(find.text('自动记忆'), findsOneWidget);
-    expect(find.text('工具请求回合上限'), findsOneWidget);
+    expect(find.text('工具请求回合上限'), findsNothing);
     expect(find.byType(Divider), findsNWidgets(2));
     expect(
       find.byKey(const ValueKey<String>('automatic-memory-switch')),
@@ -102,11 +102,8 @@ void main() {
     );
     expect(find.byType(ShadSwitch), findsOneWidget);
     expect(
-      find.descendant(
-        of: find.byKey(const ValueKey<String>('max-model-turns-edit')),
-        matching: find.text('15'),
-      ),
-      findsOneWidget,
+      find.byKey(const ValueKey<String>('max-model-turns-edit')),
+      findsNothing,
     );
     final summarizedTurnsValue = find.descendant(
       of: find.byKey(const ValueKey<String>('memory-summarized-turns')),
@@ -375,74 +372,6 @@ void main() {
     expect(
       find.byKey(const ValueKey<String>('memory-summary-card')),
       findsNothing,
-    );
-  });
-
-  testWidgets('edits and validates the conversation model turn limit', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1200, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final repository = _MemoryRepository();
-    final viewModel = ConversationMemoryViewModel(
-      chatId: 'chat_1',
-      bot: _bot,
-      repository: repository,
-      compactConversation: CompactConversation(
-        messageRepository: _MessageRepository(),
-        memoryRepository: repository,
-        summarizerFactory: (_) => const _Summarizer(),
-      ),
-      conversationArtifactsDirectoryProvider: _conversationArtifactsDirectory,
-    );
-    addTearDown(viewModel.dispose);
-
-    await tester.pumpWidget(_harness(viewModel));
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey<String>('max-model-turns-edit')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey<String>('max-model-turns-dialog')),
-      findsOneWidget,
-    );
-    expect(find.byType(ShadInputFormField), findsOneWidget);
-    final input = find.descendant(
-      of: find.byKey(const ValueKey<String>('max-model-turns-input')),
-      matching: find.byType(EditableText),
-    );
-    await tester.enterText(input, '0');
-    await tester.tap(
-      find.byKey(const ValueKey<String>('max-model-turns-save')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('请输入 1 至 50 之间的整数。'), findsOneWidget);
-    expect(repository.maxModelTurns, 15);
-
-    await tester.enterText(input, '27');
-    await tester.tap(
-      find.byKey(const ValueKey<String>('max-model-turns-save')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(repository.maxModelTurns, 27);
-    expect(
-      find.byKey(const ValueKey<String>('max-model-turns-dialog')),
-      findsNothing,
-    );
-    expect(find.text('工具请求回合上限已更新。'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey<String>('max-model-turns-edit')),
-        matching: find.text('27'),
-      ),
-      findsOneWidget,
     );
   });
 
