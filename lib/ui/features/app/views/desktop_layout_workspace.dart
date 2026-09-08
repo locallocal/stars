@@ -366,9 +366,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
               keyPrefix: 'conversation-model-modalities',
             ),
             if (generationViewModel != null)
-              ConversationModelControls(
-                provider: generationViewModel.capabilityProvider,
-              ),
+              _buildConversationModelControls(generationViewModel),
             if (widget.currentIndex == 0 && _tokenUsageViewModel != null)
               ConversationTokenUsagePanel(viewModel: _tokenUsageViewModel!),
             if (widget.currentIndex == 0 && _memoryViewModel != null)
@@ -380,6 +378,30 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildConversationModelControls(
+    ChatGenerationViewModel generationViewModel,
+  ) {
+    final memoryViewModel = _memoryViewModel;
+    if (memoryViewModel == null) {
+      return ConversationModelControls(
+        provider: generationViewModel.capabilityProvider,
+        maxModelTurnsEnabled: false,
+      );
+    }
+    return ListenableBuilder(
+      listenable: memoryViewModel,
+      builder:
+          (context, child) => ConversationModelControls(
+            provider: generationViewModel.capabilityProvider,
+            maxModelTurns:
+                memoryViewModel.state?.maxModelTurns ??
+                ConversationMemoryState.defaultMaxModelTurns,
+            maxModelTurnsEnabled: !memoryViewModel.loading,
+            onMaxModelTurnsChanged: memoryViewModel.setMaxModelTurns,
+          ),
     );
   }
 }

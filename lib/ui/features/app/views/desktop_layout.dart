@@ -12,6 +12,7 @@ import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/core/widgets/logo.dart';
 import 'package:stars/ui/core/widgets/model_modalities.dart';
 import 'package:stars/ui/features/bots/views/edit_bot.dart';
+import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';

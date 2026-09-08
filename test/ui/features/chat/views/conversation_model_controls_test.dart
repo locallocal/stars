@@ -18,8 +18,16 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final provider = _CapabilityProvider();
+    var savedMaxModelTurns = 15;
 
-    await tester.pumpWidget(_harness(provider));
+    await tester.pumpWidget(
+      _harness(
+        provider,
+        onMaxModelTurnsChanged: (value) async {
+          savedMaxModelTurns = value;
+        },
+      ),
+    );
     await tester.pumpAndSettle();
 
     final webRow = find.byKey(
@@ -34,13 +42,22 @@ void main() {
     final thinkingSwitch = find.byKey(
       const ValueKey<String>('conversation-deep-thinking-toggle'),
     );
+    final maxModelTurnsRow = find.byKey(
+      const ValueKey<String>('max-model-turns-row'),
+    );
+    final maxModelTurnsButton = find.byKey(
+      const ValueKey<String>('max-model-turns-edit'),
+    );
     expect(webRow, findsOneWidget);
     expect(thinkingRow, findsOneWidget);
-    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(2));
+    expect(maxModelTurnsRow, findsOneWidget);
+    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(3));
     expect(find.byType(ShadSwitch), findsNWidgets(2));
-    expect(find.byType(ShadButton), findsNothing);
+    expect(find.byType(ShadButton), findsOneWidget);
     expect(find.text('联网搜索'), findsOneWidget);
     expect(find.text('深度思考'), findsOneWidget);
+    expect(find.text('工具请求回合上限'), findsOneWidget);
+    expect(find.text('15'), findsOneWidget);
     expect(
       tester.getRect(find.text('联网搜索')).left,
       closeTo(tester.getRect(find.text('深度思考')).left, 0.01),
@@ -53,8 +70,17 @@ void main() {
       tester.getRect(thinkingSwitch).right,
       closeTo(tester.getRect(thinkingRow).right, 0.01),
     );
+    expect(
+      tester.getTopLeft(maxModelTurnsRow).dy,
+      greaterThan(tester.getTopLeft(thinkingRow).dy),
+    );
+    expect(
+      tester.getRect(maxModelTurnsButton).right,
+      closeTo(tester.getRect(maxModelTurnsRow).right, 0.01),
+    );
     expect(tester.getSize(webSwitch).width, 44);
     expect(tester.getSize(thinkingSwitch).width, 44);
+    expect(tester.getSize(maxModelTurnsButton).width, 72);
     expect(tester.widget<ShadSwitch>(webSwitch).value, isFalse);
     expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isFalse);
 
@@ -71,10 +97,47 @@ void main() {
 
     expect(provider.getDeepThinking(), isTrue);
     expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isTrue);
+
+    await tester.tap(maxModelTurnsButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('max-model-turns-dialog')),
+      findsOneWidget,
+    );
+    expect(find.byType(ShadInputFormField), findsOneWidget);
+    final input = find.descendant(
+      of: find.byKey(const ValueKey<String>('max-model-turns-input')),
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(input, '0');
+    await tester.tap(
+      find.byKey(const ValueKey<String>('max-model-turns-save')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('请输入 1 至 50 之间的整数。'), findsOneWidget);
+    expect(savedMaxModelTurns, 15);
+
+    await tester.enterText(input, '27');
+    await tester.tap(
+      find.byKey(const ValueKey<String>('max-model-turns-save')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(savedMaxModelTurns, 27);
+    expect(
+      find.byKey(const ValueKey<String>('max-model-turns-dialog')),
+      findsNothing,
+    );
+    expect(find.text('工具请求回合上限已更新。'), findsOneWidget);
   });
 }
 
-Widget _harness(AiProvider provider) {
+Widget _harness(
+  AiProvider provider, {
+  MaxModelTurnsChanged? onMaxModelTurnsChanged,
+}) {
   final shadTheme = buildStarsShadTheme(
     brightness: Brightness.light,
     fontSize: 16,
@@ -103,7 +166,10 @@ Widget _harness(AiProvider provider) {
               alignment: Alignment.topCenter,
               child: SizedBox(
                 width: 320,
-                child: ConversationModelControls(provider: provider),
+                child: ConversationModelControls(
+                  provider: provider,
+                  onMaxModelTurnsChanged: onMaxModelTurnsChanged,
+                ),
               ),
             ),
           ),
