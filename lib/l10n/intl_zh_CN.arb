@@ -772,6 +772,7 @@
     "statusRunning": "执行中",
     "statusCancelled": "已取消",
     "statusFailed": "失败",
+    "modelTurnLimitReached": "模型已达到处理轮次上限，请简化请求后重试。",
     "statusRecorded": "已记录",
     "statusRequested": "已请求",
     "statusAwaitingApproval": "等待确认",

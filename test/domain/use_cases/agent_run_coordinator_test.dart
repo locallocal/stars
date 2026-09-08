@@ -354,6 +354,76 @@ void main() {
       },
     );
 
+    test(
+      'stops after consecutive dependency failures and synthesizes an explanation',
+      () async {
+        final tool = _AlwaysFailingTool(
+          errorCode: 'shell_dependency_missing',
+          message: 'pandoc is not installed',
+        );
+        final session = _FakeModelSession(
+          [
+            [
+              ToolCallRequested(
+                callId: 'export-1',
+                name: tool.definition.name,
+                arguments: const {'value': 1},
+              ),
+              const ModelTurnCompleted(stopReason: 'tool_calls'),
+            ],
+            [
+              ToolCallRequested(
+                callId: 'export-2',
+                name: tool.definition.name,
+                arguments: const {'value': 2},
+              ),
+              const ModelTurnCompleted(stopReason: 'tool_calls'),
+            ],
+            [
+              ToolCallRequested(
+                callId: 'export-3',
+                name: tool.definition.name,
+                arguments: const {'value': 3},
+              ),
+              const ModelTurnCompleted(stopReason: 'tool_calls'),
+            ],
+          ],
+          groundedOutput:
+              '{"schema_version":1,"claims":[],"non_factual_text":"pandoc is required before export."}',
+        );
+        final coordinator = AgentRunCoordinator(
+          toolRegistry: StaticToolRegistry([tool]),
+          toolPolicy: const DefaultToolPolicy(),
+        );
+
+        final result = await coordinator.run(
+          provider: _FakeProvider(session),
+          request: _request(toolNames: {tool.definition.name}),
+        );
+
+        expect(result.status, AgentRunStatus.completed, reason: result.error);
+        expect(result.text, 'pandoc is required before export.');
+        expect(result.degradedReason, 'tool_dependency_missing');
+        expect(tool.executions, 2);
+        expect(session.continuations, hasLength(1));
+        expect(session.synthesisPendingResults.single, hasLength(2));
+        expect(
+          session.synthesisPendingResults.single.map(
+            (failure) => failure.errorCode,
+          ),
+          everyElement('shell_dependency_missing'),
+        );
+        expect(
+          session.synthesisRequests.single.reliabilityFeedback,
+          allOf(
+            contains('stars_tool_failure_circuit_open'),
+            contains('dependency_missing'),
+            contains('Do not request or invoke more Tools'),
+          ),
+        );
+      },
+    );
+
     test('runs independent pure computation calls in parallel', () async {
       final tool = _ParallelTool();
       final session = _FakeModelSession([
@@ -1034,6 +1104,46 @@ final class _FakeTool implements ExecutableTool {
   }
 }
 
+final class _AlwaysFailingTool implements ExecutableTool {
+  _AlwaysFailingTool({required this.errorCode, required this.message});
+
+  final String errorCode;
+  final String message;
+  int executions = 0;
+
+  @override
+  final ToolDefinition definition = ToolDefinition(
+    name: 'export_document',
+    description: 'Export a document.',
+    inputSchema: const {
+      'type': 'object',
+      'properties': {
+        'value': {'type': 'integer'},
+      },
+      'required': ['value'],
+      'additionalProperties': false,
+    },
+    source: ToolSource.builtIn,
+    riskLevel: ToolRiskLevel.readOnly,
+    capabilities: const {ToolCapability.compute},
+  );
+
+  @override
+  Future<ToolResult> execute(
+    ToolCallRequest call,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    executions += 1;
+    return ToolResult(
+      callId: call.callId,
+      name: call.name,
+      content: message,
+      isError: true,
+      errorCode: errorCode,
+    );
+  }
+}
+
 final class _EvidenceCalculationTool implements ExecutableTool {
   _EvidenceCalculationTool({this.mismatchedScope = false});
 
@@ -1159,6 +1269,8 @@ final class _FakeModelSession implements AgentModelSession {
   final String? groundedOutput;
   final List<List<ToolResult>> continuations = [];
   final List<String> reliabilityFeedback = [];
+  final List<GroundedAnswerSynthesisRequest> synthesisRequests = [];
+  final List<List<ToolResult>> synthesisPendingResults = [];
   var _turnIndex = 0;
   bool cancelled = false;
 
@@ -1182,6 +1294,8 @@ final class _FakeModelSession implements AgentModelSession {
     GroundedAnswerSynthesisRequest request, {
     List<ToolResult> pendingToolResults = const [],
   }) async* {
+    synthesisRequests.add(request);
+    synthesisPendingResults.add(List<ToolResult>.of(pendingToolResults));
     try {
       final candidate =
           groundedOutput == null

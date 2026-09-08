@@ -97,6 +97,8 @@ final class AgentRunCoordinator {
     var toolCallCount = 0;
     var pendingVerificationFeedback = '';
     var verificationRetryTurn = false;
+    final consecutiveToolFailures = <ToolResult>[];
+    var toolFailureCircuitOpen = false;
     var degradedReason = request.verificationUnavailableReason;
     var verificationAuthorizationDenied = false;
     GroundedAnswerValidationResult? groundedValidation;
@@ -105,6 +107,27 @@ final class AgentRunCoordinator {
       timedOut = true;
       request.cancellationToken.cancel();
     });
+
+    void observeToolResult(ToolResult result) {
+      if (!result.isError) {
+        consecutiveToolFailures.clear();
+        return;
+      }
+      consecutiveToolFailures.add(result);
+      if (consecutiveToolFailures.length > _limits.maxConsecutiveToolFailures) {
+        consecutiveToolFailures.removeAt(0);
+      }
+      if (consecutiveToolFailures.length < _limits.maxConsecutiveToolFailures) {
+        return;
+      }
+      toolFailureCircuitOpen = true;
+      degradedReason =
+          consecutiveToolFailures.any(
+                (failure) => failure.errorCode == 'shell_dependency_missing',
+              )
+              ? 'tool_dependency_missing'
+              : 'consecutive_tool_failures';
+    }
 
     Future<void> observeInvocation(ToolInvocationRecord invocation) async {
       if (state.isTerminal || invocation.runId != request.runId) return;
@@ -358,9 +381,18 @@ final class AgentRunCoordinator {
                       completedCalls: completedCalls,
                       invocationIdentities: invocationIdentities,
                       observeInvocation: observeInvocation,
-                      shouldContinue: () => !verificationAuthorizationDenied,
+                      shouldContinue:
+                          () =>
+                              !verificationAuthorizationDenied &&
+                              !toolFailureCircuitOpen,
+                      onResult: observeToolResult,
                     );
             results = List<ToolResult>.unmodifiable(nextResults);
+            if (canRunInParallel) {
+              for (final result in results) {
+                observeToolResult(result);
+              }
+            }
             executedCalls = true;
           }
         }
@@ -383,6 +415,7 @@ final class AgentRunCoordinator {
             verificationRequirements.isNotEmpty;
         if (executedCalls &&
             !verificationAuthorizationDenied &&
+            !toolFailureCircuitOpen &&
             !synthesizeFromToolResults) {
           continue;
         }
@@ -415,11 +448,19 @@ final class AgentRunCoordinator {
           draftText: turnText.toString(),
           invocations: invocations,
           pendingToolResults:
-              synthesizeFromToolResults ? results : const <ToolResult>[],
+              toolFailureCircuitOpen
+                  ? List<ToolResult>.unmodifiable(consecutiveToolFailures)
+                  : synthesizeFromToolResults
+                  ? results
+                  : const <ToolResult>[],
           request: request,
           verificationRequirements: verificationRequirements,
           cancellationToken: request.cancellationToken,
           state: state,
+          initialReliabilityFeedback:
+              toolFailureCircuitOpen
+                  ? _consecutiveToolFailureFeedback(consecutiveToolFailures)
+                  : '',
           onModelEvent: onModelEvent,
         );
         reasoning += synthesis.reasoning;

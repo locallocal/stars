@@ -528,6 +528,7 @@
     "statusRunning": "Em execução",
     "statusCancelled": "Cancelado",
     "statusFailed": "Falhou",
+    "modelTurnLimitReached": "O modelo atingiu o limite de turnos de processamento. Simplifique a solicitação e tente novamente.",
     "statusRecorded": "Registrado",
     "statusRequested": "Solicitado",
     "statusAwaitingApproval": "Aguardando aprovação",

@@ -4,7 +4,7 @@ description: Run build, test, version-control, package-manager, diagnostic, or o
 allowed-tools: run_shell_command
 metadata:
   scope: system
-  prompt-version: 2
+  prompt-version: 3
 ---
 
 # Run a desktop shell command
@@ -41,6 +41,19 @@ choice unless current policy denies it.
   the user denies the call.
 - Inspect `exit_code`, `timed_out`, `output_truncated`, `stdout`, and `stderr`
   before continuing. Do not blindly retry a command that may have changed state.
+- Treat `shell_dependency_missing` as terminal for the current approach. Stop
+  retrying unchanged commands, name the missing executable or package from the
+  diagnostic, and explain that it must be made available before continuing.
+
+## Document conversion preflight
+
+Before exporting a document through a converter such as Pandoc, LibreOffice,
+or another CLI/library, run a short, read-only preflight that checks every
+required executable and package. Keep the preflight separate from conversion.
+If a dependency is missing, stop and report it. Do not start a package-manager
+installation during the conversion call or use the 25-second Tool window to
+both install dependencies and export the document. Install only when the user
+explicitly requests it, in a separate approved call, then repeat the preflight.
 
 Commands run with Windows PowerShell on Windows and POSIX `sh` on macOS and
 Linux. Use syntax for the current platform; Android and iOS are unsupported.

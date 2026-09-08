@@ -551,6 +551,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelContextWindow": MessageLookupByLibrary.simpleMessage("模型上下文大小"),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("输入"),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("输出"),
+    "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
+      "模型已达到处理轮次上限，请简化请求后重试。",
+    ),
     "modelsRetrievedSuccess": m29,
     "modificationTime": MessageLookupByLibrary.simpleMessage("修改时间"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("音乐已生成"),

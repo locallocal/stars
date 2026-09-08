@@ -321,7 +321,10 @@ final class ShellCommandTool implements ExecutableTool {
         'when no structured built-in tool fits, such as a build, test, '
         'version-control, package-manager, or diagnostic command. Do not use '
         'for ordinary file or directory operations. Requires explicit user '
-        'approval. Windows uses PowerShell; macOS and Linux use POSIX sh.',
+        'approval. Before document conversion, check required executables and '
+        'packages in a separate preflight call; do not install dependencies '
+        'inside the bounded conversion call. Windows uses PowerShell; macOS '
+        'and Linux use POSIX sh.',
     inputSchema: const {
       'type': 'object',
       'properties': {
@@ -474,13 +477,22 @@ final class ShellCommandTool implements ExecutableTool {
       final errorCode =
           result.timedOut
               ? 'shell_command_timeout'
+              : _indicatesMissingDependency(result)
+              ? 'shell_dependency_missing'
               : result.exitCode == 0
               ? ''
               : 'shell_command_failed';
+      final formatted = _formatResult(result);
       return ToolResult(
         callId: call.callId,
         name: call.name,
-        content: _formatResult(result),
+        content:
+            errorCode == 'shell_dependency_missing'
+                ? 'A required executable or package is missing. Stop retrying '
+                    'this command unchanged and report the missing dependency '
+                    'to the user. Do not attempt a just-in-time installation '
+                    'inside the bounded Tool window.\n$formatted'
+                : formatted,
         structuredContent: structured,
         isError: errorCode.isNotEmpty,
         errorCode: errorCode,
@@ -510,6 +522,24 @@ final class ShellCommandTool implements ExecutableTool {
       if (result.stderr.isNotEmpty) 'stderr:\n${result.stderr}',
     ];
     return lines.join('\n');
+  }
+
+  bool _indicatesMissingDependency(ShellCommandExecutionResult result) {
+    if (result.timedOut || result.exitCode == 0) return false;
+    if (result.platform != NativeShellPlatform.windows &&
+        result.exitCode == 127) {
+      return true;
+    }
+    final diagnostic = '${result.stdout}\n${result.stderr}'.toLowerCase();
+    return const <String>[
+      'command not found',
+      'commandnotfoundexception',
+      'is not recognized as an internal or external command',
+      'modulenotfounderror: no module named',
+      'no module named ',
+      'cannot find module ',
+      'package not found',
+    ].any(diagnostic.contains);
   }
 
   ToolResult _error(ToolCallRequest call, String message, String code) =>

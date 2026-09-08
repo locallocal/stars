@@ -528,6 +528,7 @@
     "statusRunning": "Выполняется",
     "statusCancelled": "Отменено",
     "statusFailed": "Ошибка",
+    "modelTurnLimitReached": "Модель достигла лимита шагов обработки. Упростите запрос и повторите попытку.",
     "statusRecorded": "Записано",
     "statusRequested": "Запрошено",
     "statusAwaitingApproval": "Ожидает подтверждения",

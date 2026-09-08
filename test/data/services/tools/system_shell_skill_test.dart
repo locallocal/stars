@@ -27,6 +27,15 @@ void main() {
     expect(content.instructions, contains('Every command requires'));
     expect(content.instructions, contains('list_local_directory'));
     expect(content.instructions, contains('working_directory'));
+    expect(content.instructions, contains('shell_dependency_missing'));
+    expect(content.instructions, contains('Document conversion preflight'));
+    expect(
+      content.instructions,
+      allOf(
+        contains('Do not start a package-manager'),
+        contains('installation during the conversion call'),
+      ),
+    );
     expect(content.files, ['SKILL.md']);
   });
 }

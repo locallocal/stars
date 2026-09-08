@@ -216,10 +216,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "सिस्टम प्रॉम्प्ट",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -722,6 +721,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("इनपुट"),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("आउटपुट"),
+    "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
+      "मॉडल अपनी प्रोसेसिंग-टर्न सीमा तक पहुँच गया। अनुरोध को सरल करके फिर प्रयास करें।",
+    ),
     "modelsRetrievedSuccess": m29,
     "modificationTime": MessageLookupByLibrary.simpleMessage("संशोधन का समय"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),

@@ -171,6 +171,44 @@ void main() {
     });
 
     test(
+      'classifies a missing command or package as a dependency failure',
+      () async {
+        for (final runner in <_FakeShellCommandRunner>[
+          _FakeShellCommandRunner(
+            platform: NativeShellPlatform.linux,
+            exitCode: 127,
+            stderr: '/bin/sh: pandoc: command not found',
+          ),
+          _FakeShellCommandRunner(
+            platform: NativeShellPlatform.windows,
+            exitCode: 1,
+            stderr: 'ModuleNotFoundError: No module named docx',
+          ),
+        ]) {
+          final tool = ShellCommandTool(
+            platform: runner.platform,
+            runner: runner,
+          );
+
+          final result = await tool.execute(
+            ToolCallRequest(
+              callId: 'missing-dependency',
+              name: shellCommandToolName,
+              arguments: const {'command': 'pandoc report.md -o report.docx'},
+            ),
+            AgentCancellationToken(),
+          );
+
+          expect(result.isError, isTrue);
+          expect(result.errorCode, 'shell_dependency_missing');
+          expect(result.content, contains('required executable or package'));
+          expect(result.content, contains('Stop retrying'));
+          expect(result.content, contains(runner.stderr));
+        }
+      },
+    );
+
+    test(
       'rejects invalid runtime arguments before invoking the runner',
       () async {
         final runner = _FakeShellCommandRunner();
@@ -290,9 +328,16 @@ void main() {
 }
 
 final class _FakeShellCommandRunner implements ShellCommandRunner {
-  _FakeShellCommandRunner({this.exitCode = 0, this.timedOut = false});
+  _FakeShellCommandRunner({
+    this.platform = NativeShellPlatform.windows,
+    this.exitCode = 0,
+    this.stderr = '',
+    this.timedOut = false,
+  });
 
+  final NativeShellPlatform platform;
   final int exitCode;
+  final String stderr;
   final bool timedOut;
   ShellCommandExecutionRequest? request;
 
@@ -304,12 +349,12 @@ final class _FakeShellCommandRunner implements ShellCommandRunner {
     cancellationToken.throwIfCancelled();
     this.request = request;
     return ShellCommandExecutionResult(
-      platform: NativeShellPlatform.windows,
+      platform: platform,
       shell: 'PowerShell',
       workingDirectory: request.workingDirectory,
       exitCode: exitCode,
       stdout: 'ok\n',
-      stderr: '',
+      stderr: stderr,
       duration: const Duration(milliseconds: 12),
       timedOut: timedOut,
     );

@@ -263,6 +263,7 @@ class _MessageBubble extends StatelessWidget {
             child: _MessageTerminalStatus(
               outcome: terminalOutcome!,
               hasPartialContent: hasPartialContent,
+              reasonCode: grounding?.reasonCode ?? '',
             ),
           ),
         if (_showsProcessInfoAfterMessage)

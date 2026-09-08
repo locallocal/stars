@@ -40,6 +40,7 @@ void main() {
     'statusRunning',
     'statusCancelled',
     'statusFailed',
+    'modelTurnLimitReached',
     'statusRecorded',
     'statusRequested',
     'statusAwaitingApproval',
