@@ -2,6 +2,60 @@ part of 'theme.dart';
 
 enum StarsGlassRole { toolbar, sidebar, composer, popover, overlayInspector }
 
+/// A shadcn-style content section shared by desktop settings and detail pages.
+///
+/// Keeping the card shell here ensures page sections use the same spacing,
+/// typography, and row separators instead of recreating those decisions in
+/// each feature.
+class StarsDesktopSectionCard extends StatelessWidget {
+  const StarsDesktopSectionCard({
+    super.key,
+    required this.title,
+    required this.children,
+    this.titleKey,
+    this.description,
+  });
+
+  final String title;
+  final Key? titleKey;
+  final String? description;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final sectionDescription = description;
+    return ShadCard(
+      width: double.infinity,
+      padding: const EdgeInsets.all(
+        StarsDesktopThemeSpec.botFormSectionPadding,
+      ),
+      title: Text(
+        title,
+        key: titleKey,
+        style: StarsDesktopThemeSpec.sectionTitleStyle(context)?.copyWith(
+          fontSize: StarsDesktopThemeSpec.botFormSectionTitleFontSize,
+        ),
+      ),
+      description: sectionDescription == null ? null : Text(sectionDescription),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var index = 0; index < children.length; index++) ...[
+              children[index],
+              if (index != children.length - 1)
+                const ShadSeparator.horizontal(
+                  margin: StarsDesktopThemeSpec.settingsRowSeparatorMargin,
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Solid semantic fallback for glass-role surfaces.
 ///
 /// This widget intentionally never constructs a BackdropFilter. Native/window

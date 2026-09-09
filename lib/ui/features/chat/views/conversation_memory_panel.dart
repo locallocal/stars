@@ -23,10 +23,12 @@ final class ConversationMemoryPanel extends StatefulWidget {
     super.key,
     required this.viewModel,
     required this.generationViewModel,
+    this.showSectionHeader = true,
   });
 
   final ConversationMemoryViewModel viewModel;
   final ChatGenerationViewModel? generationViewModel;
+  final bool showSectionHeader;
 
   @override
   State<ConversationMemoryPanel> createState() =>
@@ -89,13 +91,15 @@ final class _ConversationMemoryPanelState
         key: const ValueKey<String>('conversation-memory-panel'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Divider(height: 25),
-          Text(
-            S.of(context).contextAndMemory,
-            key: const ValueKey<String>('conversation-memory-section-title'),
-            style: StarsDesktopThemeSpec.sectionTitleStyle(context),
-          ),
-          const SizedBox(height: 12),
+          if (widget.showSectionHeader) ...[
+            const Divider(height: 25),
+            Text(
+              S.of(context).contextAndMemory,
+              key: const ValueKey<String>('conversation-memory-section-title'),
+              style: StarsDesktopThemeSpec.sectionTitleStyle(context),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (report != null) ...[
             _MemoryMetric(
               key: const ValueKey<String>('memory-context-window'),

@@ -13,30 +13,10 @@ extension _ProfileSettingsControls on _ProfilePageState {
   }) {
     return KeyedSubtree(
       key: sectionKey,
-      child: ShadCard(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        title: Text(
-          title,
-          style: StarsDesktopThemeSpec.sectionTitleStyle(context)?.copyWith(
-            fontSize: StarsDesktopThemeSpec.botFormSectionTitleFontSize,
-          ),
-        ),
-        description: description == null ? null : Text(description),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            children: [
-              for (var index = 0; index < children.length; index++) ...[
-                children[index],
-                if (index != children.length - 1)
-                  const ShadSeparator.horizontal(
-                    margin: StarsDesktopThemeSpec.settingsRowSeparatorMargin,
-                  ),
-              ],
-            ],
-          ),
-        ),
+      child: StarsDesktopSectionCard(
+        title: title,
+        description: description,
+        children: children,
       ),
     );
   }

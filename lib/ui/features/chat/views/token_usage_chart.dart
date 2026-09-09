@@ -13,9 +13,14 @@ enum TokenUsageChartOrientation { horizontal, vertical }
 enum TokenUsageSeries { input, output }
 
 class ConversationTokenUsagePanel extends StatelessWidget {
-  const ConversationTokenUsagePanel({super.key, required this.viewModel});
+  const ConversationTokenUsagePanel({
+    super.key,
+    required this.viewModel,
+    this.showSectionHeader = true,
+  });
 
   final ChatTokenUsageViewModel viewModel;
+  final bool showSectionHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +36,15 @@ class ConversationTokenUsagePanel extends StatelessWidget {
           key: const ValueKey<String>('conversation-token-usage-panel'),
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Divider(height: 25),
-            Text(
-              key: const ValueKey<String>('token-usage-section-title'),
-              S.of(context).tokenUsage,
-              style: StarsDesktopThemeSpec.sectionTitleStyle(context),
-            ),
-            const SizedBox(height: 12),
+            if (showSectionHeader) ...[
+              const Divider(height: 25),
+              Text(
+                key: const ValueKey<String>('token-usage-section-title'),
+                S.of(context).tokenUsage,
+                style: StarsDesktopThemeSpec.sectionTitleStyle(context),
+              ),
+              const SizedBox(height: 12),
+            ],
             if (viewModel.isLoading && viewModel.dailyBuckets.isEmpty)
               const Center(
                 child: SizedBox.square(
