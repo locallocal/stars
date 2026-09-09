@@ -6,7 +6,6 @@ import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/bots/view_models/bot_skill_view_model.dart';
 import 'package:stars/ui/features/bots/views/bot_skill_settings_dialog.dart';
-import 'package:stars/ui/features/bots/views/skill_description_test_dialog.dart';
 import 'package:stars/utils/theme.dart';
 
 /// Desktop Skill editor for a Bot that has not been persisted yet.
@@ -176,28 +175,6 @@ class _AddBotSkillsState extends State<AddBotSkills> {
       onApprovalExemptChanged: (value) async {
         await _setApprovalExempt(skill.id, value);
         return viewModel.bindingFor(skill.id)?.requiresApproval == false;
-      },
-      testButtonKey: ValueKey<String>(
-        'test-add-bot-skill-description-${skill.id}',
-      ),
-      onTest:
-          viewModel.supportsAutoActivation
-              ? () => _showSkillDescriptionTest(skill)
-              : null,
-    );
-  }
-
-  Future<void> _showSkillDescriptionTest(SkillDescriptor skill) async {
-    await showSkillDescriptionTestDialog(
-      context: context,
-      skill: skill,
-      desktopMode: true,
-      onRun: (testCase) async {
-        final report = await viewModel.testDescription(
-          skillId: skill.id,
-          cases: [testCase],
-        );
-        return report.results.single;
       },
     );
   }

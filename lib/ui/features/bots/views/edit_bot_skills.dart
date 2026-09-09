@@ -205,11 +205,6 @@ extension _EditBotSkills on _EditAIBotPageState {
                 return viewModel.bindingFor(skill.id)?.requiresApproval ==
                     false;
               },
-      testButtonKey: ValueKey<String>('test-skill-description-${skill.id}'),
-      onTest:
-          viewModel.supportsAutoActivation
-              ? () => _showSkillDescriptionTest(skill)
-              : null,
     );
   }
 
@@ -550,23 +545,6 @@ extension _EditBotSkills on _EditAIBotPageState {
     } catch (error) {
       if (mounted) showStarsNotice(context, safeFailureMessage(context, error));
     }
-  }
-
-  Future<void> _showSkillDescriptionTest(SkillDescriptor skill) async {
-    final viewModel = _skillViewModel;
-    if (viewModel == null) return;
-    await showSkillDescriptionTestDialog(
-      context: context,
-      skill: skill,
-      desktopMode: widget.embedded,
-      onRun: (testCase) async {
-        final report = await viewModel.testDescription(
-          skillId: skill.id,
-          cases: [testCase],
-        );
-        return report.results.single;
-      },
-    );
   }
 
   Widget _buildFormSection(

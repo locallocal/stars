@@ -102,7 +102,6 @@ import 'package:stars/domain/use_cases/recover_agent_runs.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
-import 'package:stars/domain/use_cases/test_skill_description.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/chat_interaction_facade.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
@@ -648,10 +647,6 @@ class AppDependencies {
       supportsAutoActivation:
           bot.configuredSupportsAutomaticSkillActivation ??
           provider.capabilities.supportsAutomaticSkillActivation,
-      testSkillDescription: TestSkillDescription(
-        starsSystemPromptLanguageProvider:
-            () async => (await profileRepository.getProfile()).language,
-      ),
     );
   }
 

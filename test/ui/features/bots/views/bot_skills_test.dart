@@ -345,9 +345,6 @@ void main() {
         SkillActivationMode.auto,
       );
 
-      final testDescription = find.byKey(
-        const ValueKey<String>('test-skill-description-user:release-notes'),
-      );
       final skillToggle = find.byKey(
         const ValueKey<String>('bot-skill-toggle-user:release-notes'),
       );
@@ -360,56 +357,10 @@ void main() {
       );
       expect(settingsDialog, findsOneWidget);
       expect(skillToggle, findsOneWidget);
-      expect(testDescription, findsOneWidget);
       expect(
-        find.descendant(of: settingsDialog, matching: testDescription),
-        findsOneWidget,
+        find.descendant(of: settingsDialog, matching: find.text('测试')),
+        findsNothing,
       );
-      await tester.ensureVisible(testDescription);
-      await tester.tap(testDescription);
-      await tester.pumpAndSettle();
-
-      final skillDescriptionDialog = find.byKey(
-        const ValueKey<String>('skill-description-test-dialog'),
-      );
-      expect(skillDescriptionDialog, findsOneWidget);
-      expect(find.text('测试技能描述'), findsOneWidget);
-      expect(
-        find.descendant(
-          of: skillDescriptionDialog,
-          matching: find.byType(ShadTextarea),
-        ),
-        findsOneWidget,
-      );
-
-      await tester.enterText(
-        find.descendant(
-          of: find.byKey(
-            const ValueKey<String>('skill-description-test-input'),
-          ),
-          matching: find.byType(EditableText),
-        ),
-        'Create release notes',
-      );
-      await tester.pump();
-      await tester.tap(
-        find.byKey(const ValueKey<String>('run-skill-description-test')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(skillDescriptionDialog, findsOneWidget);
-      expect(
-        find.byKey(const ValueKey<String>('skill-description-test-result')),
-        findsOneWidget,
-      );
-      expect(find.text('3 / 3'), findsOneWidget);
-      expect(provider.startedSessions, 3);
-
-      await tester.tap(
-        find.byKey(const ValueKey<String>('cancel-skill-description-test')),
-      );
-      await tester.pumpAndSettle();
-      expect(settingsDialog, findsOneWidget);
       await tester.tap(
         find.byKey(
           const ValueKey<String>('bot-skill-settings-close-user:release-notes'),
@@ -710,8 +661,6 @@ final class _AutoProvider extends AiProvider {
         ),
       );
 
-  var startedSessions = 0;
-
   @override
   AiProviderCapabilities get capabilities => const AiProviderCapabilities(
     supportsStructuredToolCalls: true,
@@ -719,35 +668,5 @@ final class _AutoProvider extends AiProvider {
   );
 
   @override
-  SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
-    startedSessions += 1;
-    return _AutoSkillSession(skillName: request.catalog.single.name);
-  }
-
-  @override
   Future<void> generateText(List<ChatMessage> messages) async {}
-}
-
-final class _AutoSkillSession implements SkillToolSession {
-  const _AutoSkillSession({required this.skillName});
-
-  final String skillName;
-
-  @override
-  Future<SkillToolTurn> start() async => SkillToolTurn(
-    calls: [
-      SkillToolCall(
-        callId: 'call',
-        name: 'activate_skill',
-        arguments: {'name': skillName},
-      ),
-    ],
-  );
-
-  @override
-  Future<SkillToolTurn> continueWith(List<SkillToolResult> results) async =>
-      SkillToolTurn(isComplete: true);
-
-  @override
-  void close() {}
 }

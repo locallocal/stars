@@ -25,8 +25,6 @@ Future<void> showBotSkillSettingsDialog({
   required Key approvalSwitchKey,
   BotSkillSettingUpdater? onEnabledChanged,
   BotSkillSettingUpdater? onApprovalExemptChanged,
-  Key? testButtonKey,
-  Future<void> Function()? onTest,
 }) async {
   final dialog = _BotSkillSettingsDialog(
     skill: skill,
@@ -39,8 +37,6 @@ Future<void> showBotSkillSettingsDialog({
     approvalSwitchKey: approvalSwitchKey,
     onEnabledChanged: onEnabledChanged,
     onApprovalExemptChanged: onApprovalExemptChanged,
-    testButtonKey: testButtonKey,
-    onTest: onTest,
   );
   if (embedded) {
     await showShadDialog<void>(context: context, builder: (_) => dialog);
@@ -156,8 +152,6 @@ class _BotSkillSettingsDialog extends StatefulWidget {
     required this.approvalSwitchKey,
     required this.onEnabledChanged,
     required this.onApprovalExemptChanged,
-    required this.testButtonKey,
-    required this.onTest,
   });
 
   final SkillDescriptor skill;
@@ -170,8 +164,6 @@ class _BotSkillSettingsDialog extends StatefulWidget {
   final Key approvalSwitchKey;
   final BotSkillSettingUpdater? onEnabledChanged;
   final BotSkillSettingUpdater? onApprovalExemptChanged;
-  final Key? testButtonKey;
-  final Future<void> Function()? onTest;
 
   @override
   State<_BotSkillSettingsDialog> createState() =>
@@ -267,15 +259,6 @@ class _BotSkillSettingsDialogState extends State<_BotSkillSettingsDialog> {
       description: Text(strings.skillDetails),
       constraints: const BoxConstraints(maxWidth: 680),
       actions: [
-        if (widget.onTest != null)
-          ShadButton.outline(
-            key: widget.testButtonKey,
-            enabled: _isEnabled && !_isUpdating,
-            onPressed:
-                _isEnabled && !_isUpdating ? () => widget.onTest!() : null,
-            leading: const Icon(LucideIcons.flaskConical, size: 14),
-            child: Text(strings.testSkill),
-          ),
         ShadButton.outline(
           enabled: !_isUpdating,
           onPressed: _close,
@@ -287,20 +270,11 @@ class _BotSkillSettingsDialogState extends State<_BotSkillSettingsDialog> {
   }
 
   Widget _buildDialog(BuildContext context) {
-    final strings = S.of(context);
     return AlertDialog(
       key: widget.dialogKey,
       title: Text(widget.skill.name),
       content: SizedBox(width: 560, child: _buildBody(context)),
       actions: [
-        if (widget.onTest != null)
-          TextButton.icon(
-            key: widget.testButtonKey,
-            onPressed:
-                _isEnabled && !_isUpdating ? () => widget.onTest!() : null,
-            icon: const Icon(Icons.science_outlined),
-            label: Text(strings.testSkill),
-          ),
         TextButton(
           onPressed: _isUpdating ? null : _close,
           child: Text(MaterialLocalizations.of(context).closeButtonLabel),

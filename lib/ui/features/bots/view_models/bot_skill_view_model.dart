@@ -4,7 +4,6 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
-import 'package:stars/domain/use_cases/test_skill_description.dart';
 import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
 
 final class BotSkillViewModel extends DisposableChangeNotifier {
@@ -17,17 +16,14 @@ final class BotSkillViewModel extends DisposableChangeNotifier {
     AiProvider? skillToolProvider,
     bool? supportsAutoActivation,
     BundledSkillLoader? bundledSkillLoader,
-    TestSkillDescription testSkillDescription = const TestSkillDescription(),
     this.pageSize = defaultPageSize,
   }) : _skillRepository = skillRepository,
        _bindingRepository = bindingRepository,
        _bundledSkillLoader = bundledSkillLoader,
-       _skillToolProvider = skillToolProvider,
        _supportsAutoActivation =
            supportsAutoActivation ??
            skillToolProvider?.capabilities.supportsAutomaticSkillActivation ??
            false,
-       _testSkillDescription = testSkillDescription,
        assert(pageSize > 0) {
     _skillChanges = _skillRepository.changes.listen((_) => _reload());
     _bindingChanges = _bindingRepository.changes.listen((_) => _reload());
@@ -37,9 +33,7 @@ final class BotSkillViewModel extends DisposableChangeNotifier {
   final SkillRepository _skillRepository;
   final BotSkillBindingRepository _bindingRepository;
   final BundledSkillLoader? _bundledSkillLoader;
-  AiProvider? _skillToolProvider;
   bool _supportsAutoActivation;
-  final TestSkillDescription _testSkillDescription;
   final int pageSize;
   late final StreamSubscription<List<SkillDescriptor>> _skillChanges;
   late final StreamSubscription<void> _bindingChanges;
@@ -175,28 +169,6 @@ final class BotSkillViewModel extends DisposableChangeNotifier {
     _supportsAutoActivation = supported;
     _normalizePages();
     notifyListeners();
-  }
-
-  void updateSkillToolProvider(AiProvider? provider) {
-    _skillToolProvider = provider;
-  }
-
-  Future<SkillDescriptionTestReport> testDescription({
-    required String skillId,
-    required List<SkillDescriptionTestCase> cases,
-    int runsPerCase = 3,
-  }) async {
-    final provider = _skillToolProvider;
-    final skill = _skills.where((item) => item.id == skillId).firstOrNull;
-    if (provider == null || skill == null) {
-      throw StateError('Skill 或 Provider 不可用。');
-    }
-    return _testSkillDescription(
-      provider: provider,
-      skill: skill,
-      cases: cases,
-      runsPerCase: runsPerCase,
-    );
   }
 
   void previousAddedPage() {

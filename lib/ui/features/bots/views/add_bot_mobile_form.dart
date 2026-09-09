@@ -593,9 +593,7 @@ extension _AddBotMobileForm on _AddBotPageState {
 
     final model = _modelInfoById(selectedModelController.text);
     if (model?.supportsAutomaticSkillActivation != true) {
-      viewModel
-        ..updateSkillToolProvider(null)
-        ..updateSupportsAutoActivation(false);
+      viewModel.updateSupportsAutoActivation(false);
       return;
     }
 
@@ -609,9 +607,7 @@ extension _AddBotMobileForm on _AddBotPageState {
     final apiType =
         (providerInfo?['api_type'] as String?) ?? apiTypeController.text.trim();
     if (apiType.isEmpty) {
-      viewModel
-        ..updateSkillToolProvider(null)
-        ..updateSupportsAutoActivation(false);
+      viewModel.updateSupportsAutoActivation(false);
       return;
     }
 
@@ -631,15 +627,11 @@ extension _AddBotMobileForm on _AddBotPageState {
           modifyTimestamp: DateTime.now(),
         ),
       );
-      viewModel
-        ..updateSkillToolProvider(provider)
-        ..updateSupportsAutoActivation(
-          provider.capabilities.supportsAutomaticSkillActivation,
-        );
+      viewModel.updateSupportsAutoActivation(
+        provider.capabilities.supportsAutomaticSkillActivation,
+      );
     } on UnsupportedError {
-      viewModel
-        ..updateSkillToolProvider(null)
-        ..updateSupportsAutoActivation(false);
+      viewModel.updateSupportsAutoActivation(false);
     }
   }
 
