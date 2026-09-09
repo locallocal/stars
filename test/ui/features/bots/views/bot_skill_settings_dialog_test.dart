@@ -51,6 +51,7 @@ void main() {
       find.byKey(const ValueKey<String>('skill-settings-dialog')),
       findsOneWidget,
     );
+    expect(find.text('Test'), findsNothing);
     expect(
       tester.getRect(details).bottom,
       lessThan(tester.getRect(controls).top),
