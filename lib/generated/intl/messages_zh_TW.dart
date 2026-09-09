@@ -282,6 +282,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "此會話資料目錄為空。",
     ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage("會話資訊"),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("會話摘要"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
       "各對話 Token 占比",
@@ -416,7 +417,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("幫助與反饋"),
     "hideApiKey": MessageLookupByLibrary.simpleMessage("隱藏 API 金鑰"),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "隱藏會話資訊",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("首頁"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("每小時用量"),
@@ -745,10 +748,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Image from Stars",
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("顯示 API 金鑰"),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "顯示會話資訊",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "在對話內容中顯示執行狀態。",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("包含靜態資源"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("相容性"),

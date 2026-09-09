@@ -32,29 +32,16 @@ extension _DesktopLayoutOverlays on _DesktopLayoutState {
     _updateState(() {
       _activeChatOverlay = overlay;
       _preserveChatOverlayIntent = false;
-      if (overlay == _ChatOverlay.sidebar) {
-        _sidebarVisible = true;
-        _inspectorOpen = false;
-      } else {
-        _inspectorOpen = true;
-      }
+      _sidebarVisible = true;
     });
 
     final navigator = Navigator.of(context, rootNavigator: true);
     _chatOverlayNavigator = navigator;
     _chatOverlayRoute = null;
     _chatOverlayRouteReady = routeReady;
-    final side =
-        overlay == _ChatOverlay.sidebar
-            ? ShadSheetSide.left
-            : ShadSheetSide.right;
-    final targetWidth =
-        overlay == _ChatOverlay.sidebar
-            ? StarsDesktopThemeSpec.sidebarWidth
-            : StarsDesktopThemeSpec.inspectorWidth;
     final closed = showChatShadSheet<void>(
       context: context,
-      side: side,
+      side: ShadSheetSide.left,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       useRootNavigator: true,
       builder: (sheetContext) {
@@ -67,32 +54,21 @@ extension _DesktopLayoutOverlays on _DesktopLayoutState {
           0.0,
           MediaQuery.sizeOf(sheetContext).width - 32,
         );
-        final width = math.min(targetWidth, availableWidth);
+        final width = math.min(
+          StarsDesktopThemeSpec.sidebarWidth,
+          availableWidth,
+        );
         return ShadSheet(
           draggable: false,
           scrollable: false,
-          padding: overlay == _ChatOverlay.sidebar ? EdgeInsets.zero : null,
+          padding: EdgeInsets.zero,
           constraints: BoxConstraints.tightFor(width: width),
-          title:
-              overlay == _ChatOverlay.inspector
-                  ? Text(S.of(sheetContext).botInformation)
-                  : null,
           closeIcon: StarsDesktopIconAction(
             icon: LucideIcons.x,
             label: MaterialLocalizations.of(sheetContext).closeButtonTooltip,
             onPressed: () => unawaited(_dismissActiveChatOverlay()),
           ),
-          child: SizedBox.expand(
-            child:
-                overlay == _ChatOverlay.sidebar
-                    ? _buildSidebar(sheetContext)
-                    : _buildInspector(
-                      sheetContext,
-                      overlay: true,
-                      showHeader: false,
-                      contentPadding: const EdgeInsets.only(top: 12, right: 16),
-                    ),
-          ),
+          child: SizedBox.expand(child: _buildSidebar(sheetContext)),
         );
       },
     ).then<void>((_) {});
@@ -163,13 +139,7 @@ extension _DesktopLayoutOverlays on _DesktopLayoutState {
       _chatOverlayClosed = null;
       _preserveChatOverlayIntent = false;
       _chatOverlayDismissScheduled = false;
-      if (!preserveIntent) {
-        if (overlay == _ChatOverlay.sidebar) {
-          _sidebarVisible = false;
-        } else {
-          _inspectorOpen = false;
-        }
-      }
+      if (!preserveIntent) _sidebarVisible = false;
     }
 
     if (mounted) {
@@ -199,25 +169,13 @@ extension _DesktopLayoutOverlays on _DesktopLayoutState {
     return guarded;
   }
 
-  void _closeChatOverlayForBreakpoint({
-    required double width,
-    required bool sidebarDocked,
-    required bool inspectorDocked,
-    required bool inspectorAvailable,
-  }) {
+  void _closeChatOverlayForBreakpoint({required bool sidebarDocked}) {
     final overlay = _activeChatOverlay;
     if (overlay == null || _chatOverlayDismissScheduled) return;
-    final mustClose = switch (overlay) {
-      _ChatOverlay.sidebar => sidebarDocked,
-      _ChatOverlay.inspector => inspectorDocked || !inspectorAvailable,
-    };
-    if (!mustClose) return;
+    if (!sidebarDocked) return;
 
     _chatOverlayDismissScheduled = true;
-    _preserveChatOverlayIntent = switch (overlay) {
-      _ChatOverlay.sidebar => width >= 960,
-      _ChatOverlay.inspector => width >= 1500,
-    };
+    _preserveChatOverlayIntent = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_dismissActiveChatOverlay());
     });

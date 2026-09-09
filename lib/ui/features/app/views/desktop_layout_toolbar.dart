@@ -6,10 +6,10 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   final bool isChat;
   final bool compact;
   final bool sidebarVisible;
-  final bool inspectorVisible;
-  final bool inspectorAvailable;
+  final bool conversationInfoVisible;
+  final bool conversationInfoAvailable;
   final VoidCallback onToggleSidebar;
-  final VoidCallback? onToggleInspector;
+  final VoidCallback? onToggleConversationInfo;
   final VoidCallback? onCreateChat;
   final VoidCallback? onSearchRequested;
   final VoidCallback? onBrowseConversationDirectory;
@@ -21,10 +21,10 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     required this.isChat,
     required this.compact,
     required this.sidebarVisible,
-    required this.inspectorVisible,
-    required this.inspectorAvailable,
+    required this.conversationInfoVisible,
+    required this.conversationInfoAvailable,
     required this.onToggleSidebar,
-    required this.onToggleInspector,
+    required this.onToggleConversationInfo,
     required this.onCreateChat,
     required this.onSearchRequested,
     required this.onBrowseConversationDirectory,
@@ -169,25 +169,22 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             onPressed: onClearChat,
                             icon: LucideIcons.eraser,
                           ),
-                        if (inspectorAvailable)
+                        if (conversationInfoAvailable)
                           StarsDesktopIconAction(
                             key: const ValueKey<String>(
-                              'desktop-toolbar-inspector',
+                              'desktop-toolbar-conversation-info',
                             ),
                             label:
-                                inspectorVisible
-                                    ? S.of(context).hideInspector
-                                    : S.of(context).showInspector,
-                            onPressed: onToggleInspector,
-                            selected: inspectorVisible,
+                                conversationInfoVisible
+                                    ? S.of(context).hideConversationInformation
+                                    : S.of(context).showConversationInformation,
+                            onPressed: onToggleConversationInfo,
+                            selected: conversationInfoVisible,
                             variant:
-                                inspectorVisible
+                                conversationInfoVisible
                                     ? ShadButtonVariant.secondary
                                     : ShadButtonVariant.ghost,
-                            icon:
-                                inspectorVisible
-                                    ? LucideIcons.panelRightClose
-                                    : LucideIcons.panelRightOpen,
+                            icon: LucideIcons.info,
                           ),
                       ],
                     )
@@ -199,23 +196,22 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (inspectorAvailable)
+                          if (conversationInfoAvailable)
                             _DesktopToolbarIconAction(
                               key: const ValueKey<String>(
-                                'desktop-toolbar-inspector',
+                                'desktop-toolbar-conversation-info',
                               ),
                               tooltip:
-                                  inspectorVisible
-                                      ? S.of(context).hideInspector
-                                      : S.of(context).showInspector,
-                              onPressed: onToggleInspector,
-                              selected: inspectorVisible,
-                              icon: Icon(
-                                inspectorVisible
-                                    ? LucideIcons.panelRightClose
-                                    : LucideIcons.panelRightOpen,
-                                size: 17,
-                              ),
+                                  conversationInfoVisible
+                                      ? S
+                                          .of(context)
+                                          .hideConversationInformation
+                                      : S
+                                          .of(context)
+                                          .showConversationInformation,
+                              onPressed: onToggleConversationInfo,
+                              selected: conversationInfoVisible,
+                              icon: const Icon(LucideIcons.info, size: 17),
                             ),
                         ],
                       ),

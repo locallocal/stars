@@ -407,7 +407,7 @@ void main() {
     );
 
     expect(
-      find.byKey(const ValueKey<String>('desktop-toolbar-inspector')),
+      find.byKey(const ValueKey<String>('desktop-toolbar-conversation-info')),
       findsNothing,
     );
     expect(find.byIcon(Icons.vertical_split_outlined), findsNothing);

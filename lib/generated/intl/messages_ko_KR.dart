@@ -201,10 +201,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "시스템 프롬프트",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -300,6 +299,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage("대화 정보"),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("대화 요약"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("대화별 토큰 비율"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API 키 복사"),
@@ -444,7 +444,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("도움말 및 피드백"),
     "hideApiKey": MessageLookupByLibrary.simpleMessage("API 키 숨기기"),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "대화 정보 숨기기",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("홈"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("시간별 사용량"),
@@ -807,10 +809,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Image from Stars",
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("API 키 표시"),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "대화 정보 표시",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "대화 메시지에 실행 세부 정보를 표시합니다.",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("에셋 사용 가능"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("호환성"),

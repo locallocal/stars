@@ -162,7 +162,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
       child: IndexedStack(
         index: widget.currentIndex,
         children: [
-          _buildChatDetail(context),
+          _buildChatWorkspace(context),
           widget.selectedBot == null
               ? widget.pages[1]
               : _buildBotDetail(context),
@@ -171,6 +171,19 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
           profilePage,
         ],
       ),
+    );
+  }
+
+  Widget _buildChatWorkspace(BuildContext context) {
+    final bot = widget.selectedChatBot;
+    if (bot == null) return _buildChatDetail(context);
+    return IndexedStack(
+      key: const ValueKey<String>('desktop-chat-view-switcher'),
+      index: _conversationInfoOpen ? 1 : 0,
+      children: [
+        _buildChatDetail(context),
+        _buildConversationInfoPage(context, bot),
+      ],
     );
   }
 
@@ -226,158 +239,103 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
     );
   }
 
-  Widget _buildInspectorOverlay(BuildContext context, double availableWidth) {
-    final width =
-        _inspectorWidth
-            .clamp(
-              StarsDesktopThemeSpec.inspectorMinWidth,
-              math.min(
-                StarsDesktopThemeSpec.inspectorMaxWidth,
-                math.max(
-                  StarsDesktopThemeSpec.inspectorMinWidth,
-                  availableWidth - 24.0,
-                ),
-              ),
-            )
-            .toDouble();
-    return Positioned.fill(
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () => setState(() => _inspectorOpen = false),
-              child: ColoredBox(
-                color: StarsDesktopTokens.of(
-                  context,
-                ).scrim.withValues(alpha: 0.12),
-              ),
+  Widget _buildConversationInfoPage(BuildContext context, Bot bot) {
+    return ColoredBox(
+      key: const ValueKey<String>('desktop-conversation-information'),
+      color: StarsDesktopTokens.of(context).contentBackground,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          StarsDesktopThemeSpec.formPagePadding.left,
+          0,
+          StarsDesktopThemeSpec.formPagePadding.right,
+          0,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            key: const ValueKey<String>(
+              'desktop-conversation-information-content',
             ),
-          ),
-          Positioned(
-            right: 8,
-            top: 8,
-            bottom: 8,
-            width: width,
-            child: Material(
-              color: Colors.transparent,
-              elevation: 10,
-              shadowColor: StarsDesktopTokens.of(
-                context,
-              ).scrim.withValues(alpha: 0.2),
-              borderRadius: StarsDesktopThemeSpec.containerRadius,
-              clipBehavior: Clip.antiAlias,
-              child: _buildInspector(context, overlay: true),
+            constraints: const BoxConstraints(
+              maxWidth: StarsDesktopThemeSpec.contentMaxWidth,
             ),
+            child: SizedBox.expand(child: _buildConversationInfo(context, bot)),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildInspector(
-    BuildContext context, {
-    required bool overlay,
-    bool showHeader = true,
-    EdgeInsetsGeometry? contentPadding,
-  }) {
-    final bot = _activeBot;
+  Widget _buildConversationInfo(BuildContext context, Bot bot) {
     final generationViewModel =
-        widget.currentIndex == 0 &&
-                widget.selectedChatId != null &&
-                widget.selectedChatBot != null &&
-                _dependencies != null
+        widget.selectedChatId != null && _dependencies != null
             ? _dependencies!.generationRegistry.viewModelFor(
               widget.selectedChatId!,
-              widget.selectedChatBot!,
+              bot,
             )
             : null;
-    final decoration =
-        overlay && showHeader
-            ? StarsDesktopThemeSpec.overlayInspectorDecoration(context)
-            : showHeader
-            ? StarsDesktopThemeSpec.inspectorDecoration(context)
-            : const BoxDecoration();
-    return Container(
-      decoration: decoration,
-      child: ListView(
-        key: const PageStorageKey<String>('desktop-context-inspector'),
-        controller: _inspectorScrollController,
-        padding: contentPadding ?? const EdgeInsets.fromLTRB(16, 12, 16, 20),
-        children: [
-          if (showHeader) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    S.of(context).botInformation,
-                    style: StarsDesktopThemeSpec.sectionTitleStyle(context),
-                  ),
-                ),
-                if (widget.currentIndex == 0)
-                  StarsDesktopIconAction(
-                    label: MaterialLocalizations.of(context).closeButtonTooltip,
-                    onPressed: () => setState(() => _inspectorOpen = false),
-                    icon: LucideIcons.x,
-                  )
-                else
-                  _DesktopToolbarIconAction(
-                    tooltip:
-                        MaterialLocalizations.of(context).closeButtonTooltip,
-                    onPressed: () => setState(() => _inspectorOpen = false),
-                    icon: const Icon(LucideIcons.x, size: 17),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (bot != null) ...[
-            _InspectorRow(
-              icon:
-                  widget.currentIndex == 0
-                      ? LucideIcons.bot
-                      : LucideIcons.sparkles,
-              label: S.of(context).name,
-              value: bot.name,
-            ),
-            _InspectorRow(
-              icon:
-                  widget.currentIndex == 0
-                      ? LucideIcons.server
-                      : LucideIcons.server,
-              label: S.of(context).provider,
-              value: bot.provider.isEmpty ? '—' : bot.provider,
-            ),
-            _InspectorRow(
-              icon:
-                  widget.currentIndex == 0 ? LucideIcons.cpu : LucideIcons.cpu,
-              label: S.of(context).model,
-              value: bot.model.isEmpty ? '—' : bot.model,
-            ),
-            ModelModalitiesView(
-              inputModalities:
-                  generationViewModel?.capabilityProvider.getInputModalites() ??
-                  bot.configuredInputModalities ??
-                  const [InputModality.text],
-              outputModalities:
-                  generationViewModel?.capabilityProvider
-                      .getOutputModalites() ??
-                  bot.configuredOutputModalities ??
-                  const [OutputModality.text],
-              keyPrefix: 'conversation-model-modalities',
-            ),
-            if (generationViewModel != null)
-              _buildConversationModelControls(generationViewModel),
-            if (widget.currentIndex == 0 && _tokenUsageViewModel != null)
-              ConversationTokenUsagePanel(viewModel: _tokenUsageViewModel!),
-            if (widget.currentIndex == 0 && _memoryViewModel != null)
-              ConversationMemoryPanel(
-                viewModel: _memoryViewModel!,
-                generationViewModel: _dependencies?.generationRegistry
-                    .maybeViewModel(widget.selectedChatId),
-              ),
-          ],
-        ],
+    return ListView(
+      key: const PageStorageKey<String>(
+        'desktop-conversation-information-list',
       ),
+      controller: _conversationInfoScrollController,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                S.of(context).conversationInformation,
+                style: StarsDesktopThemeSpec.sectionTitleStyle(context),
+              ),
+            ),
+            StarsDesktopIconAction(
+              key: const ValueKey<String>(
+                'desktop-conversation-information-close',
+              ),
+              label: MaterialLocalizations.of(context).closeButtonTooltip,
+              onPressed: () => setState(() => _conversationInfoOpen = false),
+              icon: LucideIcons.x,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _ConversationInfoRow(
+          icon: LucideIcons.bot,
+          label: S.of(context).name,
+          value: bot.name,
+        ),
+        _ConversationInfoRow(
+          icon: LucideIcons.server,
+          label: S.of(context).provider,
+          value: bot.provider.isEmpty ? '—' : bot.provider,
+        ),
+        _ConversationInfoRow(
+          icon: LucideIcons.cpu,
+          label: S.of(context).model,
+          value: bot.model.isEmpty ? '—' : bot.model,
+        ),
+        ModelModalitiesView(
+          inputModalities:
+              generationViewModel?.capabilityProvider.getInputModalites() ??
+              bot.configuredInputModalities ??
+              const [InputModality.text],
+          outputModalities:
+              generationViewModel?.capabilityProvider.getOutputModalites() ??
+              bot.configuredOutputModalities ??
+              const [OutputModality.text],
+          keyPrefix: 'conversation-model-modalities',
+        ),
+        if (generationViewModel != null)
+          _buildConversationModelControls(generationViewModel),
+        if (_tokenUsageViewModel != null)
+          ConversationTokenUsagePanel(viewModel: _tokenUsageViewModel!),
+        if (_memoryViewModel != null)
+          ConversationMemoryPanel(
+            viewModel: _memoryViewModel!,
+            generationViewModel: _dependencies?.generationRegistry
+                .maybeViewModel(widget.selectedChatId),
+          ),
+      ],
     );
   }
 

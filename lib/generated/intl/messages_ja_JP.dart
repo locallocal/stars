@@ -203,10 +203,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "システムプロンプト",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -302,6 +301,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage("会話情報"),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会話の要約"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("会話別トークン比率"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API キーをコピー"),
@@ -450,7 +450,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("ヘルプとフィードバック"),
     "hideApiKey": MessageLookupByLibrary.simpleMessage("API キーを非表示"),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "会話情報を非表示",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("ホーム"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("時間別使用量"),
@@ -811,10 +813,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Image from Stars",
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("API キーを表示"),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "会話情報を表示",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "会話メッセージに実行の詳細を表示します。",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("アセットあり"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("互換性"),

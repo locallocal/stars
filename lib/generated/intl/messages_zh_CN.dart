@@ -276,6 +276,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "此会话数据目录为空。",
     ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage("会话信息"),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会话摘要"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
       "会话 Token 占比",
@@ -402,7 +403,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("帮助与反馈"),
     "hideApiKey": MessageLookupByLibrary.simpleMessage("隐藏 API 密钥"),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("隐藏智能体信息"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "隐藏会话信息",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("隐藏侧栏"),
     "home": MessageLookupByLibrary.simpleMessage("首页"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("小时用量"),
@@ -707,10 +710,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "来自 Stars 的图片",
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("显示 API 密钥"),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "显示会话信息",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "在会话内容中显示执行状态。",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("显示智能体信息"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("显示侧栏"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("包含静态资源"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("兼容性"),

@@ -10,9 +10,6 @@ class StarsDesktopThemeSpec {
   static const double sidebarMaxWidth = 360;
   static const double listPanelWidth = 300;
   static const double profileRailWidth = 300;
-  static const double inspectorWidth = 360;
-  static const double inspectorMinWidth = 280;
-  static const double inspectorMaxWidth = 420;
   static const double detailMinWidth = 560;
   static const double toolbarHeight = 50;
   static const double menuBarHeight = toolbarHeight;
@@ -80,7 +77,6 @@ class StarsDesktopThemeSpec {
   static const BorderRadius containerRadius = BorderRadius.all(
     Radius.circular(8),
   );
-  static const BorderRadius inspectorRadius = containerRadius;
 
   static StarsDesktopTokens tokens(BuildContext context) =>
       StarsDesktopTokens.of(context);
@@ -228,24 +224,6 @@ class StarsDesktopThemeSpec {
 
   static BoxDecoration workspaceDecoration(BuildContext context) =>
       BoxDecoration(color: workspaceSurface(context));
-
-  /// The compatibility inspector decoration is the docked, structural form.
-  /// Overlay inspectors should use [StarsGlassSurface].
-  static BoxDecoration inspectorDecoration(BuildContext context) =>
-      BoxDecoration(
-        color: panelSurface(context),
-        border: Border(left: BorderSide(color: outline(context))),
-      );
-
-  static BoxDecoration overlayInspectorDecoration(BuildContext context) {
-    final semanticTokens = tokens(context);
-    return BoxDecoration(
-      color: semanticTokens.raisedSurface,
-      borderRadius: inspectorRadius,
-      border: Border.all(color: semanticTokens.separator),
-      boxShadow: floatingShadow(context),
-    );
-  }
 
   static BoxDecoration statusDecoration(BuildContext context, {Color? color}) =>
       BoxDecoration(

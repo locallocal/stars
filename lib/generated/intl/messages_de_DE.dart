@@ -221,10 +221,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System-Prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -347,6 +346,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
+    ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage(
+      "Unterhaltungsinformationen",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Gesprächszusammenfassung",
@@ -544,7 +546,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "hideApiKey": MessageLookupByLibrary.simpleMessage(
       "API-Schlüssel ausblenden",
     ),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "Unterhaltungsinformationen ausblenden",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("Startseite"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
@@ -979,10 +983,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "showApiKey": MessageLookupByLibrary.simpleMessage(
       "API-Schlüssel anzeigen",
     ),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "Unterhaltungsinformationen anzeigen",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Ausführungsdetails in Unterhaltungsnachrichten anzeigen.",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "Assets verfügbar",

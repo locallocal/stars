@@ -68,7 +68,7 @@ class StarsInlineErrorAlert extends StatelessWidget {
   }
 }
 
-/// A shared label/value row for the desktop conversation inspector.
+/// A shared label/value row for desktop information panels.
 ///
 /// The label always starts after the same icon gutter. Text values occupy the
 /// available trailing region and align to its right edge, while controls can

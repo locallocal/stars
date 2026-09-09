@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -1450,21 +1449,21 @@ class S {
     );
   }
 
-  /// `Hide Bot Info`
-  String get hideInspector {
+  /// `Hide Conversation Info`
+  String get hideConversationInformation {
     return Intl.message(
-      'Hide Bot Info',
-      name: 'hideInspector',
+      'Hide Conversation Info',
+      name: 'hideConversationInformation',
       desc: '',
       args: [],
     );
   }
 
-  /// `Show Bot Info`
-  String get showInspector {
+  /// `Show Conversation Info`
+  String get showConversationInformation {
     return Intl.message(
-      'Show Bot Info',
-      name: 'showInspector',
+      'Show Conversation Info',
+      name: 'showConversationInformation',
       desc: '',
       args: [],
     );
@@ -1475,6 +1474,16 @@ class S {
     return Intl.message(
       'Bot Information',
       name: 'botInformation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Conversation Information`
+  String get conversationInformation {
+    return Intl.message(
+      'Conversation Information',
+      name: 'conversationInformation',
       desc: '',
       args: [],
     );
@@ -1510,7 +1519,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -4751,7 +4761,8 @@ class S {
     return Intl.message(
       'Starting…',
       name: 'startupStarting',
-      desc: 'Status shown while Stars loads the profile before the main application starts',
+      desc:
+          'Status shown while Stars loads the profile before the main application starts',
       args: [],
     );
   }
@@ -4791,7 +4802,8 @@ class S {
     return Intl.message(
       'This database was created by a newer version of Stars. Update the app before opening it.',
       name: 'databaseDowngradeNotSupported',
-      desc: 'Safe error shown when the local database is newer than the application',
+      desc:
+          'Safe error shown when the local database is newer than the application',
       args: [],
     );
   }
@@ -4801,7 +4813,8 @@ class S {
     return Intl.message(
       'The database integrity check failed, and recovery from this version\'s backup was unsuccessful.',
       name: 'databaseRecoveryFailed',
-      desc: 'Safe error shown when database validation and backup recovery both fail',
+      desc:
+          'Safe error shown when database validation and backup recovery both fail',
       args: [],
     );
   }
@@ -5049,7 +5062,8 @@ class S {
     return Intl.message(
       'I can\'t give a reliable factual answer to “$question”, so I won\'t guess.\n\nVerification status: $reason\n\nYou can review the evidence details, provide a reliable source, or ask me to verify again.',
       name: 'strictGroundingUnableToVerifyForQuestion',
-      desc: 'Safe strict-mode refusal tailored to the current user question and verification reason',
+      desc:
+          'Safe strict-mode refusal tailored to the current user question and verification reason',
       args: [question, reason],
     );
   }
@@ -5189,7 +5203,8 @@ class S {
     return Intl.message(
       '$status. $reason',
       name: 'answerTrustSemanticLabel',
-      desc: 'Accessible label combining an assistant response trust status and its reason',
+      desc:
+          'Accessible label combining an assistant response trust status and its reason',
       args: [status, reason],
     );
   }

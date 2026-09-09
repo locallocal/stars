@@ -220,10 +220,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt di sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Gestito da Stars. Quando è attivo, il contenuto seguente viene aggiunto alle richieste del modello della conversazione; quando è disattivato, viene omesso. Il contesto di esecuzione necessario non è interessato. Il contenuto non è modificabile.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Gestito da Stars. Quando è attivo, il contenuto seguente viene aggiunto alle richieste del modello della conversazione; quando è disattivato, viene omesso. Il contesto di esecuzione necessario non è interessato. Il contenuto non è modificabile.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -350,6 +349,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
+    ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage(
+      "Informazioni sulla conversazione",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Riepilogo conversazione",
@@ -547,7 +549,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "helpAndFeedback": MessageLookupByLibrary.simpleMessage("Aiuto e feedback"),
     "hideApiKey": MessageLookupByLibrary.simpleMessage("Nascondi chiave API"),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "Nascondi informazioni sulla conversazione",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("Home"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage("Utilizzo orario"),
@@ -976,10 +980,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Image from Stars",
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("Mostra chiave API"),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "Mostra informazioni sulla conversazione",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Mostra i dettagli di esecuzione nei messaggi della conversazione.",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "Risorse disponibili",

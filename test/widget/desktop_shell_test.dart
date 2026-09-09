@@ -209,7 +209,7 @@ void main() {
     });
   });
 
-  testWidgets('desktop chat inspector uses the wider responsive sheet', (
+  testWidgets('desktop conversation info replaces chat at message width', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -237,19 +237,29 @@ void main() {
       await tester.pumpWidget(desktopHarness(selectedChatBot: bot));
       await tester.pumpAndSettle();
 
+      expect(find.bySemanticsLabel('显示会话信息'), findsOneWidget);
       await tester.tap(
-        find.byKey(const ValueKey<String>('desktop-toolbar-inspector')),
+        find.byKey(const ValueKey<String>('desktop-toolbar-conversation-info')),
       );
       await tester.pumpAndSettle();
 
-      final sheet = tester.widget<ShadSheet>(find.byType(ShadSheet));
-      expect(sheet.constraints?.minWidth, StarsDesktopThemeSpec.inspectorWidth);
-      expect(sheet.constraints?.maxWidth, StarsDesktopThemeSpec.inspectorWidth);
-      final inspector = find.byKey(
-        const PageStorageKey<String>('desktop-context-inspector'),
+      expect(find.byType(ShadSheet), findsNothing);
+      expect(find.bySemanticsLabel('隐藏会话信息'), findsWidgets);
+      final content = tester.widget<ConstrainedBox>(
+        find.byKey(
+          const ValueKey<String>('desktop-conversation-information-content'),
+        ),
       );
-      final inspectorList = tester.widget<ListView>(inspector);
-      expect(inspectorList.padding, const EdgeInsets.only(top: 12, right: 16));
+      expect(
+        content.constraints.maxWidth,
+        StarsDesktopThemeSpec.contentMaxWidth,
+      );
+      final conversationInfo = find.byKey(
+        const PageStorageKey<String>('desktop-conversation-information-list'),
+      );
+      final infoList = tester.widget<ListView>(conversationInfo);
+      expect(infoList.padding, const EdgeInsets.fromLTRB(16, 12, 16, 20));
+      expect(find.text('会话信息'), findsOneWidget);
       final infoRows = find.byType(StarsInspectorInfoRow);
       expect(infoRows, findsNWidgets(5));
       final labelLefts = <double>[];
@@ -267,7 +277,7 @@ void main() {
           closeTo(tester.getRect(row).right, 0.01),
         );
         expect(
-          tester.getRect(inspector).right - tester.getRect(row).right,
+          tester.getRect(conversationInfo).right - tester.getRect(row).right,
           greaterThanOrEqualTo(16),
         );
       }
