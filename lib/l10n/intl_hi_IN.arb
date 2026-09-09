@@ -851,6 +851,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "टोकन उपयोग",
     "conversationTokenShare": "वार्तालाप के अनुसार टोकन हिस्सेदारी",
+    "deletedConversations": "हटाई गई बातचीत",
     "totalTokens": "कुल टोकन",
     "noTokenUsageRecorded": "कोई टोकन उपयोग दर्ज नहीं है",
     "dailyTokenUsage": "दैनिक उपयोग",

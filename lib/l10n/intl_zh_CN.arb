@@ -856,6 +856,7 @@
     },
     "tokenUsage": "Token 用量",
     "conversationTokenShare": "会话 Token 占比",
+    "deletedConversations": "已删除会话",
     "inputTokens": "输入 Token",
     "outputTokens": "输出 Token",
     "totalTokens": "Token 总量",

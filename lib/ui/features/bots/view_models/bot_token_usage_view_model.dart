@@ -14,9 +14,15 @@ class BotConversationTokenUsage {
     required this.usage,
   });
 
-  final String chatId;
+  const BotConversationTokenUsage.deleted({required this.usage})
+    : chatId = null,
+      preview = '';
+
+  final String? chatId;
   final String preview;
   final ModelTokenUsage usage;
+
+  bool get isDeleted => chatId == null;
 }
 
 class BotTokenUsageViewModel extends ChangeNotifier {
@@ -80,25 +86,32 @@ class BotTokenUsageViewModel extends ChangeNotifier {
             record.usage;
       }
       final chatsById = {for (final chat in chats) chat.id: chat};
-      final entries =
-          usageByChat.entries.where((entry) => entry.value.hasData).toList()
-            ..sort((left, right) {
-              final usageOrder = right.value.effectiveTotalTokens.compareTo(
-                left.value.effectiveTotalTokens,
-              );
-              return usageOrder != 0
-                  ? usageOrder
-                  : left.key.compareTo(right.key);
-            });
+      final entries = <BotConversationTokenUsage>[];
+      var deletedConversationUsage = ModelTokenUsage.empty;
+      for (final entry in usageByChat.entries) {
+        if (!entry.value.hasData) continue;
+        final chat = chatsById[entry.key];
+        if (chat == null) {
+          deletedConversationUsage += entry.value;
+          continue;
+        }
+        entries.add(
+          BotConversationTokenUsage(
+            chatId: entry.key,
+            preview: chat.lastMessage.trim(),
+            usage: entry.value,
+          ),
+        );
+      }
+      if (deletedConversationUsage.hasData) {
+        entries.add(
+          BotConversationTokenUsage.deleted(usage: deletedConversationUsage),
+        );
+      }
+      entries.sort(_compareConversationUsage);
       _usage = _timeline.totalUsage;
       _conversationUsages = List<BotConversationTokenUsage>.unmodifiable(
-        entries.map((entry) {
-          return BotConversationTokenUsage(
-            chatId: entry.key,
-            preview: chatsById[entry.key]?.lastMessage.trim() ?? '',
-            usage: entry.value,
-          );
-        }),
+        entries,
       );
     } catch (error) {
       if (_disposed || generation != _loadGeneration) return;
@@ -135,4 +148,16 @@ class BotTokenUsageViewModel extends ChangeNotifier {
     unawaited(_chatSubscription.cancel());
     super.dispose();
   }
+}
+
+int _compareConversationUsage(
+  BotConversationTokenUsage left,
+  BotConversationTokenUsage right,
+) {
+  final usageOrder = right.usage.effectiveTotalTokens.compareTo(
+    left.usage.effectiveTotalTokens,
+  );
+  if (usageOrder != 0) return usageOrder;
+  if (left.isDeleted != right.isDeleted) return left.isDeleted ? 1 : -1;
+  return (left.chatId ?? '').compareTo(right.chatId ?? '');
 }

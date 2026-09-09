@@ -856,6 +856,7 @@
     },
     "tokenUsage": "Token usage",
     "conversationTokenShare": "Token share by conversation",
+    "deletedConversations": "Deleted conversations",
     "inputTokens": "Input tokens",
     "outputTokens": "Output tokens",
     "totalTokens": "Total tokens",

@@ -58,6 +58,57 @@ void main() {
     viewModel.showDaily();
     expect(viewModel.visibleBuckets, same(viewModel.dailyBuckets));
   });
+
+  test(
+    'combines usage from all deleted conversations into one entry',
+    () async {
+      final messages = _FakeMessageRepository([
+        _record(
+          'live',
+          'chat-live',
+          DateTime(2026, 7, 24, 9),
+          input: 40,
+          output: 10,
+        ),
+        _record(
+          'deleted-a',
+          'chat-deleted-a',
+          DateTime(2026, 7, 25, 10),
+          input: 20,
+          output: 5,
+        ),
+        _record(
+          'deleted-b',
+          'chat-deleted-b',
+          DateTime(2026, 7, 26, 11),
+          input: 10,
+          output: 15,
+        ),
+      ]);
+      final viewModel = BotTokenUsageViewModel(
+        botId: 'bot-1',
+        messageRepository: messages,
+        chatRepository: _FakeChatRepository([
+          _chat('chat-live', 'Active conversation'),
+        ]),
+        now: () => DateTime(2026, 7, 27, 12),
+      );
+      addTearDown(viewModel.dispose);
+
+      await viewModel.load();
+
+      expect(viewModel.usage.effectiveTotalTokens, 100);
+      expect(viewModel.conversationUsages, hasLength(2));
+      final deleted = viewModel.conversationUsages.singleWhere(
+        (entry) => entry.isDeleted,
+      );
+      expect(deleted.chatId, isNull);
+      expect(deleted.preview, isEmpty);
+      expect(deleted.usage.inputTokens, 30);
+      expect(deleted.usage.outputTokens, 20);
+      expect(deleted.usage.effectiveTotalTokens, 50);
+    },
+  );
 }
 
 ModelTokenUsageRecord _record(

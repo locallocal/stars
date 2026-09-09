@@ -304,6 +304,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteChat": MessageLookupByLibrary.simpleMessage("删除聊天"),
     "deleteChatFailed": m15,
     "deleteMcpServer": MessageLookupByLibrary.simpleMessage("删除 MCP 服务器"),
+    "deletedConversations": MessageLookupByLibrary.simpleMessage("已删除会话"),
     "desktopAboutAndLegal": MessageLookupByLibrary.simpleMessage("关于与法律信息"),
     "desktopAppearanceAndLanguage": MessageLookupByLibrary.simpleMessage(
       "外观与语言",

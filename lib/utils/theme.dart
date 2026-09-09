@@ -9,6 +9,31 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 part 'desktop_theme_spec.dart';
 part 'theme_components.dart';
 
+const _starsChartColorKeys = <String>[
+  'chart-1',
+  'chart-2',
+  'chart-3',
+  'chart-4',
+  'chart-5',
+];
+
+// Flutter sRGB equivalents of shadcn/ui's default chart tokens.
+const _starsLightChartColors = <String, Color>{
+  'chart-1': Color(0xFFF54900),
+  'chart-2': Color(0xFF009689),
+  'chart-3': Color(0xFF104E64),
+  'chart-4': Color(0xFFFFB900),
+  'chart-5': Color(0xFFFE9A00),
+};
+
+const _starsDarkChartColors = <String, Color>{
+  'chart-1': Color(0xFF1447E6),
+  'chart-2': Color(0xFF00BC7D),
+  'chart-3': Color(0xFFFE9A00),
+  'chart-4': Color(0xFFAD46FF),
+  'chart-5': Color(0xFFFF2056),
+};
+
 @immutable
 class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
   const StarsDesktopTokens({
@@ -262,6 +287,23 @@ class StarsDesktopTokens extends ThemeExtension<StarsDesktopTokens> {
   }
 }
 
+extension StarsShadChartColors on ShadColorScheme {
+  /// Returns a theme-aware chart color, cycling after the five shadcn tokens.
+  Color chartColor(int index) {
+    assert(index >= 0, 'Chart color index must be non-negative.');
+    final normalizedIndex = index % _starsChartColorKeys.length;
+    final configured = custom[_starsChartColorKeys[normalizedIndex]];
+    if (configured != null) return configured;
+    return switch (normalizedIndex) {
+      0 => primary,
+      1 => selection,
+      2 => accentForeground,
+      3 => destructive,
+      _ => mutedForeground,
+    };
+  }
+}
+
 ShadThemeData buildStarsShadTheme({
   required Brightness brightness,
   required double fontSize,
@@ -269,10 +311,12 @@ ShadThemeData buildStarsShadTheme({
 }) {
   final contentFontSize = fontSize.clamp(12.0, 24.0);
   final isDark = brightness == Brightness.dark;
-  final baseColorScheme =
-      isDark
+  final baseColorScheme = (isDark
           ? const ShadZincColorScheme.dark()
-          : const ShadZincColorScheme.light();
+          : const ShadZincColorScheme.light())
+      .copyWith(
+        custom: isDark ? _starsDarkChartColors : _starsLightChartColors,
+      );
   final colorScheme =
       highContrast
           ? baseColorScheme.copyWith(

@@ -392,6 +392,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteMcpServer": MessageLookupByLibrary.simpleMessage(
       "Delete MCP Server",
     ),
+    "deletedConversations": MessageLookupByLibrary.simpleMessage(
+      "Conversations supprimées",
+    ),
     "desktopAboutAndLegal": MessageLookupByLibrary.simpleMessage(
       "À propos et mentions légales",
     ),

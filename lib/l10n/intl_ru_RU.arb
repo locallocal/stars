@@ -851,6 +851,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "Использование токенов",
     "conversationTokenShare": "Доля токенов по диалогам",
+    "deletedConversations": "Удалённые диалоги",
     "totalTokens": "Всего токенов",
     "noTokenUsageRecorded": "Нет данных об использовании токенов",
     "dailyTokenUsage": "Ежедневное использование",

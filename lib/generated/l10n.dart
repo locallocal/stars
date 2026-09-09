@@ -2871,6 +2871,16 @@ class S {
     );
   }
 
+  /// `Deleted conversations`
+  String get deletedConversations {
+    return Intl.message(
+      'Deleted conversations',
+      name: 'deletedConversations',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Input tokens`
   String get inputTokens {
     return Intl.message(

@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/view_models/token_usage_timeline.dart';
@@ -111,9 +111,12 @@ class _ConversationTokenShare extends StatelessWidget {
       0,
       (sum, entry) => sum + entry.usage.effectiveTotalTokens,
     );
+    final colorScheme = ShadTheme.of(context).colorScheme;
     final colors = [
       for (var index = 0; index < entries.length; index++)
-        _sliceColor(context, index),
+        entries[index].isDeleted
+            ? colorScheme.mutedForeground
+            : colorScheme.chartColor(index),
     ];
     final labels = [
       for (var index = 0; index < entries.length; index++)
@@ -248,40 +251,50 @@ class _ConversationTokenLegend extends StatelessWidget {
         for (var index = 0; index < entries.length; index++)
           Padding(
             key: ValueKey<String>(
-              'bot-token-usage-conversation-${entries[index].chatId}',
+              'bot-token-usage-conversation-'
+              '${entries[index].chatId ?? 'deleted'}',
             ),
             padding: EdgeInsets.only(
               bottom: index == entries.length - 1 ? 0 : 10,
             ),
-            child: Tooltip(
-              message:
-                  '${labels[index]} · '
-                  '${numberFormat.format(entries[index].usage.effectiveTotalTokens)} · ${_formatPercentage(context, entries[index], total)}',
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: colors[index],
-                      shape: BoxShape.circle,
+            child: ShadTooltip(
+              builder:
+                  (context) => Text(
+                    '${labels[index]} · '
+                    '${numberFormat.format(entries[index].usage.effectiveTotalTokens)} · '
+                    '${_formatPercentage(context, entries[index], total)}',
+                  ),
+              child: ShadGestureDetector(
+                child: Row(
+                  children: [
+                    Container(
+                      key: ValueKey<String>(
+                        'bot-token-usage-color-'
+                        '${entries[index].chatId ?? 'deleted'}',
+                      ),
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: colors[index],
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      labels[index],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: StarsDesktopThemeSpec.bodyStyle(context),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        labels[index],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: StarsDesktopThemeSpec.bodyStyle(context),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatPercentage(context, entries[index], total),
-                    style: StarsDesktopThemeSpec.metaStyle(context),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatPercentage(context, entries[index], total),
+                      style: StarsDesktopThemeSpec.metaStyle(context),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -295,6 +308,7 @@ String _conversationLabel(
   BotConversationTokenUsage entry,
   int index,
 ) {
+  if (entry.isDeleted) return S.of(context).deletedConversations;
   final preview = entry.preview.replaceAll(RegExp(r'\s+'), ' ').trim();
   return preview.isEmpty ? '${S.of(context).chats} ${index + 1}' : preview;
 }
@@ -310,16 +324,6 @@ String _formatPercentage(
     locale: Localizations.localeOf(context).toString(),
     decimalDigits: 1,
   ).format(percentage);
-}
-
-Color _sliceColor(BuildContext context, int index) {
-  final dark = Theme.of(context).brightness == Brightness.dark;
-  return HSLColor.fromAHSL(
-    1,
-    (215 + index * 137.5) % 360,
-    dark ? 0.68 : 0.72,
-    dark ? 0.62 : 0.46,
-  ).toColor();
 }
 
 class _ConversationTokenPiePainter extends CustomPainter {

@@ -851,6 +851,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "Utilisation des jetons",
     "conversationTokenShare": "Répartition des jetons par conversation",
+    "deletedConversations": "Conversations supprimées",
     "totalTokens": "Total des jetons",
     "noTokenUsageRecorded": "Aucune utilisation de jetons enregistrée",
     "dailyTokenUsage": "Utilisation quotidienne",
