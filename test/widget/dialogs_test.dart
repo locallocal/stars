@@ -345,6 +345,19 @@ void main() {
       final approvalSwitch = find.byKey(
         const ValueKey<String>('add-bot-skill-no-approval-user:Release Notes'),
       );
+      expect(testSkill, findsNothing);
+      expect(skillToggle, findsNothing);
+      expect(approvalSwitch, findsNothing);
+
+      await tester.tap(selectedSkill);
+      await tester.pumpAndSettle();
+
+      final skillSettings = find.byKey(
+        const ValueKey<String>('add-bot-skill-settings-user:Release Notes'),
+      );
+      expect(skillSettings, findsOneWidget);
+      expect(testSkill, findsOneWidget);
+      expect(skillToggle, findsOneWidget);
       expect(tester.widget<ShadSwitch>(approvalSwitch).value, isFalse);
       await tester.ensureVisible(approvalSwitch);
       await tester.pumpAndSettle();
@@ -358,12 +371,8 @@ void main() {
         isFalse,
       );
       expect(
-        find.descendant(of: selectedSkill, matching: find.text('测试')),
+        find.descendant(of: skillSettings, matching: find.text('测试')),
         findsOneWidget,
-      );
-      expect(
-        tester.getRect(testSkill).right,
-        lessThan(tester.getRect(skillToggle).left),
       );
       await tester.tap(testSkill);
       await tester.pumpAndSettle();
@@ -373,6 +382,15 @@ void main() {
       );
       await tester.tap(
         find.byKey(const ValueKey<String>('cancel-skill-description-test')),
+      );
+      await tester.pumpAndSettle();
+      expect(skillSettings, findsOneWidget);
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>(
+            'add-bot-skill-settings-close-user:Release Notes',
+          ),
+        ),
       );
       await tester.pumpAndSettle();
       final providerField = find.byKey(
