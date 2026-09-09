@@ -242,26 +242,8 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
   Widget _buildConversationInfoPage(BuildContext context, Bot bot) {
     return ColoredBox(
       key: const ValueKey<String>('desktop-conversation-information'),
-      color: StarsDesktopTokens.of(context).contentBackground,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          StarsDesktopThemeSpec.formPagePadding.left,
-          0,
-          StarsDesktopThemeSpec.formPagePadding.right,
-          0,
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            key: const ValueKey<String>(
-              'desktop-conversation-information-content',
-            ),
-            constraints: const BoxConstraints(
-              maxWidth: StarsDesktopThemeSpec.contentMaxWidth,
-            ),
-            child: SizedBox.expand(child: _buildConversationInfo(context, bot)),
-          ),
-        ),
-      ),
+      color: StarsDesktopThemeSpec.workspaceSurface(context),
+      child: _buildConversationInfo(context, bot),
     );
   }
 
@@ -278,63 +260,146 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
         'desktop-conversation-information-list',
       ),
       controller: _conversationInfoScrollController,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: StarsDesktopThemeSpec.profilePagePadding,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                S.of(context).conversationInformation,
-                style: StarsDesktopThemeSpec.sectionTitleStyle(context),
-              ),
+        Center(
+          child: ConstrainedBox(
+            key: const ValueKey<String>(
+              'desktop-conversation-information-content',
             ),
-            StarsDesktopIconAction(
-              key: const ValueKey<String>(
-                'desktop-conversation-information-close',
-              ),
-              label: MaterialLocalizations.of(context).closeButtonTooltip,
-              onPressed: () => setState(() => _conversationInfoOpen = false),
-              icon: LucideIcons.x,
+            constraints: const BoxConstraints(
+              maxWidth: StarsDesktopThemeSpec.contentMaxWidth,
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        _ConversationInfoRow(
-          icon: LucideIcons.bot,
-          label: S.of(context).name,
-          value: bot.name,
-        ),
-        _ConversationInfoRow(
-          icon: LucideIcons.server,
-          label: S.of(context).provider,
-          value: bot.provider.isEmpty ? '—' : bot.provider,
-        ),
-        _ConversationInfoRow(
-          icon: LucideIcons.cpu,
-          label: S.of(context).model,
-          value: bot.model.isEmpty ? '—' : bot.model,
-        ),
-        ModelModalitiesView(
-          inputModalities:
-              generationViewModel?.capabilityProvider.getInputModalites() ??
-              bot.configuredInputModalities ??
-              const [InputModality.text],
-          outputModalities:
-              generationViewModel?.capabilityProvider.getOutputModalites() ??
-              bot.configuredOutputModalities ??
-              const [OutputModality.text],
-          keyPrefix: 'conversation-model-modalities',
-        ),
-        if (generationViewModel != null)
-          _buildConversationModelControls(generationViewModel),
-        if (_tokenUsageViewModel != null)
-          ConversationTokenUsagePanel(viewModel: _tokenUsageViewModel!),
-        if (_memoryViewModel != null)
-          ConversationMemoryPanel(
-            viewModel: _memoryViewModel!,
-            generationViewModel: _dependencies?.generationRegistry
-                .maybeViewModel(widget.selectedChatId),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            S.of(context).conversationInformation,
+                            key: const ValueKey<String>(
+                              'desktop-conversation-information-title',
+                            ),
+                            style: StarsDesktopThemeSpec.pageTitleStyle(
+                              context,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            bot.name,
+                            key: const ValueKey<String>(
+                              'desktop-conversation-information-description',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: StarsDesktopThemeSpec.bodyStyle(
+                              context,
+                            )?.copyWith(
+                              color: StarsDesktopThemeSpec.mutedText(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    StarsDesktopIconAction(
+                      key: const ValueKey<String>(
+                        'desktop-conversation-information-close',
+                      ),
+                      label:
+                          MaterialLocalizations.of(context).closeButtonTooltip,
+                      onPressed:
+                          () => setState(() => _conversationInfoOpen = false),
+                      icon: LucideIcons.x,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                StarsDesktopSectionCard(
+                  key: const ValueKey<String>(
+                    'desktop-conversation-basic-section',
+                  ),
+                  title: S.of(context).basicInformation,
+                  children: [
+                    _ConversationInfoRow(
+                      icon: LucideIcons.bot,
+                      label: S.of(context).name,
+                      value: bot.name,
+                    ),
+                    _ConversationInfoRow(
+                      icon: LucideIcons.server,
+                      label: S.of(context).provider,
+                      value: bot.provider.isEmpty ? '—' : bot.provider,
+                    ),
+                    _ConversationInfoRow(
+                      icon: LucideIcons.cpu,
+                      label: S.of(context).model,
+                      value: bot.model.isEmpty ? '—' : bot.model,
+                    ),
+                    ModelModalitiesView(
+                      inputModalities:
+                          generationViewModel?.capabilityProvider
+                              .getInputModalites() ??
+                          bot.configuredInputModalities ??
+                          const [InputModality.text],
+                      outputModalities:
+                          generationViewModel?.capabilityProvider
+                              .getOutputModalites() ??
+                          bot.configuredOutputModalities ??
+                          const [OutputModality.text],
+                      keyPrefix: 'conversation-model-modalities',
+                    ),
+                    if (generationViewModel != null)
+                      _buildConversationModelControls(generationViewModel),
+                  ],
+                ),
+                if (_tokenUsageViewModel != null) ...[
+                  const SizedBox(height: 32),
+                  StarsDesktopSectionCard(
+                    key: const ValueKey<String>(
+                      'desktop-conversation-token-usage-section',
+                    ),
+                    title: S.of(context).tokenUsage,
+                    titleKey: const ValueKey<String>(
+                      'token-usage-section-title',
+                    ),
+                    children: [
+                      ConversationTokenUsagePanel(
+                        viewModel: _tokenUsageViewModel!,
+                        showSectionHeader: false,
+                      ),
+                    ],
+                  ),
+                ],
+                if (_memoryViewModel != null) ...[
+                  const SizedBox(height: 32),
+                  StarsDesktopSectionCard(
+                    key: const ValueKey<String>(
+                      'desktop-conversation-memory-section',
+                    ),
+                    title: S.of(context).contextAndMemory,
+                    titleKey: const ValueKey<String>(
+                      'conversation-memory-section-title',
+                    ),
+                    children: [
+                      ConversationMemoryPanel(
+                        viewModel: _memoryViewModel!,
+                        generationViewModel: _dependencies?.generationRegistry
+                            .maybeViewModel(widget.selectedChatId),
+                        showSectionHeader: false,
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
+        ),
       ],
     );
   }

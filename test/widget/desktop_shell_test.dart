@@ -258,8 +258,24 @@ void main() {
         const PageStorageKey<String>('desktop-conversation-information-list'),
       );
       final infoList = tester.widget<ListView>(conversationInfo);
-      expect(infoList.padding, const EdgeInsets.fromLTRB(16, 12, 16, 20));
+      expect(infoList.padding, StarsDesktopThemeSpec.profilePagePadding);
       expect(find.text('会话信息'), findsOneWidget);
+      final pageTitle = find.byKey(
+        const ValueKey<String>('desktop-conversation-information-title'),
+      );
+      expect(
+        tester.widget<Text>(pageTitle).style,
+        StarsDesktopThemeSpec.pageTitleStyle(tester.element(pageTitle)),
+      );
+      final basicSection = find.byKey(
+        const ValueKey<String>('desktop-conversation-basic-section'),
+      );
+      expect(basicSection, findsOneWidget);
+      expect(
+        find.descendant(of: basicSection, matching: find.byType(ShadCard)),
+        findsOneWidget,
+      );
+      expect(find.text('基本信息'), findsOneWidget);
       final infoRows = find.byType(StarsInspectorInfoRow);
       expect(infoRows, findsNWidgets(5));
       final labelLefts = <double>[];
