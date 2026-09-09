@@ -48,8 +48,6 @@ void main() {
       tokens.windowBackground,
     );
     expect(StarsDesktopThemeSpec.sidebarWidth, 300);
-    expect(StarsDesktopThemeSpec.inspectorWidth, 360);
-    expect(StarsDesktopThemeSpec.inspectorMaxWidth, 420);
     expect(StarsDesktopThemeSpec.toolbarHeight, 50);
     expect(StarsDesktopThemeSpec.menuBarHeight, 50);
     expect(StarsDesktopThemeSpec.sidebarDecoration(testContext).border, isNull);

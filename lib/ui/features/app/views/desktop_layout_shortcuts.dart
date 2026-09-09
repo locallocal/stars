@@ -5,8 +5,7 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
     required BuildContext context,
     required bool isChat,
     required bool overlaySidebar,
-    required bool inspectorAvailable,
-    required bool useInspectorSheet,
+    required bool conversationInfoAvailable,
   }) {
     return <ShortcutActivator, VoidCallback>{
       const SingleActivator(LogicalKeyboardKey.keyB, control: true):
@@ -26,18 +25,14 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
         control: true,
         alt: true,
       ): () {
-        if (inspectorAvailable) {
-          _toggleInspector(context, useChatSheet: useInspectorSheet);
-        }
+        if (conversationInfoAvailable) _toggleConversationInfo();
       },
       const SingleActivator(
         LogicalKeyboardKey.keyI,
         meta: true,
         alt: true,
       ): () {
-        if (inspectorAvailable) {
-          _toggleInspector(context, useChatSheet: useInspectorSheet);
-        }
+        if (conversationInfoAvailable) _toggleConversationInfo();
       },
       const SingleActivator(LogicalKeyboardKey.comma, control: true):
           () => _selectPage(4),
@@ -126,14 +121,10 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
     });
   }
 
-  void _toggleInspector(BuildContext context, {required bool useChatSheet}) {
-    if (useChatSheet) {
-      unawaited(_openChatOverlay(context, _ChatOverlay.inspector));
-      return;
-    }
+  void _toggleConversationInfo() {
     _updateState(() {
-      _inspectorOpen = !_inspectorOpen;
-      if (_inspectorOpen) _compactSidebarOpen = false;
+      _conversationInfoOpen = !_conversationInfoOpen;
+      if (_conversationInfoOpen) _compactSidebarOpen = false;
     });
   }
 
@@ -142,8 +133,8 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
       unawaited(_dismissActiveChatOverlay());
       return;
     }
-    if (_inspectorOpen) {
-      _updateState(() => _inspectorOpen = false);
+    if (_conversationInfoOpen) {
+      _updateState(() => _conversationInfoOpen = false);
     } else if (_compactSidebarOpen) {
       _updateState(() => _compactSidebarOpen = false);
     }

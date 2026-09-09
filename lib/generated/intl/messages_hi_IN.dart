@@ -216,10 +216,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "सिस्टम प्रॉम्प्ट",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -336,6 +335,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
+    ),
+    "conversationInformation": MessageLookupByLibrary.simpleMessage(
+      "बातचीत की जानकारी",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "वार्तालाप सारांश",
@@ -527,7 +529,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "सहायता और प्रतिक्रिया",
     ),
     "hideApiKey": MessageLookupByLibrary.simpleMessage("API कुंजी छिपाएँ"),
-    "hideInspector": MessageLookupByLibrary.simpleMessage("Hide Bot Info"),
+    "hideConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "बातचीत की जानकारी छिपाएँ",
+    ),
     "hideSidebar": MessageLookupByLibrary.simpleMessage("Hide Sidebar"),
     "home": MessageLookupByLibrary.simpleMessage("होम"),
     "hourlyTokenUsage": MessageLookupByLibrary.simpleMessage(
@@ -938,10 +942,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Image from Stars",
     ),
     "showApiKey": MessageLookupByLibrary.simpleMessage("API कुंजी दिखाएँ"),
+    "showConversationInformation": MessageLookupByLibrary.simpleMessage(
+      "बातचीत की जानकारी दिखाएँ",
+    ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "बातचीत के संदेशों में निष्पादन विवरण दिखाएँ।",
     ),
-    "showInspector": MessageLookupByLibrary.simpleMessage("Show Bot Info"),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "एसेट उपलब्ध हैं",

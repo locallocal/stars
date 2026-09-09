@@ -31,7 +31,7 @@ part 'desktop_layout_shortcuts.dart';
 part 'desktop_layout_overlays.dart';
 part 'desktop_layout_resizing.dart';
 
-enum _ChatOverlay { sidebar, inspector }
+enum _ChatOverlay { sidebar }
 
 /// Adaptive desktop shell for macOS, Windows and Linux.
 ///
@@ -85,11 +85,10 @@ class _DesktopLayoutState extends State<DesktopLayout> {
   void _updateState(VoidCallback callback) => setState(callback);
 
   double _sidebarWidth = StarsDesktopThemeSpec.sidebarWidth;
-  double _inspectorWidth = StarsDesktopThemeSpec.inspectorWidth;
   bool _sidebarVisible = true;
   bool _compactSidebarOpen = false;
-  bool _inspectorOpen = false;
-  final ScrollController _inspectorScrollController = ScrollController();
+  bool _conversationInfoOpen = false;
+  final ScrollController _conversationInfoScrollController = ScrollController();
   _ChatOverlay? _activeChatOverlay;
   NavigatorState? _chatOverlayNavigator;
   ModalRoute<dynamic>? _chatOverlayRoute;
@@ -137,8 +136,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     } else if (oldWidget.selectedChatBot != widget.selectedChatBot) {
       _replaceMemoryViewModel();
     }
-    if (widget.currentIndex != 0 && _inspectorOpen) {
-      _inspectorOpen = false;
+    if ((widget.currentIndex != 0 || widget.selectedChatBot == null) &&
+        _conversationInfoOpen) {
+      _conversationInfoOpen = false;
     }
     if (oldWidget.currentIndex == 0 && widget.currentIndex != 0) {
       _preserveChatOverlayIntent = false;
@@ -163,7 +163,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
         }),
       );
     }
-    _inspectorScrollController.dispose();
+    _conversationInfoScrollController.dispose();
     _tokenUsageViewModel?.dispose();
     _memoryViewModel?.dispose();
     super.dispose();
@@ -237,36 +237,11 @@ class _DesktopLayoutState extends State<DesktopLayout> {
               StarsDesktopThemeSpec.sidebarMinWidth,
               StarsDesktopThemeSpec.sidebarMaxWidth,
             );
-    final inspectorAvailable =
-        width >= 800 && widget.currentIndex == 0 && _activeBot != null;
-    final inspectorShouldDock =
-        width >= 1500 && _inspectorOpen && inspectorAvailable;
-    final dockInspector =
-        inspectorShouldDock && _activeChatOverlay != _ChatOverlay.inspector;
-    final overlayInspector =
-        width < 1500 && _inspectorOpen && inspectorAvailable;
-    final inspectorMaxWidth = math.min(
-      StarsDesktopThemeSpec.inspectorMaxWidth,
-      math.max(
-        StarsDesktopThemeSpec.inspectorMinWidth,
-        width -
-            (showSidebar ? sidebarWidth : 0) -
-            StarsDesktopThemeSpec.detailMinWidth -
-            StarsDesktopThemeSpec.splitterHitWidth * 2,
-      ),
-    );
-    final inspectorWidth =
-        _inspectorWidth
-            .clamp(StarsDesktopThemeSpec.inspectorMinWidth, inspectorMaxWidth)
-            .toDouble();
+    final conversationInfoAvailable =
+        widget.currentIndex == 0 && _activeBot != null;
 
     if (isChat) {
-      _closeChatOverlayForBreakpoint(
-        width: width,
-        sidebarDocked: sidebarDocked,
-        inspectorDocked: inspectorShouldDock,
-        inspectorAvailable: inspectorAvailable,
-      );
+      _closeChatOverlayForBreakpoint(sidebarDocked: sidebarDocked);
     }
 
     return FocusTraversalGroup(
@@ -276,8 +251,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
           context: context,
           isChat: isChat,
           overlaySidebar: overlaySidebar,
-          inspectorAvailable: inspectorAvailable,
-          useInspectorSheet: isChat && width < 1500,
+          conversationInfoAvailable: conversationInfoAvailable,
         ),
         child: Focus(
           autofocus: true,
@@ -309,12 +283,8 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                           label: S.of(context).showSidebar,
                           value: sidebarWidth,
                           onResize:
-                              (delta) => _resizeSidebar(
-                                delta,
-                                availableWidth: width,
-                                dockInspector: dockInspector,
-                                inspectorWidth: inspectorWidth,
-                              ),
+                              (delta) =>
+                                  _resizeSidebar(delta, availableWidth: width),
                           onReset: () => _resetSidebarWidth(width),
                         ),
                       ],
@@ -331,13 +301,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                               _ChatOverlay.sidebar
                                           : _compactSidebarOpen
                                       : _sidebarVisible,
-                              inspectorVisible:
-                                  dockInspector ||
-                                  (isChat
-                                      ? _activeChatOverlay ==
-                                          _ChatOverlay.inspector
-                                      : overlayInspector),
-                              inspectorAvailable: inspectorAvailable,
+                              conversationInfoVisible: _conversationInfoOpen,
+                              conversationInfoAvailable:
+                                  conversationInfoAvailable,
                               compact: isChat && overlaySidebar,
                               isChat: isChat,
                               onToggleSidebar:
@@ -346,12 +312,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                     overlay: overlaySidebar,
                                     useChatSheet: isChat,
                                   ),
-                              onToggleInspector:
-                                  inspectorAvailable
-                                      ? () => _toggleInspector(
-                                        context,
-                                        useChatSheet: isChat && width < 1500,
-                                      )
+                              onToggleConversationInfo:
+                                  conversationInfoAvailable
+                                      ? _toggleConversationInfo
                                       : null,
                               onCreateChat: widget.onCreateChat,
                               onSearchRequested:
@@ -377,36 +340,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                       )
                                       : null,
                             ),
-                            Expanded(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(child: _buildWorkspace(context)),
-                                  if (dockInspector) ...[
-                                    _DesktopResizeHandle(
-                                      label: S.of(context).showInspector,
-                                      value: inspectorWidth,
-                                      reversed: true,
-                                      onResize:
-                                          (delta) => _resizeInspector(
-                                            delta,
-                                            availableWidth: width,
-                                            sidebarWidth:
-                                                showSidebar ? sidebarWidth : 0,
-                                          ),
-                                      onReset: _resetInspectorWidth,
-                                    ),
-                                    SizedBox(
-                                      width: inspectorWidth,
-                                      child: _buildInspector(
-                                        context,
-                                        overlay: false,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
+                            Expanded(child: _buildWorkspace(context)),
                           ],
                         ),
                       ),
@@ -414,8 +348,6 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                   ),
                   if (!isChat && overlaySidebar && _compactSidebarOpen)
                     _buildSidebarOverlay(context, width),
-                  if (!isChat && overlayInspector)
-                    _buildInspectorOverlay(context, width),
                 ],
               ),
             ),

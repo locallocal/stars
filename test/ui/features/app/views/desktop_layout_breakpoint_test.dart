@@ -77,35 +77,36 @@ void main() {
     );
   }
 
-  for (final (width, inspectorDocked) in const [
-    (1499.0, false),
-    (1500.0, true),
-    (1501.0, true),
-  ]) {
+  for (final width in const [799.0, 1499.0, 1500.0, 1501.0]) {
     testWidgets(
-      'inspector uses ${inspectorDocked ? 'dock' : 'sheet'} at ${width.toInt()}px',
+      'conversation info replaces the workspace at ${width.toInt()}px',
       (tester) async {
         await _withDesktopPlatform(() async {
           await _pumpLayout(tester, width: width, selectedChatBot: _bot);
 
+          expect(find.bySemanticsLabel('显示会话信息'), findsOneWidget);
           await tester.tap(
-            find.byKey(const ValueKey<String>('desktop-toolbar-inspector')),
+            find.byKey(
+              const ValueKey<String>('desktop-toolbar-conversation-info'),
+            ),
           );
           await tester.pumpAndSettle();
 
-          final inspector = find.byKey(
-            const PageStorageKey<String>('desktop-context-inspector'),
+          final conversationInfo = find.byKey(
+            const ValueKey<String>('desktop-conversation-information'),
           );
-          final inspectorSheet = find.ancestor(
-            of: inspector,
-            matching: find.byType(ShadSheet),
-          );
+          expect(conversationInfo, findsOneWidget);
+          expect(find.byType(ShadSheet), findsNothing);
+          expect(find.bySemanticsLabel('隐藏会话信息'), findsWidgets);
 
-          expect(inspector, findsOneWidget);
-          expect(
-            inspectorSheet,
-            inspectorDocked ? findsNothing : findsOneWidget,
+          await tester.tap(
+            find.byKey(
+              const ValueKey<String>('desktop-conversation-information-close'),
+            ),
           );
+          await tester.pumpAndSettle();
+
+          expect(conversationInfo, findsNothing);
           expect(tester.takeException(), isNull);
         });
       },

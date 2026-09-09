@@ -5,7 +5,6 @@ class _DesktopResizeHandle extends StatefulWidget {
   final double value;
   final ValueChanged<double> onResize;
   final VoidCallback onReset;
-  final bool reversed;
 
   const _DesktopResizeHandle({
     super.key,
@@ -13,7 +12,6 @@ class _DesktopResizeHandle extends StatefulWidget {
     required this.value,
     required this.onResize,
     required this.onReset,
-    this.reversed = false,
   });
 
   @override
@@ -32,7 +30,7 @@ class _DesktopResizeHandleState extends State<_DesktopResizeHandle> {
   }
 
   void _moveHandle(double delta) {
-    widget.onResize(widget.reversed ? -delta : delta);
+    widget.onResize(delta);
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -240,12 +238,12 @@ class _AccountButton extends StatelessWidget {
   }
 }
 
-class _InspectorRow extends StatelessWidget {
+class _ConversationInfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
-  const _InspectorRow({
+  const _ConversationInfoRow({
     required this.icon,
     required this.label,
     required this.value,
