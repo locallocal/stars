@@ -5,6 +5,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/ui/core/view_models/token_usage_timeline.dart';
 import 'package:stars/ui/features/bots/view_models/bot_token_usage_view_model.dart';
 import 'package:stars/ui/features/bots/views/bot_token_usage.dart';
+import 'package:stars/utils/theme.dart';
 
 import '../../../../support/widget_test_support.dart';
 
@@ -123,6 +124,103 @@ void main() {
     );
     expect(find.text('聊天 1'), findsOneWidget);
     expect(find.text('100.0%'), findsOneWidget);
+  });
+
+  testWidgets('pie labels aggregated deleted conversations distinctly', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      const _Harness(
+        width: 800,
+        child: BotTokenUsagePanel(
+          usage: ModelTokenUsage(totalTokens: 100),
+          conversationUsages: [
+            BotConversationTokenUsage(
+              chatId: 'chat-live',
+              preview: '现有会话',
+              usage: ModelTokenUsage(totalTokens: 60),
+            ),
+            BotConversationTokenUsage.deleted(
+              usage: ModelTokenUsage(totalTokens: 40),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('现有会话'), findsOneWidget);
+    expect(find.text('已删除会话'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('bot-token-usage-conversation-deleted'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(RegExp(r'会话 Token 占比, 现有会话 60\.0%, 已删除会话 40\.0%')),
+      findsOneWidget,
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('pie uses the shad chart palette in light and dark themes', (
+    tester,
+  ) async {
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      await tester.pumpWidget(
+        _Harness(
+          width: 800,
+          brightness: brightness,
+          child: const BotTokenUsagePanel(
+            usage: ModelTokenUsage(totalTokens: 100),
+            conversationUsages: [
+              BotConversationTokenUsage(
+                chatId: 'chat-a',
+                preview: 'A',
+                usage: ModelTokenUsage(totalTokens: 40),
+              ),
+              BotConversationTokenUsage(
+                chatId: 'chat-b',
+                preview: 'B',
+                usage: ModelTokenUsage(totalTokens: 30),
+              ),
+              BotConversationTokenUsage(
+                chatId: 'chat-c',
+                preview: 'C',
+                usage: ModelTokenUsage(totalTokens: 20),
+              ),
+              BotConversationTokenUsage.deleted(
+                usage: ModelTokenUsage(totalTokens: 10),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final colorScheme =
+          ShadTheme.of(
+            tester.element(
+              find.byKey(
+                const ValueKey<String>('bot-conversation-token-pie-chart'),
+              ),
+            ),
+          ).colorScheme;
+      final activeColors = [
+        _legendColor(tester, 'chat-a'),
+        _legendColor(tester, 'chat-b'),
+        _legendColor(tester, 'chat-c'),
+      ];
+      expect(activeColors, [
+        colorScheme.chartColor(0),
+        colorScheme.chartColor(1),
+        colorScheme.chartColor(2),
+      ]);
+      expect(activeColors.toSet(), hasLength(3));
+      expect(_legendColor(tester, 'deleted'), colorScheme.mutedForeground);
+    }
   });
 
   testWidgets('panel appends the shared daily usage bars', (tester) async {
@@ -357,15 +455,20 @@ void main() {
 }
 
 class _Harness extends StatelessWidget {
-  const _Harness({required this.width, required this.child});
+  const _Harness({
+    required this.width,
+    required this.child,
+    this.brightness = Brightness.light,
+  });
 
   final double width;
   final Widget child;
+  final Brightness brightness;
 
   @override
   Widget build(BuildContext context) {
     return shadHarness(
-      brightness: Brightness.light,
+      brightness: brightness,
       homeBuilder:
           (context) => Scaffold(
             body: SingleChildScrollView(
@@ -377,4 +480,11 @@ class _Harness extends StatelessWidget {
           ),
     );
   }
+}
+
+Color _legendColor(WidgetTester tester, String id) {
+  final marker = tester.widget<Container>(
+    find.byKey(ValueKey<String>('bot-token-usage-color-$id')),
+  );
+  return (marker.decoration! as BoxDecoration).color!;
 }

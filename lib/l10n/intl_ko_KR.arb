@@ -851,6 +851,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "토큰 사용량",
     "conversationTokenShare": "대화별 토큰 비율",
+    "deletedConversations": "삭제된 대화",
     "totalTokens": "총 토큰",
     "noTokenUsageRecorded": "기록된 토큰 사용량 없음",
     "dailyTokenUsage": "일일 사용량",

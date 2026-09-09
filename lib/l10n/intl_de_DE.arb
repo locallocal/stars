@@ -851,6 +851,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "Token-Nutzung",
     "conversationTokenShare": "Token-Anteil nach Unterhaltung",
+    "deletedConversations": "Gelöschte Unterhaltungen",
     "totalTokens": "Token insgesamt",
     "noTokenUsageRecorded": "Keine Token-Nutzung erfasst",
     "dailyTokenUsage": "Tägliche Nutzung",

@@ -920,6 +920,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "Token 用量",
     "conversationTokenShare": "各對話 Token 占比",
+    "deletedConversations": "已刪除對話",
     "totalTokens": "Token 總量",
     "noTokenUsageRecorded": "尚無 Token 用量記錄",
     "dailyTokenUsage": "每日用量",

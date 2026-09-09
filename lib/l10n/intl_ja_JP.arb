@@ -851,6 +851,7 @@
     "deleteChatFailed": "Could not delete the chat: {error}",
     "tokenUsage": "トークン使用量",
     "conversationTokenShare": "会話別トークン比率",
+    "deletedConversations": "削除済みの会話",
     "totalTokens": "合計トークン",
     "noTokenUsageRecorded": "トークン使用履歴はありません",
     "dailyTokenUsage": "日別使用量",
