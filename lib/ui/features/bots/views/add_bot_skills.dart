@@ -5,6 +5,7 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/bots/view_models/bot_skill_view_model.dart';
+import 'package:stars/ui/features/bots/views/bot_skill_settings_dialog.dart';
 import 'package:stars/ui/features/bots/views/skill_description_test_dialog.dart';
 import 'package:stars/utils/theme.dart';
 
@@ -135,97 +136,54 @@ class _AddBotSkillsState extends State<AddBotSkills> {
   }
 
   Widget _buildSkillRow(SkillDescriptor skill) {
-    final strings = S.of(context);
     final binding = viewModel.bindingFor(skill.id);
     final enabled = binding?.enabled ?? false;
     final approvalExempt = binding?.requiresApproval == false;
-    final enabledStatus =
-        enabled ? strings.skillEnabled : strings.skillDisabled;
-    final enableSwitch = ShadSwitch(
-      key: ValueKey<String>('add-bot-skill-toggle-${skill.id}'),
-      value: enabled,
-      onChanged: (value) => _setEnabled(skill.id, value),
-      label: Text(enabledStatus),
-    );
-    final approvalSwitch = ShadSwitch(
-      key: ValueKey<String>('add-bot-skill-no-approval-${skill.id}'),
-      value: approvalExempt,
-      enabled: enabled,
-      onChanged:
-          enabled ? (value) => _setApprovalExempt(skill.id, value) : null,
-      label: Text(strings.mcpNoApprovalRequired),
-    );
-
-    return Padding(
+    return BotSkillSummaryRow(
       key: ValueKey<String>('add-bot-selected-skill-${skill.id}'),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final details = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(skill.name, style: ShadTheme.of(context).textTheme.small),
-              const SizedBox(height: 3),
-              Text(
-                skill.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: StarsDesktopThemeSpec.metaStyle(context),
-              ),
-            ],
-          );
-          final controls = Wrap(
-            key: ValueKey<String>('add-bot-skill-controls-${skill.id}'),
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              if (enabled && viewModel.supportsAutoActivation)
-                ShadButton.ghost(
-                  key: ValueKey<String>(
-                    'test-add-bot-skill-description-${skill.id}',
-                  ),
-                  size: ShadButtonSize.sm,
-                  width: 0,
-                  onPressed: () => _showSkillDescriptionTest(skill),
-                  leading: const Icon(LucideIcons.flaskConical, size: 14),
-                  child: Text(strings.testSkill),
-                ),
-              enableSwitch,
-              approvalSwitch,
-              StarsDesktopIconAction(
-                key: ValueKey<String>('remove-add-bot-skill-${skill.id}'),
-                icon: LucideIcons.trash2,
-                label: strings.removeSkill,
-                iconSize: 16,
-                onPressed: () => _removeSkill(skill.id),
-              ),
-            ],
-          );
-          if (constraints.maxWidth < 720) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                details,
-                const SizedBox(height: 10),
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: controls,
-                ),
-              ],
-            );
-          }
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(child: details),
-              const SizedBox(width: 16),
-              controls,
-            ],
-          );
-        },
+      skill: skill,
+      embedded: true,
+      isEnabled: enabled,
+      isApprovalExempt: approvalExempt,
+      onOpen: () => _showSkillSettings(skill),
+      removeButtonKey: ValueKey<String>('remove-add-bot-skill-${skill.id}'),
+      onRemove: () => _removeSkill(skill.id),
+    );
+  }
+
+  Future<void> _showSkillSettings(SkillDescriptor skill) async {
+    final binding = viewModel.bindingFor(skill.id);
+    final initialEnabled = binding?.enabled ?? false;
+    final initialApprovalExempt = binding?.requiresApproval == false;
+    await showBotSkillSettingsDialog(
+      context: context,
+      skill: skill,
+      embedded: true,
+      isEnabled: initialEnabled,
+      isApprovalExempt: initialApprovalExempt,
+      dialogKey: ValueKey<String>('add-bot-skill-settings-${skill.id}'),
+      closeButtonKey: ValueKey<String>(
+        'add-bot-skill-settings-close-${skill.id}',
       ),
+      enabledSwitchKey: ValueKey<String>('add-bot-skill-toggle-${skill.id}'),
+      approvalSwitchKey: ValueKey<String>(
+        'add-bot-skill-no-approval-${skill.id}',
+      ),
+      onEnabledChanged: (value) async {
+        await _setEnabled(skill.id, value);
+        return viewModel.bindingFor(skill.id)?.enabled ?? initialEnabled;
+      },
+      onApprovalExemptChanged: (value) async {
+        await _setApprovalExempt(skill.id, value);
+        return viewModel.bindingFor(skill.id)?.requiresApproval == false;
+      },
+      testButtonKey: ValueKey<String>(
+        'test-add-bot-skill-description-${skill.id}',
+      ),
+      onTest:
+          viewModel.supportsAutoActivation
+              ? () => _showSkillDescriptionTest(skill)
+              : null,
     );
   }
 

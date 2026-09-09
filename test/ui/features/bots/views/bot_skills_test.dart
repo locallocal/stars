@@ -74,6 +74,58 @@ void main() {
         expect(find.text('Skill 06'), findsOneWidget);
         expect(find.text('2 / 2'), findsOneWidget);
 
+        final skillRow = find.byKey(
+          const ValueKey<String>('bot-skill-user:Skill 06'),
+        );
+        await tester.ensureVisible(skillRow);
+        expect(
+          find.byKey(
+            const ValueKey<String>('bot-skill-no-approval-user:Skill 06'),
+          ),
+          findsNothing,
+        );
+        await tester.tap(skillRow);
+        await tester.pumpAndSettle();
+
+        final settingsDialog = find.byKey(
+          const ValueKey<String>('bot-skill-settings-user:Skill 06'),
+        );
+        final settingsClose = find.byKey(
+          const ValueKey<String>('bot-skill-settings-close-user:Skill 06'),
+        );
+        expect(settingsDialog, findsOneWidget);
+        expect(settingsClose, findsOneWidget);
+        final dialogSurface =
+            find
+                .ancestor(of: settingsClose, matching: find.byType(Stack))
+                .first;
+        expect(tester.getSize(settingsClose), const Size.square(44));
+        expect(
+          tester.getRect(dialogSurface).right -
+              tester.getRect(settingsClose).right,
+          closeTo(8, 0.01),
+        );
+        expect(
+          tester.getRect(settingsClose).top - tester.getRect(dialogSurface).top,
+          closeTo(12, 0.01),
+        );
+        final settingsDetails = find.byKey(
+          const ValueKey<String>('bot-skill-settings-details'),
+        );
+        final settingsControls = find.byKey(
+          const ValueKey<String>('bot-skill-settings-controls'),
+        );
+        expect(
+          (tester.getCenter(settingsDetails).dy -
+                  tester.getCenter(settingsControls).dy)
+              .abs(),
+          lessThanOrEqualTo(1),
+        );
+        expect(
+          tester.getRect(settingsDetails).right,
+          lessThan(tester.getRect(settingsControls).left),
+        );
+
         final approvalSwitch = find.byKey(
           const ValueKey<String>('bot-skill-no-approval-user:Skill 06'),
         );
@@ -106,12 +158,12 @@ void main() {
         expect(tester.widget<ShadSwitch>(approvalSwitch).enabled, isFalse);
         expect(tester.widget<ShadSwitch>(approvalSwitch).value, isTrue);
         expect(
-          find.descendant(
-            of: find.byKey(const ValueKey<String>('bot-skill-user:Skill 06')),
-            matching: find.text('已关闭'),
-          ),
+          find.descendant(of: settingsDialog, matching: find.text('已关闭')),
           findsOneWidget,
         );
+        await tester.tap(settingsClose);
+        await tester.pumpAndSettle();
+        expect(settingsDialog, findsNothing);
         expect(find.text('Skill 06'), findsOneWidget);
 
         final removeSkill = find.byKey(
@@ -279,13 +331,13 @@ void main() {
         find.byKey(
           const ValueKey<String>('bot-skill-no-approval-user:release-notes'),
         ),
-        findsOneWidget,
+        findsNothing,
       );
       expect(find.text('按消息启用'), findsNothing);
       expect(find.text('始终启用'), findsNothing);
       expect(
         find.descendant(of: skillRow, matching: find.text('测试')),
-        findsOneWidget,
+        findsNothing,
       );
 
       expect(
@@ -299,9 +351,19 @@ void main() {
       final skillToggle = find.byKey(
         const ValueKey<String>('bot-skill-toggle-user:release-notes'),
       );
+      await tester.ensureVisible(skillRow);
+      await tester.tap(skillRow);
+      await tester.pumpAndSettle();
+
+      final settingsDialog = find.byKey(
+        const ValueKey<String>('bot-skill-settings-user:release-notes'),
+      );
+      expect(settingsDialog, findsOneWidget);
+      expect(skillToggle, findsOneWidget);
+      expect(testDescription, findsOneWidget);
       expect(
-        tester.getRect(testDescription).right,
-        lessThan(tester.getRect(skillToggle).left),
+        find.descendant(of: settingsDialog, matching: testDescription),
+        findsOneWidget,
       );
       await tester.ensureVisible(testDescription);
       await tester.tap(testDescription);
@@ -347,6 +409,13 @@ void main() {
         find.byKey(const ValueKey<String>('cancel-skill-description-test')),
       );
       await tester.pumpAndSettle();
+      expect(settingsDialog, findsOneWidget);
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('bot-skill-settings-close-user:release-notes'),
+        ),
+      );
+      await tester.pumpAndSettle();
       expect(find.byType(ShadDialog), findsNothing);
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -386,16 +455,10 @@ void main() {
       await tester.pumpWidget(_harness(viewModel, readOnly: true));
       await tester.pumpAndSettle();
 
-      final skillToggle = find.byKey(
-        const ValueKey<String>('bot-skill-toggle-user:release-notes'),
-      );
-      final approvalSwitch = find.byKey(
-        const ValueKey<String>('bot-skill-no-approval-user:release-notes'),
-      );
       final skillRow = find.byKey(
         const ValueKey<String>('bot-skill-user:release-notes'),
       );
-      await tester.ensureVisible(skillToggle);
+      await tester.ensureVisible(skillRow);
 
       expect(find.byKey(const ValueKey<String>('add-bot-skill')), findsNothing);
       expect(
@@ -404,10 +467,34 @@ void main() {
         ),
         findsNothing,
       );
+      expect(
+        find.byKey(
+          const ValueKey<String>('bot-skill-toggle-user:release-notes'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: skillRow, matching: find.text('已开启')),
+        findsOneWidget,
+      );
+
+      await tester.tap(skillRow);
+      await tester.pumpAndSettle();
+
+      final settingsDialog = find.byKey(
+        const ValueKey<String>('bot-skill-settings-user:release-notes'),
+      );
+      final skillToggle = find.byKey(
+        const ValueKey<String>('bot-skill-toggle-user:release-notes'),
+      );
+      final approvalSwitch = find.byKey(
+        const ValueKey<String>('bot-skill-no-approval-user:release-notes'),
+      );
+      expect(settingsDialog, findsOneWidget);
       expect(tester.widget<ShadSwitch>(skillToggle).enabled, isFalse);
       expect(tester.widget<ShadSwitch>(approvalSwitch).enabled, isFalse);
       expect(
-        find.descendant(of: skillRow, matching: find.text('已开启')),
+        find.descendant(of: settingsDialog, matching: find.text('已开启')),
         findsOneWidget,
       );
 
@@ -415,7 +502,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bindingRepository.bindingFor('user:release-notes'), isNotNull);
-      expect(find.byType(ShadDialog), findsNothing);
+      expect(settingsDialog, findsOneWidget);
     } finally {
       debugDefaultTargetPlatformOverride = null;
       tester.view.resetPhysicalSize();

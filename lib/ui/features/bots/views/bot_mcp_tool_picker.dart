@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
+import 'package:stars/ui/features/bots/views/bot_capability_controls.dart';
 import 'package:stars/utils/mcp_search.dart';
 import 'package:stars/utils/theme.dart';
 
@@ -526,75 +527,83 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
     final title = tool.title.isEmpty ? tool.remoteName : tool.title;
     final enabledStatus =
         enabled ? S.of(context).skillEnabled : S.of(context).skillDisabled;
-    final enableSwitch =
+    final permissionControls =
         widget.embedded
-            ? ShadSwitch(
+            ? BotCapabilityControls(
               key: ValueKey<String>(
+                'bot-mcp-tool-controls-${tool.serverId}-${tool.remoteName}',
+              ),
+              enabledSwitchKey: ValueKey<String>(
                 'bot-mcp-tool-toggle-${tool.serverId}-${tool.remoteName}',
               ),
-              value: enabled,
-              enabled: !widget.readOnly,
-              onChanged:
+              approvalSwitchKey: ValueKey<String>(
+                'bot-mcp-tool-no-approval-${tool.serverId}-${tool.remoteName}',
+              ),
+              isEnabled: enabled,
+              isApprovalExempt: configuration?.requiresApproval == false,
+              enabledLabel: S.of(context).skillEnabled,
+              disabledLabel: S.of(context).skillDisabled,
+              approvalExemptLabel: S.of(context).mcpNoApprovalRequired,
+              onEnabledChanged:
                   widget.readOnly
                       ? null
                       : (value) {
                         _setEnabled(tool, value);
                         refresh(() {});
                       },
-              label: Text(enabledStatus),
-            )
-            : Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(enabledStatus),
-                Switch(
-                  key: ValueKey<String>(
-                    'bot-mcp-tool-toggle-${tool.serverId}-${tool.remoteName}',
-                  ),
-                  value: enabled,
-                  onChanged:
-                      widget.readOnly
-                          ? null
-                          : (value) {
-                            _setEnabled(tool, value);
-                            refresh(() {});
-                          },
-                ),
-              ],
-            );
-    final approvalSwitch =
-        widget.embedded
-            ? ShadSwitch(
-              key: ValueKey<String>(
-                'bot-mcp-tool-no-approval-${tool.serverId}-${tool.remoteName}',
-              ),
-              value: configuration?.requiresApproval == false,
-              enabled: enabled && !widget.readOnly,
-              onChanged:
+              onApprovalExemptChanged:
                   enabled && !widget.readOnly
                       ? (value) {
                         _setApprovalExempt(tool, value);
                         refresh(() {});
                       }
                       : null,
-              label: Text(S.of(context).mcpNoApprovalRequired),
             )
             : Wrap(
+              key: ValueKey<String>(
+                'bot-mcp-tool-controls-${tool.serverId}-${tool.remoteName}',
+              ),
               crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16,
+              runSpacing: 8,
               children: [
-                Text(S.of(context).mcpNoApprovalRequired),
-                Switch(
-                  key: ValueKey<String>(
-                    'bot-mcp-tool-no-approval-${tool.serverId}-${tool.remoteName}',
-                  ),
-                  value: configuration?.requiresApproval == false,
-                  onChanged:
-                      enabled && !widget.readOnly
-                          ? (value) {
-                            _setApprovalExempt(tool, value);
-                            refresh(() {});
-                          }
-                          : null,
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(enabledStatus),
+                    Switch(
+                      key: ValueKey<String>(
+                        'bot-mcp-tool-toggle-${tool.serverId}-${tool.remoteName}',
+                      ),
+                      value: enabled,
+                      onChanged:
+                          widget.readOnly
+                              ? null
+                              : (value) {
+                                _setEnabled(tool, value);
+                                refresh(() {});
+                              },
+                    ),
+                  ],
+                ),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(S.of(context).mcpNoApprovalRequired),
+                    Switch(
+                      key: ValueKey<String>(
+                        'bot-mcp-tool-no-approval-${tool.serverId}-${tool.remoteName}',
+                      ),
+                      value: configuration?.requiresApproval == false,
+                      onChanged:
+                          enabled && !widget.readOnly
+                              ? (value) {
+                                _setApprovalExempt(tool, value);
+                                refresh(() {});
+                              }
+                              : null,
+                    ),
+                  ],
                 ),
               ],
             );
@@ -640,15 +649,7 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
             ),
           ),
           const SizedBox(width: 16),
-          Wrap(
-            key: ValueKey<String>(
-              'bot-mcp-tool-controls-${tool.serverId}-${tool.remoteName}',
-            ),
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 16,
-            runSpacing: 8,
-            children: [enableSwitch, approvalSwitch],
-          ),
+          permissionControls,
         ],
       ),
     );
