@@ -192,8 +192,16 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.getSize(firstDailyBar).width,
-      greaterThan(tester.getSize(firstDailyBar).height),
+      find.byKey(const ValueKey<String>('token-usage-input-chart-vertical')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('token-usage-output-chart-vertical')),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(firstDailyBar).height,
+      greaterThan(tester.getSize(firstDailyBar).width),
     );
     final firstDailyBucket = find.byKey(
       const ValueKey<String>('token-usage-input-bucket-day-2026-07-24'),
@@ -219,9 +227,8 @@ void main() {
       findsNothing,
     );
     expect(
-      tester.getRect(firstDailyBucket).right -
-          tester.getRect(firstDailyValue).right,
-      closeTo(0, 0.01),
+      tester.getCenter(firstDailyValue).dx,
+      closeTo(tester.getCenter(firstDailyBucket).dx, 0.01),
     );
 
     await tester.tap(firstDailyBucket);
@@ -253,8 +260,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.getSize(firstHourlyBar).width,
-      greaterThan(tester.getSize(firstHourlyBar).height),
+      tester.getSize(firstHourlyBar).height,
+      greaterThan(tester.getSize(firstHourlyBar).width),
     );
     final firstHourlyBucket = find.byKey(
       const ValueKey<String>('token-usage-input-bucket-hour-10'),
@@ -274,9 +281,8 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.getRect(firstHourlyBucket).right -
-          tester.getRect(firstHourlyValue).right,
-      closeTo(0, 0.01),
+      tester.getCenter(firstHourlyValue).dx,
+      closeTo(tester.getCenter(firstHourlyBucket).dx, 0.01),
     );
     expect(
       find.byKey(const ValueKey<String>('token-usage-back-to-daily')),

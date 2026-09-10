@@ -64,6 +64,7 @@ class ConversationTokenUsagePanel extends StatelessWidget {
                 granularity: viewModel.granularity,
                 selectedDay: selectedDay,
                 onShowDaily: viewModel.showDaily,
+                chartOrientation: TokenUsageChartOrientation.vertical,
                 onBucketSelected:
                     hourly
                         ? null
