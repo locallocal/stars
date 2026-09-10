@@ -128,10 +128,12 @@ extension _ProfileSettingsControls on _ProfilePageState {
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
+              const SizedBox(
+                width: StarsDesktopThemeSpec.settingsRowDisclosureGap,
+              ),
               Icon(
                 Icons.chevron_right_rounded,
-                size: 18,
+                size: StarsDesktopThemeSpec.settingsRowDisclosureIconSize,
                 color: StarsDesktopThemeSpec.softText(context),
               ),
             ],

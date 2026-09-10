@@ -11,7 +11,7 @@ import 'package:stars/ui/features/chat/views/conversation_model_controls.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
-  testWidgets('shows inspector-aligned switches and toggles provider options', (
+  testWidgets('shows settings-aligned switches and toggles provider options', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(420, 600);
@@ -58,26 +58,52 @@ void main() {
     expect(find.text('深度思考'), findsOneWidget);
     expect(find.text('工具请求回合上限'), findsOneWidget);
     expect(find.text('15'), findsOneWidget);
+    final inspectorRows = find.byType(StarsInspectorInfoRow);
+    for (var index = 0; index < 3; index++) {
+      expect(
+        tester.widget<StarsInspectorInfoRow>(inspectorRows.at(index)).layout,
+        StarsInspectorInfoRowLayout.settings,
+      );
+    }
+    for (final row in [webRow, thinkingRow, maxModelTurnsRow]) {
+      expect(
+        tester.getSize(row).height,
+        StarsDesktopThemeSpec.settingsRowMinHeight +
+            StarsDesktopThemeSpec.settingsRowPadding.vertical,
+      );
+    }
     expect(
       tester.getRect(find.text('联网搜索')).left,
       closeTo(tester.getRect(find.text('深度思考')).left, 0.01),
     );
     expect(
-      tester.getRect(webSwitch).right,
-      closeTo(tester.getRect(webRow).right, 0.01),
+      tester.getRect(webRow).right - tester.getRect(webSwitch).right,
+      StarsDesktopThemeSpec.settingsRowPadding.right +
+          StarsDesktopThemeSpec.settingsRowDisclosureInset,
     );
     expect(
-      tester.getRect(thinkingSwitch).right,
-      closeTo(tester.getRect(thinkingRow).right, 0.01),
+      tester.getRect(thinkingRow).right - tester.getRect(thinkingSwitch).right,
+      StarsDesktopThemeSpec.settingsRowPadding.right +
+          StarsDesktopThemeSpec.settingsRowDisclosureInset,
     );
     expect(
       tester.getTopLeft(maxModelTurnsRow).dy,
       greaterThan(tester.getTopLeft(thinkingRow).dy),
     );
     expect(
-      tester.getRect(maxModelTurnsButton).right,
-      closeTo(tester.getRect(maxModelTurnsRow).right, 0.01),
+      tester.getRect(maxModelTurnsRow).right -
+          tester.getRect(maxModelTurnsButton).right,
+      StarsDesktopThemeSpec.settingsRowPadding.right +
+          StarsDesktopThemeSpec.settingsRowDisclosureInset,
     );
+    final separators = find.byType(ShadSeparator);
+    expect(separators, findsNWidgets(2));
+    for (final separator in separators.evaluate()) {
+      expect(
+        (separator.widget as ShadSeparator).margin,
+        StarsDesktopThemeSpec.settingsRowSeparatorMargin,
+      );
+    }
     expect(tester.getSize(webSwitch).width, 44);
     expect(tester.getSize(thinkingSwitch).width, 44);
     expect(tester.getSize(maxModelTurnsButton).width, 72);

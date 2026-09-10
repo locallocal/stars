@@ -250,6 +250,146 @@ class _ConversationInfoRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) =>
-      StarsInspectorInfoRow(icon: icon, label: label, value: value);
+  Widget build(BuildContext context) => StarsInspectorInfoRow(
+    icon: icon,
+    label: label,
+    value: value,
+    layout: StarsInspectorInfoRowLayout.settings,
+  );
+}
+
+class _ConversationInformationHeader extends StatelessWidget {
+  const _ConversationInformationHeader({
+    required this.bot,
+    required this.onClose,
+  });
+
+  final Bot bot;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = bot.provider.trim();
+    final model = bot.model.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                S.of(context).conversationInformation,
+                key: const ValueKey<String>(
+                  'desktop-conversation-information-title',
+                ),
+                style: StarsDesktopThemeSpec.pageTitleStyle(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            StarsDesktopIconAction(
+              key: const ValueKey<String>(
+                'desktop-conversation-information-close',
+              ),
+              label: MaterialLocalizations.of(context).closeButtonTooltip,
+              onPressed: onClose,
+              icon: LucideIcons.x,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ExcludeSemantics(
+              child: ShadAvatar(
+                key: const ValueKey<String>(
+                  'desktop-conversation-information-avatar',
+                ),
+                bot.avatar.isEmpty ? null : File(bot.avatar),
+                size: const Size.square(40),
+                backgroundColor: getFrostedProviderColor(
+                  provider,
+                  Theme.of(context).colorScheme.primary,
+                ),
+                placeholder: buildProviderLogo(context, '', provider, 20),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    bot.name,
+                    key: const ValueKey<String>(
+                      'desktop-conversation-information-description',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: StarsDesktopThemeSpec.bodyStyle(
+                      context,
+                    )?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  if (provider.isNotEmpty || model.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (provider.isNotEmpty)
+                          _ConversationMetadataBadge(
+                            key: const ValueKey<String>(
+                              'desktop-conversation-provider-badge',
+                            ),
+                            label: S.of(context).provider,
+                            value: provider,
+                          ),
+                        if (model.isNotEmpty)
+                          _ConversationMetadataBadge(
+                            key: const ValueKey<String>(
+                              'desktop-conversation-model-badge',
+                            ),
+                            label: S.of(context).model,
+                            value: model,
+                            emphasized: true,
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ConversationMetadataBadge extends StatelessWidget {
+  const _ConversationMetadataBadge({
+    super.key,
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeText = Text(value, maxLines: 1, overflow: TextOverflow.ellipsis);
+    return Semantics(
+      label: '$label: $value',
+      excludeSemantics: true,
+      child:
+          emphasized
+              ? ShadBadge.secondary(child: badgeText)
+              : ShadBadge.outline(child: badgeText),
+    );
+  }
 }

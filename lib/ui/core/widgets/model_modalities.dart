@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -78,19 +79,22 @@ class ModelModalitiesView extends StatelessWidget {
           key: ValueKey<String>('$keyPrefix-input'),
           icon: Icons.input_rounded,
           label: S.of(context).modelInputModalities,
-          padding: const EdgeInsets.symmetric(vertical: 7),
           crossAxisAlignment: CrossAxisAlignment.center,
+          layout: StarsInspectorInfoRowLayout.settings,
           trailing: ModelInputModalityIcons(
             keyPrefix: '$keyPrefix-input',
             modalities: orderedInputModalities,
           ),
         ),
+        const ShadSeparator.horizontal(
+          margin: StarsDesktopThemeSpec.settingsRowSeparatorMargin,
+        ),
         StarsInspectorInfoRow(
           key: ValueKey<String>('$keyPrefix-output'),
           icon: Icons.output_rounded,
           label: S.of(context).modelOutputModalities,
-          padding: const EdgeInsets.symmetric(vertical: 7),
           crossAxisAlignment: CrossAxisAlignment.center,
+          layout: StarsInspectorInfoRowLayout.settings,
           trailing: ModelOutputModalityIcons(
             keyPrefix: '$keyPrefix-output',
             modalities: orderedOutputModalities,

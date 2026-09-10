@@ -267,6 +267,30 @@ void main() {
         tester.widget<Text>(pageTitle).style,
         StarsDesktopThemeSpec.pageTitleStyle(tester.element(pageTitle)),
       );
+      expect(
+        find.byKey(
+          const ValueKey<String>('desktop-conversation-information-avatar'),
+        ),
+        findsOneWidget,
+      );
+      final providerBadge = tester.widget<ShadBadge>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('desktop-conversation-provider-badge'),
+          ),
+          matching: find.byType(ShadBadge),
+        ),
+      );
+      final modelBadge = tester.widget<ShadBadge>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('desktop-conversation-model-badge'),
+          ),
+          matching: find.byType(ShadBadge),
+        ),
+      );
+      expect(providerBadge.variant, ShadBadgeVariant.outline);
+      expect(modelBadge.variant, ShadBadgeVariant.secondary);
       final basicSection = find.byKey(
         const ValueKey<String>('desktop-conversation-basic-section'),
       );
@@ -276,21 +300,60 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('基本信息'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: basicSection,
+          matching: find.byIcon(LucideIcons.info),
+        ),
+        findsOneWidget,
+      );
       final infoRows = find.byType(StarsInspectorInfoRow);
       expect(infoRows, findsNWidgets(5));
       final labelLefts = <double>[];
       for (var index = 0; index < 3; index += 1) {
         final row = infoRows.at(index);
-        final label = find.descendant(of: row, matching: find.byType(Text));
+        expect(
+          tester.widget<StarsInspectorInfoRow>(row).layout,
+          StarsInspectorInfoRowLayout.settings,
+        );
+        final rowWidget = tester.widget<StarsInspectorInfoRow>(row);
+        final label = find.descendant(
+          of: row,
+          matching: find.text(rowWidget.label),
+        );
         final value = find.descendant(
           of: row,
-          matching: find.byType(SelectableText),
+          matching: find.text(rowWidget.value!),
         );
-        expect(tester.widget<SelectableText>(value).textAlign, TextAlign.right);
+        final valueText = tester.widget<Text>(value);
+        expect(valueText.textAlign, TextAlign.right);
+        expect(valueText.maxLines, 1);
+        expect(valueText.overflow, TextOverflow.ellipsis);
         labelLefts.add(tester.getRect(label).left);
         expect(
-          tester.getRect(value).right,
-          closeTo(tester.getRect(row).right, 0.01),
+          tester.getRect(row).right - tester.getRect(value).right,
+          closeTo(
+            StarsDesktopThemeSpec.settingsRowPadding.right +
+                StarsDesktopThemeSpec.settingsRowDisclosureInset,
+            0.01,
+          ),
+        );
+        expect(
+          tester.getRect(label).left - tester.getRect(row).left,
+          closeTo(
+            StarsDesktopThemeSpec.settingsRowPadding.left +
+                StarsDesktopThemeSpec.settingsRowIconSlotWidth +
+                StarsDesktopThemeSpec.settingsRowIconGap,
+            0.01,
+          ),
+        );
+        expect(
+          tester.getSize(row).height,
+          closeTo(
+            StarsDesktopThemeSpec.settingsRowPadding.vertical +
+                StarsDesktopThemeSpec.settingsRowMinHeight,
+            0.01,
+          ),
         );
         expect(
           tester.getRect(conversationInfo).right - tester.getRect(row).right,
@@ -299,6 +362,33 @@ void main() {
       }
       expect(labelLefts[1], closeTo(labelLefts[0], 0.01));
       expect(labelLefts[2], closeTo(labelLefts[0], 0.01));
+      for (var index = 0; index < 5; index += 1) {
+        final row = infoRows.at(index);
+        final rowWidget = tester.widget<StarsInspectorInfoRow>(row);
+        final label = find.descendant(
+          of: row,
+          matching: find.text(rowWidget.label),
+        );
+        final leadingIcon = find.descendant(
+          of: row,
+          matching: find.byIcon(rowWidget.icon),
+        );
+        final trailing =
+            rowWidget.value == null
+                ? find.byWidget(rowWidget.trailing!)
+                : find.descendant(
+                  of: row,
+                  matching: find.text(rowWidget.value!),
+                );
+        final rowCenterY = tester.getCenter(row).dy;
+
+        expect(tester.getCenter(label).dy, closeTo(rowCenterY, 0.01));
+        expect(
+          tester.getCenter(leadingIcon.first).dy,
+          closeTo(rowCenterY, 0.01),
+        );
+        expect(tester.getCenter(trailing).dy, closeTo(rowCenterY, 0.01));
+      }
       final inputModalities = find.byKey(
         const ValueKey<String>('conversation-model-modalities-input'),
       );
