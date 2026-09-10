@@ -81,7 +81,10 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
             // The conversation list remains the stable navigation context.
             // Agents and settings are rendered in the workspace instead of
             // replacing the sidebar's lower section.
-            child: widget.pages[0],
+            child: StarsConversationInformationScope(
+              onShow: _showConversationInfo,
+              child: widget.pages[0],
+            ),
           ),
           const ShadSeparator.horizontal(),
           Padding(
@@ -273,10 +276,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _ConversationInformationHeader(
-                  bot: bot,
-                  onClose: () => setState(() => _conversationInfoOpen = false),
-                ),
+                _ConversationInformationHeader(bot: bot),
                 const SizedBox(height: 32),
                 StarsDesktopSectionCard(
                   key: const ValueKey<String>(

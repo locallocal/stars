@@ -259,13 +259,9 @@ class _ConversationInfoRow extends StatelessWidget {
 }
 
 class _ConversationInformationHeader extends StatelessWidget {
-  const _ConversationInformationHeader({
-    required this.bot,
-    required this.onClose,
-  });
+  const _ConversationInformationHeader({required this.bot});
 
   final Bot bot;
-  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -275,28 +271,10 @@ class _ConversationInformationHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                S.of(context).conversationInformation,
-                key: const ValueKey<String>(
-                  'desktop-conversation-information-title',
-                ),
-                style: StarsDesktopThemeSpec.pageTitleStyle(context),
-              ),
-            ),
-            const SizedBox(width: 12),
-            StarsDesktopIconAction(
-              key: const ValueKey<String>(
-                'desktop-conversation-information-close',
-              ),
-              label: MaterialLocalizations.of(context).closeButtonTooltip,
-              onPressed: onClose,
-              icon: LucideIcons.x,
-            ),
-          ],
+        Text(
+          S.of(context).conversationInformation,
+          key: const ValueKey<String>('desktop-conversation-information-title'),
+          style: StarsDesktopThemeSpec.pageTitleStyle(context),
         ),
         const SizedBox(height: 10),
         Row(
