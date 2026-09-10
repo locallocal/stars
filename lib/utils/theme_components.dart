@@ -14,28 +14,47 @@ class StarsDesktopSectionCard extends StatelessWidget {
     required this.children,
     this.titleKey,
     this.description,
+    this.leadingIcon,
   });
 
   final String title;
   final Key? titleKey;
   final String? description;
+  final IconData? leadingIcon;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final sectionDescription = description;
+    final sectionTitle = Text(
+      title,
+      key: titleKey,
+      style: StarsDesktopThemeSpec.sectionTitleStyle(
+        context,
+      )?.copyWith(fontSize: StarsDesktopThemeSpec.botFormSectionTitleFontSize),
+    );
     return ShadCard(
       width: double.infinity,
       padding: const EdgeInsets.all(
         StarsDesktopThemeSpec.botFormSectionPadding,
       ),
-      title: Text(
-        title,
-        key: titleKey,
-        style: StarsDesktopThemeSpec.sectionTitleStyle(context)?.copyWith(
-          fontSize: StarsDesktopThemeSpec.botFormSectionTitleFontSize,
-        ),
-      ),
+      title:
+          leadingIcon == null
+              ? sectionTitle
+              : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ExcludeSemantics(
+                    child: Icon(
+                      leadingIcon,
+                      size: 16,
+                      color: StarsDesktopThemeSpec.mutedText(context),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(child: sectionTitle),
+                ],
+              ),
       description: sectionDescription == null ? null : Text(sectionDescription),
       child: Padding(
         padding: const EdgeInsets.only(top: 12),

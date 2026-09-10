@@ -273,51 +273,9 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            S.of(context).conversationInformation,
-                            key: const ValueKey<String>(
-                              'desktop-conversation-information-title',
-                            ),
-                            style: StarsDesktopThemeSpec.pageTitleStyle(
-                              context,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            bot.name,
-                            key: const ValueKey<String>(
-                              'desktop-conversation-information-description',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: StarsDesktopThemeSpec.bodyStyle(
-                              context,
-                            )?.copyWith(
-                              color: StarsDesktopThemeSpec.mutedText(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    StarsDesktopIconAction(
-                      key: const ValueKey<String>(
-                        'desktop-conversation-information-close',
-                      ),
-                      label:
-                          MaterialLocalizations.of(context).closeButtonTooltip,
-                      onPressed:
-                          () => setState(() => _conversationInfoOpen = false),
-                      icon: LucideIcons.x,
-                    ),
-                  ],
+                _ConversationInformationHeader(
+                  bot: bot,
+                  onClose: () => setState(() => _conversationInfoOpen = false),
                 ),
                 const SizedBox(height: 32),
                 StarsDesktopSectionCard(
@@ -325,6 +283,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     'desktop-conversation-basic-section',
                   ),
                   title: S.of(context).basicInformation,
+                  leadingIcon: LucideIcons.info,
                   children: [
                     _ConversationInfoRow(
                       icon: LucideIcons.bot,
@@ -368,6 +327,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     titleKey: const ValueKey<String>(
                       'token-usage-section-title',
                     ),
+                    leadingIcon: LucideIcons.chartBar,
                     children: [
                       ConversationTokenUsagePanel(
                         viewModel: _tokenUsageViewModel!,
@@ -386,6 +346,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     titleKey: const ValueKey<String>(
                       'conversation-memory-section-title',
                     ),
+                    leadingIcon: LucideIcons.brain,
                     children: [
                       ConversationMemoryPanel(
                         viewModel: _memoryViewModel!,

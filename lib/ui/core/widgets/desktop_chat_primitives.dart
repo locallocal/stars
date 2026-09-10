@@ -73,6 +73,8 @@ class StarsInlineErrorAlert extends StatelessWidget {
 /// The label always starts after the same icon gutter. Text values occupy the
 /// available trailing region and align to its right edge, while controls can
 /// opt into a fixed-width trailing column.
+enum StarsInspectorInfoRowLayout { inspector, settings }
+
 class StarsInspectorInfoRow extends StatelessWidget {
   const StarsInspectorInfoRow({
     super.key,
@@ -85,6 +87,7 @@ class StarsInspectorInfoRow extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(vertical: 9),
     this.crossAxisAlignment = CrossAxisAlignment.start,
     this.iconLabelGapKey,
+    this.layout = StarsInspectorInfoRowLayout.inspector,
   }) : assert(
          (value == null) != (trailing == null),
          'Provide either value or trailing.',
@@ -99,37 +102,91 @@ class StarsInspectorInfoRow extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final CrossAxisAlignment crossAxisAlignment;
   final Key? iconLabelGapKey;
+  final StarsInspectorInfoRowLayout layout;
 
   @override
   Widget build(BuildContext context) {
+    final settingsLayout = layout == StarsInspectorInfoRowLayout.settings;
     final trailingContent =
         trailing ??
-        SelectableText(
-          value!,
-          textAlign: valueTextAlign,
-          style: StarsDesktopThemeSpec.metaStyle(context),
-        );
-    final trailingColumn = switch (trailingWidth) {
-      final width? => SizedBox(width: width, child: trailingContent),
-      null => Flexible(
+        (settingsLayout
+            ? Text(
+              value!,
+              textAlign: valueTextAlign,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: StarsDesktopThemeSpec.metaStyle(context),
+            )
+            : SelectableText(
+              value!,
+              textAlign: valueTextAlign,
+              style: StarsDesktopThemeSpec.metaStyle(context),
+            ));
+    final Widget trailingColumn;
+    if (trailingWidth case final width?) {
+      trailingColumn = SizedBox(width: width, child: trailingContent);
+    } else if (settingsLayout) {
+      trailingColumn = ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: StarsDesktopThemeSpec.settingsRowValueMaxWidth,
+        ),
+        child: trailingContent,
+      );
+    } else {
+      trailingColumn = Flexible(
         child: Align(alignment: Alignment.centerRight, child: trailingContent),
-      ),
-    };
+      );
+    }
+
+    final icon = Icon(
+      this.icon,
+      size: settingsLayout ? StarsDesktopThemeSpec.settingsRowIconSize : 17,
+      color: StarsDesktopThemeSpec.mutedText(context),
+    );
+    final row = Row(
+      crossAxisAlignment:
+          settingsLayout ? CrossAxisAlignment.center : crossAxisAlignment,
+      children: [
+        if (settingsLayout)
+          SizedBox(
+            width: StarsDesktopThemeSpec.settingsRowIconSlotWidth,
+            child: icon,
+          )
+        else
+          icon,
+        SizedBox(
+          key: iconLabelGapKey,
+          width:
+              settingsLayout
+                  ? StarsDesktopThemeSpec.settingsRowIconGap
+                  : starsInspectorIconLabelGap,
+        ),
+        Expanded(
+          child: Text(label, style: StarsDesktopThemeSpec.bodyStyle(context)),
+        ),
+        SizedBox(
+          width: settingsLayout ? StarsDesktopThemeSpec.settingsRowValueGap : 8,
+        ),
+        trailingColumn,
+        if (settingsLayout)
+          const SizedBox(
+            width: StarsDesktopThemeSpec.settingsRowDisclosureInset,
+          ),
+      ],
+    );
 
     return Padding(
-      padding: padding,
-      child: Row(
-        crossAxisAlignment: crossAxisAlignment,
-        children: [
-          Icon(icon, size: 17, color: StarsDesktopThemeSpec.mutedText(context)),
-          SizedBox(key: iconLabelGapKey, width: starsInspectorIconLabelGap),
-          Expanded(
-            child: Text(label, style: StarsDesktopThemeSpec.bodyStyle(context)),
-          ),
-          const SizedBox(width: 8),
-          trailingColumn,
-        ],
-      ),
+      padding:
+          settingsLayout ? StarsDesktopThemeSpec.settingsRowPadding : padding,
+      child:
+          settingsLayout
+              ? ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: StarsDesktopThemeSpec.settingsRowMinHeight,
+                ),
+                child: row,
+              )
+              : row,
     );
   }
 }

@@ -40,44 +40,53 @@ final class _ConversationModelControlsState
   @override
   Widget build(BuildContext context) {
     final provider = widget.provider;
+    final rows = <Widget>[
+      if (provider.supportWebSearch())
+        _ModelControlRow(
+          key: const ValueKey<String>('conversation-web-search-row'),
+          switchKey: const ValueKey<String>('conversation-web-search-toggle'),
+          icon: LucideIcons.globe,
+          label: S.of(context).webSearch,
+          value: provider.getWebSearch(),
+          onChanged: (value) {
+            setState(() {
+              provider.setWebSearch(value);
+            });
+          },
+        ),
+      if (provider.supportDeepThinking())
+        _ModelControlRow(
+          key: const ValueKey<String>('conversation-deep-thinking-row'),
+          switchKey: const ValueKey<String>(
+            'conversation-deep-thinking-toggle',
+          ),
+          icon: LucideIcons.brain,
+          label: S.of(context).deepThinking,
+          value: provider.getDeepThinking(),
+          onChanged: (value) {
+            setState(() {
+              provider.setDeepThinking(value);
+            });
+          },
+        ),
+      _MaxModelTurnsRow(
+        enabled:
+            widget.maxModelTurnsEnabled &&
+            widget.onMaxModelTurnsChanged != null,
+        value: widget.maxModelTurns,
+        onPressed: () => unawaited(_editMaxModelTurns(context)),
+      ),
+    ];
     return Column(
       key: const ValueKey<String>('conversation-model-controls'),
       children: [
-        if (provider.supportWebSearch())
-          _ModelControlRow(
-            key: const ValueKey<String>('conversation-web-search-row'),
-            switchKey: const ValueKey<String>('conversation-web-search-toggle'),
-            icon: LucideIcons.globe,
-            label: S.of(context).webSearch,
-            value: provider.getWebSearch(),
-            onChanged: (value) {
-              setState(() {
-                provider.setWebSearch(value);
-              });
-            },
-          ),
-        if (provider.supportDeepThinking())
-          _ModelControlRow(
-            key: const ValueKey<String>('conversation-deep-thinking-row'),
-            switchKey: const ValueKey<String>(
-              'conversation-deep-thinking-toggle',
+        for (var index = 0; index < rows.length; index++) ...[
+          rows[index],
+          if (index != rows.length - 1)
+            const ShadSeparator.horizontal(
+              margin: StarsDesktopThemeSpec.settingsRowSeparatorMargin,
             ),
-            icon: LucideIcons.brain,
-            label: S.of(context).deepThinking,
-            value: provider.getDeepThinking(),
-            onChanged: (value) {
-              setState(() {
-                provider.setDeepThinking(value);
-              });
-            },
-          ),
-        _MaxModelTurnsRow(
-          enabled:
-              widget.maxModelTurnsEnabled &&
-              widget.onMaxModelTurnsChanged != null,
-          value: widget.maxModelTurns,
-          onPressed: () => unawaited(_editMaxModelTurns(context)),
-        ),
+        ],
       ],
     );
   }
@@ -137,9 +146,9 @@ final class _ModelControlRow extends StatelessWidget {
       child: StarsInspectorInfoRow(
         icon: icon,
         label: label,
-        padding: const EdgeInsets.symmetric(vertical: 5),
         crossAxisAlignment: CrossAxisAlignment.center,
         trailingWidth: _modelControlWidth,
+        layout: StarsInspectorInfoRowLayout.settings,
         trailing: toggle,
       ),
     );
@@ -162,9 +171,9 @@ final class _MaxModelTurnsRow extends StatelessWidget {
     key: const ValueKey<String>('max-model-turns-row'),
     icon: LucideIcons.rotateCcw,
     label: S.of(context).maxToolRequestRounds,
-    padding: const EdgeInsets.symmetric(vertical: 5),
     crossAxisAlignment: CrossAxisAlignment.center,
     trailingWidth: _modelTurnLimitControlWidth,
+    layout: StarsInspectorInfoRowLayout.settings,
     trailing: ShadButton.outline(
       key: const ValueKey<String>('max-model-turns-edit'),
       size: ShadButtonSize.sm,
