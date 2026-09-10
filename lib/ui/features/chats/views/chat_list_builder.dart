@@ -3,6 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/ui/core/widgets/common.dart';
+import 'package:stars/ui/core/widgets/conversation_information_scope.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';
@@ -24,6 +25,7 @@ class ChatListBuilder extends StatelessWidget {
   final ValueChanged<String> onChatDeleted;
   final void Function(String chatId, Bot bot) onChatSelected;
   final Future<void> Function(String chatId) onDeleteChat;
+  final VoidCallback? onChatDetailsRequested;
   final ChatGenerationRegistry generationRegistry;
 
   const ChatListBuilder({
@@ -37,12 +39,16 @@ class ChatListBuilder extends StatelessWidget {
     required this.onChatDeleted,
     required this.onChatSelected,
     required this.onDeleteChat,
+    this.onChatDetailsRequested,
     required this.generationRegistry,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = isDesktopPlatform(context);
+    final showConversationInformation =
+        onChatDetailsRequested ??
+        StarsConversationInformationScope.maybeOf(context)?.onShow;
     return ListView.separated(
       padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: chatList.length,
@@ -238,6 +244,12 @@ class ChatListBuilder extends StatelessWidget {
           onChatDeleted(chat.id);
         }
 
+        void openDetails() {
+          if (isOrphaned || showConversationInformation == null) return;
+          onChatSelected(chat.id, bot);
+          showConversationInformation();
+        }
+
         ChatListItem buildListItem({Widget? trailing}) {
           final storedPreview = chat.lastMessage;
           final localizedPreview =
@@ -273,6 +285,13 @@ class ChatListBuilder extends StatelessWidget {
                 desktopConversationText(context, S.of(context).startChatting),
               ),
             ),
+            ShadContextMenuItem(
+              key: ValueKey<String>('chat-context-details-${chat.id}'),
+              leading: const Icon(LucideIcons.info, size: 16),
+              enabled: !isOrphaned && showConversationInformation != null,
+              onPressed: openDetails,
+              child: Text(S.of(context).details),
+            ),
             const ShadSeparator.horizontal(
               margin: EdgeInsets.symmetric(vertical: 4),
             ),
@@ -295,8 +314,12 @@ class ChatListBuilder extends StatelessWidget {
             child: buildListItem(
               trailing: _ChatRowActions(
                 canOpen: !isOrphaned,
+                canShowDetails:
+                    !isOrphaned && showConversationInformation != null,
                 onOpen: openChat,
+                onShowDetails: openDetails,
                 onDelete: deleteChat,
+                detailsKey: ValueKey<String>('chat-details-${chat.id}'),
               ),
             ),
           );
@@ -341,13 +364,19 @@ class ChatListBuilder extends StatelessWidget {
 class _ChatRowActions extends StatefulWidget {
   const _ChatRowActions({
     required this.canOpen,
+    required this.canShowDetails,
     required this.onOpen,
+    required this.onShowDetails,
     required this.onDelete,
+    required this.detailsKey,
   });
 
   final bool canOpen;
+  final bool canShowDetails;
   final VoidCallback onOpen;
+  final VoidCallback onShowDetails;
   final VoidCallback onDelete;
+  final Key detailsKey;
 
   @override
   State<_ChatRowActions> createState() => _ChatRowActionsState();
@@ -415,6 +444,15 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
                         S.of(context).startChatting,
                       ),
                     ),
+                  ),
+                  ShadButton.ghost(
+                    key: widget.detailsKey,
+                    size: ShadButtonSize.sm,
+                    enabled: widget.canShowDetails,
+                    onPressed: () => _invoke(widget.onShowDetails),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(LucideIcons.info, size: 16),
+                    child: Text(S.of(context).details),
                   ),
                   ShadButton.raw(
                     variant: ShadButtonVariant.ghost,

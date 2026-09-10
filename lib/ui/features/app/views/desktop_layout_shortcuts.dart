@@ -128,6 +128,16 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
     });
   }
 
+  void _showConversationInfo() {
+    _updateState(() {
+      _conversationInfoOpen = true;
+      _compactSidebarOpen = false;
+    });
+    if (_activeChatOverlay != null) {
+      unawaited(_dismissActiveChatOverlay());
+    }
+  }
+
   void _closeTopOverlay() {
     if (_activeChatOverlay != null) {
       unawaited(_dismissActiveChatOverlay());

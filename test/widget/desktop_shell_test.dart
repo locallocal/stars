@@ -9,10 +9,12 @@ import 'package:stars/domain/use_cases/create_chat.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
 import 'package:stars/ui/features/bots/views/bots.dart';
+import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/clear_chat_dialog.dart';
 import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
 import 'package:stars/ui/features/chats/views/chats.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
+import 'package:stars/ui/features/chats/views/chat_list_builder.dart';
 import 'package:stars/ui/features/profile/views/profile.dart';
 import 'package:stars/utils/theme.dart';
 
@@ -245,6 +247,12 @@ void main() {
 
       expect(find.byType(ShadSheet), findsNothing);
       expect(find.bySemanticsLabel('隐藏会话信息'), findsWidgets);
+      expect(
+        find.byKey(
+          const ValueKey<String>('desktop-conversation-information-close'),
+        ),
+        findsNothing,
+      );
       final content = tester.widget<ConstrainedBox>(
         find.byKey(
           const ValueKey<String>('desktop-conversation-information-content'),
@@ -430,6 +438,105 @@ void main() {
         findsNothing,
       );
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  testWidgets('desktop chat row details menu opens conversation information', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+    final registry = ChatGenerationRegistry(
+      messagePersister: (message) async => message,
+      lastMessageUpdater: (_, _) async {},
+      providerFactory: (_) => throw StateError('Provider is not expected'),
+    );
+    addTearDown(registry.clear);
+    final timestamp = DateTime(2026);
+    final bot = Bot(
+      id: 'bot-details-menu',
+      name: '菜单智能体',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: '',
+      apiKey: '',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: '',
+      createTimestamp: timestamp,
+      modifyTimestamp: timestamp,
+    );
+    final chat = Chat(
+      id: 'chat-details-menu',
+      botId: bot.id,
+      lastMessage: '查看详情',
+      lastMessageTimestamp: timestamp,
+      createTimestamp: timestamp,
+      modifyTimestamp: timestamp,
+    );
+    var selectedChatId = '';
+
+    await withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        desktopHarness(
+          selectedChatBot: bot,
+          chatListPage: ChatListBuilder(
+            chatList: [chat],
+            bots: [bot],
+            selectedChatId: chat.id,
+            generationRegistry: registry,
+            onChatDeleted: (_) {},
+            onDeleteChat: (_) async {},
+            onChatSelected: (chatId, _) => selectedChatId = chatId,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final contextMenu = tester.widget<StarsContextMenu>(
+        find.byKey(const ValueKey<String>('chat-menu-chat-details-menu')),
+      );
+      expect(
+        contextMenu.items.where(
+          (item) =>
+              item.key ==
+              const ValueKey<String>('chat-context-details-chat-details-menu'),
+        ),
+        hasLength(1),
+      );
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+
+      final detailsAction = find.byKey(
+        const ValueKey<String>('chat-details-chat-details-menu'),
+      );
+      expect(detailsAction, findsOneWidget);
+      expect(
+        find.descendant(
+          of: detailsAction,
+          matching: find.byIcon(LucideIcons.info),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('详情'), findsOneWidget);
+
+      await tester.tap(detailsAction);
+      await tester.pumpAndSettle();
+
+      expect(selectedChatId, chat.id);
+      expect(
+        find.byKey(const ValueKey<String>('desktop-conversation-information')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('desktop-conversation-information-close'),
+        ),
+        findsNothing,
+      );
+      expect(find.bySemanticsLabel('隐藏会话信息'), findsWidgets);
     });
   });
 
