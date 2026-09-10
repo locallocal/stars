@@ -58,21 +58,34 @@ class StarsDesktopSectionCard extends StatelessWidget {
       description: sectionDescription == null ? null : Text(sectionDescription),
       child: Padding(
         padding: const EdgeInsets.only(top: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var index = 0; index < children.length; index++) ...[
-              children[index],
-              if (index != children.length - 1)
-                const ShadSeparator.horizontal(
-                  margin: StarsDesktopThemeSpec.settingsRowSeparatorMargin,
-                ),
-            ],
-          ],
-        ),
+        child: StarsDesktopSettingsGroup(children: children),
       ),
     );
   }
+}
+
+/// A shadcn-style group of settings rows separated after the icon gutter.
+///
+/// Reusing this group keeps field separators aligned across settings and
+/// inspector cards, including dynamically assembled row collections.
+class StarsDesktopSettingsGroup extends StatelessWidget {
+  const StarsDesktopSettingsGroup({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (var index = 0; index < children.length; index++) ...[
+        children[index],
+        if (index != children.length - 1)
+          const ShadSeparator.horizontal(
+            margin: StarsDesktopThemeSpec.settingsRowSeparatorMargin,
+          ),
+      ],
+    ],
+  );
 }
 
 /// Solid semantic fallback for glass-role surfaces.

@@ -263,7 +263,7 @@ class _InspectorTokenUsageSummary extends StatelessWidget {
           '${S.of(context).inputTokens} ${usage.inputTokens}, '
           '${S.of(context).outputTokens} ${usage.outputTokens}',
       child: ExcludeSemantics(
-        child: Column(
+        child: StarsDesktopSettingsGroup(
           key: const ValueKey<String>('inspector-token-usage-summary'),
           children: [
             _InspectorTokenMetric(
@@ -304,8 +304,12 @@ class _InspectorTokenMetric extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) =>
-      StarsInspectorInfoRow(icon: icon, label: label, value: value);
+  Widget build(BuildContext context) => StarsInspectorInfoRow(
+    icon: icon,
+    label: label,
+    value: value,
+    layout: StarsInspectorInfoRowLayout.settings,
+  );
 }
 
 class TokenUsageChart extends StatelessWidget {

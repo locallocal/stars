@@ -85,6 +85,54 @@ final class _ConversationMemoryPanelState
     final numberFormat = NumberFormat.decimalPattern(
       Localizations.localeOf(context).toString(),
     );
+    final memoryFields = <Widget>[
+      if (report != null) ...[
+        _MemoryMetric(
+          key: const ValueKey<String>('memory-context-window'),
+          icon: Icons.memory_rounded,
+          label: S.of(context).contextWindow,
+          value: numberFormat.format(report.contextWindowTokens),
+        ),
+        _MemoryMetric(
+          key: const ValueKey<String>('memory-estimated-usage'),
+          icon: Icons.data_usage_rounded,
+          label: S.of(context).estimatedContextUsage,
+          value:
+              '${numberFormat.format(report.estimatedInputTokens)} / '
+              '${numberFormat.format(report.inputBudgetTokens)}',
+        ),
+        _MemoryMetric(
+          key: const ValueKey<String>('memory-retained-turns'),
+          icon: Icons.forum_outlined,
+          label: S.of(context).retainedRecentTurns,
+          value: numberFormat.format(report.includedTurnIds.length),
+        ),
+      ],
+      _MemoryMetric(
+        key: const ValueKey<String>('memory-summarized-turns'),
+        icon: Icons.summarize_outlined,
+        label: S.of(context).summarizedTurns,
+        valueTextAlign: TextAlign.right,
+        value: numberFormat.format(
+          viewModel.summary?.metadata.sourceMessageIds.length ?? 0,
+        ),
+      ),
+      _MemoryMetric(
+        key: const ValueKey<String>('memory-compaction-status'),
+        icon: Icons.sync_rounded,
+        label: S.of(context).compactionStatus,
+        valueTextAlign: TextAlign.right,
+        value:
+            viewModel.compacting
+                ? S.of(context).compactingContext
+                : _statusLabel(context, state?.compactionStatus),
+      ),
+      _AutomaticMemoryRow(
+        enabled: !viewModel.loading,
+        value: state?.autoMemoryEnabled ?? true,
+        onChanged: (value) => unawaited(_setAutoMemoryEnabled(context, value)),
+      ),
+    ];
     return Material(
       type: MaterialType.transparency,
       child: Column(
@@ -100,55 +148,7 @@ final class _ConversationMemoryPanelState
             ),
             const SizedBox(height: 12),
           ],
-          if (report != null) ...[
-            _MemoryMetric(
-              key: const ValueKey<String>('memory-context-window'),
-              icon: Icons.memory_rounded,
-              label: S.of(context).contextWindow,
-              value: numberFormat.format(report.contextWindowTokens),
-            ),
-            _MemoryMetric(
-              key: const ValueKey<String>('memory-estimated-usage'),
-              icon: Icons.data_usage_rounded,
-              label: S.of(context).estimatedContextUsage,
-              value:
-                  '${numberFormat.format(report.estimatedInputTokens)} / '
-                  '${numberFormat.format(report.inputBudgetTokens)}',
-            ),
-            _MemoryMetric(
-              key: const ValueKey<String>('memory-retained-turns'),
-              icon: Icons.forum_outlined,
-              label: S.of(context).retainedRecentTurns,
-              value: numberFormat.format(report.includedTurnIds.length),
-            ),
-          ],
-          _MemoryMetric(
-            key: const ValueKey<String>('memory-summarized-turns'),
-            icon: Icons.summarize_outlined,
-            label: S.of(context).summarizedTurns,
-            valueWidth: _memoryTrailingControlWidth,
-            valueTextAlign: TextAlign.right,
-            value: numberFormat.format(
-              viewModel.summary?.metadata.sourceMessageIds.length ?? 0,
-            ),
-          ),
-          _MemoryMetric(
-            key: const ValueKey<String>('memory-compaction-status'),
-            icon: Icons.sync_rounded,
-            label: S.of(context).compactionStatus,
-            valueWidth: _memoryTrailingControlWidth,
-            valueTextAlign: TextAlign.right,
-            value:
-                viewModel.compacting
-                    ? S.of(context).compactingContext
-                    : _statusLabel(context, state?.compactionStatus),
-          ),
-          _AutomaticMemoryRow(
-            enabled: !viewModel.loading,
-            value: state?.autoMemoryEnabled ?? true,
-            onChanged:
-                (value) => unawaited(_setAutoMemoryEnabled(context, value)),
-          ),
+          StarsDesktopSettingsGroup(children: memoryFields),
           const SizedBox(height: 10),
           _MemoryActions(
             compacting: viewModel.compacting,

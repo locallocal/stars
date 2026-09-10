@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
+import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.dart';
 import 'package:stars/ui/features/chat/views/token_usage_chart.dart';
 import 'package:stars/utils/theme.dart';
@@ -48,10 +50,6 @@ void main() {
     final outputRect = tester.getRect(outputMetric);
 
     expect(summary, findsOneWidget);
-    expect(
-      find.descendant(of: summary, matching: find.byType(DecoratedBox)),
-      findsNothing,
-    );
     expect(totalRect.left, closeTo(inputRect.left, 0.01));
     expect(totalRect.left, closeTo(outputRect.left, 0.01));
     expect(totalRect.width, closeTo(inputRect.width, 0.01));
@@ -62,20 +60,61 @@ void main() {
     final metricFinders = [totalMetric, inputMetric, outputMetric];
     final labelLefts = <double>[];
     for (final metric in metricFinders) {
-      final label = find.descendant(of: metric, matching: find.byType(Text));
+      final infoRow = find.descendant(
+        of: metric,
+        matching: find.byType(StarsInspectorInfoRow),
+      );
+      final infoRowWidget = tester.widget<StarsInspectorInfoRow>(infoRow);
+      expect(infoRowWidget.layout, StarsInspectorInfoRowLayout.settings);
+      final label = find.descendant(
+        of: metric,
+        matching: find.text(infoRowWidget.label),
+      );
       final value = find.descendant(
         of: metric,
-        matching: find.byType(SelectableText),
+        matching: find.text(infoRowWidget.value!),
       );
-      expect(tester.widget<SelectableText>(value).textAlign, TextAlign.right);
+      final valueText = tester.widget<Text>(value);
+      expect(valueText.textAlign, TextAlign.right);
+      expect(valueText.maxLines, 1);
+      expect(valueText.overflow, TextOverflow.ellipsis);
       labelLefts.add(tester.getRect(label).left);
       expect(
-        tester.getRect(value).right,
-        closeTo(tester.getRect(metric).right, 0.01),
+        tester.getRect(metric).right - tester.getRect(value).right,
+        closeTo(
+          StarsDesktopThemeSpec.settingsRowPadding.right +
+              StarsDesktopThemeSpec.settingsRowDisclosureInset,
+          0.01,
+        ),
+      );
+      expect(
+        tester.getRect(label).left - tester.getRect(metric).left,
+        closeTo(
+          StarsDesktopThemeSpec.settingsRowPadding.left +
+              StarsDesktopThemeSpec.settingsRowIconSlotWidth +
+              StarsDesktopThemeSpec.settingsRowIconGap,
+          0.01,
+        ),
+      );
+      expect(
+        tester.getSize(metric).height,
+        StarsDesktopThemeSpec.settingsRowPadding.vertical +
+            StarsDesktopThemeSpec.settingsRowMinHeight,
       );
     }
     expect(labelLefts[1], closeTo(labelLefts[0], 0.01));
     expect(labelLefts[2], closeTo(labelLefts[0], 0.01));
+    final fieldSeparators = find.descendant(
+      of: summary,
+      matching: find.byType(ShadSeparator),
+    );
+    expect(fieldSeparators, findsNWidgets(2));
+    for (final separator in fieldSeparators.evaluate()) {
+      expect(
+        (separator.widget as ShadSeparator).margin,
+        StarsDesktopThemeSpec.settingsRowSeparatorMargin,
+      );
+    }
 
     final totalLabel = tester.widget<Text>(find.text('Token 总量'));
     final inputLabel = tester.widget<Text>(

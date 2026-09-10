@@ -103,14 +103,6 @@ void main() {
       find.byKey(const ValueKey<String>('max-model-turns-edit')),
       findsNothing,
     );
-    final summarizedTurnsValue = find.descendant(
-      of: find.byKey(const ValueKey<String>('memory-summarized-turns')),
-      matching: find.byType(SelectableText),
-    );
-    final compactionStatusValue = find.descendant(
-      of: find.byKey(const ValueKey<String>('memory-compaction-status')),
-      matching: find.byType(SelectableText),
-    );
     final automaticMemorySwitch = find.byKey(
       const ValueKey<String>('automatic-memory-switch'),
     );
@@ -123,34 +115,57 @@ void main() {
     final automaticMemoryRow = find.byKey(
       const ValueKey<String>('automatic-memory-row'),
     );
-    expect(
-      tester.widget<SelectableText>(summarizedTurnsValue).textAlign,
-      TextAlign.right,
+    final memoryInfoRows = find.descendant(
+      of: find.byKey(const ValueKey<String>('conversation-memory-panel')),
+      matching: find.byType(StarsInspectorInfoRow),
     );
-    expect(
-      tester.widget<SelectableText>(compactionStatusValue).textAlign,
-      TextAlign.right,
+    expect(memoryInfoRows, findsNWidgets(3));
+    for (var index = 0; index < 3; index++) {
+      expect(
+        tester.widget<StarsInspectorInfoRow>(memoryInfoRows.at(index)).layout,
+        StarsInspectorInfoRowLayout.settings,
+      );
+      expect(
+        tester.getSize(memoryInfoRows.at(index)).height,
+        StarsDesktopThemeSpec.settingsRowPadding.vertical +
+            StarsDesktopThemeSpec.settingsRowMinHeight,
+      );
+    }
+    final summarizedTurnsInfoRow = find.descendant(
+      of: summarizedTurnsRow,
+      matching: find.byType(StarsInspectorInfoRow),
     );
-    expect(
-      tester.getRect(compactionStatusValue).center.dx,
-      closeTo(tester.getRect(automaticMemorySwitch).center.dx, 0.01),
+    final compactionStatusInfoRow = find.descendant(
+      of: compactionStatusRow,
+      matching: find.byType(StarsInspectorInfoRow),
     );
-    expect(
-      tester.getRect(summarizedTurnsValue).center.dx,
-      closeTo(tester.getRect(automaticMemorySwitch).center.dx, 0.01),
+    final summarizedTurnsWidget = tester.widget<StarsInspectorInfoRow>(
+      summarizedTurnsInfoRow,
     );
-    expect(
-      tester.getRect(summarizedTurnsValue).right,
-      closeTo(tester.getRect(summarizedTurnsRow).right, 0.01),
+    final compactionStatusWidget = tester.widget<StarsInspectorInfoRow>(
+      compactionStatusInfoRow,
     );
-    expect(
-      tester.getRect(compactionStatusValue).right,
-      closeTo(tester.getRect(compactionStatusRow).right, 0.01),
+    final summarizedTurnsValue = find.descendant(
+      of: summarizedTurnsRow,
+      matching: find.text(summarizedTurnsWidget.value!),
     );
-    expect(
-      tester.getRect(automaticMemorySwitch).right,
-      closeTo(tester.getRect(automaticMemoryRow).right, 0.01),
+    final compactionStatusValue = find.descendant(
+      of: compactionStatusRow,
+      matching: find.text(compactionStatusWidget.value!),
     );
+    final expectedTrailingInset =
+        StarsDesktopThemeSpec.settingsRowPadding.right +
+        StarsDesktopThemeSpec.settingsRowDisclosureInset;
+    for (final (row, value) in [
+      (summarizedTurnsRow, summarizedTurnsValue),
+      (compactionStatusRow, compactionStatusValue),
+      (automaticMemoryRow, automaticMemorySwitch),
+    ]) {
+      expect(
+        tester.getRect(row).right - tester.getRect(value).right,
+        closeTo(expectedTrailingInset, 0.01),
+      );
+    }
     final memoryLabelLefts = [
       tester.getRect(find.text('已摘要消息数')).left,
       tester.getRect(find.text('压缩状态')).left,
@@ -158,6 +173,17 @@ void main() {
     ];
     expect(memoryLabelLefts[1], closeTo(memoryLabelLefts[0], 0.01));
     expect(memoryLabelLefts[2], closeTo(memoryLabelLefts[0], 0.01));
+    final memoryFieldSeparators = find.descendant(
+      of: find.byKey(const ValueKey<String>('conversation-memory-panel')),
+      matching: find.byType(ShadSeparator),
+    );
+    expect(memoryFieldSeparators, findsNWidgets(2));
+    for (final separator in memoryFieldSeparators.evaluate()) {
+      expect(
+        (separator.widget as ShadSeparator).margin,
+        StarsDesktopThemeSpec.settingsRowSeparatorMargin,
+      );
+    }
 
     final actionsRect = tester.getRect(
       find.byKey(const ValueKey<String>('conversation-memory-actions')),
