@@ -6,6 +6,7 @@ enum _LocalFileKind {
   image,
   markdown,
   html,
+  code,
   text,
   audio,
   video,
@@ -21,15 +22,19 @@ final class _LocalFileDescriptor {
     required this.fileName,
     required this.extension,
     required this.kind,
+    required this.syntaxLanguage,
   });
 
   factory _LocalFileDescriptor.fromPath(String filePath) {
     final extension = path_context.extension(filePath).toLowerCase();
+    final fileName = path_context.basename(filePath);
+    final syntaxLanguage = _syntaxLanguageFor(fileName, extension);
     return _LocalFileDescriptor(
       path: filePath,
-      fileName: path_context.basename(filePath),
+      fileName: fileName,
       extension: extension,
-      kind: _kindForExtension(extension),
+      kind: _kindForExtension(extension, syntaxLanguage),
+      syntaxLanguage: syntaxLanguage,
     );
   }
 
@@ -37,11 +42,13 @@ final class _LocalFileDescriptor {
   final String fileName;
   final String extension;
   final _LocalFileKind kind;
+  final String? syntaxLanguage;
 
   String get typeLabel => switch (kind) {
     _LocalFileKind.image => 'IMAGE',
     _LocalFileKind.markdown => 'MARKDOWN',
     _LocalFileKind.html => 'HTML',
+    _LocalFileKind.code => _codeTypeLabel(fileName, extension, syntaxLanguage!),
     _LocalFileKind.text => 'TEXT',
     _LocalFileKind.audio => 'AUDIO',
     _LocalFileKind.video => 'VIDEO',
@@ -56,7 +63,7 @@ final class _LocalFileDescriptor {
     _LocalFileKind.image => Icons.image_outlined,
     _LocalFileKind.markdown ||
     _LocalFileKind.text => Icons.text_snippet_outlined,
-    _LocalFileKind.html => LucideIcons.fileCode2,
+    _LocalFileKind.html || _LocalFileKind.code => LucideIcons.fileCode2,
     _LocalFileKind.audio => Icons.audio_file_outlined,
     _LocalFileKind.video => Icons.video_file_outlined,
     _LocalFileKind.pdf => Icons.picture_as_pdf_outlined,
@@ -66,7 +73,7 @@ final class _LocalFileDescriptor {
   };
 }
 
-_LocalFileKind _kindForExtension(String extension) {
+_LocalFileKind _kindForExtension(String extension, String? syntaxLanguage) {
   if (const {
     '.png',
     '.jpg',
@@ -83,24 +90,8 @@ _LocalFileKind _kindForExtension(String extension) {
   if (const {'.html', '.htm'}.contains(extension)) {
     return _LocalFileKind.html;
   }
-  if (const {
-    '.txt',
-    '.log',
-    '.csv',
-    '.json',
-    '.yaml',
-    '.yml',
-    '.xml',
-    '.css',
-    '.dart',
-    '.js',
-    '.ts',
-    '.py',
-    '.sh',
-    '.sql',
-    '.ini',
-    '.toml',
-  }.contains(extension)) {
+  if (syntaxLanguage != null) return _LocalFileKind.code;
+  if (const {'.txt', '.log', '.csv'}.contains(extension)) {
     return _LocalFileKind.text;
   }
   if (const {
@@ -138,6 +129,114 @@ _LocalFileKind _kindForExtension(String extension) {
     return _LocalFileKind.document;
   }
   return _LocalFileKind.other;
+}
+
+const _syntaxLanguageByExtension = <String, String>{
+  '.bash': 'bash',
+  '.c': 'cpp',
+  '.cc': 'cpp',
+  '.cmake': 'cmake',
+  '.cpp': 'cpp',
+  '.cs': 'cs',
+  '.css': 'css',
+  '.cxx': 'cpp',
+  '.dart': 'dart',
+  '.ex': 'elixir',
+  '.exs': 'elixir',
+  '.go': 'go',
+  '.gradle': 'gradle',
+  '.gql': 'graphql',
+  '.graphql': 'graphql',
+  '.h': 'cpp',
+  '.hh': 'cpp',
+  '.hpp': 'cpp',
+  '.hxx': 'cpp',
+  '.ini': 'ini',
+  '.java': 'java',
+  '.js': 'javascript',
+  '.json': 'json',
+  '.jsonc': 'javascript',
+  '.jsx': 'javascript',
+  '.kt': 'kotlin',
+  '.kts': 'kotlin',
+  '.less': 'less',
+  '.lua': 'lua',
+  '.m': 'objectivec',
+  '.mm': 'objectivec',
+  '.mjs': 'javascript',
+  '.php': 'php',
+  '.proto': 'protobuf',
+  '.ps1': 'powershell',
+  '.py': 'python',
+  '.pyw': 'python',
+  '.r': 'r',
+  '.rb': 'ruby',
+  '.rs': 'rust',
+  '.scala': 'scala',
+  '.sc': 'scala',
+  '.scss': 'scss',
+  '.sh': 'bash',
+  '.sol': 'solidity',
+  '.sql': 'sql',
+  '.swift': 'swift',
+  '.toml': 'ini',
+  '.ts': 'typescript',
+  '.tsx': 'typescript',
+  '.vue': 'vue',
+  '.xml': 'xml',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
+  '.zsh': 'bash',
+};
+
+String? _syntaxLanguageFor(String fileName, String extension) {
+  final normalizedName = fileName.toLowerCase();
+  if (normalizedName == 'dockerfile' ||
+      normalizedName.startsWith('dockerfile.')) {
+    return 'dockerfile';
+  }
+  if (normalizedName == 'makefile' || normalizedName == 'gnumakefile') {
+    return 'makefile';
+  }
+  if (normalizedName == 'cmakelists.txt') return 'cmake';
+  if (normalizedName == '.env' || normalizedName.startsWith('.env.')) {
+    return 'bash';
+  }
+  return _syntaxLanguageByExtension[extension];
+}
+
+String _codeTypeLabel(String fileName, String extension, String language) {
+  final normalizedName = fileName.toLowerCase();
+  if (normalizedName == 'cmakelists.txt') return 'CMAKE';
+  if (normalizedName == '.env' || normalizedName.startsWith('.env.')) {
+    return 'ENV';
+  }
+  return switch (extension) {
+    '.c' => 'C',
+    '.cc' || '.cpp' || '.cxx' => 'C++',
+    '.cs' => 'C#',
+    '.h' || '.hh' || '.hpp' || '.hxx' => 'C/C++',
+    '.js' || '.mjs' => 'JAVASCRIPT',
+    '.jsx' => 'JSX',
+    '.jsonc' => 'JSONC',
+    '.kt' || '.kts' => 'KOTLIN',
+    '.m' => 'OBJECTIVE-C',
+    '.mm' => 'OBJECTIVE-C++',
+    '.ps1' => 'POWERSHELL',
+    '.py' || '.pyw' => 'PYTHON',
+    '.rb' => 'RUBY',
+    '.rs' => 'RUST',
+    '.sh' || '.bash' || '.zsh' => 'SHELL',
+    '.toml' => 'TOML',
+    '.ts' => 'TYPESCRIPT',
+    '.tsx' => 'TSX',
+    '.yml' => 'YAML',
+    _ => switch (normalizedName) {
+      'dockerfile' => 'DOCKERFILE',
+      'makefile' || 'gnumakefile' => 'MAKEFILE',
+      _ => language.toUpperCase(),
+    },
+  };
 }
 
 List<String> _localFilesFromMarkdown(
@@ -535,6 +634,13 @@ class _LocalFilePreview extends StatelessWidget {
         actionViewModel: actionViewModel,
       ),
       _LocalFileKind.html => LocalHtmlFilePreview(file: file),
+      _LocalFileKind.code => _LocalTextFilePreview(
+        key: const ValueKey<String>('message-local-file-code-preview'),
+        file: file,
+        markdown: false,
+        syntaxLanguage: descriptor.syntaxLanguage,
+        actionViewModel: actionViewModel,
+      ),
       _LocalFileKind.text => _LocalTextFilePreview(
         key: const ValueKey<String>('message-local-file-text-preview'),
         file: file,
@@ -567,10 +673,12 @@ class _LocalTextFilePreview extends StatefulWidget {
     required this.file,
     required this.markdown,
     required this.actionViewModel,
+    this.syntaxLanguage,
   });
 
   final File file;
   final bool markdown;
+  final String? syntaxLanguage;
   final MessageActionViewModel? actionViewModel;
 
   @override
@@ -608,6 +716,13 @@ class _LocalTextFilePreviewState extends State<_LocalTextFilePreview> {
             (text, href, title) => unawaited(
               _openMarkdownLink(context, href, widget.actionViewModel),
             ),
+      );
+    }
+    final syntaxLanguage = widget.syntaxLanguage;
+    if (syntaxLanguage != null) {
+      return StarsSyntaxHighlightedCode(
+        source: _content,
+        language: syntaxLanguage,
       );
     }
     return DecoratedBox(

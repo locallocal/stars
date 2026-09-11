@@ -233,6 +233,59 @@ cat "${file.path}"
     );
   });
 
+  testWidgets('code files are detected and syntax highlighted', (tester) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'stars-code-file-preview-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final dartFile = File('${directory.path}/main.dart')
+      ..writeAsStringSync("void main() { print('hello'); }");
+    final pythonFile = File('${directory.path}/worker.py')
+      ..writeAsStringSync("def run():\n    return 'ready'");
+    final dockerFile = File('${directory.path}/Dockerfile')
+      ..writeAsStringSync('FROM scratch');
+
+    await _pumpFileMessage(
+      tester,
+      files: [dartFile.path, pythonFile.path, dockerFile.path],
+    );
+
+    expect(find.text('DART'), findsOneWidget);
+    expect(find.text('PYTHON'), findsOneWidget);
+    expect(find.text('DOCKERFILE'), findsOneWidget);
+    expect(find.byIcon(LucideIcons.fileCode2), findsNWidgets(3));
+
+    await tester.tap(
+      find.byKey(ValueKey<String>('message-local-file-${dartFile.path}')),
+    );
+    await _pumpDialog(tester);
+
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-code-preview')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-text-preview')),
+      findsNothing,
+    );
+    expect(find.byType(SelectionArea), findsOneWidget);
+
+    await _pumpUntilSyntaxHighlighted(tester);
+
+    final codeText = tester.widget<Text>(
+      find.byKey(const ValueKey<String>('stars-syntax-highlighted-code-text')),
+    );
+    final codeSpan = codeText.textSpan! as TextSpan;
+    expect(codeSpan.toPlainText(), "void main() { print('hello'); }");
+    final syntaxColors =
+        codeSpan.children!
+            .whereType<TextSpan>()
+            .map((span) => span.style?.color)
+            .whereType<Color>()
+            .toSet();
+    expect(syntaxColors.length, greaterThan(1));
+  });
+
   testWidgets('markdown and image files use rich in-app previews', (
     tester,
   ) async {
@@ -372,7 +425,8 @@ cat "${file.path}"
       find.byKey(const ValueKey<String>('message-local-html-source')),
       findsOneWidget,
     );
-    expect(find.text(source), findsOneWidget);
+    await _pumpUntilSyntaxHighlighted(tester);
+    expect(find.text(source, findRichText: true), findsOneWidget);
   });
 
   testWidgets('URL previews deduplicate safe links and open from their cards', (
@@ -507,6 +561,30 @@ Future<void> _pumpFileMessage(
 Future<void> _pumpDialog(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
+}
+
+Future<void> _pumpUntilSyntaxHighlighted(WidgetTester tester) async {
+  final codeFinder = find.byKey(
+    const ValueKey<String>('stars-syntax-highlighted-code-text'),
+  );
+  for (var attempt = 0; attempt < 50; attempt++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+    if (codeFinder.evaluate().isEmpty) continue;
+    final codeText = tester.widget<Text>(codeFinder);
+    final codeSpan = codeText.textSpan;
+    if (codeSpan is! TextSpan) continue;
+    final colors =
+        codeSpan.children
+            ?.whereType<TextSpan>()
+            .map((span) => span.style?.color)
+            .whereType<Color>()
+            .toSet();
+    if (colors != null && colors.length > 1) return;
+  }
+  fail('Syntax highlighting did not finish.');
 }
 
 Future<void> _finishHtmlBackgroundWork(WidgetTester tester) async {

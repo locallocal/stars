@@ -94,7 +94,10 @@ void main() {
       find.byKey(const ValueKey<String>('message-local-html-source')),
       findsOneWidget,
     );
-    expect(find.textContaining('dashboard.js'), findsOneWidget);
+    expect(
+      find.textContaining('dashboard.js', findRichText: true),
+      findsOneWidget,
+    );
   });
 }
 
