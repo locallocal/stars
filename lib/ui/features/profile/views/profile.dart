@@ -54,6 +54,7 @@ class _ProfilePageState extends State<ProfilePage> {
   ThemeMode _themeMode = ThemeMode.system;
   String _language = 'zh_CN'; // 语言设置
   ProfileViewModel? _resolvedViewModel;
+  ProfileViewModel? _listenedViewModel;
   bool _loadStarted = false;
   final List<GlobalKey> _desktopSectionKeys = List<GlobalKey>.generate(
     5,
@@ -104,6 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    _listenToViewModel(widget.viewModel);
     final initialProfile = widget.initialProfile;
     if (initialProfile == null) {
       if (widget.viewModel != null) _loadProfileInfo();
@@ -121,11 +123,13 @@ class _ProfilePageState extends State<ProfilePage> {
     super.didChangeDependencies();
     if (_profile != null || _loadStarted) return;
     _resolvedViewModel ??= AppScope.of(context).createProfileViewModel();
+    _listenToViewModel(_resolvedViewModel);
     _loadProfileInfo();
   }
 
   @override
   void dispose() {
+    _listenedViewModel?.removeListener(_handleViewModelChanged);
     _resolvedViewModel?.dispose();
     super.dispose();
   }
@@ -133,9 +137,30 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel != widget.viewModel) {
+      _listenToViewModel(widget.viewModel ?? _resolvedViewModel);
+    }
     if (oldWidget.selectedSection != widget.selectedSection) {
       _scheduleSelectedSectionScroll();
     }
+  }
+
+  void _listenToViewModel(ProfileViewModel? viewModel) {
+    if (identical(_listenedViewModel, viewModel)) return;
+    _listenedViewModel?.removeListener(_handleViewModelChanged);
+    _listenedViewModel = viewModel;
+    viewModel?.addListener(_handleViewModelChanged);
+  }
+
+  void _handleViewModelChanged() {
+    final profile = _listenedViewModel?.profile;
+    if (!mounted || profile == null || identical(_profile, profile)) return;
+    setState(() {
+      _profile = profile;
+      _themeMode = intToThemeMode(profile.themeMode);
+      _language = profile.language;
+      _isLoading = false;
+    });
   }
 
   Future<void> _loadProfileInfo() async {
@@ -356,7 +381,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   key: const ValueKey<String>('profile-mcp-servers'),
                 ),
                 const SizedBox(height: 12),
-                _buildStrictGroundingControl(context, desktop: false),
+                _buildStrictGroundingControl(context),
                 const SizedBox(height: 12),
                 _buildApplicationInjectedPrompt(context, desktop: false),
               ],
@@ -468,8 +493,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       subtitle: S.of(context).mcpServersDescription,
                       onTap: widget.onOpenMcpServers,
                     ),
-                    _buildDesktopExecutionStatusControl(context),
-                    _buildStrictGroundingControl(context, desktop: true),
                     _buildApplicationInjectedPrompt(context, desktop: true),
                   ],
                 ),

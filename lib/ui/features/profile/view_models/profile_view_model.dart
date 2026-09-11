@@ -52,6 +52,36 @@ class ProfileViewModel extends DisposableChangeNotifier {
     _applyProfile(profile);
   }
 
+  Future<void> setShowExecutionStatus(bool value) async {
+    var profile = _profile;
+    if (profile == null) {
+      await load();
+      profile = _profile;
+    }
+    if (profile == null || profile.showExecutionStatus == value) return;
+    await save(
+      profile.copyWith(
+        showExecutionStatus: value,
+        modifyTimestamp: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> setStrictGroundingMode(bool value) async {
+    var profile = _profile;
+    if (profile == null) {
+      await load();
+      profile = _profile;
+    }
+    if (profile == null || profile.strictGroundingMode == value) return;
+    await save(
+      profile.copyWith(
+        strictGroundingMode: value,
+        modifyTimestamp: DateTime.now(),
+      ),
+    );
+  }
+
   Future<String?> pickAvatar() => _attachmentRepository.selectImage();
 
   void _applyProfile(Profile profile, {bool notify = true}) {

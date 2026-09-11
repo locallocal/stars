@@ -14,18 +14,27 @@ const double _modelControlWidth = 44;
 const double _modelTurnLimitControlWidth = 72;
 
 typedef MaxModelTurnsChanged = Future<void> Function(int maxModelTurns);
+typedef ConversationPreferenceChanged = Future<void> Function(bool value);
 
-/// Conversation-scoped model options shown in the bot-information inspector.
+/// Model and presentation controls shown in the conversation inspector.
 final class ConversationModelControls extends StatefulWidget {
   const ConversationModelControls({
     super.key,
     required this.provider,
+    required this.showExecutionStatus,
+    required this.strictGroundingMode,
+    this.onShowExecutionStatusChanged,
+    this.onStrictGroundingModeChanged,
     this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
     this.maxModelTurnsEnabled = true,
     this.onMaxModelTurnsChanged,
   });
 
   final AiProvider provider;
+  final bool showExecutionStatus;
+  final bool strictGroundingMode;
+  final ConversationPreferenceChanged? onShowExecutionStatusChanged;
+  final ConversationPreferenceChanged? onStrictGroundingModeChanged;
   final int maxModelTurns;
   final bool maxModelTurnsEnabled;
   final MaxModelTurnsChanged? onMaxModelTurnsChanged;
@@ -69,6 +78,46 @@ final class _ConversationModelControlsState
             });
           },
         ),
+      _ModelControlRow(
+        key: const ValueKey<String>('conversation-execution-status-row'),
+        switchKey: const ValueKey<String>(
+          'conversation-execution-status-toggle',
+        ),
+        icon: LucideIcons.activity,
+        label: S.of(context).chatExecutionStatus,
+        description: S.of(context).showExecutionStatusDescription,
+        value: widget.showExecutionStatus,
+        onChanged:
+            widget.onShowExecutionStatusChanged == null
+                ? null
+                : (value) => unawaited(
+                  _updatePreference(
+                    context,
+                    widget.onShowExecutionStatusChanged!,
+                    value,
+                  ),
+                ),
+      ),
+      _ModelControlRow(
+        key: const ValueKey<String>('conversation-strict-grounding-row'),
+        switchKey: const ValueKey<String>(
+          'conversation-strict-grounding-toggle',
+        ),
+        icon: LucideIcons.shieldCheck,
+        label: S.of(context).strictGroundingMode,
+        description: S.of(context).strictGroundingModeDescription,
+        value: widget.strictGroundingMode,
+        onChanged:
+            widget.onStrictGroundingModeChanged == null
+                ? null
+                : (value) => unawaited(
+                  _updatePreference(
+                    context,
+                    widget.onStrictGroundingModeChanged!,
+                    value,
+                  ),
+                ),
+      ),
       _MaxModelTurnsRow(
         enabled:
             widget.maxModelTurnsEnabled &&
@@ -89,6 +138,24 @@ final class _ConversationModelControlsState
         ],
       ],
     );
+  }
+
+  Future<void> _updatePreference(
+    BuildContext context,
+    ConversationPreferenceChanged onChanged,
+    bool value,
+  ) async {
+    try {
+      await onChanged(value);
+    } on Object catch (error) {
+      if (context.mounted) {
+        showStarsNotice(
+          context,
+          safeFailureMessage(context, error),
+          tone: StarsNoticeTone.error,
+        );
+      }
+    }
   }
 
   Future<void> _editMaxModelTurns(BuildContext context) async {
@@ -124,6 +191,7 @@ final class _ModelControlRow extends StatelessWidget {
     required this.switchKey,
     required this.icon,
     required this.label,
+    this.description,
     required this.value,
     required this.onChanged,
   });
@@ -131,8 +199,9 @@ final class _ModelControlRow extends StatelessWidget {
   final Key switchKey;
   final IconData icon;
   final String label;
+  final String? description;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -140,12 +209,14 @@ final class _ModelControlRow extends StatelessWidget {
       key: switchKey,
       width: _modelControlWidth,
       value: value,
+      enabled: onChanged != null,
       onChanged: onChanged,
     );
     return MergeSemantics(
       child: StarsInspectorInfoRow(
         icon: icon,
         label: label,
+        description: description,
         crossAxisAlignment: CrossAxisAlignment.center,
         trailingWidth: _modelControlWidth,
         layout: StarsInspectorInfoRowLayout.settings,

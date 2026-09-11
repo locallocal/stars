@@ -10,11 +10,30 @@ import 'package:stars/ui/features/profile/views/profile.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
-  testWidgets('desktop strict mode is accessible, persisted, and restored', (
+  testWidgets('desktop profile omits the conversation strict-mode control', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    final semantics = tester.ensureSemantics();
+    try {
+      await tester.pumpWidget(_harness());
+      await tester.pumpAndSettle();
+
+      final control = find.byKey(
+        const ValueKey<String>('profile-strict-grounding-switch'),
+      );
+      expect(control, findsNothing);
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('mobile strict mode control fits a compact layout', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
     Profile? saved;
     try {
       await tester.pumpWidget(
@@ -31,53 +50,14 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(control, findsOneWidget);
-      expect(tester.widget<ShadSwitch>(control).value, isFalse);
-      expect(find.bySemanticsLabel(RegExp('严格验证模式')), findsWidgets);
+      expect(find.text('严格验证模式'), findsOneWidget);
 
+      await tester.ensureVisible(control);
+      await tester.pumpAndSettle();
       await tester.tap(control);
       await tester.pumpAndSettle();
 
       expect(saved?.strictGroundingMode, isTrue);
-      expect(tester.widget<ShadSwitch>(control).value, isTrue);
-
-      await tester.pumpWidget(_harness(initialProfile: saved));
-      await tester.pumpAndSettle();
-      final restored = find.byKey(
-        const ValueKey<String>('profile-strict-grounding-switch'),
-      );
-      await tester.scrollUntilVisible(
-        restored,
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(tester.widget<ShadSwitch>(restored).value, isTrue);
-      expect(tester.takeException(), isNull);
-    } finally {
-      semantics.dispose();
-      debugDefaultTargetPlatformOverride = null;
-    }
-  });
-
-  testWidgets('mobile strict mode control fits a compact layout', (
-    tester,
-  ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    try {
-      await tester.pumpWidget(_harness());
-      await tester.pumpAndSettle();
-
-      final control = find.byKey(
-        const ValueKey<String>('profile-strict-grounding-switch'),
-      );
-      await tester.scrollUntilVisible(
-        control,
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(control, findsOneWidget);
-      expect(find.text('严格验证模式'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       tester.view.reset();
