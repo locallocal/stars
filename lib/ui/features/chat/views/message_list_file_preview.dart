@@ -415,23 +415,34 @@ class _LocalFilePreviewDialogState extends State<_LocalFilePreviewDialog> {
         padding: const EdgeInsetsDirectional.only(end: 96),
         child: Text(
           widget.descriptor.fileName,
+          key: const ValueKey<String>('message-local-file-title'),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: StarsDesktopThemeSpec.pageTitleStyle(context),
         ),
       ),
-      description: Row(
-        children: [
-          ShadBadge.outline(child: Text(widget.descriptor.typeLabel)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: SelectableText(
-              widget.descriptor.path,
-              maxLines: 2,
-              style: StarsDesktopThemeSpec.metaStyle(context),
+      description: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Row(
+          key: const ValueKey<String>('message-local-file-metadata'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ShadBadge.outline(
+              key: const ValueKey<String>('message-local-file-type'),
+              child: Text(widget.descriptor.typeLabel),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Flexible(
+              child: SelectableText(
+                widget.descriptor.path,
+                key: const ValueKey<String>('message-local-file-path'),
+                maxLines: 1,
+                style: StarsDesktopThemeSpec.metaStyle(context),
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         if (widget.actions != null)
