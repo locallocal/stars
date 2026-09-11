@@ -212,10 +212,15 @@ void main() {
       'memory-compact-now',
       'memory-manage',
     ]) {
+      final buttonFinder = find.byKey(ValueKey<String>(key));
+      final button = tester.widget<ShadButton>(buttonFinder);
       expect(
-        tester.widget<ShadButton>(find.byKey(ValueKey<String>(key))).gap,
-        automaticMemoryGap,
+        tester.getSize(buttonFinder).height,
+        StarsDesktopThemeSpec.botFormFieldHeight,
       );
+      expect(button.variant, ShadButtonVariant.outline);
+      expect(button.size, ShadButtonSize.sm);
+      expect(button.gap, automaticMemoryGap);
     }
     final summaryButton = find.byKey(
       const ValueKey<String>('memory-view-summary'),

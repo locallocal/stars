@@ -251,37 +251,46 @@ final class _MemoryActions extends StatelessWidget {
               .toDouble();
       final padding = EdgeInsets.symmetric(horizontal: compactLayout ? 3 : 8);
       final iconSize = compactLayout ? 14.0 : 15.0;
-      Widget label(String value) => Flexible(
-        child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis),
+      const outlineBorderWidth = 1.0;
+      const buttonContentHeight =
+          StarsDesktopThemeSpec.botFormFieldHeight - outlineBorderWidth * 2;
+
+      ShadButton actionButton({
+        required Key key,
+        required String label,
+        required Widget leading,
+        required VoidCallback? onPressed,
+      }) => ShadButton.outline(
+        key: key,
+        size: ShadButtonSize.sm,
+        // ShadButton's outline is laid out outside its configured height.
+        // Exclude both border edges to keep the rendered control at 48 px.
+        height: buttonContentHeight,
+        width: buttonWidth,
+        padding: padding,
+        gap: StarsDesktopThemeSpec.settingsRowIconGap,
+        onPressed: onPressed,
+        leading: leading,
+        child: Flexible(
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
       );
 
-      final viewSummary = ShadButton.outline(
+      final viewSummary = actionButton(
         key: const ValueKey<String>('memory-view-summary'),
-        size: ShadButtonSize.sm,
-        width: buttonWidth,
-        padding: padding,
-        gap: StarsDesktopThemeSpec.settingsRowIconGap,
-        onPressed: onViewSummary,
+        label: S.of(context).viewSummary,
         leading: Icon(LucideIcons.fileText, size: iconSize),
-        child: label(S.of(context).viewSummary),
+        onPressed: onViewSummary,
       );
-      final manage = ShadButton.outline(
+      final manage = actionButton(
         key: const ValueKey<String>('memory-manage'),
-        size: ShadButtonSize.sm,
-        width: buttonWidth,
-        padding: padding,
-        gap: StarsDesktopThemeSpec.settingsRowIconGap,
-        onPressed: onManage,
+        label: S.of(context).manageMemory,
         leading: Icon(LucideIcons.brain, size: iconSize),
-        child: label(S.of(context).manageMemory),
+        onPressed: onManage,
       );
-      final compact = ShadButton.outline(
+      final compact = actionButton(
         key: const ValueKey<String>('memory-compact-now'),
-        size: ShadButtonSize.sm,
-        width: buttonWidth,
-        padding: padding,
-        gap: StarsDesktopThemeSpec.settingsRowIconGap,
-        onPressed: compacting ? null : onCompact,
+        label: S.of(context).compactNow,
         leading:
             compacting
                 ? const SizedBox.square(
@@ -289,7 +298,7 @@ final class _MemoryActions extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
                 : Icon(LucideIcons.minimize2, size: iconSize),
-        child: label(S.of(context).compactNow),
+        onPressed: compacting ? null : onCompact,
       );
 
       return Row(
