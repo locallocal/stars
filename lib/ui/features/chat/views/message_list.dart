@@ -11,6 +11,7 @@ import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/widgets/syntax_highlighted_code.dart';
 import 'package:stars/ui/features/chat/views/audio_player_widget.dart';
 import 'package:stars/ui/features/chat/views/video_player_widget.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';

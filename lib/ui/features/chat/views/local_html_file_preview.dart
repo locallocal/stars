@@ -10,6 +10,7 @@ import 'package:path/path.dart' as path;
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/widgets/syntax_highlighted_code.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:webview_all/webview_all.dart';
 
@@ -497,25 +498,12 @@ class _HtmlSourceView extends StatelessWidget {
   final String source;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-    return SingleChildScrollView(
-      key: const ValueKey<String>('message-local-html-source'),
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        width: double.infinity,
-        child: SelectableText(
-          source,
-          style: theme.textTheme.p.copyWith(
-            color: theme.colorScheme.cardForeground,
-            fontFamily: 'monospace',
-            fontSize: 13,
-            height: 1.55,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => StarsSyntaxHighlightedCode(
+    key: const ValueKey<String>('message-local-html-source'),
+    source: source,
+    language: 'xml',
+    framed: false,
+  );
 }
 
 class _HtmlReadableFallback extends StatelessWidget {
