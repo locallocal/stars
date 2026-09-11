@@ -15,9 +15,11 @@ import 'package:stars/ui/core/widgets/model_modalities.dart';
 import 'package:stars/ui/features/bots/views/edit_bot.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.dart';
+import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
+import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';
-import 'package:stars/ui/features/chat/views/conversation_directory_dialog.dart';
+import 'package:stars/ui/features/chat/views/conversation_directory_page.dart';
 import 'package:stars/ui/features/chat/views/conversation_memory_panel.dart';
 import 'package:stars/ui/features/chat/views/conversation_model_controls.dart';
 import 'package:stars/ui/features/chat/views/token_usage_chart.dart';
@@ -33,6 +35,8 @@ part 'desktop_layout_overlays.dart';
 part 'desktop_layout_resizing.dart';
 
 enum _ChatOverlay { sidebar }
+
+enum _ChatWorkspacePane { messages, information, directory }
 
 /// Adaptive desktop shell for macOS, Windows and Linux.
 ///
@@ -92,7 +96,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
   double _sidebarWidth = StarsDesktopThemeSpec.sidebarWidth;
   bool _sidebarVisible = true;
   bool _compactSidebarOpen = false;
-  bool _conversationInfoOpen = false;
+  _ChatWorkspacePane _chatWorkspacePane = _ChatWorkspacePane.messages;
   final ScrollController _conversationInfoScrollController = ScrollController();
   _ChatOverlay? _activeChatOverlay;
   NavigatorState? _chatOverlayNavigator;
@@ -109,6 +113,14 @@ class _DesktopLayoutState extends State<DesktopLayout> {
   AppDependencies? _dependencies;
   ChatTokenUsageViewModel? _tokenUsageViewModel;
   ConversationMemoryViewModel? _memoryViewModel;
+  ConversationDirectoryViewModel? _conversationDirectoryViewModel;
+  MessageActionViewModel? _conversationDirectoryActionViewModel;
+
+  bool get _conversationInfoOpen =>
+      _chatWorkspacePane == _ChatWorkspacePane.information;
+
+  bool get _conversationDirectoryOpen =>
+      _chatWorkspacePane == _ChatWorkspacePane.directory;
 
   Bot? get _activeBot => switch (widget.currentIndex) {
     0 => widget.selectedChatBot,
@@ -123,11 +135,15 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     if (_dependencies == dependencies) return;
     _tokenUsageViewModel?.dispose();
     _memoryViewModel?.dispose();
+    _conversationDirectoryViewModel?.dispose();
     _tokenUsageViewModel = null;
     _memoryViewModel = null;
+    _conversationDirectoryViewModel = null;
+    _conversationDirectoryActionViewModel = null;
     _dependencies = dependencies;
     _replaceTokenUsageViewModel();
     _replaceMemoryViewModel();
+    if (_conversationDirectoryOpen) _ensureConversationDirectoryViewModel();
   }
 
   @override
@@ -138,12 +154,16 @@ class _DesktopLayoutState extends State<DesktopLayout> {
       _chatPageKey = null;
       _replaceTokenUsageViewModel();
       _replaceMemoryViewModel();
+      _conversationDirectoryViewModel?.dispose();
+      _conversationDirectoryViewModel = null;
+      _conversationDirectoryActionViewModel = null;
+      _chatWorkspacePane = _ChatWorkspacePane.messages;
     } else if (oldWidget.selectedChatBot != widget.selectedChatBot) {
       _replaceMemoryViewModel();
     }
     if ((widget.currentIndex != 0 || widget.selectedChatBot == null) &&
-        _conversationInfoOpen) {
-      _conversationInfoOpen = false;
+        _chatWorkspacePane != _ChatWorkspacePane.messages) {
+      _chatWorkspacePane = _ChatWorkspacePane.messages;
     }
     if (oldWidget.currentIndex == 0 && widget.currentIndex != 0) {
       _preserveChatOverlayIntent = false;
@@ -171,6 +191,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     _conversationInfoScrollController.dispose();
     _tokenUsageViewModel?.dispose();
     _memoryViewModel?.dispose();
+    _conversationDirectoryViewModel?.dispose();
     super.dispose();
   }
 
@@ -196,6 +217,23 @@ class _DesktopLayoutState extends State<DesktopLayout> {
         chatId == null || bot == null || dependencies == null
             ? null
             : dependencies.createConversationMemoryViewModel(chatId, bot);
+  }
+
+  bool _ensureConversationDirectoryViewModel() {
+    final chatId = widget.selectedChatId;
+    final dependencies = _dependencies;
+    if (_conversationDirectoryViewModel?.chatId == chatId && chatId != null) {
+      return true;
+    }
+    _conversationDirectoryViewModel?.dispose();
+    _conversationDirectoryViewModel = null;
+    _conversationDirectoryActionViewModel = null;
+    if (chatId == null || dependencies == null) return false;
+    _conversationDirectoryViewModel = dependencies
+        .createConversationDirectoryViewModel(chatId);
+    _conversationDirectoryActionViewModel =
+        dependencies.createMessageActionViewModel();
+    return true;
   }
 
   @override
@@ -307,6 +345,8 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                           : _compactSidebarOpen
                                       : _sidebarVisible,
                               conversationInfoVisible: _conversationInfoOpen,
+                              conversationDirectoryVisible:
+                                  _conversationDirectoryOpen,
                               conversationInfoAvailable:
                                   conversationInfoAvailable,
                               compact: isChat && overlaySidebar,
@@ -338,11 +378,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                               onBrowseConversationDirectory:
                                   widget.currentIndex == 0 &&
                                           widget.selectedChatId != null
-                                      ? () => unawaited(
-                                        _requestBrowseConversationDirectory(
-                                          context,
-                                        ),
-                                      )
+                                      ? _toggleConversationDirectory
                                       : null,
                             ),
                             Expanded(child: _buildWorkspace(context)),

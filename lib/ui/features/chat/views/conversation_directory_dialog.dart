@@ -30,7 +30,7 @@ Future<void> showConversationDirectoryDialog({
   }
 }
 
-final class ConversationDirectoryDialog extends StatefulWidget {
+final class ConversationDirectoryDialog extends StatelessWidget {
   const ConversationDirectoryDialog({
     super.key,
     required this.viewModel,
@@ -41,12 +41,65 @@ final class ConversationDirectoryDialog extends StatefulWidget {
   final MessageActionViewModel? actionViewModel;
 
   @override
-  State<ConversationDirectoryDialog> createState() =>
-      _ConversationDirectoryDialogState();
+  Widget build(BuildContext context) {
+    final strings = S.of(context);
+    final viewport = MediaQuery.sizeOf(context);
+    final dialogHeight =
+        (viewport.height * 0.68).clamp(360.0, 680.0).toDouble();
+    final dialogWidth = (viewport.width - 32).clamp(280.0, 920.0).toDouble();
+    return ShadDialog(
+      key: const ValueKey<String>('conversation-directory-dialog'),
+      title: Text(
+        strings.conversationDirectory,
+        style: StarsDesktopThemeSpec.pageTitleStyle(context),
+      ),
+      description: Text(strings.conversationDirectoryDescription),
+      constraints: BoxConstraints(maxWidth: dialogWidth),
+      closeIcon: StarsDesktopIconAction(
+        key: const ValueKey<String>('conversation-directory-header-close'),
+        icon: LucideIcons.x,
+        label: MaterialLocalizations.of(context).closeButtonTooltip,
+        onPressed: () => Navigator.pop(context),
+      ),
+      actions: [
+        ShadButton.outline(
+          key: const ValueKey<String>('conversation-directory-close'),
+          onPressed: () => Navigator.pop(context),
+          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+        ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.only(top: 16),
+        child: SizedBox(
+          height: dialogHeight,
+          child: ConversationDirectoryBrowser(
+            viewModel: viewModel,
+            actionViewModel: actionViewModel,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-final class _ConversationDirectoryDialogState
-    extends State<ConversationDirectoryDialog> {
+/// Directory contents shared by the mobile dialog and desktop workspace page.
+final class ConversationDirectoryBrowser extends StatefulWidget {
+  const ConversationDirectoryBrowser({
+    super.key,
+    required this.viewModel,
+    this.actionViewModel,
+  });
+
+  final ConversationDirectoryViewModel viewModel;
+  final MessageActionViewModel? actionViewModel;
+
+  @override
+  State<ConversationDirectoryBrowser> createState() =>
+      _ConversationDirectoryBrowserState();
+}
+
+final class _ConversationDirectoryBrowserState
+    extends State<ConversationDirectoryBrowser> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -59,7 +112,7 @@ final class _ConversationDirectoryDialogState
   }
 
   @override
-  void didUpdateWidget(covariant ConversationDirectoryDialog oldWidget) {
+  void didUpdateWidget(covariant ConversationDirectoryBrowser oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.viewModel == widget.viewModel) return;
     oldWidget.viewModel.removeListener(_changed);
@@ -98,62 +151,29 @@ final class _ConversationDirectoryDialogState
 
   @override
   Widget build(BuildContext context) {
-    final strings = S.of(context);
-    final viewport = MediaQuery.sizeOf(context);
-    final dialogHeight =
-        (viewport.height * 0.68).clamp(360.0, 680.0).toDouble();
-    final dialogWidth = (viewport.width - 32).clamp(280.0, 920.0).toDouble();
-    return ShadDialog(
-      key: const ValueKey<String>('conversation-directory-dialog'),
-      title: Text(
-        strings.conversationDirectory,
-        style: StarsDesktopThemeSpec.pageTitleStyle(context),
-      ),
-      description: Text(strings.conversationDirectoryDescription),
-      constraints: BoxConstraints(maxWidth: dialogWidth),
-      closeIcon: StarsDesktopIconAction(
-        key: const ValueKey<String>('conversation-directory-header-close'),
-        icon: LucideIcons.x,
-        label: MaterialLocalizations.of(context).closeButtonTooltip,
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        ShadButton.outline(
-          key: const ValueKey<String>('conversation-directory-close'),
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _DirectoryToolbar(
+          path: widget.viewModel.directoryPath,
+          canNavigateUp: widget.viewModel.canNavigateUp,
+          loading: widget.viewModel.loading,
+          onNavigateUp: () => unawaited(widget.viewModel.navigateUp()),
+          searchController: _searchController,
+          searchFocusNode: _searchFocusNode,
+          query: widget.viewModel.query,
+          onSearch: widget.viewModel.search,
+          onClearSearch: _clearSearch,
         ),
-      ],
-      child: Padding(
-        padding: const EdgeInsets.only(top: 16),
-        child: SizedBox(
-          height: dialogHeight,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _DirectoryToolbar(
-                path: widget.viewModel.directoryPath,
-                canNavigateUp: widget.viewModel.canNavigateUp,
-                loading: widget.viewModel.loading,
-                onNavigateUp: () => unawaited(widget.viewModel.navigateUp()),
-                searchController: _searchController,
-                searchFocusNode: _searchFocusNode,
-                query: widget.viewModel.query,
-                onSearch: widget.viewModel.search,
-                onClearSearch: _clearSearch,
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _DirectoryEntriesPanel(
-                  count: widget.viewModel.visibleEntries.length,
-                  loading: widget.viewModel.loading,
-                  child: _buildContents(context),
-                ),
-              ),
-            ],
+        const SizedBox(height: 12),
+        Expanded(
+          child: _DirectoryEntriesPanel(
+            count: widget.viewModel.visibleEntries.length,
+            loading: widget.viewModel.loading,
+            child: _buildContents(context),
           ),
         ),
-      ),
+      ],
     );
   }
 

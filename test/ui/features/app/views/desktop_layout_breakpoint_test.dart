@@ -101,7 +101,7 @@ void main() {
 
           await tester.tap(
             find.byKey(
-              const ValueKey<String>('desktop-conversation-information-close'),
+              const ValueKey<String>('desktop-toolbar-conversation-info'),
             ),
           );
           await tester.pumpAndSettle();
