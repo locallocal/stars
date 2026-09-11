@@ -152,6 +152,32 @@ cat "${file.path}"
     );
     expect(find.text('A local text artifact'), findsOneWidget);
 
+    final fileType = find.byKey(
+      const ValueKey<String>('message-local-file-type'),
+    );
+    final fileTitle = find.byKey(
+      const ValueKey<String>('message-local-file-title'),
+    );
+    final fileMetadata = find.byKey(
+      const ValueKey<String>('message-local-file-metadata'),
+    );
+    final filePath = find.byKey(
+      const ValueKey<String>('message-local-file-path'),
+    );
+    expect(fileTitle, findsOneWidget);
+    expect(fileMetadata, findsOneWidget);
+    expect(fileType, findsOneWidget);
+    expect(filePath, findsOneWidget);
+    expect(tester.widget<SelectableText>(filePath).maxLines, 1);
+    expect(
+      tester.getTopLeft(fileMetadata).dx,
+      closeTo(tester.getTopLeft(fileTitle).dx, 0.5),
+    );
+    expect(
+      tester.getCenter(filePath).dy,
+      closeTo(tester.getCenter(fileType).dy, 0.5),
+    );
+
     final dialog = find.byKey(
       const ValueKey<String>('message-local-file-dialog'),
     );
