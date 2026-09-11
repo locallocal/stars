@@ -8,6 +8,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/conversation_directory_repository.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
 import 'package:stars/ui/features/chat/views/conversation_directory_dialog.dart';
+import 'package:stars/ui/features/chat/views/conversation_directory_page.dart';
 import 'package:stars/utils/theme.dart';
 
 import '../../../../support/widget_test_support.dart';
@@ -317,6 +318,66 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     },
   );
+
+  testWidgets('renders as a full-width desktop workspace page', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.reset);
+    final viewModel = ConversationDirectoryViewModel(
+      chatId: 'chat-page',
+      repository: _DirectoryRepository({
+        '': ConversationDirectorySnapshot(
+          path: '/data/chats/chat-page',
+          relativePath: '',
+          entries: [
+            ConversationDirectoryEntry(
+              name: 'report.md',
+              relativePath: 'report.md',
+              isDirectory: false,
+              modifiedAt: DateTime.utc(2026, 9, 11, 12),
+              sizeBytes: 1024,
+            ),
+          ],
+        ),
+      }),
+    );
+    addTearDown(viewModel.dispose);
+
+    await tester.pumpWidget(
+      shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) =>
+                Scaffold(body: ConversationDirectoryPage(viewModel: viewModel)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('desktop-conversation-directory')),
+      findsOneWidget,
+    );
+    expect(find.byType(ShadDialog), findsNothing);
+    final contentFinder = find.byKey(
+      const ValueKey<String>('desktop-conversation-directory-content'),
+    );
+    final content = tester.widget<ConstrainedBox>(contentFinder);
+    expect(content.constraints.maxWidth, StarsDesktopThemeSpec.contentMaxWidth);
+    expect(
+      tester.getSize(contentFinder).width,
+      StarsDesktopThemeSpec.contentMaxWidth,
+    );
+    final pageTitle = find.byKey(
+      const ValueKey<String>('desktop-conversation-directory-title'),
+    );
+    expect(
+      tester.widget<Text>(pageTitle).style,
+      StarsDesktopThemeSpec.pageTitleStyle(tester.element(pageTitle)),
+    );
+    expect(find.text('/data/chats/chat-page'), findsOneWidget);
+    expect(find.text('report.md'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('stacks path and search controls on a narrow viewport', (
     tester,

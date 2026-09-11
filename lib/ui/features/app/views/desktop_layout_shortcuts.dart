@@ -123,14 +123,32 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
 
   void _toggleConversationInfo() {
     _updateState(() {
-      _conversationInfoOpen = !_conversationInfoOpen;
+      _chatWorkspacePane =
+          _conversationInfoOpen
+              ? _ChatWorkspacePane.messages
+              : _ChatWorkspacePane.information;
       if (_conversationInfoOpen) _compactSidebarOpen = false;
     });
   }
 
+  void _toggleConversationDirectory() {
+    if (_conversationDirectoryOpen) {
+      _updateState(() => _chatWorkspacePane = _ChatWorkspacePane.messages);
+      return;
+    }
+    if (!_ensureConversationDirectoryViewModel()) return;
+    _updateState(() {
+      _chatWorkspacePane = _ChatWorkspacePane.directory;
+      _compactSidebarOpen = false;
+    });
+    if (_activeChatOverlay != null) {
+      unawaited(_dismissActiveChatOverlay());
+    }
+  }
+
   void _showConversationInfo() {
     _updateState(() {
-      _conversationInfoOpen = true;
+      _chatWorkspacePane = _ChatWorkspacePane.information;
       _compactSidebarOpen = false;
     });
     if (_activeChatOverlay != null) {
@@ -143,8 +161,8 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
       unawaited(_dismissActiveChatOverlay());
       return;
     }
-    if (_conversationInfoOpen) {
-      _updateState(() => _conversationInfoOpen = false);
+    if (_chatWorkspacePane != _ChatWorkspacePane.messages) {
+      _updateState(() => _chatWorkspacePane = _ChatWorkspacePane.messages);
     } else if (_compactSidebarOpen) {
       _updateState(() => _compactSidebarOpen = false);
     }

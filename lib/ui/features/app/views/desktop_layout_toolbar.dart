@@ -7,6 +7,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   final bool compact;
   final bool sidebarVisible;
   final bool conversationInfoVisible;
+  final bool conversationDirectoryVisible;
   final bool conversationInfoAvailable;
   final VoidCallback onToggleSidebar;
   final VoidCallback? onToggleConversationInfo;
@@ -22,6 +23,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     required this.compact,
     required this.sidebarVisible,
     required this.conversationInfoVisible,
+    required this.conversationDirectoryVisible,
     required this.conversationInfoAvailable,
     required this.onToggleSidebar,
     required this.onToggleConversationInfo,
@@ -155,6 +157,11 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             ),
                             label: S.of(context).browseConversationDirectory,
                             onPressed: onBrowseConversationDirectory,
+                            selected: conversationDirectoryVisible,
+                            variant:
+                                conversationDirectoryVisible
+                                    ? ShadButtonVariant.secondary
+                                    : ShadButtonVariant.ghost,
                             icon: LucideIcons.folderOpen,
                           ),
                         if (onClearChat != null)

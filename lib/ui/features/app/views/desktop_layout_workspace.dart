@@ -179,14 +179,28 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
 
   Widget _buildChatWorkspace(BuildContext context) {
     final bot = widget.selectedChatBot;
-    if (bot == null) return _buildChatDetail(context);
+    if (bot == null) {
+      return _conversationDirectoryOpen
+          ? _buildConversationDirectoryPage(context)
+          : _buildChatDetail(context);
+    }
     return IndexedStack(
       key: const ValueKey<String>('desktop-chat-view-switcher'),
-      index: _conversationInfoOpen ? 1 : 0,
+      index: _chatWorkspacePane.index,
       children: [
         _buildChatDetail(context),
         _buildConversationInfoPage(context, bot),
+        _buildConversationDirectoryPage(context),
       ],
+    );
+  }
+
+  Widget _buildConversationDirectoryPage(BuildContext context) {
+    final viewModel = _conversationDirectoryViewModel;
+    if (viewModel == null) return const SizedBox.shrink();
+    return ConversationDirectoryPage(
+      viewModel: viewModel,
+      actionViewModel: _conversationDirectoryActionViewModel,
     );
   }
 
