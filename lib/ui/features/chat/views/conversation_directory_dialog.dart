@@ -199,28 +199,32 @@ final class _ConversationDirectoryBrowserState
 
     return Scrollbar(
       controller: _scrollController,
-      child: ListView.separated(
+      child: ListView.builder(
         key: const ValueKey<String>('conversation-directory-list'),
         controller: _scrollController,
         itemCount: entries.length,
-        separatorBuilder: (_, _) => const ShadSeparator.horizontal(),
         itemBuilder: (context, index) {
           final entry = entries[index];
           final filePath = viewModel.filePathFor(entry);
-          return _DirectoryEntryRow(
-            entry: entry,
-            onOpen:
-                viewModel.loading
-                    ? null
-                    : entry.isDirectory
-                    ? () => unawaited(viewModel.openDirectory(entry))
-                    : filePath == null
-                    ? null
-                    : () => showLocalFilePreviewDialog(
-                      context: context,
-                      filePath: filePath,
-                      actions: widget.actionViewModel,
-                    ),
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index == entries.length - 1 ? 0 : 4,
+            ),
+            child: _DirectoryEntryRow(
+              entry: entry,
+              onOpen:
+                  viewModel.loading
+                      ? null
+                      : entry.isDirectory
+                      ? () => unawaited(viewModel.openDirectory(entry))
+                      : filePath == null
+                      ? null
+                      : () => showLocalFilePreviewDialog(
+                        context: context,
+                        filePath: filePath,
+                        actions: widget.actionViewModel,
+                      ),
+            ),
           );
         },
       ),
@@ -315,37 +319,30 @@ final class _DirectoryEntriesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.card,
-        borderRadius: theme.radius,
-        border: Border.all(color: theme.colorScheme.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Icon(
-                  LucideIcons.files,
-                  size: 16,
-                  color: theme.colorScheme.mutedForeground,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  S.of(context).fileCount(count.toString()),
-                  style: theme.textTheme.muted,
-                ),
-              ],
-            ),
+    return Column(
+      key: const ValueKey<String>('conversation-directory-entries'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+          child: Row(
+            children: [
+              Icon(
+                LucideIcons.files,
+                size: 16,
+                color: theme.colorScheme.mutedForeground,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                S.of(context).fileCount(count.toString()),
+                style: theme.textTheme.muted,
+              ),
+            ],
           ),
-          if (loading) const ShadProgress(),
-          const ShadSeparator.horizontal(),
-          Expanded(child: child),
-        ],
-      ),
+        ),
+        if (loading) const ShadProgress(),
+        Expanded(child: child),
+      ],
     );
   }
 }
@@ -456,64 +453,59 @@ final class _DirectoryEntryRow extends StatelessWidget {
       button: onOpen != null,
       onTap: onOpen,
       child: ExcludeSemantics(
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            key: ValueKey<String>(
-              'conversation-directory-${entry.relativePath}',
-            ),
-            borderRadius: StarsDesktopThemeSpec.itemRadius,
-            onTap: onOpen,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: tokens.controlFill,
-                      borderRadius: StarsDesktopThemeSpec.itemRadius,
+        child: ShadButton.ghost(
+          key: ValueKey<String>('conversation-directory-${entry.relativePath}'),
+          width: double.infinity,
+          height: 0,
+          expands: true,
+          enabled: onOpen != null,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          mainAxisAlignment: MainAxisAlignment.start,
+          onPressed: onOpen,
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: tokens.controlFill,
+                  borderRadius: StarsDesktopThemeSpec.itemRadius,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  entry.isDirectory ? LucideIcons.folder : LucideIcons.fileText,
+                  size: 17,
+                  color: tokens.secondaryText,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: StarsDesktopThemeSpec.bodyStyle(context),
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      entry.isDirectory
-                          ? LucideIcons.folder
-                          : LucideIcons.fileText,
-                      size: 17,
-                      color: tokens.secondaryText,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: StarsDesktopThemeSpec.bodyStyle(context),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          metadata.join(' · '),
-                          style: StarsDesktopThemeSpec.metaStyle(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (entry.isDirectory && onOpen != null) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      LucideIcons.chevronRight,
-                      size: 17,
-                      color: tokens.secondaryText,
+                    const SizedBox(height: 2),
+                    Text(
+                      metadata.join(' · '),
+                      style: StarsDesktopThemeSpec.metaStyle(context),
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
+              if (entry.isDirectory && onOpen != null) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 17,
+                  color: tokens.secondaryText,
+                ),
+              ],
+            ],
           ),
         ),
       ),
