@@ -85,6 +85,54 @@ void main() {
     expect(viewModel.snapshot, isNull);
     expect(viewModel.loading, isFalse);
   });
+
+  test('sorts directories before files and names within each group', () async {
+    final viewModel = ConversationDirectoryViewModel(
+      chatId: 'chat-1',
+      repository: _DirectoryRepository({
+        '': ConversationDirectorySnapshot(
+          path: '/data/chats/chat-1',
+          relativePath: '',
+          entries: [
+            ConversationDirectoryEntry(
+              name: 'zeta.txt',
+              relativePath: 'zeta.txt',
+              isDirectory: false,
+              modifiedAt: _timestamp,
+            ),
+            ConversationDirectoryEntry(
+              name: 'Zebra',
+              relativePath: 'Zebra',
+              isDirectory: true,
+              modifiedAt: _timestamp,
+            ),
+            ConversationDirectoryEntry(
+              name: 'alpha.txt',
+              relativePath: 'alpha.txt',
+              isDirectory: false,
+              modifiedAt: _timestamp,
+            ),
+            ConversationDirectoryEntry(
+              name: 'Archive',
+              relativePath: 'Archive',
+              isDirectory: true,
+              modifiedAt: _timestamp,
+            ),
+          ],
+        ),
+      }),
+    );
+    addTearDown(viewModel.dispose);
+
+    await viewModel.load();
+
+    expect(viewModel.visibleEntries.map((entry) => entry.name), [
+      'Archive',
+      'Zebra',
+      'alpha.txt',
+      'zeta.txt',
+    ]);
+  });
 }
 
 final _timestamp = DateTime.utc(2026, 8, 27, 12);

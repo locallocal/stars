@@ -28,17 +28,17 @@ void main() {
           relativePath: '',
           entries: [
             ConversationDirectoryEntry(
-              name: 'notes',
-              relativePath: 'notes',
-              isDirectory: true,
-              modifiedAt: DateTime.utc(2026, 8, 27, 12),
-            ),
-            ConversationDirectoryEntry(
               name: 'image.png',
               relativePath: 'image.png',
               isDirectory: false,
               modifiedAt: DateTime.utc(2026, 8, 27, 12),
               sizeBytes: 2048,
+            ),
+            ConversationDirectoryEntry(
+              name: 'notes',
+              relativePath: 'notes',
+              isDirectory: true,
+              modifiedAt: DateTime.utc(2026, 8, 27, 12),
             ),
             for (var index = 0; index < 20; index += 1)
               ConversationDirectoryEntry(
@@ -126,8 +126,20 @@ void main() {
 
     expect(find.text('/data/chats/chat-1'), findsOneWidget);
     expect(find.text('notes'), findsOneWidget);
-    expect(find.text('image.png'), findsOneWidget);
+    expect(find.text('file-0.txt'), findsOneWidget);
     expect(find.text('summary.md'), findsNothing);
+    expect(
+      tester.getTopLeft(find.text('notes')).dy,
+      lessThan(tester.getTopLeft(find.text('file-0.txt')).dy),
+    );
+    final entriesPanel = find.byKey(
+      const ValueKey<String>('conversation-directory-entries'),
+    );
+    expect(tester.widget(entriesPanel), isA<Column>());
+    expect(
+      find.descendant(of: entriesPanel, matching: find.byType(ShadSeparator)),
+      findsNothing,
+    );
 
     await tester.tap(
       find.byKey(const ValueKey<String>('conversation-directory-notes')),
@@ -136,7 +148,7 @@ void main() {
 
     expect(find.text('/data/chats/chat-1/notes'), findsOneWidget);
     expect(find.text('notes'), findsNothing);
-    expect(find.text('image.png'), findsNothing);
+    expect(find.text('file-0.txt'), findsNothing);
     expect(find.text('summary.md'), findsOneWidget);
 
     final searchField = find.descendant(
@@ -168,7 +180,7 @@ void main() {
 
     expect(find.text('/data/chats/chat-1'), findsOneWidget);
     expect(find.text('notes'), findsOneWidget);
-    expect(find.text('image.png'), findsOneWidget);
+    expect(find.text('file-0.txt'), findsOneWidget);
     expect(find.text('summary.md'), findsNothing);
     final scrollbar = tester.widget<Scrollbar>(
       find.descendant(

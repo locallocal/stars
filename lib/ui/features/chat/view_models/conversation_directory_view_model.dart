@@ -73,7 +73,13 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
         relativePath: relativePath,
       );
       if (isDisposed || generation != _loadGeneration) return;
-      _snapshot = snapshot;
+      final sortedEntries =
+          snapshot.entries.toList()..sort(_compareDirectoryEntries);
+      _snapshot = ConversationDirectorySnapshot(
+        path: snapshot.path,
+        relativePath: snapshot.relativePath,
+        entries: sortedEntries,
+      );
       _requestedRelativePath = snapshot.relativePath;
     } on Object catch (error) {
       if (isDisposed || generation != _loadGeneration) return;
@@ -96,4 +102,18 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
   }
 
   void clearSearch() => search('');
+}
+
+int _compareDirectoryEntries(
+  ConversationDirectoryEntry left,
+  ConversationDirectoryEntry right,
+) {
+  if (left.isDirectory != right.isDirectory) {
+    return left.isDirectory ? -1 : 1;
+  }
+  final normalizedNameComparison = left.name.toLowerCase().compareTo(
+    right.name.toLowerCase(),
+  );
+  if (normalizedNameComparison != 0) return normalizedNameComparison;
+  return left.name.compareTo(right.name);
 }
