@@ -224,10 +224,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Системный промпт",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Управляется Stars. Когда включено, содержимое ниже добавляется к запросам модели в беседе; когда выключено, оно не добавляется. Необходимый контекст выполнения беседы не затрагивается. Содержимое нельзя редактировать.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Управляется Stars. Когда включено, содержимое ниже добавляется к запросам модели в беседе; когда выключено, оно не добавляется. Необходимый контекст выполнения беседы не затрагивается. Содержимое нельзя редактировать.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -342,6 +341,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("Контекст сжат"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Окно контекста"),
+    "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
+      "Очистить",
+    ),
+    "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("Данные"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
       "Conversation data directory",
     ),

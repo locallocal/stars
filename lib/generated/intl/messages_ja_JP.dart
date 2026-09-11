@@ -203,10 +203,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "システムプロンプト",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -293,6 +292,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("コンテキストとメモリ"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("コンテキストを圧縮しました"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("コンテキストウィンドウ"),
+    "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("消去"),
+    "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("データ"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
       "Conversation data directory",
     ),

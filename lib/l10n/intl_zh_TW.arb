@@ -855,6 +855,8 @@
     "clearSearch": "Clear search",
     "conversationDirectory": "會話資料目錄",
     "browseConversationDirectory": "查看會話資料",
+    "conversationDataMenuLabel": "資料",
+    "conversationClearMenuLabel": "清空",
     "conversationDirectoryDescription": "查看此會話儲存的檔案和資料夾。",
     "searchConversationFiles": "搜尋檔案和資料夾",
     "conversationDirectoryEmpty": "此會話資料目錄為空。",

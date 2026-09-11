@@ -220,10 +220,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt del sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars lo administra. Al activarlo, el contenido siguiente se añade a las solicitudes del modelo de la conversación; al desactivarlo, se omite. El contexto de ejecución necesario no se ve afectado. El contenido no se puede editar.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars lo administra. Al activarlo, el contenido siguiente se añade a las solicitudes del modelo de la conversación; al desactivarlo, se omite. El contexto de ejecución necesario no se ve afectado. El contenido no se puede editar.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -342,6 +341,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindow": MessageLookupByLibrary.simpleMessage(
       "Ventana de contexto",
     ),
+    "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
+      "Vaciar",
+    ),
+    "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("Datos"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
       "Conversation data directory",
     ),

@@ -269,6 +269,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("上下文与记忆"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("上下文已压缩"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("上下文窗口"),
+    "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("清空"),
+    "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("数据"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage("会话数据目录"),
     "conversationDirectoryDescription": MessageLookupByLibrary.simpleMessage(
       "查看此会话存储的文件和文件夹。",

@@ -665,6 +665,8 @@
     "clearSearch": "Clear search",
     "conversationDirectory": "Conversation data directory",
     "browseConversationDirectory": "Browse conversation data",
+    "conversationDataMenuLabel": "Data",
+    "conversationClearMenuLabel": "Clear",
     "conversationDirectoryDescription": "Browse files and folders stored for this conversation.",
     "searchConversationFiles": "Search files and folders",
     "conversationDirectoryEmpty": "This conversation directory is empty.",
