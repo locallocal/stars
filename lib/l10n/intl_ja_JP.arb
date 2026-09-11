@@ -786,6 +786,8 @@
     "clearSearch": "Clear search",
     "conversationDirectory": "Conversation data directory",
     "browseConversationDirectory": "Browse conversation data",
+    "conversationDataMenuLabel": "データ",
+    "conversationClearMenuLabel": "消去",
     "conversationDirectoryDescription": "Browse files and folders stored for this conversation.",
     "searchConversationFiles": "Search files and folders",
     "conversationDirectoryEmpty": "This conversation directory is empty.",

@@ -3,6 +3,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/ui/core/widgets/common.dart';
+import 'package:stars/ui/core/widgets/conversation_clear_scope.dart';
+import 'package:stars/ui/core/widgets/conversation_directory_scope.dart';
 import 'package:stars/ui/core/widgets/conversation_information_scope.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -26,6 +28,8 @@ class ChatListBuilder extends StatelessWidget {
   final void Function(String chatId, Bot bot) onChatSelected;
   final Future<void> Function(String chatId) onDeleteChat;
   final VoidCallback? onChatDetailsRequested;
+  final VoidCallback? onChatDirectoryRequested;
+  final VoidCallback? onChatClearRequested;
   final ChatGenerationRegistry generationRegistry;
 
   const ChatListBuilder({
@@ -40,6 +44,8 @@ class ChatListBuilder extends StatelessWidget {
     required this.onChatSelected,
     required this.onDeleteChat,
     this.onChatDetailsRequested,
+    this.onChatDirectoryRequested,
+    this.onChatClearRequested,
     required this.generationRegistry,
   });
 
@@ -49,6 +55,12 @@ class ChatListBuilder extends StatelessWidget {
     final showConversationInformation =
         onChatDetailsRequested ??
         StarsConversationInformationScope.maybeOf(context)?.onShow;
+    final showConversationDirectory =
+        onChatDirectoryRequested ??
+        StarsConversationDirectoryScope.maybeOf(context)?.onShow;
+    final clearConversation =
+        onChatClearRequested ??
+        StarsConversationClearScope.maybeOf(context)?.onClear;
     return ListView.separated(
       padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: chatList.length,
@@ -250,6 +262,18 @@ class ChatListBuilder extends StatelessWidget {
           showConversationInformation();
         }
 
+        void openDirectory() {
+          if (isOrphaned || showConversationDirectory == null) return;
+          onChatSelected(chat.id, bot);
+          showConversationDirectory();
+        }
+
+        void clearChat() {
+          if (isOrphaned || clearConversation == null) return;
+          onChatSelected(chat.id, bot);
+          clearConversation();
+        }
+
         ChatListItem buildListItem({Widget? trailing}) {
           final storedPreview = chat.lastMessage;
           final localizedPreview =
@@ -278,12 +302,11 @@ class ChatListBuilder extends StatelessWidget {
         if (isDesktop) {
           final contextItems = <Widget>[
             ShadContextMenuItem(
-              leading: const Icon(LucideIcons.messageCircle, size: 16),
-              enabled: !isOrphaned,
-              onPressed: openChat,
-              child: Text(
-                desktopConversationText(context, S.of(context).startChatting),
-              ),
+              key: ValueKey<String>('chat-context-directory-${chat.id}'),
+              leading: const Icon(LucideIcons.folderOpen, size: 16),
+              enabled: !isOrphaned && showConversationDirectory != null,
+              onPressed: openDirectory,
+              child: Text(S.of(context).conversationDataMenuLabel),
             ),
             ShadContextMenuItem(
               key: ValueKey<String>('chat-context-details-${chat.id}'),
@@ -292,10 +315,18 @@ class ChatListBuilder extends StatelessWidget {
               onPressed: openDetails,
               child: Text(S.of(context).details),
             ),
+            ShadContextMenuItem(
+              key: ValueKey<String>('chat-context-clear-${chat.id}'),
+              leading: const Icon(LucideIcons.eraser, size: 16),
+              enabled: !isOrphaned && clearConversation != null,
+              onPressed: clearChat,
+              child: Text(S.of(context).conversationClearMenuLabel),
+            ),
             const ShadSeparator.horizontal(
               margin: EdgeInsets.symmetric(vertical: 4),
             ),
             ShadContextMenuItem(
+              key: ValueKey<String>('chat-context-delete-${chat.id}'),
               leading: Icon(
                 LucideIcons.trash2,
                 size: 16,
@@ -313,13 +344,19 @@ class ChatListBuilder extends StatelessWidget {
             items: contextItems,
             child: buildListItem(
               trailing: _ChatRowActions(
-                canOpen: !isOrphaned,
                 canShowDetails:
                     !isOrphaned && showConversationInformation != null,
-                onOpen: openChat,
+                canShowDirectory:
+                    !isOrphaned && showConversationDirectory != null,
+                canClear: !isOrphaned && clearConversation != null,
                 onShowDetails: openDetails,
+                onShowDirectory: openDirectory,
+                onClear: clearChat,
                 onDelete: deleteChat,
                 detailsKey: ValueKey<String>('chat-details-${chat.id}'),
+                directoryKey: ValueKey<String>('chat-directory-${chat.id}'),
+                clearKey: ValueKey<String>('chat-clear-${chat.id}'),
+                deleteKey: ValueKey<String>('chat-delete-${chat.id}'),
               ),
             ),
           );
@@ -363,20 +400,30 @@ class ChatListBuilder extends StatelessWidget {
 
 class _ChatRowActions extends StatefulWidget {
   const _ChatRowActions({
-    required this.canOpen,
     required this.canShowDetails,
-    required this.onOpen,
+    required this.canShowDirectory,
+    required this.canClear,
     required this.onShowDetails,
+    required this.onShowDirectory,
+    required this.onClear,
     required this.onDelete,
     required this.detailsKey,
+    required this.directoryKey,
+    required this.clearKey,
+    required this.deleteKey,
   });
 
-  final bool canOpen;
   final bool canShowDetails;
-  final VoidCallback onOpen;
+  final bool canShowDirectory;
+  final bool canClear;
   final VoidCallback onShowDetails;
+  final VoidCallback onShowDirectory;
+  final VoidCallback onClear;
   final VoidCallback onDelete;
   final Key detailsKey;
+  final Key directoryKey;
+  final Key clearKey;
+  final Key deleteKey;
 
   @override
   State<_ChatRowActions> createState() => _ChatRowActionsState();
@@ -433,17 +480,13 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ShadButton.ghost(
+                    key: widget.directoryKey,
                     size: ShadButtonSize.sm,
-                    enabled: widget.canOpen,
-                    onPressed: () => _invoke(widget.onOpen),
+                    enabled: widget.canShowDirectory,
+                    onPressed: () => _invoke(widget.onShowDirectory),
                     mainAxisAlignment: MainAxisAlignment.start,
-                    leading: const Icon(LucideIcons.messageCircle, size: 16),
-                    child: Text(
-                      desktopConversationText(
-                        context,
-                        S.of(context).startChatting,
-                      ),
-                    ),
+                    leading: const Icon(LucideIcons.folderOpen, size: 16),
+                    child: Text(S.of(context).conversationDataMenuLabel),
                   ),
                   ShadButton.ghost(
                     key: widget.detailsKey,
@@ -454,7 +497,17 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
                     leading: const Icon(LucideIcons.info, size: 16),
                     child: Text(S.of(context).details),
                   ),
+                  ShadButton.ghost(
+                    key: widget.clearKey,
+                    size: ShadButtonSize.sm,
+                    enabled: widget.canClear,
+                    onPressed: () => _invoke(widget.onClear),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(LucideIcons.eraser, size: 16),
+                    child: Text(S.of(context).conversationClearMenuLabel),
+                  ),
                   ShadButton.raw(
+                    key: widget.deleteKey,
                     variant: ShadButtonVariant.ghost,
                     size: ShadButtonSize.sm,
                     foregroundColor: colors.destructive,

@@ -441,7 +441,7 @@ void main() {
     });
   });
 
-  testWidgets('desktop chat row details menu opens conversation information', (
+  testWidgets('desktop chat row menu follows conversation action order', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -476,6 +476,8 @@ void main() {
       modifyTimestamp: timestamp,
     );
     var selectedChatId = '';
+    var directoryRequests = 0;
+    var clearRequests = 0;
 
     await withDesktopPlatform(() async {
       await tester.pumpWidget(
@@ -489,6 +491,8 @@ void main() {
             onChatDeleted: (_) {},
             onDeleteChat: (_) async {},
             onChatSelected: (chatId, _) => selectedChatId = chatId,
+            onChatDirectoryRequested: () => directoryRequests += 1,
+            onChatClearRequested: () => clearRequests += 1,
           ),
         ),
       );
@@ -505,6 +509,27 @@ void main() {
         ),
         hasLength(1),
       );
+      final contextActionKeys = contextMenu.items
+          .map((item) => item.key)
+          .whereType<ValueKey<String>>()
+          .map((key) => key.value)
+          .toList(growable: false);
+      expect(contextActionKeys, [
+        'chat-context-directory-chat-details-menu',
+        'chat-context-details-chat-details-menu',
+        'chat-context-clear-chat-details-menu',
+        'chat-context-delete-chat-details-menu',
+      ]);
+      expect(
+        contextMenu.items.where(
+          (item) =>
+              item.key ==
+              const ValueKey<String>(
+                'chat-context-directory-chat-details-menu',
+              ),
+        ),
+        hasLength(1),
+      );
 
       await tester.tap(find.byIcon(LucideIcons.ellipsis));
       await tester.pumpAndSettle();
@@ -512,7 +537,35 @@ void main() {
       final detailsAction = find.byKey(
         const ValueKey<String>('chat-details-chat-details-menu'),
       );
+      final dataAction = find.byKey(
+        const ValueKey<String>('chat-directory-chat-details-menu'),
+      );
+      final clearAction = find.byKey(
+        const ValueKey<String>('chat-clear-chat-details-menu'),
+      );
+      final deleteAction = find.byKey(
+        const ValueKey<String>('chat-delete-chat-details-menu'),
+      );
+      expect(dataAction, findsOneWidget);
       expect(detailsAction, findsOneWidget);
+      expect(clearAction, findsOneWidget);
+      expect(deleteAction, findsOneWidget);
+      expect(find.text('开始聊天'), findsNothing);
+      expect(find.text('数据'), findsOneWidget);
+      expect(find.text('清空'), findsOneWidget);
+      expect(
+        [
+          dataAction,
+          detailsAction,
+          clearAction,
+          deleteAction,
+        ].map((finder) => tester.getTopLeft(finder).dy).toList(growable: false),
+        orderedEquals(
+          [dataAction, detailsAction, clearAction, deleteAction]
+            .map((finder) => tester.getTopLeft(finder).dy)
+            .toList(growable: false)..sort(),
+        ),
+      );
       expect(
         find.descendant(
           of: detailsAction,
@@ -537,6 +590,38 @@ void main() {
         findsNothing,
       );
       expect(find.bySemanticsLabel('隐藏会话信息'), findsWidgets);
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+
+      final directoryAction = find.byKey(
+        const ValueKey<String>('chat-directory-chat-details-menu'),
+      );
+      expect(directoryAction, findsOneWidget);
+      expect(
+        find.descendant(
+          of: directoryAction,
+          matching: find.byIcon(LucideIcons.folderOpen),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('数据'), findsOneWidget);
+
+      await tester.tap(directoryAction);
+      await tester.pumpAndSettle();
+
+      expect(selectedChatId, chat.id);
+      expect(directoryRequests, 1);
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('chat-clear-chat-details-menu')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(selectedChatId, chat.id);
+      expect(clearRequests, 1);
     });
   });
 

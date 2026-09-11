@@ -216,10 +216,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Managed by Stars. When enabled, the content below is added to conversation model requests; when disabled, it is omitted. Required runtime conversation context is unaffected. The content cannot be edited.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Managed by Stars. When enabled, the content below is added to conversation model requests; when disabled, it is omitted. Required runtime conversation context is unaffected. The content cannot be edited.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -332,6 +331,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Context compacted",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Context window"),
+    "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("Clear"),
+    "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("Data"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
       "Conversation data directory",
     ),

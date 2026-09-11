@@ -136,6 +136,10 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
       _updateState(() => _chatWorkspacePane = _ChatWorkspacePane.messages);
       return;
     }
+    _openConversationDirectory();
+  }
+
+  void _openConversationDirectory() {
     if (!_ensureConversationDirectoryViewModel()) return;
     _updateState(() {
       _chatWorkspacePane = _ChatWorkspacePane.directory;
@@ -144,6 +148,13 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
     if (_activeChatOverlay != null) {
       unawaited(_dismissActiveChatOverlay());
     }
+  }
+
+  void _showConversationDirectory() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _openConversationDirectory();
+    });
   }
 
   void _showConversationInfo() {

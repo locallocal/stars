@@ -29,4 +29,11 @@ extension _DesktopLayoutResizing on _DesktopLayoutState {
   Future<void> _requestClearChat() async {
     await _chatPageKey?.currentState?.requestClearChat();
   }
+
+  void _requestClearChatFromSidebar() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_requestClearChat());
+    });
+  }
 }

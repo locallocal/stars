@@ -826,6 +826,7 @@ void main() {
                     onChatDeleted: (_) {},
                     onDeleteChat: (_) async {},
                     onChatSelected: (_, _) => openCount += 1,
+                    onChatDirectoryRequested: () {},
                   ),
                 ),
               ),
@@ -888,7 +889,7 @@ void main() {
       );
 
       await tester.tap(
-        find.byIcon(LucideIcons.messageCircle),
+        find.byKey(const ValueKey<String>('chat-directory-chat-1')),
         kind: PointerDeviceKind.mouse,
       );
       await tester.pumpAndSettle();
