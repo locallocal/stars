@@ -372,6 +372,10 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
     if (memoryViewModel == null) {
       return ConversationModelControls(
         provider: generationViewModel.capabilityProvider,
+        showExecutionStatus: widget.showExecutionStatus,
+        strictGroundingMode: widget.strictGroundingMode,
+        onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
+        onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
         maxModelTurnsEnabled: false,
       );
     }
@@ -380,6 +384,10 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
       builder:
           (context, child) => ConversationModelControls(
             provider: generationViewModel.capabilityProvider,
+            showExecutionStatus: widget.showExecutionStatus,
+            strictGroundingMode: widget.strictGroundingMode,
+            onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
+            onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
             maxModelTurns:
                 memoryViewModel.state?.maxModelTurns ??
                 ConversationMemoryState.defaultMaxModelTurns,

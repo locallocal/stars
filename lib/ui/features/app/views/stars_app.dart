@@ -567,6 +567,10 @@ class _MainPageState extends State<MainPage> {
               isEditingBot: _viewModel.isEditingSelectedBot,
               showExecutionStatus: widget.showExecutionStatus,
               strictGroundingMode: widget.strictGroundingMode,
+              onShowExecutionStatusChanged:
+                  _profileViewModel.setShowExecutionStatus,
+              onStrictGroundingModeChanged:
+                  _profileViewModel.setStrictGroundingMode,
               selectedProfileSection: _viewModel.selectedProfileSection,
               onProfileSectionChanged: _viewModel.selectProfileSection,
               onCreateChat: _requestCreateChat,

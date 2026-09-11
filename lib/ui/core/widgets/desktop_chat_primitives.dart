@@ -80,6 +80,7 @@ class StarsInspectorInfoRow extends StatelessWidget {
     super.key,
     required this.icon,
     required this.label,
+    this.description,
     this.value,
     this.trailing,
     this.trailingWidth,
@@ -95,6 +96,7 @@ class StarsInspectorInfoRow extends StatelessWidget {
 
   final IconData icon;
   final String label;
+  final String? description;
   final String? value;
   final Widget? trailing;
   final double? trailingWidth;
@@ -162,7 +164,24 @@ class StarsInspectorInfoRow extends StatelessWidget {
                   : starsInspectorIconLabelGap,
         ),
         Expanded(
-          child: Text(label, style: StarsDesktopThemeSpec.bodyStyle(context)),
+          child:
+              description == null
+                  ? Text(label, style: StarsDesktopThemeSpec.bodyStyle(context))
+                  : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: StarsDesktopThemeSpec.bodyStyle(context),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        description!,
+                        style: StarsDesktopThemeSpec.metaStyle(context),
+                      ),
+                    ],
+                  ),
         ),
         SizedBox(
           width: settingsLayout ? StarsDesktopThemeSpec.settingsRowValueGap : 8,

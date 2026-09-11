@@ -251,37 +251,30 @@ void main() {
     }
   });
 
-  testWidgets('desktop general setting persists execution status visibility', (
+  testWidgets('desktop general omits conversation presentation preferences', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    Profile? savedProfile;
     try {
-      await tester.pumpWidget(
-        _profileHarness(
-          onProfileSaved: (profile) async => savedProfile = profile,
-        ),
-      );
+      await tester.pumpWidget(_profileHarness());
       await tester.pumpAndSettle();
 
       final generalSection = find.text('通用');
-      final switchFinder = find.byKey(
-        const ValueKey<String>('profile-show-execution-status-switch'),
-      );
       expect(generalSection, findsOneWidget);
-      expect(switchFinder, findsOneWidget);
-      expect(tester.widget<ShadSwitch>(switchFinder).value, isTrue);
+      expect(
+        find.byKey(
+          const ValueKey<String>('profile-show-execution-status-switch'),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('profile-strict-grounding-switch')),
+        findsNothing,
+      );
       expect(
         tester.getTopLeft(generalSection).dy,
         greaterThan(tester.getTopLeft(find.text('外观与语言')).dy),
       );
-
-      await tester.ensureVisible(switchFinder);
-      await tester.tap(switchFinder);
-      await tester.pumpAndSettle();
-
-      expect(tester.widget<ShadSwitch>(switchFinder).value, isFalse);
-      expect(savedProfile?.showExecutionStatus, isFalse);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

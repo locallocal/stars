@@ -229,104 +229,37 @@ extension _ProfileSettingsControls on _ProfilePageState {
     );
   }
 
-  Widget _buildDesktopExecutionStatusControl(BuildContext context) {
-    return MergeSemantics(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24,
-              child: Icon(
-                LucideIcons.activity,
-                size: 18,
-                color: StarsDesktopThemeSpec.mutedText(context),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    S.of(context).chatExecutionStatus,
-                    style: StarsDesktopThemeSpec.bodyStyle(context),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    S.of(context).showExecutionStatusDescription,
-                    style: StarsDesktopThemeSpec.metaStyle(context),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            ShadSwitch(
-              key: const ValueKey<String>(
-                'profile-show-execution-status-switch',
-              ),
-              value: _showExecutionStatus,
-              onChanged: _updateShowExecutionStatus,
-            ),
-          ],
-        ),
-      ),
+  Widget _buildStrictGroundingControl(BuildContext context) {
+    final control = Switch.adaptive(
+      key: const ValueKey<String>('profile-strict-grounding-switch'),
+      value: _strictGroundingMode,
+      onChanged: _updateStrictGroundingMode,
     );
-  }
-
-  Widget _buildStrictGroundingControl(
-    BuildContext context, {
-    required bool desktop,
-  }) {
-    final control =
-        desktop
-            ? ShadSwitch(
-              key: const ValueKey<String>('profile-strict-grounding-switch'),
-              value: _strictGroundingMode,
-              onChanged: _updateStrictGroundingMode,
-            )
-            : Switch.adaptive(
-              key: const ValueKey<String>('profile-strict-grounding-switch'),
-              value: _strictGroundingMode,
-              onChanged: _updateStrictGroundingMode,
-            );
     return MergeSemantics(
       child: Padding(
-        padding:
-            desktop
-                ? const EdgeInsets.symmetric(vertical: 14, horizontal: 8)
-                : const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
             SizedBox(
-              width:
-                  desktop ? StarsDesktopThemeSpec.settingsRowIconSlotWidth : 32,
+              width: 32,
               child: Icon(
-                desktop ? LucideIcons.shieldCheck : Icons.shield_outlined,
-                size: desktop ? StarsDesktopThemeSpec.settingsRowIconSize : 22,
+                Icons.shield_outlined,
+                size: 22,
                 color: StarsDesktopThemeSpec.mutedText(context),
               ),
             ),
-            if (desktop)
-              const SizedBox(width: StarsDesktopThemeSpec.settingsRowIconGap),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     S.of(context).strictGroundingMode,
-                    style:
-                        desktop
-                            ? StarsDesktopThemeSpec.bodyStyle(context)
-                            : Theme.of(context).textTheme.bodyLarge,
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     S.of(context).strictGroundingModeDescription,
-                    style:
-                        desktop
-                            ? StarsDesktopThemeSpec.metaStyle(context)
-                            : Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
@@ -490,17 +423,6 @@ extension _ProfileSettingsControls on _ProfilePageState {
 
   Future<void> _commitFontSize(double value) async {
     _previewFontSize(value);
-    await _saveProfile();
-  }
-
-  Future<void> _updateShowExecutionStatus(bool value) async {
-    if (_profile == null || _showExecutionStatus == value) return;
-    setState(() {
-      _profile = _profile!.copyWith(
-        showExecutionStatus: value,
-        modifyTimestamp: DateTime.now(),
-      );
-    });
     await _saveProfile();
   }
 
