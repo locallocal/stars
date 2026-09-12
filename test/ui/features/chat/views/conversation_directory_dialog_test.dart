@@ -162,11 +162,27 @@ void main() {
 
     await tester.enterText(searchField, 'missing');
     await tester.pump();
-    expect(
-      find.byKey(const ValueKey<String>('conversation-directory-no-results')),
-      findsOneWidget,
+    final searchEmptyState = find.byKey(
+      const ValueKey<String>('conversation-directory-no-results'),
     );
+    expect(searchEmptyState, findsOneWidget);
+    final emptyState = tester.widget<DesktopEmptyStateCard>(searchEmptyState);
+    expect(emptyState.icon, LucideIcons.searchX);
+    expect(emptyState.title, '未找到匹配的文件或文件夹。');
+    expect(emptyState.description, '试试其他文件或文件夹名称，或清除搜索。');
+    expect(emptyState.supportingText, '搜索会匹配当前目录中的文件和文件夹名称。');
 
+    await tester.tap(
+      find.byKey(
+        const ValueKey<String>('conversation-directory-empty-clear-search'),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('summary.md'), findsOneWidget);
+    expect(_searchText(tester), isEmpty);
+
+    await tester.enterText(searchField, 'missing');
+    await tester.pump();
     await tester.tap(
       find.byKey(const ValueKey<String>('conversation-directory-clear-search')),
     );
@@ -388,6 +404,30 @@ void main() {
     );
     expect(find.text('/data/chats/chat-page'), findsOneWidget);
     expect(find.text('report.md'), findsOneWidget);
+
+    final searchField = find.descendant(
+      of: find.byKey(const ValueKey<String>('conversation-directory-search')),
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(searchField, 'missing');
+    await tester.pump();
+
+    final searchEmptyState = find.byKey(
+      const ValueKey<String>('conversation-directory-no-results'),
+    );
+    expect(searchEmptyState, findsOneWidget);
+    expect(tester.widget(searchEmptyState), isA<DesktopEmptyStateCard>());
+    expect(
+      find.descendant(
+        of: searchEmptyState,
+        matching: find.byIcon(LucideIcons.searchX),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: searchEmptyState, matching: find.byType(ShadButton)),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -460,6 +500,14 @@ void main() {
     );
     await tester.pumpAndSettle();
   });
+}
+
+String _searchText(WidgetTester tester) {
+  final search = find.descendant(
+    of: find.byKey(const ValueKey<String>('conversation-directory-search')),
+    matching: find.byType(EditableText),
+  );
+  return tester.widget<EditableText>(search).controller.text;
 }
 
 final class _DirectoryRepository implements ConversationDirectoryRepository {

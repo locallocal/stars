@@ -698,6 +698,8 @@
     "searchConversationFiles": "搜索文件和文件夹",
     "conversationDirectoryEmpty": "此会话数据目录为空。",
     "noConversationFilesFound": "未找到匹配的文件或文件夹。",
+    "conversationFileSearchEmptyDescription": "试试其他文件或文件夹名称，或清除搜索。",
+    "conversationFileSearchScope": "搜索会匹配当前目录中的文件和文件夹名称。",
     "unavailableBot": "智能体不可用",
     "botUnavailableTitle": "此智能体已不可用",
     "orphanedChatGuidance": "删除这条孤立会话，或重新创建缺失的智能体。",

@@ -2161,6 +2161,26 @@ class S {
     );
   }
 
+  /// `Try another file or folder name, or clear the search.`
+  String get conversationFileSearchEmptyDescription {
+    return Intl.message(
+      'Try another file or folder name, or clear the search.',
+      name: 'conversationFileSearchEmptyDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Search matches file and folder names in the current directory.`
+  String get conversationFileSearchScope {
+    return Intl.message(
+      'Search matches file and folder names in the current directory.',
+      name: 'conversationFileSearchScope',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Unavailable bot`
   String get unavailableBot {
     return Intl.message(

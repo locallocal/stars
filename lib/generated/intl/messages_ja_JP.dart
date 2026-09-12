@@ -317,6 +317,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
+    "conversationFileSearchEmptyDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "別のファイル名またはフォルダー名を試すか、検索をクリアしてください。",
+        ),
+    "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
+      "現在のディレクトリ内のファイル名とフォルダー名が検索対象です。",
+    ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage("会話情報"),
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "この会話の返信生成に使用するモデルです。",

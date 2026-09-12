@@ -356,6 +356,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
+    "conversationFileSearchEmptyDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "कोई दूसरा फ़ाइल या फ़ोल्डर नाम आज़माएँ, या खोज साफ़ करें।",
+        ),
+    "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
+      "खोज मौजूदा डायरेक्टरी में फ़ाइल और फ़ोल्डर नामों से मेल खाती है।",
+    ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage(
       "बातचीत की जानकारी",
     ),
