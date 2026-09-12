@@ -222,6 +222,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
         key: _chatPageKey,
         id: widget.selectedChatId!,
         bot: widget.selectedChatBot!,
+        showVerificationStatus: widget.showVerificationStatus,
         showExecutionStatus: widget.showExecutionStatus,
         strictGroundingMode: widget.strictGroundingMode,
       );
@@ -308,16 +309,20 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     _ConversationInfoRow(
                       icon: LucideIcons.bot,
                       label: S.of(context).name,
+                      description: S.of(context).conversationNameDescription,
                       value: bot.name,
                     ),
                     _ConversationInfoRow(
                       icon: LucideIcons.server,
                       label: S.of(context).provider,
+                      description:
+                          S.of(context).conversationProviderDescription,
                       value: bot.provider.isEmpty ? '—' : bot.provider,
                     ),
                     _ConversationInfoRow(
                       icon: LucideIcons.cpu,
                       label: S.of(context).model,
+                      description: S.of(context).conversationModelDescription,
                       value: bot.model.isEmpty ? '—' : bot.model,
                     ),
                     ModelModalitiesView(
@@ -332,6 +337,10 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                           bot.configuredOutputModalities ??
                           const [OutputModality.text],
                       keyPrefix: 'conversation-model-modalities',
+                      inputDescription:
+                          S.of(context).modelInputModalitiesDescription,
+                      outputDescription:
+                          S.of(context).modelOutputModalitiesDescription,
                     ),
                     if (generationViewModel != null)
                       _buildConversationModelControls(generationViewModel),
@@ -392,9 +401,11 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
     if (memoryViewModel == null) {
       return ConversationModelControls(
         provider: generationViewModel.capabilityProvider,
+        showVerificationStatus: widget.showVerificationStatus,
         showExecutionStatus: widget.showExecutionStatus,
         strictGroundingMode: widget.strictGroundingMode,
         onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
+        onShowVerificationStatusChanged: widget.onShowVerificationStatusChanged,
         onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
         maxModelTurnsEnabled: false,
       );
@@ -404,9 +415,12 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
       builder:
           (context, child) => ConversationModelControls(
             provider: generationViewModel.capabilityProvider,
+            showVerificationStatus: widget.showVerificationStatus,
             showExecutionStatus: widget.showExecutionStatus,
             strictGroundingMode: widget.strictGroundingMode,
             onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
+            onShowVerificationStatusChanged:
+                widget.onShowVerificationStatusChanged,
             onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
             maxModelTurns:
                 memoryViewModel.state?.maxModelTurns ??

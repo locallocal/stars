@@ -376,6 +376,7 @@ class _MyAppState extends State<MyApp> {
         return supportedLocales.first;
       },
       home: MainPage(
+        showVerificationStatus: _viewModel.showVerificationStatus,
         showExecutionStatus: _viewModel.showExecutionStatus,
         strictGroundingMode: _viewModel.strictGroundingMode,
         startupCapabilitiesReport: widget.startupCapabilitiesReport,
@@ -440,6 +441,7 @@ class _MyAppState extends State<MyApp> {
             );
           },
           home: MainPage(
+            showVerificationStatus: _viewModel.showVerificationStatus,
             showExecutionStatus: _viewModel.showExecutionStatus,
             strictGroundingMode: _viewModel.strictGroundingMode,
             startupCapabilitiesReport: widget.startupCapabilitiesReport,
@@ -454,12 +456,14 @@ class _MyAppState extends State<MyApp> {
 class MainPage extends StatefulWidget {
   const MainPage({
     super.key,
+    this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.strictGroundingMode = false,
     this.startupCapabilitiesReport = StartupCapabilitiesReport.empty,
     this.onRetryStartupCapabilities,
   });
 
+  final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
   final StartupCapabilitiesReport startupCapabilitiesReport;
@@ -527,6 +531,7 @@ class _MainPageState extends State<MainPage> {
       ChatListPage(
         key: _chatListKey,
         viewModel: _chatListViewModel,
+        showVerificationStatus: widget.showVerificationStatus,
         showExecutionStatus: widget.showExecutionStatus,
         strictGroundingMode: widget.strictGroundingMode,
         sidebarMode: isDesktopOrTablet,
@@ -565,8 +570,11 @@ class _MainPageState extends State<MainPage> {
               selectedChatBot: _viewModel.selectedChatBot,
               selectedBot: _viewModel.selectedBot,
               isEditingBot: _viewModel.isEditingSelectedBot,
+              showVerificationStatus: widget.showVerificationStatus,
               showExecutionStatus: widget.showExecutionStatus,
               strictGroundingMode: widget.strictGroundingMode,
+              onShowVerificationStatusChanged:
+                  _profileViewModel.setShowVerificationStatus,
               onShowExecutionStatusChanged:
                   _profileViewModel.setShowExecutionStatus,
               onStrictGroundingModeChanged:

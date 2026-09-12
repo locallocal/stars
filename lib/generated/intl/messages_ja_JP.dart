@@ -217,6 +217,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "このプロバイダーは手動スキルのみ対応しています。",
     ),
     "automaticMemory": MessageLookupByLibrary.simpleMessage("自動メモリ"),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "コンテキストに空きが必要なとき、古いメッセージを自動的に要約します。",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "自動要約は不正確な場合があります。現在のメッセージが常に優先されます。",
     ),
@@ -255,6 +258,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("検証ステータス"),
     "chats": MessageLookupByLibrary.simpleMessage("チャット"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("クリア"),
@@ -281,6 +285,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactingContext": MessageLookupByLibrary.simpleMessage("コンテキストを整理中…"),
     "compactionFailed": MessageLookupByLibrary.simpleMessage("失敗"),
     "compactionStatus": MessageLookupByLibrary.simpleMessage("圧縮状態"),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "会話コンテキストの自動圧縮の現在の状態です。",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("確認"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("削除の確認"),
@@ -292,6 +299,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("コンテキストとメモリ"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("コンテキストを圧縮しました"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("コンテキストウィンドウ"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "1 回のリクエストでモデルが参照できる最大トークン数です。",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("消去"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("データ"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
@@ -304,6 +314,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "This conversation directory is empty.",
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage("会話情報"),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "この会話の返信生成に使用するモデルです。",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "この会話で使用しているボットです。",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "この会話にモデルサービスを提供するプロバイダーです。",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会話の要約"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("会話別トークン比率"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API キーをコピー"),
@@ -324,6 +343,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "データベースの整合性チェックに失敗し、このバージョンのバックアップからも復元できませんでした。",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("深い思考"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "返信前にモデルがより深く推論できるようにします。",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "あなたは役立つAIアシスタントです。日本語で回答してください。",
     ),
@@ -393,6 +415,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "コンテンツの読み込み中にエラーが発生しました。後でもう一度お試しください。",
     ),
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage("推定使用量"),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "次回リクエストの推定トークン数と利用可能な入力予算です。",
+    ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("実行状態"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "フィードバック内容を入力してください",
@@ -474,6 +499,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Includes duration",
     ),
     "inputTokens": MessageLookupByLibrary.simpleMessage("入力トークン"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "会話コンテキストと指示を含む、モデルに送信されたトークンです。",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("更新をインストール"),
     "invalidSummary": MessageLookupByLibrary.simpleMessage("生成された要約は検証に失敗しました"),
     "itemCount": m24,
@@ -639,7 +667,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelConfiguration": MessageLookupByLibrary.simpleMessage("モデル設定"),
     "modelContextWindow": MessageLookupByLibrary.simpleMessage("モデルのコンテキストサイズ"),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("入力"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "このモデルが処理できるコンテンツの種類です。",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("出力"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "このモデルが生成できるコンテンツの種類です。",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "モデルの処理ターン上限に達しました。依頼を簡潔にして再試行してください。",
     ),
@@ -715,6 +749,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Delete this orphaned chat or recreate the missing bot.",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("出力トークン"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "返信でモデルが生成したトークンです。",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("部分回答"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("音声を一時停止"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("生成を一時停止"),
@@ -780,6 +817,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "restoreMemory": MessageLookupByLibrary.simpleMessage("復元"),
     "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage("保持された最近のターン"),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "元の形式のまま保持されている最近の会話ターンです。",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage("テストを実行"),
     "save": MessageLookupByLibrary.simpleMessage("保存"),
@@ -822,6 +862,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "会話メッセージに実行の詳細を表示します。",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "アシスタントのメッセージに検証ステータスと詳細を表示します。",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("アセットあり"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("互換性"),
     "skillDescriptionShouldActivate": MessageLookupByLibrary.simpleMessage(
@@ -946,6 +989,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("構造化された処理情報"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("フィードバックを送信"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("要約済みメッセージ"),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "会話の要約に圧縮済みのメッセージです。",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("対応"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("MCP 対応"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage("Skills 対応"),
@@ -988,6 +1034,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "状態を再読込して検証済み",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("合計トークン"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "選択した期間に使用された入力トークンと出力トークンの合計です。",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "別の条件で検索するか、新しい項目を作成してください。",
     ),
@@ -1024,5 +1073,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wait for generation to finish.",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "モデルが最新情報を Web で検索できるようにします。",
+    ),
   };
 }

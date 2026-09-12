@@ -12,6 +12,7 @@ void main() {
       final repository = _FakeProfileRepository();
       addTearDown(repository.dispose);
       final initialProfile = _profile(
+        showVerificationStatus: true,
         showExecutionStatus: true,
         strictGroundingMode: false,
       );
@@ -21,14 +22,20 @@ void main() {
       );
       addTearDown(viewModel.dispose);
 
+      expect(viewModel.showVerificationStatus, isTrue);
       expect(viewModel.showExecutionStatus, isTrue);
       expect(viewModel.strictGroundingMode, isFalse);
 
       repository.publish(
-        _profile(showExecutionStatus: false, strictGroundingMode: true),
+        _profile(
+          showVerificationStatus: false,
+          showExecutionStatus: false,
+          strictGroundingMode: true,
+        ),
       );
       await Future<void>.delayed(Duration.zero);
 
+      expect(viewModel.showVerificationStatus, isFalse);
       expect(viewModel.showExecutionStatus, isFalse);
       expect(viewModel.strictGroundingMode, isTrue);
     },
@@ -36,6 +43,7 @@ void main() {
 }
 
 Profile _profile({
+  required bool showVerificationStatus,
   required bool showExecutionStatus,
   required bool strictGroundingMode,
 }) => Profile(
@@ -44,6 +52,7 @@ Profile _profile({
   fontSize: 16,
   themeMode: 1,
   language: 'zh_CN',
+  showVerificationStatus: showVerificationStatus,
   showExecutionStatus: showExecutionStatus,
   strictGroundingMode: strictGroundingMode,
   createTimestamp: DateTime(2026),
@@ -60,8 +69,11 @@ class _FakeProfileRepository implements ProfileRepository {
   void publish(Profile profile) => _changes.add(profile);
 
   @override
-  Future<Profile> getProfile() async =>
-      _profile(showExecutionStatus: true, strictGroundingMode: false);
+  Future<Profile> getProfile() async => _profile(
+    showVerificationStatus: true,
+    showExecutionStatus: true,
+    strictGroundingMode: false,
+  );
 
   @override
   Future<void> updateProfile(Profile profile) async => publish(profile);

@@ -67,6 +67,21 @@ class ProfileViewModel extends DisposableChangeNotifier {
     );
   }
 
+  Future<void> setShowVerificationStatus(bool value) async {
+    var profile = _profile;
+    if (profile == null) {
+      await load();
+      profile = _profile;
+    }
+    if (profile == null || profile.showVerificationStatus == value) return;
+    await save(
+      profile.copyWith(
+        showVerificationStatus: value,
+        modifyTimestamp: DateTime.now(),
+      ),
+    );
+  }
+
   Future<void> setStrictGroundingMode(bool value) async {
     var profile = _profile;
     if (profile == null) {

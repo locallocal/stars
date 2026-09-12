@@ -21,8 +21,10 @@ final class ConversationModelControls extends StatefulWidget {
   const ConversationModelControls({
     super.key,
     required this.provider,
+    required this.showVerificationStatus,
     required this.showExecutionStatus,
     required this.strictGroundingMode,
+    this.onShowVerificationStatusChanged,
     this.onShowExecutionStatusChanged,
     this.onStrictGroundingModeChanged,
     this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
@@ -31,8 +33,10 @@ final class ConversationModelControls extends StatefulWidget {
   });
 
   final AiProvider provider;
+  final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
+  final ConversationPreferenceChanged? onShowVerificationStatusChanged;
   final ConversationPreferenceChanged? onShowExecutionStatusChanged;
   final ConversationPreferenceChanged? onStrictGroundingModeChanged;
   final int maxModelTurns;
@@ -56,6 +60,7 @@ final class _ConversationModelControlsState
           switchKey: const ValueKey<String>('conversation-web-search-toggle'),
           icon: LucideIcons.globe,
           label: S.of(context).webSearch,
+          description: S.of(context).webSearchDescription,
           value: provider.getWebSearch(),
           onChanged: (value) {
             setState(() {
@@ -71,6 +76,7 @@ final class _ConversationModelControlsState
           ),
           icon: LucideIcons.brain,
           label: S.of(context).deepThinking,
+          description: S.of(context).deepThinkingDescription,
           value: provider.getDeepThinking(),
           onChanged: (value) {
             setState(() {
@@ -78,6 +84,26 @@ final class _ConversationModelControlsState
             });
           },
         ),
+      _ModelControlRow(
+        key: const ValueKey<String>('conversation-verification-status-row'),
+        switchKey: const ValueKey<String>(
+          'conversation-verification-status-toggle',
+        ),
+        icon: LucideIcons.badgeCheck,
+        label: S.of(context).chatVerificationStatus,
+        description: S.of(context).showVerificationStatusDescription,
+        value: widget.showVerificationStatus,
+        onChanged:
+            widget.onShowVerificationStatusChanged == null
+                ? null
+                : (value) => unawaited(
+                  _updatePreference(
+                    context,
+                    widget.onShowVerificationStatusChanged!,
+                    value,
+                  ),
+                ),
+      ),
       _ModelControlRow(
         key: const ValueKey<String>('conversation-execution-status-row'),
         switchKey: const ValueKey<String>(
@@ -242,6 +268,7 @@ final class _MaxModelTurnsRow extends StatelessWidget {
     key: const ValueKey<String>('max-model-turns-row'),
     icon: LucideIcons.rotateCcw,
     label: S.of(context).maxToolRequestRounds,
+    description: S.of(context).maxToolRequestRoundsDescription,
     crossAxisAlignment: CrossAxisAlignment.center,
     trailingWidth: _modelTurnLimitControlWidth,
     layout: StarsInspectorInfoRowLayout.settings,

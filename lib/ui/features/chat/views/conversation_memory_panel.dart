@@ -91,12 +91,14 @@ final class _ConversationMemoryPanelState
           key: const ValueKey<String>('memory-context-window'),
           icon: Icons.memory_rounded,
           label: S.of(context).contextWindow,
+          description: S.of(context).contextWindowDescription,
           value: numberFormat.format(report.contextWindowTokens),
         ),
         _MemoryMetric(
           key: const ValueKey<String>('memory-estimated-usage'),
           icon: Icons.data_usage_rounded,
           label: S.of(context).estimatedContextUsage,
+          description: S.of(context).estimatedContextUsageDescription,
           value:
               '${numberFormat.format(report.estimatedInputTokens)} / '
               '${numberFormat.format(report.inputBudgetTokens)}',
@@ -105,6 +107,7 @@ final class _ConversationMemoryPanelState
           key: const ValueKey<String>('memory-retained-turns'),
           icon: Icons.forum_outlined,
           label: S.of(context).retainedRecentTurns,
+          description: S.of(context).retainedRecentTurnsDescription,
           value: numberFormat.format(report.includedTurnIds.length),
         ),
       ],
@@ -112,6 +115,7 @@ final class _ConversationMemoryPanelState
         key: const ValueKey<String>('memory-summarized-turns'),
         icon: Icons.summarize_outlined,
         label: S.of(context).summarizedTurns,
+        description: S.of(context).summarizedTurnsDescription,
         valueTextAlign: TextAlign.right,
         value: numberFormat.format(
           viewModel.summary?.metadata.sourceMessageIds.length ?? 0,
@@ -121,6 +125,7 @@ final class _ConversationMemoryPanelState
         key: const ValueKey<String>('memory-compaction-status'),
         icon: Icons.sync_rounded,
         label: S.of(context).compactionStatus,
+        description: S.of(context).compactionStatusDescription,
         valueTextAlign: TextAlign.right,
         value:
             viewModel.compacting

@@ -18,6 +18,7 @@ class ChatListPage extends StatefulWidget {
   final VoidCallback? onSelectionCleared;
   final bool sidebarMode;
   final bool selectionVisible;
+  final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
   final ChatListViewModel viewModel;
@@ -29,6 +30,7 @@ class ChatListPage extends StatefulWidget {
     this.onSelectionCleared,
     this.sidebarMode = false,
     this.selectionVisible = true,
+    this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.strictGroundingMode = false,
   });
@@ -211,6 +213,7 @@ class ChatListPageState extends State<ChatListPage> {
       bots: bots,
       selectedChatId: widget.selectedChatId,
       selectionVisible: widget.selectionVisible,
+      showVerificationStatus: widget.showVerificationStatus,
       showExecutionStatus: widget.showExecutionStatus,
       strictGroundingMode: widget.strictGroundingMode,
       generationRegistry: AppScope.of(context).generationRegistry,

@@ -204,6 +204,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "当前模型服务仅支持手动使用技能。",
     ),
     "automaticMemory": MessageLookupByLibrary.simpleMessage("自动记忆"),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "在上下文需要空间时自动摘要较早的消息。",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "自动摘要可能不准确，当前消息始终优先。",
     ),
@@ -238,6 +241,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "搜索会匹配智能体名称和最后一条消息。",
     ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("核验检查"),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("相册"),
     "clear": MessageLookupByLibrary.simpleMessage("清理"),
@@ -258,6 +262,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactingContext": MessageLookupByLibrary.simpleMessage("正在整理上下文…"),
     "compactionFailed": MessageLookupByLibrary.simpleMessage("失败"),
     "compactionStatus": MessageLookupByLibrary.simpleMessage("压缩状态"),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "当前自动整理会话上下文的状态。",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("确定"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("确认删除"),
@@ -269,6 +276,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("上下文与记忆"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("上下文已压缩"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("上下文窗口"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "模型单次请求可以处理的最大 Token 数。",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("清空"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("数据"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage("会话数据目录"),
@@ -279,6 +289,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "此会话数据目录为空。",
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage("会话信息"),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "当前会话用于生成回复的模型。",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "当前会话使用的智能体。",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "为当前会话提供模型服务的供应商。",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会话摘要"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage(
       "会话 Token 占比",
@@ -299,6 +318,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "数据库完整性检查失败，且无法从当前版本备份恢复。",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("深度思考"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "允许模型在回复前进行更深入的推理。",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "你是一个有用的AI助手，请用中文回答问题。",
     ),
@@ -362,6 +384,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "加载内容时出错，请稍后再试。",
     ),
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage("预计本轮占用"),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "下一次请求的预计 Token 数与可用输入预算。",
+    ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("执行状态"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage("请输入反馈内容"),
     "feedbackDescription": MessageLookupByLibrary.simpleMessage(
@@ -423,6 +448,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "importingSkill": MessageLookupByLibrary.simpleMessage("正在导入技能…"),
     "includesDuration": MessageLookupByLibrary.simpleMessage("包含耗时"),
     "inputTokens": MessageLookupByLibrary.simpleMessage("输入 Token"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "发送给模型的 Token，包括会话上下文和指令。",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("安装更新"),
     "invalidSummary": MessageLookupByLibrary.simpleMessage("生成的摘要未通过校验"),
     "itemCount": m24,
@@ -566,7 +594,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelConfiguration": MessageLookupByLibrary.simpleMessage("模型配置"),
     "modelContextWindow": MessageLookupByLibrary.simpleMessage("模型上下文大小"),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("输入"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "此模型可以处理的内容类型。",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("输出"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "此模型可以生成的内容类型。",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "模型已达到处理轮次上限，请简化请求后重试。",
     ),
@@ -630,6 +664,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "删除这条孤立会话，或重新创建缺失的智能体。",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("输出 Token"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "模型在回复中生成的 Token。",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("部分回复"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("暂停播放"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("暂停生成"),
@@ -683,6 +720,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "restoreMemory": MessageLookupByLibrary.simpleMessage("恢复"),
     "restorePreview": MessageLookupByLibrary.simpleMessage("还原预览"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage("保留的最近轮次"),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "以原始内容保留的最近会话轮次。",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("重试"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage("运行测试"),
     "save": MessageLookupByLibrary.simpleMessage("保存"),
@@ -719,6 +759,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "在会话内容中显示执行状态。",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("显示侧栏"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "在智能体会话消息中显示核验状态和详情。",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("包含静态资源"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("兼容性"),
     "skillDescriptionShouldActivate": MessageLookupByLibrary.simpleMessage(
@@ -823,6 +866,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage("结构化过程信息"),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("提交反馈"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("已摘要消息数"),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "已压缩到会话摘要中的消息数量。",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("支持"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("支持 MCP"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage("支持技能"),
@@ -859,6 +905,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "状态已回读验证",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Token 总量"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "所选时间范围内使用的输入与输出 Token 总数。",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "试试其他关键词，或直接新建。",
     ),
@@ -889,5 +938,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "请等待生成完成。",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("联网搜索"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "允许模型搜索互联网以获取最新信息。",
+    ),
   };
 }

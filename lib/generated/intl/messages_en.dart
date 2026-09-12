@@ -230,6 +230,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "This provider supports manual Skills only.",
     ),
     "automaticMemory": MessageLookupByLibrary.simpleMessage("Automatic memory"),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Automatically summarize older messages when the context needs space.",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "Automatic summaries can be inaccurate. The current message always takes precedence.",
     ),
@@ -276,6 +279,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
+      "Verification status",
+    ),
     "chats": MessageLookupByLibrary.simpleMessage("Chats"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Clear"),
@@ -314,6 +320,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatus": MessageLookupByLibrary.simpleMessage(
       "Compaction status",
     ),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Current status of automatic conversation context compaction.",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("Confirm Delete"),
@@ -331,6 +340,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Context compacted",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Context window"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "Maximum tokens the model can consider in one request.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("Clear"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("Data"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
@@ -344,6 +356,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage(
       "Conversation Information",
+    ),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "The model used to generate replies in this conversation.",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "The bot used by this conversation.",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "The provider supplying the model service for this conversation.",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Conversation summary",
@@ -371,6 +392,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "The database integrity check failed, and recovery from this version\'s backup was unsuccessful.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Deep Thinking"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "Allow the model to reason more deeply before responding.",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "You are a helpful AI assistant.",
     ),
@@ -464,6 +488,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage(
       "Estimated usage",
     ),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "Estimated tokens for the next request compared with the available input budget.",
+    ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("Execution status"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Please enter feedback content",
@@ -551,6 +578,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Includes duration",
     ),
     "inputTokens": MessageLookupByLibrary.simpleMessage("Input tokens"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Tokens sent to the model, including conversation context and instructions.",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Install update",
     ),
@@ -732,7 +762,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Model Context Size",
     ),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("Input"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "The content types this model can process.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Output"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "The content types this model can generate.",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "The model reached its processing-turn limit. Simplify the request and try again.",
     ),
@@ -818,6 +854,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Delete this orphaned chat or recreate the missing bot.",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("Output tokens"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Tokens generated by the model in replies.",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("Partial response"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("Pause audio"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("Pause generation"),
@@ -899,6 +938,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Recent turns retained",
     ),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "Recent conversation turns kept in their original form.",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage("Run test"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),
@@ -941,6 +983,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Show execution details in conversation messages.",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Show verification status and details in assistant messages.",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "Assets available",
     ),
@@ -1087,6 +1132,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "summarizedTurns": MessageLookupByLibrary.simpleMessage(
       "Messages summarized",
     ),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "Messages already compressed into the conversation summary.",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("Supported"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("Supports MCP"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage("Supports Skills"),
@@ -1145,6 +1193,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "State read back and verified",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Total tokens"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Total input and output tokens used during the selected period.",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "Try a different search, or create a new item.",
     ),
@@ -1183,5 +1234,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wait for generation to finish.",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "Allow the model to search the web for up-to-date information.",
+    ),
   };
 }

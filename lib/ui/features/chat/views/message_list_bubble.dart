@@ -7,6 +7,7 @@ class _MessageBubble extends StatelessWidget {
   final String reasoning;
   final MessageProcessInfo processInfo;
   final ModelTokenUsage tokenUsage;
+  final bool showVerificationStatus;
   final bool showExecutionStatus;
   final String content;
   final List<String> images;
@@ -29,6 +30,7 @@ class _MessageBubble extends StatelessWidget {
     required this.reasoning,
     this.processInfo = const MessageProcessInfo(),
     this.tokenUsage = ModelTokenUsage.empty,
+    this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     required this.content,
     this.images = const [],
@@ -339,7 +341,7 @@ class _MessageBubble extends StatelessWidget {
   bool get _showsProcessInfoAfterMessage => _showProcessInfo && isDesktop;
 
   bool get _showTrustStatus {
-    if (isCurrentUser || isStreaming) return false;
+    if (!showVerificationStatus || isCurrentUser || isStreaming) return false;
     return grounding != null;
   }
 

@@ -22,6 +22,7 @@ class ChatListBuilder extends StatelessWidget {
   final List<Bot> bots;
   final String? selectedChatId;
   final bool selectionVisible;
+  final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
   final ValueChanged<String> onChatDeleted;
@@ -38,6 +39,7 @@ class ChatListBuilder extends StatelessWidget {
     required this.bots,
     this.selectedChatId,
     this.selectionVisible = true,
+    this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.strictGroundingMode = false,
     required this.onChatDeleted,
@@ -106,6 +108,7 @@ class ChatListBuilder extends StatelessWidget {
                   (context) => ChatPage(
                     id: chat.id,
                     bot: bot,
+                    showVerificationStatus: showVerificationStatus,
                     showExecutionStatus: showExecutionStatus,
                     strictGroundingMode: strictGroundingMode,
                   ),

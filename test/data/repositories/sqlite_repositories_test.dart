@@ -464,6 +464,7 @@ void main() {
 
       final profile = await repository.getProfile();
       expect(profile.fontSize, ProfileDefaults.desktopFontSize);
+      expect(profile.showVerificationStatus, isTrue);
       expect(profile.showExecutionStatus, isTrue);
       expect(profile.injectApplicationPrompt, isTrue);
       expect(profile.strictGroundingMode, isFalse);
@@ -472,6 +473,7 @@ void main() {
         fontSize: 18,
         themeMode: 2,
         language: 'en_US',
+        showVerificationStatus: false,
         showExecutionStatus: false,
         injectApplicationPrompt: false,
         strictGroundingMode: true,
@@ -482,6 +484,7 @@ void main() {
 
       final rows = await database.query('profile');
       expect(rows, hasLength(1));
+      expect(rows.single['show_verification_status'], 0);
       expect(rows.single['show_execution_status'], 0);
       expect(rows.single['inject_application_prompt'], 0);
       expect(rows.single['strict_grounding_mode'], 1);

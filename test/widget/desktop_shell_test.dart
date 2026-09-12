@@ -314,6 +314,11 @@ void main() {
       );
       final infoRows = find.byType(StarsInspectorInfoRow);
       expect(infoRows, findsNWidgets(5));
+      expect(find.text('当前会话使用的智能体。'), findsOneWidget);
+      expect(find.text('为当前会话提供模型服务的供应商。'), findsOneWidget);
+      expect(find.text('当前会话用于生成回复的模型。'), findsOneWidget);
+      expect(find.text('此模型可以处理的内容类型。'), findsOneWidget);
+      expect(find.text('此模型可以生成的内容类型。'), findsOneWidget);
       final labelLefts = <double>[];
       for (var index = 0; index < 3; index += 1) {
         final row = infoRows.at(index);
@@ -354,10 +359,9 @@ void main() {
         );
         expect(
           tester.getSize(row).height,
-          closeTo(
+          greaterThanOrEqualTo(
             StarsDesktopThemeSpec.settingsRowPadding.vertical +
                 StarsDesktopThemeSpec.settingsRowMinHeight,
-            0.01,
           ),
         );
         expect(
@@ -370,9 +374,14 @@ void main() {
       for (var index = 0; index < 5; index += 1) {
         final row = infoRows.at(index);
         final rowWidget = tester.widget<StarsInspectorInfoRow>(row);
+        expect(rowWidget.description, isNotEmpty);
         final label = find.descendant(
           of: row,
           matching: find.text(rowWidget.label),
+        );
+        final description = find.descendant(
+          of: row,
+          matching: find.text(rowWidget.description!),
         );
         final leadingIcon = find.descendant(
           of: row,
@@ -387,7 +396,10 @@ void main() {
                 );
         final rowCenterY = tester.getCenter(row).dy;
 
-        expect(tester.getCenter(label).dy, closeTo(rowCenterY, 0.01));
+        expect(
+          tester.getTopLeft(description).dy,
+          greaterThan(tester.getBottomLeft(label).dy),
+        );
         expect(
           tester.getCenter(leadingIcon.first).dy,
           closeTo(rowCenterY, 0.01),

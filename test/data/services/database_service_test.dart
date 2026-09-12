@@ -689,6 +689,7 @@ void main() {
 
       final rows = await migratedDatabase.query('profile');
       expect(rows.single['name'], 'Existing User');
+      expect(rows.single['show_verification_status'], 1);
       expect(rows.single['inject_application_prompt'], 1);
       expect(rows.single['strict_grounding_mode'], 0);
     });
@@ -1324,12 +1325,19 @@ Future<void> _expectCurrentSchema(Database database) async {
       'font_size',
       'theme_mode',
       'language',
+      'show_verification_status',
       'show_execution_status',
       'inject_application_prompt',
       'strict_grounding_mode',
       'create_timestamp',
       'modify_timestamp',
     ]),
+  );
+  expect(
+    profileColumns.singleWhere(
+      (column) => column['name'] == 'show_verification_status',
+    )['dflt_value'],
+    '1',
   );
   expect(
     profileColumns.singleWhere(

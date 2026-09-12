@@ -17,18 +17,21 @@ void main() {
     addTearDown(viewModel.dispose);
 
     await viewModel.load();
+    await viewModel.setShowVerificationStatus(false);
     await viewModel.setShowExecutionStatus(false);
     await viewModel.setStrictGroundingMode(true);
 
+    expect(repository.profile.showVerificationStatus, isFalse);
     expect(repository.profile.showExecutionStatus, isFalse);
     expect(repository.profile.strictGroundingMode, isTrue);
-    expect(repository.updateCount, 2);
+    expect(repository.updateCount, 3);
     expect(viewModel.profile, same(repository.profile));
 
+    await viewModel.setShowVerificationStatus(false);
     await viewModel.setShowExecutionStatus(false);
     await viewModel.setStrictGroundingMode(true);
 
-    expect(repository.updateCount, 2);
+    expect(repository.updateCount, 3);
   });
 }
 
@@ -38,6 +41,7 @@ Profile _profile() => Profile(
   fontSize: 16,
   themeMode: 1,
   language: 'zh_CN',
+  showVerificationStatus: true,
   showExecutionStatus: true,
   strictGroundingMode: false,
   createTimestamp: DateTime(2026),

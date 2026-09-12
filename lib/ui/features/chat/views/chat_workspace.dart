@@ -148,6 +148,7 @@ extension _ChatPageWorkspace on ChatPageState {
                   deepThinking: _provider.getDeepThinking(),
                   reasoningResponse: _reasoningResponse,
                   isDesktop: isDesktop,
+                  showVerificationStatus: widget.showVerificationStatus,
                   showExecutionStatus: widget.showExecutionStatus,
                   strictGroundingMode: widget.strictGroundingMode,
                   actionViewModel: _chatViewModel.messageActions,
