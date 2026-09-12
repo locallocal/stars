@@ -221,9 +221,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System-Prompt",
     ),
-    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
-      "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
-    ),
+    "applicationInjectedPromptDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
+        ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -367,9 +368,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
-    "conversationFileSearchEmptyDescription": MessageLookupByLibrary.simpleMessage(
-      "Versuchen Sie einen anderen Datei- oder Ordnernamen oder löschen Sie die Suche.",
-    ),
+    "conversationFileSearchEmptyDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "Versuchen Sie einen anderen Datei- oder Ordnernamen oder löschen Sie die Suche.",
+        ),
     "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
       "Die Suche berücksichtigt Datei- und Ordnernamen im aktuellen Verzeichnis.",
     ),

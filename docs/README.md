@@ -15,6 +15,7 @@
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |
+| 实现参考 | [用户消息到智能体回复的现有流转](reference/user-message-agent-response-flow.md) | 从发送、上下文准备、Agent Loop 到终态落库的完整代码路径 |
 | 实现参考 | [会话 Loop 的事实依据与防幻觉协议](reference/conversation-loop-grounding.md) | 工具证据、声明门禁、跨轮信任与落地验收标准 |
 
 ## 代码事实来源
