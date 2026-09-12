@@ -1,5 +1,7 @@
 part of 'message_list.dart';
 
+const double _mobileMessageImagePreviewSize = 136;
+
 class _MessageBubble extends StatelessWidget {
   final bool isCurrentUser;
   final bool isDesktop;
@@ -136,25 +138,7 @@ class _MessageBubble extends StatelessWidget {
             padding: EdgeInsets.only(
               top: content.isNotEmpty || _showsProcessInfoBeforeMedia ? 14 : 0,
             ),
-            child: _StatusCardSection(
-              isDesktop: isDesktop,
-              icon: isDesktop ? LucideIcons.image : Icons.image_outlined,
-              title:
-                  isCurrentUser
-                      ? S.of(context).imageAttachment
-                      : S.of(context).imageResult,
-              subtitle: S.of(context).itemCount(images.length.toString()),
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children:
-                    images
-                        .map(
-                          (imagePath) => _buildImagePreview(context, imagePath),
-                        )
-                        .toList(),
-              ),
-            ),
+            child: _buildImageSection(context),
           ),
         if (files.isNotEmpty)
           Padding(
@@ -361,7 +345,53 @@ class _MessageBubble extends StatelessWidget {
       music.isNotEmpty ||
       video.isNotEmpty;
 
-  Widget _buildImagePreview(BuildContext context, String imagePath) {
+  Widget _buildImageSection(BuildContext context) => Column(
+    key: const ValueKey<String>('message-image-section'),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _StatusCardHeader(
+        isDesktop: isDesktop,
+        icon: isDesktop ? LucideIcons.image : Icons.image_outlined,
+        iconKey: const ValueKey<String>('message-image-section-icon'),
+        title:
+            isCurrentUser
+                ? S.of(context).imageAttachment
+                : S.of(context).imageResult,
+        subtitle: S.of(context).itemCount(images.length.toString()),
+      ),
+      const SizedBox(height: 12),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final preferredPreviewSize =
+              isDesktop
+                  ? StarsDesktopThemeSpec.messageImagePreviewSize
+                  : _mobileMessageImagePreviewSize;
+          final previewSize = math.min(
+            preferredPreviewSize,
+            constraints.maxWidth,
+          );
+          return Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final imagePath in images)
+                _buildImagePreview(context, imagePath, previewSize),
+            ],
+          );
+        },
+      ),
+    ],
+  );
+
+  Widget _buildImagePreview(
+    BuildContext context,
+    String imagePath,
+    double previewSize,
+  ) {
+    final radius =
+        isDesktop
+            ? StarsDesktopThemeSpec.containerRadius
+            : BorderRadius.circular(12);
     return GestureDetector(
       key: ValueKey<String>('message-image-preview-$imagePath'),
       behavior: HitTestBehavior.opaque,
@@ -373,35 +403,28 @@ class _MessageBubble extends StatelessWidget {
           trustAnnotation: exportTrustAnnotation,
         );
       },
-      child: ClipRRect(
-        borderRadius:
-            isDesktop
-                ? StarsDesktopThemeSpec.containerRadius
-                : BorderRadius.circular(12),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: 96,
-            minHeight: 96,
-            maxWidth: isDesktop ? 220 : 150,
-            maxHeight: isDesktop ? 240 : 200,
-          ),
-          child: Image.file(
-            File(imagePath),
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 96,
-                height: 96,
-                color: StarsDesktopTokens.of(context).controlFill,
-                child: Center(
-                  child: Icon(
-                    isDesktop ? LucideIcons.imageOff : Icons.broken_image,
-                    color: StarsDesktopTokens.of(context).secondaryText,
-                  ),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        width: previewSize,
+        height: previewSize,
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          border: Border.all(color: StarsDesktopTokens.of(context).separator),
+        ),
+        child: Image.file(
+          File(imagePath),
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return ColoredBox(
+              color: StarsDesktopTokens.of(context).controlFill,
+              child: Center(
+                child: Icon(
+                  isDesktop ? LucideIcons.imageOff : Icons.broken_image,
+                  color: StarsDesktopTokens.of(context).secondaryText,
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

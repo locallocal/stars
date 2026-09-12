@@ -385,7 +385,7 @@ void main() {
                           chatId: 'chat-1',
                           botId: 'bot-1',
                           senderId: 'me',
-                          content: '',
+                          content: '附图消息',
                           images: const [imagePath],
                           timestamp: DateTime(2026),
                         ),
@@ -403,9 +403,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey<String>('message-image-preview-$imagePath')),
+      final messageText = find.text('附图消息');
+      final thumbnail = find.byKey(
+        const ValueKey<String>('message-image-preview-$imagePath'),
       );
+      expect(
+        tester.getTopLeft(thumbnail).dx,
+        closeTo(tester.getTopLeft(messageText).dx, 0.01),
+      );
+      expect(
+        tester.getSize(thumbnail),
+        const Size.square(StarsDesktopThemeSpec.messageImagePreviewSize),
+      );
+
+      await tester.tap(thumbnail);
       await tester.pumpAndSettle();
 
       final dialog = find.byKey(const ValueKey<String>('message-image-dialog'));
@@ -419,6 +430,59 @@ void main() {
       expect(previewSize.height, greaterThan(0));
       expect(tester.takeException(), isNull);
     });
+  });
+
+  testWidgets('mobile message image aligns with text and stays compact', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(400, 600);
+    addTearDown(tester.view.reset);
+    final scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+    const imagePath = 'assets/images/profile/no_bots_v2.png';
+
+    await tester.pumpWidget(
+      shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: Column(
+                children: [
+                  MessageList(
+                    messages: [
+                      Message(
+                        messageId: 'mobile-message-with-image',
+                        chatId: 'chat-1',
+                        botId: 'bot-1',
+                        senderId: 'me',
+                        content: '移动端附图消息',
+                        images: const [imagePath],
+                        timestamp: DateTime(2026),
+                      ),
+                    ],
+                    scrollController: scrollController,
+                    isStreaming: false,
+                    streamingResponse: '',
+                    currentUserId: 'me',
+                  ),
+                ],
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final messageText = find.text('移动端附图消息');
+    final thumbnail = find.byKey(
+      const ValueKey<String>('message-image-preview-$imagePath'),
+    );
+    expect(
+      tester.getTopLeft(thumbnail).dx,
+      closeTo(tester.getTopLeft(messageText).dx, 0.01),
+    );
+    expect(tester.getSize(thumbnail), const Size.square(136));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('desktop message execution status is the final message block', (
