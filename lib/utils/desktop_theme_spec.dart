@@ -21,6 +21,7 @@ class StarsDesktopThemeSpec {
   static const double listItemMinHeight = 44;
   static const double contentMaxWidth = 920;
   static const double messageBubbleMaxWidth = 552;
+  static const double messageImagePreviewSize = 180;
   static const double formContentMaxWidth = contentMaxWidth;
   static const double addBotFormFieldWidth = 640;
   static const double botFormFieldHeight = 48;
