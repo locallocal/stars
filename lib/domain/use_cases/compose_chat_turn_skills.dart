@@ -160,9 +160,7 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
         );
       }
       final content = state.contents[descriptor.id]!.content;
-      final references = content.files
-          .where((file) => file.startsWith('references/'))
-          .join('\n');
+      final referencePaths = _skillReferencePaths(content);
       return SkillToolResult(
         callId: call.callId,
         name: call.name,
@@ -172,7 +170,7 @@ Activated ${descriptor.name}.
 <skill_instructions>
 ${content.instructions}
 </skill_instructions>
-${references.isEmpty ? '' : '<available_references>\n$references\n</available_references>'}''',
+${_availableReferencesPrompt(referencePaths)}''',
       );
     }
 
@@ -184,23 +182,37 @@ ${references.isEmpty ? '' : '<available_references>\n$references\n</available_re
               .where((entry) => entry.content.descriptor.name == name)
               .firstOrNull;
       if (activeEntry == null) {
-        stopwatch.stop();
-        state.toolCalls.add(
-          MessageToolCall(
-            name: call.name,
-            status: 'failed',
-            detail: relativePath,
-            durationMs: stopwatch.elapsedMilliseconds,
-          ),
-        );
-        return SkillToolResult(
-          callId: call.callId,
-          name: call.name,
-          content: 'Activate the Skill before reading its references.',
-          isError: true,
+        return _skillResourceFailure(
+          call: call,
+          state: state,
+          stopwatch: stopwatch,
+          relativePath: relativePath,
+          errorCode: 'skill_not_activated',
         );
       }
-      final resourceKey = '${activeEntry.content.descriptor.id}:$relativePath';
+      final referencePaths = _skillReferencePaths(activeEntry.content);
+      if (referencePaths.isEmpty) {
+        return _skillResourceFailure(
+          call: call,
+          state: state,
+          stopwatch: stopwatch,
+          relativePath: relativePath,
+          errorCode: 'skill_has_no_references',
+        );
+      }
+      final normalizedPath = relativePath.trim().replaceAll('\\', '/');
+      if (normalizedPath != relativePath ||
+          !referencePaths.contains(normalizedPath)) {
+        return _skillResourceFailure(
+          call: call,
+          state: state,
+          stopwatch: stopwatch,
+          relativePath: relativePath,
+          errorCode: 'skill_reference_not_advertised',
+        );
+      }
+      final resourceKey =
+          '${activeEntry.content.descriptor.id}:$normalizedPath';
       final cachedResource = state.resources[resourceKey];
       if (cachedResource != null) {
         stopwatch.stop();
@@ -219,15 +231,30 @@ ${references.isEmpty ? '' : '<available_references>\n$references\n</available_re
         );
       }
       try {
-        var resource = await _skillRepository.readResource(
-          activeEntry.content.descriptor.id,
-          relativePath,
-          contentDigest: activeEntry.content.descriptor.contentDigest,
-        );
+        final descriptor = activeEntry.content.descriptor;
+        var resource = switch (descriptor.scope) {
+          SkillScope.bundled => SkillResourceContent(
+            skillId: descriptor.id,
+            path: normalizedPath,
+            content:
+                activeEntry.content.resources[normalizedPath] ??
+                (throw const SkillInstallException(
+                  '内置 Skill 参考资料不可用。',
+                  code: 'bundled_skill_reference_unavailable',
+                )),
+          ),
+          SkillScope.user || SkillScope.project => await _skillRepository
+              .readResource(
+                descriptor.id,
+                normalizedPath,
+                contentDigest: descriptor.contentDigest,
+              ),
+        };
         final remaining = _budget.maxResourceTokens - state.resourceTokens;
         if (remaining <= 0) {
           throw const SkillInstallException(
             'Skill resource Token budget exhausted.',
+            code: 'skill_resource_token_budget_exhausted',
           );
         }
         final bounded = _truncateToTokens(resource.content, remaining);
@@ -243,7 +270,7 @@ ${references.isEmpty ? '' : '<available_references>\n$references\n</available_re
           MessageToolCall(
             name: call.name,
             status: 'completed',
-            detail: relativePath,
+            detail: normalizedPath,
             durationMs: stopwatch.elapsedMilliseconds,
           ),
         );
@@ -253,21 +280,12 @@ ${references.isEmpty ? '' : '<available_references>\n$references\n</available_re
           content: bounded,
         );
       } catch (error) {
-        stopwatch.stop();
-        state.toolCalls.add(
-          MessageToolCall(
-            name: call.name,
-            status: 'failed',
-            detail: relativePath,
-            durationMs: stopwatch.elapsedMilliseconds,
-          ),
-        );
-        return SkillToolResult(
-          callId: call.callId,
-          name: call.name,
-          content:
-              AppFailure.from(error, code: 'skill_resource_read_failed').code,
-          isError: true,
+        return _skillResourceFailure(
+          call: call,
+          state: state,
+          stopwatch: stopwatch,
+          relativePath: relativePath,
+          errorCode: _skillResourceErrorCode(error),
         );
       }
     }
@@ -287,6 +305,57 @@ ${references.isEmpty ? '' : '<available_references>\n$references\n</available_re
       content: 'Unsupported Skill tool.',
       isError: true,
     );
+  }
+
+  Set<String> _skillReferencePaths(SkillContent content) =>
+      Set<String>.unmodifiable(
+        content.files.where((file) => file.startsWith('references/')),
+      );
+
+  String _availableReferencesPrompt(Set<String> referencePaths) {
+    if (referencePaths.isEmpty) {
+      return '''<available_references count="0">
+No reference resources are available. The complete Skill instructions are
+already loaded; do not call read_skill_resource for this Skill.
+</available_references>''';
+    }
+    final paths = referencePaths.toList()..sort();
+    return '''<available_references count="${paths.length}">
+Use read_skill_resource only with one of these exact paths:
+${paths.map((path) => '- ${_escapeText(path)}').join('\n')}
+</available_references>''';
+  }
+
+  SkillToolResult _skillResourceFailure({
+    required SkillToolCall call,
+    required _TurnSkillState state,
+    required Stopwatch stopwatch,
+    required String relativePath,
+    required String errorCode,
+  }) {
+    stopwatch.stop();
+    state.toolCalls.add(
+      MessageToolCall(
+        name: call.name,
+        status: 'failed',
+        detail: relativePath,
+        errorCode: errorCode,
+        durationMs: stopwatch.elapsedMilliseconds,
+      ),
+    );
+    return SkillToolResult(
+      callId: call.callId,
+      name: call.name,
+      content: 'Skill resource read failed: $errorCode.',
+      isError: true,
+      errorCode: errorCode,
+    );
+  }
+
+  String _skillResourceErrorCode(Object error) {
+    if (error is SkillInstallException) return error.code;
+    if (error is AppFailure && error.code.isNotEmpty) return error.code;
+    return 'skill_resource_read_failed';
   }
 
   Future<bool> _activate({

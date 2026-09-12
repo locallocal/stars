@@ -23,9 +23,13 @@ enum SkillActivationStatus { activated, failed, skipped }
 enum SkillImportKind { directory, zipArchive }
 
 final class SkillInstallException implements Exception {
-  const SkillInstallException(this.message);
+  const SkillInstallException(
+    this.message, {
+    this.code = 'skill_install_failed',
+  });
 
   final String message;
+  final String code;
 
   @override
   String toString() => message;
@@ -125,11 +129,20 @@ final class SkillContent {
     required this.descriptor,
     required this.instructions,
     List<String> files = const [],
-  }) : files = List<String>.unmodifiable(files);
+    Map<String, String> resources = const {},
+  }) : files = List<String>.unmodifiable(files),
+       resources = Map<String, String>.unmodifiable(resources);
 
   final SkillDescriptor descriptor;
   final String instructions;
   final List<String> files;
+
+  /// Integrity-checked reference text bundled with the application.
+  ///
+  /// Installed user and project Skills keep this empty and load references
+  /// through [SkillRepository]. Bundled Skills cannot be resolved by that
+  /// repository, so their application assets are retained here instead.
+  final Map<String, String> resources;
 }
 
 final class SkillResourceContent {
@@ -151,6 +164,7 @@ final class SkillCatalogEntry {
     required this.description,
     required this.contentDigest,
     required this.priority,
+    this.hasReferences = false,
   });
 
   final String id;
@@ -158,6 +172,7 @@ final class SkillCatalogEntry {
   final String description;
   final String contentDigest;
   final int priority;
+  final bool hasReferences;
 }
 
 final class SkillImportSource {

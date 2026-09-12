@@ -513,6 +513,10 @@ final class AnthropicAgentModelSession implements AgentModelSession {
 
 List<Map<String, Object?>> _openAiSkillTools(List<SkillCatalogEntry> catalog) {
   final names = catalog.map((entry) => entry.name).toList(growable: false);
+  final referenceNames = catalog
+      .where((entry) => entry.hasReferences)
+      .map((entry) => entry.name)
+      .toList(growable: false);
   return [
     {
       'type': 'function',
@@ -531,27 +535,30 @@ List<Map<String, Object?>> _openAiSkillTools(List<SkillCatalogEntry> catalog) {
         },
       },
     },
-    {
-      'type': 'function',
-      'function': {
-        'name': 'read_skill_resource',
-        'description':
-            'Read a UTF-8 text file under references/ for an activated Skill.',
-        'strict': true,
-        'parameters': {
-          'type': 'object',
-          'properties': {
-            'name': {'type': 'string', 'enum': names},
-            'path': {
-              'type': 'string',
-              'description': 'A relative path beginning with references/.',
+    if (referenceNames.isNotEmpty)
+      {
+        'type': 'function',
+        'function': {
+          'name': 'read_skill_resource',
+          'description':
+              'Read one exact UTF-8 path listed in available_references for '
+              'an activated Skill.',
+          'strict': true,
+          'parameters': {
+            'type': 'object',
+            'properties': {
+              'name': {'type': 'string', 'enum': referenceNames},
+              'path': {
+                'type': 'string',
+                'description':
+                    'An exact relative path listed in available_references.',
+              },
             },
+            'required': ['name', 'path'],
+            'additionalProperties': false,
           },
-          'required': ['name', 'path'],
-          'additionalProperties': false,
         },
       },
-    },
   ];
 }
 

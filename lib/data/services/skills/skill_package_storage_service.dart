@@ -210,7 +210,10 @@ final class SkillPackageStorageService {
         normalized == 'references' ||
         !normalized.startsWith('references/') ||
         segments.any((segment) => segment.isEmpty || segment == '..')) {
-      throw const SkillInstallException('只能读取 Skill references 目录中的相对路径。');
+      throw const SkillInstallException(
+        '只能读取 Skill references 目录中的相对路径。',
+        code: 'invalid_skill_reference_path',
+      );
     }
 
     final root = await _verifiedBundleRoot(rootPath);
@@ -218,7 +221,10 @@ final class SkillPackageStorageService {
     final file = File(path.joinAll([root.path, ...segments]));
     final type = await FileSystemEntity.type(file.path, followLinks: false);
     if (type != FileSystemEntityType.file) {
-      throw const SkillInstallException('请求的 Skill 参考资料不存在或不是普通文件。');
+      throw const SkillInstallException(
+        '请求的 Skill 参考资料不存在或不是普通文件。',
+        code: 'skill_reference_not_found',
+      );
     }
 
     final canonicalRoot = await root.resolveSymbolicLinks();
@@ -226,16 +232,25 @@ final class SkillPackageStorageService {
     final canonicalFile = await file.resolveSymbolicLinks();
     if (!_isWithin(canonicalRoot, canonicalFile) ||
         !_isWithin(canonicalReferences, canonicalFile)) {
-      throw const SkillInstallException('拒绝读取 Skill 根目录以外的参考资料。');
+      throw const SkillInstallException(
+        '拒绝读取 Skill 根目录以外的参考资料。',
+        code: 'skill_reference_outside_root',
+      );
     }
     final length = await file.length();
     if (length > maxReferenceBytes) {
-      throw const SkillInstallException('Skill 参考资料超过 256 KB 读取限制。');
+      throw const SkillInstallException(
+        'Skill 参考资料超过 256 KB 读取限制。',
+        code: 'skill_reference_too_large',
+      );
     }
     try {
       return utf8.decode(await file.readAsBytes());
     } on FormatException {
-      throw const SkillInstallException('当前版本只能读取 UTF-8 文本参考资料。');
+      throw const SkillInstallException(
+        '当前版本只能读取 UTF-8 文本参考资料。',
+        code: 'skill_reference_not_utf8',
+      );
     }
   }
 
