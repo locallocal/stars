@@ -15,7 +15,7 @@ Skill 可以在包内携带 `scripts/tools.json` 和脚本文件，并将脚本�
 当前实现采用以下原则：
 
 - 脚本默认不注册，必须由用户对当前 Skill 内容摘要显式启用；
-- 注册、Tool 调用和进程启动是三个独立授权点；
+- 脚本启用授权、Bot 绑定的调用确认策略和进程启动前复验是独立门禁；
 - 每次启动前重新验证安装目录及全部受保护内容；
 - 脚本进程不继承 Stars 的环境变量、凭据、主目录或普通宿主文件系统；
 - 网络、宿主文件读写和外部服务访问不作为脚本能力开放；
@@ -64,7 +64,7 @@ Skill 可以在包内携带 `scripts/tools.json` 和脚本文件，并将脚本�
 | `SkillScriptTool` | 调用前复核授权、封装执行、脱敏输出、记录脚本事件 |
 | `LinuxBubblewrapSkillSandbox` | 使用 `bubblewrap` 和 `prlimit` 创建进程隔离 |
 | `SkillPackageStorageService` | 管理不可变安装目录、计算摘要、执行前完整性复验 |
-| `DefaultToolPolicy` | 要求脚本属于当前激活 Skill，并对每次调用进行一次性批准 |
+| `DefaultToolPolicy` | 要求脚本属于当前激活 Skill，并执行逐次批准或 Bot 显式免确认策略 |
 | `AgentRunCoordinator` | 校验输入/输出 Schema、处理批准、外层超时和结果截断 |
 | `SkillEcosystemRepository` | 持久化组织策略、发布者、摘要授权和合规事件 |
 
@@ -105,8 +105,12 @@ sequenceDiagram
     C->>C: 注册 skill.<skill-name>.<tool>
 
     Note over T,S: 每一次 Agent Tool 调用
-    T->>T: 校验当前激活 Skill 和输入 Schema
-    T->>U: 请求 allowOnce
+    T->>T: 校验当前激活 Skill、输入 Schema 和确认策略
+    alt Bot 未配置免确认
+        T->>U: 请求 allowOnce
+    else Bot 已为该 Skill 配置免确认
+        T->>T: 按 approvalExemptToolNames 放行
+    end
     T->>C: 执行 Tool
     C->>R: 复核组织策略、发布者和摘要授权
     C->>S: execute(request)
@@ -238,14 +242,17 @@ approvedAt
 
 这避免了检查与使用之间只依赖一次安装时判断。
 
-### 6.3 每次调用仍需批准
+### 6.3 调用审批与免确认
 
 `DefaultToolPolicy` 对 `skillScript` 来源或带有 `process` 能力的 Tool 采用统一规则：
 
 - Tool 必须属于当前激活 Skill 请求的 Tool 集合；
 - `allowSkillScripts` 为 `false` 时直接拒绝；
-- 为 `true` 时也只能进入 `requireApproval`；
-- 用户批准结果只有 `allowOnce`，没有永久放行；
+- 默认进入 `requireApproval`；用户批准结果只有 `allowOnce` 或拒绝；
+- Bot 的 `BotSkillBinding.requiresApproval` 为 `false` 时，该 Skill 本轮请求的 Tool 名会进入
+  `approvalExemptToolNames`，策略可直接放行，不显示逐次批准卡；
+- 免确认只属于当前 Bot 与 Skill 的持久化绑定，不是脚本安装授权，也不能绕过组织策略、发布者
+  信任、内容摘要、输入 Schema、沙箱探测或执行前完整性复验；
 - 拒绝或批准超时不会启动进程。
 
 输入参数会在批准和执行前根据 `inputSchema` 校验。
@@ -384,7 +391,7 @@ Tool 的 JSON 参数仍属于显式输入；如果参数本身包含敏感信息
 stdout 和 stderr 分别计数。任意一条流超过上限都会继续被排空但不再保存多余字节，
 最终整次调用以 `skill_script_output_limit` 失败，截断内容不会作为成功结果进入模型。
 
-Agent Run 外层还有 30 秒 Tool 超时和 16,000 字符的最终结果上限。内层 15 秒墙钟限制
+Agent Run 外层还有 2 分钟 Tool 超时和 16,000 字符的最终结果上限。内层 15 秒墙钟限制
 负责尽快终止脚本，外层限制用于覆盖 Tool 适配器或其他非脚本阶段异常阻塞。
 
 ## 10. 执行前完整性校验
@@ -485,7 +492,7 @@ arguments = json.load(sys.stdin)
 | 错误码/状态 | 含义 |
 | --- | --- |
 | `process_execution_disabled` | 应用 Tool Policy 未允许 Skill Script |
-| `skill_script_requires_approval` | 当前调用需要用户一次性批准 |
+| `skill_script_requires_approval` | 当前调用未配置免确认，需要用户一次性批准 |
 | `tool_approval_denied` | 用户拒绝调用 |
 | `tool_approval_timeout` | 批准等待超时 |
 | `invalid_tool_arguments` | 输入不符合 `inputSchema` |
@@ -584,8 +591,9 @@ timestamp
 - 在授权变化后刷新脚本 Tool Registry；
 - 沙箱不可用、策略拒绝或清单无效时展示错误，并保持脚本关闭。
 
-“启用脚本”是对当前安装摘要的注册授权，不是对每次 Tool 调用的永久授权。聊天过程中
-每次实际进程调用仍会显示 Tool 批准卡。
+Bot 的 Skill 设置还可以为绑定启用“免确认”。“启用脚本”只授权当前安装摘要注册 Tool；
+调用时默认仍显示一次性批准卡，只有当前 Bot 对该 Skill 明确关闭 `requiresApproval` 时才直接
+执行。无论是否免确认，沙箱、摘要和组织策略门禁保持不变。
 
 ## 18. 部署要求与排障
 
@@ -630,7 +638,8 @@ Stars 不会在探测失败后尝试直接运行解释器。修复系统配置�
 - 结构化输出中的 token 字段脱敏；
 - 脚本启用和执行合规事件；
 - 动态 Registry 中 MCP 与 Skill Script 来源互不覆盖；
-- Skill Script 即使全局启用也必须逐次批准；
+- Skill Script 全局启用后默认仍需逐次批准；
+- Bot 对 Skill 的免确认绑定只豁免批准卡，不绕过脚本授权和沙箱门禁；
 - SQLite 中组织策略、发布者、授权和合规状态的持久化。
 
 相关测试：
@@ -660,7 +669,7 @@ test/ui/features/chat/view_models/chat_generation_view_model_test.dart
 7. 必须在进程启动前调用安装完整性校验；
 8. 不支持或无法确认隔离时返回不可用，不能回退到普通进程；
 9. 必须继续通过 `SkillScriptTool`、`DefaultToolPolicy` 和
-   `AgentRunCoordinator`，不能绕开摘要授权、逐次批准、Schema 和审计链路。
+   `AgentRunCoordinator`，不能绕开摘要授权、逐次批准或显式免确认策略、Schema 和审计链路。
 
 只有满足这些条件的平台实现，才可以接入 `AppDependencies.production()` 并向用户展示
 为可用沙箱。

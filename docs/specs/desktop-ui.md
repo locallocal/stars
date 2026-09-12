@@ -40,15 +40,14 @@ Stars 桌面端采用紧凑、连续的工作台布局：结构面板之间以�
 1. 顶部 50px toolbar；
 2. 可调整宽度的左侧上下文栏；
 3. 自适应详情工作区；
-4. 聊天场景下按需出现的上下文 inspector。
+4. 聊天场景下在详情工作区内切换的消息、会话信息和会话目录页。
 
 默认尺寸：
 
 | 区域 | 默认值 | 约束 |
 | --- | ---: | ---: |
 | Sidebar | 300px | 240–360px |
-| Inspector | 360px | 280–420px |
-| 详情区 | 自适应 | 最小 560px |
+| 详情区 | 自适应 | 停靠模式拖动侧栏时保留至少 560px |
 | 内容正文 | 最大 920px | 居中 |
 | 消息气泡 | 最大 552px | 随详情区收缩 |
 
@@ -66,24 +65,25 @@ Workspace 使用 `IndexedStack` 保留功能页状态。会话详情、Bot 详�
 共享同一语义表面；未选择实体时使用 `DesktopEmptyStateCard`。嵌入式详情不得再创建
 移动端 AppBar 或第二层桌面 shell。
 
-### 3.4 Inspector
+### 3.4 会话工作区页面
 
-宽屏时 inspector 作为 docked panel；中等宽度时作为 overlay。聊天侧栏和 inspector
-overlay 必须保持单一活动状态，支持 Escape、关闭按钮、遮罩点击和焦点恢复。
+聊天工作区通过嵌套 `IndexedStack` 在消息、会话信息和会话目录之间切换，三者不会并排停靠，
+也不会因窗口宽度改为浮层。会话信息只在当前会话有活动 Bot 时可用；会话目录只在已选择会话
+时可打开。工具栏按钮负责进入或返回这些页面；Escape 优先关闭侧栏浮层，无浮层时返回消息页。
 
 ## 4. Breakpoint 行为
 
 当前断点以可用宽度为准：
 
-| 宽度 | Sidebar | Inspector |
+| 宽度 | Sidebar 行为 | Sidebar 宽度 |
 | --- | --- | --- |
-| `< 960px` | overlay | overlay（可用时） |
-| `960–1199px` | docked，压缩到 260–280px | overlay |
-| `1200–1499px` | docked，使用用户调整宽度 | overlay |
-| `>= 1500px` | docked | 可 docked |
+| `< 960px` | overlay；聊天页使用左侧 Shad sheet | 最大 300px，并为窗口边缘留白 |
+| `960–1199px` | docked | 260–280px |
+| `>= 1200px` | docked，可由用户调整 | 240–360px，默认 300px |
 
-`>= 800px` 且存在活动 Bot 时才提供 inspector。breakpoint 变更时必须关闭已不适用的
-route/overlay，避免不可见焦点和重复导航栈。
+会话信息和会话目录不受断点影响，始终替换详情工作区而非变为 inspector。聊天页窗口跨过
+960px 进入停靠模式时会关闭已不适用的 Shad sheet route，并保留侧栏显示意图，避免不可见焦点
+和重复导航栈。
 
 ## 5. 组件与视觉规则
 
@@ -186,7 +186,7 @@ flutter test integration_test/desktop_workflow_test.dart -d linux
 桌面变更只有在以下条件全部满足时才完成：
 
 1. 三种桌面平台共享同一组件与 token 体系；
-2. 960/1200/1500 附近没有溢出、双层滚动或不可见焦点；
+2. 960/1200 附近没有溢出、双层滚动或不可见焦点；
 3. 新建会话、选择会话、发送/停止、Bot 新增/编辑/删除流程无回归；
 4. 移动端外观与交互无回归；
 5. 架构测试、widget tests、视觉矩阵和 Linux 集成流程通过；
