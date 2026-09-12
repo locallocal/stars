@@ -159,9 +159,8 @@ void main() {
       of: compactionStatusRow,
       matching: find.text(compactionStatusWidget.value!),
     );
-    final expectedTrailingInset =
-        StarsDesktopThemeSpec.settingsRowPadding.right +
-        StarsDesktopThemeSpec.settingsRowDisclosureInset;
+    final expectedTrailingPadding =
+        StarsDesktopThemeSpec.settingsRowPadding.right;
     for (final (row, value) in [
       (summarizedTurnsRow, summarizedTurnsValue),
       (compactionStatusRow, compactionStatusValue),
@@ -169,7 +168,7 @@ void main() {
     ]) {
       expect(
         tester.getRect(row).right - tester.getRect(value).right,
-        closeTo(expectedTrailingInset, 0.01),
+        closeTo(expectedTrailingPadding, 0.01),
       );
     }
     final memoryLabelLefts = [

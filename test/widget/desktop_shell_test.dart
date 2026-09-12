@@ -324,7 +324,7 @@ void main() {
       expect(find.text('此模型可以处理的内容类型。'), findsOneWidget);
       expect(find.text('此模型可以生成的内容类型。'), findsOneWidget);
       final labelLefts = <double>[];
-      for (var index = 0; index < 3; index += 1) {
+      for (var index = 0; index < 4; index += 1) {
         final row = infoRows.at(index);
         expect(
           tester.widget<StarsInspectorInfoRow>(row).layout,
@@ -346,11 +346,7 @@ void main() {
         labelLefts.add(tester.getRect(label).left);
         expect(
           tester.getRect(row).right - tester.getRect(value).right,
-          closeTo(
-            StarsDesktopThemeSpec.settingsRowPadding.right +
-                StarsDesktopThemeSpec.settingsRowDisclosureInset,
-            0.01,
-          ),
+          closeTo(StarsDesktopThemeSpec.settingsRowPadding.right, 0.01),
         );
         expect(
           tester.getRect(label).left - tester.getRect(row).left,
@@ -409,6 +405,10 @@ void main() {
           closeTo(rowCenterY, 0.01),
         );
         expect(tester.getCenter(trailing).dy, closeTo(rowCenterY, 0.01));
+        expect(
+          tester.getRect(row).right - tester.getRect(trailing).right,
+          closeTo(StarsDesktopThemeSpec.settingsRowPadding.right, 0.01),
+        );
       }
       final inputModalities = find.byKey(
         const ValueKey<String>('conversation-model-modalities-input'),

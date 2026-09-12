@@ -43,8 +43,6 @@ class StarsDesktopThemeSpec {
   static const double settingsRowValueMaxWidth = 220;
   static const double settingsRowDisclosureGap = 8;
   static const double settingsRowDisclosureIconSize = 18;
-  static const double settingsRowDisclosureInset =
-      settingsRowDisclosureGap + settingsRowDisclosureIconSize;
   static const EdgeInsetsDirectional settingsRowSeparatorMargin =
       EdgeInsetsDirectional.only(start: 40);
   static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);

@@ -88,11 +88,7 @@ void main() {
       labelLefts.add(tester.getRect(label).left);
       expect(
         tester.getRect(metric).right - tester.getRect(value).right,
-        closeTo(
-          StarsDesktopThemeSpec.settingsRowPadding.right +
-              StarsDesktopThemeSpec.settingsRowDisclosureInset,
-          0.01,
-        ),
+        closeTo(StarsDesktopThemeSpec.settingsRowPadding.right, 0.01),
       );
       expect(
         tester.getRect(label).left - tester.getRect(metric).left,

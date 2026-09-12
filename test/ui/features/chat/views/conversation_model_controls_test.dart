@@ -145,37 +145,31 @@ void main() {
     );
     expect(
       tester.getRect(webRow).right - tester.getRect(webSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getRect(thinkingRow).right - tester.getRect(thinkingSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getRect(reasoningRow).right -
           tester.getRect(reasoningSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getRect(verificationStatusRow).right -
           tester.getRect(verificationStatusSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getRect(executionStatusRow).right -
           tester.getRect(executionStatusSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getRect(strictGroundingRow).right -
           tester.getRect(strictGroundingSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getTopLeft(reasoningRow).dy,
@@ -200,8 +194,7 @@ void main() {
     expect(
       tester.getRect(maxModelTurnsRow).right -
           tester.getRect(maxModelTurnsButton).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right +
-          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     final separators = find.byType(ShadSeparator);
     expect(separators, findsNWidgets(6));
