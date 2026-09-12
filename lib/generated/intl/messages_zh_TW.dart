@@ -298,6 +298,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "此會話資料目錄為空。",
     ),
+    "conversationFileSearchEmptyDescription":
+        MessageLookupByLibrary.simpleMessage("請嘗試其他檔案或資料夾名稱，或清除搜尋。"),
+    "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
+      "搜尋會比對目前目錄中的檔案和資料夾名稱。",
+    ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage("會話資訊"),
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "目前會話用於產生回覆的模型。",

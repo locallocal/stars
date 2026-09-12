@@ -819,6 +819,8 @@
     "searchConversationFiles": "Search files and folders",
     "conversationDirectoryEmpty": "This conversation directory is empty.",
     "noConversationFilesFound": "No matching files or folders.",
+    "conversationFileSearchEmptyDescription": "다른 파일 또는 폴더 이름을 검색하거나 검색어를 지우세요.",
+    "conversationFileSearchScope": "현재 디렉터리의 파일 및 폴더 이름을 검색합니다.",
     "unavailableBot": "사용할 수 없는 봇",
     "botUnavailableTitle": "This bot is unavailable",
     "orphanedChatGuidance": "Delete this orphaned chat or recreate the missing bot.",

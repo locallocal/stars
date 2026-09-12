@@ -523,11 +523,23 @@ final class _DirectoryEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = S.of(context);
     if (hasQuery) {
-      return StarsSearchEmptyState(
+      return DesktopEmptyStateCard(
         key: const ValueKey<String>('conversation-directory-no-results'),
-        message: strings.noConversationFilesFound,
-        clearLabel: strings.clearSearch,
-        onClear: onClear,
+        icon: LucideIcons.searchX,
+        title: strings.noConversationFilesFound,
+        description: strings.conversationFileSearchEmptyDescription,
+        supportingText: strings.conversationFileSearchScope,
+        action: ShadButton(
+          key: const ValueKey<String>(
+            'conversation-directory-empty-clear-search',
+          ),
+          size: ShadButtonSize.sm,
+          height: StarsDesktopThemeSpec.controlHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          onPressed: onClear,
+          leading: const Icon(LucideIcons.x, size: 16),
+          child: Text(strings.clearSearch),
+        ),
       );
     }
     return Center(

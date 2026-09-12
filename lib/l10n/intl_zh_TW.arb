@@ -888,6 +888,8 @@
     "searchConversationFiles": "搜尋檔案和資料夾",
     "conversationDirectoryEmpty": "此會話資料目錄為空。",
     "noConversationFilesFound": "找不到符合的檔案或資料夾。",
+    "conversationFileSearchEmptyDescription": "請嘗試其他檔案或資料夾名稱，或清除搜尋。",
+    "conversationFileSearchScope": "搜尋會比對目前目錄中的檔案和資料夾名稱。",
     "unavailableBot": "智能體不可用",
     "botUnavailableTitle": "This bot is unavailable",
     "orphanedChatGuidance": "Delete this orphaned chat or recreate the missing bot.",

@@ -315,6 +315,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
+    "conversationFileSearchEmptyDescription":
+        MessageLookupByLibrary.simpleMessage(
+          "다른 파일 또는 폴더 이름을 검색하거나 검색어를 지우세요.",
+        ),
+    "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
+      "현재 디렉터리의 파일 및 폴더 이름을 검색합니다.",
+    ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage("대화 정보"),
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "이 대화의 답변을 생성하는 데 사용하는 모델입니다.",

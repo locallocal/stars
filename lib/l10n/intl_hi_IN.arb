@@ -819,6 +819,8 @@
     "searchConversationFiles": "Search files and folders",
     "conversationDirectoryEmpty": "This conversation directory is empty.",
     "noConversationFilesFound": "No matching files or folders.",
+    "conversationFileSearchEmptyDescription": "कोई दूसरा फ़ाइल या फ़ोल्डर नाम आज़माएँ, या खोज साफ़ करें।",
+    "conversationFileSearchScope": "खोज मौजूदा डायरेक्टरी में फ़ाइल और फ़ोल्डर नामों से मेल खाती है।",
     "unavailableBot": "बॉट उपलब्ध नहीं है",
     "botUnavailableTitle": "This bot is unavailable",
     "orphanedChatGuidance": "Delete this orphaned chat or recreate the missing bot.",

@@ -367,6 +367,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
+    "conversationFileSearchEmptyDescription": MessageLookupByLibrary.simpleMessage(
+      "Versuchen Sie einen anderen Datei- oder Ordnernamen oder löschen Sie die Suche.",
+    ),
+    "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
+      "Die Suche berücksichtigt Datei- und Ordnernamen im aktuellen Verzeichnis.",
+    ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage(
       "Unterhaltungsinformationen",
     ),
