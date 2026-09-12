@@ -73,38 +73,42 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child:
                 !sidebarVisible
-                    ? isChat
-                        ? StarsDesktopIconAction(
-                          key: const ValueKey<String>(
-                            'desktop-toolbar-sidebar',
-                          ),
-                          label: S.of(context).showSidebar,
-                          onPressed: onToggleSidebar,
-                          icon: LucideIcons.panelLeftOpen,
-                        )
-                        : _DesktopToolbarIconAction(
-                          key: const ValueKey<String>(
-                            'desktop-toolbar-sidebar',
-                          ),
-                          tooltip: S.of(context).showSidebar,
-                          onPressed: onToggleSidebar,
-                          icon: const Icon(LucideIcons.panelLeft, size: 17),
-                        )
+                    ? StarsDesktopIconAction(
+                      key: const ValueKey<String>('desktop-toolbar-sidebar'),
+                      label: S.of(context).showSidebar,
+                      onPressed: onToggleSidebar,
+                      icon: LucideIcons.panelLeftOpen,
+                    )
                     : const SizedBox.shrink(),
           ),
           Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (isChat && activeBot != null) ...[
+                if (activeBot != null) ...[
                   ShadAvatar(
+                    key: const ValueKey<String>(
+                      'desktop-toolbar-active-bot-avatar',
+                    ),
                     activeBot.avatar.isEmpty ? null : File(activeBot.avatar),
-                    size: const Size.square(28),
-                    placeholder: buildProviderLogo(
-                      context,
-                      '',
-                      activeBot.provider,
-                      14,
+                    size: const Size.square(
+                      StarsDesktopThemeSpec.toolbarAvatarSize,
+                    ),
+                    fit: BoxFit.cover,
+                    placeholder: SizedBox.square(
+                      key: const ValueKey<String>(
+                        'desktop-toolbar-active-bot-logo',
+                      ),
+                      dimension: StarsDesktopThemeSpec.toolbarLogoSize,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: buildProviderLogo(
+                          context,
+                          '',
+                          activeBot.provider,
+                          StarsDesktopThemeSpec.toolbarLogoSize,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -195,98 +199,9 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                           ),
                       ],
                     )
-                    : DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: StarsDesktopThemeSpec.controlFill(context),
-                        borderRadius: StarsDesktopThemeSpec.controlRadius,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (conversationInfoAvailable)
-                            _DesktopToolbarIconAction(
-                              key: const ValueKey<String>(
-                                'desktop-toolbar-conversation-info',
-                              ),
-                              tooltip:
-                                  conversationInfoVisible
-                                      ? S
-                                          .of(context)
-                                          .hideConversationInformation
-                                      : S
-                                          .of(context)
-                                          .showConversationInformation,
-                              onPressed: onToggleConversationInfo,
-                              selected: conversationInfoVisible,
-                              icon: const Icon(LucideIcons.info, size: 17),
-                            ),
-                        ],
-                      ),
-                    ),
+                    : const SizedBox.shrink(),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DesktopToolbarIconAction extends StatefulWidget {
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final Widget icon;
-  final bool selected;
-
-  const _DesktopToolbarIconAction({
-    super.key,
-    required this.tooltip,
-    required this.onPressed,
-    required this.icon,
-    this.selected = false,
-  });
-
-  @override
-  State<_DesktopToolbarIconAction> createState() =>
-      _DesktopToolbarIconActionState();
-}
-
-class _DesktopToolbarIconActionState extends State<_DesktopToolbarIconAction> {
-  final FocusNode _focusNode = FocusNode();
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: widget.onPressed != null,
-      selected: widget.selected,
-      label: widget.tooltip,
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Center(
-          child: ShadTooltip(
-            focusNode: _focusNode,
-            builder: (context) => Text(widget.tooltip),
-            child: ShadIconButton.raw(
-              variant:
-                  widget.selected
-                      ? ShadButtonVariant.secondary
-                      : ShadButtonVariant.ghost,
-              focusNode: _focusNode,
-              width: 32,
-              height: 32,
-              iconSize: 18,
-              enabled: widget.onPressed != null,
-              onPressed: widget.onPressed,
-              icon: widget.icon,
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -12,6 +12,8 @@ class StarsDesktopThemeSpec {
   static const double profileRailWidth = 300;
   static const double detailMinWidth = 560;
   static const double toolbarHeight = 50;
+  static const double toolbarAvatarSize = 28;
+  static const double toolbarLogoSize = 14;
   static const double menuBarHeight = toolbarHeight;
   static const double shellGap = 0;
   static const double controlHeight = 32;
