@@ -71,8 +71,8 @@ class StarsInlineErrorAlert extends StatelessWidget {
 /// A shared label/value row for desktop information panels.
 ///
 /// The label always starts after the same icon gutter. Text values occupy the
-/// available trailing region and align to its right edge, while controls can
-/// opt into a fixed-width trailing column.
+/// available trailing region and align to the row's content edge, while
+/// controls can opt into a fixed-width trailing column.
 enum StarsInspectorInfoRowLayout { inspector, settings }
 
 class StarsInspectorInfoRow extends StatelessWidget {
@@ -187,10 +187,6 @@ class StarsInspectorInfoRow extends StatelessWidget {
           width: settingsLayout ? StarsDesktopThemeSpec.settingsRowValueGap : 8,
         ),
         trailingColumn,
-        if (settingsLayout)
-          const SizedBox(
-            width: StarsDesktopThemeSpec.settingsRowDisclosureInset,
-          ),
       ],
     );
 
