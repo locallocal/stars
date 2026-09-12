@@ -22,7 +22,9 @@ abstract base class BundledSystemSkill {
     required this.compatibility,
     required Set<String> requestedToolNames,
     required this.integrityError,
-  }) : requestedToolNames = Set<String>.unmodifiable(requestedToolNames);
+    Map<String, String> referenceDigests = const {},
+  }) : requestedToolNames = Set<String>.unmodifiable(requestedToolNames),
+       referenceDigests = Map<String, String>.unmodifiable(referenceDigests);
 
   final String bundledAssetRoot;
   final String bundledAssetPath;
@@ -34,6 +36,7 @@ abstract base class BundledSystemSkill {
   final String compatibility;
   final Set<String> requestedToolNames;
   final String integrityError;
+  final Map<String, String> referenceDigests;
 
   bool _isValid = false;
   SkillContent? _content;
@@ -58,10 +61,8 @@ abstract base class BundledSystemSkill {
     }
 
     _isValid = false;
-    final source = await (bundle ?? rootBundle).loadString(
-      bundledAssetPath,
-      cache: false,
-    );
+    final assetBundle = bundle ?? rootBundle;
+    final source = await assetBundle.loadString(bundledAssetPath, cache: false);
     final digest = sha256.convert(utf8.encode(source)).toString();
     if (digest != expectedDigest) {
       throw FormatException(integrityError);
@@ -69,6 +70,21 @@ abstract base class BundledSystemSkill {
 
     final parsed = _parse(source);
     _validateFrontmatter(parsed.frontmatter);
+    final resources = <String, String>{};
+    for (final entry in referenceDigests.entries) {
+      final relativePath = _validatedReferencePath(entry.key);
+      final reference = await assetBundle.loadString(
+        '$bundledAssetRoot/$relativePath',
+        cache: false,
+      );
+      final referenceDigest = sha256.convert(utf8.encode(reference)).toString();
+      if (referenceDigest != entry.value) {
+        throw FormatException(
+          '$integrityError Bundled reference integrity validation failed.',
+        );
+      }
+      resources[relativePath] = reference;
+    }
     final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
     final content = SkillContent(
       descriptor: SkillDescriptor(
@@ -84,17 +100,36 @@ abstract base class BundledSystemSkill {
         validationStatus: SkillValidationStatus.valid,
         compatibility: compatibility,
         requestedToolNames: requestedToolNames,
+        hasReferences: resources.isNotEmpty,
         publisherId: 'stars',
         publisherName: 'Stars',
         installedAt: timestamp,
         updatedAt: timestamp,
       ),
       instructions: parsed.instructions,
-      files: const ['SKILL.md'],
+      files: ['SKILL.md', ...resources.keys],
+      resources: resources,
     );
     if (bundle == null) _content = content;
     _isValid = true;
     return content;
+  }
+
+  String _validatedReferencePath(String source) {
+    final normalized = source.trim().replaceAll('\\', '/');
+    final segments = normalized.split('/');
+    if (normalized != source ||
+        !normalized.startsWith('references/') ||
+        segments.any(
+          (segment) => segment.isEmpty || segment == '.' || segment == '..',
+        )) {
+      throw ArgumentError.value(
+        source,
+        'referenceDigests',
+        'Bundled Skill references must be safe paths under references/.',
+      );
+    }
+    return normalized;
   }
 
   ({YamlMap frontmatter, String instructions}) _parse(String source) {

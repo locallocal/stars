@@ -44,6 +44,7 @@ final class TestSkillDescription {
         description: skill.description,
         contentDigest: skill.contentDigest,
         priority: 0,
+        hasReferences: skill.hasReferences,
       ),
     ];
     final results = <SkillDescriptionTestResult>[];

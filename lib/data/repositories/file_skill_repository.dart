@@ -59,10 +59,16 @@ final class FileSkillRepository implements SkillRepository {
   Future<SkillContent> load(String skillId, {String? contentDigest}) async {
     final descriptor = await getById(skillId);
     if (descriptor == null) {
-      throw const SkillInstallException('Skill 不存在或已卸载。');
+      throw const SkillInstallException(
+        'Skill 不存在或已卸载。',
+        code: 'skill_not_installed',
+      );
     }
     if (contentDigest != null && contentDigest != descriptor.contentDigest) {
-      throw const SkillInstallException('请求的 Skill 版本已不再安装。');
+      throw const SkillInstallException(
+        '请求的 Skill 版本已不再安装。',
+        code: 'skill_version_changed',
+      );
     }
     return SkillContent(
       descriptor: descriptor,
@@ -79,10 +85,16 @@ final class FileSkillRepository implements SkillRepository {
   }) async {
     final descriptor = await getById(skillId);
     if (descriptor == null) {
-      throw const SkillInstallException('Skill 不存在或已卸载。');
+      throw const SkillInstallException(
+        'Skill 不存在或已卸载。',
+        code: 'skill_not_installed',
+      );
     }
     if (contentDigest != null && contentDigest != descriptor.contentDigest) {
-      throw const SkillInstallException('请求的 Skill 版本已不再安装。');
+      throw const SkillInstallException(
+        '请求的 Skill 版本已不再安装。',
+        code: 'skill_version_changed',
+      );
     }
     return SkillResourceContent(
       skillId: descriptor.id,

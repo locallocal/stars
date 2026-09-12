@@ -95,6 +95,36 @@ void main() {
         )).content,
         'Use concise headings.',
       );
+      await expectLater(
+        repository.readResource(first.id, 'SKILL.md'),
+        throwsA(
+          isA<SkillInstallException>().having(
+            (error) => error.code,
+            'code',
+            'invalid_skill_reference_path',
+          ),
+        ),
+      );
+      await expectLater(
+        repository.readResource(first.id, 'references/missing.md'),
+        throwsA(
+          isA<SkillInstallException>().having(
+            (error) => error.code,
+            'code',
+            'skill_reference_not_found',
+          ),
+        ),
+      );
+      await expectLater(
+        repository.readResource('user:missing', 'references/style.md'),
+        throwsA(
+          isA<SkillInstallException>().having(
+            (error) => error.code,
+            'code',
+            'skill_not_installed',
+          ),
+        ),
+      );
       await File(
         '${source.path}/references/style.md',
       ).writeAsString('Changed after import.');

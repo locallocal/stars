@@ -486,6 +486,14 @@ void main() {
         isNot(contains('<available_skills>')),
       );
       expect(repository.readResourcePaths, ['references/style.md']);
+      expect(
+        provider.session.results.first.single.content,
+        contains('<available_references count="1">'),
+      );
+      expect(
+        provider.session.results.first.single.content,
+        contains('- references/style.md'),
+      );
       expect(result.skillToolCalls.map((call) => call.name), [
         'activate_skill',
         'read_skill_resource',
@@ -500,6 +508,258 @@ void main() {
       expect(provider.session.closed, isTrue);
     },
   );
+
+  test(
+    'reference-free bundled Skill rejects resource reads with an explicit manifest',
+    () async {
+      final skill = _systemLocalFileSystemSkill(directory: false);
+      final repository = _FakeSkillRepository(const {});
+      final provider = _FakeSkillProvider([
+        SkillToolTurn(
+          calls: [
+            SkillToolCall(
+              callId: 'activate-1',
+              name: 'activate_skill',
+              arguments: const {'name': 'file-operations'},
+            ),
+          ],
+        ),
+        SkillToolTurn(
+          calls: [
+            SkillToolCall(
+              callId: 'read-1',
+              name: 'read_skill_resource',
+              arguments: const {
+                'name': 'file-operations',
+                'path': 'references/tools.md',
+              },
+            ),
+          ],
+        ),
+        SkillToolTurn(isComplete: true),
+      ]);
+      final compose = ComposeChatTurn(
+        skillRepository: repository,
+        bindingRepository: _FakeBindingRepository([
+          _binding(fileOperationsSkillId),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        bundledSkillLoader: () async => [skill],
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Save this HTML file locally',
+        ),
+        currentUserId: 'user-1',
+        skillToolProvider: provider,
+      );
+
+      final activationResult = provider.session.results.first.single;
+      expect(
+        activationResult.content,
+        contains('<available_references count="0">'),
+      );
+      expect(
+        activationResult.content,
+        contains('do not call read_skill_resource'),
+      );
+      expect(repository.readResourcePaths, isEmpty);
+      expect(result.skillToolCalls.last.status, 'failed');
+      expect(result.skillToolCalls.last.errorCode, 'skill_has_no_references');
+      expect(
+        provider.session.results.last.single.errorCode,
+        'skill_has_no_references',
+      );
+    },
+  );
+
+  test(
+    'bundled Skill reads an advertised reference from application assets',
+    () async {
+      final skill = _systemSkillWithReference();
+      final repository = _FakeSkillRepository(const {});
+      final provider = _FakeSkillProvider([
+        SkillToolTurn(
+          calls: [
+            SkillToolCall(
+              callId: 'activate-1',
+              name: 'activate_skill',
+              arguments: const {'name': 'bundled-reference'},
+            ),
+          ],
+        ),
+        SkillToolTurn(
+          calls: [
+            SkillToolCall(
+              callId: 'read-1',
+              name: 'read_skill_resource',
+              arguments: const {
+                'name': 'bundled-reference',
+                'path': 'references/guide.md',
+              },
+            ),
+          ],
+        ),
+        SkillToolTurn(isComplete: true),
+      ]);
+      final compose = ComposeChatTurn(
+        skillRepository: repository,
+        bindingRepository: _FakeBindingRepository([
+          _binding(skill.descriptor.id),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            _testConversationArtifactsDirectory,
+        bundledSkillLoader: () async => [skill],
+      );
+
+      final result = await compose(
+        bot: _bot(),
+        history: const [],
+        userMessage: _message(
+          senderId: 'user-1',
+          content: 'Use the bundled guide',
+        ),
+        currentUserId: 'user-1',
+        skillToolProvider: provider,
+      );
+
+      expect(repository.readResourcePaths, isEmpty);
+      expect(result.skillToolCalls.last.status, 'completed');
+      expect(result.messages.first.content, contains('Bundled guide content.'));
+      expect(
+        provider.session.results.first.single.content,
+        contains('- references/guide.md'),
+      );
+    },
+  );
+
+  test('rejects a resource path that was not advertised', () async {
+    final skill = _skill(
+      'user:reference-reader',
+      'reference-reader',
+      'Read an advertised reference.',
+      files: const ['SKILL.md', 'references/guide.md'],
+    );
+    final repository = _FakeSkillRepository({skill.descriptor.id: skill});
+    final provider = _FakeSkillProvider([
+      SkillToolTurn(
+        calls: [
+          SkillToolCall(
+            callId: 'activate-1',
+            name: 'activate_skill',
+            arguments: const {'name': 'reference-reader'},
+          ),
+        ],
+      ),
+      SkillToolTurn(
+        calls: [
+          SkillToolCall(
+            callId: 'read-1',
+            name: 'read_skill_resource',
+            arguments: const {
+              'name': 'reference-reader',
+              'path': 'references/tools.md',
+            },
+          ),
+        ],
+      ),
+      SkillToolTurn(isComplete: true),
+    ]);
+    final compose = ComposeChatTurn(
+      skillRepository: repository,
+      bindingRepository: _FakeBindingRepository([
+        _binding(skill.descriptor.id),
+      ]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: const [],
+      userMessage: _message(senderId: 'user-1', content: 'Read the guide'),
+      currentUserId: 'user-1',
+      skillToolProvider: provider,
+    );
+
+    expect(repository.readResourcePaths, isEmpty);
+    expect(
+      result.skillToolCalls.last.errorCode,
+      'skill_reference_not_advertised',
+    );
+    expect(
+      provider.session.results.last.single.content,
+      contains('skill_reference_not_advertised'),
+    );
+  });
+
+  test('preserves a specific repository resource error code', () async {
+    final skill = _skill(
+      'user:reference-reader',
+      'reference-reader',
+      'Read an advertised reference.',
+      files: const ['SKILL.md', 'references/guide.md'],
+    );
+    final repository = _FakeSkillRepository(
+      {skill.descriptor.id: skill},
+      resourceReadError: const SkillInstallException(
+        'Reference not found.',
+        code: 'skill_reference_not_found',
+      ),
+    );
+    final provider = _FakeSkillProvider([
+      SkillToolTurn(
+        calls: [
+          SkillToolCall(
+            callId: 'activate-1',
+            name: 'activate_skill',
+            arguments: const {'name': 'reference-reader'},
+          ),
+        ],
+      ),
+      SkillToolTurn(
+        calls: [
+          SkillToolCall(
+            callId: 'read-1',
+            name: 'read_skill_resource',
+            arguments: const {
+              'name': 'reference-reader',
+              'path': 'references/guide.md',
+            },
+          ),
+        ],
+      ),
+      SkillToolTurn(isComplete: true),
+    ]);
+    final compose = ComposeChatTurn(
+      skillRepository: repository,
+      bindingRepository: _FakeBindingRepository([
+        _binding(skill.descriptor.id),
+      ]),
+      conversationArtifactsDirectoryProvider:
+          _testConversationArtifactsDirectory,
+    );
+
+    final result = await compose(
+      bot: _bot(),
+      history: const [],
+      userMessage: _message(senderId: 'user-1', content: 'Read the guide'),
+      currentUserId: 'user-1',
+      skillToolProvider: provider,
+    );
+
+    expect(repository.readResourcePaths, ['references/guide.md']);
+    expect(result.skillToolCalls.last.errorCode, 'skill_reference_not_found');
+    expect(
+      provider.session.results.last.single.errorCode,
+      'skill_reference_not_found',
+    );
+  });
 
   test('legacy provider does not receive or activate auto Skills', () async {
     final auto = _skill(
@@ -1325,6 +1585,7 @@ SkillContent _skill(
       validationStatus: SkillValidationStatus.valid,
       compatibility: '',
       requestedToolNames: requestedToolNames,
+      hasReferences: files.any((file) => file.startsWith('references/')),
       installedAt: now,
       updatedAt: now,
     ),
@@ -1400,6 +1661,31 @@ SkillContent _systemLocalFileSystemSkill({required bool directory}) {
     ),
     instructions: 'Use native $name tools only after user approval.',
     files: const ['SKILL.md'],
+  );
+}
+
+SkillContent _systemSkillWithReference() {
+  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+  return SkillContent(
+    descriptor: SkillDescriptor(
+      id: 'system:bundled-reference',
+      name: 'bundled-reference',
+      description: 'Read a bundled reference.',
+      version: '1',
+      scope: SkillScope.bundled,
+      sourceUri: 'asset:///bundled-reference/SKILL.md',
+      rootPath: 'assets/skills/system/bundled-reference',
+      contentDigest: 'digest-bundled-reference',
+      trustState: SkillTrustState.bundledTrusted,
+      validationStatus: SkillValidationStatus.valid,
+      compatibility: 'Stars',
+      hasReferences: true,
+      installedAt: timestamp,
+      updatedAt: timestamp,
+    ),
+    instructions: 'Read only advertised bundled references.',
+    files: const ['SKILL.md', 'references/guide.md'],
+    resources: const {'references/guide.md': 'Bundled guide content.'},
   );
 }
 
@@ -1540,10 +1826,15 @@ Message _message({
 );
 
 final class _FakeSkillRepository implements SkillRepository {
-  _FakeSkillRepository(this.contents, {this.resources = const {}});
+  _FakeSkillRepository(
+    this.contents, {
+    this.resources = const {},
+    this.resourceReadError,
+  });
 
   final Map<String, SkillContent> contents;
   final Map<String, String> resources;
+  final Object? resourceReadError;
   final List<String> loadedIds = [];
   final List<String> readResourcePaths = [];
 
@@ -1575,6 +1866,8 @@ final class _FakeSkillRepository implements SkillRepository {
     String? contentDigest,
   }) async {
     readResourcePaths.add(relativePath);
+    final error = resourceReadError;
+    if (error != null) throw error;
     return SkillResourceContent(
       skillId: skillId,
       path: relativePath,

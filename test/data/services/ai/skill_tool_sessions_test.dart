@@ -79,12 +79,73 @@ void main() {
     expect(second.isComplete, isTrue);
     expect(requests, hasLength(2));
     expect(requests.first['parallel_tool_calls'], isFalse);
-    expect(requests.first['tools'], hasLength(2));
+    expect(requests.first['tools'], hasLength(1));
     final secondMessages = requests.last['messages']! as List<Object?>;
     final toolMessage = secondMessages.last as Map<Object?, Object?>;
     expect(toolMessage['role'], 'tool');
     expect(toolMessage['tool_call_id'], 'call-1');
   });
+
+  test(
+    'Skill resource tool is exposed only for catalog entries with references',
+    () async {
+      final requests = <Map<String, Object?>>[];
+      final client = MockClient((request) async {
+        requests.add(
+          (jsonDecode(request.body) as Map<Object?, Object?>).map(
+            (key, value) => MapEntry(key.toString(), value),
+          ),
+        );
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {
+                'message': {'content': 'done'},
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      final provider = OpenAI(_bot, skillToolClient: client);
+      final session = provider.openSkillToolSession(
+        SkillToolSessionRequest(
+          messages: [ChatMessage(role: 'user', content: 'Use a Skill')],
+          catalog: const [
+            SkillCatalogEntry(
+              id: 'system:file-operations',
+              name: 'file-operations',
+              description: 'Work with files.',
+              contentDigest: 'file-digest',
+              priority: 0,
+            ),
+            SkillCatalogEntry(
+              id: 'user:reference-reader',
+              name: 'reference-reader',
+              description: 'Read references.',
+              contentDigest: 'reference-digest',
+              priority: 1,
+              hasReferences: true,
+            ),
+          ],
+        ),
+      );
+      addTearDown(session.close);
+
+      await session.start();
+
+      final tools = requests.single['tools']! as List<Object?>;
+      expect(tools, hasLength(2));
+      final readTool = tools
+          .map((tool) => tool! as Map<Object?, Object?>)
+          .map((tool) => tool['function']! as Map<Object?, Object?>)
+          .singleWhere((function) => function['name'] == 'read_skill_resource');
+      final parameters = readTool['parameters']! as Map<Object?, Object?>;
+      final properties = parameters['properties']! as Map<Object?, Object?>;
+      final nameProperty = properties['name']! as Map<Object?, Object?>;
+      expect(nameProperty['enum'], ['reference-reader']);
+    },
+  );
 
   test('OpenAI Responses Skill session round-trips function outputs', () async {
     final requests = <Map<String, Object?>>[];
@@ -366,9 +427,9 @@ void main() {
                   evidenceKind: EvidenceKind.calculation,
                   subject: 'calculation:basic-arithmetic',
                   scope: const {'expression': '2+2'},
-              structuredFacts: [
-                StructuredFact(name: 'calculation.result', value: 4),
-              ],
+                  structuredFacts: [
+                    StructuredFact(name: 'calculation.result', value: 4),
+                  ],
                 ),
               ],
             )

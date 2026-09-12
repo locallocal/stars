@@ -175,6 +175,7 @@ final class ComposeChatTurn {
           description: descriptors[binding.skillId]!.description,
           contentDigest: descriptors[binding.skillId]!.contentDigest,
           priority: binding.priority,
+          hasReferences: descriptors[binding.skillId]!.hasReferences,
         ),
     ];
 

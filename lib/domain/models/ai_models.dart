@@ -363,12 +363,14 @@ final class SkillToolResult {
     required this.name,
     required this.content,
     this.isError = false,
+    this.errorCode = '',
   });
 
   final String callId;
   final String name;
   final String content;
   final bool isError;
+  final String errorCode;
 }
 
 enum HostedSkillPreparationStatus { unavailable, prepared, rejected }
