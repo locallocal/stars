@@ -263,6 +263,10 @@ class _InspectorTokenUsageSummary extends StatelessWidget {
           '${S.of(context).totalTokens} ${usage.effectiveTotalTokens}, '
           '${S.of(context).inputTokens} ${usage.inputTokens}, '
           '${S.of(context).outputTokens} ${usage.outputTokens}',
+      hint:
+          '${S.of(context).totalTokensDescription} '
+          '${S.of(context).inputTokensDescription} '
+          '${S.of(context).outputTokensDescription}',
       child: ExcludeSemantics(
         child: StarsDesktopSettingsGroup(
           key: const ValueKey<String>('inspector-token-usage-summary'),
@@ -271,18 +275,21 @@ class _InspectorTokenUsageSummary extends StatelessWidget {
               key: const ValueKey<String>('inspector-token-usage-total'),
               icon: Icons.data_usage_rounded,
               label: S.of(context).totalTokens,
+              description: S.of(context).totalTokensDescription,
               value: numberFormat.format(usage.effectiveTotalTokens),
             ),
             _InspectorTokenMetric(
               key: const ValueKey<String>('inspector-token-usage-input'),
               icon: Icons.login_rounded,
               label: S.of(context).inputTokens,
+              description: S.of(context).inputTokensDescription,
               value: numberFormat.format(usage.inputTokens),
             ),
             _InspectorTokenMetric(
               key: const ValueKey<String>('inspector-token-usage-output'),
               icon: Icons.logout_rounded,
               label: S.of(context).outputTokens,
+              description: S.of(context).outputTokensDescription,
               value: numberFormat.format(usage.outputTokens),
             ),
           ],
@@ -297,17 +304,20 @@ class _InspectorTokenMetric extends StatelessWidget {
     super.key,
     required this.icon,
     required this.label,
+    required this.description,
     required this.value,
   });
 
   final IconData icon;
   final String label;
+  final String description;
   final String value;
 
   @override
   Widget build(BuildContext context) => StarsInspectorInfoRow(
     icon: icon,
     label: label,
+    description: description,
     value: value,
     layout: StarsInspectorInfoRowLayout.settings,
   );

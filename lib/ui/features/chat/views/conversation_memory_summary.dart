@@ -32,6 +32,11 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
           key: const ValueKey<String>('conversation-system-prompt-title'),
           style: StarsDesktopThemeSpec.sectionTitleStyle(context),
         ),
+        const SizedBox(height: 2),
+        Text(
+          S.of(context).applicationInjectedPromptDescription,
+          style: StarsDesktopThemeSpec.metaStyle(context),
+        ),
         const SizedBox(height: 12),
         Semantics(
           key: const ValueKey<String>('conversation-system-prompt-value'),
@@ -175,12 +180,14 @@ final class _MemoryMetric extends StatelessWidget {
     super.key,
     required this.icon,
     required this.label,
+    required this.description,
     required this.value,
     this.valueTextAlign = TextAlign.right,
   });
 
   final IconData icon;
   final String label;
+  final String description;
   final String value;
   final TextAlign valueTextAlign;
 
@@ -188,6 +195,7 @@ final class _MemoryMetric extends StatelessWidget {
   Widget build(BuildContext context) => StarsInspectorInfoRow(
     icon: icon,
     label: label,
+    description: description,
     value: value,
     valueTextAlign: valueTextAlign,
     layout: StarsInspectorInfoRowLayout.settings,
@@ -211,6 +219,7 @@ final class _AutomaticMemoryRow extends StatelessWidget {
       key: const ValueKey<String>('automatic-memory-row'),
       icon: LucideIcons.brain,
       label: S.of(context).automaticMemory,
+      description: S.of(context).automaticMemoryDescription,
       crossAxisAlignment: CrossAxisAlignment.center,
       iconLabelGapKey: const ValueKey<String>('automatic-memory-icon-gap'),
       trailingWidth: _memoryTrailingControlWidth,

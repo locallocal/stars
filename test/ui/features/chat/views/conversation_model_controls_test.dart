@@ -14,19 +14,29 @@ void main() {
   testWidgets('shows settings-aligned switches and toggles provider options', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(420, 600);
+    tester.view.physicalSize = const Size(420, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final provider = _CapabilityProvider();
     var savedMaxModelTurns = 15;
+    var showReasoning = true;
+    var showVerificationStatus = true;
     var showExecutionStatus = true;
     var strictGroundingMode = false;
 
     await tester.pumpWidget(
       _harness(
         provider,
+        showReasoning: showReasoning,
+        showVerificationStatus: showVerificationStatus,
         showExecutionStatus: showExecutionStatus,
         strictGroundingMode: strictGroundingMode,
+        onShowReasoningChanged: (value) async {
+          showReasoning = value;
+        },
+        onShowVerificationStatusChanged: (value) async {
+          showVerificationStatus = value;
+        },
         onShowExecutionStatusChanged: (value) async {
           showExecutionStatus = value;
         },
@@ -52,6 +62,18 @@ void main() {
     final thinkingSwitch = find.byKey(
       const ValueKey<String>('conversation-deep-thinking-toggle'),
     );
+    final reasoningRow = find.byKey(
+      const ValueKey<String>('conversation-reasoning-row'),
+    );
+    final reasoningSwitch = find.byKey(
+      const ValueKey<String>('conversation-reasoning-toggle'),
+    );
+    final verificationStatusRow = find.byKey(
+      const ValueKey<String>('conversation-verification-status-row'),
+    );
+    final verificationStatusSwitch = find.byKey(
+      const ValueKey<String>('conversation-verification-status-toggle'),
+    );
     final executionStatusRow = find.byKey(
       const ValueKey<String>('conversation-execution-status-row'),
     );
@@ -72,33 +94,34 @@ void main() {
     );
     expect(webRow, findsOneWidget);
     expect(thinkingRow, findsOneWidget);
+    expect(reasoningRow, findsOneWidget);
+    expect(verificationStatusRow, findsOneWidget);
     expect(executionStatusRow, findsOneWidget);
     expect(strictGroundingRow, findsOneWidget);
     expect(maxModelTurnsRow, findsOneWidget);
-    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(5));
-    expect(find.byType(ShadSwitch), findsNWidgets(4));
+    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(7));
+    expect(find.byType(ShadSwitch), findsNWidgets(6));
     expect(find.byType(ShadButton), findsOneWidget);
     expect(find.text('联网搜索'), findsOneWidget);
+    expect(find.text('允许模型搜索互联网以获取最新信息。'), findsOneWidget);
     expect(find.text('深度思考'), findsOneWidget);
+    expect(find.text('允许模型在回复前进行更深入的推理。'), findsOneWidget);
+    expect(find.text('思考过程'), findsOneWidget);
+    expect(find.text('在智能体会话消息中显示思考过程。'), findsOneWidget);
+    expect(find.text('核验检查'), findsOneWidget);
+    expect(find.text('在智能体会话消息中显示核验状态和详情。'), findsOneWidget);
     expect(find.text('会话执行状态'), findsOneWidget);
     expect(find.text('严格验证模式'), findsOneWidget);
     expect(find.text('在会话内容中显示执行状态。'), findsOneWidget);
     expect(find.text('隐藏未验证的事实回答，同时保留验证详情和工具失败原因。'), findsOneWidget);
     expect(find.text('工具请求回合上限'), findsOneWidget);
+    expect(find.text('单次回复中允许模型请求工具的最大回合数。此设置仅应用于当前会话。'), findsOneWidget);
     expect(find.text('15'), findsOneWidget);
     final inspectorRows = find.byType(StarsInspectorInfoRow);
-    for (var index = 0; index < 5; index++) {
-      expect(
-        tester.widget<StarsInspectorInfoRow>(inspectorRows.at(index)).layout,
-        StarsInspectorInfoRowLayout.settings,
-      );
-    }
-    for (final row in [webRow, thinkingRow, maxModelTurnsRow]) {
-      expect(
-        tester.getSize(row).height,
-        StarsDesktopThemeSpec.settingsRowMinHeight +
-            StarsDesktopThemeSpec.settingsRowPadding.vertical,
-      );
+    for (var index = 0; index < 7; index++) {
+      final row = tester.widget<StarsInspectorInfoRow>(inspectorRows.at(index));
+      expect(row.layout, StarsInspectorInfoRowLayout.settings);
+      expect(row.description, isNotEmpty);
     }
     expect(
       tester.getRect(find.text('联网搜索')).left,
@@ -106,6 +129,14 @@ void main() {
     );
     expect(
       tester.getRect(find.text('深度思考')).left,
+      closeTo(tester.getRect(find.text('思考过程')).left, 0.01),
+    );
+    expect(
+      tester.getRect(find.text('思考过程')).left,
+      closeTo(tester.getRect(find.text('核验检查')).left, 0.01),
+    );
+    expect(
+      tester.getRect(find.text('核验检查')).left,
       closeTo(tester.getRect(find.text('会话执行状态')).left, 0.01),
     );
     expect(
@@ -123,6 +154,18 @@ void main() {
           StarsDesktopThemeSpec.settingsRowDisclosureInset,
     );
     expect(
+      tester.getRect(reasoningRow).right -
+          tester.getRect(reasoningSwitch).right,
+      StarsDesktopThemeSpec.settingsRowPadding.right +
+          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+    );
+    expect(
+      tester.getRect(verificationStatusRow).right -
+          tester.getRect(verificationStatusSwitch).right,
+      StarsDesktopThemeSpec.settingsRowPadding.right +
+          StarsDesktopThemeSpec.settingsRowDisclosureInset,
+    );
+    expect(
       tester.getRect(executionStatusRow).right -
           tester.getRect(executionStatusSwitch).right,
       StarsDesktopThemeSpec.settingsRowPadding.right +
@@ -135,8 +178,16 @@ void main() {
           StarsDesktopThemeSpec.settingsRowDisclosureInset,
     );
     expect(
-      tester.getTopLeft(executionStatusRow).dy,
+      tester.getTopLeft(reasoningRow).dy,
       greaterThan(tester.getTopLeft(thinkingRow).dy),
+    );
+    expect(
+      tester.getTopLeft(verificationStatusRow).dy,
+      greaterThan(tester.getTopLeft(reasoningRow).dy),
+    );
+    expect(
+      tester.getTopLeft(executionStatusRow).dy,
+      greaterThan(tester.getTopLeft(verificationStatusRow).dy),
     );
     expect(
       tester.getTopLeft(strictGroundingRow).dy,
@@ -153,7 +204,7 @@ void main() {
           StarsDesktopThemeSpec.settingsRowDisclosureInset,
     );
     final separators = find.byType(ShadSeparator);
-    expect(separators, findsNWidgets(4));
+    expect(separators, findsNWidgets(6));
     for (final separator in separators.evaluate()) {
       expect(
         (separator.widget as ShadSeparator).margin,
@@ -162,11 +213,15 @@ void main() {
     }
     expect(tester.getSize(webSwitch).width, 44);
     expect(tester.getSize(thinkingSwitch).width, 44);
+    expect(tester.getSize(reasoningSwitch).width, 44);
+    expect(tester.getSize(verificationStatusSwitch).width, 44);
     expect(tester.getSize(executionStatusSwitch).width, 44);
     expect(tester.getSize(strictGroundingSwitch).width, 44);
     expect(tester.getSize(maxModelTurnsButton).width, 72);
     expect(tester.widget<ShadSwitch>(webSwitch).value, isFalse);
     expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isFalse);
+    expect(tester.widget<ShadSwitch>(reasoningSwitch).value, isTrue);
+    expect(tester.widget<ShadSwitch>(verificationStatusSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(executionStatusSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(strictGroundingSwitch).value, isFalse);
 
@@ -184,6 +239,14 @@ void main() {
     expect(provider.getDeepThinking(), isTrue);
     expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isTrue);
 
+    await tester.tap(reasoningSwitch);
+    await tester.pumpAndSettle();
+    expect(showReasoning, isFalse);
+
+    await tester.tap(verificationStatusSwitch);
+    await tester.pumpAndSettle();
+    expect(showVerificationStatus, isFalse);
+
     await tester.tap(executionStatusSwitch);
     await tester.pumpAndSettle();
     expect(showExecutionStatus, isFalse);
@@ -191,8 +254,16 @@ void main() {
     await tester.pumpWidget(
       _harness(
         provider,
+        showReasoning: showReasoning,
+        showVerificationStatus: showVerificationStatus,
         showExecutionStatus: showExecutionStatus,
         strictGroundingMode: strictGroundingMode,
+        onShowReasoningChanged: (value) async {
+          showReasoning = value;
+        },
+        onShowVerificationStatusChanged: (value) async {
+          showVerificationStatus = value;
+        },
         onShowExecutionStatusChanged: (value) async {
           showExecutionStatus = value;
         },
@@ -205,6 +276,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(tester.widget<ShadSwitch>(reasoningSwitch).value, isFalse);
+    expect(tester.widget<ShadSwitch>(verificationStatusSwitch).value, isFalse);
     expect(tester.widget<ShadSwitch>(executionStatusSwitch).value, isFalse);
 
     await tester.tap(strictGroundingSwitch);
@@ -214,8 +287,16 @@ void main() {
     await tester.pumpWidget(
       _harness(
         provider,
+        showReasoning: showReasoning,
+        showVerificationStatus: showVerificationStatus,
         showExecutionStatus: showExecutionStatus,
         strictGroundingMode: strictGroundingMode,
+        onShowReasoningChanged: (value) async {
+          showReasoning = value;
+        },
+        onShowVerificationStatusChanged: (value) async {
+          showVerificationStatus = value;
+        },
         onShowExecutionStatusChanged: (value) async {
           showExecutionStatus = value;
         },
@@ -268,8 +349,12 @@ void main() {
 
 Widget _harness(
   AiProvider provider, {
+  bool showReasoning = true,
+  bool showVerificationStatus = true,
   bool showExecutionStatus = true,
   bool strictGroundingMode = false,
+  ConversationPreferenceChanged? onShowReasoningChanged,
+  ConversationPreferenceChanged? onShowVerificationStatusChanged,
   ConversationPreferenceChanged? onShowExecutionStatusChanged,
   ConversationPreferenceChanged? onStrictGroundingModeChanged,
   MaxModelTurnsChanged? onMaxModelTurnsChanged,
@@ -304,8 +389,13 @@ Widget _harness(
                 width: 320,
                 child: ConversationModelControls(
                   provider: provider,
+                  showReasoning: showReasoning,
+                  showVerificationStatus: showVerificationStatus,
                   showExecutionStatus: showExecutionStatus,
                   strictGroundingMode: strictGroundingMode,
+                  onShowReasoningChanged: onShowReasoningChanged,
+                  onShowVerificationStatusChanged:
+                      onShowVerificationStatusChanged,
                   onShowExecutionStatusChanged: onShowExecutionStatusChanged,
                   onStrictGroundingModeChanged: onStrictGroundingModeChanged,
                   onMaxModelTurnsChanged: onMaxModelTurnsChanged,

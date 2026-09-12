@@ -15,12 +15,16 @@ class ModelModalitiesView extends StatelessWidget {
     required this.outputModalities,
     required this.keyPrefix,
     this.density = ModelModalitiesDensity.regular,
+    this.inputDescription,
+    this.outputDescription,
   });
 
   final List<InputModality> inputModalities;
   final List<OutputModality> outputModalities;
   final String keyPrefix;
   final ModelModalitiesDensity density;
+  final String? inputDescription;
+  final String? outputDescription;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +83,7 @@ class ModelModalitiesView extends StatelessWidget {
           key: ValueKey<String>('$keyPrefix-input'),
           icon: Icons.input_rounded,
           label: S.of(context).modelInputModalities,
+          description: inputDescription,
           crossAxisAlignment: CrossAxisAlignment.center,
           layout: StarsInspectorInfoRowLayout.settings,
           trailing: ModelInputModalityIcons(
@@ -93,6 +98,7 @@ class ModelModalitiesView extends StatelessWidget {
           key: ValueKey<String>('$keyPrefix-output'),
           icon: Icons.output_rounded,
           label: S.of(context).modelOutputModalities,
+          description: outputDescription,
           crossAxisAlignment: CrossAxisAlignment.center,
           layout: StarsInspectorInfoRowLayout.settings,
           trailing: ModelOutputModalityIcons(

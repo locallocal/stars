@@ -240,6 +240,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "automaticMemory": MessageLookupByLibrary.simpleMessage(
       "Автоматическая память",
     ),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Автоматически суммирует старые сообщения, когда в контексте требуется место.",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "Автоматические сводки могут быть неточными. Текущее сообщение всегда имеет приоритет.",
     ),
@@ -283,8 +286,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "История чата очищена",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("Ход рассуждений"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
+    ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
+      "Статус проверки",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Чаты"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
@@ -324,6 +331,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatus": MessageLookupByLibrary.simpleMessage(
       "Состояние сжатия",
     ),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Текущее состояние автоматического сжатия контекста.",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage(
@@ -341,6 +351,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("Контекст сжат"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Окно контекста"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "Максимальное число токенов, которое модель может учитывать в одном запросе.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
       "Очистить",
     ),
@@ -356,6 +369,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage(
       "Информация о беседе",
+    ),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "Модель, используемая для создания ответов в этой беседе.",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "Бот, используемый в этой беседе.",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "Провайдер, предоставляющий сервис модели для этой беседы.",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Сводка разговора",
@@ -385,6 +407,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Проверка целостности базы данных завершилась ошибкой, восстановить её из резервной копии этой версии не удалось.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Глубокое мышление"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "Разрешает модели глубже рассуждать перед ответом.",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Вы полезный ИИ-ассистент. Пожалуйста, отвечайте на русском языке.",
     ),
@@ -477,6 +502,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage(
       "Оценка использования",
+    ),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "Оценка токенов следующего запроса относительно доступного входного бюджета.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage(
       "Статус выполнения",
@@ -577,6 +605,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Includes duration",
     ),
     "inputTokens": MessageLookupByLibrary.simpleMessage("Входные токены"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Токены, отправленные модели, включая контекст беседы и инструкции.",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Установить обновление",
     ),
@@ -756,7 +787,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Размер контекста модели",
     ),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("Ввод"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "Типы содержимого, которые может обрабатывать эта модель.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Вывод"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "Типы содержимого, которые может создавать эта модель.",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "Модель достигла лимита шагов обработки. Упростите запрос и повторите попытку.",
     ),
@@ -842,6 +879,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Delete this orphaned chat or recreate the missing bot.",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("Выходные токены"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Токены, созданные моделью в ответах.",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("Частичный ответ"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("Приостановить аудио"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage(
@@ -931,6 +971,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Сохранённые последние ходы",
     ),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "Недавние ходы беседы, сохранённые в исходном виде.",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage(
       "Запустить проверку",
@@ -976,7 +1019,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Показывать сведения о выполнении в сообщениях беседы.",
     ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "Показывает ход рассуждений в сообщениях ассистента.",
+    ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Показывает статус и подробности проверки в сообщениях ассистента.",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "Доступны ресурсы",
     ),
@@ -1129,6 +1178,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("Отправить отзыв"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("Сводка сообщений"),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "Сообщения, уже сжатые в сводку беседы.",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("Поддерживается"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("Поддерживает MCP"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage(
@@ -1191,6 +1243,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Состояние перечитано и проверено",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Всего токенов"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Общее число входных и выходных токенов за выбранный период.",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "Измените условия поиска или создайте новый элемент.",
     ),
@@ -1233,5 +1288,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wait for generation to finish.",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "Разрешает модели искать актуальную информацию в Интернете.",
+    ),
   };
 }

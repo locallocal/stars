@@ -50,6 +50,12 @@ void main() {
     final outputRect = tester.getRect(outputMetric);
 
     expect(summary, findsOneWidget);
+    expect(
+      tester.getSemantics(summary).hint,
+      '所选时间范围内使用的输入与输出 Token 总数。 '
+      '发送给模型的 Token，包括会话上下文和指令。 '
+      '模型在回复中生成的 Token。',
+    );
     expect(totalRect.left, closeTo(inputRect.left, 0.01));
     expect(totalRect.left, closeTo(outputRect.left, 0.01));
     expect(totalRect.width, closeTo(inputRect.width, 0.01));
@@ -66,6 +72,7 @@ void main() {
       );
       final infoRowWidget = tester.widget<StarsInspectorInfoRow>(infoRow);
       expect(infoRowWidget.layout, StarsInspectorInfoRowLayout.settings);
+      expect(infoRowWidget.description, isNotEmpty);
       final label = find.descendant(
         of: metric,
         matching: find.text(infoRowWidget.label),
@@ -98,10 +105,15 @@ void main() {
       );
       expect(
         tester.getSize(metric).height,
-        StarsDesktopThemeSpec.settingsRowPadding.vertical +
-            StarsDesktopThemeSpec.settingsRowMinHeight,
+        greaterThanOrEqualTo(
+          StarsDesktopThemeSpec.settingsRowPadding.vertical +
+              StarsDesktopThemeSpec.settingsRowMinHeight,
+        ),
       );
     }
+    expect(find.text('所选时间范围内使用的输入与输出 Token 总数。'), findsOneWidget);
+    expect(find.text('发送给模型的 Token，包括会话上下文和指令。'), findsOneWidget);
+    expect(find.text('模型在回复中生成的 Token。'), findsOneWidget);
     expect(labelLefts[1], closeTo(labelLefts[0], 0.01));
     expect(labelLefts[2], closeTo(labelLefts[0], 0.01));
     final fieldSeparators = find.descendant(

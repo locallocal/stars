@@ -52,8 +52,12 @@ class DesktopLayout extends StatefulWidget {
   final Bot? selectedChatBot;
   final Bot? selectedBot;
   final bool isEditingBot;
+  final bool showReasoning;
+  final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
+  final ConversationPreferenceChanged? onShowReasoningChanged;
+  final ConversationPreferenceChanged? onShowVerificationStatusChanged;
   final ConversationPreferenceChanged? onShowExecutionStatusChanged;
   final ConversationPreferenceChanged? onStrictGroundingModeChanged;
   final int selectedProfileSection;
@@ -74,8 +78,12 @@ class DesktopLayout extends StatefulWidget {
     this.selectedChatBot,
     this.selectedBot,
     this.isEditingBot = false,
+    this.showReasoning = true,
+    this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.strictGroundingMode = false,
+    this.onShowReasoningChanged,
+    this.onShowVerificationStatusChanged,
     this.onShowExecutionStatusChanged,
     this.onStrictGroundingModeChanged,
     this.selectedProfileSection = 0,

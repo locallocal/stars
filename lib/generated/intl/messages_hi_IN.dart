@@ -230,6 +230,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "यह प्रदाता केवल मैन्युअल कौशल का समर्थन करता है।",
     ),
     "automaticMemory": MessageLookupByLibrary.simpleMessage("स्वचालित स्मृति"),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "संदर्भ में जगह की जरूरत होने पर पुराने संदेशों का अपने आप सारांश बनाता है।",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "स्वचालित सारांश गलत हो सकते हैं। वर्तमान संदेश हमेशा प्राथमिक है।",
     ),
@@ -271,8 +274,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "चैट इतिहास मिटा दिया गया",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("सोचने की प्रक्रिया"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
+    ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
+      "सत्यापन स्थिति",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("चैट्स"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
@@ -308,6 +315,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "compactionFailed": MessageLookupByLibrary.simpleMessage("विफल"),
     "compactionStatus": MessageLookupByLibrary.simpleMessage("संपीड़न स्थिति"),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "बातचीत संदर्भ के स्वचालित संक्षेपण की वर्तमान स्थिति।",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("पुष्टि करें"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage(
@@ -327,6 +337,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "संदर्भ संपीड़ित हुआ",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("संदर्भ विंडो"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "एक अनुरोध में मॉडल द्वारा देखे जा सकने वाले अधिकतम टोकन।",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
       "साफ़ करें",
     ),
@@ -342,6 +355,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage(
       "बातचीत की जानकारी",
+    ),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "इस बातचीत में उत्तर बनाने के लिए उपयोग किया गया मॉडल।",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "इस बातचीत में उपयोग किया गया बॉट।",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "इस बातचीत के लिए मॉडल सेवा देने वाला प्रदाता।",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "वार्तालाप सारांश",
@@ -367,6 +389,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "डेटाबेस अखंडता जाँच विफल रही और इस संस्करण के बैकअप से पुनर्प्राप्ति नहीं हो सकी।",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("गहन चिंतन"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "उत्तर देने से पहले मॉडल को अधिक गहराई से तर्क करने दें।",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "आप एक सहायक AI हैं। कृपया हिंदी में उत्तर दें।",
     ),
@@ -463,6 +488,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage(
       "अनुमानित उपयोग",
+    ),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "अगले अनुरोध के अनुमानित टोकन और उपलब्ध इनपुट बजट की तुलना।",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("निष्पादन स्थिति"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
@@ -563,6 +591,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Includes duration",
     ),
     "inputTokens": MessageLookupByLibrary.simpleMessage("इनपुट टोकन"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "मॉडल को भेजे गए टोकन, जिनमें बातचीत का संदर्भ और निर्देश शामिल हैं।",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "अपडेट इंस्टॉल करें",
     ),
@@ -744,7 +775,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "मॉडल कॉन्टेक्स्ट आकार",
     ),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("इनपुट"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "वे सामग्री प्रकार जिन्हें यह मॉडल संसाधित कर सकता है।",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("आउटपुट"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "वे सामग्री प्रकार जिन्हें यह मॉडल बना सकता है।",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "मॉडल अपनी प्रोसेसिंग-टर्न सीमा तक पहुँच गया। अनुरोध को सरल करके फिर प्रयास करें।",
     ),
@@ -830,6 +867,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Delete this orphaned chat or recreate the missing bot.",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("आउटपुट टोकन"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "उत्तर में मॉडल द्वारा बनाए गए टोकन।",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("आंशिक उत्तर"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("ऑडियो रोकें"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("उत्पादन रोकें"),
@@ -909,6 +949,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "हाल के रखे गए चरण",
     ),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "मूल रूप में रखे गए हाल के बातचीत चरण।",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage(
       "जाँच चलाएँ",
@@ -952,7 +995,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "बातचीत के संदेशों में निष्पादन विवरण दिखाएँ।",
     ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "सहायक के संदेशों में सोचने की प्रक्रिया दिखाएं।",
+    ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "सहायक के संदेशों में सत्यापन स्थिति और विवरण दिखाएं।",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "एसेट उपलब्ध हैं",
     ),
@@ -1099,6 +1148,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("प्रतिक्रिया भेजें"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("सारांशित संदेश"),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "बातचीत के सारांश में पहले से संक्षिप्त किए गए संदेश।",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("समर्थित"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("MCP समर्थित है"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage(
@@ -1159,6 +1211,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "स्थिति पढ़कर सत्यापित की गई",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("कुल टोकन"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "चुनी गई अवधि में उपयोग किए गए कुल इनपुट और आउटपुट टोकन।",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "किसी अन्य खोज का प्रयास करें या नया आइटम बनाएँ।",
     ),
@@ -1201,5 +1256,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wait for generation to finish.",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "मॉडल को नवीनतम जानकारी के लिए वेब खोजने दें।",
+    ),
   };
 }

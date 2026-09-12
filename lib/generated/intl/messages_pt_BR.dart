@@ -237,6 +237,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "automaticMemory": MessageLookupByLibrary.simpleMessage(
       "Memória automática",
     ),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "Resume automaticamente mensagens antigas quando o contexto precisa de espaço.",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "Resumos automáticos podem ser imprecisos. A mensagem atual sempre tem prioridade.",
     ),
@@ -280,8 +283,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "Histórico de conversa limpo",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage(
+      "Processo de raciocínio",
+    ),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
+    ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
+      "Status da verificação",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Conversas"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
@@ -321,6 +330,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatus": MessageLookupByLibrary.simpleMessage(
       "Status da compactação",
     ),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Estado atual da compactação automática do contexto.",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirmar"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("Confirmar exclusão"),
@@ -338,6 +350,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Contexto compactado",
     ),
     "contextWindow": MessageLookupByLibrary.simpleMessage("Janela de contexto"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "Número máximo de tokens que o modelo pode considerar em uma solicitação.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
       "Limpar",
     ),
@@ -353,6 +368,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage(
       "Informações da conversa",
+    ),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "O modelo usado para gerar respostas nesta conversa.",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "O bot usado por esta conversa.",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "O provedor do serviço de modelo para esta conversa.",
     ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage(
       "Resumo da conversa",
@@ -380,6 +404,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "A verificação de integridade do banco de dados falhou e não foi possível recuperá-lo pelo backup desta versão.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Raciocínio profundo"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "Permite que o modelo raciocine mais profundamente antes de responder.",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Você é um assistente de IA útil. Por favor, responda em português.",
     ),
@@ -476,6 +503,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage(
       "Uso estimado",
+    ),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "Tokens estimados para a próxima solicitação em relação ao orçamento de entrada disponível.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage(
       "Status da execução",
@@ -576,6 +606,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Includes duration",
     ),
     "inputTokens": MessageLookupByLibrary.simpleMessage("Tokens de entrada"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Tokens enviados ao modelo, incluindo o contexto da conversa e as instruções.",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Instalar atualização",
     ),
@@ -761,7 +794,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Tamanho do contexto do modelo",
     ),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("Entrada"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "Os tipos de conteúdo que este modelo pode processar.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Saída"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "Os tipos de conteúdo que este modelo pode gerar.",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "O modelo atingiu o limite de turnos de processamento. Simplifique a solicitação e tente novamente.",
     ),
@@ -849,6 +888,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Delete this orphaned chat or recreate the missing bot.",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("Tokens de saída"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Tokens gerados pelo modelo nas respostas.",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("Resposta parcial"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("Pausar áudio"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("Pausar geração"),
@@ -936,6 +978,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
       "Turnos recentes mantidos",
     ),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "Turnos recentes da conversa mantidos na forma original.",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage(
       "Executar teste",
@@ -981,7 +1026,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Mostrar detalhes da execução nas mensagens da conversa.",
     ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "Mostra o processo de raciocínio nas mensagens do assistente.",
+    ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "Mostra o status e os detalhes da verificação nas mensagens do assistente.",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage(
       "Recursos disponíveis",
     ),
@@ -1138,6 +1189,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "summarizedTurns": MessageLookupByLibrary.simpleMessage(
       "Mensagens resumidas",
     ),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "Mensagens já compactadas no resumo da conversa.",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("Compatível"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("Compatível com MCP"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage(
@@ -1198,6 +1252,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Estado relido e verificado",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("Total de tokens"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "Total de tokens de entrada e saída usados no período selecionado.",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "Tente outra pesquisa ou crie um novo item.",
     ),
@@ -1238,5 +1295,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wait for generation to finish.",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "Permite que o modelo pesquise informações atualizadas na Web.",
+    ),
   };
 }

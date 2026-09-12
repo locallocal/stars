@@ -215,6 +215,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "이 제공자는 수동 스킬만 지원합니다.",
     ),
     "automaticMemory": MessageLookupByLibrary.simpleMessage("자동 메모리"),
+    "automaticMemoryDescription": MessageLookupByLibrary.simpleMessage(
+      "컨텍스트에 공간이 필요할 때 이전 메시지를 자동으로 요약합니다.",
+    ),
     "automaticSummaryWarning": MessageLookupByLibrary.simpleMessage(
       "자동 요약은 부정확할 수 있습니다. 현재 메시지가 항상 우선합니다.",
     ),
@@ -250,9 +253,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatDeleted": m6,
     "chatExecutionStatus": MessageLookupByLibrary.simpleMessage("채팅 실행 상태"),
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("채팅 기록이 지워졌습니다"),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("사고 과정"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
+    "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("검증 상태"),
     "chats": MessageLookupByLibrary.simpleMessage("채팅"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("지우기"),
@@ -279,6 +284,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactingContext": MessageLookupByLibrary.simpleMessage("컨텍스트 정리 중…"),
     "compactionFailed": MessageLookupByLibrary.simpleMessage("실패"),
     "compactionStatus": MessageLookupByLibrary.simpleMessage("압축 상태"),
+    "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "대화 컨텍스트 자동 압축의 현재 상태입니다.",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("확인"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("삭제 확인"),
@@ -290,6 +298,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("컨텍스트와 메모리"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("컨텍스트가 압축되었습니다"),
     "contextWindow": MessageLookupByLibrary.simpleMessage("컨텍스트 창"),
+    "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
+      "한 요청에서 모델이 고려할 수 있는 최대 토큰 수입니다.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("비우기"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("데이터"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
@@ -302,6 +313,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "This conversation directory is empty.",
     ),
     "conversationInformation": MessageLookupByLibrary.simpleMessage("대화 정보"),
+    "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
+      "이 대화의 답변을 생성하는 데 사용하는 모델입니다.",
+    ),
+    "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
+      "이 대화에서 사용하는 봇입니다.",
+    ),
+    "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
+      "이 대화에 모델 서비스를 제공하는 공급자입니다.",
+    ),
     "conversationSummary": MessageLookupByLibrary.simpleMessage("대화 요약"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("대화별 토큰 비율"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API 키 복사"),
@@ -322,6 +342,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "데이터베이스 무결성 검사에 실패했으며 현재 버전의 백업에서도 복구하지 못했습니다.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("심층 사고"),
+    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
+      "응답하기 전에 모델이 더 깊이 추론하도록 허용합니다.",
+    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "당신은 도움이 되는 AI 어시스턴트입니다. 한국어로 대답해 주세요.",
     ),
@@ -389,6 +412,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "콘텐츠를 로드하는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
     ),
     "estimatedContextUsage": MessageLookupByLibrary.simpleMessage("예상 사용량"),
+    "estimatedContextUsageDescription": MessageLookupByLibrary.simpleMessage(
+      "다음 요청의 예상 토큰 수와 사용 가능한 입력 예산입니다.",
+    ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("실행 상태"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "피드백 내용을 입력해 주세요",
@@ -468,6 +494,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Includes duration",
     ),
     "inputTokens": MessageLookupByLibrary.simpleMessage("입력 토큰"),
+    "inputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "대화 컨텍스트와 지침을 포함하여 모델에 전송된 토큰입니다.",
+    ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("업데이트 설치"),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "생성된 요약이 검증을 통과하지 못했습니다",
@@ -637,7 +666,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelConfiguration": MessageLookupByLibrary.simpleMessage("모델 구성"),
     "modelContextWindow": MessageLookupByLibrary.simpleMessage("모델 컨텍스트 크기"),
     "modelInputModalities": MessageLookupByLibrary.simpleMessage("입력"),
+    "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "이 모델이 처리할 수 있는 콘텐츠 유형입니다.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("출력"),
+    "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
+      "이 모델이 생성할 수 있는 콘텐츠 유형입니다.",
+    ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "모델이 처리 턴 한도에 도달했습니다. 요청을 단순화한 후 다시 시도하세요.",
     ),
@@ -711,6 +746,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Delete this orphaned chat or recreate the missing bot.",
     ),
     "outputTokens": MessageLookupByLibrary.simpleMessage("출력 토큰"),
+    "outputTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "모델이 응답에서 생성한 토큰입니다.",
+    ),
     "partialResponse": MessageLookupByLibrary.simpleMessage("부분 응답"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("오디오 일시정지"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("생성 일시 중지"),
@@ -776,6 +814,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "restoreMemory": MessageLookupByLibrary.simpleMessage("복원"),
     "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage("유지된 최근 턴"),
+    "retainedRecentTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "원래 형식으로 유지된 최근 대화 턴입니다.",
+    ),
     "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "runSkillDescriptionTest": MessageLookupByLibrary.simpleMessage("테스트 실행"),
     "save": MessageLookupByLibrary.simpleMessage("저장"),
@@ -817,7 +858,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "대화 메시지에 실행 세부 정보를 표시합니다.",
     ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "어시스턴트 메시지에 사고 과정을 표시합니다.",
+    ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
+    "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
+      "어시스턴트 메시지에 검증 상태와 세부 정보를 표시합니다.",
+    ),
     "skillAssetsAvailable": MessageLookupByLibrary.simpleMessage("에셋 사용 가능"),
     "skillCompatibility": MessageLookupByLibrary.simpleMessage("호환성"),
     "skillDescriptionShouldActivate": MessageLookupByLibrary.simpleMessage(
@@ -946,6 +993,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "submitFeedback": MessageLookupByLibrary.simpleMessage("피드백 제출"),
     "summarizedTurns": MessageLookupByLibrary.simpleMessage("요약된 메시지"),
+    "summarizedTurnsDescription": MessageLookupByLibrary.simpleMessage(
+      "대화 요약에 이미 압축된 메시지입니다.",
+    ),
     "supported": MessageLookupByLibrary.simpleMessage("지원됨"),
     "supportsMcp": MessageLookupByLibrary.simpleMessage("MCP 지원"),
     "supportsSkills": MessageLookupByLibrary.simpleMessage("Skills 지원"),
@@ -988,6 +1038,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "상태를 다시 읽고 검증함",
     ),
     "totalTokens": MessageLookupByLibrary.simpleMessage("총 토큰"),
+    "totalTokensDescription": MessageLookupByLibrary.simpleMessage(
+      "선택한 기간에 사용된 입력 및 출력 토큰의 합계입니다.",
+    ),
     "tryDifferentSearch": MessageLookupByLibrary.simpleMessage(
       "다른 조건으로 검색하거나 새 항목을 만드세요.",
     ),
@@ -1024,5 +1077,8 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wait for generation to finish.",
     ),
     "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
+    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
+      "모델이 최신 정보를 웹에서 검색하도록 허용합니다.",
+    ),
   };
 }

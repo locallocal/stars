@@ -121,16 +121,22 @@ void main() {
     );
     expect(memoryInfoRows, findsNWidgets(3));
     for (var index = 0; index < 3; index++) {
-      expect(
-        tester.widget<StarsInspectorInfoRow>(memoryInfoRows.at(index)).layout,
-        StarsInspectorInfoRowLayout.settings,
+      final row = tester.widget<StarsInspectorInfoRow>(
+        memoryInfoRows.at(index),
       );
+      expect(row.layout, StarsInspectorInfoRowLayout.settings);
+      expect(row.description, isNotEmpty);
       expect(
         tester.getSize(memoryInfoRows.at(index)).height,
-        StarsDesktopThemeSpec.settingsRowPadding.vertical +
-            StarsDesktopThemeSpec.settingsRowMinHeight,
+        greaterThanOrEqualTo(
+          StarsDesktopThemeSpec.settingsRowPadding.vertical +
+              StarsDesktopThemeSpec.settingsRowMinHeight,
+        ),
       );
     }
+    expect(find.text('已压缩到会话摘要中的消息数量。'), findsOneWidget);
+    expect(find.text('当前自动整理会话上下文的状态。'), findsOneWidget);
+    expect(find.text('在上下文需要空间时自动摘要较早的消息。'), findsOneWidget);
     final summarizedTurnsInfoRow = find.descendant(
       of: summarizedTurnsRow,
       matching: find.byType(StarsInspectorInfoRow),
@@ -662,6 +668,13 @@ void main() {
 
       expect(promptBlock, findsOneWidget);
       expect(find.text('系统提示词'), findsOneWidget);
+      expect(
+        find.text(
+          '由 Stars 管理。开启后会把以下内容注入会话模型请求，关闭后不注入；'
+          '必要的运行时会话上下文不受此开关影响。内容不可编辑。',
+        ),
+        findsOneWidget,
+      );
       expect(promptText, findsOneWidget);
       expect(find.byType(ShadTextarea), findsNothing);
       expect(

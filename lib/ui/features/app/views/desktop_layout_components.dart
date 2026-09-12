@@ -241,11 +241,13 @@ class _AccountButton extends StatelessWidget {
 class _ConversationInfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String description;
   final String value;
 
   const _ConversationInfoRow({
     required this.icon,
     required this.label,
+    required this.description,
     required this.value,
   });
 
@@ -253,6 +255,7 @@ class _ConversationInfoRow extends StatelessWidget {
   Widget build(BuildContext context) => StarsInspectorInfoRow(
     icon: icon,
     label: label,
+    description: description,
     value: value,
     layout: StarsInspectorInfoRowLayout.settings,
   );

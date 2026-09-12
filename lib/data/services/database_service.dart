@@ -102,6 +102,20 @@ class DatabaseService {
           CHECK (inject_application_prompt IN (0, 1))
       ''');
     }
+    if (!columnNames.contains('show_reasoning')) {
+      await database.execute('''
+        ALTER TABLE profile
+        ADD COLUMN show_reasoning INTEGER NOT NULL DEFAULT 1
+          CHECK (show_reasoning IN (0, 1))
+      ''');
+    }
+    if (!columnNames.contains('show_verification_status')) {
+      await database.execute('''
+        ALTER TABLE profile
+        ADD COLUMN show_verification_status INTEGER NOT NULL DEFAULT 1
+          CHECK (show_verification_status IN (0, 1))
+      ''');
+    }
     if (!columnNames.contains('strict_grounding_mode')) {
       await database.execute('''
         ALTER TABLE profile
@@ -521,6 +535,10 @@ class DatabaseService {
         font_size REAL NOT NULL,
         theme_mode INTEGER NOT NULL,
         language TEXT NOT NULL,
+        show_reasoning INTEGER NOT NULL DEFAULT 1
+          CHECK (show_reasoning IN (0, 1)),
+        show_verification_status INTEGER NOT NULL DEFAULT 1
+          CHECK (show_verification_status IN (0, 1)),
         show_execution_status INTEGER NOT NULL
           CHECK (show_execution_status IN (0, 1)),
         inject_application_prompt INTEGER NOT NULL DEFAULT 1
