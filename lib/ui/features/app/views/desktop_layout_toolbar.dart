@@ -150,6 +150,18 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             onPressed: onCreateChat,
                             icon: desktopStartConversationIcon,
                           ),
+                        if (onClearChat != null)
+                          StarsDesktopIconAction(
+                            key: const ValueKey<String>(
+                              'desktop-toolbar-clear-chat',
+                            ),
+                            label: desktopConversationText(
+                              context,
+                              S.of(context).clearChatHistory,
+                            ),
+                            onPressed: onClearChat,
+                            icon: LucideIcons.eraser,
+                          ),
                         if (onBrowseConversationDirectory != null)
                           StarsDesktopIconAction(
                             key: const ValueKey<String>(
@@ -163,18 +175,6 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                                     ? ShadButtonVariant.secondary
                                     : ShadButtonVariant.ghost,
                             icon: LucideIcons.folderOpen,
-                          ),
-                        if (onClearChat != null)
-                          StarsDesktopIconAction(
-                            key: const ValueKey<String>(
-                              'desktop-toolbar-clear-chat',
-                            ),
-                            label: desktopConversationText(
-                              context,
-                              S.of(context).clearChatHistory,
-                            ),
-                            onPressed: onClearChat,
-                            icon: LucideIcons.eraser,
                           ),
                         if (conversationInfoAvailable)
                           StarsDesktopIconAction(

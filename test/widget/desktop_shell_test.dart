@@ -180,7 +180,7 @@ void main() {
     });
   });
 
-  testWidgets('desktop selected chat exposes directory before clear action', (
+  testWidgets('desktop selected chat places clear before conversation data', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -191,23 +191,20 @@ void main() {
       await tester.pumpWidget(desktopHarness(selectedChatId: 'chat-1'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const ValueKey<String>('desktop-toolbar-clear-chat')),
-        findsOneWidget,
+      final clearAction = find.byKey(
+        const ValueKey<String>('desktop-toolbar-clear-chat'),
       );
       final directoryAction = find.byKey(
         const ValueKey<String>('desktop-toolbar-conversation-directory'),
       );
-      final clearAction = find.byKey(
-        const ValueKey<String>('desktop-toolbar-clear-chat'),
-      );
+      expect(clearAction, findsOneWidget);
       expect(directoryAction, findsOneWidget);
       expect(
-        tester.getCenter(directoryAction).dx,
-        lessThan(tester.getCenter(clearAction).dx),
+        tester.getCenter(clearAction).dx,
+        lessThan(tester.getCenter(directoryAction).dx),
       );
-      expect(find.bySemanticsLabel('查看会话数据'), findsOneWidget);
       expect(find.bySemanticsLabel('清空会话记录'), findsOneWidget);
+      expect(find.bySemanticsLabel('查看会话数据'), findsOneWidget);
     });
   });
 
