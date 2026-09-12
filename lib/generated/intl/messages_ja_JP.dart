@@ -257,7 +257,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatReasoning": MessageLookupByLibrary.simpleMessage("思考プロセス"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search matches bot names and the latest message.",
+      "Search matches conversation names, bot names, and the latest message.",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("検証ステータス"),
     "chats": MessageLookupByLibrary.simpleMessage("チャット"),
@@ -303,6 +303,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "1 回のリクエストでモデルが参照できる最大トークン数です。",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "この会話で使用しているボットです。",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("消去"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("データ"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
@@ -318,8 +321,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "この会話の返信生成に使用するモデルです。",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage("会話名"),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "この会話で使用しているボットです。",
+      "この会話を識別するためのカスタム名です。",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "会話名を入力",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "会話名を入力してください。",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "この会話にモデルサービスを提供するプロバイダーです。",
@@ -809,6 +819,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("スキルを削除"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage("会話名を変更"),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "この会話を見つけやすくするため、分かりやすい名前を設定します。",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("応答がキャンセルされました"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "停止済み · 部分回答を保持",
@@ -1053,6 +1067,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
+    ),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "会話名を変更できません",
     ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage("利用できないボット"),
     "uninstall": MessageLookupByLibrary.simpleMessage("アンインストール"),

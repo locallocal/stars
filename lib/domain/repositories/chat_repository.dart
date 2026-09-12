@@ -15,6 +15,8 @@ abstract interface class ChatRepository {
 
   Future<void> updateLastMessage(String id, String content);
 
+  Future<void> updateChatName(String id, String name);
+
   Future<void> clearHistory(String id);
 
   void invalidate();

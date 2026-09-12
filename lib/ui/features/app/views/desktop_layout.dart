@@ -49,6 +49,7 @@ class DesktopLayout extends StatefulWidget {
   final ValueChanged<int> onPageChanged;
   final List<Widget> pages;
   final String? selectedChatId;
+  final String? selectedChatName;
   final Bot? selectedChatBot;
   final Bot? selectedBot;
   final bool isEditingBot;
@@ -75,6 +76,7 @@ class DesktopLayout extends StatefulWidget {
     required this.onPageChanged,
     required this.pages,
     this.selectedChatId,
+    this.selectedChatName,
     this.selectedChatBot,
     this.selectedBot,
     this.isEditingBot = false,

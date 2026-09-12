@@ -16,6 +16,7 @@ void main() {
 
     expect(first.id, isNot(second.id));
     expect(first.botId, _bot.id);
+    expect(first.name, _bot.name);
     expect(first.createTimestamp, now);
     expect(first.modifyTimestamp, now);
     expect(repository.added, [first, second]);
@@ -67,4 +68,7 @@ class _FakeChatRepository implements ChatRepository {
 
   @override
   Future<void> updateLastMessage(String id, String content) async {}
+
+  @override
+  Future<void> updateChatName(String id, String name) async {}
 }

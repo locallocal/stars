@@ -10,6 +10,7 @@ class MainShellViewModel extends DisposableChangeNotifier {
 
   int _currentIndex = 0;
   String? _selectedChatId;
+  String? _selectedChatName;
   Bot? _selectedChatBot;
   Bot? _selectedBot;
   bool _isEditingSelectedBot = false;
@@ -17,14 +18,18 @@ class MainShellViewModel extends DisposableChangeNotifier {
 
   int get currentIndex => _currentIndex;
   String? get selectedChatId => _selectedChatId;
+  String? get selectedChatName => _selectedChatName;
   Bot? get selectedChatBot => _selectedChatBot;
   Bot? get selectedBot => _selectedBot;
   bool get isEditingSelectedBot => _isEditingSelectedBot;
   int get selectedProfileSection => _selectedProfileSection;
   bool get isChatSelectionVisible => _currentIndex == 0;
 
-  void selectChat(String chatId, Bot bot) {
+  void selectChat(String chatId, Bot bot, {String? chatName}) {
+    final normalizedChatName = chatName?.trim();
     _selectedChatId = chatId;
+    _selectedChatName =
+        normalizedChatName?.isNotEmpty == true ? normalizedChatName : bot.name;
     _selectedChatBot = bot;
     _currentIndex = 0;
     notifyListeners();
@@ -46,6 +51,7 @@ class MainShellViewModel extends DisposableChangeNotifier {
 
   void clearSelectedChat() {
     _selectedChatId = null;
+    _selectedChatName = null;
     _selectedChatBot = null;
     notifyListeners();
   }
@@ -77,6 +83,14 @@ class MainShellViewModel extends DisposableChangeNotifier {
     notifyListeners();
   }
 
+  void applyChatNameUpdate(String chatId, String name) {
+    if (_selectedChatId != chatId) return;
+    final normalizedName = name.trim();
+    _selectedChatName =
+        normalizedName.isEmpty ? _selectedChatBot?.name : normalizedName;
+    notifyListeners();
+  }
+
   Future<void> updateBot(Bot bot) async {
     if (isDisposed) return;
     await _botRepository.updateBot(bot);
@@ -92,6 +106,7 @@ class MainShellViewModel extends DisposableChangeNotifier {
     if (isDisposed) return;
     if (_selectedChatBot?.id == botId) {
       _selectedChatId = null;
+      _selectedChatName = null;
       _selectedChatBot = null;
     }
     _selectedBot = null;

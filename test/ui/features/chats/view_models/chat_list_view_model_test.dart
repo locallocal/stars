@@ -43,6 +43,16 @@ void main() {
       viewModel.search('architecture');
       expect(viewModel.filteredChats.map((chat) => chat.id), ['chat-1']);
 
+      chatRepository.items[0] = chatRepository.items[0].copyWith(
+        name: 'Launch review',
+      );
+      await viewModel.load();
+      viewModel.search('launch');
+      expect(viewModel.filteredChats.map((chat) => chat.id), ['chat-1']);
+
+      await viewModel.updateChatName('chat-1', 'Release plan');
+      expect(chatRepository.items.first.name, 'Release plan');
+
       chatRepository.items.add(_chat('chat-3', 'bot-1', 'New snapshot'));
       await viewModel.load();
 
@@ -135,6 +145,14 @@ class _FakeChatRepository implements ChatRepository {
 
   @override
   Future<void> updateLastMessage(String id, String content) async {}
+
+  @override
+  Future<void> updateChatName(String id, String name) async {
+    final index = items.indexWhere((chat) => chat.id == id);
+    if (index == -1) return;
+    items[index] = items[index].copyWith(name: name);
+    controller.add(List<Chat>.unmodifiable(items));
+  }
 }
 
 class _FakeBotRepository implements BotRepository {

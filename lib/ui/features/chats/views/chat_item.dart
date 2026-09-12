@@ -7,6 +7,7 @@ import 'package:stars/utils/theme.dart';
 
 class ChatListItem extends StatefulWidget {
   final Bot bot;
+  final String? name;
   final String lastMessage;
   final String timestamp;
   final bool isSelected;
@@ -16,6 +17,7 @@ class ChatListItem extends StatefulWidget {
   const ChatListItem({
     super.key,
     required this.bot,
+    this.name,
     required this.lastMessage,
     required this.timestamp,
     this.isSelected = false,
@@ -51,10 +53,13 @@ class _ChatListItemState extends State<ChatListItem> {
       fontSize: (fontSize - 3).clamp(12, 13),
       color: selectedTextColor,
     );
-    final subtitle =
-        widget.bot.provider.isEmpty
-            ? widget.lastMessage
-            : '${widget.bot.provider} · ${widget.lastMessage}';
+    final displayName = widget.name ?? widget.bot.name;
+    final subtitleParts = <String>[
+      if (displayName.trim() != widget.bot.name.trim()) widget.bot.name,
+      if (widget.bot.provider.isNotEmpty) widget.bot.provider,
+      widget.lastMessage,
+    ];
+    final subtitle = subtitleParts.join(' · ');
     final timestamp = Text(widget.timestamp, style: metaStyle);
     final timestampWithTooltip =
         ShadTheme.maybeOf(context) == null
@@ -98,7 +103,7 @@ class _ChatListItemState extends State<ChatListItem> {
                   children: [
                     Expanded(
                       child: Text(
-                        widget.bot.name,
+                        displayName,
                         textAlign: TextAlign.left,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

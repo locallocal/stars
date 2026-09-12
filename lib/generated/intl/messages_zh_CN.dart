@@ -240,7 +240,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("聊天记录已清空"),
     "chatReasoning": MessageLookupByLibrary.simpleMessage("思考过程"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "搜索会匹配智能体名称和最后一条消息。",
+      "搜索会匹配会话名称、智能体名称和最后一条消息。",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("核验检查"),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
@@ -280,6 +280,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "模型单次请求可以处理的最大 Token 数。",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "当前会话使用的智能体。",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("清空"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("数据"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage("会话数据目录"),
@@ -293,8 +296,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "当前会话用于生成回复的模型。",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage("会话名称"),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "当前会话使用的智能体。",
+      "用于识别当前会话的自定义名称。",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "输入会话名称",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "请输入会话名称。",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "为当前会话提供模型服务的供应商。",
@@ -714,6 +724,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "removeImageAttachment": MessageLookupByLibrary.simpleMessage("移除图片"),
     "removeMcpServer": MessageLookupByLibrary.simpleMessage("移除 MCP 服务器"),
     "removeSkill": MessageLookupByLibrary.simpleMessage("移除技能"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage("修改会话名称"),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "使用清晰的名称，以便更快找到此会话。",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("已取消回复"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage("已停止 · 保留部分回复"),
     "resetToDefault": MessageLookupByLibrary.simpleMessage("恢复默认"),
@@ -919,6 +933,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "unableToLoadBots": MessageLookupByLibrary.simpleMessage("无法加载智能体"),
     "unableToLoadChats": MessageLookupByLibrary.simpleMessage("无法加载聊天列表"),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage("无法加载消息"),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "无法修改会话名称",
+    ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage("智能体不可用"),
     "uninstall": MessageLookupByLibrary.simpleMessage("卸载"),
     "uninstallSkill": MessageLookupByLibrary.simpleMessage("卸载技能"),

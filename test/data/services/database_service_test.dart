@@ -805,6 +805,50 @@ void main() {
       },
     );
 
+    test('adds conversation names without deleting existing chats', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_conversation_name_upgrade_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final dataDirectory = _applicationDataDirectory(directory);
+      await dataDirectory.create(recursive: true);
+      final databasePath = path.join(dataDirectory.path, 'app.db');
+      final initialDatabase = await databaseFactoryFfi.openDatabase(
+        databasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      await initialDatabase.insert('bots', _botRow('bot-chat-name'));
+      await initialDatabase.insert(
+        'chats',
+        _chatRow('chat-name-upgrade', 'bot-chat-name'),
+      );
+      await initialDatabase.execute('ALTER TABLE chats DROP COLUMN name');
+      await initialDatabase.setVersion(DatabaseService.databaseVersion - 1);
+      await initialDatabase.close();
+
+      final service = DatabaseService(
+        applicationDocumentsDirectoryProvider: () async => directory,
+      );
+      final migratedDatabase = await service.initDatabase();
+      addTearDown(migratedDatabase.close);
+
+      final columns = await migratedDatabase.rawQuery(
+        'PRAGMA table_info(chats)',
+      );
+      final rows = await migratedDatabase.query(
+        'chats',
+        where: 'id = ?',
+        whereArgs: const ['chat-name-upgrade'],
+      );
+      expect(columns.map((column) => column['name']), contains('name'));
+      expect(rows, hasLength(1));
+      expect(rows.single['name'], 'Current Bot');
+    });
+
     test(
       'adds the conversation model turn limit with a default of 15',
       () async {
@@ -1297,6 +1341,14 @@ Future<void> _expectCurrentSchema(Database database) async {
   );
 
   final chatColumns = await database.rawQuery('PRAGMA table_info(chats)');
+  expect(
+    chatColumns.singleWhere((column) => column['name'] == 'name')['type'],
+    'TEXT',
+  );
+  expect(
+    chatColumns.singleWhere((column) => column['name'] == 'name')['notnull'],
+    1,
+  );
   expect(
     chatColumns.singleWhere(
       (column) => column['name'] == 'create_timestamp',

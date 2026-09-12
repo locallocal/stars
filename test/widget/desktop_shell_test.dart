@@ -233,7 +233,9 @@ void main() {
     );
 
     await withDesktopPlatform(() async {
-      await tester.pumpWidget(desktopHarness(selectedChatBot: bot));
+      await tester.pumpWidget(
+        desktopHarness(selectedChatBot: bot, selectedChatName: '季度规划'),
+      );
       await tester.pumpAndSettle();
 
       expect(find.bySemanticsLabel('显示会话信息'), findsOneWidget);
@@ -313,7 +315,9 @@ void main() {
         findsOneWidget,
       );
       final infoRows = find.byType(StarsInspectorInfoRow);
-      expect(infoRows, findsNWidgets(5));
+      expect(infoRows, findsNWidgets(6));
+      expect(find.text('季度规划'), findsOneWidget);
+      expect(find.text('用于识别当前会话的自定义名称。'), findsOneWidget);
       expect(find.text('当前会话使用的智能体。'), findsOneWidget);
       expect(find.text('为当前会话提供模型服务的供应商。'), findsOneWidget);
       expect(find.text('当前会话用于生成回复的模型。'), findsOneWidget);
@@ -371,7 +375,7 @@ void main() {
       }
       expect(labelLefts[1], closeTo(labelLefts[0], 0.01));
       expect(labelLefts[2], closeTo(labelLefts[0], 0.01));
-      for (var index = 0; index < 5; index += 1) {
+      for (var index = 0; index < 6; index += 1) {
         final row = infoRows.at(index);
         final rowWidget = tester.widget<StarsInspectorInfoRow>(row);
         expect(rowWidget.description, isNotEmpty);

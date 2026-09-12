@@ -53,6 +53,20 @@ extension LocalDatabaseConversations on LocalDatabaseService {
     );
   }
 
+  Future<int> updateChatName(
+    String id, {
+    required String name,
+    required DateTime timestamp,
+  }) async {
+    final database = await _databaseProvider();
+    return database.update(
+      'chats',
+      {'name': name, 'modify_timestamp': timestamp.millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> clearChatHistory(String id, DateTime timestamp) async {
     final database = await _databaseProvider();
     await database.transaction((transaction) async {

@@ -82,6 +82,7 @@ Widget desktopHarness({
   Bot? bot,
   Bot? selectedChatBot,
   String? selectedChatId,
+  String? selectedChatName,
   Widget? chatListPage,
   Widget? profilePage,
   VoidCallback? onCreateChat,
@@ -102,6 +103,7 @@ Widget desktopHarness({
               profilePage ?? const Center(child: Text('profile')),
             ],
             selectedChatId: selectedChatId,
+            selectedChatName: selectedChatName,
             selectedChatBot: selectedChatBot,
             selectedBot: bot,
             onCreateChat: onCreateChat,
@@ -285,6 +287,9 @@ class BotCardTestChatRepository implements ChatRepository {
 
   @override
   Future<void> updateLastMessage(String id, String content) async {}
+
+  @override
+  Future<void> updateChatName(String id, String name) async {}
 }
 
 class UnusedAiProviderRepository implements AiProviderRepository {

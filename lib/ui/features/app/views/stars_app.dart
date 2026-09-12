@@ -543,6 +543,7 @@ class _MainPageState extends State<MainPage> {
         selectedChatId: _viewModel.selectedChatId,
         selectionVisible: _viewModel.isChatSelectionVisible,
         onChatSelected: _onChatSelected,
+        onChatRenamed: _viewModel.applyChatNameUpdate,
         onSelectionCleared: _viewModel.clearSelectedChat,
       ),
       ContactsPage(
@@ -572,6 +573,7 @@ class _MainPageState extends State<MainPage> {
               onPageChanged: _onPageChanged,
               pages: pages,
               selectedChatId: _viewModel.selectedChatId,
+              selectedChatName: _viewModel.selectedChatName,
               selectedChatBot: _viewModel.selectedChatBot,
               selectedBot: _viewModel.selectedBot,
               isEditingBot: _viewModel.isEditingSelectedBot,
@@ -675,7 +677,14 @@ class _MainPageState extends State<MainPage> {
   // 新增：处理聊天选择的回调
   void _onChatSelected(String chatId, Bot bot) {
     if (!mounted) return;
-    _viewModel.selectChat(chatId, bot);
+    final matchingChats = _chatListViewModel.chats.where(
+      (chat) => chat.id == chatId,
+    );
+    final chatName =
+        matchingChats.isEmpty
+            ? bot.name
+            : matchingChats.first.displayName(bot.name);
+    _viewModel.selectChat(chatId, bot, chatName: chatName);
   }
 
   void _onBotSelected(Bot bot) {

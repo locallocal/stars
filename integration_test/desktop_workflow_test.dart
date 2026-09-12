@@ -432,5 +432,8 @@ class _MemoryChatRepository implements ChatRepository {
   @override
   Future<void> updateLastMessage(String id, String content) async {}
 
+  @override
+  Future<void> updateChatName(String id, String name) async {}
+
   void dispose() => _changes.close();
 }
