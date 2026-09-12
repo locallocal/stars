@@ -255,6 +255,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "チャット履歴が消去されました",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("思考プロセス"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
@@ -860,6 +861,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "会話メッセージに実行の詳細を表示します。",
+    ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "アシスタントのメッセージに思考プロセスを表示します。",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(

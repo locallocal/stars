@@ -203,6 +203,7 @@ void main() {
       fontSize: 18,
       themeMode: 2,
       language: 'zh_CN',
+      showReasoning: false,
       showVerificationStatus: false,
       showExecutionStatus: false,
       injectApplicationPrompt: false,
@@ -225,6 +226,7 @@ void main() {
     expect(restoredChat.lastMessage, 'Hello');
     expect(restoredChat.lastMessageTimestamp, timestamp);
     expect(restoredProfile.fontSize, 18);
+    expect(restoredProfile.showReasoning, isFalse);
     expect(restoredProfile.showVerificationStatus, isFalse);
     expect(restoredProfile.showExecutionStatus, isFalse);
     expect(restoredProfile.injectApplicationPrompt, isFalse);
@@ -237,6 +239,8 @@ void main() {
       ProfileRecord(legacyProfileValues).toDomain().injectApplicationPrompt,
       isTrue,
     );
+    legacyProfileValues.remove('show_reasoning');
+    expect(ProfileRecord(legacyProfileValues).toDomain().showReasoning, isTrue);
     legacyProfileValues.remove('show_verification_status');
     expect(
       ProfileRecord(legacyProfileValues).toDomain().showVerificationStatus,

@@ -222,6 +222,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
         key: _chatPageKey,
         id: widget.selectedChatId!,
         bot: widget.selectedChatBot!,
+        showReasoning: widget.showReasoning,
         showVerificationStatus: widget.showVerificationStatus,
         showExecutionStatus: widget.showExecutionStatus,
         strictGroundingMode: widget.strictGroundingMode,
@@ -401,9 +402,11 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
     if (memoryViewModel == null) {
       return ConversationModelControls(
         provider: generationViewModel.capabilityProvider,
+        showReasoning: widget.showReasoning,
         showVerificationStatus: widget.showVerificationStatus,
         showExecutionStatus: widget.showExecutionStatus,
         strictGroundingMode: widget.strictGroundingMode,
+        onShowReasoningChanged: widget.onShowReasoningChanged,
         onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
         onShowVerificationStatusChanged: widget.onShowVerificationStatusChanged,
         onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
@@ -415,9 +418,11 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
       builder:
           (context, child) => ConversationModelControls(
             provider: generationViewModel.capabilityProvider,
+            showReasoning: widget.showReasoning,
             showVerificationStatus: widget.showVerificationStatus,
             showExecutionStatus: widget.showExecutionStatus,
             strictGroundingMode: widget.strictGroundingMode,
+            onShowReasoningChanged: widget.onShowReasoningChanged,
             onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
             onShowVerificationStatusChanged:
                 widget.onShowVerificationStatusChanged,

@@ -47,6 +47,7 @@ class MessageList extends StatefulWidget {
   final bool? deepThinking;
   final String? reasoningResponse;
   final bool isDesktop;
+  final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
@@ -66,6 +67,7 @@ class MessageList extends StatefulWidget {
     this.deepThinking = false,
     this.reasoningResponse = '',
     this.isDesktop = false,
+    this.showReasoning = true,
     this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.strictGroundingMode = false,
@@ -93,6 +95,7 @@ class _MessageListState extends State<MessageList> {
   bool? get deepThinking => widget.deepThinking;
   String? get reasoningResponse => widget.reasoningResponse;
   bool get isDesktop => widget.isDesktop;
+  bool get showReasoning => widget.showReasoning;
   bool get showVerificationStatus => widget.showVerificationStatus;
   bool get showExecutionStatus => widget.showExecutionStatus;
 
@@ -217,6 +220,7 @@ class _MessageListState extends State<MessageList> {
                     ),
                   ),
                   tokenUsage: streamingTokenUsage,
+                  showReasoning: showReasoning,
                   showVerificationStatus: showVerificationStatus,
                   showExecutionStatus: showExecutionStatus,
                   content: widget.strictGroundingMode ? '' : streamingResponse,
@@ -260,6 +264,7 @@ class _MessageListState extends State<MessageList> {
                 widget.strictGroundingMode && !isMe ? '' : message.reasoning,
             processInfo: _displayedProcessInfo[messageIndex],
             tokenUsage: message.tokenUsage,
+            showReasoning: showReasoning && !isMe,
             showVerificationStatus: showVerificationStatus && !isMe,
             showExecutionStatus: showExecutionStatus && !isMe,
             content: displayedContent,

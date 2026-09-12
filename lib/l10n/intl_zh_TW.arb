@@ -518,6 +518,8 @@
     "desktopGeneral": "一般",
     "applicationInjectedPrompt": "系統提示詞",
     "applicationInjectedPromptDescription": "由 Stars 管理。啟用後會將以下內容注入對話模型請求，停用後不會注入；必要的執行階段對話內容不受此開關影響。內容無法編輯。",
+    "chatReasoning": "思考過程",
+    "showReasoningDescription": "在智慧體對話訊息中顯示思考過程。",
     "chatVerificationStatus": "核驗檢查",
     "showVerificationStatusDescription": "在智慧體對話訊息中顯示核驗狀態與詳情。",
     "chatExecutionStatus": "對話執行狀態",

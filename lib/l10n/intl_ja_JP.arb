@@ -573,6 +573,8 @@
     "desktopSettingsDescription": "プロフィール、外観、言語、アプリのサポートを管理します。",
     "desktopEditProfileDescription": "アバターと表示名を変更します。",
     "desktopSavedImmediatelyDescription": "変更はすぐに反映され、ローカルに保存されます。",
+    "chatReasoning": "思考プロセス",
+    "showReasoningDescription": "アシスタントのメッセージに思考プロセスを表示します。",
     "chatVerificationStatus": "検証ステータス",
     "showVerificationStatusDescription": "アシスタントのメッセージに検証ステータスと詳細を表示します。",
     "chatExecutionStatus": "チャットの実行状況",

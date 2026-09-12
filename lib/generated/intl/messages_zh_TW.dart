@@ -242,6 +242,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatDeleted": m6,
     "chatExecutionStatus": MessageLookupByLibrary.simpleMessage("對話執行狀態"),
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("聊天記錄已清空"),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("思考過程"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
@@ -795,6 +796,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "在對話內容中顯示執行狀態。",
+    ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "在智慧體對話訊息中顯示思考過程。",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(

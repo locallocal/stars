@@ -573,6 +573,8 @@
     "desktopSettingsDescription": "Gerencie seu perfil, aparência, idioma e suporte do aplicativo.",
     "desktopEditProfileDescription": "Altere seu avatar e nome de exibição.",
     "desktopSavedImmediatelyDescription": "As alterações entram em vigor imediatamente e são salvas localmente.",
+    "chatReasoning": "Processo de raciocínio",
+    "showReasoningDescription": "Mostra o processo de raciocínio nas mensagens do assistente.",
     "chatVerificationStatus": "Status da verificação",
     "showVerificationStatusDescription": "Mostra o status e os detalhes da verificação nas mensagens do assistente.",
     "chatExecutionStatus": "Status de execução do chat",

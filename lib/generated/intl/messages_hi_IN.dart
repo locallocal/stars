@@ -274,6 +274,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "चैट इतिहास मिटा दिया गया",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("सोचने की प्रक्रिया"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
@@ -993,6 +994,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "बातचीत के संदेशों में निष्पादन विवरण दिखाएँ।",
+    ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "सहायक के संदेशों में सोचने की प्रक्रिया दिखाएं।",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(

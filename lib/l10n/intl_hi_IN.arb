@@ -573,6 +573,8 @@
     "desktopSettingsDescription": "अपनी प्रोफ़ाइल, दिखावट, भाषा और ऐप सहायता प्रबंधित करें।",
     "desktopEditProfileDescription": "अपना अवतार और प्रदर्शन नाम बदलें।",
     "desktopSavedImmediatelyDescription": "बदलाव तुरंत लागू होते हैं और स्थानीय रूप से सहेजे जाते हैं।",
+    "chatReasoning": "सोचने की प्रक्रिया",
+    "showReasoningDescription": "सहायक के संदेशों में सोचने की प्रक्रिया दिखाएं।",
     "chatVerificationStatus": "सत्यापन स्थिति",
     "showVerificationStatusDescription": "सहायक के संदेशों में सत्यापन स्थिति और विवरण दिखाएं।",
     "chatExecutionStatus": "चैट निष्पादन स्थिति",

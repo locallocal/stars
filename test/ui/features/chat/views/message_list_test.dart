@@ -493,6 +493,85 @@ void main() => print('done');
   );
 
   testWidgets(
+    'reasoning and execution status visibility are controlled independently',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(900, 900);
+      addTearDown(tester.view.reset);
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      final message = _groundedMessage(
+        id: 'reasoning-visibility-message',
+        trust: AnswerTrustLevel.verified,
+        claimTrust: ClaimTrustLevel.verified,
+        evidenceIds: const [_evidenceId],
+        reasonCode: 'all_evidence_validated',
+        processInfo: const MessageProcessInfo(
+          reasoningStatus: 'completed',
+          toolCalls: [
+            MessageToolCall(
+              callId: 'reasoning-status-tool',
+              name: 'inventory.read',
+              status: 'succeeded',
+            ),
+          ],
+        ),
+      ).copyWith(reasoning: 'Private reasoning details.');
+
+      Widget buildList({
+        required bool showReasoning,
+        required bool showExecutionStatus,
+      }) => _harness(
+        isStreaming: false,
+        disableAnimations: true,
+        body: Column(
+          children: [
+            MessageList(
+              messages: [message],
+              scrollController: controller,
+              isStreaming: false,
+              streamingResponse: '',
+              currentUserId: 'me',
+              isDesktop: true,
+              showReasoning: showReasoning,
+              showVerificationStatus: false,
+              showExecutionStatus: showExecutionStatus,
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(
+        buildList(showReasoning: false, showExecutionStatus: true),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('reasoning-status-icon')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('desktop-execution-status')),
+        findsOneWidget,
+      );
+
+      await tester.pumpWidget(
+        buildList(showReasoning: true, showExecutionStatus: false),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('reasoning-status-icon')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('desktop-execution-status')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
     'execution durations use localized units and decimal separators',
     (tester) async {
       await tester.pumpWidget(

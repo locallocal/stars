@@ -10,6 +10,7 @@ class Profile {
     required this.fontSize,
     required this.themeMode,
     required this.language,
+    this.showReasoning = true,
     this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.injectApplicationPrompt = true,
@@ -23,6 +24,7 @@ class Profile {
   final double fontSize;
   final int themeMode;
   final String language;
+  final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool injectApplicationPrompt;
@@ -36,6 +38,7 @@ class Profile {
     double? fontSize,
     int? themeMode,
     String? language,
+    bool? showReasoning,
     bool? showVerificationStatus,
     bool? showExecutionStatus,
     bool? injectApplicationPrompt,
@@ -49,6 +52,7 @@ class Profile {
       fontSize: fontSize ?? this.fontSize,
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
+      showReasoning: showReasoning ?? this.showReasoning,
       showVerificationStatus:
           showVerificationStatus ?? this.showVerificationStatus,
       showExecutionStatus: showExecutionStatus ?? this.showExecutionStatus,

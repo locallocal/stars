@@ -434,6 +434,7 @@ final class ProfileRecord {
       'font_size': profile.fontSize,
       'theme_mode': profile.themeMode,
       'language': profile.language,
+      'show_reasoning': profile.showReasoning ? 1 : 0,
       'show_verification_status': profile.showVerificationStatus ? 1 : 0,
       'show_execution_status': profile.showExecutionStatus ? 1 : 0,
       'inject_application_prompt': profile.injectApplicationPrompt ? 1 : 0,
@@ -452,6 +453,10 @@ final class ProfileRecord {
       fontSize: _storageDouble(values['font_size']),
       themeMode: _storageInt(values['theme_mode']),
       language: _string(values['language']),
+      showReasoning: _storageBoolOrDefault(
+        values['show_reasoning'],
+        defaultValue: true,
+      ),
       showVerificationStatus: _storageBoolOrDefault(
         values['show_verification_status'],
         defaultValue: true,

@@ -253,6 +253,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatDeleted": m6,
     "chatExecutionStatus": MessageLookupByLibrary.simpleMessage("채팅 실행 상태"),
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("채팅 기록이 지워졌습니다"),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("사고 과정"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
@@ -856,6 +857,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "대화 메시지에 실행 세부 정보를 표시합니다.",
+    ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "어시스턴트 메시지에 사고 과정을 표시합니다.",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(

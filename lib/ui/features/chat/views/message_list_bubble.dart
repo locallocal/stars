@@ -7,6 +7,7 @@ class _MessageBubble extends StatelessWidget {
   final String reasoning;
   final MessageProcessInfo processInfo;
   final ModelTokenUsage tokenUsage;
+  final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
   final String content;
@@ -30,6 +31,7 @@ class _MessageBubble extends StatelessWidget {
     required this.reasoning,
     this.processInfo = const MessageProcessInfo(),
     this.tokenUsage = ModelTokenUsage.empty,
+    this.showReasoning = true,
     this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     required this.content,
@@ -63,7 +65,7 @@ class _MessageBubble extends StatelessWidget {
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (reasoning.isNotEmpty)
+        if (_showReasoning)
           Padding(
             padding: EdgeInsets.only(
               bottom:
@@ -125,7 +127,7 @@ class _MessageBubble extends StatelessWidget {
               tokenUsage: tokenUsage,
               isDesktop: isDesktop,
               isStreaming: isStreaming,
-              hasReasoningContent: reasoning.isNotEmpty,
+              hasReasoningContent: _showReasoning,
               grounding: grounding,
             ),
           ),
@@ -284,7 +286,7 @@ class _MessageBubble extends StatelessWidget {
               tokenUsage: tokenUsage,
               isDesktop: isDesktop,
               isStreaming: isStreaming,
-              hasReasoningContent: reasoning.isNotEmpty,
+              hasReasoningContent: _showReasoning,
               grounding: grounding,
             ),
           ),
@@ -339,6 +341,8 @@ class _MessageBubble extends StatelessWidget {
   bool get _showsProcessInfoBeforeMedia => _showProcessInfo && !isDesktop;
 
   bool get _showsProcessInfoAfterMessage => _showProcessInfo && isDesktop;
+
+  bool get _showReasoning => showReasoning && reasoning.isNotEmpty;
 
   bool get _showTrustStatus {
     if (!showVerificationStatus || isCurrentUser || isStreaming) return false;

@@ -32,6 +32,7 @@ part 'chat_session_commands.dart';
 class ChatPage extends StatefulWidget {
   final Bot bot;
   final String id;
+  final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
@@ -40,6 +41,7 @@ class ChatPage extends StatefulWidget {
     super.key,
     required this.id,
     required this.bot,
+    this.showReasoning = true,
     this.showVerificationStatus = true,
     this.showExecutionStatus = true,
     this.strictGroundingMode = false,

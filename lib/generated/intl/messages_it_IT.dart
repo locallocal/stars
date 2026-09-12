@@ -282,6 +282,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "Cronologia chat cancellata",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage(
+      "Processo di ragionamento",
+    ),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
@@ -1031,6 +1034,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Mostra i dettagli di esecuzione nei messaggi della conversazione.",
+    ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "Mostra il processo di ragionamento nei messaggi dell’assistente.",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(

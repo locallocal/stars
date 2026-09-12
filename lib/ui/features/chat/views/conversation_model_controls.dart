@@ -21,9 +21,11 @@ final class ConversationModelControls extends StatefulWidget {
   const ConversationModelControls({
     super.key,
     required this.provider,
+    required this.showReasoning,
     required this.showVerificationStatus,
     required this.showExecutionStatus,
     required this.strictGroundingMode,
+    this.onShowReasoningChanged,
     this.onShowVerificationStatusChanged,
     this.onShowExecutionStatusChanged,
     this.onStrictGroundingModeChanged,
@@ -33,9 +35,11 @@ final class ConversationModelControls extends StatefulWidget {
   });
 
   final AiProvider provider;
+  final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
   final bool strictGroundingMode;
+  final ConversationPreferenceChanged? onShowReasoningChanged;
   final ConversationPreferenceChanged? onShowVerificationStatusChanged;
   final ConversationPreferenceChanged? onShowExecutionStatusChanged;
   final ConversationPreferenceChanged? onStrictGroundingModeChanged;
@@ -84,6 +88,24 @@ final class _ConversationModelControlsState
             });
           },
         ),
+      _ModelControlRow(
+        key: const ValueKey<String>('conversation-reasoning-row'),
+        switchKey: const ValueKey<String>('conversation-reasoning-toggle'),
+        icon: LucideIcons.brain,
+        label: S.of(context).chatReasoning,
+        description: S.of(context).showReasoningDescription,
+        value: widget.showReasoning,
+        onChanged:
+            widget.onShowReasoningChanged == null
+                ? null
+                : (value) => unawaited(
+                  _updatePreference(
+                    context,
+                    widget.onShowReasoningChanged!,
+                    value,
+                  ),
+                ),
+      ),
       _ModelControlRow(
         key: const ValueKey<String>('conversation-verification-status-row'),
         switchKey: const ValueKey<String>(

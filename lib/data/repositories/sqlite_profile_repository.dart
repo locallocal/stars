@@ -56,6 +56,7 @@ class SqliteProfileRepository implements ProfileRepository {
         fontSize: _defaultFontSize,
         themeMode: 0,
         language: 'zh_CN',
+        showReasoning: true,
         showVerificationStatus: true,
         showExecutionStatus: true,
         injectApplicationPrompt: true,

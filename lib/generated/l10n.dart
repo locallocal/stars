@@ -1389,6 +1389,26 @@ class S {
     );
   }
 
+  /// `Thinking process`
+  String get chatReasoning {
+    return Intl.message(
+      'Thinking process',
+      name: 'chatReasoning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show the thinking process in assistant messages.`
+  String get showReasoningDescription {
+    return Intl.message(
+      'Show the thinking process in assistant messages.',
+      name: 'showReasoningDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Verification status`
   String get chatVerificationStatus {
     return Intl.message(

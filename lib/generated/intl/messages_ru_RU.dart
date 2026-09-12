@@ -286,6 +286,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage(
       "История чата очищена",
     ),
+    "chatReasoning": MessageLookupByLibrary.simpleMessage("Ход рассуждений"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
       "Search matches bot names and the latest message.",
     ),
@@ -1017,6 +1018,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "showExecutionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Показывать сведения о выполнении в сообщениях беседы.",
+    ),
+    "showReasoningDescription": MessageLookupByLibrary.simpleMessage(
+      "Показывает ход рассуждений в сообщениях ассистента.",
     ),
     "showSidebar": MessageLookupByLibrary.simpleMessage("Show Sidebar"),
     "showVerificationStatusDescription": MessageLookupByLibrary.simpleMessage(
