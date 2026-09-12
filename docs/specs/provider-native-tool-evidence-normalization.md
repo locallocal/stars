@@ -135,8 +135,9 @@ OpenAI 先迁移到共享组件并运行现有测试，输出 JSON、digest、�
 
 ### 4.3 能力声明
 
-`AiProviderCapabilities.supportsNativeToolEvidence` 继续作为进入 Agent Loop 的硬门。它只能在以下
-条件同时满足时为 `true`：
+`AiProviderCapabilities.supportsNativeToolEvidence` 继续作为仅依赖 Provider 原生工具进入
+Agent Loop 的硬门；应用本地或 MCP Tool 仍由 `supportsAgentLoop` 与实际 Tool 集合决定。该标志
+只能在以下条件同时满足时为 `true`：
 
 1. 使用明确的第一方 Provider adapter，而不是仅声称兼容的自定义 Base URL。
 2. 当前 endpoint、模型和原生工具 wire version 在应用 allowlist 中。

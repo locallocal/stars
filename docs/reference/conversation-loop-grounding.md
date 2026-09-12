@@ -49,7 +49,8 @@ PrepareTextGeneration
   或脱敏。
 - OpenAI Responses 的原生 web search 会归一化为应用统一的调用生命周期和 observation 证据；
   未实现该适配的 Provider 仍保持 `unverified`。
-- 会话摘要和 Memory 只接收 verified claim，并保留来源与观测时间；消息中其他声明不会随之
+- 会话摘要和 Memory 中的助手事实只接收 verified claim，并保留来源与观测时间；用户原文可
+  形成 `userAssertion`、偏好、决策或待办，但不会升级为外部事实。消息中其他声明不会随之
   获得信任。
 
 这些措施共同保证：没有合格工具证据的回复不会被授予 `verified`，空、截断、跨运行或未持久化
@@ -84,8 +85,9 @@ kind、能力、subject、scope、有效期、Schema、完整性和持久化状�
 ### 跨轮上下文保留声明边界
 
 历史回放注入应用生成的 trust envelope，携带终态、逐声明可信等级、证据摘要和观测时间。
-失败、取消和 partial 正文默认隔离；Memory 只接收 verified claim，过期的 current fact 必须
-重新观测，不能因摘要压缩丢失来源边界。
+失败、取消和 partial 正文默认隔离；Memory 只把 verified assistant claim 作为事实来源，用户
+来源的 assertion、偏好、决策与任务则保留其来源类型。过期的 current fact 必须重新观测，不能
+因摘要压缩丢失来源边界。
 
 ### Provider 原生工具按 adapter 明确授予证据资格
 
@@ -120,12 +122,13 @@ Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获�
 | `failed` | Provider、工具、门禁或持久化失败 | 只保留诊断和部分输出，不作为事实 |
 
 问候、创作、改写、基于当前用户文本的摘要等内容未必需要查询外部世界，但仍只能是
-`unverified` 或单独的 `notFactChecked`，不能因为“不需要工具”而获得 `verified`。用户偏好和
-用户决策应标记为 `userAssertion`，表示“用户确实这样说过”，不等价于外部事实。
+`unverified`；结构化候选中的非事实段使用 `ClaimKind.nonFactual`，并落为
+`ClaimTrustLevel.notVerifiable`，不能因为“不需要工具”而获得 `verified`。用户偏好和用户决策
+应标记为 `userAssertion`，表示“用户确实这样说过”，不等价于外部事实。
 
-产品提供严格模式：当最终等级不是 `verified` 时，不展示模型生成的事实答案，只展示应用
-生成的“无法验证”状态和原因。默认模式可以展示未验证内容，但视觉、持久化和后续召回都必须
-保留该标签。
+产品提供严格模式：只展示已验证事实以及 `userAssertion`/`nonFactual` 等无需外部验证的段落，
+抑制未验证的事实段并追加应用生成的“无法验证”状态和原因；没有结构化声明边界的旧消息按事实
+内容失败关闭。默认模式可以展示未验证内容，但视觉、持久化和后续召回都必须保留该标签。
 
 ### 工具证据记录
 
@@ -245,12 +248,16 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 
 ### Domain
 
-- 在 `lib/domain/models/tool.dart` 拆分调用生命周期和 `ToolEvidenceRecord`；为调用尝试生成独立
-  ID，避免 `duplicate` 覆盖第一次成功事实。
+- `lib/domain/models/tool.dart` 定义 Tool、调用结果、策略和当前执行投影；
+  `lib/domain/models/tool_evidence.dart` 定义 append-only 调用事件与 `ToolEvidenceRecord`。调用
+  尝试使用独立 ID，避免 `duplicate` 覆盖第一次成功事实。
 - 为 `ToolDefinition` 增加证据能力声明，例如可支持的 claim kind、作用域提取器、时效策略和
   是否需要写后读。
-- 在 `lib/domain/models/message.dart` 增加消息可信等级、结构化 claims、证据引用和门禁失败
-  原因。`MessageToolCall` 增加 `truncated`、`schemaValid`、`observedAt` 等最小投影。
+- `lib/domain/models/grounded_answer.dart` 定义结构化 claim 和候选，
+  `lib/domain/models/message.dart` 保存消息可信等级、声明级证据引用和门禁失败原因。
+  `MessageToolCall` 只保存调用身份、来源/风险、参数与结果摘要、审批、错误和耗时等 UI 投影；
+  `truncated`、`schemaValid`、`observedAt` 等证据完整性字段由 `ToolResult` 和
+  `ToolEvidenceRecord` 保存。
 - `AgentRunCoordinator` 已接入独立 Loop 状态机、覆盖率验证和最终声明门禁；工具执行、限制与
   取消继续由协调器统一拥有。
 - `VerificationToolDiscovery` 只检查应用显式允许的候选名称，根据读风险、证据能力和
@@ -311,7 +318,9 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 ## 404 与 Provider 错误的处理边界
 
 仓库中的 OpenAI 默认 Responses 地址是 `https://api.openai.com/v1/responses`；当 Bot 配置了
-自定义 `baseURL` 时，`OpenAI._endpoint` 会直接在它后面追加 `responses`。仓库中没有
+合法的自定义 `baseURL` 时，`OpenAI._endpoint` 会在规范化后的末尾追加 `responses`。配置必须
+使用 HTTP(S)、包含有效 host，且不能带 user info、query 或 fragment；`chatgpt.com` host 和
+`/backend-api/codex` 内部路径会以 `openai_invalid_base_url` 在发出请求前拒绝。仓库中没有
 `https://chatgpt.com/backend-api/codex/responses` 这个常量。
 
 因此日志中出现该 URL 时应先区分来源：
