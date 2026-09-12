@@ -69,6 +69,9 @@ class ChatListViewModel extends DisposableChangeNotifier {
 
   Future<void> deleteChat(String id) => _chatRepository.deleteChat(id);
 
+  Future<void> updateChatName(String id, String name) =>
+      _chatRepository.updateChatName(id, name);
+
   void _applyFilter() {
     final normalized = _query.trim().toLowerCase();
     if (normalized.isEmpty) {
@@ -81,6 +84,7 @@ class ChatListViewModel extends DisposableChangeNotifier {
     _filteredChats = List<Chat>.unmodifiable(
       _chats.where(
         (chat) =>
+            chat.name.toLowerCase().contains(normalized) ||
             chat.lastMessage.toLowerCase().contains(normalized) ||
             (botNames[chat.botId]?.contains(normalized) ?? false),
       ),

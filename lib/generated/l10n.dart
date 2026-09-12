@@ -1586,11 +1586,81 @@ class S {
     );
   }
 
-  /// `The bot used by this conversation.`
+  /// `Conversation name`
+  String get conversationName {
+    return Intl.message(
+      'Conversation name',
+      name: 'conversationName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The custom name used to identify this conversation.`
   String get conversationNameDescription {
     return Intl.message(
-      'The bot used by this conversation.',
+      'The custom name used to identify this conversation.',
       name: 'conversationNameDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The bot used by this conversation.`
+  String get conversationBotDescription {
+    return Intl.message(
+      'The bot used by this conversation.',
+      name: 'conversationBotDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a conversation name`
+  String get conversationNamePlaceholder {
+    return Intl.message(
+      'Enter a conversation name',
+      name: 'conversationNamePlaceholder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a conversation name.`
+  String get conversationNameRequired {
+    return Intl.message(
+      'Enter a conversation name.',
+      name: 'conversationNameRequired',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rename conversation`
+  String get renameConversation {
+    return Intl.message(
+      'Rename conversation',
+      name: 'renameConversation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Choose a clear name to make this conversation easier to find.`
+  String get renameConversationDescription {
+    return Intl.message(
+      'Choose a clear name to make this conversation easier to find.',
+      name: 'renameConversationDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unable to rename conversation`
+  String get unableToRenameConversation {
+    return Intl.message(
+      'Unable to rename conversation',
+      name: 'unableToRenameConversation',
       desc: '',
       args: [],
     );
@@ -1946,10 +2016,10 @@ class S {
     );
   }
 
-  /// `Search matches bot names and the latest message.`
+  /// `Search matches conversation names, bot names, and the latest message.`
   String get chatSearchScope {
     return Intl.message(
-      'Search matches bot names and the latest message.',
+      'Search matches conversation names, bot names, and the latest message.',
       name: 'chatSearchScope',
       desc: '',
       args: [],

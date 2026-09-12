@@ -18,6 +18,7 @@ class CreateChat {
     final chat = Chat(
       id: 'chat_${now.microsecondsSinceEpoch}_$_sequence',
       botId: bot.id,
+      name: bot.name.trim(),
       lastMessage: '',
       lastMessageTimestamp: now,
       createTimestamp: now,

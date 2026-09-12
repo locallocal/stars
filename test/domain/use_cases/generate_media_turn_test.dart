@@ -149,6 +149,9 @@ final class _MemoryChats implements ChatRepository {
   }
 
   @override
+  Future<void> updateChatName(String id, String name) async {}
+
+  @override
   Future<void> addChat(Chat chat) async {}
 
   @override

@@ -286,7 +286,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Proceso de razonamiento",
     ),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search matches bot names and the latest message.",
+      "Search matches conversation names, bot names, and the latest message.",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
       "Estado de verificación",
@@ -356,6 +356,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "Número máximo de tokens que el modelo puede considerar en una solicitud.",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "El bot utilizado en esta conversación.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
       "Vaciar",
     ),
@@ -375,8 +378,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "El modelo que genera las respuestas de esta conversación.",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage(
+      "Nombre de la conversación",
+    ),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "El bot utilizado en esta conversación.",
+      "El nombre personalizado que identifica esta conversación.",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "Introduce un nombre para la conversación",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "Introduce un nombre para la conversación.",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "El proveedor del servicio de modelo para esta conversación.",
@@ -974,6 +986,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("Quitar habilidad"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage(
+      "Cambiar nombre de la conversación",
+    ),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "Elige un nombre claro para encontrar esta conversación más fácilmente.",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage(
       "Respuesta cancelada",
     ),
@@ -1282,6 +1300,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
+    ),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "No se pudo cambiar el nombre de la conversación",
     ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage("Bot no disponible"),
     "uninstall": MessageLookupByLibrary.simpleMessage("Desinstalar"),

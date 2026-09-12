@@ -11,6 +11,7 @@ import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.da
 import 'package:stars/ui/features/chat/views/chat.dart';
 import 'package:stars/ui/features/chat/views/clear_chat_dialog.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
+import 'package:stars/ui/features/chats/views/rename_chat_dialog.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:stars/utils/time.dart';
@@ -29,6 +30,8 @@ class ChatListBuilder extends StatelessWidget {
   final ValueChanged<String> onChatDeleted;
   final void Function(String chatId, Bot bot) onChatSelected;
   final Future<void> Function(String chatId) onDeleteChat;
+  final Future<void> Function(String chatId, String name)? onRenameChat;
+  final void Function(String chatId, String name)? onChatRenamed;
   final VoidCallback? onChatDetailsRequested;
   final VoidCallback? onChatDirectoryRequested;
   final VoidCallback? onChatClearRequested;
@@ -47,6 +50,8 @@ class ChatListBuilder extends StatelessWidget {
     required this.onChatDeleted,
     required this.onChatSelected,
     required this.onDeleteChat,
+    this.onRenameChat,
+    this.onChatRenamed,
     this.onChatDetailsRequested,
     this.onChatDirectoryRequested,
     this.onChatClearRequested,
@@ -280,6 +285,22 @@ class ChatListBuilder extends StatelessWidget {
           clearConversation();
         }
 
+        Future<void> renameChat() async {
+          final updateChatName = onRenameChat;
+          if (updateChatName == null) return;
+          final name = await showChatShadDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder:
+                (dialogContext) => RenameChatDialog(
+                  initialName: chat.displayName(bot.name),
+                  onSave: (name) => updateChatName(chat.id, name),
+                ),
+          );
+          if (name == null || !context.mounted) return;
+          onChatRenamed?.call(chat.id, name);
+        }
+
         ChatListItem buildListItem({Widget? trailing}) {
           final storedPreview = chat.lastMessage;
           final localizedPreview =
@@ -288,6 +309,7 @@ class ChatListBuilder extends StatelessWidget {
                   : storedPreview;
           return ChatListItem(
             bot: bot,
+            name: chat.displayName(bot.name),
             isSelected:
                 isDesktop && selectionVisible && selectedChatId == chat.id,
             lastMessage:
@@ -307,6 +329,13 @@ class ChatListBuilder extends StatelessWidget {
 
         if (isDesktop) {
           final contextItems = <Widget>[
+            if (onRenameChat != null)
+              ShadContextMenuItem(
+                key: ValueKey<String>('chat-context-rename-${chat.id}'),
+                leading: const Icon(LucideIcons.pencil, size: 16),
+                onPressed: renameChat,
+                child: Text(S.of(context).renameConversation),
+              ),
             ShadContextMenuItem(
               key: ValueKey<String>('chat-context-directory-${chat.id}'),
               leading: const Icon(LucideIcons.folderOpen, size: 16),
@@ -350,15 +379,18 @@ class ChatListBuilder extends StatelessWidget {
             items: contextItems,
             child: buildListItem(
               trailing: _ChatRowActions(
+                canRename: onRenameChat != null,
                 canShowDetails:
                     !isOrphaned && showConversationInformation != null,
                 canShowDirectory:
                     !isOrphaned && showConversationDirectory != null,
                 canClear: !isOrphaned && clearConversation != null,
+                onRename: renameChat,
                 onShowDetails: openDetails,
                 onShowDirectory: openDirectory,
                 onClear: clearChat,
                 onDelete: deleteChat,
+                renameKey: ValueKey<String>('chat-rename-${chat.id}'),
                 detailsKey: ValueKey<String>('chat-details-${chat.id}'),
                 directoryKey: ValueKey<String>('chat-directory-${chat.id}'),
                 clearKey: ValueKey<String>('chat-clear-${chat.id}'),
@@ -384,7 +416,7 @@ class ChatListBuilder extends StatelessWidget {
                 child: const Icon(Icons.chat_bubble_rounded, size: 18),
               ),
               CustomSlidableAction(
-                onPressed: (_) {},
+                onPressed: (_) => renameChat(),
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
                 child: const Icon(Icons.edit_square, size: 18),
@@ -406,26 +438,32 @@ class ChatListBuilder extends StatelessWidget {
 
 class _ChatRowActions extends StatefulWidget {
   const _ChatRowActions({
+    required this.canRename,
     required this.canShowDetails,
     required this.canShowDirectory,
     required this.canClear,
+    required this.onRename,
     required this.onShowDetails,
     required this.onShowDirectory,
     required this.onClear,
     required this.onDelete,
+    required this.renameKey,
     required this.detailsKey,
     required this.directoryKey,
     required this.clearKey,
     required this.deleteKey,
   });
 
+  final bool canRename;
   final bool canShowDetails;
   final bool canShowDirectory;
   final bool canClear;
+  final VoidCallback onRename;
   final VoidCallback onShowDetails;
   final VoidCallback onShowDirectory;
   final VoidCallback onClear;
   final VoidCallback onDelete;
+  final Key renameKey;
   final Key detailsKey;
   final Key directoryKey;
   final Key clearKey;
@@ -485,6 +523,15 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.canRename)
+                    ShadButton.ghost(
+                      key: widget.renameKey,
+                      size: ShadButtonSize.sm,
+                      onPressed: () => _invoke(widget.onRename),
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      leading: const Icon(LucideIcons.pencil, size: 16),
+                      child: Text(S.of(context).renameConversation),
+                    ),
                   ShadButton.ghost(
                     key: widget.directoryKey,
                     size: ShadButtonSize.sm,

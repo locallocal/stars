@@ -273,6 +273,9 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
   }
 
   Widget _buildConversationInfo(BuildContext context, Bot bot) {
+    final selectedChatName = widget.selectedChatName?.trim();
+    final conversationName =
+        selectedChatName?.isNotEmpty == true ? selectedChatName! : bot.name;
     final generationViewModel =
         widget.selectedChatId != null && _dependencies != null
             ? _dependencies!.generationRegistry.viewModelFor(
@@ -308,9 +311,15 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                   leadingIcon: LucideIcons.info,
                   children: [
                     _ConversationInfoRow(
-                      icon: LucideIcons.bot,
-                      label: S.of(context).name,
+                      icon: LucideIcons.messageSquareText,
+                      label: S.of(context).conversationName,
                       description: S.of(context).conversationNameDescription,
+                      value: conversationName,
+                    ),
+                    _ConversationInfoRow(
+                      icon: LucideIcons.bot,
+                      label: S.of(context).botName,
+                      description: S.of(context).conversationBotDescription,
                       value: bot.name,
                     ),
                     _ConversationInfoRow(

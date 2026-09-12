@@ -107,6 +107,38 @@ void main() {
     expect(viewModel.isEditingSelectedBot, isFalse);
   });
 
+  test('main shell keeps the selected conversation name in sync', () {
+    final bot = Bot(
+      id: 'bot-chat-name',
+      name: 'Assistant',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: '',
+      apiKey: '',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: '',
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+    final viewModel = MainShellViewModel(
+      botRepository: BotCardTestBotRepository([bot]),
+    );
+    addTearDown(viewModel.dispose);
+
+    viewModel.selectChat('chat-1', bot, chatName: ' Planning ');
+    expect(viewModel.selectedChatName, 'Planning');
+
+    viewModel.applyChatNameUpdate('another-chat', 'Ignored');
+    expect(viewModel.selectedChatName, 'Planning');
+
+    viewModel.applyChatNameUpdate('chat-1', 'Release');
+    expect(viewModel.selectedChatName, 'Release');
+
+    viewModel.clearSelectedChat();
+    expect(viewModel.selectedChatName, isNull);
+  });
+
   testWidgets('strict grounding preview marker is localized without raw text', (
     tester,
   ) async {
@@ -165,6 +197,111 @@ void main() {
 
       expect(find.textContaining('我暂时没有获得足够可靠的证据'), findsOneWidget);
       expect(find.textContaining(strictGroundingPreviewMarker), findsNothing);
+    });
+  });
+
+  testWidgets('chat row shows its name and renames it with a Shad dialog', (
+    tester,
+  ) async {
+    await withDesktopPlatform(() async {
+      final registry = ChatGenerationRegistry(
+        messagePersister: (message) async => message,
+        lastMessageUpdater: (_, _) async {},
+        providerFactory: (_) => throw StateError('Provider is not expected'),
+      );
+      addTearDown(registry.clear);
+      final timestamp = DateTime(2026, 9, 12);
+      final bot = Bot(
+        id: 'bot-rename',
+        name: '规划智能体',
+        avatar: '',
+        provider: 'OpenAI',
+        baseURL: '',
+        apiKey: '',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: '',
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+      final chat = Chat(
+        id: 'chat-rename',
+        botId: bot.id,
+        name: '需求梳理',
+        lastMessage: '整理发布计划',
+        lastMessageTimestamp: timestamp,
+        createTimestamp: timestamp,
+        modifyTimestamp: timestamp,
+      );
+      String? savedName;
+      String? notifiedName;
+
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: SizedBox(
+                  width: 320,
+                  height: 240,
+                  child: ChatListBuilder(
+                    chatList: [chat],
+                    bots: [bot],
+                    generationRegistry: registry,
+                    onChatDeleted: (_) {},
+                    onDeleteChat: (_) async {},
+                    onChatSelected: (_, _) {},
+                    onRenameChat: (_, name) async => savedName = name,
+                    onChatRenamed: (_, name) => notifiedName = name,
+                  ),
+                ),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('需求梳理'), findsOneWidget);
+      expect(find.textContaining('规划智能体 · OpenAI'), findsOneWidget);
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      tester
+          .widget<ShadButton>(
+            find.byKey(const ValueKey<String>('chat-rename-chat-rename')),
+          )
+          .onPressed
+          ?.call();
+      await tester.pumpAndSettle();
+
+      final input = find.byKey(
+        const ValueKey<String>('rename-chat-name-input'),
+      );
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: input, matching: find.byType(EditableText)),
+            )
+            .controller
+            .text,
+        '需求梳理',
+      );
+
+      await tester.enterText(input, '   ');
+      await tester.tap(find.byKey(const ValueKey<String>('rename-chat-save')));
+      await tester.pump();
+      expect(find.text('请输入会话名称。'), findsOneWidget);
+      expect(savedName, isNull);
+
+      await tester.enterText(input, ' 发布计划 ');
+      await tester.tap(find.byKey(const ValueKey<String>('rename-chat-save')));
+      await tester.pumpAndSettle();
+
+      expect(savedName, '发布计划');
+      expect(notifiedName, '发布计划');
+      expect(
+        find.byKey(const ValueKey<String>('rename-chat-dialog')),
+        findsNothing,
+      );
     });
   });
 

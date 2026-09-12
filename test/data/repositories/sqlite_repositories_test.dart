@@ -89,6 +89,60 @@ void main() {
     expect(await botRepository.getBots(forceRefresh: true), hasLength(1));
   });
 
+  test('chat names are normalized, persisted, and emitted', () async {
+    final bot = _bot();
+    final timestamp = DateTime(2026, 9, 12, 10);
+    await botRepository.addBot(bot);
+    await localDatabase.insertChat(
+      ChatRecord.fromDomain(
+        Chat(
+          id: 'chat-rename',
+          botId: bot.id,
+          name: 'Initial name',
+          lastMessageTimestamp: timestamp,
+          createTimestamp: timestamp,
+          modifyTimestamp: timestamp,
+        ),
+      ).values,
+    );
+    await chatRepository.getChats(forceRefresh: true);
+    final changes = expectLater(
+      chatRepository.changes,
+      emits(
+        contains(
+          isA<Chat>().having((chat) => chat.name, 'name', 'Release planning'),
+        ),
+      ),
+    );
+
+    await chatRepository.updateChatName('chat-rename', '  Release planning  ');
+    await changes;
+
+    expect(
+      (await chatRepository.getChat('chat-rename'))?.name,
+      'Release planning',
+    );
+    expect(
+      (await localDatabase.loadChat('chat-rename')).single['name'],
+      'Release planning',
+    );
+    await expectLater(
+      chatRepository.updateChatName('chat-rename', '   '),
+      throwsArgumentError,
+    );
+    await expectLater(
+      chatRepository.updateChatName(
+        'chat-rename',
+        List<String>.filled(Chat.maxNameLength + 1, 'x').join(),
+      ),
+      throwsArgumentError,
+    );
+    await expectLater(
+      chatRepository.updateChatName('missing-chat', 'New name'),
+      throwsStateError,
+    );
+  });
+
   test(
     'message history cache stays coherent across writes and clears',
     () async {

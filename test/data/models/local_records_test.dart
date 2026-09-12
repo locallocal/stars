@@ -192,6 +192,7 @@ void main() {
     final chat = Chat(
       id: 'chat-1',
       botId: bot.id,
+      name: 'Planning session',
       lastMessage: 'Hello',
       lastMessageTimestamp: timestamp,
       createTimestamp: timestamp,
@@ -224,7 +225,14 @@ void main() {
     expect(restoredBot.modifyTimestamp, timestamp);
     expect(botRecord.storedApiKey, 'encrypted-api-key');
     expect(restoredChat.lastMessage, 'Hello');
+    expect(restoredChat.name, 'Planning session');
     expect(restoredChat.lastMessageTimestamp, timestamp);
+    final legacyChatValues = Map<String, Object?>.from(
+      ChatRecord.fromDomain(chat).values,
+    )..remove('name');
+    final legacyChat = ChatRecord(legacyChatValues).toDomain();
+    expect(legacyChat.name, isEmpty);
+    expect(legacyChat.displayName(bot.name), bot.name);
     expect(restoredProfile.fontSize, 18);
     expect(restoredProfile.showReasoning, isFalse);
     expect(restoredProfile.showVerificationStatus, isFalse);

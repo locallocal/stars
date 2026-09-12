@@ -15,6 +15,7 @@ import 'package:stars/utils/utils.dart';
 class ChatListPage extends StatefulWidget {
   final String? selectedChatId;
   final void Function(String chatId, Bot bot) onChatSelected;
+  final void Function(String chatId, String name)? onChatRenamed;
   final VoidCallback? onSelectionCleared;
   final bool sidebarMode;
   final bool selectionVisible;
@@ -28,6 +29,7 @@ class ChatListPage extends StatefulWidget {
     required this.viewModel,
     this.selectedChatId,
     required this.onChatSelected,
+    this.onChatRenamed,
     this.onSelectionCleared,
     this.sidebarMode = false,
     this.selectionVisible = true,
@@ -221,6 +223,8 @@ class ChatListPageState extends State<ChatListPage> {
       strictGroundingMode: widget.strictGroundingMode,
       generationRegistry: AppScope.of(context).generationRegistry,
       onDeleteChat: widget.viewModel.deleteChat,
+      onRenameChat: widget.viewModel.updateChatName,
+      onChatRenamed: widget.onChatRenamed,
       onChatDeleted: (String id) {
         if (id.isNotEmpty) {
           final wasSelected = widget.selectedChatId == id;

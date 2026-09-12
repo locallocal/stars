@@ -72,6 +72,7 @@ class DatabaseService {
     );
     try {
       await _ensureCompatibleProfileSchema(database);
+      await _ensureCompatibleChatNameSchema(database);
       await _ensureCompatibleMessageGroundingSchema(database);
       await _ensureCompatibleBotSkillBindingSchema(database);
       await _ensureCompatibleToolExecutionSchema(database);
@@ -123,6 +124,27 @@ class DatabaseService {
           CHECK (strict_grounding_mode IN (0, 1))
       ''');
     }
+  }
+
+  static Future<void> _ensureCompatibleChatNameSchema(Database database) async {
+    final columns = await database.rawQuery('PRAGMA table_info(chats)');
+    final columnNames =
+        columns.map((column) => column['name']).whereType<String>().toSet();
+    if (columnNames.contains('name')) return;
+    await database.transaction((transaction) async {
+      await transaction.execute('''
+        ALTER TABLE chats
+        ADD COLUMN name TEXT NOT NULL DEFAULT ''
+      ''');
+      await transaction.execute('''
+        UPDATE chats
+        SET name = COALESCE(
+          (SELECT bots.name FROM bots WHERE bots.id = chats.bot_id),
+          ''
+        )
+        WHERE name = ''
+      ''');
+    });
   }
 
   static Future<void> _ensureCompatibleMessageGroundingSchema(
@@ -475,6 +497,7 @@ class DatabaseService {
       CREATE TABLE chats (
         id TEXT PRIMARY KEY,
         bot_id TEXT NOT NULL,
+        name TEXT NOT NULL DEFAULT '',
         last_message TEXT NOT NULL,
         last_message_timestamp INTEGER NOT NULL,
         create_timestamp INTEGER NOT NULL,

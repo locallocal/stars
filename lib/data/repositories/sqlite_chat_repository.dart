@@ -175,12 +175,9 @@ class SqliteChatRepository
       _cache = [
         for (final chat in cache)
           if (chat.id == id)
-            Chat(
-              id: chat.id,
-              botId: chat.botId,
+            chat.copyWith(
               lastMessage: content,
               lastMessageTimestamp: timestamp,
-              createTimestamp: chat.createTimestamp,
               modifyTimestamp: timestamp,
             )
           else
@@ -189,6 +186,43 @@ class SqliteChatRepository
         (left, right) =>
             right.lastMessageTimestamp.compareTo(left.lastMessageTimestamp),
       );
+    }
+    _emit();
+  }
+
+  @override
+  Future<void> updateChatName(String id, String name) async {
+    final normalizedName = name.trim();
+    if (normalizedName.isEmpty) {
+      throw ArgumentError.value(name, 'name', 'Chat name cannot be empty.');
+    }
+    if (normalizedName.length > Chat.maxNameLength) {
+      throw ArgumentError.value(
+        name,
+        'name',
+        'Chat name cannot exceed ${Chat.maxNameLength} characters.',
+      );
+    }
+
+    final timestamp = DateTime.now();
+    final updatedRows = await _localDatabase.updateChatName(
+      id,
+      name: normalizedName,
+      timestamp: timestamp,
+    );
+    if (updatedRows != 1) {
+      throw StateError('Chat $id does not exist.');
+    }
+
+    final cache = _cache;
+    if (cache != null) {
+      _cache = [
+        for (final chat in cache)
+          if (chat.id == id)
+            chat.copyWith(name: normalizedName, modifyTimestamp: timestamp)
+          else
+            chat,
+      ];
     }
     _emit();
   }
@@ -213,12 +247,9 @@ class SqliteChatRepository
       _cache = [
         for (final chat in cache)
           if (chat.id == id)
-            Chat(
-              id: chat.id,
-              botId: chat.botId,
+            chat.copyWith(
               lastMessage: '',
               lastMessageTimestamp: timestamp,
-              createTimestamp: chat.createTimestamp,
               modifyTimestamp: timestamp,
             )
           else

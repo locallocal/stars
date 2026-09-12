@@ -55,6 +55,7 @@ final class ChatRecord {
     return ChatRecord({
       'id': chat.id,
       'bot_id': chat.botId,
+      'name': chat.name,
       'last_message': chat.lastMessage,
       'last_message_timestamp':
           chat.lastMessageTimestamp.millisecondsSinceEpoch,
@@ -69,6 +70,7 @@ final class ChatRecord {
     return Chat(
       id: _string(values['id']),
       botId: _string(values['bot_id']),
+      name: _optionalString(values['name']),
       lastMessage: _string(values['last_message']),
       lastMessageTimestamp: _timestamp(values['last_message_timestamp']),
       createTimestamp: _timestamp(values['create_timestamp']),

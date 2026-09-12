@@ -255,7 +255,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "chatHistoryCleared": MessageLookupByLibrary.simpleMessage("채팅 기록이 지워졌습니다"),
     "chatReasoning": MessageLookupByLibrary.simpleMessage("사고 과정"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search matches bot names and the latest message.",
+      "Search matches conversation names, bot names, and the latest message.",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("검증 상태"),
     "chats": MessageLookupByLibrary.simpleMessage("채팅"),
@@ -301,6 +301,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "한 요청에서 모델이 고려할 수 있는 최대 토큰 수입니다.",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "이 대화에서 사용하는 봇입니다.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("비우기"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("데이터"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
@@ -316,8 +319,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "이 대화의 답변을 생성하는 데 사용하는 모델입니다.",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage("대화 이름"),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "이 대화에서 사용하는 봇입니다.",
+      "이 대화를 식별하는 사용자 지정 이름입니다.",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "대화 이름 입력",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "대화 이름을 입력하세요.",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "이 대화에 모델 서비스를 제공하는 공급자입니다.",
@@ -805,6 +815,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("스킬 제거"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage("대화 이름 변경"),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "이 대화를 쉽게 찾을 수 있도록 명확한 이름을 지정하세요.",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("응답이 취소되었습니다"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "중지됨 · 부분 응답 유지",
@@ -1053,6 +1067,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
+    ),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "대화 이름을 변경할 수 없음",
     ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage("사용할 수 없는 봇"),
     "uninstall": MessageLookupByLibrary.simpleMessage("제거"),

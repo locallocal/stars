@@ -288,7 +288,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatReasoning": MessageLookupByLibrary.simpleMessage("Ход рассуждений"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search matches bot names and the latest message.",
+      "Search matches conversation names, bot names, and the latest message.",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
       "Статус проверки",
@@ -354,6 +354,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "Максимальное число токенов, которое модель может учитывать в одном запросе.",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "Бот, используемый в этой беседе.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
       "Очистить",
     ),
@@ -373,8 +376,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "Модель, используемая для создания ответов в этой беседе.",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage("Название беседы"),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "Бот, используемый в этой беседе.",
+      "Пользовательское название этой беседы.",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "Введите название беседы",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "Введите название беседы.",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "Провайдер, предоставляющий сервис модели для этой беседы.",
@@ -958,6 +968,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("Удалить навык"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage(
+      "Переименовать беседу",
+    ),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "Выберите понятное название, чтобы быстрее находить эту беседу.",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Ответ отменен"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "Остановлено · Частичный ответ сохранён",
@@ -1258,6 +1274,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
+    ),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "Не удалось переименовать беседу",
     ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage("Бот недоступен"),
     "uninstall": MessageLookupByLibrary.simpleMessage("Удалить"),

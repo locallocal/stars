@@ -278,7 +278,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatReasoning": MessageLookupByLibrary.simpleMessage("Thinking process"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search matches bot names and the latest message.",
+      "Search matches conversation names, bot names, and the latest message.",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
       "Verification status",
@@ -344,6 +344,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "Maximum tokens the model can consider in one request.",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "The bot used by this conversation.",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage("Clear"),
     "conversationDataMenuLabel": MessageLookupByLibrary.simpleMessage("Data"),
     "conversationDirectory": MessageLookupByLibrary.simpleMessage(
@@ -361,8 +364,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "The model used to generate replies in this conversation.",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage(
+      "Conversation name",
+    ),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "The bot used by this conversation.",
+      "The custom name used to identify this conversation.",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "Enter a conversation name",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "Enter a conversation name.",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "The provider supplying the model service for this conversation.",
@@ -928,6 +940,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("Remove Skill"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage(
+      "Rename conversation",
+    ),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "Choose a clear name to make this conversation easier to find.",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Reply cancelled"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "Stopped · Partial response kept",
@@ -1212,6 +1230,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
+    ),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "Unable to rename conversation",
     ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage("Unavailable bot"),
     "uninstall": MessageLookupByLibrary.simpleMessage("Uninstall"),

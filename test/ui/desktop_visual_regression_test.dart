@@ -555,6 +555,9 @@ class _VisualChatRepository implements ChatRepository {
 
   @override
   Future<void> updateLastMessage(String id, String content) async {}
+
+  @override
+  Future<void> updateChatName(String id, String name) async {}
 }
 
 class _UnusedAiProviderRepository implements AiProviderRepository {

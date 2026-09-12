@@ -276,7 +276,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatReasoning": MessageLookupByLibrary.simpleMessage("सोचने की प्रक्रिया"),
     "chatSearchScope": MessageLookupByLibrary.simpleMessage(
-      "Search matches bot names and the latest message.",
+      "Search matches conversation names, bot names, and the latest message.",
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage(
       "सत्यापन स्थिति",
@@ -340,6 +340,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "contextWindowDescription": MessageLookupByLibrary.simpleMessage(
       "एक अनुरोध में मॉडल द्वारा देखे जा सकने वाले अधिकतम टोकन।",
     ),
+    "conversationBotDescription": MessageLookupByLibrary.simpleMessage(
+      "इस बातचीत में उपयोग किया गया बॉट।",
+    ),
     "conversationClearMenuLabel": MessageLookupByLibrary.simpleMessage(
       "साफ़ करें",
     ),
@@ -359,8 +362,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationModelDescription": MessageLookupByLibrary.simpleMessage(
       "इस बातचीत में उत्तर बनाने के लिए उपयोग किया गया मॉडल।",
     ),
+    "conversationName": MessageLookupByLibrary.simpleMessage("बातचीत का नाम"),
     "conversationNameDescription": MessageLookupByLibrary.simpleMessage(
-      "इस बातचीत में उपयोग किया गया बॉट।",
+      "इस बातचीत की पहचान करने वाला कस्टम नाम।",
+    ),
+    "conversationNamePlaceholder": MessageLookupByLibrary.simpleMessage(
+      "बातचीत का नाम दर्ज करें",
+    ),
+    "conversationNameRequired": MessageLookupByLibrary.simpleMessage(
+      "बातचीत का नाम दर्ज करें।",
     ),
     "conversationProviderDescription": MessageLookupByLibrary.simpleMessage(
       "इस बातचीत के लिए मॉडल सेवा देने वाला प्रदाता।",
@@ -934,6 +944,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("कौशल हटाएँ"),
+    "renameConversation": MessageLookupByLibrary.simpleMessage(
+      "बातचीत का नाम बदलें",
+    ),
+    "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
+      "इस बातचीत को आसानी से खोजने के लिए एक स्पष्ट नाम चुनें।",
+    ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage(
       "उत्तर रद्द किया गया",
     ),
@@ -1226,6 +1242,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "unableToLoadMessages": MessageLookupByLibrary.simpleMessage(
       "Unable to load messages",
+    ),
+    "unableToRenameConversation": MessageLookupByLibrary.simpleMessage(
+      "बातचीत का नाम नहीं बदला जा सका",
     ),
     "unavailableBot": MessageLookupByLibrary.simpleMessage(
       "बॉट उपलब्ध नहीं है",
