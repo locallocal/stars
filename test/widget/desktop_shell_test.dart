@@ -1072,4 +1072,67 @@ void main() {
     expect(chatBorder.bottom.width, 0);
     expect(chatBorder.bottom.style, BorderStyle.solid);
   });
+
+  testWidgets('desktop bot detail mirrors the chat toolbar identity layout', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final timestamp = DateTime(2026);
+    final bot = Bot(
+      id: 'toolbar-bot',
+      name: 'Researcher',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: '',
+      apiKey: '',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: '',
+      createTimestamp: timestamp,
+      modifyTimestamp: timestamp,
+    );
+    const toolbarKey = ValueKey<String>('desktop-unified-toolbar');
+    const avatarKey = ValueKey<String>('desktop-toolbar-active-bot-avatar');
+
+    await tester.pumpWidget(desktopHarness(selectedChatBot: bot));
+    await tester.pumpAndSettle();
+
+    final chatToolbar = find.byKey(toolbarKey);
+    final chatAvatar = find.descendant(
+      of: chatToolbar,
+      matching: find.byKey(avatarKey),
+    );
+    final chatAvatarRect = tester.getRect(chatAvatar);
+    final chatTitleStyle =
+        tester
+            .widget<Text>(
+              find.descendant(of: chatToolbar, matching: find.text(bot.name)),
+            )
+            .style;
+
+    await tester.pumpWidget(desktopHarness(currentIndex: 1, bot: bot));
+    await tester.pumpAndSettle();
+
+    final botToolbar = find.byKey(toolbarKey);
+    final botAvatar = find.descendant(
+      of: botToolbar,
+      matching: find.byKey(avatarKey),
+    );
+    final botAvatarRect = tester.getRect(botAvatar);
+    final botTitleStyle =
+        tester
+            .widget<Text>(
+              find.descendant(of: botToolbar, matching: find.text(bot.name)),
+            )
+            .style;
+    expect(botAvatarRect.size, chatAvatarRect.size);
+    expect(botAvatarRect.top, closeTo(chatAvatarRect.top, 0.01));
+    expect(botTitleStyle, chatTitleStyle);
+    expect(
+      find.descendant(of: botToolbar, matching: find.text('OpenAI · gpt-test')),
+      findsOneWidget,
+    );
+  });
 }

@@ -43,6 +43,41 @@ void main() {
     await tester.pumpWidget(desktopHarness(currentIndex: 1, bot: bot));
     await tester.pumpAndSettle();
 
+    final toolbar = find.byKey(
+      const ValueKey<String>('desktop-unified-toolbar'),
+    );
+    final toolbarAvatar = find.descendant(
+      of: toolbar,
+      matching: find.byKey(
+        const ValueKey<String>('desktop-toolbar-active-bot-avatar'),
+      ),
+    );
+    final toolbarLogo = find.descendant(
+      of: toolbar,
+      matching: find.byKey(
+        const ValueKey<String>('desktop-toolbar-active-bot-logo'),
+      ),
+    );
+    expect(toolbarAvatar, findsOneWidget);
+    expect(toolbarLogo, findsOneWidget);
+    expect(
+      tester.getSize(toolbarAvatar),
+      const Size.square(StarsDesktopThemeSpec.toolbarAvatarSize),
+    );
+    expect(
+      tester.getSize(toolbarLogo),
+      const Size.square(StarsDesktopThemeSpec.toolbarLogoSize),
+    );
+    expect(tester.widget<ShadAvatar>(toolbarAvatar).fit, BoxFit.cover);
+    expect(
+      find.descendant(of: toolbar, matching: find.text('Researcher')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: toolbar, matching: find.text('OpenAI · gpt-test')),
+      findsOneWidget,
+    );
+
     final detailScaffold = tester.widget<Scaffold>(
       find.byKey(const ValueKey<String>('desktop-bot-detail-scaffold')),
     );
