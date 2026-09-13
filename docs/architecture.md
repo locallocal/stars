@@ -34,7 +34,8 @@ View -> ViewModel -> Use Case（按需） -> Repository contract
 壳、功能页面与组件全部位于 UI 分层目录。相机、相册和文件选择通过
 `AttachmentRepository` 注入 ViewModel；消息保存、分享和外链打开通过
 `MessageActionRepository` 注入 ViewModel，View 不直接调用平台插件。会话草稿由有界
-`ConversationDraftRepository` 管理，并在会话删除时清理。
+`ConversationDraftRepository` 管理，并在会话删除时清理。用户上传附件保存在
+`chats/<chatId>/attachments/`，与 `chats/<chatId>/` 下的智能体生成产物隔离。
 
 ## 功能开发顺序
 

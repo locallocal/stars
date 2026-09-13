@@ -28,29 +28,46 @@ void main() {
 
     expect(outputDirectory, path.join(root.path, 'chats', 'chat_1'));
     expect(await Directory(outputDirectory).exists(), isTrue);
-  });
-
-  test('same-basename assets are unique and preserve extensions', () async {
-    final firstDirectory =
-        await Directory(path.join(root.path, 'source-a')).create();
-    final secondDirectory =
-        await Directory(path.join(root.path, 'source-b')).create();
-    final first = File(path.join(firstDirectory.path, 'photo.PNG'));
-    final second = File(path.join(secondDirectory.path, 'photo.PNG'));
-    await first.writeAsString('first');
-    await second.writeAsString('second');
-
-    final stored = await repository.persistAssets(
-      chatId: 'chat_1',
-      sourcePaths: [first.path, second.path],
+    expect(
+      await Directory(path.join(outputDirectory, 'attachments')).exists(),
+      isFalse,
     );
-
-    expect(stored, hasLength(2));
-    expect(stored.toSet(), hasLength(2));
-    expect(stored.every((item) => path.extension(item) == '.png'), isTrue);
-    expect(await File(stored.first).readAsString(), 'first');
-    expect(await File(stored.last).readAsString(), 'second');
   });
+
+  test(
+    'user assets use a dedicated directory and preserve unique extensions',
+    () async {
+      final firstDirectory =
+          await Directory(path.join(root.path, 'source-a')).create();
+      final secondDirectory =
+          await Directory(path.join(root.path, 'source-b')).create();
+      final first = File(path.join(firstDirectory.path, 'photo.PNG'));
+      final second = File(path.join(secondDirectory.path, 'photo.PNG'));
+      await first.writeAsString('first');
+      await second.writeAsString('second');
+
+      final stored = await repository.persistAssets(
+        chatId: 'chat_1',
+        sourcePaths: [first.path, second.path],
+      );
+
+      final attachmentsDirectory = path.join(
+        root.path,
+        'chats',
+        'chat_1',
+        'attachments',
+      );
+      expect(stored, hasLength(2));
+      expect(stored.toSet(), hasLength(2));
+      expect(
+        stored.every((item) => path.dirname(item) == attachmentsDirectory),
+        isTrue,
+      );
+      expect(stored.every((item) => path.extension(item) == '.png'), isTrue);
+      expect(await File(stored.first).readAsString(), 'first');
+      expect(await File(stored.last).readAsString(), 'second');
+    },
+  );
 
   test('a missing source rolls back every staged asset', () async {
     final source = File(path.join(root.path, 'valid.txt'));
@@ -64,11 +81,11 @@ void main() {
       throwsA(isA<AppFailure>()),
     );
 
-    final destination = Directory(path.join(root.path, 'chats', 'chat_2'));
-    expect(
-      await destination.list().where((entity) => entity is File).toList(),
-      isEmpty,
+    final destination = Directory(
+      path.join(root.path, 'chats', 'chat_2', 'attachments'),
     );
+    expect(await destination.exists(), isTrue);
+    expect(await destination.list().toList(), isEmpty);
   });
 
   test('selectImage accepts a supported raster image', () async {

@@ -9,8 +9,9 @@ abstract interface class AttachmentRepository {
   Future<String?> selectFile();
 }
 
-/// Persists picker results into a conversation-owned directory. The operation
-/// is all-or-nothing: no returned path is visible until every source copied.
+/// Persists picker results into a dedicated user-attachment directory owned by
+/// the conversation. The operation is all-or-nothing: no returned path is
+/// visible until every source copied.
 abstract interface class ConversationAssetRepository
     implements AttachmentRepository {
   Future<List<String>> persistAssets({
@@ -18,7 +19,7 @@ abstract interface class ConversationAssetRepository
     required Iterable<String> sourcePaths,
   });
 
-  /// Ensures and returns the conversation-owned directory shared by persisted
-  /// attachments and agent-generated artifacts.
+  /// Ensures and returns the conversation root used by agent-generated
+  /// artifacts. User attachments are stored in a dedicated child directory.
   Future<String> getOutputDirectory(String chatId);
 }
