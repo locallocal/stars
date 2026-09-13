@@ -5,6 +5,7 @@ import 'package:stars/data/repositories/legal_document_repository_impl.dart';
 import 'package:stars/data/repositories/local_conversation_directory_repository.dart';
 import 'package:stars/data/repositories/memory_conversation_draft_repository.dart';
 import 'package:stars/data/repositories/platform_message_action_repository.dart';
+import 'package:stars/data/repositories/platform_bot_transfer_repository.dart';
 import 'package:stars/data/repositories/file_skill_repository.dart';
 import 'package:stars/data/repositories/sqlite_mcp_server_repository.dart';
 import 'package:stars/data/repositories/sqlite_mcp_inventory_repository.dart';
@@ -29,6 +30,7 @@ import 'package:stars/data/services/feedback_service.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
 import 'package:stars/data/services/asset_text_service.dart';
 import 'package:stars/data/services/bot_api_key_cipher.dart';
+import 'package:stars/data/services/bot_transfer_file_service.dart';
 import 'package:stars/data/services/database_service.dart';
 import 'package:stars/data/services/conversation_summary_storage.dart';
 import 'package:stars/data/services/ai/provider_context_summarizer.dart';
@@ -66,6 +68,7 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
+import 'package:stars/domain/repositories/bot_transfer_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/conversation_skill_pin_repository.dart';
 import 'package:stars/domain/repositories/conversation_memory_repository.dart';
@@ -176,6 +179,7 @@ class AppDependencies {
     ConversationDraftRepository? conversationDraftRepository,
     ConversationDirectoryRepository? conversationDirectoryRepository,
     MessageActionRepository? messageActionRepository,
+    BotTransferRepository? botTransferRepository,
     this.skillEcosystemRepository,
     this.skillScriptCatalogService,
     this.skillCatalogService,
@@ -189,7 +193,12 @@ class AppDependencies {
              directoryProvider: conversationArtifactsDirectoryProvider,
            ),
        messageActionRepository =
-           messageActionRepository ?? const PlatformMessageActionRepository();
+           messageActionRepository ?? const PlatformMessageActionRepository(),
+       botTransferRepository =
+           botTransferRepository ??
+           const PlatformBotTransferRepository(
+             fileService: BotTransferFileService(),
+           );
 
   factory AppDependencies.production() {
     final databaseService = DatabaseService();
@@ -594,6 +603,7 @@ class AppDependencies {
   final ChatGenerationRegistry generationRegistry;
   final ConversationDraftRepository conversationDraftRepository;
   final MessageActionRepository messageActionRepository;
+  final BotTransferRepository botTransferRepository;
   final SkillEcosystemRepository? skillEcosystemRepository;
   final SkillScriptCatalogService? skillScriptCatalogService;
   final SkillCatalogService? skillCatalogService;
@@ -622,6 +632,7 @@ class AppDependencies {
     botSkillBindingRepository: botSkillBindingRepository,
     messageRepository: messageRepository,
     mcpServerRepository: mcpServerRepository,
+    botTransferRepository: botTransferRepository,
   );
 
   BotFormViewModel createBotFormViewModel() => BotFormViewModel(

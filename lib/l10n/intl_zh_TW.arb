@@ -100,6 +100,16 @@
     "@addBot": {
         "description": "添加智能體"
     },
+    "importBot": "匯入智能體",
+    "exportBot": "匯出智能體",
+    "botImportSucceeded": "智能體已匯入",
+    "botExportSucceeded": "智能體已匯出",
+    "botImportedWithoutApiKey": "為保障安全，API 金鑰不會被匯入。使用此智能體前請重新設定金鑰。",
+    "botExportedWithoutSecrets": "智能體匯出檔案一律不會包含 API 金鑰。",
+    "configureApiKey": "設定 API 金鑰",
+    "invalidBotExport": "此檔案不是有效的 Stars 智能體匯出檔。",
+    "botImportFailed": "無法匯入智能體，請檢查檔案後再試一次。",
+    "botExportFailed": "無法匯出智能體，請再試一次。",
     "editBot": "編輯智能體",
     "@editBot": {
         "description": "編輯智能體"

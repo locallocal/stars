@@ -203,10 +203,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "システムプロンプト",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars が管理します。有効にすると以下の内容を会話のモデルリクエストに注入し、無効にすると注入しません。必要な実行時の会話コンテキストには影響しません。内容は編集できません。",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -229,7 +228,23 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("ボットのアバター"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "ボットをエクスポートできませんでした。再試行してください。",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "ボットをエクスポートしました",
+    ),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "ボットのエクスポートファイルに API キーが含まれることはありません。",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "ボットをインポートできませんでした。ファイルを確認して再試行してください。",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage("ボットをインポートしました"),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "安全のため API キーはインポートされません。このボットを使用する前にキーを設定してください。",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -290,6 +305,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "会話コンテキストの自動圧縮の現在の状態です。",
     ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage("API キーを設定"),
     "confirm": MessageLookupByLibrary.simpleMessage("確認"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("削除の確認"),
@@ -438,6 +454,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "次回リクエストの推定トークン数と利用可能な入力予算です。",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("実行状態"),
+    "exportBot": MessageLookupByLibrary.simpleMessage("ボットをエクスポート"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "フィードバック内容を入力してください",
     ),
@@ -511,6 +528,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("ボットをインポート"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage("スキルフォルダーをインポート"),
     "importSkillZip": MessageLookupByLibrary.simpleMessage("スキル ZIP をインポート"),
     "importingSkill": MessageLookupByLibrary.simpleMessage("スキルをインポート中…"),
@@ -522,6 +540,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "会話コンテキストと指示を含む、モデルに送信されたトークンです。",
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("更新をインストール"),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "このファイルは有効な Stars ボットのエクスポートではありません。",
+    ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage("生成された要約は検証に失敗しました"),
     "itemCount": m24,
     "jumpToLatest": MessageLookupByLibrary.simpleMessage("Jump to Latest"),

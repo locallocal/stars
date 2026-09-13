@@ -100,6 +100,18 @@
     "@addBot": {
         "description": "Add bot"
     },
+    "importBot": "Import Bot",
+    "@importBot": {"description": "Import a Bot from JSON"},
+    "exportBot": "Export Bot",
+    "@exportBot": {"description": "Export a Bot as JSON"},
+    "botImportSucceeded": "Bot imported",
+    "botExportSucceeded": "Bot exported",
+    "botImportedWithoutApiKey": "For your security, API keys are never imported. Add a key before using this Bot.",
+    "botExportedWithoutSecrets": "API keys are never included in Bot export files.",
+    "configureApiKey": "Configure API key",
+    "invalidBotExport": "This file is not a valid Stars Bot export.",
+    "botImportFailed": "The Bot could not be imported. Check the file and try again.",
+    "botExportFailed": "The Bot could not be exported. Try again.",
     "editBot": "Edit Bot",
     "@editBot": {
         "description": "Edit bot"

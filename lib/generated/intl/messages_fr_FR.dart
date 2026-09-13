@@ -220,10 +220,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt système",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Géré par Stars. Lorsqu’il est activé, le contenu ci-dessous est ajouté aux requêtes du modèle de la conversation ; lorsqu’il est désactivé, il est omis. Le contexte d’exécution requis reste inchangé. Le contenu n’est pas modifiable.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Géré par Stars. Lorsqu’il est activé, le contenu ci-dessous est ajouté aux requêtes du modèle de la conversation ; lorsqu’il est désactivé, il est omis. Le contexte d’exécution requis reste inchangé. Le contenu n’est pas modifiable.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -252,7 +251,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Avatar du Bot"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "Le Bot n’a pas pu être exporté. Réessayez.",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage("Bot exporté"),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "Les clés API ne sont jamais incluses dans les fichiers d’exportation de Bot.",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Le Bot n’a pas pu être importé. Vérifiez le fichier et réessayez.",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage("Bot importé"),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "Pour votre sécurité, les clés API ne sont jamais importées. Ajoutez-en une avant d’utiliser ce Bot.",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -333,6 +346,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "État actuel de la compaction automatique du contexte.",
     ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage(
+      "Configurer la clé API",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirmer"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage(
@@ -375,10 +391,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
-    "conversationFileSearchEmptyDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Essayez un autre nom de fichier ou de dossier, ou effacez la recherche.",
-        ),
+    "conversationFileSearchEmptyDescription": MessageLookupByLibrary.simpleMessage(
+      "Essayez un autre nom de fichier ou de dossier, ou effacez la recherche.",
+    ),
     "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
       "La recherche porte sur les noms de fichiers et de dossiers du répertoire actuel.",
     ),
@@ -537,6 +552,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Tokens estimés pour la prochaine requête par rapport au budget d’entrée disponible.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("État d’exécution"),
+    "exportBot": MessageLookupByLibrary.simpleMessage("Exporter le Bot"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Veuillez saisir le contenu des commentaires",
     ),
@@ -624,6 +640,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("Importer un Bot"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage(
       "Importer un dossier de compétences",
     ),
@@ -642,6 +659,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Installer la mise à jour",
+    ),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "Ce fichier n’est pas une exportation de Bot Stars valide.",
     ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "Le résumé généré n’a pas passé la validation",

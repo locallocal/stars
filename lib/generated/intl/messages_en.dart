@@ -216,10 +216,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Managed by Stars. When enabled, the content below is added to conversation model requests; when disabled, it is omitted. Required runtime conversation context is unaffected. The content cannot be edited.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Managed by Stars. When enabled, the content below is added to conversation model requests; when disabled, it is omitted. Required runtime conversation context is unaffected. The content cannot be edited.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -246,7 +245,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Bot Avatar"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "The Bot could not be exported. Try again.",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage("Bot exported"),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "API keys are never included in Bot export files.",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "The Bot could not be imported. Check the file and try again.",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage("Bot imported"),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "For your security, API keys are never imported. Add a key before using this Bot.",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -324,6 +337,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Current status of automatic conversation context compaction.",
+    ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage(
+      "Configure API key",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirm"),
     "confirmClearChat": m8,
@@ -513,6 +529,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Estimated tokens for the next request compared with the available input budget.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("Execution status"),
+    "exportBot": MessageLookupByLibrary.simpleMessage("Export Bot"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Please enter feedback content",
     ),
@@ -592,6 +609,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("Import Bot"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage("Import folder"),
     "importSkillZip": MessageLookupByLibrary.simpleMessage("Import ZIP"),
     "importingSkill": MessageLookupByLibrary.simpleMessage("Importing…"),
@@ -604,6 +622,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Install update",
+    ),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "This file is not a valid Stars Bot export.",
     ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "The generated summary did not pass validation",

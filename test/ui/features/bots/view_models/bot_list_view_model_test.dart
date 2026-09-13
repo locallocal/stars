@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
@@ -6,6 +7,7 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
+import 'package:stars/domain/repositories/bot_transfer_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -137,6 +139,90 @@ void main() {
     expect(messages.batchRequests.last, {'one'});
     expect(bindings.batchRequests.last, {'one'});
     expect(viewModel.metricsFor('two').tokenUsage.effectiveTotalTokens, 20);
+  });
+
+  test('exports a secret-free document with a safe file name', () async {
+    final botRepository = _TransferBotRepository();
+    final transferRepository = _FakeBotTransferRepository();
+    final viewModel = BotListViewModel(
+      botRepository: botRepository,
+      createChat: CreateChat(chatRepository: _UnusedChatRepository()),
+      aiProviderRepository: _UnusedAiProviderRepository(),
+      attachmentRepository: _UnusedAttachmentRepository(),
+      botTransferRepository: transferRepository,
+    );
+    addTearDown(viewModel.dispose);
+    final bot = _bot(
+      id: 'private-id',
+      name: 'Research/Writer',
+      provider: 'OpenAI',
+      model: 'gpt-test',
+    );
+    final sourceWithSecret = Bot(
+      id: bot.id,
+      name: bot.name,
+      avatar: '/private/avatar.png',
+      provider: bot.provider,
+      baseURL: bot.baseURL,
+      apiKey: 'private-key',
+      apiType: bot.apiType,
+      model: bot.model,
+      systemPrompt: bot.systemPrompt,
+      createTimestamp: bot.createTimestamp,
+      modifyTimestamp: bot.modifyTimestamp,
+    );
+
+    final result = await viewModel.exportBot(
+      sourceWithSecret,
+      dialogTitle: 'Export Bot',
+    );
+
+    expect(result, BotExportResult.saved);
+    expect(
+      transferRepository.suggestedFileName,
+      'Research-Writer.stars-bot.json',
+    );
+    expect(transferRepository.dialogTitle, 'Export Bot');
+    expect(transferRepository.exportedDocument?.name, 'Research/Writer');
+    expect(
+      jsonEncode(transferRepository.exportedDocument),
+      isNot(contains('private-key')),
+    );
+    expect(viewModel.commandState.phase, CommandPhase.succeeded);
+  });
+
+  test('imports a Bot with a new identity and an empty API key', () async {
+    final botRepository = _TransferBotRepository();
+    final transferRepository = _FakeBotTransferRepository(
+      importedDocument: BotExportDocument(
+        name: 'Imported Bot',
+        provider: 'OpenAI',
+        baseUrl: 'https://example.invalid',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: 'Be helpful.',
+      ),
+    );
+    final importedAt = DateTime.utc(2026, 9, 13, 8, 30);
+    final viewModel = BotListViewModel(
+      botRepository: botRepository,
+      createChat: CreateChat(chatRepository: _UnusedChatRepository()),
+      aiProviderRepository: _UnusedAiProviderRepository(),
+      attachmentRepository: _UnusedAttachmentRepository(),
+      botTransferRepository: transferRepository,
+      clock: () => importedAt,
+    );
+    addTearDown(viewModel.dispose);
+
+    final imported = await viewModel.importBot(dialogTitle: 'Import Bot');
+
+    expect(imported, same(botRepository.addedBot));
+    expect(imported?.id, 'bot_${importedAt.microsecondsSinceEpoch}');
+    expect(imported?.apiKey, isEmpty);
+    expect(imported?.avatar, isEmpty);
+    expect(imported?.createTimestamp, importedAt);
+    expect(imported?.modifyTimestamp, importedAt);
+    expect(transferRepository.dialogTitle, 'Import Bot');
   });
 }
 
@@ -358,4 +444,48 @@ final class _ScopedBindingMetricsRepository
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnsupportedError('Only batch metrics are used.');
+}
+
+final class _TransferBotRepository implements BotRepository {
+  Bot? addedBot;
+
+  @override
+  Stream<List<Bot>> get changes => const Stream.empty();
+
+  @override
+  Future<void> addBot(Bot bot) async => addedBot = bot;
+
+  @override
+  Future<List<Bot>> getBots({bool forceRefresh = false}) async => const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('Only Bot creation is used.');
+}
+
+final class _FakeBotTransferRepository implements BotTransferRepository {
+  _FakeBotTransferRepository({this.importedDocument});
+
+  final BotExportDocument? importedDocument;
+  BotExportDocument? exportedDocument;
+  String? suggestedFileName;
+  String? dialogTitle;
+
+  @override
+  Future<BotExportResult> exportBot(
+    BotExportDocument document, {
+    required String suggestedFileName,
+    required String dialogTitle,
+  }) async {
+    exportedDocument = document;
+    this.suggestedFileName = suggestedFileName;
+    this.dialogTitle = dialogTitle;
+    return BotExportResult.saved;
+  }
+
+  @override
+  Future<BotExportDocument?> importBot({required String dialogTitle}) async {
+    this.dialogTitle = dialogTitle;
+    return importedDocument;
+  }
 }

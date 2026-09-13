@@ -1,13 +1,17 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/repositories/platform_message_action_repository.dart';
+import 'package:stars/data/repositories/platform_bot_transfer_repository.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
+import 'package:stars/data/services/bot_transfer_file_service.dart';
 import 'package:stars/data/services/skills/skill_picker_service.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
+import 'package:stars/domain/repositories/bot_transfer_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -110,6 +114,113 @@ void main() {
 
     expect(sharedPath, '/tmp/image.png');
     expect(sharedText, 'Generated image');
+  });
+
+  test('Bot transfer repository writes readable, indented JSON', () async {
+    filePicker.savedPath = '/tmp/research.stars-bot.json';
+    const repository = PlatformBotTransferRepository(
+      fileService: BotTransferFileService(),
+    );
+
+    final result = await repository.exportBot(
+      BotExportDocument(
+        name: 'Research',
+        provider: 'OpenAI',
+        baseUrl: 'https://example.invalid',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: 'Be helpful.',
+      ),
+      suggestedFileName: 'research.stars-bot.json',
+      dialogTitle: 'Export Bot',
+    );
+
+    expect(result, BotExportResult.saved);
+    expect(filePicker.dialogTitle, 'Export Bot');
+    expect(filePicker.fileName, 'research.stars-bot.json');
+    expect(filePicker.fileType, FileType.custom);
+    expect(filePicker.allowedExtensions, ['json']);
+    final exportedText = utf8.decode(filePicker.bytes!);
+    expect(exportedText, contains('\n  "format": "stars.bot"'));
+    expect(jsonDecode(exportedText), isA<Map<String, Object?>>());
+  });
+
+  test('Bot transfer repository reads a selected JSON document', () async {
+    final bytes = Uint8List.fromList(
+      utf8.encode(
+        jsonEncode(
+          BotExportDocument(
+            name: 'Imported',
+            provider: 'OpenAI',
+            baseUrl: '',
+            apiType: Bot.apiTypeOpenAI,
+            model: 'gpt-test',
+            systemPrompt: '',
+          ),
+        ),
+      ),
+    );
+    filePicker.selectedFile = PlatformFile(
+      name: 'import.stars-bot.json',
+      size: bytes.length,
+      bytes: bytes,
+    );
+    const repository = PlatformBotTransferRepository(
+      fileService: BotTransferFileService(),
+    );
+
+    final document = await repository.importBot(dialogTitle: 'Import Bot');
+
+    expect(document?.name, 'Imported');
+    expect(filePicker.fileType, FileType.custom);
+    expect(filePicker.allowedExtensions, ['json']);
+    expect(filePicker.allowMultiple, isFalse);
+  });
+
+  test('Bot transfer repository maps malformed JSON to validation', () async {
+    final bytes = Uint8List.fromList(utf8.encode('{not json'));
+    filePicker.selectedFile = PlatformFile(
+      name: 'broken.json',
+      size: bytes.length,
+      bytes: bytes,
+    );
+    const repository = PlatformBotTransferRepository(
+      fileService: BotTransferFileService(),
+    );
+
+    expect(
+      () => repository.importBot(dialogTitle: 'Import Bot'),
+      throwsA(
+        isA<AppFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'bot_import_invalid',
+        ),
+      ),
+    );
+  });
+
+  test('Bot transfer repository rejects oversized documents', () async {
+    final bytes = Uint8List(PlatformBotTransferRepository.maxDocumentBytes + 1);
+    filePicker.selectedFile = PlatformFile(
+      name: 'oversized.json',
+      size: bytes.length,
+      bytes: bytes,
+    );
+    const repository = PlatformBotTransferRepository(
+      fileService: BotTransferFileService(),
+    );
+
+    expect(
+      () => repository.importBot(dialogTitle: 'Import Bot'),
+      throwsA(
+        isA<AppFailure>().having(
+          (failure) => failure.code,
+          'code',
+          'bot_import_invalid',
+        ),
+      ),
+    );
   });
 }
 

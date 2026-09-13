@@ -215,7 +215,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("智能体头像"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage("无法导出智能体，请重试。"),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage("智能体已导出"),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "智能体导出文件始终不会包含 API 密钥。",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "无法导入智能体，请检查文件后重试。",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage("智能体已导入"),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "为保障安全，API 密钥不会被导入。使用此智能体前请重新配置密钥。",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("智能体信息"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -266,6 +278,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "当前自动整理会话上下文的状态。",
     ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage("配置 API 密钥"),
     "confirm": MessageLookupByLibrary.simpleMessage("确定"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("确认删除"),
@@ -404,6 +417,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "下一次请求的预计 Token 数与可用输入预算。",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("执行状态"),
+    "exportBot": MessageLookupByLibrary.simpleMessage("导出智能体"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage("请输入反馈内容"),
     "feedbackDescription": MessageLookupByLibrary.simpleMessage(
       "请告诉我们您的想法、问题或建议，帮助我们改进应用",
@@ -459,6 +473,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "imageSavedToGallery": MessageLookupByLibrary.simpleMessage("图片已保存到相册"),
     "imageSize": MessageLookupByLibrary.simpleMessage("图像尺寸"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("图像风格"),
+    "importBot": MessageLookupByLibrary.simpleMessage("导入智能体"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage("导入技能文件夹"),
     "importSkillZip": MessageLookupByLibrary.simpleMessage("导入技能 ZIP"),
     "importingSkill": MessageLookupByLibrary.simpleMessage("正在导入技能…"),
@@ -468,6 +483,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "发送给模型的 Token，包括会话上下文和指令。",
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("安装更新"),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "此文件不是有效的 Stars 智能体导出文件。",
+    ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage("生成的摘要未通过校验"),
     "itemCount": m24,
     "jumpToLatest": MessageLookupByLibrary.simpleMessage("回到最新"),

@@ -101,6 +101,16 @@
         "description": "Bot hinzufügen"
     },
     "edit": "Bearbeiten",
+    "importBot": "Bot importieren",
+    "exportBot": "Bot exportieren",
+    "botImportSucceeded": "Bot importiert",
+    "botExportSucceeded": "Bot exportiert",
+    "botImportedWithoutApiKey": "API-Schlüssel werden aus Sicherheitsgründen nicht importiert. Füge vor der Nutzung einen Schlüssel hinzu.",
+    "botExportedWithoutSecrets": "API-Schlüssel sind niemals in Bot-Exportdateien enthalten.",
+    "configureApiKey": "API-Schlüssel einrichten",
+    "invalidBotExport": "Diese Datei ist kein gültiger Stars-Bot-Export.",
+    "botImportFailed": "Der Bot konnte nicht importiert werden. Prüfe die Datei und versuche es erneut.",
+    "botExportFailed": "Der Bot konnte nicht exportiert werden. Versuche es erneut.",
     "editBot": "Bot bearbeiten",
     "@editBot": {
         "description": "Bot bearbeiten"
