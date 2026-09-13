@@ -103,6 +103,7 @@
     "edit": "編集",
     "importBot": "ボットをインポート",
     "exportBot": "ボットをエクスポート",
+    "exportAction": "エクスポート",
     "botImportSucceeded": "ボットをインポートしました",
     "botExportSucceeded": "ボットをエクスポートしました",
     "botImportedWithoutApiKey": "安全のため API キーはインポートされません。このボットを使用する前にキーを設定してください。",

@@ -103,6 +103,7 @@
     "edit": "संपादित करें",
     "importBot": "बॉट आयात करें",
     "exportBot": "बॉट निर्यात करें",
+    "exportAction": "निर्यात करें",
     "botImportSucceeded": "बॉट आयात हो गया",
     "botExportSucceeded": "बॉट निर्यात हो गया",
     "botImportedWithoutApiKey": "सुरक्षा के लिए API कुंजियाँ आयात नहीं की जातीं। इस बॉट का उपयोग करने से पहले कुंजी जोड़ें।",

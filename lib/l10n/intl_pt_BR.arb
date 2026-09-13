@@ -103,6 +103,7 @@
     "edit": "Editar",
     "importBot": "Importar bot",
     "exportBot": "Exportar bot",
+    "exportAction": "Exportar",
     "botImportSucceeded": "Bot importado",
     "botExportSucceeded": "Bot exportado",
     "botImportedWithoutApiKey": "Por segurança, as chaves de API não são importadas. Adicione uma antes de usar este bot.",

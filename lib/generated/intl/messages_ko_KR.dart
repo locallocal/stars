@@ -448,6 +448,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "다음 요청의 예상 토큰 수와 사용 가능한 입력 예산입니다.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("실행 상태"),
+    "exportAction": MessageLookupByLibrary.simpleMessage("내보내기"),
     "exportBot": MessageLookupByLibrary.simpleMessage("봇 내보내기"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "피드백 내용을 입력해 주세요",

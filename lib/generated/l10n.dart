@@ -289,6 +289,16 @@ class S {
     );
   }
 
+  /// `Export`
+  String get exportAction {
+    return Intl.message(
+      'Export',
+      name: 'exportAction',
+      desc: 'Generic export menu action',
+      args: [],
+    );
+  }
+
   /// `Bot imported`
   String get botImportSucceeded {
     return Intl.message(

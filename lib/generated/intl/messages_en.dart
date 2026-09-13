@@ -529,6 +529,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Estimated tokens for the next request compared with the available input budget.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("Execution status"),
+    "exportAction": MessageLookupByLibrary.simpleMessage("Export"),
     "exportBot": MessageLookupByLibrary.simpleMessage("Export Bot"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Please enter feedback content",

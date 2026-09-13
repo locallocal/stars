@@ -454,6 +454,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "次回リクエストの推定トークン数と利用可能な入力予算です。",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("実行状態"),
+    "exportAction": MessageLookupByLibrary.simpleMessage("エクスポート"),
     "exportBot": MessageLookupByLibrary.simpleMessage("ボットをエクスポート"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "フィードバック内容を入力してください",

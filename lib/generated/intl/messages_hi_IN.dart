@@ -531,6 +531,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "अगले अनुरोध के अनुमानित टोकन और उपलब्ध इनपुट बजट की तुलना।",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("निष्पादन स्थिति"),
+    "exportAction": MessageLookupByLibrary.simpleMessage("निर्यात करें"),
     "exportBot": MessageLookupByLibrary.simpleMessage("बॉट निर्यात करें"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "कृपया प्रतिक्रिया सामग्री दर्ज करें",
