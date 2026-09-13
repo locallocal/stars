@@ -201,10 +201,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "시스템 프롬프트",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars에서 관리합니다. 켜면 아래 내용을 대화 모델 요청에 주입하고, 끄면 주입하지 않습니다. 필요한 런타임 대화 컨텍스트에는 영향을 주지 않습니다. 내용은 편집할 수 없습니다.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -227,7 +226,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("봇 아바타"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "봇을 내보낼 수 없습니다. 다시 시도하세요.",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage("봇을 내보냈습니다"),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "봇 내보내기 파일에는 API 키가 포함되지 않습니다.",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "봇을 가져올 수 없습니다. 파일을 확인한 후 다시 시도하세요.",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage("봇을 가져왔습니다"),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "보안을 위해 API 키는 가져오지 않습니다. 이 봇을 사용하기 전에 키를 추가하세요.",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -288,6 +301,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "대화 컨텍스트 자동 압축의 현재 상태입니다.",
     ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage("API 키 설정"),
     "confirm": MessageLookupByLibrary.simpleMessage("확인"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("삭제 확인"),
@@ -434,6 +448,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "다음 요청의 예상 토큰 수와 사용 가능한 입력 예산입니다.",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("실행 상태"),
+    "exportBot": MessageLookupByLibrary.simpleMessage("봇 내보내기"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "피드백 내용을 입력해 주세요",
     ),
@@ -505,6 +520,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("봇 가져오기"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage("스킬 폴더 가져오기"),
     "importSkillZip": MessageLookupByLibrary.simpleMessage("스킬 ZIP 가져오기"),
     "importingSkill": MessageLookupByLibrary.simpleMessage("스킬 가져오는 중…"),
@@ -516,6 +532,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "대화 컨텍스트와 지침을 포함하여 모델에 전송된 토큰입니다.",
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage("업데이트 설치"),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "유효한 Stars 봇 내보내기 파일이 아닙니다.",
+    ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "생성된 요약이 검증을 통과하지 못했습니다",
     ),

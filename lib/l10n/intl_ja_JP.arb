@@ -101,6 +101,16 @@
         "description": "ボットを追加"
     },
     "edit": "編集",
+    "importBot": "ボットをインポート",
+    "exportBot": "ボットをエクスポート",
+    "botImportSucceeded": "ボットをインポートしました",
+    "botExportSucceeded": "ボットをエクスポートしました",
+    "botImportedWithoutApiKey": "安全のため API キーはインポートされません。このボットを使用する前にキーを設定してください。",
+    "botExportedWithoutSecrets": "ボットのエクスポートファイルに API キーが含まれることはありません。",
+    "configureApiKey": "API キーを設定",
+    "invalidBotExport": "このファイルは有効な Stars ボットのエクスポートではありません。",
+    "botImportFailed": "ボットをインポートできませんでした。ファイルを確認して再試行してください。",
+    "botExportFailed": "ボットをエクスポートできませんでした。再試行してください。",
     "editBot": "ボットを編集",
     "@editBot": {
         "description": "ボットを編集"

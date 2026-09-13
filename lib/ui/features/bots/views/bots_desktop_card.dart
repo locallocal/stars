@@ -8,6 +8,7 @@ class _DesktopBotCard extends StatefulWidget {
     required this.onOpen,
     required this.onEdit,
     required this.onStartChat,
+    required this.onExport,
     required this.onDelete,
   });
 
@@ -17,6 +18,7 @@ class _DesktopBotCard extends StatefulWidget {
   final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onStartChat;
+  final VoidCallback onExport;
   final VoidCallback onDelete;
 
   @override
@@ -112,6 +114,16 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                     leading: const Icon(LucideIcons.pencil, size: 16),
                     child: Text(S.of(context).edit),
                   ),
+                  ShadButton.ghost(
+                    key: ValueKey<String>(
+                      'desktop-bot-export-${widget.bot.id}',
+                    ),
+                    size: ShadButtonSize.sm,
+                    onPressed: () => _invokeMenuAction(widget.onExport),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(LucideIcons.download, size: 16),
+                    child: Text(S.of(context).exportBot),
+                  ),
                   ShadButton.raw(
                     variant: ShadButtonVariant.ghost,
                     size: ShadButtonSize.sm,
@@ -169,6 +181,11 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
               leading: const Icon(LucideIcons.pencil, size: 16),
               onPressed: widget.onEdit,
               child: Text(S.of(context).editBot),
+            ),
+            ShadContextMenuItem(
+              leading: const Icon(LucideIcons.download, size: 16),
+              onPressed: widget.onExport,
+              child: Text(S.of(context).exportBot),
             ),
             ShadContextMenuItem(
               leading: const Icon(LucideIcons.trash2, size: 16),

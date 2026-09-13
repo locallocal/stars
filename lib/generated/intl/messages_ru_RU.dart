@@ -224,10 +224,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Системный промпт",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Управляется Stars. Когда включено, содержимое ниже добавляется к запросам модели в беседе; когда выключено, оно не добавляется. Необходимый контекст выполнения беседы не затрагивается. Содержимое нельзя редактировать.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Управляется Stars. Когда включено, содержимое ниже добавляется к запросам модели в беседе; когда выключено, оно не добавляется. Необходимый контекст выполнения беседы не затрагивается. Содержимое нельзя редактировать.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -256,7 +255,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Аватар бота"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось экспортировать бота. Повторите попытку.",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "Бот экспортирован",
+    ),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "Ключи API никогда не включаются в файлы экспорта ботов.",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось импортировать бота. Проверьте файл и повторите попытку.",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "Бот импортирован",
+    ),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "В целях безопасности ключи API не импортируются. Добавьте ключ перед использованием бота.",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -334,6 +351,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Текущее состояние автоматического сжатия контекста.",
+    ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage(
+      "Настроить ключ API",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Подтвердить"),
     "confirmClearChat": m8,
@@ -527,6 +547,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "executionStatus": MessageLookupByLibrary.simpleMessage(
       "Статус выполнения",
     ),
+    "exportBot": MessageLookupByLibrary.simpleMessage("Экспортировать бота"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Пожалуйста, введите содержание отзыва",
     ),
@@ -612,6 +633,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("Импортировать бота"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage(
       "Импортировать папку навыка",
     ),
@@ -628,6 +650,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Установить обновление",
+    ),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "Этот файл не является допустимым экспортом бота Stars.",
     ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "Созданная сводка не прошла проверку",

@@ -1,9 +1,9 @@
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/bot_transfer_repository.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -636,11 +636,13 @@ void main() {
       modifyTimestamp: DateTime(2026),
     );
     final botRepository = BotCardTestBotRepository([bot]);
+    final transferRepository = _WidgetBotTransferRepository();
     final viewModel = BotListViewModel(
       botRepository: botRepository,
       createChat: CreateChat(chatRepository: BotCardTestChatRepository()),
       aiProviderRepository: UnusedAiProviderRepository(),
       attachmentRepository: UnusedAttachmentRepository(),
+      botTransferRepository: transferRepository,
     );
     addTearDown(viewModel.dispose);
     await viewModel.load();
@@ -695,6 +697,9 @@ void main() {
       final detailsAction = find.byKey(
         const ValueKey<String>('desktop-bot-details-bot-menu'),
       );
+      final exportAction = find.byKey(
+        const ValueKey<String>('desktop-bot-export-bot-menu'),
+      );
       final pageContext = tester.element(find.byType(ContactsPage));
       final startChatLabel = desktopConversationText(
         pageContext,
@@ -706,6 +711,7 @@ void main() {
       );
       expect(actionMenu, findsOneWidget);
       expect(detailsAction, findsOneWidget);
+      expect(exportAction, findsOneWidget);
       expect(startChatAction, findsOneWidget);
       expect(
         find.descendant(
@@ -721,6 +727,7 @@ void main() {
       expect(find.text(startChatLabel), findsOneWidget);
       expect(find.text('详情'), findsOneWidget);
       expect(find.text('编辑'), findsOneWidget);
+      expect(find.text('导出智能体'), findsOneWidget);
       expect(find.text('删除'), findsOneWidget);
       expect(
         tester.getCenter(startChatAction).dy,
@@ -728,9 +735,16 @@ void main() {
       );
       expect(
         find.descendant(of: actionMenu, matching: find.byType(ShadButton)),
-        findsNWidgets(4),
+        findsNWidgets(5),
       );
 
+      await tester.tap(exportAction);
+      await tester.pumpAndSettle();
+      expect(transferRepository.exportedDocument?.name, bot.name);
+      expect(actionMenu, findsNothing);
+
+      await tester.tap(menuButton);
+      await tester.pumpAndSettle();
       await tester.tap(detailsAction);
       await tester.pumpAndSettle();
       expect(selectedDetailBot?.id, bot.id);
@@ -752,6 +766,58 @@ void main() {
       await tester.tap(find.text('删除'));
       await tester.pumpAndSettle();
       expect(botRepository.deletedBotId, bot.id);
+    });
+  });
+
+  testWidgets('desktop import action creates a Bot without an API key', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 800);
+    addTearDown(tester.view.reset);
+    final botRepository = BotCardTestBotRepository([]);
+    final transferRepository = _WidgetBotTransferRepository(
+      importedDocument: BotExportDocument(
+        name: '导入智能体',
+        provider: 'OpenAI',
+        baseUrl: 'https://example.invalid',
+        apiType: Bot.apiTypeOpenAI,
+        model: 'gpt-test',
+        systemPrompt: 'Be helpful.',
+      ),
+    );
+    final viewModel = BotListViewModel(
+      botRepository: botRepository,
+      createChat: CreateChat(chatRepository: BotCardTestChatRepository()),
+      aiProviderRepository: UnusedAiProviderRepository(),
+      attachmentRepository: UnusedAttachmentRepository(),
+      botTransferRepository: transferRepository,
+    );
+    addTearDown(viewModel.dispose);
+    await viewModel.load();
+
+    await withDesktopPlatform(() async {
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (context) => Scaffold(
+                body: ContactsPage(viewModel: viewModel, onBotSelected: (_) {}),
+              ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('desktop-import-bot')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(botRepository.addedBot?.name, '导入智能体');
+      expect(botRepository.addedBot?.apiKey, isEmpty);
+      expect(botRepository.addedBot?.avatar, isEmpty);
+      expect(find.text('智能体已导入'), findsOneWidget);
+      expect(find.text('配置 API 密钥'), findsOneWidget);
     });
   });
 
@@ -858,5 +924,25 @@ void main() {
       semantics.dispose();
     }
   });
+}
 
+final class _WidgetBotTransferRepository implements BotTransferRepository {
+  _WidgetBotTransferRepository({this.importedDocument});
+
+  final BotExportDocument? importedDocument;
+  BotExportDocument? exportedDocument;
+
+  @override
+  Future<BotExportResult> exportBot(
+    BotExportDocument document, {
+    required String suggestedFileName,
+    required String dialogTitle,
+  }) async {
+    exportedDocument = document;
+    return BotExportResult.saved;
+  }
+
+  @override
+  Future<BotExportDocument?> importBot({required String dialogTitle}) async =>
+      importedDocument;
 }

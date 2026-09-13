@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/bot_transfer_repository.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -167,6 +169,43 @@ class ContactsPageState extends State<ContactsPage> {
     }
   }
 
+  Future<void> _exportBot(Bot bot) async {
+    try {
+      final result = await widget.viewModel.exportBot(
+        bot,
+        dialogTitle: S.of(context).exportBot,
+      );
+      if (!mounted || result != BotExportResult.saved) return;
+      showStarsNotice(
+        context,
+        S.of(context).botExportSucceeded,
+        description: S.of(context).botExportedWithoutSecrets,
+        tone: StarsNoticeTone.success,
+      );
+    } on Object {
+      // The shared inline error alert renders the product-safe failure.
+    }
+  }
+
+  Future<void> _importBot() async {
+    try {
+      final importedBot = await widget.viewModel.importBot(
+        dialogTitle: S.of(context).importBot,
+      );
+      if (!mounted || importedBot == null) return;
+      showStarsNotice(
+        context,
+        S.of(context).botImportSucceeded,
+        description: S.of(context).botImportedWithoutApiKey,
+        tone: StarsNoticeTone.success,
+        actionLabel: S.of(context).configureApiKey,
+        onAction: () => _editBot(importedBot),
+      );
+    } on Object {
+      // The shared inline error alert renders the product-safe failure.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -208,6 +247,22 @@ class ContactsPageState extends State<ContactsPage> {
           surfaceTintColor: Colors.transparent,
           actions: [
             IconButton(
+              key: const ValueKey<String>('mobile-import-bot'),
+              tooltip: S.of(context).importBot,
+              style: IconButton.styleFrom(
+                minimumSize: const Size.square(48),
+                maximumSize: const Size.square(48),
+              ),
+              icon: Icon(
+                LucideIcons.fileUp,
+                semanticLabel: S.of(context).importBot,
+              ),
+              onPressed:
+                  widget.viewModel.commandState.isSubmitting
+                      ? null
+                      : _importBot,
+            ),
+            IconButton(
               tooltip: S.of(context).addBot,
               style: IconButton.styleFrom(
                 minimumSize: const Size.square(48),
@@ -217,7 +272,10 @@ class ContactsPageState extends State<ContactsPage> {
                 Icons.add_circle_rounded,
                 semanticLabel: S.of(context).addBot,
               ),
-              onPressed: _openAddBotPage,
+              onPressed:
+                  widget.viewModel.commandState.isSubmitting
+                      ? null
+                      : _openAddBotPage,
             ),
           ],
         ),
@@ -234,10 +292,26 @@ class ContactsPageState extends State<ContactsPage> {
       contentMaxWidth: StarsDesktopThemeSpec.formContentMaxWidth,
       padding: StarsDesktopThemeSpec.formPagePadding,
       backgroundColor: StarsDesktopThemeSpec.workspaceSurface(context),
-      action: ShadButton(
-        onPressed: _openAddBotPage,
-        leading: const Icon(LucideIcons.plus, size: 16),
-        child: Text(S.of(context).addBot),
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ShadButton.outline(
+            key: const ValueKey<String>('desktop-import-bot'),
+            onPressed:
+                widget.viewModel.commandState.isSubmitting ? null : _importBot,
+            leading: const Icon(LucideIcons.fileUp, size: 16),
+            child: Text(S.of(context).importBot),
+          ),
+          const SizedBox(width: 8),
+          ShadButton(
+            onPressed:
+                widget.viewModel.commandState.isSubmitting
+                    ? null
+                    : _openAddBotPage,
+            leading: const Icon(LucideIcons.plus, size: 16),
+            child: Text(S.of(context).addBot),
+          ),
+        ],
       ),
       child: body,
     );
@@ -281,6 +355,7 @@ class ContactsPageState extends State<ContactsPage> {
               onOpen: () => _openBotDetails(bot),
               onEdit: () => _editBot(bot),
               onStartChat: () => _startChat(bot),
+              onExport: () => _exportBot(bot),
               onDelete: () => _deleteBot(bot),
             );
           },
@@ -332,6 +407,12 @@ class ContactsPageState extends State<ContactsPage> {
                 backgroundColor: Theme.of(context).colorScheme.tertiary,
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
                 child: Icon(Icons.edit_square, size: 18),
+              ),
+              CustomSlidableAction(
+                onPressed: (_) => unawaited(_exportBot(bot)),
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                child: const Icon(LucideIcons.download, size: 18),
               ),
               CustomSlidableAction(
                 onPressed: (_) => _deleteBot(bot),

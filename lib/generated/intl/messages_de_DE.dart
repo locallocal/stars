@@ -221,10 +221,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "System-Prompt",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Wird von Stars verwaltet. Wenn aktiviert, wird der folgende Inhalt zu Modellanfragen der Unterhaltung hinzugefügt; wenn deaktiviert, wird er weggelassen. Erforderlicher Laufzeitkontext bleibt davon unberührt. Der Inhalt kann nicht bearbeitet werden.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -253,7 +252,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Bot-Avatar"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "Der Bot konnte nicht exportiert werden. Versuche es erneut.",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "Bot exportiert",
+    ),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "API-Schlüssel sind niemals in Bot-Exportdateien enthalten.",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Der Bot konnte nicht importiert werden. Prüfe die Datei und versuche es erneut.",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "Bot importiert",
+    ),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "API-Schlüssel werden aus Sicherheitsgründen nicht importiert. Füge vor der Nutzung einen Schlüssel hinzu.",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -332,6 +349,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Aktueller Status der automatischen Kontextkomprimierung.",
     ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage(
+      "API-Schlüssel einrichten",
+    ),
     "confirm": MessageLookupByLibrary.simpleMessage("Bestätigen"),
     "confirmClearChat": m8,
     "confirmDelete": MessageLookupByLibrary.simpleMessage("Löschen bestätigen"),
@@ -368,10 +388,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationDirectoryEmpty": MessageLookupByLibrary.simpleMessage(
       "This conversation directory is empty.",
     ),
-    "conversationFileSearchEmptyDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Versuchen Sie einen anderen Datei- oder Ordnernamen oder löschen Sie die Suche.",
-        ),
+    "conversationFileSearchEmptyDescription": MessageLookupByLibrary.simpleMessage(
+      "Versuchen Sie einen anderen Datei- oder Ordnernamen oder löschen Sie die Suche.",
+    ),
     "conversationFileSearchScope": MessageLookupByLibrary.simpleMessage(
       "Die Suche berücksichtigt Datei- und Ordnernamen im aktuellen Verzeichnis.",
     ),
@@ -530,6 +549,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "executionStatus": MessageLookupByLibrary.simpleMessage(
       "Ausführungsstatus",
     ),
+    "exportBot": MessageLookupByLibrary.simpleMessage("Bot exportieren"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Bitte geben Sie Feedback-Inhalt ein",
     ),
@@ -615,6 +635,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("Bot importieren"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage(
       "Fähigkeitsordner importieren",
     ),
@@ -633,6 +654,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Aktualisierung installieren",
+    ),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "Diese Datei ist kein gültiger Stars-Bot-Export.",
     ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "Die Zusammenfassung hat die Prüfung nicht bestanden",

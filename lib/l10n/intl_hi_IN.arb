@@ -101,6 +101,16 @@
         "description": "बॉट जोड़ें"
     },
     "edit": "संपादित करें",
+    "importBot": "बॉट आयात करें",
+    "exportBot": "बॉट निर्यात करें",
+    "botImportSucceeded": "बॉट आयात हो गया",
+    "botExportSucceeded": "बॉट निर्यात हो गया",
+    "botImportedWithoutApiKey": "सुरक्षा के लिए API कुंजियाँ आयात नहीं की जातीं। इस बॉट का उपयोग करने से पहले कुंजी जोड़ें।",
+    "botExportedWithoutSecrets": "बॉट निर्यात फ़ाइलों में API कुंजियाँ कभी शामिल नहीं की जातीं।",
+    "configureApiKey": "API कुंजी कॉन्फ़िगर करें",
+    "invalidBotExport": "यह मान्य Stars बॉट निर्यात फ़ाइल नहीं है।",
+    "botImportFailed": "बॉट आयात नहीं किया जा सका। फ़ाइल जाँचें और फिर प्रयास करें।",
+    "botExportFailed": "बॉट निर्यात नहीं किया जा सका। फिर प्रयास करें।",
     "editBot": "बॉट संपादित करें",
     "@editBot": {
         "description": "बॉट संपादित करें"

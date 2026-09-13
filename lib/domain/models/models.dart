@@ -1,5 +1,6 @@
 // Public domain model surface.
 export 'bot.dart';
+export 'bot_export_document.dart';
 export 'app_failure.dart';
 export 'ai_model_info.dart';
 export 'chat.dart';

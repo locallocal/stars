@@ -221,10 +221,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "Prompt do sistema",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Gerenciado pelo Stars. Quando ativado, o conteúdo abaixo é adicionado às solicitações do modelo da conversa; quando desativado, ele é omitido. O contexto de execução necessário não é afetado. O conteúdo não pode ser editado.",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Gerenciado pelo Stars. Quando ativado, o conteúdo abaixo é adicionado às solicitações do modelo da conversa; quando desativado, ele é omitido. O contexto de execução necessário não é afetado. O conteúdo não pode ser editado.",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -253,7 +252,21 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("Avatar do bot"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "Não foi possível exportar o bot. Tente novamente.",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage("Bot exportado"),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "As chaves de API nunca são incluídas nos arquivos de exportação de bots.",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "Não foi possível importar o bot. Verifique o arquivo e tente novamente.",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage("Bot importado"),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "Por segurança, as chaves de API não são importadas. Adicione uma antes de usar este bot.",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -333,6 +346,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "Estado atual da compactação automática do contexto.",
+    ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage(
+      "Configurar chave de API",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("Confirmar"),
     "confirmClearChat": m8,
@@ -530,6 +546,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "executionStatus": MessageLookupByLibrary.simpleMessage(
       "Status da execução",
     ),
+    "exportBot": MessageLookupByLibrary.simpleMessage("Exportar bot"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Por favor, digite o conteúdo do feedback",
     ),
@@ -613,6 +630,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("Importar bot"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage(
       "Importar pasta de habilidades",
     ),
@@ -631,6 +649,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "Instalar atualização",
+    ),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "Este arquivo não é uma exportação válida de bot do Stars.",
     ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "O resumo gerado não passou na validação",

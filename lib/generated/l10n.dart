@@ -1,7 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import 'intl/messages_all.dart';
 
 // **************************************************************************
@@ -268,6 +267,106 @@ class S {
   /// `Add Bot`
   String get addBot {
     return Intl.message('Add Bot', name: 'addBot', desc: 'Add bot', args: []);
+  }
+
+  /// `Import Bot`
+  String get importBot {
+    return Intl.message(
+      'Import Bot',
+      name: 'importBot',
+      desc: 'Import a Bot from JSON',
+      args: [],
+    );
+  }
+
+  /// `Export Bot`
+  String get exportBot {
+    return Intl.message(
+      'Export Bot',
+      name: 'exportBot',
+      desc: 'Export a Bot as JSON',
+      args: [],
+    );
+  }
+
+  /// `Bot imported`
+  String get botImportSucceeded {
+    return Intl.message(
+      'Bot imported',
+      name: 'botImportSucceeded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Bot exported`
+  String get botExportSucceeded {
+    return Intl.message(
+      'Bot exported',
+      name: 'botExportSucceeded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `For your security, API keys are never imported. Add a key before using this Bot.`
+  String get botImportedWithoutApiKey {
+    return Intl.message(
+      'For your security, API keys are never imported. Add a key before using this Bot.',
+      name: 'botImportedWithoutApiKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `API keys are never included in Bot export files.`
+  String get botExportedWithoutSecrets {
+    return Intl.message(
+      'API keys are never included in Bot export files.',
+      name: 'botExportedWithoutSecrets',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Configure API key`
+  String get configureApiKey {
+    return Intl.message(
+      'Configure API key',
+      name: 'configureApiKey',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This file is not a valid Stars Bot export.`
+  String get invalidBotExport {
+    return Intl.message(
+      'This file is not a valid Stars Bot export.',
+      name: 'invalidBotExport',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The Bot could not be imported. Check the file and try again.`
+  String get botImportFailed {
+    return Intl.message(
+      'The Bot could not be imported. Check the file and try again.',
+      name: 'botImportFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The Bot could not be exported. Try again.`
+  String get botExportFailed {
+    return Intl.message(
+      'The Bot could not be exported. Try again.',
+      name: 'botExportFailed',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Edit Bot`
@@ -1560,7 +1659,8 @@ class S {
     return Intl.message(
       'Generating…',
       name: 'generating',
-      desc: 'Disabled primary action label while a request is running and cannot be cancelled',
+      desc:
+          'Disabled primary action label while a request is running and cannot be cancelled',
       args: [],
     );
   }
@@ -5071,7 +5171,8 @@ class S {
     return Intl.message(
       'Starting…',
       name: 'startupStarting',
-      desc: 'Status shown while Stars loads the profile before the main application starts',
+      desc:
+          'Status shown while Stars loads the profile before the main application starts',
       args: [],
     );
   }
@@ -5111,7 +5212,8 @@ class S {
     return Intl.message(
       'This database was created by a newer version of Stars. Update the app before opening it.',
       name: 'databaseDowngradeNotSupported',
-      desc: 'Safe error shown when the local database is newer than the application',
+      desc:
+          'Safe error shown when the local database is newer than the application',
       args: [],
     );
   }
@@ -5121,7 +5223,8 @@ class S {
     return Intl.message(
       'The database integrity check failed, and recovery from this version\'s backup was unsuccessful.',
       name: 'databaseRecoveryFailed',
-      desc: 'Safe error shown when database validation and backup recovery both fail',
+      desc:
+          'Safe error shown when database validation and backup recovery both fail',
       args: [],
     );
   }
@@ -5369,7 +5472,8 @@ class S {
     return Intl.message(
       'I can\'t give a reliable factual answer to “$question”, so I won\'t guess.\n\nVerification status: $reason\n\nYou can review the evidence details, provide a reliable source, or ask me to verify again.',
       name: 'strictGroundingUnableToVerifyForQuestion',
-      desc: 'Safe strict-mode refusal tailored to the current user question and verification reason',
+      desc:
+          'Safe strict-mode refusal tailored to the current user question and verification reason',
       args: [question, reason],
     );
   }
@@ -5509,7 +5613,8 @@ class S {
     return Intl.message(
       '$status. $reason',
       name: 'answerTrustSemanticLabel',
-      desc: 'Accessible label combining an assistant response trust status and its reason',
+      desc:
+          'Accessible label combining an assistant response trust status and its reason',
       args: [status, reason],
     );
   }

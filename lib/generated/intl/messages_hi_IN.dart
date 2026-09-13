@@ -216,10 +216,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "applicationInjectedPrompt": MessageLookupByLibrary.simpleMessage(
       "सिस्टम प्रॉम्प्ट",
     ),
-    "applicationInjectedPromptDescription":
-        MessageLookupByLibrary.simpleMessage(
-          "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
-        ),
+    "applicationInjectedPromptDescription": MessageLookupByLibrary.simpleMessage(
+      "Stars इसे प्रबंधित करता है। चालू होने पर नीचे की सामग्री बातचीत के मॉडल अनुरोधों में जोड़ी जाती है; बंद होने पर इसे नहीं जोड़ा जाता। आवश्यक रनटाइम बातचीत संदर्भ प्रभावित नहीं होता। सामग्री संपादित नहीं की जा सकती।",
+    ),
     "attachedFiles": MessageLookupByLibrary.simpleMessage("Attached Files"),
     "attachedImages": MessageLookupByLibrary.simpleMessage("Attached Images"),
     "attachments": MessageLookupByLibrary.simpleMessage("Attachments"),
@@ -244,7 +243,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "botAddedSuccess": m1,
     "botAvatar": MessageLookupByLibrary.simpleMessage("बॉट अवतार"),
     "botDeleted": m2,
+    "botExportFailed": MessageLookupByLibrary.simpleMessage(
+      "बॉट निर्यात नहीं किया जा सका। फिर प्रयास करें।",
+    ),
+    "botExportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "बॉट निर्यात हो गया",
+    ),
+    "botExportedWithoutSecrets": MessageLookupByLibrary.simpleMessage(
+      "बॉट निर्यात फ़ाइलों में API कुंजियाँ कभी शामिल नहीं की जातीं।",
+    ),
     "botGreeting": m3,
+    "botImportFailed": MessageLookupByLibrary.simpleMessage(
+      "बॉट आयात नहीं किया जा सका। फ़ाइल जाँचें और फिर प्रयास करें।",
+    ),
+    "botImportSucceeded": MessageLookupByLibrary.simpleMessage(
+      "बॉट आयात हो गया",
+    ),
+    "botImportedWithoutApiKey": MessageLookupByLibrary.simpleMessage(
+      "सुरक्षा के लिए API कुंजियाँ आयात नहीं की जातीं। इस बॉट का उपयोग करने से पहले कुंजी जोड़ें।",
+    ),
     "botInformation": MessageLookupByLibrary.simpleMessage("Bot Information"),
     "botIsTyping": m4,
     "botMcpToolsDescription": MessageLookupByLibrary.simpleMessage(
@@ -318,6 +335,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "compactionStatus": MessageLookupByLibrary.simpleMessage("संपीड़न स्थिति"),
     "compactionStatusDescription": MessageLookupByLibrary.simpleMessage(
       "बातचीत संदर्भ के स्वचालित संक्षेपण की वर्तमान स्थिति।",
+    ),
+    "configureApiKey": MessageLookupByLibrary.simpleMessage(
+      "API कुंजी कॉन्फ़िगर करें",
     ),
     "confirm": MessageLookupByLibrary.simpleMessage("पुष्टि करें"),
     "confirmClearChat": m8,
@@ -511,6 +531,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "अगले अनुरोध के अनुमानित टोकन और उपलब्ध इनपुट बजट की तुलना।",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("निष्पादन स्थिति"),
+    "exportBot": MessageLookupByLibrary.simpleMessage("बॉट निर्यात करें"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "कृपया प्रतिक्रिया सामग्री दर्ज करें",
     ),
@@ -596,6 +617,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "imageSize": MessageLookupByLibrary.simpleMessage("Image Size"),
     "imageStyle": MessageLookupByLibrary.simpleMessage("Image Style"),
+    "importBot": MessageLookupByLibrary.simpleMessage("बॉट आयात करें"),
     "importSkillFolder": MessageLookupByLibrary.simpleMessage(
       "कौशल फ़ोल्डर आयात करें",
     ),
@@ -614,6 +636,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "installSkillUpdate": MessageLookupByLibrary.simpleMessage(
       "अपडेट इंस्टॉल करें",
+    ),
+    "invalidBotExport": MessageLookupByLibrary.simpleMessage(
+      "यह मान्य Stars बॉट निर्यात फ़ाइल नहीं है।",
     ),
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "सारांश सत्यापन में विफल रहा",

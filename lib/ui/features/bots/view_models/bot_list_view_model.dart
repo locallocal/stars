@@ -6,6 +6,7 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
+import 'package:stars/domain/repositories/bot_transfer_repository.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -35,6 +36,9 @@ class BotCardMetrics {
 class BotListViewModel extends ChangeNotifier {
   static final RegExp _searchWhitespace = RegExp(r'\s+');
   static final RegExp _searchSeparators = RegExp(r'[\s\-_.:/]+');
+  static final RegExp _unsafeFileNameCharacters = RegExp(
+    r'[<>:"/\\|?*\x00-\x1F]',
+  );
 
   BotListViewModel({
     required BotRepository botRepository,
@@ -47,13 +51,17 @@ class BotListViewModel extends ChangeNotifier {
     CreateBot? createBot,
     UpdateBot? updateBot,
     DeleteBot? deleteBot,
+    BotTransferRepository? botTransferRepository,
+    DateTime Function()? clock,
   }) : _botRepository = botRepository,
        _createChat = createChat,
        _aiProviderRepository = aiProviderRepository,
        _attachmentRepository = attachmentRepository,
        _botSkillBindingRepository = botSkillBindingRepository,
        _messageRepository = messageRepository,
-       _mcpServerRepository = mcpServerRepository {
+       _mcpServerRepository = mcpServerRepository,
+       _botTransferRepository = botTransferRepository,
+       _clock = clock ?? DateTime.now {
     _createBot =
         createBot ??
         CreateBot(
@@ -105,6 +113,8 @@ class BotListViewModel extends ChangeNotifier {
   final BotSkillBindingRepository? _botSkillBindingRepository;
   final MessageRepository? _messageRepository;
   final McpServerRepository? _mcpServerRepository;
+  final BotTransferRepository? _botTransferRepository;
+  final DateTime Function() _clock;
   late final CreateBot _createBot;
   late final UpdateBot _updateBot;
   late final DeleteBot _deleteBot;
@@ -199,16 +209,62 @@ class BotListViewModel extends ChangeNotifier {
   Future<void> deleteBot(String id) =>
       _runMutation('bot_delete_failed', () => _deleteBot(id));
 
-  Future<void> _runMutation(
+  Future<BotExportResult> exportBot(Bot bot, {required String dialogTitle}) =>
+      _runMutation('bot_export_failed', () {
+        final repository = _requireTransferRepository();
+        return repository.exportBot(
+          BotExportDocument.fromBot(bot),
+          suggestedFileName: _suggestedExportFileName(bot.name),
+          dialogTitle: dialogTitle,
+        );
+      });
+
+  Future<Bot?> importBot({required String dialogTitle}) =>
+      _runMutation('bot_import_failed', () async {
+        final document = await _requireTransferRepository().importBot(
+          dialogTitle: dialogTitle,
+        );
+        if (document == null) return null;
+        final timestamp = _clock();
+        final bot = document.toImportedBot(
+          id: 'bot_${timestamp.microsecondsSinceEpoch}',
+          timestamp: timestamp,
+        );
+        await _createBot(bot);
+        return bot;
+      });
+
+  BotTransferRepository _requireTransferRepository() {
+    final repository = _botTransferRepository;
+    if (repository == null) {
+      throw StateError('Bot transfer is not configured.');
+    }
+    return repository;
+  }
+
+  String _suggestedExportFileName(String botName) {
+    final safeName =
+        botName
+            .replaceAll(_unsafeFileNameCharacters, '-')
+            .replaceAll(_searchWhitespace, ' ')
+            .trim();
+    final baseName = safeName.isEmpty ? 'bot' : safeName;
+    final shortened =
+        baseName.length > 80 ? baseName.substring(0, 80) : baseName;
+    return '$shortened.stars-bot.json';
+  }
+
+  Future<T> _runMutation<T>(
     String failureCode,
-    Future<void> Function() operation,
+    Future<T> Function() operation,
   ) async {
     _error = null;
     _commandState = const CommandState.submitting();
     notifyListeners();
     try {
-      await operation();
+      final result = await operation();
       _commandState = const CommandState.succeeded();
+      return result;
     } on Object catch (error) {
       final failure = AppFailure.from(error, code: failureCode);
       _commandState = CommandState.failed(failure);

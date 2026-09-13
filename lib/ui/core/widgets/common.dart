@@ -20,6 +20,15 @@ String safeFailureMessage(BuildContext context, Object error) {
   if (failure.code == 'unsupported_image_format') {
     return S.of(context).unsupportedImageFormat;
   }
+  if (failure.code == 'bot_import_invalid') {
+    return S.of(context).invalidBotExport;
+  }
+  if (failure.code == 'bot_import_failed') {
+    return S.of(context).botImportFailed;
+  }
+  if (failure.code == 'bot_export_failed') {
+    return S.of(context).botExportFailed;
+  }
   return switch (failure.kind) {
     AppFailureKind.cancelled => S.of(context).replyCancelled,
     AppFailureKind.networkTimeout => S.of(context).statusTimedOut,
