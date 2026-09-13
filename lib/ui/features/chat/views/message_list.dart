@@ -250,13 +250,7 @@ class _MessageListState extends State<MessageList> {
             message,
             strictPresentation,
           );
-          final exportContent = _messageExportText(
-            context,
-            message,
-            displayedContent: displayedContent,
-            isCurrentUser: isMe,
-            strictMode: widget.strictGroundingMode,
-          );
+          final exportContent = isMe ? message.content : displayedContent;
           final bubble = _MessageBubble(
             isCurrentUser: isMe,
             isDesktop: isDesktop,

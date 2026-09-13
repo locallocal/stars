@@ -175,6 +175,20 @@ void main() => print('done');
     final scrollController = ScrollController();
     addTearDown(scrollController.dispose);
     final timestamp = DateTime(2026, 8, 11, 14, 5, 9);
+    final clipboardWrites = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') clipboardWrites.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
 
     await tester.pumpWidget(
       _desktopMessageListHarness(
@@ -240,7 +254,129 @@ void main() => print('done');
       find.byKey(const ValueKey<String>('desktop-message-copy-action')),
       findsOneWidget,
     );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('desktop-message-copy-action')),
+    );
+    await tester.pump();
+
+    expect(clipboardWrites, hasLength(1));
+    expect((clipboardWrites.single.arguments as Map)['text'], 'hover me');
   });
+
+  testWidgets(
+    'desktop hover metadata aligns the whole group with each message role',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(900, 800);
+      addTearDown(tester.view.reset);
+      final scrollController = ScrollController();
+      addTearDown(scrollController.dispose);
+
+      await tester.pumpWidget(
+        _desktopMessageListHarness(
+          MessageList(
+            messages: [
+              Message(
+                messageId: 'assistant-alignment',
+                chatId: 'chat-1',
+                botId: 'bot-1',
+                senderId: 'bot-1',
+                content: 'Assistant message',
+                timestamp: DateTime(2026, 8, 11, 14, 5, 9),
+              ),
+              Message(
+                messageId: 'user-alignment',
+                chatId: 'chat-1',
+                botId: 'bot-1',
+                senderId: 'me',
+                content: 'User message',
+                timestamp: DateTime(2026, 8, 11, 14, 6, 10),
+              ),
+            ],
+            scrollController: scrollController,
+            isStreaming: false,
+            streamingResponse: '',
+            currentUserId: 'me',
+            isDesktop: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final assistantMessage = find.byKey(
+        const ValueKey<String>('assistant-alignment'),
+      );
+      final userMessage = find.byKey(const ValueKey<String>('user-alignment'));
+      Finder messagePart(Finder message, String key) => find.descendant(
+        of: message,
+        matching: find.byKey(ValueKey<String>(key)),
+      );
+
+      final assistantRegion = messagePart(
+        assistantMessage,
+        'desktop-message-hover-region',
+      );
+      final assistantMetadata = messagePart(
+        assistantMessage,
+        'desktop-message-metadata',
+      );
+      final userRegion = messagePart(
+        userMessage,
+        'desktop-message-hover-region',
+      );
+      final userMetadata = messagePart(userMessage, 'desktop-message-metadata');
+
+      expect(
+        tester.getTopLeft(assistantMetadata).dx,
+        closeTo(tester.getTopLeft(assistantRegion).dx, 0.01),
+      );
+      expect(
+        tester.getBottomRight(userMetadata).dx,
+        closeTo(tester.getBottomRight(userRegion).dx, 0.01),
+      );
+
+      for (final message in [assistantMessage, userMessage]) {
+        final copyAction = messagePart(message, 'desktop-message-copy-action');
+        final timestamp = messagePart(message, 'desktop-message-timestamp');
+        expect(
+          tester.getBottomRight(copyAction).dx,
+          lessThan(tester.getTopLeft(timestamp).dx),
+        );
+      }
+
+      final assistantViewport = messagePart(
+        assistantMessage,
+        'desktop-message-viewport',
+      );
+      final userViewport = messagePart(userMessage, 'desktop-message-viewport');
+      expect(
+        tester.getTopLeft(assistantRegion).dx,
+        closeTo(tester.getTopLeft(assistantViewport).dx, 0.01),
+      );
+      expect(
+        tester.getBottomRight(userRegion).dx,
+        closeTo(tester.getBottomRight(userViewport).dx, 0.01),
+      );
+
+      final userTimestamp = messagePart(
+        userMessage,
+        'desktop-message-timestamp',
+      );
+      final userActionsOpacity = find.ancestor(
+        of: userTimestamp,
+        matching: find.byType(AnimatedOpacity),
+      );
+      expect(tester.widget<AnimatedOpacity>(userActionsOpacity).opacity, 0);
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(find.text('User message')));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<AnimatedOpacity>(userActionsOpacity).opacity, 1);
+    },
+  );
 
   testWidgets('desktop reasoning icon rotates while the model is thinking', (
     tester,
@@ -815,7 +951,8 @@ void main() => print('done');
       expect(copied, isNot(contains('Secret unverified factual answer.')));
       expect(copied, contains('这颗卫星什么时候发射？'));
       expect(copied, contains('此回复没有可用的工具证据'));
-      expect(copied, contains('可信状态: 未验证'));
+      expect(copied, isNot(contains('可信状态')));
+      expect(copied, isNot(contains('可信原因')));
     },
   );
 
