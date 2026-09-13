@@ -1,6 +1,8 @@
 # 用户消息到智能体回复的现有流转
 
-[返回文档导航](../README.md) | [事实依据与防幻觉协议](conversation-loop-grounding.md)
+[返回文档导航](../README.md) |
+[事实依据与防幻觉协议](conversation-loop-grounding.md) |
+[前台响应与后台任务目标模型](../specs/conversation-foreground-background-model.md)
 
 本文记录 Stars 当前实现中，用户在会话页提交一条消息之后，到助手回复完成并进入历史记录的
 完整运行路径。它用于定位职责、排查中断位置和约束后续重构；代码行为发生变化时应同步更新
