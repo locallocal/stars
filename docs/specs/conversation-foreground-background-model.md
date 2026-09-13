@@ -21,8 +21,8 @@
 | --- | --- | --- |
 | 1 | 智能体尽快响应 | 每条输入先走轻量前台分流；首个模型调用同时完成“直接回答或创建任务”的判断，避免额外分类调用 |
 | 2 | 简单问候和可直接回答的问题立即结束 | 生成一个完整助手消息，不创建后台任务，不进入工具循环 |
-| 3 | 工具型、长时间任务后台运行 | 先原子保存任务与受控回执，再由脱离页面生命周期的任务调度器执行；完成后一次性发送整体结果 |
-| 4 | 用户可询问任务状态 | 状态回答读取持久化任务事实，不要求运行中的模型记住状态，也不猜测进度 |
+| 3 | 工具型、长时间任务后台运行 | 先原子保存任务与结合上下文生成的友好回执，再由脱离页面生命周期的任务调度器执行；成功、失败或取消后都发送一条友好的整体终态回复 |
+| 4 | 用户可询问任务状态 | 后台任务及推进过程（包括计划步骤、工具调用、等待审批、恢复与验证）必须落库；查询时汇总这些持久化记录并向用户呈现真实进度 |
 | 5 | 长任务可使用现有验证模式且无整体超时 | 复用证据和可信性门禁；取消任务级墙钟超时，但保留单次操作超时、重试上限、无进展检测与用户取消 |
 | 6 | 按现有实现调整且不兼容历史数据 | 延续现有分层、工具与证据模型；采用新数据库结构，不迁移、不回填、不双读旧运行数据 |
 
@@ -75,11 +75,13 @@
   |        后台 ConversationTaskRunner
   |          规划 -> 工具 -> 证据 -> 验证 -> 合成
   |             |
-  |             `-----------------------> 一次性保存整体结果
+  |             `-----------------------> 一次性保存成功、失败或取消回复
   |
   `-- TaskStatusRequest
          -> 从 ConversationTaskRepository 读取事实
-         -> 生成确定性的状态回复或状态卡片
+         -> 立即生成确定性状态卡片
+         -> 模型基于同一摘要润色
+         -> 校验后发送友好、客观的状态回复
 ```
 
 该模型有三条互斥的前台处置结果：
@@ -102,6 +104,7 @@ final class BackgroundTaskPlan extends TurnDisposition {
     required this.steps,
     required this.allowedToolNames,
     required this.requiresVerification,
+    required this.acknowledgementDraft,
   });
 
   final String title;
@@ -109,6 +112,7 @@ final class BackgroundTaskPlan extends TurnDisposition {
   final List<TaskPlanStep> steps;
   final Set<String> allowedToolNames;
   final bool requiresVerification;
+  final String acknowledgementDraft;
 }
 
 final class TaskStatusRequest extends TurnDisposition {
@@ -130,6 +134,7 @@ Provider 不支持结构化输出时，Data 层适配器仍必须把结果解析
 
 - 能直接回答时返回 `DirectReply.content`；
 - 确实需要工具、审批、等待外部系统或多阶段验证时返回 `BackgroundTaskPlan`；
+- `BackgroundTaskPlan` 在同一次调用中提供结合上下文和任务内容生成的 `acknowledgementDraft`；
 - 用户询问已有任务时返回 `TaskStatusRequest`；
 - 返回的工具名必须是本轮准备结果中白名单的子集；
 - 路由 JSON 必须经过 schema、长度和枚举校验；
@@ -159,15 +164,30 @@ Provider 不支持结构化输出时，Data 层适配器仍必须把结果解析
 
 ### 4.3 后台任务回执
 
-模型只提供经过净化的任务标题和计划摘要，回执文本由应用本地化模板生成，例如：
+首个前台模型回合应根据用户当前请求、会话语言、表达语气、任务标题和任务内容，同时生成自然、
+友好的回执草稿，不增加第二次模型调用。例如用户要求完成一份调研报告时，可以回复：
 
-> 已将“整理项目依赖并验证结果”转为后台任务。你可以继续聊天；完成后我会发送完整结果。
+> 这个调研报告我需要花点时间，已经记录。完成后我会发送完整的结果。
+
+`TaskAcknowledgementPolicy` 在 Domain 层校验并净化 `acknowledgementDraft`。它不是固定文案生成器，
+但必须保证回执与真实任务状态一致。合格回执应该：
+
+- 明确回应当前任务内容，例如“这份调研报告”“这些文件”或“这个分析任务”；
+- 使用用户当前语言并保持简洁、友好的会话语气；
+- 说明任务需要一些时间、已经记录，以及完成后会发送完整结果；
+- 控制在一至两句话内，避免重复完整计划和机械式系统提示。
+
+回执草稿为空、与任务无关或违反安全约束时，应用使用本地化兜底模板，例如：
+
+> “{任务标题}”需要一些时间，已经记录。完成后我会发送完整的结果。
 
 回执必须满足：
 
 - 任务记录、初始事件和回执消息在同一数据库事务中写入；
 - 事务提交后才能调用 `enqueue`；
-- 不包含“已经完成”“验证通过”等执行性声明；
+- 可以表述任务“已经记录”，因为消息只在创建事务提交后可见；
+- 不包含“已经完成”“验证通过”“工具已经调用”等尚未发生的执行性声明；
+- 不承诺没有可靠依据的完成时间或精确进度；
 - 不包含工具原始参数、密钥或模型 reasoning；
 - 使用稳定消息 ID `taskId:ack`，重复派发不能产生第二条回执；
 - 回执保存成功后立即释放输入框，不等待第一个工具调用。
@@ -200,9 +220,9 @@ queued -> running <-> waitingForUser
 | `waitingForUser` | 等待审批、补充认证或必要输入 | 否 |
 | `paused` | 应用/平台暂时不能执行，检查点完整 | 否 |
 | `cancelRequested` | 已收到取消请求，正在停止或对账 | 否 |
-| `succeeded` | 整体结果已原子提交 | 是 |
-| `failed` | 确认不可恢复或无进展后提交失败结果 | 是 |
-| `cancelled` | 已安全停止并提交取消状态 | 是 |
+| `succeeded` | 整体结果与成功回复已原子提交 | 是 |
+| `failed` | 确认不可恢复或无进展，失败原因与友好失败回复已原子提交 | 是 |
+| `cancelled` | 已安全停止或完成副作用对账，取消原因与友好取消回复已原子提交 | 是 |
 
 `timedOut` 不再是任务终态。单次网络或工具调用超时是一次尝试的结果，任务可以重试、重规划、
 暂停或请求用户处理。
@@ -218,17 +238,34 @@ queued -> running <-> waitingForUser
 
 ### 5.3 任务进度
 
-进度是业务事实，不使用虚假的时间百分比。每次检查点最多保存：
+进度是必须持久化的业务事实，不能只存在于 runner、ViewModel 或内存事件流中，也不使用虚假的时间
+百分比。任务推进时至少记录以下事件：
+
+- 任务入队、开始、暂停、恢复、取消请求和终态；
+- 计划创建、计划修订、步骤开始与步骤完成；
+- 工具调用已排队、已开始、成功、失败、重试和外部 job 状态变化；
+- 审批请求、进入等待、批准、拒绝和恢复执行；
+- 验证开始、证据接受/拒绝、验证结论与结果提交；
+- runner lease 失效、进程恢复、重试退避和无进展判定。
+
+工具调用前必须先保存调用 ID、幂等键、工具名称和净化后的用途摘要；调用结束后再保存终态、耗时、
+净化后的结果摘要和证据引用。审批请求必须与 `waitingForUser` 状态原子保存，审批决定也必须先落库
+再恢复执行。这样即使应用在外部操作或审批前后退出，查询与恢复仍能基于同一组事实。
+
+`TaskProgress` 是上述记录的最新物化投影，每次事件事务同时更新该投影。投影至少包含：
 
 - 已完成步骤数与计划步骤总数；
 - 当前步骤的安全摘要；
 - 最近一次有意义进展时间；
 - 累计模型回合、工具尝试和恢复次数；
+- 最近工具调用的安全名称、状态和结果摘要；
+- 当前待审批动作的安全摘要与请求时间；
 - 等待原因、失败代码或验证阶段；
 - 最近进展内容的摘要哈希，用于无进展检测。
 
 当计划动态调整时增加 `planRevision`，并同时更新总步骤数。UI 应优先显示“3/5 个步骤”和当前
-阶段，不能把不稳定的步骤比值渲染成精确剩余时间。
+阶段，不能把不稳定的步骤比值渲染成精确剩余时间。物化投影用于高效读取，只追加事件、工具执行
+记录和审批记录仍是可审计的事实源；投影损坏时必须能够由这些记录重建。
 
 ## 6. 无整体超时与有界执行
 
@@ -244,16 +281,45 @@ queued -> running <-> waitingForUser
 
 ### 6.2 必须保留的护栏
 
-- Provider 单次请求、工具单次连接和轮询请求仍有技术超时；
-- 单个执行分段仍限制模型回合数、工具调用数、相同参数重试数和连续失败数；
+- Provider 单次请求、工具单次连接和轮询请求仍有较宽松的技术超时；
+- 单个执行分段仍限制模型回合数、工具调用数、相同参数重试数和连续失败数，但后台默认预算必须
+  明显大于当前前台 Agent Run；
 - 分段达到上限但确有进展时，保存检查点并排入下一分段，而不是结束整个任务；
 - 连续多个分段的进展摘要哈希相同，且没有新证据、外部 job 状态或用户输入时，以
   `task_no_progress` 安全失败；
 - 用户取消、权限永久拒绝、无效计划、缺少必需密钥等可以成为明确终态；
 - 每次重试采用有上限的指数退避，等待期间不占用 runner 并发槽。
 
-默认分段限制可以复用当前 `AgentRunLimits` 中除整体时间之外的数值，但它们应重命名为
-`TaskSegmentLimits`，明确只是单段预算。限制值仍由代码与测试作为事实来源，文档不复制易变默认值。
+后台任务使用独立的 `TaskSegmentLimits`，不得直接复用当前 `AgentRunLimits` 的短运行默认值。目标
+默认值如下：
+
+| 限制项 | 后台默认值 | 达到上限后的行为 |
+| --- | ---: | --- |
+| 单分段模型回合数 | 32 | 有进展则保存检查点并开启下一分段 |
+| 单分段工具调用数 | 48 | 有进展则保存检查点并开启下一分段 |
+| 同一调用额外重试数 | 4 | 重规划、暂停或请求用户处理 |
+| 连续工具失败数 | 8 | 停止当前执行路径并重规划，不直接结束整个任务 |
+| 单分段可信性修复次数 | 3 | 输出可验证的部分结果或进入安全失败 |
+| 单分段计划修订次数 | 8 | 保存检查点并开启下一分段 |
+| 连续无进展分段数 | 8 | 以 `task_no_progress` 安全失败 |
+| Provider 单次请求超时 | 15 分钟 | 保存失败尝试并按策略重试 |
+| 普通工具单次执行超时 | 15 分钟 | 查询执行状态、重试或转换为外部 job |
+| 外部 job 单次轮询超时 | 5 分钟 | 记录轮询失败并延后重试，不影响外部 job |
+| 副作用对账单次超时 | 15 分钟 | 进入退避或 `waitingForUser`，禁止盲目重放 |
+| 重试初始退避 | 15 秒 | 使用带随机抖动的指数退避 |
+| 单次重试最大退避 | 30 分钟 | 到期后重新排队，等待不占 runner 槽位 |
+
+这些值是每个分段或每次尝试的默认上限，不构成任务总时长、总分段数或总恢复次数限制。Provider、
+工具和设备环境可以通过注入的 Domain 策略进一步调大；所有覆盖值必须为正、设置合理硬上限并写入
+任务策略快照，以便恢复时保持一致。
+
+合成与验证阶段的模型请求同样使用 Provider 单次请求超时；该超时只约束一次请求，不会重新引入
+任务级 `synthesisTimeout` 或整体 deadline。
+
+重试次数是允许上限而不是必须耗尽的次数。认证失败、权限拒绝、参数验证失败等不可恢复错误应立即
+停止当前路径。写操作只有在具备幂等键或完成副作用对账后才能重试；任何配置都不能放宽这一规则。
+长于普通工具单次超时的工作必须使用 6.3 节的外部 job 协议，不能仅通过继续增大 `Future.timeout`
+实现。
 
 ### 6.3 长时间工具协议
 
@@ -294,23 +360,40 @@ final class ToolJobStarted extends ToolStartResult {
 2. 没有 ID 且只有一个非终态任务时选择该任务；
 3. 有多个候选任务时返回任务列表，由用户选择；
 4. 没有活动任务时说明最近任务终态或当前没有运行任务；
-5. 不启动 Agent Loop，不让模型根据聊天上下文猜测进度。
+5. 对选中的任务调用 `GetConversationTaskProgress`；
+6. 在同一一致性快照中汇总任务、计划、进度事件、工具执行、审批、检查点和验证记录；
+7. 不启动 Agent Loop，不让模型根据聊天上下文猜测进度。
 
-自然语言意图识别可以由首个模型回合完成，但状态内容必须由应用根据 repository 数据生成。可以
-用确定性模板或状态卡片呈现，不再进行第二次模型润色，以同时保证速度和真实性。
+自然语言意图识别可以由首个模型回合完成，但状态事实必须由 Domain 层汇总用例根据 repository
+中的落库记录生成。UI 可以先立即呈现确定性状态卡片，随后由
+`NarrateConversationTaskProgress` 把同一份 `ConversationTaskProgressSummary` 交给模型润色，生成
+友好、客观的自然语言回复。该模型调用只负责表达，不调用工具、不读取 runner 内存，也无权补充
+摘要中不存在的事实。
+
+润色请求只能包含经过净化的任务摘要、用户当前语言和必要的语气上下文。模型必须返回
+`summaryRevision` 与 `content`；`TaskProgressNarrationPolicy` 至少校验 revision、任务 ID、数值、工具
+名称、审批状态和终态声明均能在输入摘要中找到依据。首次结果不合格时可以修复一次，再失败则使用
+确定性本地化文案。确定性卡片始终是事实基线，模型润色失败不得阻塞状态查询。
+
+查询不得依赖仍在运行的 runner 回调；最新事件尚未提交时，就不能对用户宣称对应进度已经发生。
 用户点击任务卡片的“查看状态”或发送带稳定任务引用的结构化命令时，应直接查询 repository，跳过
-模型意图识别。
+模型意图识别，但仍使用模型对汇总结果进行友好、客观的润色。
 
 ### 7.2 用户可见信息
 
-状态回复可以包含：任务标题、稳定短 ID、生命周期、当前阶段、已完成/总步骤、最近更新时间、
-等待原因、恢复次数和验证状态。
+状态回复应汇总：任务标题、稳定短 ID、生命周期、当前阶段、已完成/总步骤、当前步骤、最近工具
+调用及其状态、待审批动作、最近更新时间、等待原因、恢复次数和验证状态。工具与审批只展示安全
+摘要；详细记录仍留在任务审计数据中。
+
+模型润色应采用平实、友好且客观的语气：先说明任务当前处于什么状态，再说明已经推进的内容和正在
+等待或执行的动作；存在审批时明确告诉用户需要做什么。不得为了显得积极而弱化失败、等待或验证
+未通过的事实。
 
 状态回复不得包含：模型思维链、未净化工具输出、完整文件内容、密钥、访问令牌、原始请求头、
 敏感工具参数或未经确认的完成百分比。
 
-状态消息使用 `messageKind = taskStatus` 并关联 `taskId`。它是应用根据持久化状态生成的操作消息，
-不应被标成“已验证的模型事实”。
+状态消息使用 `messageKind = taskStatus` 并关联 `taskId`、`summaryRevision`。它由确定性状态卡片和
+模型润色文本共同组成，是应用根据持久化状态生成的操作消息，不应被标成“已验证的模型事实”。
 
 ## 8. 最终结果与验证模式
 
@@ -350,7 +433,7 @@ final class VerificationPolicySnapshot {
 运行中修改个人设置只影响新任务。当前任务仍按接受时的策略验证，避免同一任务在最后一步因为 UI
 设置变化而改变正确性语义。展示层可以采用最新主题，但不能改写保存的验证结论。
 
-### 8.3 整体发送
+### 8.3 整体发送成功结果
 
 后台执行期间不把规划草稿、工具观察或未验证候选答案作为普通助手消息写入时间线。它们只作为受
 限任务事件和检查点存在。完成路径为：
@@ -369,6 +452,65 @@ final class VerificationPolicySnapshot {
 更正。
 
 回执、状态和等待审批消息属于操作信息；只有 `directReply` 与 `taskResult` 进入回答可信状态计算。
+
+### 8.4 失败与取消的友好终态回复
+
+`failed` 和 `cancelled` 也必须向会话发送一条整体终态回复，不能只改变任务卡片颜色或静默停止。
+Domain 层先从已落库事件生成 `TaskTerminalSummary`，再由
+`NarrateConversationTaskTerminal` 调用模型进行友好、客观的表达润色。
+
+```dart
+/// 目标接口示意，不是当前代码。
+final class TaskTerminalSummary {
+  const TaskTerminalSummary({
+    required this.status,
+    required this.reasonCode,
+    required this.safeReason,
+    required this.completedWorkSummary,
+    required this.retainedArtifacts,
+    required this.sideEffectStatus,
+    required this.canRetry,
+    required this.suggestedNextActions,
+    this.cancellationSource,
+  });
+
+  final ConversationTaskStatus status;
+  final String reasonCode;
+  final String safeReason;
+  final String completedWorkSummary;
+  final List<String> retainedArtifacts;
+  final TaskSideEffectStatus sideEffectStatus;
+  final bool canRetry;
+  final List<String> suggestedNextActions;
+  final TaskCancellationSource? cancellationSource;
+}
+```
+
+失败回复应说明：任务没有完成、经过净化的失败原因、已经完成或保留的部分，以及用户可以重试、
+补充权限或修改输入等下一步。例如：
+
+> 这项调研没能完成，因为当前无法访问指定的数据源。已整理的资料已经保留；检查数据源连接后，
+> 你可以让我继续重试。
+
+取消回复应说明：任务已经取消、后续执行是否停止、已完成内容是否保留，以及已经发生且无法自动
+回滚的副作用。例如：
+
+> 这个调研任务已经取消，后续工具调用已停止。此前整理的只读结果仍保留在任务记录中。
+
+终态回复必须满足：
+
+- `cancelRequested` 期间只能回复“正在取消并核对执行状态”，完成停止或对账后才能声称“已取消”；
+- 失败原因使用稳定 `reasonCode` 和经过净化的 `safeReason`，不得直接展示异常堆栈、Provider 原始
+  响应、路径、密钥或工具参数；
+- 模型只能润色 `TaskTerminalSummary`，不得改变终态、虚构完成内容、弱化失败或声称副作用已回滚；
+- 存在已经执行且无法回滚的写操作时，必须客观说明影响和建议处理方式；
+- 模型不可用或润色不合格时立即使用友好的本地化兜底，不得阻止任务进入终态；
+- 终态消息、`TaskTerminalSummary` 与任务状态在同一事务中提交，使用稳定消息 ID
+  `taskId:result`，重试提交不得产生重复消息。
+
+`TaskTerminalNarrationPolicy` 校验状态、原因、已完成内容、副作用和下一步均来自终态摘要。失败任务
+中的部分事实结果仍要经过现有证据验证；取消确认本身是操作事实，不应因为没有外部证据而显示为
+“验证失败”。
 
 ## 9. Domain 模型与持久化
 
@@ -396,7 +538,7 @@ final class ConversationTask {
     required this.revision,
     this.resultMessageId,
     this.waitingReason,
-    this.failureCode,
+    this.terminalSummary,
     this.completedAt,
   });
 
@@ -418,7 +560,7 @@ final class ConversationTask {
   final DateTime updatedAt;
   final DateTime? completedAt;
   final String? waitingReason;
-  final String? failureCode;
+  final TaskTerminalSummary? terminalSummary;
   final int revision;
 }
 ```
@@ -428,7 +570,10 @@ final class ConversationTask {
 - `ConversationTaskPlan`：版本化目标、步骤与工具白名单；
 - `ConversationTaskEvent`：只追加的状态变更、尝试、审批和外部 job 事件；
 - `ConversationTaskCheckpoint`：恢复所需的最小状态、下一步骤和证据游标；
-- `TaskProgress`：可向用户展示的净化进度；
+- `TaskProgress`：由持久化记录物化、可向用户展示的净化进度；
+- `ConversationTaskProgressSummary`：状态查询用例输出的任务、工具、审批和验证汇总；
+- `TaskTerminalSummary`：失败或取消原因、已完成内容、副作用状态和下一步的安全终态事实；
+- `TaskApprovalRecord`：持久化审批请求、决定、操作者和时间；
 - `TaskLease`：runner 所有权和过期时间，不等同于任务超时；
 - `TaskMessageKind`：`acknowledgement`、`status`、`result`。
 
@@ -442,6 +587,10 @@ abstract interface class ConversationTaskRepository {
 
   Future<List<ConversationTask>> listActiveForChat(String chatId);
 
+  Future<ConversationTaskProgressSummary?> getProgressSummary(String taskId);
+
+  Stream<ConversationTaskProgressSummary> watchProgress(String taskId);
+
   Future<void> createWithAcknowledgement({
     required ConversationTask task,
     required ConversationTaskPlan plan,
@@ -450,16 +599,13 @@ abstract interface class ConversationTaskRepository {
 
   Future<TaskLease?> tryAcquireLease(String taskId, DateTime now);
 
-  Future<void> appendEventAndCheckpoint({
-    required ConversationTaskEvent event,
-    required ConversationTaskCheckpoint checkpoint,
-    required int expectedRevision,
-  });
+  Future<void> appendProgress(ConversationTaskProgressUpdate update);
 
-  Future<void> commitResult({
+  Future<void> commitTerminalMessage({
     required String taskId,
-    required Message result,
+    required Message message,
     required ConversationTaskStatus terminalStatus,
+    required TaskTerminalSummary? terminalSummary,
     required int expectedRevision,
   });
 
@@ -467,8 +613,13 @@ abstract interface class ConversationTaskRepository {
 }
 ```
 
+`ConversationTaskProgressUpdate` 包含事件、最新物化投影、`expectedRevision`，并按事件类型携带可选
+检查点、工具执行变化或审批变化。Repository 必须在一个事务中写入这些记录，禁止出现事件已提交
+但查询投影未更新的状态。
+
 所有状态更新使用 `revision` 乐观并发控制。事件使用 `(taskId, sequence)` 唯一键；工具尝试使用稳定
-幂等键。repository 方法表达领域事务，UI 不直接拼装数据库写操作。
+幂等键。`GetConversationTaskProgress` 组合 repository 返回的领域汇总，不由 UI 查询多张表或拼接
+进度文案。
 
 ### 9.3 数据表
 
@@ -476,9 +627,11 @@ abstract interface class ConversationTaskRepository {
 
 | 表/字段调整 | 用途 |
 | --- | --- |
-| `conversation_tasks` | 当前任务生命周期、阶段、进度、策略快照、租约和终态 |
+| `conversation_tasks` | 当前任务生命周期、阶段、进度、策略快照、租约和结构化终态摘要 |
 | `conversation_task_plans` | 版本化计划及允许的工具集合 |
-| `conversation_task_events` | 只追加审计与恢复事件 |
+| `conversation_task_events` | 只追加的任务、步骤、工具、审批、恢复和验证事件 |
+| `conversation_task_progress` | 面向状态查询的最新物化进度，可由事实记录重建 |
+| `conversation_task_approvals` | 审批请求、等待状态、决定、操作者与时间 |
 | `conversation_task_checkpoints` | 每个计划版本的最新可恢复检查点 |
 | `messages.task_id` | 将回执、状态和最终结果关联到任务 |
 | `messages.task_message_kind` | 区分普通回答与任务操作/结果消息 |
@@ -536,6 +689,8 @@ abstract interface class ConversationTaskRepository {
 
 - 用户取消任务时先持久化 `cancelRequested`，再通知 runner 或外部 job；
 - 外部副作用需要对账后才能进入 `cancelled`；
+- 对账完成后必须生成 `TaskTerminalSummary`，并原子提交友好取消回复与 `cancelled` 状态；
+- 不可恢复错误或无进展失败必须生成安全失败原因，并原子提交友好失败回复与 `failed` 状态；
 - 删除有非终态任务的会话必须明确提示并走取消/对账流程，禁止留下孤儿任务；
 - 删除 bot 时若仍有非终态任务，应阻止删除或先取消相关任务；
 - 运行时找不到 bot、Provider 或密钥时，任务进入带可操作原因的 `waitingForUser` 或明确失败，
@@ -557,10 +712,17 @@ View -> ViewModel -> Domain Use Case -> Repository Contract
 新增或拆分：
 
 - `models/conversation_task.dart`：任务、状态、阶段、计划、进度和策略快照；
+- `models/task_segment_limits.dart`：后台分段、重试、退避和单次操作超时策略；
 - `repositories/conversation_task_repository.dart`：持久化领域契约；
+- `services/task_acknowledgement_policy.dart`：校验、净化上下文回执并提供本地化兜底；
+- `services/task_progress_narration_policy.dart`：约束润色内容不得改变任务事实；
+- `services/task_terminal_narration_policy.dart`：约束失败和取消回复不得改变终态事实；
 - `use_cases/conversation_turn_dispatcher.dart`：三路前台处置；
 - `use_cases/conversation_task_runner.dart`：从检查点推进一个有界分段；
 - `use_cases/conversation_task_scheduler.dart`：排队、lease、并发和退避；
+- `use_cases/get_conversation_task_progress.dart`：汇总任务、步骤、工具、审批和验证记录；
+- `use_cases/narrate_conversation_task_progress.dart`：调用模型润色状态摘要并执行安全回退；
+- `use_cases/narrate_conversation_task_terminal.dart`：生成友好失败/取消回复并执行安全回退；
 - `use_cases/recover_conversation_tasks.dart`：启动恢复与副作用对账；
 - 将 `AgentRunCoordinator` 可复用的规划、执行、观察、验证和合成能力下沉为分段协调组件。
 
@@ -568,16 +730,19 @@ Domain 层不依赖 Flutter、SQLite 或具体 Provider。任务状态变换集�
 
 ### 11.2 Data 层
 
-新增 SQLite repository、schema 和映射 DTO；扩展工具执行/证据存储的任务作用域。长工具适配器
-实现 start/poll/cancel/reconcile 协议。事务、唯一键、lease 和乐观锁在 repository/service 中实现，
-而不是泄漏到 ViewModel。
+新增 SQLite repository、schema 和映射 DTO；扩展工具执行/证据存储的任务作用域。Repository 在
+同一数据库一致性快照中读取任务、事件、工具、审批和验证记录，并返回 Domain 汇总模型。长工具
+适配器实现 start/poll/cancel/reconcile 协议。事务、唯一键、lease 和乐观锁在
+repository/service 中实现，而不是泄漏到 ViewModel。
 
 ### 11.3 UI 层
 
 - 将现有 `ChatGenerationViewModel` 收缩或重命名为前台回复 ViewModel；
 - 新增只订阅任务摘要的 `ConversationTasksViewModel`；
 - `_isTyping` 只反映前台分流/直接回复，不反映后台任务；
-- 时间线展示回执和一次性结果，任务卡片展示进度、等待审批、取消和重试动作；
+- 时间线展示回执和一次性终态回复；成功、失败和取消都必须形成用户可见消息；
+- 任务状态消息先展示确定性卡片，再呈现模型润色的友好客观回复；
+- 任务卡片展示进度、等待审批、取消和重试动作；
 - 状态卡片使用 shadcn 风格的语义 token、紧凑层级和可访问状态标签，不用颜色作为唯一状态信号；
 - View 只绑定不可变状态并转发命令，不启动 runner、不直接轮询数据库。
 
@@ -624,7 +789,7 @@ provider session factory 和 tool executor。
 | 直接回复 | `turnId:assistant` | 空 | `directReply` |
 | 后台回执 | `taskId:ack` | 有 | `taskAcknowledgement` |
 | 用户询问后的状态回复 | 新消息 ID | 有或为空 | `taskStatus` |
-| 后台整体结果 | `taskId:result` | 有 | `taskResult` |
+| 后台成功、失败或取消回复 | `taskId:result` | 有 | `taskResult`，并携带对应 `terminalOutcome` |
 
 最终结果可能在用户后续消息之后到达，按数据库提交序列进入时间线。客户端不得为了视觉上紧邻原始
 请求而改写历史顺序。通知与重新加载都以稳定消息 ID 去重。
@@ -645,6 +810,8 @@ provider session factory 和 tool executor。
 
 - 用户提交到直接回复首字符/完成的延迟；
 - 用户提交到后台回执提交的延迟；
+- 状态卡片首屏延迟、模型润色完成延迟和确定性回退比例；
+- 失败/取消终态回复提交延迟、模型润色失败和本地化兜底比例；
 - 排队时长、有效执行时长、等待用户时长和端到端完成时长；
 - 每任务分段数、恢复次数、工具重试次数；
 - `task_no_progress`、对账失败和永久失败数量；
@@ -659,12 +826,13 @@ provider session factory 和 tool executor。
 实现应按可验证的架构切面推进：
 
 1. 建立全新的任务 Domain 模型、repository 契约和新建数据库 schema；
-2. 实现任务与回执原子写入、消息关联和只读状态查询；
-3. 引入前台三路 dispatcher，使直接回复不再因工具存在而进入 Agent Loop；
+2. 实现任务与回执原子写入、进度事件、工具/审批记录、物化投影和汇总状态查询；
+3. 引入前台三路 dispatcher 和回执策略，使直接回复不再因工具存在而进入 Agent Loop，并在同一次
+   模型调用中生成上下文友好的任务回执；
 4. 将现有 Agent Loop 拆为可检查点化的执行分段，移除任务级 deadline；
 5. 实现 scheduler、lease、队列、恢复、幂等工具尝试与副作用对账；
-6. 接入跨分段证据与验证策略快照，原子提交整体结果；
-7. 解开会话输入锁，增加任务状态卡片、审批、取消和状态询问；
+6. 接入跨分段证据、验证策略快照和终态回复策略，原子提交成功、失败或取消回复；
+7. 解开会话输入锁，增加任务状态卡片、模型状态润色、审批、取消和状态询问；
 8. 删除旧 run 恢复路径、旧 schema 与临时兼容代码；
 9. 完成单元、repository、ViewModel、Widget 和恢复集成测试后更新
    [现有消息流转](../reference/user-message-agent-response-flow.md)为实际代码路径。
@@ -679,17 +847,26 @@ provider session factory 和 tool executor。
 | --- | --- |
 | 简单问候 | 一个模型回合产生一个完整直接回复；无任务、无工具调用 |
 | 可直接回答的问题 | 工具可用也不自动进入 Agent Loop |
-| 长任务 | 任务与回执原子保存；回执后输入框立即可用 |
+| 长任务 | 任务与上下文友好回执原子保存；回执准确指代任务，且显示后输入框立即可用 |
+| 不合格回执草稿 | 空内容、无关内容、虚假完成声明或不可靠耗时承诺被拒绝，并使用安全本地化兜底 |
 | 后台进行中继续聊天 | 新消息正常进入前台分流，不取消、不覆盖后台任务 |
-| 询问单个任务 | 回复内容与 repository 快照完全一致，不调用工具生成进度 |
+| 询问单个任务 | 汇总任务、步骤、工具、审批与验证的落库记录；立即展示确定性卡片，并生成友好客观的模型润色回复 |
+| 状态润色 | 模型只能改写表达；任务状态、数值、工具、审批和验证结论与 repository 摘要完全一致 |
+| 状态润色不合格 | 允许修复一次；仍不合格或 Provider 不可用时展示确定性本地化回复，不阻塞查询 |
 | 多个活动任务 | 返回可区分的短 ID 和状态，不擅自选择错误任务 |
+| 工具调用推进 | 调用前后均有持久化记录；查询可展示安全的工具名称、状态与结果摘要 |
+| 等待审批 | 请求与 `waitingForUser` 原子落库；重启和长时间等待后仍可查询并审批，且不占执行槽 |
 | 后台工具产生中间文本 | 时间线不出现 partial 结果；终态只出现一个 `taskId:result` |
+| 达到旧前台运行限制 | 在新的后台分段预算内继续执行，不因旧回合数、调用数或短超时提前终止 |
+| 达到后台分段限制 | 有进展时保存检查点并开启下一分段；无进展达到阈值时才安全失败 |
 | 运行时间超过旧总时限 | 任务保持可运行或明确等待，不进入 `timedOut` |
 | 单次调用超时 | 记录失败尝试并按策略重试/暂停，不直接结束整个任务 |
-| 等待审批 | 重启和长时间等待后仍可审批；等待不占执行槽 |
 | 严格验证成功 | 最终声明可追溯到同一任务的有效证据 |
 | 严格验证失败 | 未验证关键声明被抑制，只提交安全的整体结果 |
-| 用户取消 | 先保存取消请求，副作用对账后只形成一个取消终态 |
+| 不可恢复失败 | 结构化失败原因先净化；只提交一条友好回复，说明未完成原因、保留内容和可行下一步 |
+| 用户请求取消 | 先回复正在取消；副作用停止或对账后只提交一条友好取消回复和一个取消终态 |
+| 取消存在不可回滚影响 | 回复明确说明已经发生的操作及建议处理方式，不虚假承诺已经回滚 |
+| 终态润色不可用 | 立即使用友好本地化兜底，失败或取消状态仍能完成原子提交 |
 
 ### 15.2 崩溃与幂等测试
 
@@ -707,7 +884,8 @@ provider session factory 和 tool executor。
 
 ### 15.3 分层与 UI 测试
 
-- Domain 单元测试覆盖所有合法/非法状态变换和无进展检测；
+- Domain 单元测试覆盖所有合法/非法状态变换、`TaskSegmentLimits` 边界、退避、无进展检测，以及
+  状态与终态润色的事实约束、单次修复和确定性回退；
 - Repository 测试覆盖事务、唯一键、revision 冲突、lease 与全新 schema；
 - ViewModel 测试证明后台更新不改变前台 typing 状态；
 - Widget 测试覆盖任务卡片、状态标签、键盘操作、屏幕阅读语义和不同宽度；
@@ -718,8 +896,12 @@ provider session factory 和 tool executor。
 
 - 快速响应来自“一次前台模型回合完成分流和直接回答”，不是用未经验证的占位答案冒充结果；
 - 后台任务是持久化领域实体，不是页面里未 `await` 的 `Future`；
-- 回执由应用控制并与任务原子保存，最终结果只在执行与验证完成后整体发送；
-- 状态询问以 repository 为事实源，模型只识别意图，不编造状态；
+- 回执由首个前台模型回合结合上下文生成，再由 Domain 策略校验并与任务原子保存；成功结果只在
+  执行与验证完成后整体发送，失败或取消回复只在原因确认及必要对账完成后发送；
+- 成功、失败和取消都会产生一条友好客观的整体终态回复；失败说明安全原因与下一步，取消说明停止
+  和副作用对账结果；
+- 后台任务、工具调用、审批和验证推进必须落库；状态询问由 Domain 用例汇总这些事实记录，模型
+  负责意图识别和友好客观的表达润色，但不能编造或改变状态；
 - 无整体超时与有界分段、单次调用超时、无进展检测并存；
 - 验证策略在任务创建时快照，证据跨分段但不跨任务；
 - 新实现不兼容历史数据库和旧 run，避免长期维护双重生命周期语义。
