@@ -104,6 +104,8 @@
     "@importBot": {"description": "Import a Bot from JSON"},
     "exportBot": "Export Bot",
     "@exportBot": {"description": "Export a Bot as JSON"},
+    "exportAction": "Export",
+    "@exportAction": {"description": "Generic export menu action"},
     "botImportSucceeded": "Bot imported",
     "botExportSucceeded": "Bot exported",
     "botImportedWithoutApiKey": "For your security, API keys are never imported. Add a key before using this Bot.",

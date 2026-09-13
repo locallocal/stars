@@ -425,6 +425,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "下一次請求的預計 Token 數與可用輸入預算。",
     ),
     "executionStatus": MessageLookupByLibrary.simpleMessage("執行狀態"),
+    "exportAction": MessageLookupByLibrary.simpleMessage("匯出"),
     "exportBot": MessageLookupByLibrary.simpleMessage("匯出智能體"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage("請輸入反饋內容"),
     "feedbackDescription": MessageLookupByLibrary.simpleMessage(

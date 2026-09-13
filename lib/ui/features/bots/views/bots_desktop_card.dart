@@ -122,7 +122,7 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                     onPressed: () => _invokeMenuAction(widget.onExport),
                     mainAxisAlignment: MainAxisAlignment.start,
                     leading: const Icon(LucideIcons.download, size: 16),
-                    child: Text(S.of(context).exportBot),
+                    child: Text(S.of(context).exportAction),
                   ),
                   ShadButton.raw(
                     variant: ShadButtonVariant.ghost,
@@ -185,7 +185,7 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
             ShadContextMenuItem(
               leading: const Icon(LucideIcons.download, size: 16),
               onPressed: widget.onExport,
-              child: Text(S.of(context).exportBot),
+              child: Text(S.of(context).exportAction),
             ),
             ShadContextMenuItem(
               leading: const Icon(LucideIcons.trash2, size: 16),

@@ -551,6 +551,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "executionStatus": MessageLookupByLibrary.simpleMessage(
       "Stato di esecuzione",
     ),
+    "exportAction": MessageLookupByLibrary.simpleMessage("Esporta"),
     "exportBot": MessageLookupByLibrary.simpleMessage("Esporta bot"),
     "feedbackContentRequired": MessageLookupByLibrary.simpleMessage(
       "Inserisci il contenuto del feedback",

@@ -727,7 +727,7 @@ void main() {
       expect(find.text(startChatLabel), findsOneWidget);
       expect(find.text('详情'), findsOneWidget);
       expect(find.text('编辑'), findsOneWidget);
-      expect(find.text('导出智能体'), findsOneWidget);
+      expect(find.text('导出'), findsOneWidget);
       expect(find.text('删除'), findsOneWidget);
       expect(
         tester.getCenter(startChatAction).dy,
