@@ -537,34 +537,6 @@ String _markdownSafeInline(String source) => source.replaceAllMapped(
   (match) => '\\${match.group(0)}',
 );
 
-String _messageExportText(
-  BuildContext context,
-  Message message, {
-  required String displayedContent,
-  required bool isCurrentUser,
-  required bool strictMode,
-}) {
-  if (isCurrentUser) return message.content;
-  final strings = S.of(context);
-  final claimLines = <String>[];
-  for (final claim in message.grounding.claims) {
-    final hidesClaim =
-        strictMode &&
-        _claimRequiresVerification(claim.claim.kind) &&
-        claim.trustLevel != ClaimTrustLevel.verified;
-    claimLines.add(
-      '- ${claim.claim.claimId}: ${_claimTrustLabel(strings, claim.trustLevel)}'
-      '${hidesClaim ? '' : ' — ${claim.claim.text}'}',
-    );
-  }
-  return <String>[
-    if (displayedContent.isNotEmpty) displayedContent,
-    '---',
-    _messageTrustExportAnnotation(context, message),
-    if (claimLines.isNotEmpty) ...claimLines,
-  ].join('\n');
-}
-
 String _messageTrustExportAnnotation(BuildContext context, Message message) {
   final strings = S.of(context);
   final status = _answerTrustLabel(

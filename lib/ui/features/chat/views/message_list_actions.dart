@@ -69,6 +69,7 @@ class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
       enabled: _canCopy,
       items: actions,
       child: MouseRegion(
+        key: const ValueKey<String>('desktop-message-hover-region'),
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: Column(
@@ -92,12 +93,9 @@ class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
                   child: IgnorePointer(
                     ignoring: !_showActions,
                     child: Row(
+                      key: const ValueKey<String>('desktop-message-metadata'),
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (widget.isCurrentUser) ...[
-                          _MessageTimestamp(timestamp: timestamp),
-                          if (_canCopy) const SizedBox(width: 4),
-                        ],
                         if (_canCopy)
                           StarsDesktopIconAction(
                             key: const ValueKey<String>(
@@ -107,10 +105,8 @@ class _DesktopMessageActionsState extends State<_DesktopMessageActions> {
                             label: copyLabel,
                             onPressed: _copyMessage,
                           ),
-                        if (!widget.isCurrentUser) ...[
-                          if (_canCopy) const SizedBox(width: 4),
-                          _MessageTimestamp(timestamp: timestamp),
-                        ],
+                        if (_canCopy) const SizedBox(width: 4),
+                        _MessageTimestamp(timestamp: timestamp),
                       ],
                     ),
                   ),
