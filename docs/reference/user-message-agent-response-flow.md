@@ -69,7 +69,7 @@ ChatPage._sendMessage
 文本路径 `_generateText` 接受以下任一输入：非空文本、图片附件或文件附件。发送前页面会：
 
 1. 保存原始文本和附件到 pending draft，并写入 `ConversationDraftRepository`；
-2. 通过 `PersistConversationAssets` 把附件复制到当前会话的受管目录；
+2. 通过 `PersistConversationAssets` 把附件复制到当前会话的 `attachments/` 子目录；
 3. 用 `CreateUserMessage` 创建带 `messageId`、`turnId`、附件和 file-edit 投影的用户消息；
 4. 将用户消息先加入页面时间线，清空输入框与附件并滚动到底部；
 5. 把发送前的历史快照和用户消息交给 generation ViewModel。

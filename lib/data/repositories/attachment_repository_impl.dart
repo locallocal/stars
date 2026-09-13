@@ -21,6 +21,9 @@ class AttachmentRepositoryImpl implements ConversationAssetRepository {
   final AttachmentPickerService _service;
   final AttachmentDocumentsDirectoryProvider _documentsDirectoryProvider;
 
+  static const _chatsDirectoryName = 'chats';
+  static const _attachmentsDirectoryName = 'attachments';
+
   @override
   Future<String?> captureImage() =>
       _selectSupportedImage(_service.captureImage);
@@ -71,7 +74,14 @@ class AttachmentRepositoryImpl implements ConversationAssetRepository {
     if (sources.isEmpty) return const [];
 
     final root = await _documentsDirectoryProvider();
-    final directory = Directory(path.join(root.path, 'chats', chatId));
+    final directory = Directory(
+      path.join(
+        root.path,
+        _chatsDirectoryName,
+        chatId,
+        _attachmentsDirectoryName,
+      ),
+    );
     try {
       await directory.create(recursive: true);
     } on Object catch (error) {
@@ -141,7 +151,9 @@ class AttachmentRepositoryImpl implements ConversationAssetRepository {
       throw const AppFailure.validation('invalid_chat_id');
     }
     final root = await _documentsDirectoryProvider();
-    final directory = Directory(path.join(root.path, 'chats', chatId));
+    final directory = Directory(
+      path.join(root.path, _chatsDirectoryName, chatId),
+    );
     await directory.create(recursive: true);
     return directory.path;
   }
