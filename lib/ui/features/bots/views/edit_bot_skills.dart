@@ -19,6 +19,7 @@ extension _EditBotSkills on _EditAIBotPageState {
     return BotTokenUsagePanel(
       usage: usage,
       conversationUsages: viewModel?.conversationUsages ?? const [],
+      provider: selectedProvider,
       dailyBuckets: viewModel?.dailyBuckets ?? const [],
       visibleBuckets: viewModel?.visibleBuckets ?? const [],
       granularity: viewModel?.granularity ?? TokenUsageGranularity.day,

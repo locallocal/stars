@@ -18,6 +18,7 @@ class BotTokenUsagePanel extends StatelessWidget {
     super.key,
     required this.usage,
     required this.conversationUsages,
+    this.provider = '',
     this.dailyBuckets = const [],
     this.visibleBuckets = const [],
     this.granularity = TokenUsageGranularity.day,
@@ -30,6 +31,7 @@ class BotTokenUsagePanel extends StatelessWidget {
 
   final ModelTokenUsage usage;
   final List<BotConversationTokenUsage> conversationUsages;
+  final String provider;
   final List<TokenUsageBucket> dailyBuckets;
   final List<TokenUsageBucket> visibleBuckets;
   final TokenUsageGranularity granularity;
@@ -86,6 +88,7 @@ class BotTokenUsagePanel extends StatelessWidget {
           visibleBuckets: visibleBuckets,
           granularity: granularity,
           selectedDay: selectedDay,
+          palette: TokenUsageChartPalette.fromProvider(context, provider),
           onShowDaily: onShowDaily ?? _noop,
           onBucketSelected: onBucketSelected,
           chartOrientation: TokenUsageChartOrientation.vertical,

@@ -5,6 +5,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/ui/core/view_models/token_usage_timeline.dart';
 import 'package:stars/ui/features/bots/view_models/bot_token_usage_view_model.dart';
 import 'package:stars/ui/features/bots/views/bot_token_usage.dart';
+import 'package:stars/ui/features/chat/views/token_usage_chart.dart';
 import 'package:stars/utils/theme.dart';
 
 import '../../../../support/widget_test_support.dart';
@@ -223,6 +224,45 @@ void main() {
     }
   });
 
+  testWidgets('provider chart colors preserve contrast in dark theme', (
+    tester,
+  ) async {
+    final bucket = TokenUsageBucket(
+      start: DateTime(2026, 7, 24),
+      usage: const ModelTokenUsage(
+        inputTokens: 80,
+        outputTokens: 20,
+        totalTokens: 100,
+      ),
+    );
+    await tester.pumpWidget(
+      _Harness(
+        width: 600,
+        brightness: Brightness.dark,
+        child: BotTokenUsagePanel(
+          usage: const ModelTokenUsage(totalTokens: 100),
+          conversationUsages: const [],
+          provider: 'openai',
+          dailyBuckets: [bucket],
+          visibleBuckets: [bucket],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final input = _chartColor(tester, 'token-usage-input-bar-day-2026-07-24');
+    final output = _chartColor(tester, 'token-usage-output-bar-day-2026-07-24');
+    final surface =
+        ShadTheme.of(
+          tester.element(
+            find.byKey(const ValueKey<String>('token-usage-input-section')),
+          ),
+        ).colorScheme.secondary;
+    expect(_contrastRatio(input, surface), greaterThanOrEqualTo(3));
+    expect(_contrastRatio(output, surface), greaterThanOrEqualTo(3));
+    expect(input, isNot(output));
+  });
+
   testWidgets('panel appends the shared daily usage bars', (tester) async {
     TokenUsageBucket? selectedBucket;
     final buckets = [
@@ -250,6 +290,7 @@ void main() {
         child: BotTokenUsagePanel(
           usage: const ModelTokenUsage(totalTokens: 100),
           conversationUsages: const [],
+          provider: 'deepseek',
           dailyBuckets: buckets,
           visibleBuckets: buckets,
           onBucketSelected: (bucket) => selectedBucket = bucket,
@@ -340,6 +381,26 @@ void main() {
       ),
       findsOneWidget,
     );
+    final expectedPalette = TokenUsageChartPalette.fromProvider(
+      tester.element(inputSection),
+      'deepseek',
+    );
+    expect(
+      _chartColor(tester, 'token-usage-input-bar-day-2026-07-25'),
+      expectedPalette.input,
+    );
+    expect(
+      _chartColor(tester, 'token-usage-output-bar-day-2026-07-25'),
+      expectedPalette.output,
+    );
+    expect(
+      _chartColor(tester, 'token-usage-input-legend-swatch'),
+      expectedPalette.input,
+    );
+    expect(
+      _chartColor(tester, 'token-usage-output-legend-swatch'),
+      expectedPalette.output,
+    );
     final tallestDailyBar = find.byKey(
       const ValueKey<String>('token-usage-input-bar-day-2026-07-25'),
     );
@@ -375,6 +436,7 @@ void main() {
         child: BotTokenUsagePanel(
           usage: const ModelTokenUsage(totalTokens: 300),
           conversationUsages: const [],
+          provider: 'deepseek',
           dailyBuckets: [
             TokenUsageBucket(
               start: DateTime(2026, 7, 24),
@@ -402,6 +464,20 @@ void main() {
     expect(
       find.byKey(const ValueKey<String>('token-usage-output-bar-hour-0')),
       findsOneWidget,
+    );
+    final expectedPalette = TokenUsageChartPalette.fromProvider(
+      tester.element(
+        find.byKey(const ValueKey<String>('token-usage-input-bar-hour-0')),
+      ),
+      'deepseek',
+    );
+    expect(
+      _chartColor(tester, 'token-usage-input-bar-hour-0'),
+      expectedPalette.input,
+    );
+    expect(
+      _chartColor(tester, 'token-usage-output-bar-hour-0'),
+      expectedPalette.output,
     );
     expect(
       tester
@@ -487,4 +563,19 @@ Color _legendColor(WidgetTester tester, String id) {
     find.byKey(ValueKey<String>('bot-token-usage-color-$id')),
   );
   return (marker.decoration! as BoxDecoration).color!;
+}
+
+Color _chartColor(WidgetTester tester, String key) {
+  final marker = tester.widget<Container>(find.byKey(ValueKey<String>(key)));
+  return (marker.decoration! as BoxDecoration).color!;
+}
+
+double _contrastRatio(Color first, Color second) {
+  final firstLuminance = first.computeLuminance();
+  final secondLuminance = second.computeLuminance();
+  final high =
+      firstLuminance > secondLuminance ? firstLuminance : secondLuminance;
+  final low =
+      firstLuminance > secondLuminance ? secondLuminance : firstLuminance;
+  return (high + 0.05) / (low + 0.05);
 }
