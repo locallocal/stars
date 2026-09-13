@@ -30,7 +30,9 @@ void main() {
     addTearDown(viewModel.dispose);
     await viewModel.load();
 
-    await tester.pumpWidget(_Harness(viewModel: viewModel));
+    await tester.pumpWidget(
+      _Harness(viewModel: viewModel, provider: 'anthropic'),
+    );
     await tester.pumpAndSettle();
 
     final summary = find.byKey(
@@ -192,13 +194,28 @@ void main() {
     final firstDailyBar = find.byKey(
       const ValueKey<String>('token-usage-input-bar-day-2026-07-24'),
     );
+    final expectedPalette = TokenUsageChartPalette.fromProvider(
+      tester.element(firstDailyBar),
+      'anthropic',
+    );
     expect(firstDailyBar, findsOneWidget);
+    expect(_barColor(tester, firstDailyBar), expectedPalette.input);
     expect(
       find.byKey(
         const ValueKey<String>('token-usage-output-bar-day-2026-07-24'),
       ),
       findsOneWidget,
     );
+    expect(
+      _barColor(
+        tester,
+        find.byKey(
+          const ValueKey<String>('token-usage-output-bar-day-2026-07-24'),
+        ),
+      ),
+      expectedPalette.output,
+    );
+    expect(expectedPalette.input, isNot(expectedPalette.output));
     expect(
       find.byKey(const ValueKey<String>('token-usage-input-chart-vertical')),
       findsOneWidget,
@@ -263,9 +280,17 @@ void main() {
       const ValueKey<String>('token-usage-input-bar-hour-10'),
     );
     expect(firstHourlyBar, findsOneWidget);
+    expect(_barColor(tester, firstHourlyBar), expectedPalette.input);
     expect(
       find.byKey(const ValueKey<String>('token-usage-output-bar-hour-10')),
       findsOneWidget,
+    );
+    expect(
+      _barColor(
+        tester,
+        find.byKey(const ValueKey<String>('token-usage-output-bar-hour-10')),
+      ),
+      expectedPalette.output,
     );
     expect(
       tester.getSize(firstHourlyBar).height,
@@ -362,9 +387,10 @@ Message _message(DateTime timestamp, int input, int output) {
 }
 
 class _Harness extends StatelessWidget {
-  const _Harness({required this.viewModel});
+  const _Harness({required this.viewModel, this.provider = ''});
 
   final ChatTokenUsageViewModel viewModel;
+  final String provider;
 
   @override
   Widget build(BuildContext context) {
@@ -375,12 +401,20 @@ class _Harness extends StatelessWidget {
             body: SizedBox(
               width: 320,
               child: SingleChildScrollView(
-                child: ConversationTokenUsagePanel(viewModel: viewModel),
+                child: ConversationTokenUsagePanel(
+                  viewModel: viewModel,
+                  provider: provider,
+                ),
               ),
             ),
           ),
     );
   }
+}
+
+Color _barColor(WidgetTester tester, Finder finder) {
+  final bar = tester.widget<Container>(finder);
+  return (bar.decoration! as BoxDecoration).color!;
 }
 
 class _FakeMessageRepository implements MessageRepository {

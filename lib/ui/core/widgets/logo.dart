@@ -27,6 +27,7 @@ Widget buildProviderLogo(
     'assets/images/providers/$providerLower.svg',
     width: size,
     height: size,
+    theme: SvgTheme(currentColor: Theme.of(context).colorScheme.onSurface),
     placeholderBuilder: (context) => _providerIconFallback(context, size),
     errorBuilder:
         (context, _, _) => Image.asset(
@@ -44,10 +45,57 @@ Widget _providerIconFallback(BuildContext context, double size) => Icon(
   color: Theme.of(context).colorScheme.onSurface,
 );
 
-// 获取提供商对应的主题色
-// 获取提供商对应的主题色
+/// Returns the representative foreground color used by a provider logo.
+///
+/// Multi-color and gradient logos use their visually dominant brand color.
+/// Monochrome logos intentionally inherit [defaultColor] so callers can keep
+/// them aligned with the active theme.
+Color getProviderLogoColor(String provider, Color defaultColor) {
+  return switch (provider.trim().toLowerCase()) {
+    'aihubmix' => const Color(0xFF006FFB),
+    'aimass' => const Color(0xFF003E97),
+    'aistudio' => const Color(0xFF0057CC),
+    'alibabacloud' => const Color(0xFFFF6A00),
+    'anthropic' => const Color(0xFFD97757),
+    'baichuan' => const Color(0xFFFF6933),
+    'baidu' => const Color(0xFF2464F5),
+    'cerebras' => const Color(0xFFF15A29),
+    'chatglm' => const Color(0xFF504AF4),
+    'cohere' => const Color(0xFF39594D),
+    'deepinfra' => const Color(0xFF2A3275),
+    'deepseek' => const Color(0xFF4D6BFE),
+    'fireworks' || 'fireworks-ai' => const Color(0xFF5019C5),
+    'gemini' => const Color(0xFF1C69FF),
+    'huggingface' || 'hf-inference' => const Color(0xFFFFD21E),
+    'infinigence' => const Color(0xFF2EA7E0),
+    'internlm' => const Color(0xFF858599),
+    'kluster' => const Color(0xFF6525F7),
+    'minimax' => const Color(0xFFE2167E),
+    'mistral' => const Color(0xFFE10500),
+    'modelscope' => const Color(0xFF624AFF),
+    'monica' => const Color(0xFF515FFB),
+    'novita' => const Color(0xFF23D57C),
+    'perplexity' => const Color(0xFF22B8CD),
+    'ppio' => const Color(0xFF2874FF),
+    'sambanova' => const Color(0xFFEE7624),
+    'search1api' => const Color(0xFF0066FF),
+    'sensenova' => const Color(0xFF5B2AD8),
+    'siliconflow' => const Color(0xFF7C3AED),
+    'spark' => const Color(0xFF1652D8),
+    'stability' => const Color(0xFF9D39FF),
+    'stepfun' => const Color(0xFF0160FF),
+    'tencent' => const Color(0xFF0055E9),
+    'together' || 'togetherai' => const Color(0xFF0F6FFF),
+    'volcanoengine' => const Color(0xFF006EFF),
+    'xinghe' => const Color(0xFF0A51C3),
+    'zhipu' => const Color(0xFF3859FF),
+    _ => defaultColor,
+  };
+}
+
+/// Returns the background color used behind a provider logo.
 Color getProviderColor(String provider, Color defaultColor) {
-  switch (provider.toLowerCase()) {
+  switch (provider.trim().toLowerCase()) {
     case 'openai':
       return const Color(0xFFB8E6D9); // OpenAI 浅绿色
     case 'anthropic':

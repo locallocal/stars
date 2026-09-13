@@ -370,6 +370,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     children: [
                       ConversationTokenUsagePanel(
                         viewModel: _tokenUsageViewModel!,
+                        provider: bot.provider,
                         showSectionHeader: false,
                       ),
                     ],

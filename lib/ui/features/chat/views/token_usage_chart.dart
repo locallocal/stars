@@ -6,7 +6,10 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.dart';
+import 'package:stars/ui/features/chat/views/token_usage_chart_palette.dart';
 import 'package:stars/utils/theme.dart';
+
+export 'token_usage_chart_palette.dart';
 
 enum TokenUsageChartOrientation { horizontal, vertical }
 
@@ -16,10 +19,12 @@ class ConversationTokenUsagePanel extends StatelessWidget {
   const ConversationTokenUsagePanel({
     super.key,
     required this.viewModel,
+    this.provider = '',
     this.showSectionHeader = true,
   });
 
   final ChatTokenUsageViewModel viewModel;
+  final String provider;
   final bool showSectionHeader;
 
   @override
@@ -63,6 +68,7 @@ class ConversationTokenUsagePanel extends StatelessWidget {
                 visibleBuckets: populatedBuckets,
                 granularity: viewModel.granularity,
                 selectedDay: selectedDay,
+                palette: TokenUsageChartPalette.fromProvider(context, provider),
                 onShowDaily: viewModel.showDaily,
                 chartOrientation: TokenUsageChartOrientation.vertical,
                 onBucketSelected:
@@ -86,6 +92,7 @@ class TokenUsageTimelineSection extends StatelessWidget {
     required this.granularity,
     required this.selectedDay,
     required this.onShowDaily,
+    this.palette,
     this.onBucketSelected,
     this.chartOrientation = TokenUsageChartOrientation.horizontal,
   });
@@ -95,6 +102,7 @@ class TokenUsageTimelineSection extends StatelessWidget {
   final TokenUsageGranularity granularity;
   final DateTime? selectedDay;
   final VoidCallback onShowDaily;
+  final TokenUsageChartPalette? palette;
   final ValueChanged<TokenUsageBucket>? onBucketSelected;
   final TokenUsageChartOrientation chartOrientation;
 
@@ -102,6 +110,8 @@ class TokenUsageTimelineSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final hourly = granularity == TokenUsageGranularity.hour;
     final locale = Localizations.localeOf(context).toString();
+    final resolvedPalette =
+        palette ?? TokenUsageChartPalette.fromProvider(context, '');
     return Column(
       key: const ValueKey<String>('token-usage-timeline-section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,10 +157,12 @@ class TokenUsageTimelineSection extends StatelessWidget {
           key: const ValueKey<String>('token-usage-input-section'),
           series: TokenUsageSeries.input,
           total: _seriesTotal(visibleBuckets, TokenUsageSeries.input),
+          color: resolvedPalette.input,
           child: TokenUsageChart(
             buckets: visibleBuckets,
             granularity: granularity,
             series: TokenUsageSeries.input,
+            palette: resolvedPalette,
             onBucketSelected: onBucketSelected,
             orientation: chartOrientation,
           ),
@@ -160,10 +172,12 @@ class TokenUsageTimelineSection extends StatelessWidget {
           key: const ValueKey<String>('token-usage-output-section'),
           series: TokenUsageSeries.output,
           total: _seriesTotal(visibleBuckets, TokenUsageSeries.output),
+          color: resolvedPalette.output,
           child: TokenUsageChart(
             buckets: visibleBuckets,
             granularity: granularity,
             series: TokenUsageSeries.output,
+            palette: resolvedPalette,
             onBucketSelected: onBucketSelected,
             orientation: chartOrientation,
           ),
@@ -178,11 +192,13 @@ class _TokenUsageSeriesCard extends StatelessWidget {
     super.key,
     required this.series,
     required this.total,
+    required this.color,
     required this.child,
   });
 
   final TokenUsageSeries series;
   final int total;
+  final Color color;
   final Widget child;
 
   @override
@@ -209,10 +225,13 @@ class _TokenUsageSeriesCard extends StatelessWidget {
             Row(
               children: [
                 Container(
+                  key: ValueKey<String>(
+                    'token-usage-${series.name}-legend-swatch',
+                  ),
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: _seriesColor(context, series),
+                    color: color,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -329,6 +348,7 @@ class TokenUsageChart extends StatelessWidget {
     required this.buckets,
     required this.granularity,
     required this.series,
+    this.palette,
     this.onBucketSelected,
     this.orientation = TokenUsageChartOrientation.horizontal,
   });
@@ -336,11 +356,14 @@ class TokenUsageChart extends StatelessWidget {
   final List<TokenUsageBucket> buckets;
   final TokenUsageGranularity granularity;
   final TokenUsageSeries series;
+  final TokenUsageChartPalette? palette;
   final ValueChanged<TokenUsageBucket>? onBucketSelected;
   final TokenUsageChartOrientation orientation;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedPalette =
+        palette ?? TokenUsageChartPalette.fromProvider(context, '');
     if (buckets.isEmpty) {
       return SizedBox(
         key: ValueKey<String>('token-usage-${series.name}-chart-empty'),
@@ -361,6 +384,7 @@ class TokenUsageChart extends StatelessWidget {
         maximum: maximum,
         granularity: granularity,
         series: series,
+        color: _seriesColor(resolvedPalette, series),
         onBucketSelected: onBucketSelected,
       );
     }
@@ -381,6 +405,7 @@ class TokenUsageChart extends StatelessWidget {
                   '${_tokenUsageDateKey(bucket.start)}',
               label: DateFormat.Md(locale).format(bucket.start),
               series: series,
+              color: _seriesColor(resolvedPalette, series),
               onTap:
                   onBucketSelected == null
                       ? null
@@ -402,6 +427,7 @@ class TokenUsageChart extends StatelessWidget {
             barKey: 'token-usage-${series.name}-bar-hour-${bucket.start.hour}',
             label: '${bucket.start.hour.toString().padLeft(2, '0')}:00',
             series: series,
+            color: _seriesColor(resolvedPalette, series),
           ),
       ],
     );
@@ -414,6 +440,7 @@ class _VerticalTokenUsageChart extends StatelessWidget {
     required this.maximum,
     required this.granularity,
     required this.series,
+    required this.color,
     required this.onBucketSelected,
   });
 
@@ -421,6 +448,7 @@ class _VerticalTokenUsageChart extends StatelessWidget {
   final int maximum;
   final TokenUsageGranularity granularity;
   final TokenUsageSeries series;
+  final Color color;
   final ValueChanged<TokenUsageBucket>? onBucketSelected;
 
   @override
@@ -472,6 +500,7 @@ class _VerticalTokenUsageChart extends StatelessWidget {
                 barKey: barKey,
                 label: label,
                 series: series,
+                color: color,
                 onTap:
                     onBucketSelected == null
                         ? null
@@ -493,6 +522,7 @@ class _VerticalTokenUsageBar extends StatelessWidget {
     required this.barKey,
     required this.label,
     required this.series,
+    required this.color,
     this.onTap,
   });
 
@@ -502,6 +532,7 @@ class _VerticalTokenUsageBar extends StatelessWidget {
   final String barKey;
   final String label;
   final TokenUsageSeries series;
+  final Color color;
   final VoidCallback? onTap;
 
   @override
@@ -517,8 +548,6 @@ class _VerticalTokenUsageBar extends StatelessWidget {
       locale: Localizations.localeOf(context).toString(),
     );
     final value = _seriesValue(bucket.usage, series);
-    final color = _seriesColor(context, series);
-
     return ShadTooltip(
       builder: (context) => Text(semanticsLabel),
       child: Semantics(
@@ -609,6 +638,7 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
     required this.barKey,
     required this.label,
     required this.series,
+    required this.color,
     this.onTap,
   });
 
@@ -618,6 +648,7 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
   final String barKey;
   final String label;
   final TokenUsageSeries series;
+  final Color color;
   final VoidCallback? onTap;
 
   @override
@@ -633,8 +664,6 @@ class _HorizontalTokenUsageBar extends StatelessWidget {
       locale: Localizations.localeOf(context).toString(),
     );
     final value = _seriesValue(bucket.usage, series);
-    final color = _seriesColor(context, series);
-
     return ShadTooltip(
       builder: (context) => Text(semanticsLabel),
       child: Semantics(
@@ -760,10 +789,10 @@ String _seriesLabel(BuildContext context, TokenUsageSeries series) {
   };
 }
 
-Color _seriesColor(BuildContext context, TokenUsageSeries series) {
+Color _seriesColor(TokenUsageChartPalette palette, TokenUsageSeries series) {
   return switch (series) {
-    TokenUsageSeries.input => StarsDesktopThemeSpec.primaryActionColor(context),
-    TokenUsageSeries.output => StarsDesktopTokens.of(context).secondaryText,
+    TokenUsageSeries.input => palette.input,
+    TokenUsageSeries.output => palette.output,
   };
 }
 
