@@ -1,4 +1,5 @@
 import 'package:stars/domain/models/grounded_answer.dart';
+import 'package:stars/domain/models/task_message_kind.dart';
 
 class MessageToolCall {
   const MessageToolCall({
@@ -344,6 +345,9 @@ class Message {
     this.messageId = '',
     this.turnId = '',
     this.runId = '',
+    this.taskId,
+    this.taskMessageKind,
+    this.summaryRevision,
     required this.chatId,
     required this.botId,
     required this.senderId,
@@ -361,6 +365,13 @@ class Message {
     this.hasPartialContent = false,
     required this.timestamp,
   }) {
+    if (taskMessageKind == null &&
+        (taskId != null || summaryRevision != null)) {
+      throw ArgumentError('Task metadata requires explicit message semantics.');
+    }
+    if (taskMessageKind != null) {
+      _validateTaskIdentity();
+    }
     final trustLevel = grounding.trustLevel;
     final hasUnsuccessfulTerminalOutcome =
         terminalOutcome == MessageTerminalOutcome.cancelled ||
@@ -380,6 +391,9 @@ class Message {
   final String messageId;
   final String turnId;
   final String runId;
+  final String? taskId;
+  final TaskMessageKind? taskMessageKind;
+  final int? summaryRevision;
   final String chatId;
   final String botId;
   final String senderId;
@@ -401,6 +415,9 @@ class Message {
     String? messageId,
     String? turnId,
     String? runId,
+    String? taskId,
+    TaskMessageKind? taskMessageKind,
+    int? summaryRevision,
     String? chatId,
     String? botId,
     String? senderId,
@@ -423,6 +440,9 @@ class Message {
       messageId: messageId ?? this.messageId,
       turnId: turnId ?? this.turnId,
       runId: runId ?? this.runId,
+      taskId: taskId ?? this.taskId,
+      taskMessageKind: taskMessageKind ?? this.taskMessageKind,
+      summaryRevision: summaryRevision ?? this.summaryRevision,
       chatId: chatId ?? this.chatId,
       botId: botId ?? this.botId,
       senderId: senderId ?? this.senderId,
@@ -441,5 +461,49 @@ class Message {
       hasPartialContent: hasPartialContent ?? this.hasPartialContent,
       timestamp: timestamp ?? this.timestamp,
     );
+  }
+
+  void _validateTaskIdentity() {
+    final kind = taskMessageKind!;
+    if (taskId != null && (taskId!.isEmpty || taskId!.trim() != taskId)) {
+      throw ArgumentError('Task identifiers must be normalized.');
+    }
+    if (kind == TaskMessageKind.status) {
+      if ((taskId != null) != (summaryRevision != null) ||
+          (summaryRevision != null && summaryRevision! < 0)) {
+        throw ArgumentError(
+          'Task status messages require a matching summary revision.',
+        );
+      }
+    } else if (summaryRevision != null) {
+      throw ArgumentError('Only status messages have a summary revision.');
+    }
+    final expectedId = switch (kind) {
+      TaskMessageKind.directReply => ConversationMessageIdentity.directReply(
+        turnId,
+      ),
+      TaskMessageKind.acknowledgement =>
+        ConversationMessageIdentity.acknowledgement(taskId ?? ''),
+      TaskMessageKind.result => ConversationMessageIdentity.result(
+        taskId ?? '',
+      ),
+      TaskMessageKind.status => messageId,
+    };
+    if (messageId.isEmpty ||
+        messageId != expectedId ||
+        (kind == TaskMessageKind.directReply && taskId != null)) {
+      throw ArgumentError(
+        'Message identity does not match its task semantics.',
+      );
+    }
+    if (kind == TaskMessageKind.result && terminalOutcome == null) {
+      throw ArgumentError('Task results require a terminal outcome.');
+    }
+    if (!kind.participatesInAnswerTrust &&
+        grounding.trustLevel != AnswerTrustLevel.unverified) {
+      throw ArgumentError(
+        'Task operation messages are not verified model answers.',
+      );
+    }
   }
 }

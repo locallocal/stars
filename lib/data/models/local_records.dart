@@ -348,6 +348,9 @@ final class MessageRecord {
       'message_id': message.messageId,
       'turn_id': message.turnId,
       'run_id': message.runId,
+      'task_id': message.taskId,
+      'task_message_kind': message.taskMessageKind?.storageName,
+      'summary_revision': message.summaryRevision,
       'chat_id': message.chatId,
       'bot_id': message.botId,
       'sender_id': message.senderId,
@@ -381,6 +384,14 @@ final class MessageRecord {
       messageId: _string(values['message_id']),
       turnId: _string(values['turn_id']),
       runId: _string(values['run_id']),
+      taskId: values['task_id'] as String?,
+      taskMessageKind:
+          values['task_message_kind'] == null
+              ? null
+              : TaskMessageKind.fromStorage(
+                values['task_message_kind']! as String,
+              ),
+      summaryRevision: values['summary_revision'] as int?,
       chatId: _string(values['chat_id']),
       botId: _string(values['bot_id']),
       senderId: _string(values['sender_id']),

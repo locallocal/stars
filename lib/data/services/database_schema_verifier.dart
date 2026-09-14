@@ -1,11 +1,6 @@
 part of 'database_service.dart';
 
-Future<void> _verifyCurrentDatabaseSchema(
-  Database database, {
-  bool allowMissingToolExecutionSchema = false,
-  bool allowMissingToolEvidenceSchema = false,
-  bool allowMissingGroundingReliabilitySchema = false,
-}) async {
+Future<void> _verifyCurrentDatabaseSchema(Database database) async {
   final tables = await database.rawQuery('''
     SELECT name
     FROM sqlite_master
@@ -13,11 +8,7 @@ Future<void> _verifyCurrentDatabaseSchema(
   ''');
   final tableNames =
       tables.map((row) => row['name']).whereType<String>().toSet();
-  if (!_matchesSchemaNames(tableNames, _currentTableNames, [
-    if (allowMissingToolExecutionSchema) const {'tool_execution_records'},
-    if (allowMissingToolEvidenceSchema) _toolEvidenceTableNames,
-    if (allowMissingGroundingReliabilitySchema) _groundingReliabilityTableNames,
-  ])) {
+  if (!_setsEqual(tableNames, _currentTableNames)) {
     throw const FormatException(
       'Database tables do not match the current Stars schema.',
     );
@@ -30,10 +21,7 @@ Future<void> _verifyCurrentDatabaseSchema(
   ''');
   final indexNames =
       indexes.map((row) => row['name']).whereType<String>().toSet();
-  if (!_matchesSchemaNames(indexNames, _currentIndexNames, [
-    if (allowMissingToolExecutionSchema) _toolExecutionIndexNames,
-    if (allowMissingToolEvidenceSchema) _toolEvidenceIndexNames,
-  ])) {
+  if (!_setsEqual(indexNames, _currentIndexNames)) {
     throw const FormatException(
       'Database indexes do not match the current Stars schema.',
     );
@@ -46,12 +34,35 @@ Future<void> _verifyCurrentDatabaseSchema(
   ''');
   final triggerNames =
       triggers.map((row) => row['name']).whereType<String>().toSet();
-  if (!_matchesSchemaNames(triggerNames, _currentTriggerNames, [
-    if (allowMissingToolEvidenceSchema) _toolEvidenceTriggerNames,
-  ])) {
+  if (!_setsEqual(triggerNames, _currentTriggerNames)) {
     throw const FormatException(
       'Database triggers do not match the current Stars schema.',
     );
+  }
+  for (final entry
+      in <String, Set<String>>{
+        'messages': {'task_id', 'task_message_kind', 'summary_revision'},
+        'conversation_tasks': {
+          'acceptance_json',
+          'revision',
+          'plan_revision',
+          'lease_token',
+          'lease_expires_at',
+          'next_run_at',
+          'cancel_requested_at',
+        },
+        'conversation_task_checkpoints': {
+          'checkpoint_json',
+          'sequence',
+          'segment_id',
+        },
+        'conversation_task_progress': {'progress_json', 'summary_revision'},
+      }.entries) {
+    final columns = await database.rawQuery('PRAGMA table_info(${entry.key})');
+    final names = columns.map((column) => column['name']).toSet();
+    if (!names.containsAll(entry.value)) {
+      throw FormatException('Missing task schema fields in ${entry.key}.');
+    }
   }
 }
 
@@ -107,23 +118,8 @@ Future<void> _createSkillReferenceValidationTrigger(
 bool _setsEqual<T>(Set<T> left, Set<T> right) =>
     left.length == right.length && left.containsAll(right);
 
-bool _matchesSchemaNames(
-  Set<String> actual,
-  Set<String> current,
-  List<Set<String>> optionalGroups,
-) {
-  var expectedSets = <Set<String>>[current];
-  for (final group in optionalGroups) {
-    expectedSets = <Set<String>>[
-      ...expectedSets,
-      for (final expected in expectedSets)
-        <String>{...expected}..removeAll(group),
-    ];
-  }
-  return expectedSets.any((expected) => _setsEqual(actual, expected));
-}
-
 const Set<String> _currentTableNames = <String>{
+  ..._conversationTaskTables,
   'bots',
   'chats',
   'messages',
@@ -153,6 +149,7 @@ const Set<String> _currentTableNames = <String>{
 };
 
 const Set<String> _currentIndexNames = <String>{
+  ..._conversationTaskIndexes,
   'messages_message_id_unique',
   'messages_bot_id_index',
   'tool_execution_records_run_id_index',
@@ -178,45 +175,12 @@ const Set<String> _currentIndexNames = <String>{
   'mcp_tools_server_id_index',
 };
 
-const Set<String> _toolEvidenceTableNames = <String>{
-  'tool_invocation_events',
-  'tool_evidence_records',
-  'answer_claim_evidence',
-};
-
-const Set<String> _groundingReliabilityTableNames = <String>{
-  'agent_run_answer_checkpoints',
-  'grounding_metric_counters',
-  'grounding_metric_observations',
-};
-
-const Set<String> _toolExecutionIndexNames = <String>{
-  'tool_execution_records_run_id_index',
-  'tool_execution_records_chat_started_at_index',
-};
-
-const Set<String> _toolEvidenceIndexNames = <String>{
-  'tool_invocation_events_run_id_index',
-  'tool_invocation_events_message_id_index',
-  'tool_invocation_events_chat_time_index',
-  'tool_evidence_records_run_id_index',
-  'tool_evidence_records_message_id_index',
-  'tool_evidence_records_observed_at_index',
-  'tool_evidence_records_chat_observed_index',
-  'answer_claim_evidence_evidence_id_index',
-};
-
-const Set<String> _currentTriggerNames = <String>{
+final Set<String> _currentTriggerNames = <String>{
+  ..._conversationTaskTriggers,
   'bot_skill_bindings_validate_skill_insert',
   'bot_skill_bindings_validate_skill_update',
   'conversation_skill_pins_validate_skill_insert',
   'conversation_skill_pins_validate_skill_update',
-  'tool_invocation_events_prevent_update',
-  'tool_evidence_records_prevent_update',
-  'answer_claim_evidence_prevent_update',
-};
-
-const Set<String> _toolEvidenceTriggerNames = <String>{
   'tool_invocation_events_prevent_update',
   'tool_evidence_records_prevent_update',
   'answer_claim_evidence_prevent_update',

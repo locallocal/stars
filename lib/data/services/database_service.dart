@@ -11,6 +11,7 @@ part 'database_schema_verifier.dart';
 part 'database_grounding_reliability_schema.dart';
 part 'database_tool_execution_schema.dart';
 part 'database_tool_evidence_schema.dart';
+part 'database_conversation_task_schema.dart';
 
 typedef ApplicationDocumentsDirectoryProvider = Future<Directory> Function();
 
@@ -26,7 +27,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 23;
+  static const int databaseVersion = 24;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -68,17 +69,8 @@ class DatabaseService {
       version: databaseVersion,
       onConfigure: configure,
       onCreate: createSchema,
-      onUpgrade: _upgradeToolEvidenceSchema,
     );
     try {
-      await _ensureCompatibleProfileSchema(database);
-      await _ensureCompatibleChatNameSchema(database);
-      await _ensureCompatibleMessageGroundingSchema(database);
-      await _ensureCompatibleBotSkillBindingSchema(database);
-      await _ensureCompatibleToolExecutionSchema(database);
-      await _ensureCompatibleToolEvidenceSchema(database);
-      await _ensureCompatibleConversationMemorySchema(database);
-      await _createGroundingReliabilitySchema(database);
       await _verifyIntegrity(database);
       await _verifyCurrentDatabaseSchema(database);
       return database;
@@ -92,105 +84,9 @@ class DatabaseService {
     await database.execute('PRAGMA foreign_keys = ON');
   }
 
-  static Future<void> _ensureCompatibleProfileSchema(Database database) async {
-    final columns = await database.rawQuery('PRAGMA table_info(profile)');
-    final columnNames =
-        columns.map((column) => column['name']).whereType<String>().toSet();
-    if (!columnNames.contains('inject_application_prompt')) {
-      await database.execute('''
-        ALTER TABLE profile
-        ADD COLUMN inject_application_prompt INTEGER NOT NULL DEFAULT 1
-          CHECK (inject_application_prompt IN (0, 1))
-      ''');
-    }
-    if (!columnNames.contains('show_reasoning')) {
-      await database.execute('''
-        ALTER TABLE profile
-        ADD COLUMN show_reasoning INTEGER NOT NULL DEFAULT 1
-          CHECK (show_reasoning IN (0, 1))
-      ''');
-    }
-    if (!columnNames.contains('show_verification_status')) {
-      await database.execute('''
-        ALTER TABLE profile
-        ADD COLUMN show_verification_status INTEGER NOT NULL DEFAULT 1
-          CHECK (show_verification_status IN (0, 1))
-      ''');
-    }
-    if (!columnNames.contains('strict_grounding_mode')) {
-      await database.execute('''
-        ALTER TABLE profile
-        ADD COLUMN strict_grounding_mode INTEGER NOT NULL DEFAULT 0
-          CHECK (strict_grounding_mode IN (0, 1))
-      ''');
-    }
-  }
-
-  static Future<void> _ensureCompatibleChatNameSchema(Database database) async {
-    final columns = await database.rawQuery('PRAGMA table_info(chats)');
-    final columnNames =
-        columns.map((column) => column['name']).whereType<String>().toSet();
-    if (columnNames.contains('name')) return;
-    await database.transaction((transaction) async {
-      await transaction.execute('''
-        ALTER TABLE chats
-        ADD COLUMN name TEXT NOT NULL DEFAULT ''
-      ''');
-      await transaction.execute('''
-        UPDATE chats
-        SET name = COALESCE(
-          (SELECT bots.name FROM bots WHERE bots.id = chats.bot_id),
-          ''
-        )
-        WHERE name = ''
-      ''');
-    });
-  }
-
-  static Future<void> _ensureCompatibleMessageGroundingSchema(
-    Database database,
-  ) async {
-    final columns = await database.rawQuery('PRAGMA table_info(messages)');
-    final columnNames =
-        columns.map((column) => column['name']).whereType<String>().toSet();
-    if (columnNames.contains('grounding_json')) return;
-    await database.execute('''
-      ALTER TABLE messages
-      ADD COLUMN grounding_json TEXT NOT NULL DEFAULT ''
-    ''');
-  }
-
-  static Future<void> _ensureCompatibleConversationMemorySchema(
-    Database database,
-  ) async {
-    final columns = await database.rawQuery(
-      'PRAGMA table_info(conversation_memory_state)',
-    );
-    final columnNames =
-        columns.map((column) => column['name']).whereType<String>().toSet();
-    if (columnNames.contains('max_model_turns')) return;
-    await database.execute('''
-      ALTER TABLE conversation_memory_state
-      ADD COLUMN max_model_turns INTEGER NOT NULL DEFAULT 15
-        CHECK (max_model_turns BETWEEN 1 AND 50)
-    ''');
-  }
-
-  static Future<void> _ensureCompatibleBotSkillBindingSchema(
-    Database database,
-  ) async {
-    final columns = await database.rawQuery(
-      'PRAGMA table_info(bot_skill_bindings)',
-    );
-    final columnNames =
-        columns.map((column) => column['name']).whereType<String>().toSet();
-    if (columnNames.contains('requires_approval')) return;
-    await database.execute('''
-      ALTER TABLE bot_skill_bindings
-      ADD COLUMN requires_approval INTEGER NOT NULL DEFAULT 1
-        CHECK (requires_approval IN (0, 1))
-    ''');
-  }
+  /// Validates the current baseline without altering or backfilling a database.
+  static Future<void> verifySchema(Database database) =>
+      _verifyCurrentDatabaseSchema(database);
 
   static Future<void> _migrateLegacyData(
     Directory legacyRoot,
@@ -218,7 +114,7 @@ class DatabaseService {
           Directory(join(staging.path, 'chats')),
         );
       }
-      await _verifySupportedDatabaseFile(stagedDatabase.path);
+      await _verifyDatabaseFile(stagedDatabase.path);
       await staging.rename(destination.path);
     } on Object catch (error) {
       if (await staging.exists()) await staging.delete(recursive: true);
@@ -251,7 +147,7 @@ class DatabaseService {
   static Future<bool> _isSupportedDatabaseValid(File database) async {
     if (!await database.exists()) return false;
     try {
-      await _verifySupportedDatabaseFile(database.path);
+      await _verifyDatabaseFile(database.path);
       return true;
     } on Object {
       return false;
@@ -266,11 +162,15 @@ class DatabaseService {
 
     final version = await _readVersion(databasePath);
     if (version < databaseVersion) {
-      if (await _isSupportedPreviousDatabaseValid(databasePath, version)) {
-        return;
-      }
-      await _deleteCurrentData(root, databasePath);
-      return;
+      throw AppFailure(
+        kind: AppFailureKind.migration,
+        code: 'database_rebuild_required',
+        retryable: false,
+        arguments: <String, Object?>{
+          'foundVersion': version,
+          'expectedVersion': databaseVersion,
+        },
+      );
     }
     if (version > databaseVersion) {
       throw AppFailure(
@@ -327,12 +227,7 @@ class DatabaseService {
         throw const FormatException('Backup schema version is not current.');
       }
       await _verifyIntegrity(database);
-      await _verifyCurrentDatabaseSchema(
-        database,
-        allowMissingToolExecutionSchema: true,
-        allowMissingToolEvidenceSchema: true,
-        allowMissingGroundingReliabilitySchema: true,
-      );
+      await _verifyCurrentDatabaseSchema(database);
     } finally {
       await database.close();
     }
@@ -349,29 +244,6 @@ class DatabaseService {
     );
     if (foreignKeyFailures.isNotEmpty) {
       throw const FormatException('SQLite foreign_key_check failed.');
-    }
-  }
-
-  static Future<void> _deleteCurrentData(
-    Directory root,
-    String databasePath,
-  ) async {
-    await deleteDatabase(databasePath);
-    final chats = Directory(join(root.path, 'chats'));
-    if (await chats.exists()) await chats.delete(recursive: true);
-    final pendingDeletions = Directory(join(root.path, '.pending_deletions'));
-    if (await pendingDeletions.exists()) {
-      await pendingDeletions.delete(recursive: true);
-    }
-    for (final name in <String>[_currentBackupName, _previousBackupName]) {
-      final backup = Directory(join(root.path, name));
-      if (await backup.exists()) await backup.delete(recursive: true);
-    }
-    await for (final entity in root.list(followLinks: false)) {
-      if (entity is Directory &&
-          basename(entity.path).startsWith('.stars_backup_staging_')) {
-        await entity.delete(recursive: true);
-      }
     }
   }
 
@@ -511,6 +383,10 @@ class DatabaseService {
         message_id TEXT NOT NULL UNIQUE,
         turn_id TEXT NOT NULL,
         run_id TEXT NOT NULL,
+        task_id TEXT,
+        task_message_kind TEXT CHECK (task_message_kind IN (
+          'directReply', 'taskAcknowledgement', 'taskStatus', 'taskResult')),
+        summary_revision INTEGER CHECK (summary_revision >= 0),
         chat_id TEXT NOT NULL,
         bot_id TEXT NOT NULL,
         sender_id TEXT NOT NULL,
@@ -531,6 +407,14 @@ class DatabaseService {
         has_partial_content INTEGER NOT NULL
           CHECK (has_partial_content IN (0, 1)),
         timestamp INTEGER NOT NULL,
+        CHECK (task_message_kind IS NOT NULL OR (task_id IS NULL AND summary_revision IS NULL)),
+        CHECK (task_message_kind != 'directReply' OR (task_id IS NULL AND message_id = turn_id || ':assistant')),
+        CHECK (task_message_kind != 'taskAcknowledgement' OR (task_id IS NOT NULL AND message_id = task_id || ':ack')),
+        CHECK (task_message_kind != 'taskResult' OR (task_id IS NOT NULL AND message_id = task_id || ':result' AND terminal_state != '')),
+        CHECK (summary_revision IS NULL OR task_message_kind = 'taskStatus'),
+        CHECK (task_message_kind != 'taskStatus' OR ((task_id IS NULL) = (summary_revision IS NULL))),
+        FOREIGN KEY (task_id) REFERENCES conversation_tasks(task_id) ON DELETE CASCADE
+          DEFERRABLE INITIALLY DEFERRED,
         FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
         FOREIGN KEY (bot_id) REFERENCES bots(id) ON DELETE CASCADE
       )
@@ -542,6 +426,7 @@ class DatabaseService {
     await db.execute('CREATE INDEX messages_bot_id_index ON messages(bot_id)');
     await _createToolExecutionSchema(db);
     await _createToolEvidenceSchema(db);
+    await _createConversationTaskSchema(db);
     await _createGroundingReliabilitySchema(db);
     await _createTokenUsageSchema(db);
     await _createSkillSchema(db);
