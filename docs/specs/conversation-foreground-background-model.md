@@ -823,6 +823,9 @@ provider session factory 和 tool executor。
 
 ## 14. 实现顺序
 
+详细步骤见[分阶段实现计划](../plans/conversation-foreground-background-model/README.md)，按下列 9 个阶段
+分别列出前置依赖、代码落点和退出条件；计划文档不代表对应能力已经实现。
+
 实现应按可验证的架构切面推进：
 
 1. 建立全新的任务 Domain 模型、repository 契约和新建数据库 schema；
