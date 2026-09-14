@@ -9,6 +9,7 @@ export 'conversation_history.dart';
 export 'conversation_memory.dart';
 export 'conversation_draft.dart';
 export 'conversation_directory.dart';
+export 'conversation_task.dart';
 export 'grounded_answer.dart';
 export 'grounding_metrics.dart';
 export 'local_file_system.dart';
