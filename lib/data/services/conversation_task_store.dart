@@ -17,6 +17,7 @@ import 'package:stars/domain/services/task_safe_data.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
 part 'conversation_task_store_execution.dart';
+part 'conversation_task_store_status.dart';
 part 'conversation_task_store_writes.dart';
 part 'conversation_task_store_commands.dart';
 part 'conversation_task_store_scheduling.dart';

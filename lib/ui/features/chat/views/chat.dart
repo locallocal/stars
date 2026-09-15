@@ -1,5 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:stars/ui/features/chat/views/conversation_task_retry_dialog.dart';
+import 'package:stars/ui/features/chat/views/task_action_button.dart';
+import 'package:stars/domain/services/task_progress_strings.dart';
+import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
+import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
+import 'package:stars/ui/features/chat/views/conversation_tasks_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
@@ -25,6 +31,7 @@ import 'package:stars/utils/utils.dart';
 
 // 聊天页面
 part 'chat_workspace.dart';
+part 'chat_task_actions.dart';
 part 'chat_draft_and_media.dart';
 part 'chat_send_commands.dart';
 part 'chat_session_commands.dart';
@@ -63,6 +70,8 @@ class ChatPageState extends State<ChatPage> {
 
   late final ChatGenerationViewModel _generationViewModel;
   late final ChatViewModel _chatViewModel;
+  ConversationTasksViewModel? _tasksViewModel;
+  bool _sendPending = false;
   bool _dependenciesInitialized = false;
   AiProvider get _provider => _generationViewModel.capabilityProvider;
   final String _currentUserId = 'me';
@@ -88,6 +97,7 @@ class ChatPageState extends State<ChatPage> {
   List<Message> _messages = [];
   StreamSubscription<void>? _taskMessageSubscription;
   int _messageRevision = 0;
+  int _messageLoadEpoch = 0;
   String _streamingResponse = '';
   List<String> _streamingFiles = const [];
   String _reasoningResponse = '';
@@ -123,9 +133,14 @@ class ChatPageState extends State<ChatPage> {
     _generationViewModel =
         _chatViewModel.generationViewModel
           ..addListener(_handleGenerationChanged);
+    _tasksViewModel = AppScope.of(
+      context,
+    ).createConversationTasksViewModel(widget.id, widget.bot.id);
+    _tasksViewModel?.addListener(_handleTaskChanges);
+    unawaited(_tasksViewModel?.start());
     _handleGenerationChanged();
     _taskMessageSubscription = _chatViewModel.taskMessageChanges.listen((_) {
-      if (mounted) unawaited(_loadMessages());
+      if (mounted) unawaited(_loadMessages(preserveViewport: true));
     });
     unawaited(_restoreConversationDraft());
     _loadMessages();
@@ -226,6 +241,7 @@ class ChatPageState extends State<ChatPage> {
     });
 
     if (isNewTerminal) {
+      if (_generationViewModel.dispatcher != null) unawaited(_loadMessages());
       _scheduleScrollToLatest(animate: true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _generationViewModel.snapshot.lifecycle.isTerminal) {
@@ -237,7 +253,8 @@ class ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> _loadMessages() async {
+  Future<void> _loadMessages({bool preserveViewport = false}) async {
+    final epoch = ++_messageLoadEpoch;
     final cachedMessages = _chatViewModel.cachedMessages;
     if (cachedMessages != null) {
       final mergedMessages = _mergeLoadedMessages(cachedMessages);
@@ -247,14 +264,16 @@ class ChatPageState extends State<ChatPage> {
         _isLoading = false;
         _historyError = null;
         _historyRetryLoadsEarlier = false;
-        _followLatest = true;
-        _showJumpToLatest = false;
+        if (!preserveViewport) {
+          _followLatest = true;
+          _showJumpToLatest = false;
+        }
       });
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      if (!preserveViewport) _isLoading = true;
       _historyError = null;
       _historyRetryLoadsEarlier = false;
     });
@@ -264,7 +283,7 @@ class ChatPageState extends State<ChatPage> {
       final messages = _chatViewModel.messages;
       final historyError = _chatViewModel.historyError;
       if (historyError != null) throw historyError;
-      if (!mounted) return;
+      if (!mounted || epoch != _messageLoadEpoch) return;
       final mergedMessages = _mergeLoadedMessages(messages);
       setState(() {
         _messages = mergedMessages;
@@ -272,11 +291,13 @@ class ChatPageState extends State<ChatPage> {
         _isLoading = false;
         _historyError = null;
         _historyRetryLoadsEarlier = false;
-        _followLatest = true;
-        _showJumpToLatest = false;
+        if (!preserveViewport) {
+          _followLatest = true;
+          _showJumpToLatest = false;
+        }
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || epoch != _messageLoadEpoch) return;
       setState(() {
         _isLoading = false;
         _historyError = safeFailureMessage(context, error);
@@ -305,7 +326,7 @@ class ChatPageState extends State<ChatPage> {
       if (messageId.isEmpty || existingIndex == null) {
         if (messageId.isNotEmpty) indexesById[messageId] = merged.length;
         merged.add(message);
-      } else {
+      } else if (message.taskMessageKind == null) {
         // The in-memory snapshot may have reached a newer terminal state while
         // the database query was in flight, so it wins for the same message.
         merged[existingIndex] = message;
@@ -318,6 +339,8 @@ class ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     unawaited(_taskMessageSubscription?.cancel());
+    _tasksViewModel?.removeListener(_handleTaskChanges);
+    _tasksViewModel?.dispose();
     if (_dependenciesInitialized) unawaited(_persistDraft());
     if (_dependenciesInitialized) {
       _generationViewModel.removeListener(_handleGenerationChanged);
@@ -478,13 +501,14 @@ class ChatPageState extends State<ChatPage> {
             children: [
               Expanded(child: _buildConversationBody(context, fontSize)),
               _buildAttachmentsBar(),
+              _buildTasksPanel(),
               _buildToolApprovalCard(isDesktop: false),
               _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: false),
               MessageInput(
                 provider: _provider,
                 controller: _messageController,
-                requestInProgress: _isTyping,
+                requestInProgress: _isTyping || _sendPending,
                 canCancel: _isCancellable,
                 isStopping: _isStopping,
                 autofocus: _autofocusComposer,

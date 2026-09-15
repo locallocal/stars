@@ -10,6 +10,7 @@ final class ConversationTurnInput {
     required this.verification,
     required this.segmentLimits,
     this.explicitTaskId,
+    this.retryOfTaskId,
   }) : bot = _frozenBot(bot),
        userMessage = userMessage.copyWith(
          images: List.unmodifiable(userMessage.images),
@@ -47,6 +48,7 @@ final class ConversationTurnInput {
   final VerificationPolicySnapshot verification;
   final TaskSegmentLimits segmentLimits;
   final String? explicitTaskId;
+  final String? retryOfTaskId;
   ConversationDraft get draft => ConversationDraft(
     text: userMessage.content,
     imagePaths: userMessage.images,
@@ -130,6 +132,7 @@ final class TurnTaskStatusRead extends TurnDispatchResult {
 }
 
 enum TurnDispatchFailureCode {
+  cancelled,
   userPersistenceFailed,
   preparationFailed,
   routingFailed,
@@ -225,7 +228,8 @@ final class _DispatchTiming {
 }
 
 final class _PendingTurn {
-  _PendingTurn(this.input);
+  _PendingTurn(this.input, this.cancellation);
+  AgentCancellationToken? cancellation;
   final ConversationTurnInput input;
   bool userPersisted = false;
   bool providerSupportsAgentLoop = false;

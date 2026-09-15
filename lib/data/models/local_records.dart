@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:stars/data/models/conversation_task_record.dart';
 
 import 'package:stars/domain/models/models.dart';
 
@@ -365,6 +366,9 @@ final class MessageRecord {
       'task_id': message.taskId,
       'task_message_kind': message.taskMessageKind?.storageName,
       'summary_revision': message.summaryRevision,
+      'task_summary_json': jsonEncode(
+        message.taskStatusSummaries.map(TaskSummaryRecord.encode).toList(),
+      ),
       'chat_id': message.chatId,
       'bot_id': message.botId,
       'sender_id': message.senderId,
@@ -406,6 +410,9 @@ final class MessageRecord {
                 values['task_message_kind']! as String,
               ),
       summaryRevision: values['summary_revision'] as int?,
+      taskStatusSummaries: TaskSummaryRecord.decodeList(
+        values['task_summary_json'],
+      ),
       taskResultPolicy: _taskResultPolicy(values['task_verification_json']),
       chatId: _string(values['chat_id']),
       botId: _string(values['bot_id']),

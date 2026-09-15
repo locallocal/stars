@@ -25,6 +25,7 @@ final class ProviderConversationTurnRouter implements ConversationTurnRouter {
     var completed = false;
     var succeeded = false;
     try {
+      request.cancellation?.throwIfCancelled();
       provider = _providers.create(request.bot);
       final mode = provider.foregroundRoutingTransport;
       if (mode == ForegroundRoutingTransport.unavailable) {
@@ -72,7 +73,18 @@ final class ProviderConversationTurnRouter implements ConversationTurnRouter {
       while (true) {
         final remaining = timeout - elapsed.elapsed;
         if (remaining <= Duration.zero) throw TimeoutException('routing');
-        if (!await iterator.moveNext().timeout(remaining)) break;
+        final cancelled = request.cancellation?.whenCancelled;
+        final next = iterator.moveNext().timeout(remaining);
+        if (!await (cancelled == null
+            ? next
+            : Future.any([
+              next,
+              cancelled.then<bool>(
+                (_) => throw StateError('foreground_cancelled'),
+              ),
+            ]))) {
+          break;
+        }
         switch (iterator.current) {
           case TextDelta(:final text):
             if (completed) throw const FormatException();
@@ -134,7 +146,11 @@ final class ProviderConversationTurnRouter implements ConversationTurnRouter {
       yield const TurnRoutingFailed(TurnRoutingFailure.timedOut);
     } on Object {
       // Provider errors may contain request URLs, keys, or raw response bodies.
-      yield const TurnRoutingFailed(TurnRoutingFailure.providerFailed);
+      yield TurnRoutingFailed(
+        request.cancellation?.isCancelled == true
+            ? TurnRoutingFailure.cancelled
+            : TurnRoutingFailure.providerFailed,
+      );
     } finally {
       if (!succeeded && provider != null) {
         unawaited(

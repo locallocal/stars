@@ -4,7 +4,7 @@
 
 `ConversationTaskRunner` 推进一个已接受任务的有界分段。任务、计划、工具尝试、审批、证据和
 检查点来自数据库；模型 session 只在一次模型请求期间存在。[应用调度与恢复](conversation-task-scheduling.md)
-已接入组合根；[最终验证和唯一结果消息提交](conversation-task-terminal-results.md)已实现，会话交互接入属于阶段 07。
+已接入组合根；[最终验证和唯一结果消息提交](conversation-task-terminal-results.md)已与[生产会话交互](conversation-task-chat-ui.md)连通。
 
 ## 调用与返回
 
@@ -87,7 +87,7 @@ job 协议。
 
 ## 存储与安全边界
 
-schema 版本 26 增加分段事件类型约束。`getExecutionSnapshot` 在一个读事务中返回任务、当前
+当前 schema 包含分段事件类型约束。`getExecutionSnapshot` 在一个读事务中返回任务、当前
 计划、检查点、事件序号、尝试归属、审批和证据，供执行与恢复使用。进度仍由已提交事实重建。
 
 检查点的 `TaskExecutionState` 保存待执行调用、工具版本、重试及对账状态、步骤状态和候选。

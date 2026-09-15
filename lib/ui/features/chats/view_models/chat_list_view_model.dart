@@ -71,6 +71,9 @@ class ChatListViewModel extends DisposableChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> hasActiveTasks(String id) async =>
+      await _deleteConversation?.hasActiveTasks(id) ?? false;
+
   Future<void> deleteChat(String id) =>
       _deleteConversation?.call(id) ?? _chatRepository.deleteChat(id);
 

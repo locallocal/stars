@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:crypto/crypto.dart';
 import 'package:stars/domain/models/bot.dart';
@@ -20,7 +21,7 @@ import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 part 'conversation_turn_dispatch_contracts.dart';
 part 'conversation_turn_acceptance.dart';
 
-/// Foreground only. Production composition waits for the scheduler and runner.
+/// Foreground only. Accepted tasks are owned by the application scheduler.
 /// Share one instance (or one gate) for all foreground entry points.
 final class ConversationTurnDispatcher {
   ConversationTurnDispatcher({
@@ -62,14 +63,19 @@ final class ConversationTurnDispatcher {
   Future<TurnDispatchResult> dispatch(
     ConversationTurnInput input, {
     void Function(TurnDispatchUpdate)? onUpdate,
-  }) => _run(_PendingTurn(input), onUpdate);
+    AgentCancellationToken? cancellation,
+  }) => _run(_PendingTurn(input, cancellation), onUpdate);
 
   /// Reuses prepared context, the validated disposition, and original identities.
   /// No second routing call is needed after an acceptance/persistence failure.
   Future<TurnDispatchResult> retry(
     TurnDispatchRetry retry, {
     void Function(TurnDispatchUpdate)? onUpdate,
-  }) => _run(retry._pending, onUpdate);
+    AgentCancellationToken? cancellation,
+  }) {
+    retry._pending.cancellation = cancellation;
+    return _run(retry._pending, onUpdate);
+  }
 
   Future<TurnDispatchResult> _run(
     _PendingTurn pending,
@@ -142,15 +148,18 @@ final class ConversationTurnDispatcher {
       if (pending.prepared == null) {
         metrics.preparationCalls++;
         final started = metrics.clock.elapsed;
-        pending.prepared = await _prepare(
-          chatId: user.chatId,
-          bot: input.bot,
-          history:
-              history
-                  .where((message) => message.messageId != user.messageId)
-                  .toList(),
-          userMessage: user,
-          currentUserId: user.senderId,
+        pending.prepared = await _foregroundWait(
+          _prepare(
+            chatId: user.chatId,
+            bot: input.bot,
+            history:
+                history
+                    .where((message) => message.messageId != user.messageId)
+                    .toList(),
+            userMessage: user,
+            currentUserId: user.senderId,
+          ),
+          pending.cancellation,
         );
         metrics.preparationDuration = metrics.clock.elapsed - started;
         if (!_sameUser(pending.prepared!.userMessage, user)) {
@@ -163,9 +172,21 @@ final class ConversationTurnDispatcher {
       metrics.preflightUsage = prepared.preflightTokenUsage;
       pending.acceptance ??= _freezeAcceptance(input, prepared, _tools);
       if (pending.disposition == null) {
-        await _route(pending, metrics, onUpdate);
+        await _foregroundWait(
+          _route(pending, metrics, onUpdate),
+          pending.cancellation,
+        );
+      }
+      if (pending.cancellation?.isCancelled ?? false) {
+        throw const _DispatchProblem(TurnDispatchFailureCode.cancelled);
       }
       final disposition = pending.disposition!;
+      if (input.retryOfTaskId != null && disposition is! BackgroundTaskPlan) {
+        pending.disposition = null;
+        throw const _DispatchProblem(
+          TurnDispatchFailureCode.taskCreationFailed,
+        );
+      }
       switch (disposition) {
         case DirectReply():
           return await _direct(pending, disposition, metrics);
@@ -242,7 +263,8 @@ final class ConversationTurnDispatcher {
         code: code,
         routingFailure: problem?.routing,
         retry:
-            code == TurnDispatchFailureCode.identityConflict
+            (code == TurnDispatchFailureCode.identityConflict ||
+                    code == TurnDispatchFailureCode.cancelled)
                 ? null
                 : TurnDispatchRetry._(pending),
         userPersisted: pending.userPersisted,
@@ -267,6 +289,8 @@ final class ConversationTurnDispatcher {
       bot: pending.input.bot,
       userMessage: pending.input.userMessage,
       language: pending.input.language,
+      cancellation: pending.cancellation,
+      requiresBackgroundTask: pending.input.retryOfTaskId != null,
       messages: pending.prepared!.messages,
       allowedToolNames: pending.acceptance!.allowedToolNames,
     );
@@ -277,6 +301,7 @@ final class ConversationTurnDispatcher {
         );
     try {
       await for (final event in _router.route(request)) {
+        if (pending.cancellation?.isCancelled ?? false) return;
         switch (event) {
           case TurnRoutingCallStarted(:final providerSupportsAgentLoop):
             if (++metrics.mainReplyCalls > 1) invalid();
@@ -461,3 +486,17 @@ final class _DispatchProblem implements Exception {
   final TurnDispatchFailureCode code;
   final TurnRoutingFailure? routing;
 }
+
+Future<T> _foregroundWait<T>(
+  Future<T> operation,
+  AgentCancellationToken? token,
+) =>
+    token == null
+        ? operation
+        : Future.any([
+          operation,
+          token.whenCancelled.then<T>(
+            (_) =>
+                throw const _DispatchProblem(TurnDispatchFailureCode.cancelled),
+          ),
+        ]);

@@ -41,7 +41,12 @@ Future<void> _verifyCurrentDatabaseSchema(Database database) async {
   }
   for (final entry
       in <String, Set<String>>{
-        'messages': {'task_id', 'task_message_kind', 'summary_revision'},
+        'messages': {
+          'task_id',
+          'task_message_kind',
+          'summary_revision',
+          'task_summary_json',
+        },
         'conversation_tasks': {
           'acceptance_json',
           'revision',

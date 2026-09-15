@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/services/strict_grounding_policy.dart';
@@ -36,6 +37,7 @@ class ChatListBuilder extends StatelessWidget {
   final VoidCallback? onChatDirectoryRequested;
   final VoidCallback? onChatClearRequested;
   final ChatGenerationRegistry generationRegistry;
+  final Future<bool> Function(String chatId)? hasActiveTasks;
 
   const ChatListBuilder({
     super.key,
@@ -56,6 +58,7 @@ class ChatListBuilder extends StatelessWidget {
     this.onChatDirectoryRequested,
     this.onChatClearRequested,
     required this.generationRegistry,
+    this.hasActiveTasks,
   });
 
   @override
@@ -129,6 +132,21 @@ class ChatListBuilder extends StatelessWidget {
 
         Future<void> deleteChat() async {
           final registry = generationRegistry;
+          bool active;
+          try {
+            active = await hasActiveTasks?.call(chat.id) ?? false;
+          } on Object {
+            if (context.mounted) {
+              showStarsNotice(context, S.of(context).errorLoadingContent);
+            }
+            return;
+          }
+          if (!context.mounted) return;
+          final deleteDescription =
+              S.of(context).confirmDeleteChat(bot.name) +
+              (active
+                  ? '\n\n${TaskProgressStrings(Localizations.localeOf(context).toLanguageTag()).deleteImpact}'
+                  : '');
           final confirm =
               isDesktop
                   ? await showChatShadDialog<bool>(
@@ -145,7 +163,7 @@ class ChatListBuilder extends StatelessWidget {
                           description: Text(
                             desktopConversationText(
                               dialogContext,
-                              S.of(dialogContext).confirmDeleteChat(bot.name),
+                              deleteDescription,
                             ),
                           ),
                           actions: [
@@ -178,9 +196,7 @@ class ChatListBuilder extends StatelessWidget {
                               ),
                             ),
                           ),
-                          content: Text(
-                            S.of(dialogContext).confirmDeleteChat(bot.name),
-                          ),
+                          content: Text(deleteDescription),
                           actions: [
                             TextButton(
                               onPressed:

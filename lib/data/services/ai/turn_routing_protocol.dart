@@ -29,6 +29,7 @@ final class TurnRoutingProtocol {
   static String instruction(TurnRoutingRequest request) => '''
 Use Stars foreground routing protocol v1 for this main reply.
 Choose exactly one disposition. Available tools do NOT imply a task.
+${request.requiresBackgroundTask ? 'The user explicitly reviewed a retry. Create a new backgroundTaskPlan for the reviewed input; do not reuse old execution results or approvals.' : ''}
 Greetings, explanations needing no external facts, and rewriting supplied text
 are directReply. Work needing external tools, verification or extended execution
 is backgroundTaskPlan. Questions about task progress are taskStatusRequest.

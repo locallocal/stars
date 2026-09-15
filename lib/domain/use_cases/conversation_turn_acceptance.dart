@@ -74,6 +74,7 @@ _AcceptanceWrite _createAcceptance(
     botId: user.botId,
     originTurnId: user.turnId,
     originUserMessageId: user.messageId,
+    retryOfTaskId: pending.input.retryOfTaskId,
     title: proposal.title,
     objective: proposal.objective,
     acceptance: pending.acceptance!,

@@ -1,4 +1,13 @@
 import 'dart:math';
+
+import 'package:stars/domain/models/task_tool_protocol.dart';
+import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
+import 'package:stars/data/services/ai/provider_conversation_turn_router.dart';
+import 'package:stars/data/services/ai/task_progress_polisher.dart';
+import 'package:stars/domain/use_cases/conversation_turn_dispatcher.dart';
+import 'package:stars/domain/use_cases/present_conversation_task_progress.dart';
+import 'package:stars/domain/use_cases/prepare_conversation_task_retry.dart';
+import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
 import 'package:stars/data/services/ai/task_terminal_polisher.dart';
 import 'package:stars/domain/use_cases/finalize_conversation_task.dart';
 import 'package:stars/data/repositories/sqlite_conversation_task_repository.dart';
@@ -490,8 +499,11 @@ class AppDependencies {
       allowSkillScripts: true,
       allowProcessExecution: true,
     );
-    final conversationTasks = _createConversationTasks(
+    final conversationTasks = createAppConversationTasks(
       database: localDatabase,
+      messages: messageRepository,
+      drafts: conversationDraftRepository,
+      prepare: prepareTextGeneration,
       bots: botRepository,
       chats: chatRepository,
       providers: aiProviderRepository,
@@ -545,6 +557,8 @@ class AppDependencies {
       bundledSkillLoader: loadBundledSkills,
       createChat: CreateChat(chatRepository: chatRepository),
       generationRegistry: ChatGenerationRegistry(
+        dispatcher: conversationTasks.dispatcher,
+        taskProgress: conversationTasks.progress,
         messagePersister: messageRepository.upsertMessage,
         groundedMessagePersister: messageRepository.upsertGroundedMessage,
         answerRecoveryCheckpointPersister:
@@ -756,28 +770,4 @@ class AppDependencies {
 
   NewChatViewModel createNewChatViewModel() =>
       NewChatViewModel(botRepository: botRepository, createChat: createChat);
-
-  ChatViewModel createChatViewModel(String chatId, Bot bot) {
-    final workflow = ChatWorkflowFacade(
-      chatId: chatId,
-      bot: bot,
-      messageRepository: messageRepository,
-      chatRepository: chatRepository,
-      aiProviderRepository: aiProviderRepository,
-      attachmentRepository: attachmentRepository,
-      conversationDraftRepository: conversationDraftRepository,
-      createUserMessage: createUserMessage,
-      persistConversationAssets: persistConversationAssets,
-      generateMediaTurn: generateMediaTurn,
-      prepareTextGeneration: prepareTextGeneration,
-    );
-    return ChatViewModel(
-      interaction: ChatInteractionFacade(
-        workflow: workflow,
-        messageActions: createMessageActionViewModel(),
-        generationRegistry: generationRegistry,
-        generationViewModel: generationRegistry.viewModelFor(chatId, bot),
-      ),
-    );
-  }
 }

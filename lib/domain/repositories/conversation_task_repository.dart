@@ -20,6 +20,14 @@ abstract interface class ConversationTaskRepository {
   Future<ConversationTaskProgressSummary?> getProgressSummary(String taskId);
   Stream<ConversationTaskProgressSummary> watchProgress(String taskId);
 
+  /// Subscribes before reading an initial snapshot, including newly accepted tasks.
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId);
+
+  /// One immutable card snapshot per status message; repeat queries keep the
+  /// original version. Narration updates only its text, with a revision fence.
+  Future<Message> saveStatusMessage(Message message);
+  Future<bool> updateStatusNarration(Message message);
+
   /// Repairs only the disposable projection from committed audit facts.
   Future<ConversationTaskProgressSummary?> rebuildProgress(String taskId);
 

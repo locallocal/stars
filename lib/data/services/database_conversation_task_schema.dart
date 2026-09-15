@@ -53,6 +53,7 @@ Future<void> _createConversationTaskSchema(DatabaseExecutor db) async {
       bot_id TEXT NOT NULL,
       origin_turn_id TEXT NOT NULL UNIQUE CHECK (length(origin_turn_id) > 0),
       origin_user_message_id TEXT NOT NULL UNIQUE,
+      retry_of_task_id TEXT REFERENCES conversation_tasks(task_id) DEFERRABLE INITIALLY DEFERRED,
       ack_message_id TEXT NOT NULL UNIQUE CHECK (ack_message_id = task_id || ':ack'),
       result_message_id TEXT UNIQUE CHECK (result_message_id = task_id || ':result'),
       title TEXT NOT NULL CHECK (length(title) BETWEEN 1 AND 200),
@@ -263,7 +264,8 @@ Future<void> _createConversationTaskSchema(DatabaseExecutor db) async {
   ''');
   await db.execute('''
     CREATE TRIGGER conversation_tasks_preserve_acceptance BEFORE UPDATE ON conversation_tasks
-    WHEN OLD.task_id IS NOT NEW.task_id OR OLD.chat_id IS NOT NEW.chat_id
+    WHEN OLD.retry_of_task_id IS NOT NEW.retry_of_task_id
+      OR OLD.task_id IS NOT NEW.task_id OR OLD.chat_id IS NOT NEW.chat_id
       OR OLD.bot_id IS NOT NEW.bot_id OR OLD.origin_turn_id IS NOT NEW.origin_turn_id
       OR OLD.origin_user_message_id IS NOT NEW.origin_user_message_id
       OR OLD.ack_message_id IS NOT NEW.ack_message_id OR OLD.title IS NOT NEW.title

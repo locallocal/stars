@@ -1,4 +1,5 @@
 import 'package:stars/domain/models/ai_models.dart';
+import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/turn_disposition.dart';
@@ -8,10 +9,14 @@ final class TurnRoutingRequest {
     required this.bot,
     required this.userMessage,
     required this.language,
+    this.cancellation,
+    this.requiresBackgroundTask = false,
     required List<ChatMessage> messages,
     required Set<String> allowedToolNames,
   }) : messages = List.unmodifiable(messages),
        allowedToolNames = Set.unmodifiable(allowedToolNames);
+  final AgentCancellationToken? cancellation;
+  final bool requiresBackgroundTask;
   final Bot bot;
   final Message userMessage;
   final String language;

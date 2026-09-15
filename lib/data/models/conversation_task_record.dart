@@ -6,6 +6,7 @@ import 'package:stars/domain/models/tool.dart';
 
 part 'conversation_task_snapshot_record.dart';
 part 'conversation_task_fact_records.dart';
+part 'task_summary_record.dart';
 
 /// Current-schema task DTO. Task timestamps use UTC microseconds throughout.
 final class ConversationTaskRecord {
@@ -19,6 +20,7 @@ final class ConversationTaskRecord {
         'bot_id': task.botId,
         'origin_turn_id': task.originTurnId,
         'origin_user_message_id': task.originUserMessageId,
+        'retry_of_task_id': task.retryOfTaskId,
         'ack_message_id': task.ackMessageId,
         'result_message_id': task.resultMessageId,
         'title': task.title,
@@ -57,6 +59,7 @@ final class ConversationTaskRecord {
       botId: row.text('bot_id'),
       originTurnId: row.text('origin_turn_id'),
       originUserMessageId: row.text('origin_user_message_id'),
+      retryOfTaskId: row.optionalText('retry_of_task_id'),
       title: row.text('title'),
       objective: row.text('objective'),
       acceptance: TaskAcceptanceRecord.decode(row.json('acceptance_json')),

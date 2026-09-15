@@ -4,11 +4,19 @@ part of 'app_dependencies.dart';
 final class AppConversationTasks {
   AppConversationTasks({
     required this.repository,
+    this.clock = const SystemTaskRunnerClock(),
+    this.dispatcher,
+    this.progress,
+    this.retry,
     required this.scheduler,
     required this.commands,
     required this.deleteConversation,
     required this.deleteBot,
   });
+  final TaskRunnerClock clock;
+  final ConversationTurnDispatcher? dispatcher;
+  final PresentConversationTaskProgress? progress;
+  final PrepareConversationTaskRetry? retry;
   final ConversationTaskRepository repository;
   final ConversationTaskScheduler scheduler;
   final ConversationTaskCommands commands;
@@ -42,8 +50,14 @@ final class AppConversationTasks {
   }
 }
 
-AppConversationTasks _createConversationTasks({
+AppConversationTasks createAppConversationTasks({
   required LocalDatabaseService database,
+  TaskRunnerClock clock = const SystemTaskRunnerClock(),
+  String Function()? idGenerator,
+  Map<String, TaskToolAdapter> adapters = const {},
+  required MessageRepository messages,
+  required ConversationDraftRepository drafts,
+  required PrepareTextGeneration prepare,
   required BotRepository bots,
   required ChatRepository chats,
   required AiProviderRepository providers,
@@ -56,12 +70,15 @@ AppConversationTasks _createConversationTasks({
   final repository = SqliteConversationTaskRepository(localDatabase: database);
   final random = Random.secure();
   String newId() =>
+      idGenerator?.call() ??
       List.generate(
         24,
         (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
       ).join();
   final runtime = TaskRuntimeFactory(
     tasks: repository,
+    adapters: adapters,
+    clock: clock,
     bots: bots,
     providers: providers,
     registry: registry,
@@ -94,6 +111,7 @@ AppConversationTasks _createConversationTasks({
   );
   final finalizer = FinalizeConversationTask(
     repository: repository,
+    clock: clock,
     evidenceRepository: SqliteToolEvidenceRepository(localDatabase: database),
     ownerId: newId(),
     newId: newId,
@@ -103,6 +121,7 @@ AppConversationTasks _createConversationTasks({
   );
   final scheduler = ConversationTaskScheduler(
     repository: repository,
+    clock: clock,
     resolve: runtime.resolve,
     ownerId: newId(),
     newId: newId,
@@ -110,11 +129,31 @@ AppConversationTasks _createConversationTasks({
   );
   final commands = ConversationTaskCommands(
     repository: repository,
+    clock: clock,
     wake: scheduler.enqueue,
     metrics: scheduler.metrics,
   );
   return AppConversationTasks(
     repository: repository,
+    clock: clock,
+    dispatcher: ConversationTurnDispatcher(
+      prepare: prepare,
+      router: ProviderConversationTurnRouter(providers: providers),
+      messages: messages,
+      drafts: drafts,
+      tasks: repository,
+      enqueuer: scheduler,
+      toolRegistry: registry,
+      now: clock.now,
+    ),
+    progress: PresentConversationTaskProgress(
+      repository: repository,
+      newId: messages.createId,
+      now: clock.now,
+      polisher:
+          TaskProgressPolisherFactory(bots: bots, providers: providers).forBot,
+    ),
+    retry: PrepareConversationTaskRetry(tasks: repository, messages: messages),
     scheduler: scheduler,
     commands: commands,
     deleteConversation: DeleteConversation(

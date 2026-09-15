@@ -27,8 +27,10 @@ View -> ViewModel -> Use Case（按需） -> Repository contract
   动画、路由和弹窗。
 
 旧 `lib/services` 已完成迁移并删除：静态 CRUD 入口由 Repository 取代，数据库服务改为
-实例依赖，AI Provider 通过 `AiProviderRepository` 暴露领域契约，聊天生成状态由
-`ChatGenerationViewModel` 管理。生产页面使用 `AppDependencies.production()` 组合的依赖。
+实例依赖，AI Provider 通过 `AiProviderRepository` 暴露领域契约，前台文本交互由
+`ChatGenerationViewModel` 协调；后台任务由应用级 scheduler 与持久 repository 管理，
+`ConversationTasksViewModel` 只订阅已提交摘要并调用领域命令。生产页面使用
+`AppDependencies.production()` 组合的依赖，完整边界见[会话任务交互](reference/conversation-task-chat-ui.md)。
 
 旧 `lib/pages` 也已完成迁移并删除。应用入口 `main.dart` 只负责平台初始化和启动；应用
 壳、功能页面与组件全部位于 UI 分层目录。相机、相册和文件选择通过

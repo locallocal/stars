@@ -223,6 +223,7 @@ class ChatListPageState extends State<ChatListPage> {
       strictGroundingMode: widget.strictGroundingMode,
       generationRegistry: AppScope.of(context).generationRegistry,
       onDeleteChat: widget.viewModel.deleteChat,
+      hasActiveTasks: widget.viewModel.hasActiveTasks,
       onRenameChat: widget.viewModel.updateChatName,
       onChatRenamed: widget.onChatRenamed,
       onChatDeleted: (String id) {

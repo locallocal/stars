@@ -36,6 +36,18 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
           plan.createdAt != task.createdAt) {
         throw ArgumentError('Invalid initial task, plan or event.');
       }
+      if (task.retryOfTaskId != null) {
+        final original = await _task(tx, task.retryOfTaskId!);
+        if (original == null ||
+            original.chatId != task.chatId ||
+            original.botId != task.botId ||
+            !original.status.isTerminal ||
+            original.terminalSummary?.canRetry != true ||
+            original.terminalSummary!.sideEffectStatus !=
+                TaskSideEffectStatus.none) {
+          throw ArgumentError('Task is not eligible for a safe retry.');
+        }
+      }
       _validateEventReferences(initialEvent);
       final taskValues = _taskValues(task);
       final planValues = _planValues(plan);

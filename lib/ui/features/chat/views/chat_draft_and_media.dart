@@ -28,7 +28,13 @@ extension _ChatPageDraftAndMedia on ChatPageState {
     _pendingDraftText = null;
     _pendingDraftImages = const [];
     _pendingDraftFiles = const [];
-    unawaited(_chatViewModel.deleteDraft());
+    if (_messageController.text.isNotEmpty ||
+        _selectedImages.isNotEmpty ||
+        _selectedFiles.isNotEmpty) {
+      unawaited(_persistDraft());
+    } else {
+      unawaited(_chatViewModel.deleteDraft());
+    }
   }
 
   Future<(List<String>, List<String>)> _persistSelectedAttachments() async {
@@ -121,7 +127,13 @@ extension _ChatPageDraftAndMedia on ChatPageState {
             }
             if (kind == MediaTurnKind.music) _selectedFiles.clear();
           });
-          unawaited(_chatViewModel.deleteDraft());
+          if (_messageController.text.isNotEmpty ||
+              _selectedImages.isNotEmpty ||
+              _selectedFiles.isNotEmpty) {
+            unawaited(_persistDraft());
+          } else {
+            unawaited(_chatViewModel.deleteDraft());
+          }
           _scheduleScrollToLatest(animate: true);
         },
       );

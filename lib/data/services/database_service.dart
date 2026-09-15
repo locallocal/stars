@@ -27,7 +27,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 26;
+  static const int databaseVersion = 27;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -387,6 +387,7 @@ class DatabaseService {
         task_message_kind TEXT CHECK (task_message_kind IN (
           'directReply', 'taskAcknowledgement', 'taskStatus', 'taskResult')),
         summary_revision INTEGER CHECK (summary_revision >= 0),
+        task_summary_json TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(task_summary_json)),
         chat_id TEXT NOT NULL,
         bot_id TEXT NOT NULL,
         sender_id TEXT NOT NULL,

@@ -69,13 +69,14 @@ extension _ChatPageWorkspace on ChatPageState {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildAttachmentsBar(desktopMode: true),
+              _buildTasksPanel(),
               _buildToolApprovalCard(isDesktop: true),
               _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: true),
               MessageInput(
                 provider: _provider,
                 controller: _messageController,
-                requestInProgress: _isTyping,
+                requestInProgress: _isTyping || _sendPending,
                 canCancel: _isCancellable,
                 isStopping: _isStopping,
                 autofocus: _autofocusComposer,
@@ -137,6 +138,7 @@ extension _ChatPageWorkspace on ChatPageState {
               children: [
                 MessageList(
                   messages: _messages,
+                  onTaskStatus: _queryTask,
                   messageRevision: _messageRevision,
                   scrollController: _scrollController,
                   isStreaming: _isStreaming,
@@ -226,10 +228,23 @@ extension _ChatPageWorkspace on ChatPageState {
     final error = _generationError;
     if (error == null || error.isEmpty) return const SizedBox.shrink();
 
-    return ChatGenerationErrorAlert(
-      error: error,
-      isDesktop: isDesktop,
-      onDismiss: _dismissGenerationError,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_generationViewModel.canRetryDispatch)
+          TaskActionButton(
+            onPressed: () => _generationViewModel.retryDispatch(),
+            label:
+                TaskProgressStrings(
+                  Localizations.localeOf(context).toLanguageTag(),
+                ).creationRetry,
+          ),
+        ChatGenerationErrorAlert(
+          error: error,
+          isDesktop: isDesktop,
+          onDismiss: _dismissGenerationError,
+        ),
+      ],
     );
   }
 

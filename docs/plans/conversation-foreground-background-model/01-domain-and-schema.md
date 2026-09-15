@@ -5,7 +5,7 @@
 前置依赖：无。对应目标规格第 5、6、9、11、12 节。
 
 状态：本阶段已实现。任务模型、repository 契约、Data 映射及新建 schema 已落地；任务事务现已由
-[持久化阶段](../../reference/conversation-task-persistence.md)实现，调度和前台入口仍按后续阶段接入。
+[持久化阶段](../../reference/conversation-task-persistence.md)实现，调度和前台入口见[当前会话交互](../../reference/conversation-task-chat-ui.md)。
 
 目标：先建立可持久化、可恢复的任务契约，使后续前台、runner 和 UI 使用同一套身份与状态语义。
 

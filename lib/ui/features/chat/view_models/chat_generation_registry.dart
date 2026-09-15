@@ -2,6 +2,8 @@ part of 'chat_generation_view_model.dart';
 
 class ChatGenerationRegistry {
   ChatGenerationRegistry({
+    this.dispatcher,
+    this.taskProgress,
     required MessagePersister messagePersister,
     GroundedMessagePersister? groundedMessagePersister,
     AnswerRecoveryCheckpointPersister? answerRecoveryCheckpointPersister,
@@ -41,6 +43,8 @@ class ChatGenerationRegistry {
        _agentRunLimits = agentRunLimits,
        _partialPersistenceInterval = partialPersistenceInterval;
 
+  final ConversationTurnDispatcher? dispatcher;
+  final PresentConversationTaskProgress? taskProgress;
   final Map<String, ChatGenerationViewModel> _viewModels = {};
   final Set<String> _nonCancellableRuns = {};
   final Map<String, Future<bool> Function()> _externalRunCancellers = {};
@@ -68,6 +72,8 @@ class ChatGenerationRegistry {
       chatId,
       () => ChatGenerationViewModel(
         chatId: chatId,
+        dispatcher: dispatcher,
+        taskProgress: taskProgress,
         bot: bot,
         messagePersister: _messagePersister,
         groundedMessagePersister: _groundedMessagePersister,

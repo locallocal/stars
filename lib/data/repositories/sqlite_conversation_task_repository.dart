@@ -14,6 +14,16 @@ final class SqliteConversationTaskRepository
     required LocalDatabaseService localDatabase,
   }) : _store = localDatabase.conversationTasks;
 
+  @override
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) =>
+      _store.watchForChat(chatId);
+  @override
+  Future<Message> saveStatusMessage(Message message) =>
+      _store.saveStatusMessage(message);
+  @override
+  Future<bool> updateStatusNarration(Message message) =>
+      _store.updateStatusNarration(message);
+
   final ConversationTaskStore _store;
   TaskPersistenceMetrics get metrics => _store.metrics;
 
