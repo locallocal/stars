@@ -446,6 +446,8 @@ abstract interface class AgentModelSession {
   Stream<ModelEvent> continueWithReliabilityFeedback(String feedback);
 
   /// Produces one schema-validated, Provider-independent answer candidate.
+  /// May be the first request on a fresh session restored from durable facts;
+  /// no preliminary [start] request is needed. Also supports an existing session.
   Stream<ModelEvent> synthesizeGroundedAnswer(
     GroundedAnswerSynthesisRequest request, {
     List<ToolResult> pendingToolResults = const [],

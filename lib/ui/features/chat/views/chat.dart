@@ -210,7 +210,7 @@ class ChatPageState extends State<ChatPage> {
       _streamingResponse = snapshot.streamingResponse;
       _streamingTokenUsage = snapshot.tokenUsage;
       if (snapshot.error != null) {
-        _generationError = safeFailureMessage(context, snapshot.error!);
+        _generationError = S.of(context).generationFailed;
       } else if (snapshot.lifecycle.isRunning ||
           snapshot.lifecycle.isTerminal) {
         _generationError = null;

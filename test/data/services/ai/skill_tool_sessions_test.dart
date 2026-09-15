@@ -4,10 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:stars/data/services/ai/anthropic.dart';
+import 'package:stars/data/services/ai/moonshot.dart';
 import 'package:stars/data/services/ai/openai.dart';
 import 'package:stars/data/services/ai/skill_tool_sessions.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 void main() {
   test('OpenAI uses structured Skill tools and returns tool results', () async {
@@ -368,6 +370,69 @@ void main() {
       );
     },
   );
+
+  for (final transport in [
+    'OpenAI Chat',
+    'OpenAI Responses',
+    'Anthropic',
+    'Moonshot',
+  ]) {
+    test(
+      '$transport synthesizes on a fresh session with one request',
+      () async {
+        final requests = <Map<String, dynamic>>[];
+        final client = MockClient((request) async {
+          requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+          final payload = switch (transport) {
+            'OpenAI Responses' => {
+              'status': 'completed',
+              'output': [
+                {
+                  'type': 'message',
+                  'role': 'assistant',
+                  'content': [
+                    {'type': 'output_text', 'text': _groundedJson},
+                  ],
+                },
+              ],
+            },
+            'Anthropic' => {
+              'content': [
+                {'type': 'text', 'text': _groundedJson},
+              ],
+              'stop_reason': 'end_turn',
+            },
+            _ => {
+              'choices': [
+                {
+                  'message': {'content': _groundedJson},
+                  'finish_reason': 'stop',
+                },
+              ],
+            },
+          };
+          return http.Response(jsonEncode(payload), 200);
+        });
+        addTearDown(client.close);
+        final AiProvider provider = switch (transport) {
+          'OpenAI Responses' => OpenAI(_firstPartyBot, skillToolClient: client),
+          'Anthropic' => Anthropic(_bot, skillToolClient: client),
+          'Moonshot' => Moonshot(_bot, client: client),
+          _ => OpenAI(_bot, skillToolClient: client),
+        };
+        final session = provider.openModelSession(_modelRequest);
+        addTearDown(session.close);
+        final events =
+            await session.synthesizeGroundedAnswer(_groundedRequest).toList();
+        _expectGroundedProtocol(events);
+        expect(requests, hasLength(1));
+        expect(requests.single, isNot(contains('tools')));
+        expect(requests.single, isNot(contains('include')));
+        expect(jsonEncode(requests.single), contains('required_claims'));
+        expect(session.start, throwsStateError);
+      },
+    );
+  }
 
   test('OpenAI Chat returns the shared grounded answer DTO', () async {
     final requests = <Map<String, Object?>>[];

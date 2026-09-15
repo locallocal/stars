@@ -20,6 +20,7 @@ import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
+import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/dependency_injection/app_dependencies.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -189,6 +190,69 @@ void main() {
           ),
     ),
   );
+  testWidgets(
+    'routing failure preserves history and reports generation failure',
+    (tester) async {
+      await withDesktopPlatform(() async {
+        tester.view.physicalSize = const Size(1200, 850);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        h.response = 'invalid routing response';
+        await tester.pumpWidget(page());
+        await _drive(tester);
+        final input = tester.widget<MessageInput>(find.byType(MessageInput));
+        input.controller.text = 'Hello';
+        input.onSend();
+        final alert = find.byKey(
+          const ValueKey('chat-generation-error-message'),
+        );
+        await _drive(tester, until: () => alert.evaluate().isNotEmpty);
+        final strings = S.of(tester.element(alert));
+        expect(tester.widget<Text>(alert).data, strings.generationFailed);
+        expect(find.text(strings.errorLoadingContent), findsNothing);
+        expect(
+          find.byKey(const ValueKey('chat-history-error-alert')),
+          findsNothing,
+        );
+        expect(
+          tester
+              .widget<MessageInput>(find.byType(MessageInput))
+              .requestInProgress,
+          isFalse,
+        );
+        final vm = deps.generationRegistry.maybeViewModel('chat-1')!;
+        expect(vm.canRetryDispatch, isTrue);
+
+        h.response = routeFrames('directReply', [
+          {'text': 'Recovered reply'},
+        ]);
+        final retry = vm.retryDispatch();
+        await _drive(
+          tester,
+          until: () => find.text('Recovered reply').evaluate().isNotEmpty,
+        );
+        expect(await retry, isTrue);
+        expect(alert, findsNothing);
+        final messages =
+            (await tester.runAsync(() => h.messages.getMessages('chat-1')))!;
+        expect(
+          messages.where((message) => message.content == 'Hello'),
+          hasLength(1),
+        );
+        expect(
+          messages.where(
+            (message) => message.taskMessageKind == TaskMessageKind.directReply,
+          ),
+          hasLength(1),
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await _drive(tester);
+      });
+    },
+  );
+
   testWidgets(
     'production composition keeps chat usable across page rebuild and delivers terminal once',
     (tester) async {

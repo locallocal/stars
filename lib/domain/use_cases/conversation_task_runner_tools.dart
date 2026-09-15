@@ -12,7 +12,9 @@ extension _TaskSegmentTools on _TaskSegment {
         taskSafeText(call.callId, maximum: 256) != call.callId ||
         jsonEncode(call.arguments).length > 64000 ||
         jsonEncode(call.arguments) !=
-            jsonEncode(taskSafeObject(call.arguments)) ||
+            jsonEncode(
+              taskSafeObject(call.arguments, preserveFormatting: true),
+            ) ||
         const JsonSchemaValidator()
             .validate(call.arguments, adapter.definition.inputSchema)
             .isNotEmpty) {
