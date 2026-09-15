@@ -32,6 +32,7 @@ final class ConversationTurnDispatcher {
     required ConversationTaskRepository tasks,
     required ConversationTaskEnqueuer enqueuer,
     required ToolRegistry toolRegistry,
+    required this.supportsTaskTool,
     ForegroundTurnGate? gate,
     DateTime Function()? now,
     this.enqueueTimeout = const Duration(seconds: 1),
@@ -53,6 +54,7 @@ final class ConversationTurnDispatcher {
   final ConversationTaskRepository _tasks;
   final ConversationTaskEnqueuer _enqueuer;
   final ToolRegistry _tools;
+  final bool Function(ExecutableTool) supportsTaskTool;
   final ForegroundTurnGate _gate;
   final DateTime Function() _now;
   final Duration enqueueTimeout;
@@ -170,7 +172,12 @@ final class ConversationTurnDispatcher {
       }
       final prepared = pending.prepared!;
       metrics.preflightUsage = prepared.preflightTokenUsage;
-      pending.acceptance ??= _freezeAcceptance(input, prepared, _tools);
+      pending.acceptance ??= _freezeAcceptance(
+        input,
+        prepared,
+        _tools,
+        supportsTaskTool,
+      );
       if (pending.disposition == null) {
         await _foregroundWait(
           _route(pending, metrics, onUpdate),
@@ -192,9 +199,12 @@ final class ConversationTurnDispatcher {
           return await _direct(pending, disposition, metrics);
         case BackgroundTaskPlan():
           if (!pending.acceptance!.allowedToolNames.containsAll(
-            disposition.allowedToolNames,
-          )) {
+                disposition.allowedToolNames,
+              ) ||
+              !_supportsPlan(prepared, disposition.allowedToolNames)) {
             pending.disposition = null;
+            pending.acceptance = null;
+            pending.acceptanceWrite = null;
             throw const _DispatchProblem(
               TurnDispatchFailureCode.routingFailed,
               routing: TurnRoutingFailure.invalidProtocol,
@@ -275,6 +285,17 @@ final class ConversationTurnDispatcher {
       _gate._active.remove(user.chatId);
       _observe(() => onMetrics?.call(metrics.snapshot(user)));
     }
+  }
+
+  bool _supportsPlan(PreparedChatGeneration prepared, Set<String> names) {
+    final registry = OverlayToolRegistry(
+      parent: _tools,
+      overlayTools: prepared.runScopedTools,
+    );
+    return names.every((name) {
+      final tool = registry.find(name);
+      return tool != null && supportsTaskTool(tool);
+    });
   }
 
   Future<void> _route(

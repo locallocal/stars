@@ -42,12 +42,13 @@ extension ConversationTaskStoreScheduling on ConversationTaskStore {
     final old = await _current(tx, taskId, expectedRevision);
     if (reason == TaskWaitingReason.approval ||
         !{
-          TaskReasonCode.missingCredentials,
-          TaskReasonCode.providerUnavailable,
-          TaskReasonCode.botUnavailable,
-          TaskReasonCode.reconciliationRequired,
-          TaskReasonCode.invalidPlan,
-        }.contains(reasonCode)) {
+              TaskReasonCode.missingCredentials,
+              TaskReasonCode.providerUnavailable,
+              TaskReasonCode.botUnavailable,
+              TaskReasonCode.reconciliationRequired,
+              TaskReasonCode.invalidPlan,
+            }.contains(reasonCode) &&
+            !TaskReasonCode.isToolUnavailable(reasonCode)) {
       throw ArgumentError(
         'Use a safe runtime obstacle or reconciliation reason.',
       );

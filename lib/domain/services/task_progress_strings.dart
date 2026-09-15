@@ -93,6 +93,47 @@ final class TaskProgressStrings {
     'Update the provider credentials or task configuration, then explicitly recheck. New chat messages do not change this task.',
     '请更新供应商凭据或任务配置，再显式重新检查。普通聊天消息不会修改此任务。',
   );
+
+  /// Describes a committed obstacle without exposing arbitrary diagnostic text.
+  String waitingDescription(TaskWaitingReason reason, String code) {
+    if (reason == TaskWaitingReason.approval) return wait(reason);
+    if (TaskReasonCode.isToolUnavailable(code)) {
+      final name = TaskReasonCode.unavailableTool(code);
+      return name == null
+          ? pick(
+            'A required tool is unavailable for background execution. Enable or update the tool, then recheck.',
+            '任务所需工具暂不支持后台执行。请启用或更新对应工具后重新检查。',
+          )
+          : pick(
+            'The tool "$name" is unavailable for background execution. Enable or update it, then recheck.',
+            '工具「$name」暂不支持后台执行。请启用或更新对应工具后重新检查。',
+          );
+    }
+    return switch (code) {
+      TaskReasonCode.invalidPlan => pick(
+        'The task plan is invalid or a required tool is unavailable. Repair the plan or tool configuration before rechecking.',
+        '任务计划无效，或计划所需工具尚未接入后台执行。请修复计划或工具配置后重新检查。',
+      ),
+      TaskReasonCode.missingCredentials => pick(
+        'Provider credentials are unavailable. Update them, then recheck.',
+        '供应商凭据不可用。请更新凭据后重新检查。',
+      ),
+      TaskReasonCode.providerUnavailable => pick(
+        'The provider or model configuration no longer matches the accepted task. Restore it, or create a new task with the current settings.',
+        '供应商或模型配置不可用，或与任务接受时的配置不一致。请恢复配置，或使用当前设置创建新任务。',
+      ),
+      TaskReasonCode.botUnavailable => pick(
+        'The bot used by this task is unavailable. Restore it, then recheck.',
+        '此任务使用的智能体不可用。请恢复智能体后重新检查。',
+      ),
+      TaskReasonCode.reconciliationRequired => pick(
+        'An external operation has an unknown outcome. Check its effects before continuing; the command will not be automatically repeated.',
+        '外部操作的结果尚未确定。请先核对实际执行结果；系统不会自动重复执行该命令。',
+      ),
+      _ => wait(reason),
+    };
+  }
+
   String status(ConversationTaskStatus value) =>
       pick(value.name, switch (value) {
         ConversationTaskStatus.queued => '已排队',

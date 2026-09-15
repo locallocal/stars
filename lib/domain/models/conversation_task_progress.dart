@@ -19,6 +19,8 @@ final class TaskToolProgress {
 }
 
 final class TaskProgress {
+  /// A bounded checkpoint call must be reviewable in full before approval.
+  static const maximumApprovalSummaryLength = 65536;
   TaskProgress({
     this.completedSteps = 0,
     required this.totalSteps,
@@ -65,7 +67,11 @@ final class TaskProgress {
     }
     if (hasApproval) {
       _taskText(pendingApprovalId!, 'approvalId', maximum: 256);
-      _taskText(pendingApprovalSummary!, 'approval summary', maximum: 2000);
+      _taskText(
+        pendingApprovalSummary!,
+        'approval summary',
+        maximum: maximumApprovalSummaryLength,
+      );
     }
     if (reasonCode.isNotEmpty) {
       _taskText(reasonCode, 'reasonCode', maximum: 128);

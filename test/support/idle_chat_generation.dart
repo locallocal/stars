@@ -18,6 +18,7 @@ ChatGenerationRegistry idleChatGenerationRegistry({
 
 ConversationTurnDispatcher unusedForegroundDispatcher() =>
     ConversationTurnDispatcher(
+      supportsTaskTool: (_) => false,
       prepare: PrepareTextGeneration(
         aiProviderRepository: ForegroundProviders(
           (_) => throw StateError('Unexpected provider'),

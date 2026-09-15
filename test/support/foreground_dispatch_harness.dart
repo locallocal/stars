@@ -66,6 +66,7 @@ final class ForegroundDispatchHarness {
     ConversationTurnRouter? router,
     ForegroundTurnGate? gate,
     Duration enqueueTimeout = const Duration(seconds: 1),
+    bool Function(ExecutableTool)? supportsTaskTool,
   }) {
     prepare = PrepareTextGeneration(
       aiProviderRepository: providers,
@@ -120,6 +121,7 @@ final class ForegroundDispatchHarness {
       tasks: tasks ?? storage.repository,
       enqueuer: enqueuer,
       toolRegistry: StaticToolRegistry([tool]),
+      supportsTaskTool: supportsTaskTool ?? (_) => true,
       now: () => foregroundTime,
       gate: gate,
       enqueueTimeout: enqueueTimeout,
