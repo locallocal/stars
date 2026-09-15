@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 
+/// Audited transport paths that omit application and Provider-native tools.
+enum ForegroundRoutingTransport { unavailable, modelSession, bufferedText }
+
 abstract class AiProvider {
   AiProvider(this.bot);
 
@@ -24,6 +27,9 @@ abstract class AiProvider {
   bool supportStreamResponse() => true;
 
   AiProviderCapabilities get capabilities => AiProviderCapabilities.legacy;
+
+  ForegroundRoutingTransport get foregroundRoutingTransport =>
+      ForegroundRoutingTransport.unavailable;
 
   bool get supportsCancellation => true;
 

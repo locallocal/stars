@@ -11,6 +11,7 @@ import 'package:stars/domain/models/models.dart';
 part 'openai_model_catalog.dart';
 part 'openai_core_model_specs.dart';
 part 'openai_specialized_model_specs.dart';
+part 'openai_message_formatting.dart';
 
 class OpenAI extends Provider {
   static const String defaultApiModelsUrl = 'https://api.openai.com/v1/models';
@@ -30,6 +31,12 @@ class OpenAI extends Provider {
     : _skillToolClient = skillToolClient;
 
   final http.Client? _skillToolClient;
+
+  @override
+  ForegroundRoutingTransport get foregroundRoutingTransport =>
+      _isSearchPreviewModel || bot.model.toLowerCase().contains('search')
+          ? ForegroundRoutingTransport.unavailable
+          : ForegroundRoutingTransport.modelSession;
 
   static Set<String> get officialModelIds => Set<String>.unmodifiable(
     _openAiModelSpecs.values
@@ -79,6 +86,7 @@ class OpenAI extends Provider {
       closeClient: _skillToolClient == null,
       decodeResponse: decodeProviderResponse,
       reasoningEffort: _selectedReasoningEffort,
+      streamResponses: request.options.foregroundRouting,
     );
   }
 
@@ -615,68 +623,7 @@ class OpenAI extends Provider {
   @override
   List<Map<String, dynamic>> processMessagesWithImages(
     List<ChatMessage> messages,
-  ) {
-    return messages
-        .map((message) {
-          final role = _normalizedMessageRole(message.role);
-          if (message.images.isEmpty) {
-            return {'role': role, 'content': message.content};
-          }
-          final content = <Map<String, dynamic>>[];
-          if (message.content.isNotEmpty) {
-            content.add({'type': 'text', 'text': message.content});
-          }
-
-          for (final imagePath in message.images) {
-            try {
-              final file = File(imagePath);
-              if (file.existsSync()) {
-                final bytes = file.readAsBytesSync();
-                content.add({
-                  'type': 'image_url',
-                  'image_url': {
-                    'url':
-                        'data:${getImageMediaType(bytes)};base64,${base64Encode(bytes)}',
-                  },
-                });
-              }
-            } catch (_) {
-              // Skip an unreadable optional image and continue the request.
-            }
-          }
-          return {'role': role, 'content': content};
-        })
-        .toList(growable: false);
-  }
-
-  List<Map<String, dynamic>> _processMessagesForResponses(
-    List<ChatMessage> messages,
-  ) {
-    return messages
-        .map((message) {
-          final content = <Map<String, dynamic>>[];
-          if (message.content.isNotEmpty) {
-            content.add({'type': 'input_text', 'text': message.content});
-          }
-          for (final imagePath in message.images) {
-            try {
-              final bytes = File(imagePath).readAsBytesSync();
-              content.add({
-                'type': 'input_image',
-                'image_url':
-                    'data:${getImageMediaType(bytes)};base64,${base64Encode(bytes)}',
-              });
-            } on FileSystemException {
-              // Ignore an optional image that was removed before sending.
-            }
-          }
-          return {
-            'role': _normalizedMessageRole(message.role),
-            'content': content,
-          };
-        })
-        .toList(growable: false);
-  }
+  ) => _formatChatMessages(messages);
 
   Future<List<String>> _persistImages(
     Object? decoded,

@@ -12,6 +12,10 @@ class Gemini extends Provider {
 
   Gemini(super.bot);
 
+  @override
+  ForegroundRoutingTransport get foregroundRoutingTransport =>
+      ForegroundRoutingTransport.bufferedText;
+
   // The current Gemini implementation uses a single http.post request and
   // cannot abort it or acknowledge cancellation before the response arrives.
   @override

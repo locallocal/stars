@@ -3,8 +3,8 @@
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
 [后续实施阶段](../plans/conversation-foreground-background-model/README.md)
 
-会话任务的事务存储和查询已实现。前台分流、runner、调度恢复、终态验证策略及 UI 接入仍由后续
-阶段完成；当前生产聊天入口尚未切换到后台任务模型。
+会话任务的事务存储和查询已实现，[前台分流与接受](conversation-turn-dispatch.md)也已完成。
+runner、调度恢复、终态验证策略及 UI 接入仍由后续阶段完成；当前生产聊天入口尚未切换到后台任务模型。
 
 ## 入口与职责
 

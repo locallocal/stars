@@ -6,6 +6,10 @@ class Ollama extends Provider {
   Ollama(super.bot);
 
   @override
+  ForegroundRoutingTransport get foregroundRoutingTransport =>
+      ForegroundRoutingTransport.bufferedText;
+
+  @override
   Future<List<AiModelInfo>> fetchModels() async {
     final url =
         bot.baseURL.isNotEmpty

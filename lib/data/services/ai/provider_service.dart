@@ -11,6 +11,8 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 export 'package:stars/domain/models/ai_models.dart';
 export 'package:stars/domain/models/ai_model_info.dart';
+export 'package:stars/domain/repositories/ai_provider_repository.dart'
+    show ForegroundRoutingTransport;
 
 extension ChatMessageJson on ChatMessage {
   Map<String, Object> toJson() => {'role': role, 'content': content};

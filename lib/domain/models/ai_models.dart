@@ -25,12 +25,17 @@ final class ModelGenerationOptions {
     this.allowParallelToolCalls = false,
     this.webSearch = false,
     this.deepThinking = false,
+    this.foregroundRouting = false,
   });
 
   final bool stream;
   final bool allowParallelToolCalls;
   final bool webSearch;
   final bool deepThinking;
+
+  /// Tool-free foreground protocol; adapters may stream text for this path
+  /// without changing the established tool-session transport behavior.
+  final bool foregroundRouting;
 }
 
 final class ModelRequest {
@@ -39,7 +44,15 @@ final class ModelRequest {
     List<ToolDefinition> tools = const [],
     this.options = const ModelGenerationOptions(),
   }) : messages = List<ChatMessage>.unmodifiable(messages),
-       tools = List<ToolDefinition>.unmodifiable(tools);
+       tools = List<ToolDefinition>.unmodifiable(tools) {
+    if (options.foregroundRouting &&
+        (tools.isNotEmpty ||
+            options.webSearch ||
+            options.deepThinking ||
+            options.allowParallelToolCalls)) {
+      throw ArgumentError('Foreground routing must be tool-free.');
+    }
+  }
 
   final List<ChatMessage> messages;
   final List<ToolDefinition> tools;
