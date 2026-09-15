@@ -13,6 +13,7 @@ import 'package:stars/ui/core/dependency_injection/app_dependencies.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/widgets/user_profile_scope.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:stars/ui/features/chat/views/attachments.dart';

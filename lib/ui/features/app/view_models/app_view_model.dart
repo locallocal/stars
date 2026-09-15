@@ -16,6 +16,7 @@ class AppViewModel extends ChangeNotifier {
 
   final ProfileRepository _profileRepository;
   late final StreamSubscription<Profile> _profileSubscription;
+  late Profile _profile;
 
   ThemeMode _themeMode = ThemeMode.system;
   Locale _locale = const Locale('zh', 'CN');
@@ -26,6 +27,7 @@ class AppViewModel extends ChangeNotifier {
   bool _strictGroundingMode = false;
 
   ThemeMode get themeMode => _themeMode;
+  Profile get profile => _profile;
   Locale get locale => _locale;
   double get fontSize => _fontSize;
   bool get showReasoning => _showReasoning;
@@ -34,6 +36,7 @@ class AppViewModel extends ChangeNotifier {
   bool get strictGroundingMode => _strictGroundingMode;
 
   void _applyProfile(Profile profile, {bool notify = true}) {
+    _profile = profile;
     _themeMode = intToThemeMode(profile.themeMode);
     _fontSize = profile.fontSize;
     _showReasoning = profile.showReasoning;

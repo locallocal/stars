@@ -17,6 +17,7 @@ import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
 import 'package:stars/ui/features/bots/views/add_bot.dart';
 import 'package:stars/ui/features/bots/views/bots.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/ui/features/chat/views/message_avatar.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
 import 'package:stars/ui/features/profile/views/profile.dart';
 import 'package:stars/utils/theme.dart';
@@ -67,6 +68,18 @@ void main() {
                   ),
                 ),
               );
+              await tester.pumpAndSettle();
+
+              // Include decoded sender photos rather than a loading frame.
+              await tester.runAsync(() async {
+                final images = find.descendant(
+                  of: find.byType(MessageAvatar),
+                  matching: find.byType(Image),
+                );
+                for (final element in images.evaluate()) {
+                  await precacheImage((element.widget as Image).image, element);
+                }
+              });
               await tester.pumpAndSettle();
 
               await expectLater(
@@ -386,6 +399,7 @@ class _DesktopVisualGalleryState extends State<_DesktopVisualGallery> {
           isStreaming: false,
           streamingResponse: '',
           currentUserId: 'me',
+          bot: bot,
           isDesktop: true,
         ),
       ],

@@ -1,5 +1,32 @@
 part of 'message_list.dart';
 
+/// Keeps status controls usable in the mobile Material app as well as ShadApp.
+class _MessageMetadata extends StatelessWidget {
+  const _MessageMetadata({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
+      children: children,
+    );
+    if (ShadTheme.maybeOf(context) != null) return content;
+    final materialTheme = Theme.of(context);
+    return ShadTheme(
+      data: buildStarsShadTheme(
+        brightness: materialTheme.brightness,
+        fontSize: materialTheme.textTheme.bodyLarge?.fontSize ?? 14,
+        highContrast: MediaQuery.highContrastOf(context),
+      ),
+      child: content,
+    );
+  }
+}
+
 class _MessageTerminalStatus extends StatelessWidget {
   const _MessageTerminalStatus({
     required this.outcome,
@@ -76,6 +103,7 @@ class _StatusCardSection extends StatelessWidget {
   final Widget? child;
 
   const _StatusCardSection({
+    super.key,
     required this.isDesktop,
     required this.icon,
     required this.title,
@@ -171,18 +199,20 @@ class _StatusCardHeader extends StatelessWidget {
                       1,
                 ),
               ),
-              const SizedBox(height: 2),
-              subtitleContent ??
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: StarsDesktopTokens.of(context).secondaryText,
-                      fontSize:
-                          (Theme.of(context).textTheme.bodyMedium?.fontSize ??
-                              12) -
-                          1,
+              if (subtitleContent != null || subtitle.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                subtitleContent ??
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: StarsDesktopTokens.of(context).secondaryText,
+                        fontSize:
+                            (Theme.of(context).textTheme.bodyMedium?.fontSize ??
+                                12) -
+                            1,
+                      ),
                     ),
-                  ),
+              ],
             ],
           ),
         ),

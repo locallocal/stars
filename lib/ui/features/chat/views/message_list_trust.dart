@@ -2,6 +2,7 @@ part of 'message_list.dart';
 
 class _MessageTrustStatus extends StatefulWidget {
   const _MessageTrustStatus({
+    super.key,
     required this.grounding,
     required this.isDesktop,
     required this.strictMode,
@@ -511,18 +512,26 @@ String _messageDisplayContent(
   StrictGroundingPresentation? presentation,
 ) {
   if (presentation == null) return message.content;
-  final strings = S.of(context);
-  final refusal =
-      presentation.userQuestion.isEmpty
-          ? strings.strictGroundingUnableToVerify
-          : strings.strictGroundingUnableToVerifyForQuestion(
-            _markdownSafeInline(presentation.userQuestion),
-            _answerTrustReason(strings, message.grounding.reasonCode),
-          );
+  final notice = _messageStrictGroundingNotice(context, message, presentation);
   return <String>[
     if (presentation.content.isNotEmpty) presentation.content,
-    if (presentation.suppressedFacts) refusal,
+    if (notice.isNotEmpty) notice,
   ].join('\n\n');
+}
+
+String _messageStrictGroundingNotice(
+  BuildContext context,
+  Message message,
+  StrictGroundingPresentation? presentation,
+) {
+  if (presentation == null || !presentation.suppressedFacts) return '';
+  final strings = S.of(context);
+  return presentation.userQuestion.isEmpty
+      ? strings.strictGroundingUnableToVerify
+      : strings.strictGroundingUnableToVerifyForQuestion(
+        _markdownSafeInline(presentation.userQuestion),
+        _answerTrustReason(strings, message.grounding.reasonCode),
+      );
 }
 
 String _markdownSafeInline(String source) => source.replaceAllMapped(

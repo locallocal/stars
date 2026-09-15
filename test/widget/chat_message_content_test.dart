@@ -308,12 +308,16 @@ void main() {
     final copyAction = find.byKey(
       const ValueKey<String>('desktop-message-copy-action'),
     );
-    final executionCard = find.ancestor(
-      of: executionStatus,
-      matching: find.byType(ShadCard),
+    final messageSurface = find.byKey(
+      const ValueKey<String>('message-bubble-surface'),
     );
+    final executionSection = find.byType(ProcessInfoSection);
     expect(copyAction, findsOneWidget);
-    expect(executionCard, findsOneWidget);
+    expect(messageSurface, findsOneWidget);
+    expect(
+      find.descendant(of: messageSurface, matching: executionSection),
+      findsNothing,
+    );
     expect(
       tester
           .widget<AnimatedOpacity>(
@@ -326,8 +330,11 @@ void main() {
       1,
     );
     final copyRect = tester.getRect(copyAction);
-    final executionRect = tester.getRect(executionCard);
-    expect(copyRect.left, executionRect.left);
+    final bubbleRect = tester.getRect(messageSurface);
+    final executionRect = tester.getRect(executionSection);
+    expect(executionRect.left, bubbleRect.left);
+    expect(executionRect.top, greaterThan(bubbleRect.bottom));
+    expect(copyRect.left, bubbleRect.left);
     expect(copyRect.top - executionRect.bottom, greaterThanOrEqualTo(4));
   });
 
