@@ -132,15 +132,16 @@ final class FinalizeConversationTask {
           validation.claims.any(
             (claim) => claim.trustLevel == ClaimTrustLevel.unverified,
           );
-      metrics.factualClaims +=
+      final factualClaims =
           validation.claims
               .where((c) => c.trustLevel != ClaimTrustLevel.notVerifiable)
               .length +
           validation.unmatchedRequirementIds.length;
-      metrics.verifiedClaims +=
+      final verifiedClaims =
           validation.claims
               .where((c) => c.trustLevel == ClaimTrustLevel.verified)
               .length;
+      var suppressedClaims = 0;
       final strictFailure =
           !failure && policy.strictGroundingEnabled && incomplete;
       TaskTerminalSummary? summary;
@@ -150,7 +151,7 @@ final class FinalizeConversationTask {
       if (failure || strictFailure) {
         if (strictFailure) {
           // Use only application-rendered facts for retained work in a failure.
-          metrics.suppressedClaims +=
+          suppressedClaims =
               validation.claims
                   .where((c) => c.trustLevel == ClaimTrustLevel.unverified)
                   .length;
@@ -297,8 +298,34 @@ final class FinalizeConversationTask {
         now: commitAt,
       );
       if (result is TaskWriteCommitted<ConversationTask>) {
-        metrics.committed++;
-        metrics.commitLatency += clock.now().difference(started);
+        if (!result.reused) {
+          metrics.committed++;
+          metrics.factualClaims += factualClaims;
+          metrics.verifiedClaims += verifiedClaims;
+          metrics.suppressedClaims += suppressedClaims;
+          final elapsed = clock.now().difference(started);
+          metrics.commitLatency += elapsed;
+          metrics.endToEndLatency += result.value.updatedAt.difference(
+            snapshot.task.createdAt,
+          );
+          switch (status) {
+            case ConversationTaskStatus.succeeded:
+              metrics.succeeded++;
+            case ConversationTaskStatus.cancelled:
+              metrics.cancelled++;
+              metrics.cancellationLatency += result.value.updatedAt.difference(
+                snapshot.task.cancelRequestedAt!,
+              );
+            case ConversationTaskStatus.failed:
+              metrics.failed++;
+              metrics.failureCommitLatency += elapsed;
+              if (summary?.reasonCode == TaskReasonCode.noProgress) {
+                metrics.noProgressFailures++;
+              }
+            default:
+              break;
+          }
+        }
         return result.value;
       }
       metrics.conflicts++;

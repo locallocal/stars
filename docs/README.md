@@ -13,7 +13,7 @@
 | 桌面规范 | [桌面端界面规范](specs/desktop-ui.md) | 布局、断点、视觉、可访问性和验收基线 |
 | 桌面规范 | [桌面组件矩阵](specs/desktop-components.md) | 组件、主题 token、通知和视觉回归的唯一入口 |
 | 功能规范 | [会话前台响应与后台任务模型](specs/conversation-foreground-background-model.md) | 快速直接回复、可恢复后台任务、状态查询与验证模式的目标设计和实现约束 |
-| 实现计划 | [会话前后台模型分阶段实现](plans/conversation-foreground-background-model/README.md) | 9 个实施阶段及其当前状态、依赖和验收条件 |
+| 验收参考 | [会话任务验收与观测](reference/conversation-task-verification.md) | 行为/故障矩阵、完整应用与原生交互测试、指标语义和平台边界 |
 | 实现参考 | [会话任务持久化与进度查询](reference/conversation-task-persistence.md) | 原子接受、进度、审批、取消、终态、lease、一致性查询和投影重建 |
 | 实现参考 | [会话前台分流与任务接受](reference/conversation-turn-dispatch.md) | 单次三路分流、流式协议、无工具边界、原子回执、幂等重试、状态查询与指标 |
 | 实现参考 | [会话任务分段执行与长工具协议](reference/conversation-task-runner.md) | 分段预算、检查点恢复、持久审批、长 job、对账与受控结果候选 |

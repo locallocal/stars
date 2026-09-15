@@ -13,7 +13,11 @@ String taskProviderConfigurationDigest(Bot bot) =>
               'model': bot.model,
               'endpoint': bot.baseURL,
               'systemPrompt': bot.systemPrompt,
-              'parameters': _ordered(bot.parameters),
+              // SQLite stores absent options as an empty object. Both forms mean
+              // the same provider behavior and must survive a repository reload.
+              'parameters': _ordered(
+                bot.parameters ?? const <String, Object?>{},
+              ),
             }),
           ),
         )

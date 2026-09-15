@@ -113,6 +113,8 @@ import 'package:stars/domain/repositories/skill_run_repository.dart';
 import 'package:stars/domain/repositories/tool_execution_repository.dart';
 import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
+import 'package:stars/domain/use_cases/conversation_task_telemetry.dart';
+import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';

@@ -51,7 +51,15 @@ based on Keep a Changelog, and the project uses semantic versioning.
   name on `intl_it_IT.arb`.
 - Removed unused direct dependencies identified by the engineering audit.
 
+### Fixed
+
+- Treat absent Bot parameters and persisted empty parameters as the same task
+  configuration, so background work can resume after repository reloads.
+
 ### Documentation
+
+- Consolidated conversation task plans into maintained implementation references,
+  reproducible recovery and native UI acceptance tests, and telemetry definitions.
 
 - Updated desktop architecture, quality commands, release conventions, and
   local/CI cache guidance to match the current implementation.

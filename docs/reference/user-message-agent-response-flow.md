@@ -99,6 +99,17 @@ MCP inventory 工具，并从受信内置工具中发现事实验证工具。最
 原子保存成功、失败或取消状态与唯一 `taskId:result`。终态消息使用实际提交时间，不插入旧 turn
 的位置；`completed` 不等于已验证，可信等级由应用策略计算。回执和状态消息不显示事实验证徽标。
 
+## 启动、恢复与观测
+
+`StartupViewModel` 先调用 `AppConversationTasks.start()` 恢复并扫描持久队列，再发布启动就绪。
+平台挂起通过应用生命周期暂停调度；重返前台后重新扫描。每个分段经 `TaskRuntimeFactory`
+重新取得安全配置，比较接受时的摘要；缺省参数和数据库空对象等价，模型、端点或有效参数变化
+仍进入等待处理。页面释放不会停止应用任务组件。
+
+组合根创建一个 `ConversationTaskTelemetry`，接收前台、状态呈现、调度和终态的数值指标。
+终态结果和证据计数在提交成功后累计，事务重试不重复统计。卡片可呈现耗时与真实绘制耗时
+分别验证，详见[验收与观测](conversation-task-verification.md)。
+
 ## 媒体生成旁路
 
 当 Bot 的输出模态是图片、语音、音乐或视频时，发送入口改走 `GenerateMediaTurn`：
@@ -124,3 +135,6 @@ MCP inventory 工具，并从受信内置工具中发现事实验证工具。最
 - [任务状态 ViewModel](../../lib/ui/features/chat/view_models/conversation_tasks_view_model.dart)
 - [应用依赖组合](../../lib/ui/core/dependency_injection/app_dependencies_tasks.dart)
 - [真实组合根页面测试](../../test/ui/features/chat/views/chat_task_flow_test.dart)
+
+- [完整应用恢复](../../test/data/repositories/conversation_task_application_test.dart)与
+  [原生页面验收](../../integration_test/conversation_tasks_test.dart)

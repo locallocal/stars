@@ -1,4 +1,5 @@
 import '../../../../support/idle_chat_generation.dart';
+import 'package:stars/domain/use_cases/conversation_task_telemetry.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_task_retry.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +28,7 @@ void main() {
       clock: h.clock,
     );
     tasks = AppConversationTasks(
+      telemetry: ConversationTaskTelemetry(),
       dispatcher: unusedForegroundDispatcher(),
       progress: unusedTaskProgress(),
       retry: PrepareConversationTaskRetry(
