@@ -7,6 +7,9 @@ final class ConversationTaskEvent {
     required this.kind,
     required this.occurredAt,
     required this.safeSummary,
+    this.planRevision = 1,
+    this.modelTurns = 0,
+    this.verificationStatus,
     this.segmentId,
     this.stepId,
     this.attemptId,
@@ -16,6 +19,8 @@ final class ConversationTaskEvent {
   }) {
     _taskText(taskId, 'taskId', maximum: 256);
     _taskCount(sequence, 'sequence', minimum: 1);
+    _taskCount(planRevision, 'planRevision', minimum: 1);
+    _taskCount(modelTurns, 'modelTurns');
     _taskText(safeSummary, 'event summary', maximum: 2000);
     for (final value in [
       segmentId,
@@ -34,6 +39,13 @@ final class ConversationTaskEvent {
   final TaskEventKind kind;
   final DateTime occurredAt;
   final String safeSummary;
+
+  /// Plan in effect for this event; revisions never rewrite earlier events.
+  final int planRevision;
+
+  /// Model calls completed since the preceding event, counted exactly once.
+  final int modelTurns;
+  final TaskVerificationStatus? verificationStatus;
   final String? segmentId;
   final String? stepId;
   final String? attemptId;

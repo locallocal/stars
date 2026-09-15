@@ -17,6 +17,9 @@ abstract interface class ConversationTaskRepository {
   Future<ConversationTaskProgressSummary?> getProgressSummary(String taskId);
   Stream<ConversationTaskProgressSummary> watchProgress(String taskId);
 
+  /// Repairs only the disposable projection from committed audit facts.
+  Future<ConversationTaskProgressSummary?> rebuildProgress(String taskId);
+
   /// Saves task, plan, initial event/projection and acknowledgement atomically.
   /// A retry of the same origin turn returns its original task and acknowledgement;
   /// changed acceptance content for that turn is a duplicateIdentity conflict.
@@ -66,6 +69,7 @@ abstract interface class ConversationTaskRepository {
   });
 
   /// Event, aggregate, projection and supplied auxiliary records are one write.
+  /// The stored projection is derived from facts, not from caller counters.
   Future<TaskWriteResult<ConversationTask>> appendProgress(
     ConversationTaskProgressUpdate update,
   );

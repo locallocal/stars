@@ -1,11 +1,11 @@
 # 01：领域模型与全新数据库
 
-[总计划](README.md) | [下一阶段：事务持久化与进度事实](02-persistence-and-progress.md)
+[总计划](README.md) | [事务持久化与进度事实（已实现）](../../reference/conversation-task-persistence.md)
 
 前置依赖：无。对应目标规格第 5、6、9、11、12 节。
 
-状态：本阶段已实现。任务模型、repository 契约、Data 映射及新建 schema 已落地；生产任务事务、
-调度和前台入口仍按后续阶段接入。
+状态：本阶段已实现。任务模型、repository 契约、Data 映射及新建 schema 已落地；任务事务现已由
+[持久化阶段](../../reference/conversation-task-persistence.md)实现，调度和前台入口仍按后续阶段接入。
 
 目标：先建立可持久化、可恢复的任务契约，使后续前台、runner 和 UI 使用同一套身份与状态语义。
 
@@ -58,7 +58,7 @@
 
 - 领域公共入口为 [conversation_task.dart](../../../lib/domain/models/conversation_task.dart)，
   状态、快照、进度与审计对象按职责拆为 part 文件，沿用项目的手写不可变对象风格。
-- 新建数据库版本为 24；较旧版本返回 `database_rebuild_required`，不升级、不回填，也不自动
+- 新建数据库版本以 [DatabaseService](../../../lib/data/services/database_service.dart) 为准；较旧版本返回 `database_rebuild_required`，不升级、不回填，也不自动
   删除用户数据库或会话附件。新建 schema 和有效的当前版本备份继续可用。
 - [任务 schema](../../../lib/data/services/database_conversation_task_schema.dart)在六类任务表之外，
   使用 `conversation_task_tool_attempts` 和 `conversation_task_evidence_links` 保存不可变的任务/

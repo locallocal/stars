@@ -13,7 +13,8 @@
 | 桌面规范 | [桌面端界面规范](specs/desktop-ui.md) | 布局、断点、视觉、可访问性和验收基线 |
 | 桌面规范 | [桌面组件矩阵](specs/desktop-components.md) | 组件、主题 token、通知和视觉回归的唯一入口 |
 | 功能规范 | [会话前台响应与后台任务模型](specs/conversation-foreground-background-model.md) | 快速直接回复、可恢复后台任务、状态查询与验证模式的目标设计和实现约束 |
-| 实现计划 | [会话前后台模型分阶段实现](plans/conversation-foreground-background-model/README.md) | 按规格顺序拆分的 9 个待实现阶段，含依赖、代码入口、步骤与验收条件 |
+| 实现计划 | [会话前后台模型分阶段实现](plans/conversation-foreground-background-model/README.md) | 9 个实施阶段及其当前状态、依赖和验收条件 |
+| 实现参考 | [会话任务持久化与进度查询](reference/conversation-task-persistence.md) | 原子接受、进度、审批、取消、终态、lease、一致性查询和投影重建 |
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |

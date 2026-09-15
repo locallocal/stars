@@ -5,7 +5,9 @@
 [事实依据与防幻觉协议](../reference/conversation-loop-grounding.md)
 
 本文定义 Stars 会话内用户与智能体交互的目标模型，以及基于现有实现进行调整的落地规范。
-它是待实现的长期设计，不代表当前代码已经具备后台恢复能力。
+它是长期设计，不代表当前代码已经具备完整后台恢复能力。领域模型、schema 和事务持久化已实现，
+当前存储行为见[会话任务持久化与进度查询](../reference/conversation-task-persistence.md)；前台分流、
+runner、调度恢复和 UI 接入仍按[后续阶段](../plans/conversation-foreground-background-model/README.md)推进。
 
 规范使用以下关键词：
 
