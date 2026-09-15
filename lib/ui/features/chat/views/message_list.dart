@@ -31,6 +31,7 @@ import 'package:stars/ui/features/chat/views/local_html_file_preview.dart';
 part 'message_list_actions.dart';
 part 'message_list_bubble.dart';
 part 'message_list_file_preview.dart';
+part 'message_list_local_files.dart';
 part 'message_list_link_preview.dart';
 part 'message_list_media_preview.dart';
 part 'message_list_process.dart';

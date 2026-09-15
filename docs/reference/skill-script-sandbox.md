@@ -65,7 +65,7 @@ Skill 可以在包内携带 `scripts/tools.json` 和脚本文件，并将脚本�
 | `LinuxBubblewrapSkillSandbox` | 使用 `bubblewrap` 和 `prlimit` 创建进程隔离 |
 | `SkillPackageStorageService` | 管理不可变安装目录、计算摘要、执行前完整性复验 |
 | `DefaultToolPolicy` | 要求脚本属于当前激活 Skill，并执行逐次批准或 Bot 显式免确认策略 |
-| `AgentRunCoordinator` | 校验输入/输出 Schema、处理批准、外层超时和结果截断 |
+| `ConversationTaskRunner` | 校验输入/输出 Schema、处理持久审批、单次超时和结果截断 |
 | `SkillEcosystemRepository` | 持久化组织策略、发布者、摘要授权和合规事件 |
 
 核心接口是：
@@ -452,7 +452,7 @@ arguments = json.load(sys.stdin)
 - JSON 中敏感键对应的值递归替换为 `[redacted]`；
 - 字符串中的常见凭据模式继续脱敏；
 - 脱敏后的值作为 `structuredContent`；
-- `AgentRunCoordinator` 再根据 `outputSchema` 校验；
+- `ConversationTaskRunner` 再根据 `outputSchema` 校验；
 - Schema 不匹配时返回 `invalid_tool_output`。
 
 ### 11.3 失败输出
@@ -669,7 +669,7 @@ test/ui/features/chat/view_models/chat_generation_view_model_test.dart
 7. 必须在进程启动前调用安装完整性校验；
 8. 不支持或无法确认隔离时返回不可用，不能回退到普通进程；
 9. 必须继续通过 `SkillScriptTool`、`DefaultToolPolicy` 和
-   `AgentRunCoordinator`，不能绕开摘要授权、逐次批准或显式免确认策略、Schema 和审计链路。
+   `ConversationTaskRunner`，不能绕开摘要授权、逐次批准或显式免确认策略、Schema 和审计链路。
 
 只有满足这些条件的平台实现，才可以接入 `AppDependencies.production()` 并向用户展示
 为可用沙箱。

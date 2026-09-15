@@ -98,7 +98,7 @@ void main() {
     }
   });
 
-  testWidgets('timeout uses execution semantics and keeps evidence details', (
+  testWidgets('provider failure keeps its trust status and evidence details', (
     tester,
   ) async {
     await _pumpMessage(
@@ -106,16 +106,14 @@ void main() {
       _assistant(
         grounding: MessageGrounding(
           trustLevel: AnswerTrustLevel.failed,
-          reasonCode: 'agent_run_timeout',
+          reasonCode: 'provider_request_timeout',
           evidenceIds: const ['evidence-before-timeout'],
         ),
       ),
     );
 
-    expect(find.text('已超时'), findsOneWidget);
-    expect(find.text('失败'), findsNothing);
-    expect(find.byIcon(LucideIcons.clock3), findsOneWidget);
-    expect(find.text('生成在最终回复完成验证前超时；已完成的工具证据仍可查看。'), findsOneWidget);
+    expect(find.text('已超时'), findsNothing);
+    expect(find.text('失败'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey<String>('message-trust-details-toggle')),

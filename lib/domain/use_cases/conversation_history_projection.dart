@@ -34,18 +34,13 @@ List<ReplayableConversationHistoryTurn> normalizeConversationHistoryTurns({
 
   final groups = <String, List<Message>>{};
   final order = <String>[];
-  var legacySequence = 0;
-  String currentLegacyTurn = '';
   for (final message in limitedHistory.skip(firstUserIndex)) {
     if (currentMessageId.isNotEmpty && message.messageId == currentMessageId) {
       continue;
     }
-    var turnId = message.turnId;
+    final turnId = message.turnId;
     if (turnId.isEmpty) {
-      if (message.senderId == currentUserId || currentLegacyTurn.isEmpty) {
-        currentLegacyTurn = 'legacy_${legacySequence++}';
-      }
-      turnId = currentLegacyTurn;
+      throw const FormatException('Stored history requires a turn identity.');
     }
     if (!groups.containsKey(turnId)) order.add(turnId);
     groups.putIfAbsent(turnId, () => []).add(message);

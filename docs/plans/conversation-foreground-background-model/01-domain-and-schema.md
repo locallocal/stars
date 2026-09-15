@@ -42,7 +42,7 @@
 | 新增领域对象与契约 | `lib/domain/models/conversation_task.dart`、`task_segment_limits.dart`；`lib/domain/repositories/conversation_task_repository.dart`，按职责拆分值对象 |
 | 现有消息与证据 | [message.dart](../../../lib/domain/models/message.dart)、[tool_evidence.dart](../../../lib/domain/models/tool_evidence.dart) |
 | 新 schema 与校验 | [database_service.dart](../../../lib/data/services/database_service.dart)、[database_schema_verifier.dart](../../../lib/data/services/database_schema_verifier.dart)，新任务 schema 按独立文件组织 |
-| 执行预算参考 | [agent_run_models.dart](../../../lib/domain/use_cases/agent_run_models.dart)，只参考已有护栏含义，后台使用独立默认值 |
+| 执行预算参考 | [TaskSegmentLimits](../../../lib/domain/models/conversation_task_snapshot.dart)，后台使用独立分段预算 |
 
 ## 验证与退出条件
 

@@ -48,6 +48,7 @@ Future<void> _verifyCurrentDatabaseSchema(Database database) async {
           'task_summary_json',
         },
         'conversation_tasks': {
+          'retry_of_task_id',
           'acceptance_json',
           'revision',
           'plan_revision',
@@ -137,7 +138,6 @@ const Set<String> _currentTableNames = <String>{
   'tool_invocation_events',
   'tool_evidence_records',
   'answer_claim_evidence',
-  'agent_run_answer_checkpoints',
   'grounding_metric_counters',
   'grounding_metric_observations',
   'token_usage_records',

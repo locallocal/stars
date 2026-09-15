@@ -244,24 +244,6 @@ final class GroundedAnswerSynthesisRequest {
   Set<String> get allowedEvidenceIds => Set<String>.unmodifiable(
     evidence.map((reference) => reference.evidenceId),
   );
-
-  Map<String, String> get legacyEvidenceAliases {
-    final aliases = <String, String>{};
-    final ambiguous = <String>{};
-    for (final reference in evidence) {
-      final providerCallId = reference.providerCallId;
-      if (providerCallId.isEmpty || ambiguous.contains(providerCallId)) {
-        continue;
-      }
-      if (aliases.containsKey(providerCallId)) {
-        aliases.remove(providerCallId);
-        ambiguous.add(providerCallId);
-      } else {
-        aliases[providerCallId] = reference.evidenceId;
-      }
-    }
-    return Map<String, String>.unmodifiable(aliases);
-  }
 }
 
 Map<String, Object?> _freezeGroundedJsonMap(Map<String, Object?> value) {

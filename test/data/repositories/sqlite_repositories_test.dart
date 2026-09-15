@@ -190,7 +190,7 @@ void main() {
   );
 
   test(
-    'message history loads tool calls persisted before execution IDs',
+    'message history rejects tool calls without current execution identities',
     () async {
       final repository = SqliteMessageRepository(localDatabase: localDatabase);
       addTearDown(repository.dispose);
@@ -243,14 +243,9 @@ void main() {
       values['process_info'] = jsonEncode(processInfo);
       await database.insert('messages', values);
 
-      final messages = await repository.getMessages('chat-legacy-tool-call');
-
-      expect(messages, hasLength(1));
-      expect(messages.single.processInfo.toolCalls, hasLength(1));
-      expect(messages.single.processInfo.toolCalls.single.executionId, isEmpty);
-      expect(
-        messages.single.processInfo.toolCalls.single.callId,
-        'legacy-call-1',
+      await expectLater(
+        repository.getMessages('chat-legacy-tool-call'),
+        throwsFormatException,
       );
     },
   );
@@ -344,9 +339,12 @@ void main() {
     expect(current.grounding.evidenceIds, [
       'attempt-grounding-current:evidence',
     ]);
-    expect(legacy.grounding.protocolVersion, 0);
+    expect(
+      legacy.grounding.protocolVersion,
+      MessageGrounding.currentProtocolVersion,
+    );
     expect(legacy.grounding.trustLevel, AnswerTrustLevel.unverified);
-    expect(legacy.grounding.reasonCode, 'legacy_grounding_missing');
+    expect(legacy.grounding.reasonCode, 'invalid_grounding_metadata');
   });
 
   test('message pages use a stable timestamp and id cursor', () async {

@@ -24,19 +24,6 @@ void main() {
       expect(grounding.evidenceIds, ['evidence-1']);
     });
 
-    test('legacy evidence footer can never produce a verified answer', () {
-      final grounding = policy.evaluate(
-        _input(
-          evidenceState: AnswerEvidenceState.legacyFormatOnly,
-          evidenceIds: const [],
-        ),
-      );
-
-      expect(grounding.trustLevel, AnswerTrustLevel.unverified);
-      expect(grounding.reasonCode, 'legacy_evidence_unverified');
-      expect(grounding.evidenceIds, isEmpty);
-    });
-
     test('structured claims stay unverified before claim validation', () {
       final grounding = policy.evaluate(
         _input(evidenceState: AnswerEvidenceState.structuredUnvalidated),
@@ -233,12 +220,12 @@ void main() {
       final grounding = policy.evaluate(
         _input(
           terminalOutcome: MessageTerminalOutcome.failed,
-          failureReasonCode: 'agent_run_timeout',
+          failureReasonCode: 'provider_request_timeout',
         ),
       );
 
       expect(grounding.trustLevel, AnswerTrustLevel.failed);
-      expect(grounding.reasonCode, 'agent_run_timeout');
+      expect(grounding.reasonCode, 'provider_request_timeout');
       expect(grounding.evidenceIds, ['evidence-1']);
     });
 

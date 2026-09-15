@@ -1,3 +1,4 @@
+import '../support/idle_chat_generation.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,7 +10,6 @@ import 'package:stars/domain/use_cases/create_chat.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/bots/view_models/bot_list_view_model.dart';
 import 'package:stars/ui/features/bots/views/bots.dart';
-import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/clear_chat_dialog.dart';
 import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
 import 'package:stars/ui/features/chats/views/chats.dart';
@@ -460,9 +460,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1280, 800);
     addTearDown(tester.view.reset);
-    final registry = ChatGenerationRegistry(
-      messagePersister: (message) async => message,
-      lastMessageUpdater: (_, _) async {},
+    final registry = idleChatGenerationRegistry(
       providerFactory: (_) => throw StateError('Provider is not expected'),
     );
     addTearDown(registry.clear);

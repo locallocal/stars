@@ -4,17 +4,6 @@ Future<void> _createGroundingReliabilitySchema(
   DatabaseExecutor database,
 ) async {
   await database.execute('''
-    CREATE TABLE IF NOT EXISTS agent_run_answer_checkpoints (
-      run_id TEXT PRIMARY KEY CHECK (length(run_id) > 0),
-      chat_id TEXT NOT NULL CHECK (length(chat_id) > 0),
-      message_id TEXT NOT NULL UNIQUE CHECK (length(message_id) > 0),
-      terminal_message_json TEXT NOT NULL
-        CHECK (length(terminal_message_json) > 0),
-      created_at INTEGER NOT NULL,
-      FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
-    )
-  ''');
-  await database.execute('''
     CREATE TABLE IF NOT EXISTS grounding_metric_counters (
       metric TEXT NOT NULL CHECK (length(metric) > 0),
       category TEXT NOT NULL DEFAULT '',

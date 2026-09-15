@@ -1,6 +1,6 @@
 # 09：完整验收与实现文档同步
 
-[总计划](README.md) | [上一阶段](08-cutover-and-cleanup.md)
+[总计划](README.md) | [正式运行边界（已实现）](../../reference/conversation-task-cutover.md)
 
 前置依赖：阶段 01—08。对应目标规格第 13、14、15 节。
 

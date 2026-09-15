@@ -27,7 +27,7 @@ class DatabaseService {
   _applicationDocumentsDirectoryProvider;
   Database? _database;
   Future<Database>? _openingDatabase;
-  static const int databaseVersion = 27;
+  static const int databaseVersion = 28;
   static const String _databaseFileName = 'app.db';
   static const String _currentBackupName = '.stars_backup_current';
   static const String _previousBackupName = '.stars_backup_previous';
@@ -59,7 +59,6 @@ class DatabaseService {
     final root = Directory(
       join(documents.path, starsApplicationDataDirectoryName),
     );
-    await _migrateLegacyData(documents, root);
     await root.create(recursive: true);
     final path = join(root.path, _databaseFileName);
 
@@ -69,6 +68,20 @@ class DatabaseService {
       version: databaseVersion,
       onConfigure: configure,
       onCreate: createSchema,
+      onUpgrade:
+          (_, oldVersion, newVersion) =>
+              throw const AppFailure(
+                kind: AppFailureKind.migration,
+                code: 'database_rebuild_required',
+                retryable: false,
+              ),
+      onDowngrade:
+          (_, oldVersion, newVersion) =>
+              throw const AppFailure(
+                kind: AppFailureKind.migration,
+                code: 'database_downgrade_not_supported',
+                retryable: false,
+              ),
     );
     try {
       await _verifyIntegrity(database);
@@ -87,72 +100,6 @@ class DatabaseService {
   /// Validates the current baseline without altering or backfilling a database.
   static Future<void> verifySchema(Database database) =>
       _verifyCurrentDatabaseSchema(database);
-
-  static Future<void> _migrateLegacyData(
-    Directory legacyRoot,
-    Directory destination,
-  ) async {
-    if (await destination.exists()) return;
-
-    final source = await _findLegacyDataSource(legacyRoot);
-    if (source == null) return;
-
-    final staging = Directory(
-      join(
-        legacyRoot.path,
-        '.stars_data_staging_${DateTime.now().microsecondsSinceEpoch}',
-      ),
-    );
-    try {
-      await staging.create(recursive: true);
-      final stagedDatabase = await source.database.copy(
-        join(staging.path, _databaseFileName),
-      );
-      if (await source.chats.exists()) {
-        await _copyDirectory(
-          source.chats,
-          Directory(join(staging.path, 'chats')),
-        );
-      }
-      await _verifyDatabaseFile(stagedDatabase.path);
-      await staging.rename(destination.path);
-    } on Object catch (error) {
-      if (await staging.exists()) await staging.delete(recursive: true);
-      throw AppFailure.storage('database_recovery_failed', cause: error);
-    }
-  }
-
-  static Future<_LegacyDataSource?> _findLegacyDataSource(
-    Directory root,
-  ) async {
-    final database = File(join(root.path, _databaseFileName));
-    if (await _isSupportedDatabaseValid(database)) {
-      return _LegacyDataSource(
-        database: database,
-        chats: Directory(join(root.path, 'chats')),
-      );
-    }
-
-    for (final name in <String>[_currentBackupName, _previousBackupName]) {
-      final backup = Directory(join(root.path, name));
-      if (!await _isCurrentBackupValid(backup)) continue;
-      return _LegacyDataSource(
-        database: File(join(backup.path, _databaseFileName)),
-        chats: Directory(join(backup.path, 'chats')),
-      );
-    }
-    return null;
-  }
-
-  static Future<bool> _isSupportedDatabaseValid(File database) async {
-    if (!await database.exists()) return false;
-    try {
-      await _verifyDatabaseFile(database.path);
-      return true;
-    } on Object {
-      return false;
-    }
-  }
 
   static Future<void> _prepareCurrentDatabase(
     Directory root,
@@ -768,11 +715,4 @@ class DatabaseService {
       'ON mcp_tools(server_id)',
     );
   }
-}
-
-final class _LegacyDataSource {
-  const _LegacyDataSource({required this.database, required this.chats});
-
-  final File database;
-  final Directory chats;
 }

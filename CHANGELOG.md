@@ -20,6 +20,10 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Completed the foreground/background cutover: text dispatch and durable tasks
+  now use one production lifecycle. Removed old run recovery, partial reply writes
+  and page-owned tool approvals; background work resumes from committed task checkpoints.
+
 - Unified bundled and installed Skill activation under model selection, so
   follow-up requests can use conversation context instead of hard-coded keyword
   routing or lexical catalog preselection, while application-side Tool policy,
@@ -29,9 +33,9 @@ based on Keep a Changelog, and the project uses semantic versioning.
 - Delayed the Linux window until Flutter renders its first frame, preventing
   startup key events from producing invalid framework-response JSON warnings.
 - Isolated databases, conversation files, and recovery snapshots under the
-  app-specific `Documents/Stars` directory. On first launch, Stars now migrates
-  a valid legacy database or recovers its own validated backup when another
-  application has replaced the old shared `Documents/app.db` file.
+  app-specific `Documents/Stars` directory. Only the current schema and validated
+  current-schema backups can open; older databases require a rebuild and are not
+  migrated or automatically deleted. Shared-directory databases and backups are ignored.
 - Fixed Bot creation with bundled system Skills by allowing their bindings and
   conversation pins without creating editable installation records.
 - Fixed system Skill runs by exempting Stars' read-only Skill/MCP inventory

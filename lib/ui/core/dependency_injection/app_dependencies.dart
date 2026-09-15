@@ -48,8 +48,6 @@ import 'package:stars/data/repositories/sqlite_skill_ecosystem_repository.dart';
 import 'package:stars/data/repositories/sqlite_skill_inventory_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_execution_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
-import 'package:stars/data/repositories/sqlite_agent_run_recovery_repository.dart';
-import 'package:stars/data/repositories/sqlite_grounding_metrics_repository.dart';
 import 'package:stars/data/services/feedback_service.dart';
 import 'package:stars/data/services/attachment_picker_service.dart';
 import 'package:stars/data/services/asset_text_service.dart';
@@ -114,9 +112,6 @@ import 'package:stars/domain/repositories/skill_inventory_repository.dart';
 import 'package:stars/domain/repositories/skill_run_repository.dart';
 import 'package:stars/domain/repositories/tool_execution_repository.dart';
 import 'package:stars/domain/repositories/tool_evidence_repository.dart';
-import 'package:stars/domain/services/grounded_answer_validator.dart';
-import 'package:stars/domain/services/grounding_metrics_service.dart';
-import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
@@ -124,8 +119,6 @@ import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
 import 'package:stars/domain/use_cases/mcp_server_mutations.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
-import 'package:stars/domain/use_cases/persist_tool_invocation.dart';
-import 'package:stars/domain/use_cases/recover_agent_runs.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
@@ -210,7 +203,7 @@ class AppDependencies {
     this.skillCatalogService,
     this.skillOrganizationPolicyBundleService,
     this.startupRecoveryInitializer,
-    this.conversationTasks,
+    required this.conversationTasks,
   }) : conversationDraftRepository =
            conversationDraftRepository ?? MemoryConversationDraftRepository(),
        conversationDirectoryRepository =
@@ -380,32 +373,6 @@ class AppDependencies {
     final toolExecutionRepository = SqliteToolExecutionRepository(
       localDatabase: localDatabase,
     );
-    final groundingMetricsRepository = SqliteGroundingMetricsRepository(
-      localDatabase: localDatabase,
-    );
-    final groundingMetrics = GroundingMetricsService(
-      repository: groundingMetricsRepository,
-      evidenceRepository: toolEvidenceRepository,
-    );
-    final agentRunRecoveryRepository = SqliteAgentRunRecoveryRepository(
-      localDatabase: localDatabase,
-    );
-    final recoverAgentRuns = RecoverAgentRuns(
-      recoveryRepository: agentRunRecoveryRepository,
-      messageRepository: messageRepository,
-      groundedMessageRepository: messageRepository,
-      evidenceRepository: toolEvidenceRepository,
-      executionRepository: toolExecutionRepository,
-      onRecoveredMessage: groundingMetrics.recordTerminalMessage,
-    );
-    final persistToolInvocation = PersistToolInvocation(
-      evidenceRepository: toolEvidenceRepository,
-      executionRepository: toolExecutionRepository,
-      complianceRepository: skillEcosystemRepository,
-    );
-    final groundedAnswerValidator = GroundedAnswerValidator(
-      evidenceRepository: toolEvidenceRepository,
-    );
     final conversationSkillPinRepository = SqliteConversationSkillPinRepository(
       localDatabase: localDatabase,
     );
@@ -559,35 +526,8 @@ class AppDependencies {
       generationRegistry: ChatGenerationRegistry(
         dispatcher: conversationTasks.dispatcher,
         taskProgress: conversationTasks.progress,
-        messagePersister: messageRepository.upsertMessage,
-        groundedMessagePersister: messageRepository.upsertGroundedMessage,
-        answerRecoveryCheckpointPersister:
-            agentRunRecoveryRepository.stageAnswer,
-        answerRecoveryCheckpointClearer: agentRunRecoveryRepository.clearAnswer,
-        lastMessageUpdater: chatRepository.updateLastMessage,
-        assistantPreviewBuilder: (message) async {
-          final profile = await profileRepository.getProfile();
-          if (!profile.strictGroundingMode) return message.content;
-          return const StrictGroundingPolicy().previewFor(message);
-        },
         providerFactory: aiProviderRepository.create,
         messageIdFactory: messageRepository.createId,
-        skillActivationPersister: skillRunRepository.saveActivations,
-        terminalMessageObserver: (chatId, bot, message, report) async {
-          final action = report?.compressionAction;
-          if (action == ContextCompressionAction.backgroundReady ||
-              action == ContextCompressionAction.synchronous ||
-              action == ContextCompressionAction.fallbackTrim) {
-            await compactConversation(bot: bot, chatId: chatId);
-          }
-        },
-        providerFailureObserver: groundingMetrics.recordProviderFailure,
-        terminalGroundingMetricsObserver:
-            groundingMetrics.recordTerminalMessage,
-        toolInvocationPersister: persistToolInvocation.call,
-        groundedAnswerValidator: groundedAnswerValidator,
-        toolRegistry: toolRegistry,
-        toolPolicy: toolPolicy,
       ),
       skillEcosystemRepository: skillEcosystemRepository,
       skillScriptCatalogService: skillScriptCatalogService,
@@ -597,7 +537,6 @@ class AppDependencies {
       conversationDraftRepository: conversationDraftRepository,
       startupRecoveryInitializer: () async {
         await databaseService.database;
-        await recoverAgentRuns();
         await conversationTasks.start();
       },
     );
@@ -655,7 +594,7 @@ class AppDependencies {
   final SkillOrganizationPolicyBundleService?
   skillOrganizationPolicyBundleService;
   final Future<void> Function()? startupRecoveryInitializer;
-  final AppConversationTasks? conversationTasks;
+  final AppConversationTasks conversationTasks;
 
   AppViewModel createAppViewModel(Profile initialProfile) => AppViewModel(
     initialProfile: initialProfile,
@@ -666,13 +605,13 @@ class AppDependencies {
       MainShellViewModel(botRepository: botRepository);
 
   ChatListViewModel createChatListViewModel() => ChatListViewModel(
-    deleteConversation: conversationTasks?.deleteConversation,
+    deleteConversation: conversationTasks.deleteConversation,
     chatRepository: chatRepository,
     botRepository: botRepository,
   );
 
   BotListViewModel createBotListViewModel() => BotListViewModel(
-    deleteBot: conversationTasks?.deleteBot,
+    deleteBot: conversationTasks.deleteBot,
     botRepository: botRepository,
     createChat: createChat,
     aiProviderRepository: aiProviderRepository,

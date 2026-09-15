@@ -35,7 +35,6 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
   }) async {
     if (!_acceptsAsyncCallbacks || hasBlockingRun) return false;
     final router = dispatcher;
-    if (router == null) throw StateError('Foreground dispatcher is required.');
     final runId = _messageIdFactory('foreground');
     final token = AgentCancellationToken();
     _foregroundCancellation = token;
@@ -57,6 +56,7 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
           token.isCancelled) {
         return;
       }
+      _contextAssemblyReport = value.context.prepared?.contextAssemblyReport;
       final event = value.event;
       _snapshot = _snapshot.copyWith(
         lifecycle: ChatRunLifecycle.active,
@@ -84,9 +84,6 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
     if (result is TurnTaskStatusRead) {
       try {
         final presenter = taskProgress;
-        if (presenter == null) {
-          throw StateError('Task progress presenter is required.');
-        }
         saved = await presenter(
           chatId: chatId,
           botId: input.bot.id,
@@ -103,6 +100,7 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
       }
     }
     if (!_acceptsAsyncCallbacks || _snapshot.runId != runId) return false;
+    _contextAssemblyReport = result.context.prepared?.contextAssemblyReport;
     _foregroundCancellation = null;
     final failed = result is TurnDispatchFailed;
     final cancelled =
@@ -119,6 +117,7 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
       userPersisted:
           failed ? result.userPersisted : result is! TurnDispatchBusy,
       terminalMessage: saved,
+      tokenUsage: saved?.tokenUsage ?? ModelTokenUsage.empty,
       clearTerminalMessage: saved == null,
       streamingResponse: '',
       supportsCancellation: false,

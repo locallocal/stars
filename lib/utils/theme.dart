@@ -8,6 +8,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 /// names lets legacy Material-only widgets share the same desktop appearance.
 part 'desktop_theme_spec.dart';
 part 'theme_components.dart';
+part 'theme_list_components.dart';
 
 const _starsChartColorKeys = <String>[
   'chart-1',

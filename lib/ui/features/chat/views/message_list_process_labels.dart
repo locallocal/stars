@@ -203,9 +203,7 @@ String _processDetailLabel(S strings, String detail) {
       return strings.statusUnknown;
     case 'skill_provider_timeout':
     case 'provider_timeout':
-    case 'tool_approval_timeout':
     case 'tool_execution_timeout':
-    case 'Tool approval timed out.':
     case 'Tool execution timed out.':
       return strings.statusTimedOut;
     case 'tool_approval_denied':
@@ -216,8 +214,6 @@ String _processDetailLabel(S strings, String detail) {
     case 'The tool call was blocked by application policy.':
     case 'The user denied the tool call.':
       return strings.statusDenied;
-    case 'agent_run_cancelled':
-      return strings.statusCancelled;
     case 'duplicate_call_id_conflict':
     case 'duplicate_call_reused':
     case 'The call id was already used with different arguments.':

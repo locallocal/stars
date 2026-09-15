@@ -49,9 +49,7 @@ class _StarsBootstrapAppState extends State<StarsBootstrapApp> {
   void initState() {
     super.initState();
     _dependencies = widget.dependencies ?? AppDependencies.production();
-    if (_dependencies.conversationTasks case final tasks?) {
-      _taskLifecycle = _TaskAppLifecycle(tasks);
-    }
+    _taskLifecycle = _TaskAppLifecycle(_dependencies.conversationTasks);
     _viewModel = _dependencies.createStartupViewModel()..load();
   }
 

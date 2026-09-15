@@ -3,32 +3,85 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/domain/repositories/ai_provider_repository.dart';
-import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
-import 'package:stars/domain/repositories/mcp_server_repository.dart';
-import 'package:stars/domain/repositories/skill_repository.dart';
-import 'package:stars/domain/services/stars_system_prompt.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 
+import '../../support/compose_chat_fixtures.dart';
+
 void main() {
+  test(
+    'does not prefilter a large Skill catalog before model selection',
+    () async {
+      final skills = <String, SkillContent>{
+        for (var index = 0; index < 20; index++)
+          'user:filler-$index': fixtureSkill(
+            'user:filler-$index',
+            'filler-$index',
+            'Unrelated instructions $index.',
+          ),
+        'user:file': fixtureSkill(
+          'user:file',
+          'file-operations',
+          'Save research results to a local file.',
+        ),
+      };
+      final provider = FixtureFakeSkillProvider(
+        fixtureActivationTurns(['file-operations']),
+      );
+      final compose = ComposeChatTurn(
+        skillRepository: FixtureFakeSkillRepository(skills),
+        bindingRepository: FixtureFakeBindingRepository([
+          for (var index = 0; index < 20; index++)
+            fixtureBinding('user:filler-$index', priority: 100 - index),
+          fixtureBinding('user:file'),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            fixtureTestConversationArtifactsDirectory,
+        starsSystemPromptProvider: fixtureTestStarsSystemPrompt,
+      );
+
+      final result = await compose(
+        bot: fixtureBot(),
+        history: const [],
+        userMessage: fixtureMessage(senderId: 'user-1', content: '再调研一次'),
+        currentUserId: 'user-1',
+        skillToolProvider: provider,
+      );
+
+      expect(provider.session.request?.catalog, hasLength(21));
+      expect(
+        provider.session.request?.catalog.map((entry) => entry.id),
+        contains('user:file'),
+      );
+      expect(result.activatedSkills.map((skill) => skill.id), ['user:file']);
+    },
+  );
+
   test('offers every enabled Skill for automatic model activation', () async {
     final skills = <String, SkillContent>{
-      'user:always': _skill('user:always', 'always', 'Always instructions.'),
-      'user:selected': _skill(
+      'user:always': fixtureSkill(
+        'user:always',
+        'always',
+        'Always instructions.',
+      ),
+      'user:selected': fixtureSkill(
         'user:selected',
         'selected',
         'Selected instructions.',
         requestedToolNames: const {'calculate'},
       ),
-      'user:ignored': _skill('user:ignored', 'ignored', 'Ignored secret.'),
+      'user:ignored': fixtureSkill(
+        'user:ignored',
+        'ignored',
+        'Ignored secret.',
+      ),
     };
-    final skillRepository = _FakeSkillRepository(skills);
-    final bindingRepository = _FakeBindingRepository([
-      _binding('user:always', priority: 10),
-      _binding('user:selected', priority: 5),
-      _binding('user:ignored'),
+    final skillRepository = FixtureFakeSkillRepository(skills);
+    final bindingRepository = FixtureFakeBindingRepository([
+      fixtureBinding('user:always', priority: 10),
+      fixtureBinding('user:selected', priority: 5),
+      fixtureBinding('user:ignored'),
     ]);
-    final provider = _FakeSkillProvider([
+    final provider = FixtureFakeSkillProvider([
       SkillToolTurn(
         calls: [
           SkillToolCall(
@@ -48,20 +101,23 @@ void main() {
         requestedArtifactsDirectories.add(conversationId);
         return '/data/Stars/chats/$conversationId';
       },
-      starsSystemPromptProvider: _testStarsSystemPrompt,
+      starsSystemPromptProvider: fixtureTestStarsSystemPrompt,
     );
 
     final result = await compose(
-      bot: _bot(systemPrompt: 'You are a helpful assistant.'),
+      bot: fixtureBot(systemPrompt: 'You are a helpful assistant.'),
       history: [
-        _message(senderId: 'user-1', content: 'Earlier question'),
-        _message(
+        fixtureMessage(senderId: 'user-1', content: 'Earlier question'),
+        fixtureMessage(
           senderId: 'bot-1',
           content: 'Earlier answer',
           reasoning: 'Earlier reasoning',
         ),
       ],
-      userMessage: _message(senderId: 'user-1', content: 'Current question'),
+      userMessage: fixtureMessage(
+        senderId: 'user-1',
+        content: 'Current question',
+      ),
       currentUserId: 'user-1',
       skillToolProvider: provider,
     );
@@ -137,215 +193,16 @@ void main() {
   });
 
   test(
-    'does not prefilter a large Skill catalog before model selection',
-    () async {
-      final skills = <String, SkillContent>{
-        for (var index = 0; index < 20; index++)
-          'user:filler-$index': _skill(
-            'user:filler-$index',
-            'filler-$index',
-            'Unrelated instructions $index.',
-          ),
-        'user:file': _skill(
-          'user:file',
-          'file-operations',
-          'Save research results to a local file.',
-        ),
-      };
-      final provider = _FakeSkillProvider(
-        _activationTurns(['file-operations']),
-      );
-      final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(skills),
-        bindingRepository: _FakeBindingRepository([
-          for (var index = 0; index < 20; index++)
-            _binding('user:filler-$index', priority: 100 - index),
-          _binding('user:file'),
-        ]),
-        conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
-        starsSystemPromptProvider: _testStarsSystemPrompt,
-      );
-
-      final result = await compose(
-        bot: _bot(),
-        history: const [],
-        userMessage: _message(senderId: 'user-1', content: '再调研一次'),
-        currentUserId: 'user-1',
-        skillToolProvider: provider,
-      );
-
-      expect(provider.session.request?.catalog, hasLength(21));
-      expect(
-        provider.session.request?.catalog.map((entry) => entry.id),
-        contains('user:file'),
-      );
-      expect(result.activatedSkills.map((skill) => skill.id), ['user:file']);
-    },
-  );
-
-  test('omits turns without replayable assistant output', () async {
-    final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(const {}),
-      bindingRepository: _FakeBindingRepository(const []),
-      conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
-      starsSystemPromptProvider: _testStarsSystemPrompt,
-    );
-
-    final result = await compose(
-      bot: _bot(),
-      history: [
-        _message(senderId: 'user-1', content: 'Failed question'),
-        _message(senderId: 'bot-1', content: ''),
-      ],
-      userMessage: _message(senderId: 'user-1', content: 'Retry question'),
-      currentUserId: 'user-1',
-    );
-
-    expect(result.messages.map((message) => message.role), ['system', 'user']);
-    expect(result.messages.last.content, 'Retry question');
-    expect(
-      result.messages.every(
-        (message) =>
-            message.content.trim().isNotEmpty ||
-            message.images.isNotEmpty ||
-            message.files.isNotEmpty,
-      ),
-      isTrue,
-    );
-  });
-
-  test(
-    'fallback isolates unsuccessful and partial history by default',
-    () async {
-      final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository(const []),
-        conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
-        starsSystemPromptProvider: _testStarsSystemPrompt,
-      );
-      final history = [
-        _message(
-          messageId: 'user-failed',
-          turnId: 'turn-failed',
-          senderId: 'user-1',
-          content: 'failed question',
-        ),
-        _message(
-          messageId: 'assistant-failed',
-          turnId: 'turn-failed',
-          runId: 'run-failed',
-          senderId: 'bot-1',
-          content: 'failed secret',
-          terminalOutcome: MessageTerminalOutcome.failed,
-        ),
-        _message(
-          messageId: 'user-cancelled',
-          turnId: 'turn-cancelled',
-          senderId: 'user-1',
-          content: 'cancelled question',
-        ),
-        _message(
-          messageId: 'assistant-cancelled',
-          turnId: 'turn-cancelled',
-          runId: 'run-cancelled',
-          senderId: 'bot-1',
-          content: 'cancelled secret',
-          terminalOutcome: MessageTerminalOutcome.cancelled,
-        ),
-        _message(
-          messageId: 'user-empty',
-          turnId: 'turn-empty',
-          senderId: 'user-1',
-          content: 'empty question',
-        ),
-        _message(
-          messageId: 'assistant-empty',
-          turnId: 'turn-empty',
-          runId: 'run-empty',
-          senderId: 'bot-1',
-          content: 'empty response secret',
-          terminalOutcome: MessageTerminalOutcome.emptyResponse,
-        ),
-        _message(
-          messageId: 'user-partial',
-          turnId: 'turn-partial',
-          senderId: 'user-1',
-          content: 'partial question',
-        ),
-        _message(
-          messageId: 'assistant-partial',
-          turnId: 'turn-partial',
-          runId: 'run-partial',
-          senderId: 'bot-1',
-          content: 'partial secret',
-          terminalOutcome: MessageTerminalOutcome.completed,
-          hasPartialContent: true,
-        ),
-        _message(
-          messageId: 'user-completed',
-          turnId: 'turn-completed',
-          senderId: 'user-1',
-          content: 'completed question',
-        ),
-        _message(
-          messageId: 'assistant-completed',
-          turnId: 'turn-completed',
-          runId: 'run-completed',
-          senderId: 'bot-1',
-          content: 'completed answer',
-          terminalOutcome: MessageTerminalOutcome.completed,
-        ),
-      ];
-
-      final result = await compose(
-        bot: _bot(),
-        history: history,
-        userMessage: _message(
-          messageId: 'current',
-          turnId: 'turn-current',
-          senderId: 'user-1',
-          content: 'follow-up',
-        ),
-        currentUserId: 'user-1',
-      );
-
-      expect(result.messages.map((message) => message.role), [
-        'system',
-        'user',
-        'assistant',
-        'user',
-      ]);
-      final serialized = result.messages
-          .map((message) => message.content)
-          .join('\n');
-      expect(serialized, isNot(contains('failed secret')));
-      expect(serialized, isNot(contains('cancelled secret')));
-      expect(serialized, isNot(contains('empty response secret')));
-      expect(serialized, isNot(contains('partial secret')));
-      final assistant = result.messages.singleWhere(
-        (message) => message.role == 'assistant',
-      );
-      expect(assistant.content, contains('<assistant_history_output'));
-      expect(assistant.content, contains('run_id="run-completed"'));
-      expect(assistant.content, contains('terminal="completed"'));
-      expect(assistant.content, contains('trust="unverified"'));
-    },
-  );
-
-  test(
     'omits the application prompt but localizes conversation context',
     () async {
       var preferenceReads = 0;
       var languageReads = 0;
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository(const []),
+        skillRepository: FixtureFakeSkillRepository(const {}),
+        bindingRepository: FixtureFakeBindingRepository(const []),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
-        starsSystemPromptProvider: _testStarsSystemPrompt,
+            fixtureTestConversationArtifactsDirectory,
+        starsSystemPromptProvider: fixtureTestStarsSystemPrompt,
         starsSystemPromptEnabledProvider: () async {
           preferenceReads += 1;
           return false;
@@ -357,9 +214,9 @@ void main() {
       );
 
       final result = await compose(
-        bot: _bot(systemPrompt: 'Bot-owned instructions.'),
+        bot: fixtureBot(systemPrompt: 'Bot-owned instructions.'),
         history: const [],
-        userMessage: _message(senderId: 'user-1', content: 'Hello'),
+        userMessage: fixtureMessage(senderId: 'user-1', content: 'Hello'),
         currentUserId: 'user-1',
       );
 
@@ -378,18 +235,18 @@ void main() {
 
   test('injects the Stars prompt using the selected language', () async {
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(const {}),
-      bindingRepository: _FakeBindingRepository(const []),
+      skillRepository: FixtureFakeSkillRepository(const {}),
+      bindingRepository: FixtureFakeBindingRepository(const []),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
-      starsSystemPromptProvider: _testStarsSystemPrompt,
+          fixtureTestConversationArtifactsDirectory,
+      starsSystemPromptProvider: fixtureTestStarsSystemPrompt,
       starsSystemPromptLanguageProvider: () async => 'zh_CN',
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Hello'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Hello'),
       currentUserId: 'user-1',
     );
 
@@ -406,19 +263,19 @@ void main() {
   test(
     'auto activation uses structured tools and injects requested references',
     () async {
-      final auto = _skill(
+      final auto = fixtureSkill(
         'user:release-notes',
         'release-notes',
         'Prepare concise release notes.',
         files: const ['SKILL.md', 'references/style.md'],
       );
-      final repository = _FakeSkillRepository(
+      final repository = FixtureFakeSkillRepository(
         {'user:release-notes': auto},
         resources: {
           'user:release-notes:references/style.md': 'Use short headings.',
         },
       );
-      final provider = _FakeSkillProvider([
+      final provider = FixtureFakeSkillProvider([
         SkillToolTurn(
           calls: [
             SkillToolCall(
@@ -456,17 +313,17 @@ void main() {
       ]);
       final compose = ComposeChatTurn(
         skillRepository: repository,
-        bindingRepository: _FakeBindingRepository([
-          _binding('user:release-notes'),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding('user:release-notes'),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Draft release notes for this version.',
         ),
@@ -512,9 +369,9 @@ void main() {
   test(
     'reference-free bundled Skill rejects resource reads with an explicit manifest',
     () async {
-      final skill = _systemLocalFileSystemSkill(directory: false);
-      final repository = _FakeSkillRepository(const {});
-      final provider = _FakeSkillProvider([
+      final skill = fixtureSystemLocalFileSystemSkill(directory: false);
+      final repository = FixtureFakeSkillRepository(const {});
+      final provider = FixtureFakeSkillProvider([
         SkillToolTurn(
           calls: [
             SkillToolCall(
@@ -540,18 +397,18 @@ void main() {
       ]);
       final compose = ComposeChatTurn(
         skillRepository: repository,
-        bindingRepository: _FakeBindingRepository([
-          _binding(fileOperationsSkillId),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(fileOperationsSkillId),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader: () async => [skill],
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Save this HTML file locally',
         ),
@@ -581,9 +438,9 @@ void main() {
   test(
     'bundled Skill reads an advertised reference from application assets',
     () async {
-      final skill = _systemSkillWithReference();
-      final repository = _FakeSkillRepository(const {});
-      final provider = _FakeSkillProvider([
+      final skill = fixtureSystemSkillWithReference();
+      final repository = FixtureFakeSkillRepository(const {});
+      final provider = FixtureFakeSkillProvider([
         SkillToolTurn(
           calls: [
             SkillToolCall(
@@ -609,18 +466,18 @@ void main() {
       ]);
       final compose = ComposeChatTurn(
         skillRepository: repository,
-        bindingRepository: _FakeBindingRepository([
-          _binding(skill.descriptor.id),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(skill.descriptor.id),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader: () async => [skill],
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Use the bundled guide',
         ),
@@ -639,14 +496,14 @@ void main() {
   );
 
   test('rejects a resource path that was not advertised', () async {
-    final skill = _skill(
+    final skill = fixtureSkill(
       'user:reference-reader',
       'reference-reader',
       'Read an advertised reference.',
       files: const ['SKILL.md', 'references/guide.md'],
     );
-    final repository = _FakeSkillRepository({skill.descriptor.id: skill});
-    final provider = _FakeSkillProvider([
+    final repository = FixtureFakeSkillRepository({skill.descriptor.id: skill});
+    final provider = FixtureFakeSkillProvider([
       SkillToolTurn(
         calls: [
           SkillToolCall(
@@ -672,17 +529,20 @@ void main() {
     ]);
     final compose = ComposeChatTurn(
       skillRepository: repository,
-      bindingRepository: _FakeBindingRepository([
-        _binding(skill.descriptor.id),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding(skill.descriptor.id),
       ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Read the guide'),
+      userMessage: fixtureMessage(
+        senderId: 'user-1',
+        content: 'Read the guide',
+      ),
       currentUserId: 'user-1',
       skillToolProvider: provider,
     );
@@ -699,20 +559,20 @@ void main() {
   });
 
   test('preserves a specific repository resource error code', () async {
-    final skill = _skill(
+    final skill = fixtureSkill(
       'user:reference-reader',
       'reference-reader',
       'Read an advertised reference.',
       files: const ['SKILL.md', 'references/guide.md'],
     );
-    final repository = _FakeSkillRepository(
+    final repository = FixtureFakeSkillRepository(
       {skill.descriptor.id: skill},
       resourceReadError: const SkillInstallException(
         'Reference not found.',
         code: 'skill_reference_not_found',
       ),
     );
-    final provider = _FakeSkillProvider([
+    final provider = FixtureFakeSkillProvider([
       SkillToolTurn(
         calls: [
           SkillToolCall(
@@ -738,17 +598,20 @@ void main() {
     ]);
     final compose = ComposeChatTurn(
       skillRepository: repository,
-      bindingRepository: _FakeBindingRepository([
-        _binding(skill.descriptor.id),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding(skill.descriptor.id),
       ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Read the guide'),
+      userMessage: fixtureMessage(
+        senderId: 'user-1',
+        content: 'Read the guide',
+      ),
       currentUserId: 'user-1',
       skillToolProvider: provider,
     );
@@ -762,24 +625,26 @@ void main() {
   });
 
   test('legacy provider does not receive or activate auto Skills', () async {
-    final auto = _skill(
+    final auto = fixtureSkill(
       'user:auto',
       'auto',
       'Auto instructions must remain undisclosed.',
     );
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository({'user:auto': auto}),
-      bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      skillRepository: FixtureFakeSkillRepository({'user:auto': auto}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding('user:auto'),
+      ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Use auto'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Use auto'),
       currentUserId: 'user-1',
-      skillToolProvider: _LegacySkillProvider(),
+      skillToolProvider: FixtureLegacySkillProvider(),
     );
 
     expect(result.activatedSkills, isEmpty);
@@ -794,27 +659,27 @@ void main() {
   test(
     'model-selected shell system Skill exposes its tool to Agent providers',
     () async {
-      final shellSkill = _systemShellSkill();
+      final shellSkill = fixtureSystemShellSkill();
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository([
-          _binding(shellCommandSkillId),
+        skillRepository: FixtureFakeSkillRepository(const {}),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(shellCommandSkillId),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader: () async => [shellSkill],
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Run flutter test for this project',
         ),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(
-          _activationTurns(const ['shell-command']),
+        skillToolProvider: FixtureFakeSkillProvider(
+          fixtureActivationTurns(const ['shell-command']),
         ),
       );
 
@@ -830,27 +695,27 @@ void main() {
   test(
     'active Skill configured for no confirmation exempts its requested tools',
     () async {
-      final shellSkill = _systemShellSkill();
+      final shellSkill = fixtureSystemShellSkill();
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository([
-          _binding(shellCommandSkillId, requiresApproval: false),
+        skillRepository: FixtureFakeSkillRepository(const {}),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(shellCommandSkillId, requiresApproval: false),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader: () async => [shellSkill],
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Run flutter test for this project',
         ),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(
-          _activationTurns(const ['shell-command']),
+        skillToolProvider: FixtureFakeSkillProvider(
+          fixtureActivationTurns(const ['shell-command']),
         ),
       );
 
@@ -862,22 +727,24 @@ void main() {
   test(
     'does not expose a bound system Skill without model activation',
     () async {
-      final fileSkill = _systemLocalFileSystemSkill(directory: false);
-      final provider = _FakeSkillProvider([SkillToolTurn(isComplete: true)]);
+      final fileSkill = fixtureSystemLocalFileSystemSkill(directory: false);
+      final provider = FixtureFakeSkillProvider([
+        SkillToolTurn(isComplete: true),
+      ]);
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository([
-          _binding(fileOperationsSkillId),
+        skillRepository: FixtureFakeSkillRepository(const {}),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(fileOperationsSkillId),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader: () async => [fileSkill],
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Save this HTML file locally',
         ),
@@ -900,28 +767,28 @@ void main() {
   test(
     'unbound Skills leave the Skill tool channel empty for verification discovery',
     () async {
-      final shellSkill = _systemShellSkill();
+      final shellSkill = fixtureSystemShellSkill();
       for (final bindings in <List<BotSkillBinding>>[
         const [],
-        [_binding(shellCommandSkillId, enabled: false)],
+        [fixtureBinding(shellCommandSkillId, enabled: false)],
       ]) {
         final compose = ComposeChatTurn(
-          skillRepository: _FakeSkillRepository(const {}),
-          bindingRepository: _FakeBindingRepository(bindings),
+          skillRepository: FixtureFakeSkillRepository(const {}),
+          bindingRepository: FixtureFakeBindingRepository(bindings),
           conversationArtifactsDirectoryProvider:
-              _testConversationArtifactsDirectory,
+              fixtureTestConversationArtifactsDirectory,
           bundledSkillLoader: () async => [shellSkill],
         );
 
         final result = await compose(
-          bot: _bot(),
+          bot: fixtureBot(),
           history: const [],
-          userMessage: _message(
+          userMessage: fixtureMessage(
             senderId: 'user-1',
             content: 'List local files',
           ),
           currentUserId: 'user-1',
-          skillToolProvider: _FakeSkillProvider(const []),
+          skillToolProvider: FixtureFakeSkillProvider(const []),
         );
 
         expect(result.requestedToolNames, isEmpty);
@@ -940,29 +807,32 @@ void main() {
   );
 
   test('model-selected local file system Skills expose native tools', () async {
-    final directorySkill = _systemLocalFileSystemSkill(directory: true);
-    final fileSkill = _systemLocalFileSystemSkill(directory: false);
+    final directorySkill = fixtureSystemLocalFileSystemSkill(directory: true);
+    final fileSkill = fixtureSystemLocalFileSystemSkill(directory: false);
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(const {}),
-      bindingRepository: _FakeBindingRepository([
-        _binding(directoryOperationsSkillId),
-        _binding(fileOperationsSkillId),
+      skillRepository: FixtureFakeSkillRepository(const {}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding(directoryOperationsSkillId),
+        fixtureBinding(fileOperationsSkillId),
       ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
       bundledSkillLoader: () async => [directorySkill, fileSkill],
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(
+      userMessage: fixtureMessage(
         senderId: 'user-1',
         content: 'Read a file and list its parent directory',
       ),
       currentUserId: 'user-1',
-      skillToolProvider: _FakeSkillProvider(
-        _activationTurns(const ['directory-operations', 'file-operations']),
+      skillToolProvider: FixtureFakeSkillProvider(
+        fixtureActivationTurns(const [
+          'directory-operations',
+          'file-operations',
+        ]),
       ),
     );
 
@@ -985,27 +855,27 @@ void main() {
   test(
     'model decides which enabled system Skills enter the final context',
     () async {
-      final shellSkill = _systemShellSkill();
-      final directorySkill = _systemLocalFileSystemSkill(directory: true);
-      final fileSkill = _systemLocalFileSystemSkill(directory: false);
-      final installerSkill = _systemSkillInstallerSkill();
-      final mcpInstallerSkill = _systemMcpInstallerSkill();
-      final historySkill = _systemConversationHistorySkill();
-      final provider = _FakeSkillProvider(
-        _activationTurns(const ['file-operations']),
+      final shellSkill = fixtureSystemShellSkill();
+      final directorySkill = fixtureSystemLocalFileSystemSkill(directory: true);
+      final fileSkill = fixtureSystemLocalFileSystemSkill(directory: false);
+      final installerSkill = fixtureSystemSkillInstallerSkill();
+      final mcpInstallerSkill = fixtureSystemMcpInstallerSkill();
+      final historySkill = fixtureSystemConversationHistorySkill();
+      final provider = FixtureFakeSkillProvider(
+        fixtureActivationTurns(const ['file-operations']),
       );
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository([
-          _binding(shellCommandSkillId),
-          _binding(directoryOperationsSkillId),
-          _binding(fileOperationsSkillId),
-          _binding(skillInstallerSkillId),
-          _binding(mcpInstallerSkillId),
-          _binding(conversationHistorySkillId),
+        skillRepository: FixtureFakeSkillRepository(const {}),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(shellCommandSkillId),
+          fixtureBinding(directoryOperationsSkillId),
+          fixtureBinding(fileOperationsSkillId),
+          fixtureBinding(skillInstallerSkillId),
+          fixtureBinding(mcpInstallerSkillId),
+          fixtureBinding(conversationHistorySkillId),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader:
             () async => [
               shellSkill,
@@ -1018,9 +888,9 @@ void main() {
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Save this HTML file locally',
         ),
@@ -1066,27 +936,30 @@ void main() {
   );
 
   test('model can select a system Skill for an elliptical follow-up', () async {
-    final fileSkill = _systemLocalFileSystemSkill(directory: false);
-    final provider = _FakeSkillProvider(
-      _activationTurns(const ['file-operations']),
+    final fileSkill = fixtureSystemLocalFileSystemSkill(directory: false);
+    final provider = FixtureFakeSkillProvider(
+      fixtureActivationTurns(const ['file-operations']),
     );
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(const {}),
-      bindingRepository: _FakeBindingRepository([
-        _binding(fileOperationsSkillId),
+      skillRepository: FixtureFakeSkillRepository(const {}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding(fileOperationsSkillId),
       ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
       bundledSkillLoader: () async => [fileSkill],
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: [
-        _message(senderId: 'user-1', content: '详细调研 Transformer 架构，将结果写入本地'),
-        _message(senderId: 'bot-1', content: '报告已写入本地。'),
+        fixtureMessage(
+          senderId: 'user-1',
+          content: '详细调研 Transformer 架构，将结果写入本地',
+        ),
+        fixtureMessage(senderId: 'bot-1', content: '报告已写入本地。'),
       ],
-      userMessage: _message(senderId: 'user-1', content: '再调研一次'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: '再调研一次'),
       currentUserId: 'user-1',
       skillToolProvider: provider,
     );
@@ -1105,27 +978,27 @@ void main() {
   test(
     'bound Skill installer exposes install and SQLite inventory tools',
     () async {
-      final installerSkill = _systemSkillInstallerSkill();
+      final installerSkill = fixtureSystemSkillInstallerSkill();
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository(const {}),
-        bindingRepository: _FakeBindingRepository([
-          _binding(skillInstallerSkillId),
+        skillRepository: FixtureFakeSkillRepository(const {}),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding(skillInstallerSkillId),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         bundledSkillLoader: () async => [installerSkill],
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Install this Skill from GitHub',
         ),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider(
-          _activationTurns(const ['skill-installer']),
+        skillToolProvider: FixtureFakeSkillProvider(
+          fixtureActivationTurns(const ['skill-installer']),
         ),
       );
 
@@ -1140,27 +1013,27 @@ void main() {
   );
 
   test('bound MCP installer Skill exposes write and inventory tools', () async {
-    final mcpInstallerSkill = _systemMcpInstallerSkill();
+    final mcpInstallerSkill = fixtureSystemMcpInstallerSkill();
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(const {}),
-      bindingRepository: _FakeBindingRepository([
-        _binding(mcpInstallerSkillId),
+      skillRepository: FixtureFakeSkillRepository(const {}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding(mcpInstallerSkillId),
       ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
       bundledSkillLoader: () async => [mcpInstallerSkill],
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(
+      userMessage: fixtureMessage(
         senderId: 'user-1',
         content: 'Add this Streamable HTTP MCP server',
       ),
       currentUserId: 'user-1',
-      skillToolProvider: _FakeSkillProvider(
-        _activationTurns(const ['mcp-installer']),
+      skillToolProvider: FixtureFakeSkillProvider(
+        fixtureActivationTurns(const ['mcp-installer']),
       ),
     );
 
@@ -1176,19 +1049,19 @@ void main() {
   test(
     'reuses an activated reference without spending its budget twice',
     () async {
-      final auto = _skill(
+      final auto = fixtureSkill(
         'user:reference-reader',
         'reference-reader',
         'Read relevant reference material.',
         files: const ['SKILL.md', 'references/guide.md'],
       );
-      final repository = _FakeSkillRepository(
+      final repository = FixtureFakeSkillRepository(
         {'user:reference-reader': auto},
         resources: {
           'user:reference-reader:references/guide.md': '1234567890123456',
         },
       );
-      final provider = _FakeSkillProvider([
+      final provider = FixtureFakeSkillProvider([
         SkillToolTurn(
           calls: [
             SkillToolCall(
@@ -1226,18 +1099,18 @@ void main() {
       ]);
       final compose = ComposeChatTurn(
         skillRepository: repository,
-        bindingRepository: _FakeBindingRepository([
-          _binding('user:reference-reader'),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding('user:reference-reader'),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
         budget: const SkillContextBudget(maxResourceTokens: 3),
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(
+        userMessage: fixtureMessage(
           senderId: 'user-1',
           content: 'Use the reference guide.',
         ),
@@ -1258,24 +1131,28 @@ void main() {
   );
 
   test('configured unsupported models do not expose Skills', () async {
-    final skill = _skill('user:auto', 'auto', 'Auto instructions.');
+    final skill = fixtureSkill('user:auto', 'auto', 'Auto instructions.');
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository({'user:auto': skill}),
-      bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      skillRepository: FixtureFakeSkillRepository({'user:auto': skill}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding('user:auto'),
+      ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
 
     final result = await compose(
-      bot: _bot(
+      bot: fixtureBot(
         parameters: const {
           Bot.parameterSupportsAutomaticSkillActivation: false,
         },
       ),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Question'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Question'),
       currentUserId: 'user-1',
-      skillToolProvider: _FakeSkillProvider([SkillToolTurn(isComplete: true)]),
+      skillToolProvider: FixtureFakeSkillProvider([
+        SkillToolTurn(isComplete: true),
+      ]),
     );
 
     expect(result.activatedSkills, isEmpty);
@@ -1289,20 +1166,22 @@ void main() {
   });
 
   test('records automatic Skill provider timeouts explicitly', () async {
-    final skill = _skill('user:auto', 'auto', 'Auto instructions.');
+    final skill = fixtureSkill('user:auto', 'auto', 'Auto instructions.');
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository({'user:auto': skill}),
-      bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      skillRepository: FixtureFakeSkillRepository({'user:auto': skill}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding('user:auto'),
+      ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Use auto'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Use auto'),
       currentUserId: 'user-1',
-      skillToolProvider: _FailingSkillProvider(
+      skillToolProvider: FixtureFailingSkillProvider(
         TimeoutException('Skill request timed out.'),
       ),
     );
@@ -1313,12 +1192,14 @@ void main() {
   });
 
   test('records a safe structured automatic Skill Provider failure', () async {
-    final skill = _skill('user:auto', 'auto', 'Auto instructions.');
+    final skill = fixtureSkill('user:auto', 'auto', 'Auto instructions.');
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository({'user:auto': skill}),
-      bindingRepository: _FakeBindingRepository([_binding('user:auto')]),
+      skillRepository: FixtureFakeSkillRepository({'user:auto': skill}),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding('user:auto'),
+      ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
     final failure = ProviderFailure.fromHttp(
       statusCode: 404,
@@ -1327,11 +1208,11 @@ void main() {
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Use auto'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Use auto'),
       currentUserId: 'user-1',
-      skillToolProvider: _FailingSkillProvider(failure),
+      skillToolProvider: FixtureFailingSkillProvider(failure),
     );
 
     expect(result.activatedSkills, isEmpty);
@@ -1346,22 +1227,22 @@ void main() {
   test('limits activation to three usable Skills', () async {
     final skills = <String, SkillContent>{
       for (var index = 0; index < 5; index++)
-        'user:skill-$index': _skill(
+        'user:skill-$index': fixtureSkill(
           'user:skill-$index',
           'skill-$index',
           'Instructions $index',
         ),
     };
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(skills),
-      bindingRepository: _FakeBindingRepository([
+      skillRepository: FixtureFakeSkillRepository(skills),
+      bindingRepository: FixtureFakeBindingRepository([
         for (var index = 0; index < 5; index++)
-          _binding('user:skill-$index', priority: index),
+          fixtureBinding('user:skill-$index', priority: index),
       ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
     );
-    final provider = _FakeSkillProvider([
+    final provider = FixtureFakeSkillProvider([
       SkillToolTurn(
         calls: [
           for (var index = 4; index >= 0; index--)
@@ -1376,9 +1257,9 @@ void main() {
     ]);
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Question'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Question'),
       currentUserId: 'user-1',
       skillToolProvider: provider,
     );
@@ -1392,25 +1273,29 @@ void main() {
   });
 
   test('records Skills skipped by the context Token budget', () async {
-    final oversized = _skill(
+    final oversized = fixtureSkill(
       'user:oversized',
       'oversized',
       'This instruction is intentionally longer than a four-token budget.',
     );
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository({'user:oversized': oversized}),
-      bindingRepository: _FakeBindingRepository([_binding('user:oversized')]),
+      skillRepository: FixtureFakeSkillRepository({
+        'user:oversized': oversized,
+      }),
+      bindingRepository: FixtureFakeBindingRepository([
+        fixtureBinding('user:oversized'),
+      ]),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
+          fixtureTestConversationArtifactsDirectory,
       budget: const SkillContextBudget(maxTokensPerSkill: 4),
     );
 
     final result = await compose(
-      bot: _bot(),
+      bot: fixtureBot(),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Question'),
+      userMessage: fixtureMessage(senderId: 'user-1', content: 'Question'),
       currentUserId: 'user-1',
-      skillToolProvider: _FakeSkillProvider([
+      skillToolProvider: FixtureFakeSkillProvider([
         SkillToolTurn(
           calls: [
             SkillToolCall(
@@ -1435,12 +1320,16 @@ void main() {
   test(
     'skips unusable candidates before applying the activation limit',
     () async {
-      final blocked = _skill(
+      final blocked = fixtureSkill(
         'user:blocked',
         'blocked',
         'Blocked instructions.',
       );
-      final usable = _skill('user:usable', 'usable', 'Usable instructions.');
+      final usable = fixtureSkill(
+        'user:usable',
+        'usable',
+        'Usable instructions.',
+      );
       final blockedDescriptor = SkillDescriptor(
         id: blocked.descriptor.id,
         name: blocked.descriptor.name,
@@ -1457,27 +1346,27 @@ void main() {
         updatedAt: blocked.descriptor.updatedAt,
       );
       final compose = ComposeChatTurn(
-        skillRepository: _FakeSkillRepository({
+        skillRepository: FixtureFakeSkillRepository({
           'user:blocked': SkillContent(
             descriptor: blockedDescriptor,
             instructions: blocked.instructions,
           ),
           'user:usable': usable,
         }),
-        bindingRepository: _FakeBindingRepository([
-          _binding('user:blocked', priority: 100),
-          _binding('user:usable', priority: 1),
+        bindingRepository: FixtureFakeBindingRepository([
+          fixtureBinding('user:blocked', priority: 100),
+          fixtureBinding('user:usable', priority: 1),
         ]),
         conversationArtifactsDirectoryProvider:
-            _testConversationArtifactsDirectory,
+            fixtureTestConversationArtifactsDirectory,
       );
 
       final result = await compose(
-        bot: _bot(),
+        bot: fixtureBot(),
         history: const [],
-        userMessage: _message(senderId: 'user-1', content: 'Question'),
+        userMessage: fixtureMessage(senderId: 'user-1', content: 'Question'),
         currentUserId: 'user-1',
-        skillToolProvider: _FakeSkillProvider([
+        skillToolProvider: FixtureFakeSkillProvider([
           SkillToolTurn(
             calls: [
               SkillToolCall(
@@ -1521,15 +1410,15 @@ void main() {
       updatedAt: now,
     );
     final compose = ComposeChatTurn(
-      skillRepository: _FakeSkillRepository(const {}),
-      bindingRepository: _FakeBindingRepository(const []),
+      skillRepository: FixtureFakeSkillRepository(const {}),
+      bindingRepository: FixtureFakeBindingRepository(const []),
       conversationArtifactsDirectoryProvider:
-          _testConversationArtifactsDirectory,
-      mcpServerRepository: _FakeMcpServerRepository(server, [tool]),
+          fixtureTestConversationArtifactsDirectory,
+      mcpServerRepository: FixtureFakeMcpServerRepository(server, [tool]),
     );
 
     final result = await compose(
-      bot: _bot(
+      bot: fixtureBot(
         parameters: const {
           Bot.parameterSupportsMcp: true,
           Bot.parameterMcpTools: [
@@ -1542,499 +1431,29 @@ void main() {
         },
       ),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Search the docs'),
+      userMessage: fixtureMessage(
+        senderId: 'user-1',
+        content: 'Search the docs',
+      ),
       currentUserId: 'user-1',
-      skillToolProvider: _McpProvider(),
+      skillToolProvider: FixtureMcpProvider(),
     );
 
     expect(result.requestedToolNames, {'mcp.server-1.search'});
     expect(result.approvalExemptToolNames, {'mcp.server-1.search'});
 
     final unconfiguredResult = await compose(
-      bot: _bot(parameters: const {Bot.parameterSupportsMcp: true}),
+      bot: fixtureBot(parameters: const {Bot.parameterSupportsMcp: true}),
       history: const [],
-      userMessage: _message(senderId: 'user-1', content: 'Search the docs'),
+      userMessage: fixtureMessage(
+        senderId: 'user-1',
+        content: 'Search the docs',
+      ),
       currentUserId: 'user-1',
-      skillToolProvider: _McpProvider(),
+      skillToolProvider: FixtureMcpProvider(),
     );
 
     expect(unconfiguredResult.requestedToolNames, isEmpty);
     expect(unconfiguredResult.approvalExemptToolNames, isEmpty);
   });
 }
-
-SkillContent _skill(
-  String id,
-  String name,
-  String instructions, {
-  List<String> files = const [],
-  Set<String> requestedToolNames = const {},
-}) {
-  final now = DateTime(2026, 7, 26);
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: id,
-      name: name,
-      description: '$name description',
-      version: '1.0.0',
-      scope: SkillScope.user,
-      sourceUri: 'file:///$name',
-      rootPath: '/skills/$name',
-      contentDigest: 'digest-$name',
-      trustState: SkillTrustState.userReviewed,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: '',
-      requestedToolNames: requestedToolNames,
-      hasReferences: files.any((file) => file.startsWith('references/')),
-      installedAt: now,
-      updatedAt: now,
-    ),
-    instructions: instructions,
-    files: files,
-  );
-}
-
-List<SkillToolTurn> _activationTurns(List<String> skillNames) => [
-  SkillToolTurn(
-    calls: [
-      for (final (index, name) in skillNames.indexed)
-        SkillToolCall(
-          callId: 'activate-$index',
-          name: 'activate_skill',
-          arguments: {'name': name},
-        ),
-    ],
-  ),
-  SkillToolTurn(isComplete: true),
-];
-
-SkillContent _systemShellSkill() {
-  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: shellCommandSkillId,
-      name: 'shell-command',
-      description: 'Execute an approved native shell command.',
-      version: '2',
-      scope: SkillScope.bundled,
-      sourceUri: 'asset:///shell-command/SKILL.md',
-      rootPath: 'assets/skills/system/shell-command',
-      contentDigest: shellCommandSkillContentDigest,
-      trustState: SkillTrustState.bundledTrusted,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: 'Stars desktop',
-      requestedToolNames: shellCommandToolNames,
-      installedAt: timestamp,
-      updatedAt: timestamp,
-    ),
-    instructions:
-        'Every command requires approval. Use the native platform shell.',
-    files: const ['SKILL.md'],
-  );
-}
-
-SkillContent _systemLocalFileSystemSkill({required bool directory}) {
-  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-  final id = directory ? directoryOperationsSkillId : fileOperationsSkillId;
-  final name = directory ? 'directory-operations' : 'file-operations';
-  final requestedToolNames =
-      directory ? directoryOperationsToolNames : fileOperationsToolNames;
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: id,
-      name: name,
-      description: 'Native local $name.',
-      version: '1',
-      scope: SkillScope.bundled,
-      sourceUri: 'asset:///$name/SKILL.md',
-      rootPath: 'assets/skills/system/$name',
-      contentDigest:
-          directory
-              ? directoryOperationsSkillContentDigest
-              : fileOperationsSkillContentDigest,
-      trustState: SkillTrustState.bundledTrusted,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: 'Stars native platforms',
-      requestedToolNames: requestedToolNames,
-      installedAt: timestamp,
-      updatedAt: timestamp,
-    ),
-    instructions: 'Use native $name tools only after user approval.',
-    files: const ['SKILL.md'],
-  );
-}
-
-SkillContent _systemSkillWithReference() {
-  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: 'system:bundled-reference',
-      name: 'bundled-reference',
-      description: 'Read a bundled reference.',
-      version: '1',
-      scope: SkillScope.bundled,
-      sourceUri: 'asset:///bundled-reference/SKILL.md',
-      rootPath: 'assets/skills/system/bundled-reference',
-      contentDigest: 'digest-bundled-reference',
-      trustState: SkillTrustState.bundledTrusted,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: 'Stars',
-      hasReferences: true,
-      installedAt: timestamp,
-      updatedAt: timestamp,
-    ),
-    instructions: 'Read only advertised bundled references.',
-    files: const ['SKILL.md', 'references/guide.md'],
-    resources: const {'references/guide.md': 'Bundled guide content.'},
-  );
-}
-
-SkillContent _systemSkillInstallerSkill() {
-  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: skillInstallerSkillId,
-      name: 'skill-installer',
-      description: 'Install a validated Stars Skill package.',
-      version: '$skillInstallerSkillPromptVersion',
-      scope: SkillScope.bundled,
-      sourceUri: 'asset:///skill-installer/SKILL.md',
-      rootPath: 'assets/skills/system/skill-installer',
-      contentDigest: skillInstallerSkillContentDigest,
-      trustState: SkillTrustState.bundledTrusted,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: 'Stars desktop',
-      requestedToolNames: skillInstallerToolNames,
-      installedAt: timestamp,
-      updatedAt: timestamp,
-    ),
-    instructions:
-        'Use install_skill only after explicit approval. Pass source_type and source.',
-    files: const ['SKILL.md'],
-  );
-}
-
-SkillContent _systemMcpInstallerSkill() {
-  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: mcpInstallerSkillId,
-      name: 'mcp-installer',
-      description: 'Install a configured Stars MCP server.',
-      version: '1',
-      scope: SkillScope.bundled,
-      sourceUri: 'asset:///mcp-installer/SKILL.md',
-      rootPath: 'assets/skills/system/mcp-installer',
-      contentDigest: mcpInstallerSkillContentDigest,
-      trustState: SkillTrustState.bundledTrusted,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: 'Stars desktop',
-      requestedToolNames: mcpInstallerToolNames,
-      installedAt: timestamp,
-      updatedAt: timestamp,
-    ),
-    instructions:
-        'Use add_mcp_server only with user-provided connection details.',
-    files: const ['SKILL.md'],
-  );
-}
-
-SkillContent _systemConversationHistorySkill() {
-  final timestamp = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-  return SkillContent(
-    descriptor: SkillDescriptor(
-      id: conversationHistorySkillId,
-      name: 'conversation-history',
-      description: 'Search and read exact persisted conversation messages.',
-      version: '$conversationHistorySkillPromptVersion',
-      scope: SkillScope.bundled,
-      sourceUri: 'asset:///conversation-history/SKILL.md',
-      rootPath: 'assets/skills/system/conversation-history',
-      contentDigest: conversationHistorySkillContentDigest,
-      trustState: SkillTrustState.bundledTrusted,
-      validationStatus: SkillValidationStatus.valid,
-      compatibility: 'Stars',
-      requestedToolNames: conversationHistoryToolNames,
-      installedAt: timestamp,
-      updatedAt: timestamp,
-    ),
-    instructions: 'Use history tools only for exact persisted messages.',
-    files: const ['SKILL.md'],
-  );
-}
-
-BotSkillBinding _binding(
-  String skillId, {
-  int priority = 0,
-  bool enabled = true,
-  bool requiresApproval = true,
-}) {
-  final now = DateTime(2026, 7, 26);
-  return BotSkillBinding(
-    botId: 'bot-1',
-    skillId: skillId,
-    enabled: enabled,
-    requiresApproval: requiresApproval,
-    priority: priority,
-    createdAt: now,
-    updatedAt: now,
-  );
-}
-
-Bot _bot({String systemPrompt = '', Map<String, dynamic>? parameters}) => Bot(
-  id: 'bot-1',
-  name: 'Assistant',
-  avatar: '',
-  provider: 'OpenAI',
-  baseURL: 'https://example.test',
-  apiKey: 'secret',
-  apiType: Bot.apiTypeOpenAI,
-  model: 'model',
-  systemPrompt: systemPrompt,
-  parameters: parameters ?? const {},
-  createTimestamp: DateTime(2026),
-  modifyTimestamp: DateTime(2026),
-);
-
-Message _message({
-  required String senderId,
-  required String content,
-  String messageId = '',
-  String turnId = '',
-  String runId = '',
-  String reasoning = '',
-  MessageTerminalOutcome? terminalOutcome,
-  bool hasPartialContent = false,
-  MessageGrounding grounding = const MessageGrounding.unverified(),
-  List<String> images = const [],
-  List<String> files = const [],
-}) => Message(
-  messageId: messageId,
-  turnId: turnId,
-  runId: runId,
-  chatId: 'chat-1',
-  botId: 'bot-1',
-  senderId: senderId,
-  content: content,
-  reasoning: reasoning,
-  terminalOutcome: terminalOutcome,
-  hasPartialContent: hasPartialContent,
-  grounding: grounding,
-  images: images,
-  files: files,
-  timestamp: DateTime(2026, 7, 26),
-);
-
-final class _FakeSkillRepository implements SkillRepository {
-  _FakeSkillRepository(
-    this.contents, {
-    this.resources = const {},
-    this.resourceReadError,
-  });
-
-  final Map<String, SkillContent> contents;
-  final Map<String, String> resources;
-  final Object? resourceReadError;
-  final List<String> loadedIds = [];
-  final List<String> readResourcePaths = [];
-
-  @override
-  Stream<List<SkillDescriptor>> get changes => const Stream.empty();
-
-  @override
-  Future<SkillDescriptor?> getById(String id) async => contents[id]?.descriptor;
-
-  @override
-  Future<List<SkillDescriptor>> getInstalled({
-    bool forceRefresh = false,
-  }) async => contents.values.map((content) => content.descriptor).toList();
-
-  @override
-  Future<SkillDescriptor> install(SkillImportSource source) =>
-      throw UnimplementedError();
-
-  @override
-  Future<SkillContent> load(String skillId, {String? contentDigest}) async {
-    loadedIds.add(skillId);
-    return contents[skillId]!;
-  }
-
-  @override
-  Future<SkillResourceContent> readResource(
-    String skillId,
-    String relativePath, {
-    String? contentDigest,
-  }) async {
-    readResourcePaths.add(relativePath);
-    final error = resourceReadError;
-    if (error != null) throw error;
-    return SkillResourceContent(
-      skillId: skillId,
-      path: relativePath,
-      content: resources['$skillId:$relativePath']!,
-    );
-  }
-
-  @override
-  Future<void> uninstall(String skillId) => throw UnimplementedError();
-}
-
-final class _FakeSkillProvider extends AiProvider {
-  _FakeSkillProvider(List<SkillToolTurn> turns)
-    : session = _FakeSkillSession(turns),
-      super(_bot());
-
-  final _FakeSkillSession session;
-
-  @override
-  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
-    supportsStructuredToolCalls: true,
-    supportsToolResults: true,
-  );
-
-  @override
-  SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
-    session.request = request;
-    return session;
-  }
-
-  @override
-  Future<void> generateText(List<ChatMessage> messages) async {}
-}
-
-final class _LegacySkillProvider extends AiProvider {
-  _LegacySkillProvider() : super(_bot());
-
-  @override
-  Future<void> generateText(List<ChatMessage> messages) async {}
-}
-
-final class _FailingSkillProvider extends AiProvider {
-  _FailingSkillProvider(Object error)
-    : session = _FailingSkillSession(error),
-      super(_bot());
-
-  final _FailingSkillSession session;
-
-  @override
-  AiProviderCapabilities get capabilities => const AiProviderCapabilities(
-    supportsStructuredToolCalls: true,
-    supportsToolResults: true,
-  );
-
-  @override
-  SkillToolSession openSkillToolSession(SkillToolSessionRequest request) =>
-      session;
-
-  @override
-  Future<void> generateText(List<ChatMessage> messages) async {}
-}
-
-final class _McpProvider extends AiProvider {
-  _McpProvider() : super(_bot());
-
-  @override
-  bool supportMcp() => true;
-
-  @override
-  Future<void> generateText(List<ChatMessage> messages) async {}
-}
-
-final class _FakeMcpServerRepository implements McpServerRepository {
-  const _FakeMcpServerRepository(this.server, this.tools);
-
-  final McpServer server;
-  final List<McpToolDescriptor> tools;
-
-  @override
-  Stream<List<McpServer>> get changes => const Stream.empty();
-
-  @override
-  Future<void> deleteServer(String id) => throw UnimplementedError();
-
-  @override
-  Future<McpServer?> getServer(String id) async =>
-      id == server.id ? server : null;
-
-  @override
-  Future<List<McpServer>> getServers() async => [server];
-
-  @override
-  Future<List<McpToolDescriptor>> getTools(String serverId) async =>
-      serverId == server.id ? tools : const [];
-
-  @override
-  Future<void> replaceCatalog(
-    McpServer server,
-    List<McpToolDescriptor> tools,
-  ) => throw UnimplementedError();
-
-  @override
-  Future<void> saveServer(McpServer server) => throw UnimplementedError();
-}
-
-final class _FakeSkillSession implements SkillToolSession {
-  _FakeSkillSession(this.turns);
-
-  final List<SkillToolTurn> turns;
-  final List<List<SkillToolResult>> results = [];
-  SkillToolSessionRequest? request;
-  var _index = 0;
-  var closed = false;
-
-  @override
-  Future<SkillToolTurn> start() async => turns[_index++];
-
-  @override
-  Future<SkillToolTurn> continueWith(List<SkillToolResult> toolResults) async {
-    results.add(toolResults);
-    return turns[_index++];
-  }
-
-  @override
-  void close() => closed = true;
-}
-
-final class _FailingSkillSession implements SkillToolSession {
-  const _FailingSkillSession(this.error);
-
-  final Object error;
-
-  @override
-  Future<SkillToolTurn> start() => Future.error(error);
-
-  @override
-  Future<SkillToolTurn> continueWith(List<SkillToolResult> results) =>
-      Future.error(error);
-
-  @override
-  void close() {}
-}
-
-final class _FakeBindingRepository implements BotSkillBindingRepository {
-  _FakeBindingRepository(this.bindings);
-
-  final List<BotSkillBinding> bindings;
-
-  @override
-  Stream<void> get changes => const Stream.empty();
-
-  @override
-  Future<List<BotSkillBinding>> getForBot(String botId) async => bindings;
-
-  @override
-  Future<void> remove(String botId, String skillId) =>
-      throw UnimplementedError();
-
-  @override
-  Future<void> save(BotSkillBinding binding) => throw UnimplementedError();
-}
-
-Future<String> _testConversationArtifactsDirectory(String conversationId) =>
-    Future.value('/data/Stars/chats/$conversationId');
-
-String _testStarsSystemPrompt(String languageCode) => buildStarsSystemPrompt(
-  operatingSystem: 'TestOS',
-  operatingSystemVersion: '1.2.3',
-  languageCode: languageCode,
-);

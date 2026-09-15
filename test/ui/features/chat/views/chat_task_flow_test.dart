@@ -36,21 +36,7 @@ void main() {
   late _Dependencies deps;
   late RunnerModels models;
   late Completer<void> backgroundGate;
-  setUp(() async {
-    h = ForegroundDispatchHarness();
-    await h.open();
-    h.background();
-    backgroundGate = Completer<void>();
-    models = RunnerModels();
-    models.turns.add(() async* {
-      await backgroundGate.future;
-      yield const TextDelta('private draft');
-      yield const ModelTurnCompleted();
-    });
-    models.completeStep();
-    models.candidate(
-      GroundedAnswerCandidate(nonFactualText: 'Final report ready'),
-    );
+  void compose() {
     final providers = ForegroundProviders(
       (bot) => _FlowProvider(bot, h, models),
     );
@@ -77,17 +63,118 @@ void main() {
       mcp: _Mcp(),
     );
     deps = _Dependencies(h, chats, providers, tasks);
-    await tasks.start();
+  }
+
+  setUp(() async {
+    h = ForegroundDispatchHarness();
+    await h.open();
+    h.background();
+    backgroundGate = Completer<void>();
+    models = RunnerModels();
+    models.turns.add(() async* {
+      await backgroundGate.future;
+      yield const TextDelta('private draft');
+      yield const ModelTurnCompleted();
+    });
+    models.completeStep();
+    models.candidate(
+      GroundedAnswerCandidate(nonFactualText: 'Final report ready'),
+    );
+    compose();
+    await deps.conversationTasks.start();
     await h.messages.getMessagePage('chat-1');
   });
   tearDown(() async {
     if (!backgroundGate.isCompleted) backgroundGate.complete();
     await deps.conversationTasks.dispose();
-    await deps.conversationTasks.progress!.settle();
+    await deps.conversationTasks.progress.settle();
     deps.generationRegistry.clear();
     await deps.chatRepository.dispose();
     await h.close();
   });
+  test(
+    'production composition resumes a persisted checkpoint after database restart',
+    () async {
+      // Complete the first plan step before the second model turn is interrupted.
+      models.turns.addFirst(() async* {
+        yield const TextDelta('first step private draft');
+        yield const ModelTurnCompleted();
+      });
+      await deps.conversationTasks.dispatcher.dispatch(foregroundInput());
+      await _until(() async => models.requests.length == 2);
+      final task =
+          (await deps.conversationTasks.repository.listActiveForChat(
+            'chat-1',
+          )).single;
+      await deps.conversationTasks.dispose();
+      await deps.conversationTasks.progress.settle();
+      final before =
+          (await deps.conversationTasks.repository.getExecutionSnapshot(
+            task.taskId,
+          ))!;
+      expect(before.checkpoint!.completedStepIds, ['read']);
+      expect(before.task.cancelRequestedAt, isNull);
+      expect(before.task.status.isTerminal, isFalse);
+      deps.generationRegistry.clear();
+      await deps.chatRepository.dispose();
+      await h.messages.dispose();
+      await h.storage.reopen();
+      h.messages = SqliteMessageRepository(localDatabase: h.storage.local);
+      // Fresh providers and production dependencies have no old model session.
+      models =
+          RunnerModels()
+            ..completeStep()
+            ..candidate(
+              GroundedAnswerCandidate(nonFactualText: 'Recovered report'),
+            );
+      compose();
+      await deps.conversationTasks.start();
+      await _until(
+        () async =>
+            (await deps.conversationTasks.repository.getById(
+              task.taskId,
+            ))!.status.isTerminal,
+      );
+      final after =
+          (await deps.conversationTasks.repository.getExecutionSnapshot(
+            task.taskId,
+          ))!;
+      expect(after.task.status, ConversationTaskStatus.succeeded);
+      expect(after.checkpoint!.completedStepIds, ['read', 'write']);
+      expect(
+        models.requests,
+        hasLength(2),
+      ); // Remaining step, then grounded synthesis.
+      expect(
+        models.requests.first.messages.map((m) => m.content).join('\n'),
+        contains('read'),
+      );
+      final messages = await h.messages.getMessages('chat-1');
+      expect(
+        messages.where(
+          (m) => m.senderId == foregroundInput().userMessage.senderId,
+        ),
+        hasLength(1),
+      );
+      expect(
+        messages.where(
+          (m) => m.taskMessageKind == TaskMessageKind.acknowledgement,
+        ),
+        hasLength(1),
+      );
+      expect(
+        messages.where((m) => m.taskMessageKind == TaskMessageKind.result),
+        hasLength(1),
+      );
+      expect(messages.last.content, 'Recovered report');
+      expect(
+        messages.map((m) => m.content).join(),
+        isNot(contains('private draft')),
+      );
+      await deps.conversationTasks.scheduler.tick();
+      expect((await h.messages.getMessages('chat-1')).length, messages.length);
+    },
+  );
   Widget page({String key = 'first'}) => AppScope(
     dependencies: deps,
     child: shadHarness(
@@ -161,7 +248,7 @@ void main() {
           status.summaryRevision,
         );
         expect(status.taskId, task.taskId);
-        expect(deps.conversationTasks.progress!.narrate.metrics.fallbacks, 0);
+        expect(deps.conversationTasks.progress.narrate.metrics.fallbacks, 0);
         h.response = routeFrames('directReply', [
           {'text': 'Hello while working'},
         ]);
@@ -359,8 +446,6 @@ class _Dependencies implements AppDependencies {
     generationRegistry = ChatGenerationRegistry(
       dispatcher: conversationTasks.dispatcher,
       taskProgress: conversationTasks.progress,
-      messagePersister: h.messages.upsertMessage,
-      lastMessageUpdater: chatRepository.updateLastMessage,
       providerFactory: aiProviderRepository.create,
     );
   }
@@ -402,4 +487,12 @@ class _Dependencies implements AppDependencies {
   PrepareTextGeneration get prepareTextGeneration => h.prepare;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+Future<void> _until(Future<bool> Function() condition) async {
+  for (var i = 0; i < 300; i++) {
+    if (await condition()) return;
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+  fail('Production task did not reach its expected persisted state.');
 }

@@ -92,46 +92,30 @@ void main() {
     expect(call.durationMs, 12);
   });
 
-  test('legacy tool invocation without execution ID remains readable', () {
-    final restored =
-        MessageProcessInfoRecord.fromRaw(
-          jsonEncode(<String, Object?>{
-            'reasoning_status': 'completed',
-            'duration_ms': 42,
-            'tool_calls': <Object?>[
-              <String, Object?>{
-                'call_id': 'legacy-call-1',
-                'name': 'legacy.tool',
-                'title': 'Legacy tool',
-                'mcp_server_name': '',
-                'status': 'succeeded',
-                'detail': 'completed',
-                'source': 'builtIn',
-                'risk_level': 'readOnly',
-                'arguments_summary': '{}',
-                'result_summary': 'ok',
-                'approval_status': '',
-                'error_code': '',
-                'duration_ms': 12,
-              },
-            ],
-            'command_executions': <Object?>[],
-            'file_edits': <Object?>[],
-            'skill_activations': <Object?>[],
-          }),
-        ).toDomain();
-
-    final call = restored.toolCalls.single;
-    expect(call.executionId, isEmpty);
-    expect(call.invocationId, isEmpty);
-    expect(call.attemptId, isEmpty);
-    expect(call.providerCallId, 'legacy-call-1');
-    expect(call.callId, 'legacy-call-1');
-    expect(call.name, 'legacy.tool');
-    expect(call.status, 'succeeded');
+  test('rejects tool projections missing current invocation identities', () {
+    for (final field in [
+      'execution_id',
+      'invocation_id',
+      'attempt_id',
+      'provider_call_id',
+    ]) {
+      final values =
+          MessageProcessInfoRecord.fromDomain(
+            const MessageProcessInfo(
+              toolCalls: [MessageToolCall(name: 'tool')],
+            ),
+          ).values;
+      (values['tool_calls']! as List<Map<String, Object?>>).single.remove(
+        field,
+      );
+      expect(
+        () => MessageProcessInfoRecord.fromRaw(jsonEncode(values)).toDomain(),
+        throwsFormatException,
+      );
+    }
   });
 
-  test('legacy execution ID compatibility still rejects invalid values', () {
+  test('rejects non-string execution identities', () {
     final values =
         MessageProcessInfoRecord.fromDomain(
           const MessageProcessInfo(
@@ -230,9 +214,10 @@ void main() {
     final legacyChatValues = Map<String, Object?>.from(
       ChatRecord.fromDomain(chat).values,
     )..remove('name');
-    final legacyChat = ChatRecord(legacyChatValues).toDomain();
-    expect(legacyChat.name, isEmpty);
-    expect(legacyChat.displayName(bot.name), bot.name);
+    expect(
+      () => ChatRecord(legacyChatValues).toDomain(),
+      throwsFormatException,
+    );
     expect(restoredProfile.fontSize, 18);
     expect(restoredProfile.showReasoning, isFalse);
     expect(restoredProfile.showVerificationStatus, isFalse);
@@ -240,25 +225,17 @@ void main() {
     expect(restoredProfile.injectApplicationPrompt, isFalse);
     expect(restoredProfile.strictGroundingMode, isTrue);
 
-    final legacyProfileValues = Map<String, Object?>.from(
-      ProfileRecord.fromDomain(profile).values,
-    )..remove('inject_application_prompt');
-    expect(
-      ProfileRecord(legacyProfileValues).toDomain().injectApplicationPrompt,
-      isTrue,
-    );
-    legacyProfileValues.remove('show_reasoning');
-    expect(ProfileRecord(legacyProfileValues).toDomain().showReasoning, isTrue);
-    legacyProfileValues.remove('show_verification_status');
-    expect(
-      ProfileRecord(legacyProfileValues).toDomain().showVerificationStatus,
-      isTrue,
-    );
-    legacyProfileValues.remove('strict_grounding_mode');
-    expect(
-      ProfileRecord(legacyProfileValues).toDomain().strictGroundingMode,
-      isFalse,
-    );
+    for (final field in [
+      'inject_application_prompt',
+      'show_reasoning',
+      'show_verification_status',
+      'strict_grounding_mode',
+    ]) {
+      final values = Map<String, Object?>.from(
+        ProfileRecord.fromDomain(profile).values,
+      )..remove(field);
+      expect(() => ProfileRecord(values).toDomain(), throwsFormatException);
+    }
   });
 
   test('message grounding survives local record serialization', () {
@@ -351,7 +328,7 @@ void main() {
     expect(restored.grounding.claims.last.reasonCode, 'claimHasNoEvidence');
   });
 
-  test('legacy message records remain unverified despite successful tools', () {
+  test('missing grounding metadata fails closed despite successful tools', () {
     final values = Map<String, Object?>.from(
       MessageRecord.fromDomain(
         Message(
@@ -379,16 +356,19 @@ void main() {
     final restored = MessageRecord(values).toDomain();
     final grounding = restored.grounding;
 
-    expect(grounding.protocolVersion, 0);
+    expect(grounding.protocolVersion, MessageGrounding.currentProtocolVersion);
     expect(grounding.trustLevel, AnswerTrustLevel.unverified);
-    expect(grounding.reasonCode, 'legacy_grounding_missing');
+    expect(grounding.reasonCode, 'invalid_grounding_metadata');
     expect(grounding.evidenceIds, isEmpty);
 
     final rewrittenGrounding =
         MessageRecord.fromDomain(restored).toDomain().grounding;
-    expect(rewrittenGrounding.protocolVersion, 0);
+    expect(
+      rewrittenGrounding.protocolVersion,
+      MessageGrounding.currentProtocolVersion,
+    );
     expect(rewrittenGrounding.trustLevel, AnswerTrustLevel.unverified);
-    expect(rewrittenGrounding.reasonCode, 'legacy_grounding_missing');
+    expect(rewrittenGrounding.reasonCode, 'invalid_grounding_metadata');
     expect(rewrittenGrounding.evidenceIds, isEmpty);
   });
 
@@ -439,7 +419,11 @@ void main() {
       };
       final grounding = MessageRecord(values).toDomain().grounding;
 
-      expect(grounding.protocolVersion, 0, reason: entry.key);
+      expect(
+        grounding.protocolVersion,
+        MessageGrounding.currentProtocolVersion,
+        reason: entry.key,
+      );
       expect(
         grounding.trustLevel,
         AnswerTrustLevel.unverified,
@@ -539,7 +523,7 @@ void main() {
     );
   });
 
-  test('protocol v2 claim records remain readable without reason codes', () {
+  test('rejects old grounding protocols without accepting claims', () {
     final current = MessageRecord.fromDomain(
       Message(
         messageId: 'message-v2',
@@ -578,11 +562,12 @@ void main() {
           'grounding_json': jsonEncode(grounding),
         }).toDomain();
 
-    expect(restored.grounding.protocolVersion, 2);
-    expect(restored.grounding.claims.single.reasonCode, isEmpty);
     expect(
-      restored.grounding.claims.single.trustLevel,
-      ClaimTrustLevel.unverified,
+      restored.grounding.protocolVersion,
+      MessageGrounding.currentProtocolVersion,
     );
+    expect(restored.grounding.trustLevel, AnswerTrustLevel.unverified);
+    expect(restored.grounding.reasonCode, 'unsupported_grounding_protocol');
+    expect(restored.grounding.claims, isEmpty);
   });
 }

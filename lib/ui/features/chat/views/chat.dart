@@ -24,7 +24,6 @@ import 'package:stars/ui/features/chat/views/conversation_directory_dialog.dart'
 import 'package:stars/ui/features/chat/views/message_input.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'package:stars/ui/features/chat/views/typing_indicator.dart';
-import 'package:stars/ui/features/chat/views/tool_approval_card.dart';
 import 'package:stars/ui/features/chat/views/welcome_view.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
@@ -99,12 +98,7 @@ class ChatPageState extends State<ChatPage> {
   int _messageRevision = 0;
   int _messageLoadEpoch = 0;
   String _streamingResponse = '';
-  List<String> _streamingFiles = const [];
-  String _reasoningResponse = '';
   ModelTokenUsage _streamingTokenUsage = ModelTokenUsage.empty;
-  final List<MessageToolCall> _toolCalls = [];
-  final List<MessageCommandExecution> _commandExecutions = [];
-  final List<MessageSkillActivation> _skillActivations = [];
   bool _followLatest = true;
   bool _showJumpToLatest = false;
   String? _generationError;
@@ -210,28 +204,11 @@ class ChatPageState extends State<ChatPage> {
       if (messagesChanged) _messageRevision += 1;
       _isTyping = snapshot.lifecycle.isRunning;
       _isStreaming =
-          snapshot.lifecycle.isRunning &&
-          (snapshot.streamingResponse.isNotEmpty ||
-              snapshot.reasoningResponse.isNotEmpty ||
-              snapshot.toolCalls.isNotEmpty ||
-              snapshot.commandExecutions.isNotEmpty ||
-              snapshot.skillActivations.isNotEmpty ||
-              snapshot.localFiles.isNotEmpty);
+          snapshot.lifecycle.isRunning && snapshot.streamingResponse.isNotEmpty;
       _isCancellable = snapshot.canCancel;
       _isStopping = snapshot.lifecycle == ChatRunLifecycle.stopping;
       _streamingResponse = snapshot.streamingResponse;
-      _streamingFiles = List<String>.of(snapshot.localFiles);
-      _reasoningResponse = snapshot.reasoningResponse;
       _streamingTokenUsage = snapshot.tokenUsage;
-      _toolCalls
-        ..clear()
-        ..addAll(snapshot.toolCalls);
-      _commandExecutions
-        ..clear()
-        ..addAll(snapshot.commandExecutions);
-      _skillActivations
-        ..clear()
-        ..addAll(snapshot.skillActivations);
       if (snapshot.error != null) {
         _generationError = safeFailureMessage(context, snapshot.error!);
       } else if (snapshot.lifecycle.isRunning ||
@@ -241,7 +218,7 @@ class ChatPageState extends State<ChatPage> {
     });
 
     if (isNewTerminal) {
-      if (_generationViewModel.dispatcher != null) unawaited(_loadMessages());
+      unawaited(_loadMessages());
       _scheduleScrollToLatest(animate: true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _generationViewModel.snapshot.lifecycle.isTerminal) {
@@ -502,7 +479,6 @@ class ChatPageState extends State<ChatPage> {
               Expanded(child: _buildConversationBody(context, fontSize)),
               _buildAttachmentsBar(),
               _buildTasksPanel(),
-              _buildToolApprovalCard(isDesktop: false),
               _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: false),
               MessageInput(
@@ -551,9 +527,6 @@ class ChatPageState extends State<ChatPage> {
 
     return _buildProcessInfo(
       reasoningStatus: _provider.getDeepThinking() ? 'streaming' : '',
-      toolCalls: _toolCalls,
-      commandExecutions: _commandExecutions,
-      skillActivations: _skillActivations,
     );
   }
 

@@ -323,7 +323,7 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                                 key: ValueKey<String>(
                                   'bot-card-token-total-${widget.bot.id}',
                                 ),
-                                icon: Icons.data_usage_rounded,
+                                icon: LucideIcons.chartNoAxesCombined,
                                 name: S.of(context).totalTokens,
                                 value: numberFormat.format(
                                   widget
@@ -354,7 +354,7 @@ class _DesktopBotCardState extends State<_DesktopBotCard> {
                                 key: ValueKey<String>(
                                   'bot-card-mcp-count-${widget.bot.id}',
                                 ),
-                                icon: Icons.hub_outlined,
+                                icon: LucideIcons.network,
                                 name: S.of(context).mcpServers,
                                 value: '${mcpServerNames.length}',
                                 separatorKey: ValueKey<String>(

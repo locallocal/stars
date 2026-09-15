@@ -309,15 +309,10 @@ final class CompactConversation {
   List<ConversationTurn> _closedTurns(List<Message> messages) {
     final grouped = <String, List<Message>>{};
     final order = <String>[];
-    var legacyTurn = '';
-    var legacySequence = 0;
     for (final message in messages) {
-      var id = message.turnId;
+      final id = message.turnId;
       if (id.isEmpty) {
-        if (message.senderId != message.botId || legacyTurn.isEmpty) {
-          legacyTurn = 'legacy_${legacySequence++}';
-        }
-        id = legacyTurn;
+        throw const FormatException('Stored history requires a turn identity.');
       }
       if (!grouped.containsKey(id)) order.add(id);
       grouped.putIfAbsent(id, () => []).add(message);

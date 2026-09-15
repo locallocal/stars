@@ -83,7 +83,7 @@ final class SkillContextBudget {
 ///
 /// Model-selected Skill activation and root-constrained reference reads happen
 /// during this preflight. The returned requested Tool names are resolved and
-/// executed separately by the AgentRunCoordinator during the generation run.
+/// executed by the background task runner after durable acceptance.
 final class ComposeChatTurn {
   const ComposeChatTurn({
     required SkillRepository skillRepository,

@@ -3,7 +3,6 @@ import 'package:stars/domain/models/models.dart';
 /// Evidence maturity understood by the application-side trust gate.
 enum AnswerEvidenceState {
   none,
-  legacyFormatOnly,
   structuredUnvalidated,
   partiallyValidated,
   fullyValidated,
@@ -45,10 +44,7 @@ final class AnswerTrustPolicyInput {
 }
 
 /// Computes trust exclusively from application-observed terminal facts.
-///
-/// A Provider cannot directly choose the returned level. Legacy evidence
-/// footers remain a formatting guard and deliberately cannot produce a
-/// verified result.
+/// A Provider cannot directly choose the returned level.
 final class AnswerTrustPolicy {
   const AnswerTrustPolicy();
 
@@ -166,9 +162,6 @@ final class AnswerTrustPolicy {
       AnswerEvidenceState.none => _unverified(
         'no_usable_evidence',
         claims: input.claims,
-      ),
-      AnswerEvidenceState.legacyFormatOnly => _unverified(
-        'legacy_evidence_unverified',
       ),
       AnswerEvidenceState.structuredUnvalidated => _unverified(
         'structured_claims_unvalidated',

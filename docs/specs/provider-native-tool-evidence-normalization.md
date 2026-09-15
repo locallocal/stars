@@ -34,7 +34,7 @@
 
 | Provider | 当前执行入口 | 当前证据状态 | 本项决策 |
 | --- | --- | --- | --- |
-| OpenAI Responses | `OpenAiResponsesAgentModelSession` | 已把 `web_search_call` 与 `url_citation` 归一化 | 保持行为不变，并提取可复用的安全工具 |
+| OpenAI Responses | `OpenAiResponsesAgentModelSession` | 已把 `web_search_call` 与 `url_citation` 归一化 | 保留 adapter 归一化，并补齐任务意图/attempt 接入 |
 | Anthropic Messages | `AnthropicAgentModelSession` / legacy `generateText` | Agent Session 不声明原生搜索；收到服务器工具块时也不归一化 | 第一阶段完整实现并启用可信能力 |
 | Moonshot Chat Completions | legacy `generateText` 内部回显 `$web_search` 参数；Agent Session 复用普通 OpenAI tool-call 解析 | 没有稳定 citation/来源 Schema，保持 `unverified` | 先保留降级并建立协议准入门；上游契约稳定后再实现 |
 | 其他 Provider | 各自的 legacy 或兼容接口 | 无专用 adapter | 必须逐 Provider 完成准入清单，不能继承其他 adapter 的资格 |
@@ -43,13 +43,14 @@
 
 - [`ProviderNativeToolResult`](../../lib/domain/models/ai_models.dart) 表示已在 Provider 侧执行的工具，
   协调器只记录和复核，不会再次调用。
-- [`AgentRunCoordinator`](../../lib/domain/use_cases/agent_run_coordinator.dart) 会为其生成 requested、
-  running 和终态事件，并复用 duplicate、预算、证据契约与持久化屏障。
+- [`ConversationTaskModelTurn`](../../lib/domain/use_cases/conversation_task_model_turn.dart) 当前拒绝没有
+  应用预先提交调用意图的原生结果。本项还必须设计任务级 intent/attempt、幂等与持久化屏障，
+  不能直接把 Provider 已执行的副作用补记为本地审批后的调用。
 - [`PersistToolInvocation`](../../lib/domain/use_cases/persist_tool_invocation.dart) 已能把成功 observation
   或安全的 `executionFailure` 写入现有事实账本。
 
-因此本项不增加数据库表，也不改变 evidence ID 算法；主要改动集中在 Data 层 Provider session、
-响应归一化和能力声明。
+因此本项不增加数据库表，也不改变 evidence ID 算法；改动包括 Data 层 Provider session、
+响应归一化、能力声明，以及 Domain 任务调用意图和证据接入。
 
 ## 3. 外部协议基线
 
@@ -76,7 +77,7 @@ Provider HTTP response
        -> sanitize URLs / bound text / digest private arguments
        -> build ToolDefinition + ToolCallRequest + ToolResult
   -> ProviderNativeToolResult
-  -> AgentRunCoordinator
+  -> Task intent/attempt integration (planned)
        -> requested / running / terminal audit events
        -> shared Tool output Schema and evidence-contract validation
        -> immutable ToolEvidenceRecord

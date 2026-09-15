@@ -169,8 +169,6 @@ final class GroundedAnswerCandidate {
   final List<AnswerClaim> claims;
   final String nonFactualText;
 
-  bool get isLegacy => schemaVersion == 0;
-
   List<String> get evidenceIds => List<String>.unmodifiable({
     for (final claim in claims) ...claim.evidenceIds,
   });
@@ -240,28 +238,6 @@ final class GroundedAnswerCandidate {
       claims: claims,
       nonFactualText: rawNonFactualText,
     );
-  }
-
-  /// Parses schema v1, falling back only to an exact legacy footer at EOF.
-  static GroundedAnswerCandidate parseProviderOutput(
-    String source, {
-    required Set<String> allowedEvidenceIds,
-    Map<String, String> providerCallToEvidenceId = const {},
-  }) {
-    try {
-      return parseJson(source, allowedEvidenceIds: allowedEvidenceIds);
-    } on GroundedAnswerFormatException {
-      final normalized = source.trimRight();
-      final matches = _legacyEvidenceFooter.allMatches(normalized).toList();
-      if (matches.length != 1 || matches.single.end != normalized.length) {
-        rethrow;
-      }
-      return _parseLegacyAnswer(
-        source,
-        allowedEvidenceIds: allowedEvidenceIds,
-        providerCallToEvidenceId: providerCallToEvidenceId,
-      );
-    }
   }
 }
 
@@ -361,48 +337,6 @@ GroundedAnswerCandidate _validatedCandidate({
   );
 }
 
-GroundedAnswerCandidate _parseLegacyAnswer(
-  String source, {
-  required Set<String> allowedEvidenceIds,
-  required Map<String, String> providerCallToEvidenceId,
-}) {
-  final normalized = source.trimRight();
-  final matches = _legacyEvidenceFooter.allMatches(normalized).toList();
-  if (matches.length != 1 || matches.single.end != normalized.length) {
-    throw const GroundedAnswerFormatException('invalid_grounded_json');
-  }
-  final body = normalized.substring(0, matches.single.start).trim();
-  _validateVisibleText(body, emptyCode: 'empty_grounded_answer');
-  final providerCallIds =
-      (matches.single.group(1) ?? '')
-          .split(',')
-          .map((value) => value.trim())
-          .where((value) => value.isNotEmpty)
-          .toSet();
-  final evidenceIds = <String>[];
-  for (final providerCallId in providerCallIds) {
-    final evidenceId = providerCallToEvidenceId[providerCallId];
-    if (evidenceId == null || !allowedEvidenceIds.contains(evidenceId)) {
-      throw const GroundedAnswerFormatException(
-        'legacy_evidence_id_out_of_range',
-      );
-    }
-    evidenceIds.add(evidenceId);
-  }
-  return _validatedCandidate(
-    schemaVersion: 0,
-    claims: [
-      AnswerClaim(
-        claimId: 'legacy:claim:1',
-        text: body,
-        kind: ClaimKind.nonFactual,
-        evidenceIds: evidenceIds,
-      ),
-    ],
-    nonFactualText: '',
-  );
-}
-
 Map<String, Object?> _stringMap(
   Map<Object?, Object?> value, {
   required String code,
@@ -436,9 +370,6 @@ final RegExp _evidenceIdPattern = RegExp(
   r'^[A-Za-z0-9][A-Za-z0-9._:-]{0,511}$',
 );
 final RegExp _unsafeTextPattern = RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]');
-final RegExp _legacyEvidenceFooter = RegExp(
-  r'<stars_evidence\s+call_ids="([^"]*)"\s*/>',
-);
 const int _maxClaims = 128;
 const int _maxEvidenceIdsPerClaim = 64;
 const int _maxSegmentCharacters = 16000;

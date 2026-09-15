@@ -20,6 +20,7 @@
 | 实现参考 | [会话任务调度、恢复与副作用对账](reference/conversation-task-scheduling.md) | 应用级调度、lease 续期与并发、重启恢复、取消对账和删除保护 |
 | 实现参考 | [会话任务跨分段验证与终态回复](reference/conversation-task-terminal-results.md) | 任务级证据、冻结验证策略、安全终态表达、原子结果与时间线通知 |
 | 实现参考 | [会话任务交互与状态展示](reference/conversation-task-chat-ui.md) | 前后台独立生命周期、持久卡片与润色、审批取消、安全重试和生产组合根 |
+| 实现参考 | [会话任务正式运行边界](reference/conversation-task-cutover.md) | 唯一生产链、旧生命周期删除、schema 与备份边界和重启验证 |
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |
