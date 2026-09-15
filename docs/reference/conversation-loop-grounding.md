@@ -310,7 +310,9 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 
 前台分流、scheduler、runner 和 finalizer 的指标只保存安全枚举、类别、计数和耗时，不包含
 消息、工具原文、URL、请求参数、凭据或异常正文。共享 grounding 指标模型和存储继续保留，
-旧 ViewModel/coordinator 的回调已删除，不能把旧回调视为当前生产观测入口。
+旧 ViewModel/coordinator 的回调已删除。当前生产入口是组合根持有的
+`ConversationTaskTelemetry.snapshot()`，统一读取前台、状态、调度和终态数值。证据覆盖与
+抑制计数只在终态事务成功后累计；失败提交和幂等重试不重复统计，见[验收与观测](conversation-task-verification.md)。
 
 验证门禁必须保持：无依据声明不能被授予 verified、verified 证据已持久化、重启不重复执行
 已成功的副作用。可选扩展记录在[后续工作](../specs/conversation-grounding-future-work.md)。

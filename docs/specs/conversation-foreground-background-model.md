@@ -6,8 +6,8 @@
 
 本文定义 Stars 会话内前台响应、后台任务和状态展示的长期约束。领域模型、事务持久化、
 前台分流、分段执行、调度恢复、终态验证及[生产会话交互](../reference/conversation-task-chat-ui.md)
-已实现。[旧路径清理与正式切换](../reference/conversation-task-cutover.md)已完成，完整产品验收
-仍按[阶段 09](../plans/conversation-foreground-background-model/09-verification-and-documentation.md)推进。
+已实现，[旧路径清理与正式切换](../reference/conversation-task-cutover.md)已完成。跨模块恢复与
+聊天页面验收入口、指标语义及原生平台验证边界见[验收与观测](../reference/conversation-task-verification.md)。
 
 规范使用以下关键词：
 
@@ -821,26 +821,25 @@ provider session factory 和 tool executor。
 任务没有整体超时，因此“长时间没有终态”不能自动算失败；应通过最近进展时间、等待原因和恢复
 状态建立可观测告警。
 
-## 14. 实现顺序
+## 14. 实现结构
 
-详细步骤见[分阶段实现计划](../plans/conversation-foreground-background-model/README.md)，按下列 9 个阶段
-分别列出前置依赖、代码落点和退出条件；计划文档不代表对应能力已经实现。
+当前生产文本链已经使用以下职责边界，过程计划已收束到实现参考：
 
-实现应按可验证的架构切面推进：
+1. [领域模型、schema 与事务](../reference/conversation-task-persistence.md)：身份、冻结快照、
+   原子接受/进展/终态、一致性查询和可重建投影。
+2. [前台 dispatcher](../reference/conversation-turn-dispatch.md)：一次主回复分流，完整直接回复、
+   原子任务回执或状态查询；后台接受后释放输入。
+3. [runner](../reference/conversation-task-runner.md)与[scheduler](../reference/conversation-task-scheduling.md)：
+   有界分段、持久审批与 job、lease、退避恢复和取消对账，无任务总超时。
+4. [终态验证](../reference/conversation-task-terminal-results.md)：同任务跨分段证据、冻结验证策略、
+   安全失败/取消表达和唯一终态消息。
+5. [会话交互](../reference/conversation-task-chat-ui.md)：已提交事实订阅、状态卡片、润色、审批、
+   取消、安全重试及页面独立生命周期。
+6. [正式运行边界](../reference/conversation-task-cutover.md)与[验收入口](../reference/conversation-task-verification.md)：
+   当前数据库、旧运行路径删除、分层/集成测试、指标与平台限制。
 
-1. 建立全新的任务 Domain 模型、repository 契约和新建数据库 schema；
-2. 实现任务与回执原子写入、进度事件、工具/审批记录、物化投影和汇总状态查询；
-3. 引入前台三路 dispatcher 和回执策略，使直接回复不再因工具存在而进入 Agent Loop，并在同一次
-   模型调用中生成上下文友好的任务回执；
-4. 将现有 Agent Loop 拆为可检查点化的执行分段，移除任务级 deadline；
-5. 实现 scheduler、lease、队列、恢复、幂等工具尝试与副作用对账；
-6. 接入跨分段证据、验证策略快照和终态回复策略，原子提交成功、失败或取消回复；
-7. 解开会话输入锁，增加任务状态卡片、模型状态润色、审批、取消和状态询问；
-8. 删除旧 run 恢复路径、旧 schema 与临时兼容代码；
-9. 完成单元、repository、ViewModel、Widget 和恢复集成测试后更新
-   [现有消息流转](../reference/user-message-agent-response-flow.md)为实际代码路径。
-
-任一步都不得以 ViewModel 内的全局 Map 或仅内存队列代替持久化任务事实。
+任何一层都不得以 ViewModel 内的全局 Map 或仅内存队列代替持久化任务事实。
+实际调用顺序见[消息流转](../reference/user-message-agent-response-flow.md)。
 
 ## 15. 验收标准
 

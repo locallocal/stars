@@ -31,6 +31,8 @@ View -> ViewModel -> Use Case（按需） -> Repository contract
 `ChatGenerationViewModel` 协调；后台任务由应用级 scheduler 与持久 repository 管理，
 `ConversationTasksViewModel` 只订阅已提交摘要并调用领域命令。生产页面使用
 `AppDependencies.production()` 组合的依赖，完整边界见[会话任务交互](reference/conversation-task-chat-ui.md)。
+同一组合根持有 `ConversationTaskTelemetry`，只汇总固定键数值；持久事件继续作为恢复事实。
+跨模块测试重建全部应用依赖，原生集成复用真实页面，见[任务验收与观测](reference/conversation-task-verification.md)。
 
 旧 `lib/pages` 也已完成迁移并删除。应用入口 `main.dart` 只负责平台初始化和启动；应用
 壳、功能页面与组件全部位于 UI 分层目录。相机、相册和文件选择通过

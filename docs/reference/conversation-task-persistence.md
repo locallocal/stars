@@ -1,7 +1,7 @@
 # 会话任务持久化与进度查询
 
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
-[后续实施阶段](../plans/conversation-foreground-background-model/README.md)
+[验收与观测](conversation-task-verification.md)
 
 会话任务的事务存储和查询已实现，[前台分流与接受](conversation-turn-dispatch.md)也已完成。
 [分段执行](conversation-task-runner.md)与[调度恢复](conversation-task-scheduling.md)已实现；
@@ -17,6 +17,23 @@
   命令、关联事实、校验和投影计算分别位于同目录的 part 文件。事务中不调用模型或外部工具。
 - [GetConversationTaskProgress](../../lib/domain/use_cases/get_conversation_task_progress.dart)
   按明确的任务 ID 查询并验证会话归属；不存在或属于其他会话时返回 `null`。
+
+## 领域模型与存储单位
+
+[ConversationTask](../../lib/domain/models/conversation_task.dart)及其 part 文件定义不可变任务、
+状态、接受快照、计划、进度和审计对象。终态不可逆；`timedOut` 只用于单次尝试。
+直接回复用 `turnId:assistant`，回执用 `taskId:ack`，所有终态共享 `taskId:result`；
+状态消息固定任务 ID 和摘要 revision，多任务查询不虚构单一任务归属。
+
+任务、事件、lease、检查点及其 JSON 时间统一为 UTC 微秒，执行策略 Duration 同样使用微秒；
+既有消息和工具记录使用各自的毫秒约定，不能混用。
+[Data 映射](../../lib/data/models/conversation_task_record.dart)是存储单位的事实来源。
+[分段预算](../../lib/domain/models/task_segment_limits.dart)校验正值和硬上限，完整配置随接受快照保存；
+累计执行没有任务级时长或次数上限。
+
+六类任务表保存 tasks、plans、events、progress、approvals、checkpoints；
+`conversation_task_tool_attempts` 与 `conversation_task_evidence_links` 保存不可变任务/分段关联。
+逻辑幂等键跨重试不变，递增 attempt number 区分审计尝试，已有关联不能跨任务或分段重绑。
 
 ## 事务边界
 
@@ -59,7 +76,7 @@ lease，再使任务可被调度器重新评估。拒绝仍保留拒绝事实；
 
 `commitTerminalMessage` 验证有效 lease、revision 和消息身份，将终态、可选终态摘要、事件、
 投影和唯一 `taskId:result` 原子提交。相同终态重复提交返回既有结果，改变结果不能覆盖终态。
-成功验证和最终文案策略由后续终态用例负责，存储层不调用模型生成文案。
+成功验证和最终文案策略由终态用例负责，存储层不调用模型生成文案。
 
 所有写事务在返回 sqflite 回调前检查延迟外键。外键失败在回调内抛出，触发回滚，避免将
 错误留到 sqflite 的 COMMIT 后才发现。消息 revision 与 watch 通知均只在事务成功返回后发布。

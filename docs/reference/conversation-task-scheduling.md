@@ -1,7 +1,7 @@
 # 会话任务调度、恢复与副作用对账
 
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
-[分段执行](conversation-task-runner.md) | [后续阶段](../plans/conversation-foreground-background-model/README.md)
+[分段执行](conversation-task-runner.md) | [验收与观测](conversation-task-verification.md)
 
 应用级调度、lease 续期、重启恢复、审批/取消命令和删除保护已实现。[生产会话交互](conversation-task-chat-ui.md)和[候选验证与唯一终态消息提交](conversation-task-terminal-results.md)已接入完整流程。
 

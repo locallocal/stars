@@ -4,6 +4,7 @@ part of 'app_dependencies.dart';
 final class AppConversationTasks {
   AppConversationTasks({
     required this.repository,
+    required this.telemetry,
     this.clock = const SystemTaskRunnerClock(),
     required this.dispatcher,
     required this.progress,
@@ -13,6 +14,7 @@ final class AppConversationTasks {
     required this.deleteConversation,
     required this.deleteBot,
   });
+  final ConversationTaskTelemetry telemetry;
   final TaskRunnerClock clock;
   final ConversationTurnDispatcher dispatcher;
   final PresentConversationTaskProgress progress;
@@ -67,6 +69,7 @@ AppConversationTasks createAppConversationTasks({
   required SkillInventoryRepository skills,
   required McpInventoryRepository mcp,
 }) {
+  final telemetry = ConversationTaskTelemetry();
   final repository = SqliteConversationTaskRepository(localDatabase: database);
   final random = Random.secure();
   String newId() =>
@@ -110,6 +113,7 @@ AppConversationTasks createAppConversationTasks({
     },
   );
   final finalizer = FinalizeConversationTask(
+    metrics: telemetry.terminal,
     repository: repository,
     clock: clock,
     evidenceRepository: SqliteToolEvidenceRepository(localDatabase: database),
@@ -120,6 +124,7 @@ AppConversationTasks createAppConversationTasks({
         TaskTerminalPolisherFactory(bots: bots, providers: providers).forTask,
   );
   final scheduler = ConversationTaskScheduler(
+    metrics: telemetry.scheduling,
     repository: repository,
     clock: clock,
     resolve: runtime.resolve,
@@ -134,9 +139,11 @@ AppConversationTasks createAppConversationTasks({
     metrics: scheduler.metrics,
   );
   return AppConversationTasks(
+    telemetry: telemetry,
     repository: repository,
     clock: clock,
     dispatcher: ConversationTurnDispatcher(
+      onMetrics: telemetry.recordDispatch,
       prepare: prepare,
       router: ProviderConversationTurnRouter(providers: providers),
       messages: messages,
@@ -147,6 +154,7 @@ AppConversationTasks createAppConversationTasks({
       now: clock.now,
     ),
     progress: PresentConversationTaskProgress(
+      narrate: NarrateConversationTaskProgress(metrics: telemetry.progress),
       repository: repository,
       newId: messages.createId,
       now: clock.now,

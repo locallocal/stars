@@ -1,7 +1,7 @@
 # 会话前台分流与任务接受
 
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
-[任务持久化](conversation-task-persistence.md) | [后续阶段](../plans/conversation-foreground-background-model/README.md)
+[任务持久化](conversation-task-persistence.md) | [验收与观测](conversation-task-verification.md)
 
 前台三路分流、直接回复提交、任务接受、状态查询及失败重试已实现。已接入[生产会话交互](conversation-task-chat-ui.md)，并通过真实 SQLite 和完整页面流程测试；旧入口与恢复已删除，见[正式运行边界](conversation-task-cutover.md)。
 
