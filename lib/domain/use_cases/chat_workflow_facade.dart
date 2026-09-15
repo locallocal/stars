@@ -64,6 +64,15 @@ final class ChatWorkflowFacade {
 
   Bot get bot => _bot;
 
+  Stream<void> get taskMessageChanges {
+    final messages = _messages;
+    return messages is TaskMessageNotifications
+        ? (messages as TaskMessageNotifications).taskMessageChanges
+            .where((id) => id == chatId)
+            .map((_) {})
+        : const Stream<void>.empty();
+  }
+
   void updateBot(Bot bot) {
     if (bot.id != _bot.id) {
       throw ArgumentError.value(

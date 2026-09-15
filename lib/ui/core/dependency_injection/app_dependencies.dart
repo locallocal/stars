@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:stars/data/services/ai/task_terminal_polisher.dart';
+import 'package:stars/domain/use_cases/finalize_conversation_task.dart';
 import 'package:stars/data/repositories/sqlite_conversation_task_repository.dart';
 import 'package:stars/data/services/task_runtime_factory.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';

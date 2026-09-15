@@ -4,7 +4,7 @@
 [分段执行](conversation-task-runner.md) | [后续阶段](../plans/conversation-foreground-background-model/README.md)
 
 应用级调度、lease 续期、重启恢复、审批/取消命令和删除保护已实现。生产聊天发送入口仍使用
-现有路径；阶段 06 完成候选验证与唯一终态消息提交，阶段 07 接入新的会话交互。
+现有路径；[候选验证与唯一终态消息提交](conversation-task-terminal-results.md)已实现，阶段 07 接入新的会话交互。
 
 ## 队列与执行所有权
 
@@ -32,8 +32,9 @@ queued/paused 和 cancelRequested 到期后可执行；有未决审批的普通�
 重新入队在同一事务提交。普通配置等待和副作用未知的等待需要显式 `resumeTask`，审批等待
 只能通过审批决定恢复。恢复使用原任务、原目标、原接受策略和已提交事实，创建新的模型 session。
 
-`phase=committing` 的候选不进入执行队列。调度器可通过 `onReady` 交给阶段 06；回调需要用
-自己的 lease/revision 事务提交终态，不能依赖进程内通知去重。即使进程在候选落库后退出，
+`phase=committing` 的候选不进入执行队列。调度器通过 `onReady` 交给终态用例；用例使用
+自己的 lease/revision 事务提交终态，不能依赖进程内通知去重。未提交回调会重新投递，正在润色的
+终态任务不阻塞其他 worker 的续期扫描。即使进程在候选落库后退出，
 恢复器仍能重新提供候选。缺少配置的候选转成明确等待，副作用未知的候选转成对账等待。
 
 ## 工具与取消恢复

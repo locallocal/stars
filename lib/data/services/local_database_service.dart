@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:stars/data/services/conversation_task_store.dart';
 import 'package:stars/domain/models/conversation_memory.dart';
@@ -21,8 +23,16 @@ class LocalDatabaseService {
   final DatabaseProvider _databaseProvider;
   late final conversationTasks = ConversationTaskStore(
     databaseProvider: _databaseProvider,
-    onMessageCommitted: _advanceMessageRevision,
+    onMessageCommitted: _taskMessageCommitted,
   );
+  final _taskMessages = StreamController<String>.broadcast();
+  Stream<String> get taskMessageChanges => _taskMessages.stream;
+
+  void _taskMessageCommitted(String chatId) {
+    _advanceMessageRevision(chatId);
+    _taskMessages.add(chatId);
+  }
+
   final Map<String, int> _messageRevisions = <String, int>{};
 
   int messageRevision(String chatId) => _messageRevisions[chatId] ?? 0;

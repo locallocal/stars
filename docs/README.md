@@ -18,6 +18,7 @@
 | 实现参考 | [会话前台分流与任务接受](reference/conversation-turn-dispatch.md) | 单次三路分流、流式协议、无工具边界、原子回执、幂等重试、状态查询与指标 |
 | 实现参考 | [会话任务分段执行与长工具协议](reference/conversation-task-runner.md) | 分段预算、检查点恢复、持久审批、长 job、对账与受控结果候选 |
 | 实现参考 | [会话任务调度、恢复与副作用对账](reference/conversation-task-scheduling.md) | 应用级调度、lease 续期与并发、重启恢复、取消对账和删除保护 |
+| 实现参考 | [会话任务跨分段验证与终态回复](reference/conversation-task-terminal-results.md) | 任务级证据、冻结验证策略、安全终态表达、原子结果与时间线通知 |
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |

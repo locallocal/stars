@@ -71,8 +71,10 @@ extension LocalDatabaseToolEvidence on LocalDatabaseService {
     final database = await _databaseProvider();
     return database.query(
       'tool_evidence_records',
-      where: 'message_id = ?',
-      whereArgs: [messageId],
+      where:
+          'message_id = ? OR evidence_id IN '
+          '(SELECT evidence_id FROM answer_claim_evidence WHERE message_id = ?)',
+      whereArgs: [messageId, messageId],
       orderBy: 'observed_at ASC, evidence_id ASC',
     );
   }

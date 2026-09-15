@@ -37,6 +37,15 @@ final class StrictGroundingPolicy {
     Message message, {
     String userMessage = '',
   }) {
+    if (!message.participatesInAnswerTrust ||
+        message.taskResultPolicy?.strictGroundingEnabled == false) {
+      return StrictGroundingPresentation(
+        content: message.content,
+        suppressedFacts: false,
+        hasNotFactCheckedContent: false,
+        userQuestion: '',
+      );
+    }
     final grounding = message.grounding;
     final claims = grounding.claims;
     if (claims.isEmpty) {

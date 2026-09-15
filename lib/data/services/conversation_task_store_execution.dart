@@ -47,6 +47,13 @@ extension ConversationTaskStoreExecution on ConversationTaskStore {
               ? null
               : ConversationTaskCheckpointRecord(checkpoints.single).toDomain(),
       lastSequence: await _nextSequence(tx, taskId) - 1,
+      events:
+          (await tx.query(
+            'conversation_task_events',
+            where: 'task_id = ?',
+            whereArgs: [taskId],
+            orderBy: 'sequence',
+          )).map((row) => ConversationTaskEventRecord(row).toDomain()).toList(),
       attempts:
           attempts.map((row) => ToolExecutionDbRecord(row).toDomain()).toList(),
       attemptLinks:
@@ -56,7 +63,20 @@ extension ConversationTaskStoreExecution on ConversationTaskStore {
       approvals:
           approvals.map((row) => TaskApprovalDbRecord(row).toDomain()).toList(),
       evidence:
-          evidence.map((row) => ToolEvidenceDbRecord(row).toDomain()).toList(),
+          evidence
+              .map(_readTaskEvidence)
+              .whereType<ToolEvidenceRecord>()
+              .toList(),
     );
   });
+}
+
+ToolEvidenceRecord? _readTaskEvidence(Map<String, Object?> row) {
+  try {
+    return ToolEvidenceDbRecord(row).toDomain();
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    return null;
+  }
 }

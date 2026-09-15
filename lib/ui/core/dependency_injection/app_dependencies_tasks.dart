@@ -92,11 +92,21 @@ AppConversationTasks _createConversationTasks({
       ];
     },
   );
+  final finalizer = FinalizeConversationTask(
+    repository: repository,
+    evidenceRepository: SqliteToolEvidenceRepository(localDatabase: database),
+    ownerId: newId(),
+    newId: newId,
+    tools: registry.list(),
+    polisher:
+        TaskTerminalPolisherFactory(bots: bots, providers: providers).forTask,
+  );
   final scheduler = ConversationTaskScheduler(
     repository: repository,
     resolve: runtime.resolve,
     ownerId: newId(),
     newId: newId,
+    onReady: finalizer.onReady,
   );
   final commands = ConversationTaskCommands(
     repository: repository,

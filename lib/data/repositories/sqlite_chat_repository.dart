@@ -20,7 +20,13 @@ class SqliteChatRepository
   }) : _localDatabase = localDatabase,
        _conversationMemoryRepository = conversationMemoryRepository,
        _conversationSummaryStorage = conversationSummaryStorage,
-       _conversationDraftRepository = conversationDraftRepository;
+       _conversationDraftRepository = conversationDraftRepository {
+    _taskSubscription = localDatabase.taskMessageChanges.listen(
+      (_) => invalidate(),
+    );
+  }
+
+  late final StreamSubscription<String> _taskSubscription;
 
   final LocalDatabaseService _localDatabase;
   final ConversationMemoryRepository? _conversationMemoryRepository;
@@ -276,7 +282,10 @@ class SqliteChatRepository
   }
 
   @visibleForTesting
-  Future<void> dispose() => _changes.close();
+  Future<void> dispose() async {
+    await _taskSubscription.cancel();
+    await _changes.close();
+  }
 }
 
 final class _SqliteBotChatDeletionStage implements BotChatDeletionStage {

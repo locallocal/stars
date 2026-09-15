@@ -1,4 +1,13 @@
 /// Explicit message semantics; null denotes a non-task message.
+final class TaskResultPresentationPolicy {
+  const TaskResultPresentationPolicy({
+    required this.strictGroundingEnabled,
+    required this.showVerificationStatus,
+  });
+  final bool strictGroundingEnabled;
+  final bool showVerificationStatus;
+}
+
 enum TaskMessageKind {
   directReply,
   acknowledgement,
