@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:stars/ui/features/chat/views/task_action_button.dart';
-import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 
 import 'package:path/path.dart' as path_context;
@@ -42,7 +40,6 @@ part 'message_list_trust.dart';
 
 class MessageList extends StatefulWidget {
   final List<Message> messages;
-  final ValueChanged<String>? onTaskStatus;
   final ScrollController scrollController;
   final bool isStreaming;
   final String streamingResponse;
@@ -63,7 +60,6 @@ class MessageList extends StatefulWidget {
   const MessageList({
     super.key,
     required this.messages,
-    this.onTaskStatus,
     required this.scrollController,
     required this.isStreaming,
     required this.streamingResponse,
@@ -292,37 +288,19 @@ class _MessageListState extends State<MessageList> {
             hasPartialContent: message.hasPartialContent,
             actionViewModel: widget.actionViewModel,
           );
-          if (message.taskMessageKind == TaskMessageKind.status ||
-              message.taskId != null) {
-            final words = TaskProgressStrings(
-              Localizations.localeOf(context).toLanguageTag(),
-            );
+          if (message.taskMessageKind == TaskMessageKind.status) {
             bubble = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (message.taskMessageKind == TaskMessageKind.status) ...[
-                  for (final summary in message.taskStatusSummaries)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: ConversationTaskCard(
-                        summary: summary,
-                        historical: true,
-                        onAction:
-                            widget.onTaskStatus == null
-                                ? null
-                                : (_) => widget.onTaskStatus!(summary.taskId),
-                      ),
+                for (final summary in message.taskStatusSummaries)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ConversationTaskCard(
+                      summary: summary,
+                      historical: true,
                     ),
-                  Text(message.content),
-                ] else ...[
-                  bubble,
-                  if (widget.onTaskStatus != null)
-                    TaskActionButton(
-                      ghost: true,
-                      label: words.viewStatus,
-                      onPressed: () => widget.onTaskStatus!(message.taskId!),
-                    ),
-                ],
+                  ),
+                Text(message.content),
               ],
             );
           }

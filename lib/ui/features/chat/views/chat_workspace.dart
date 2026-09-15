@@ -69,7 +69,6 @@ extension _ChatPageWorkspace on ChatPageState {
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildAttachmentsBar(desktopMode: true),
-              _buildTasksPanel(),
               _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: true),
               MessageInput(
@@ -137,7 +136,6 @@ extension _ChatPageWorkspace on ChatPageState {
               children: [
                 MessageList(
                   messages: _messages,
-                  onTaskStatus: _queryTask,
                   messageRevision: _messageRevision,
                   scrollController: _scrollController,
                   isStreaming: _isStreaming,

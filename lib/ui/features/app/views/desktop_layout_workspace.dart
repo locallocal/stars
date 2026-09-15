@@ -87,7 +87,10 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                 onShow: _showConversationDirectory,
                 child: StarsConversationInformationScope(
                   onShow: _showConversationInfo,
-                  child: widget.pages[0],
+                  child: StarsConversationTasksScope(
+                    onShow: _showConversationTasks,
+                    child: widget.pages[0],
+                  ),
                 ),
               ),
             ),
@@ -197,6 +200,17 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
         _buildChatDetail(context),
         _buildConversationInfoPage(context, bot),
         _buildConversationDirectoryPage(context),
+        if (_conversationTasksOpen && widget.selectedChatId != null)
+          ConversationTasksScreen(
+            key: ValueKey('conversation-tasks-${widget.selectedChatId}'),
+            chatId: widget.selectedChatId!,
+            bot: bot,
+            embedded: true,
+            strictGroundingMode: widget.strictGroundingMode,
+            showVerificationStatus: widget.showVerificationStatus,
+          )
+        else
+          const SizedBox.shrink(),
       ],
     );
   }

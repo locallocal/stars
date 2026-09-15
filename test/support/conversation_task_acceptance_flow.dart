@@ -4,10 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
-import 'package:stars/ui/features/chat/views/chat.dart';
+import 'package:stars/ui/features/app/views/desktop_layout.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
-import 'package:stars/ui/features/chat/views/conversation_tasks_panel.dart';
-import 'package:stars/ui/features/chat/views/task_action_button.dart';
+import 'package:stars/ui/features/chat/views/conversation_tasks_page.dart';
 import 'package:stars/ui/features/chat/views/message_input.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'conversation_task_app_harness.dart';
@@ -37,18 +36,27 @@ void conversationTaskAcceptanceTests({
             brightness: Brightness.light,
             homeBuilder:
                 (_) => Scaffold(
-                  body: ChatPage(
-                    id: 'chat-1',
-                    bot: h.bot,
+                  body: DesktopLayout(
+                    currentIndex: 0,
+                    onPageChanged: (_) {},
+                    pages: const [SizedBox.shrink(), SizedBox.shrink()],
+                    selectedChatId: 'chat-1',
+                    selectedChatBot: h.bot,
+                    onBotUpdated: (_) async {},
+                    onBotDeleted: () async {},
                     strictGroundingMode: true,
                   ),
                 ),
           ),
         );
         List<Message> messages() =>
-            find.byType(MessageList).evaluate().isEmpty
+            find.byType(MessageList, skipOffstage: false).evaluate().isEmpty
                 ? const []
-                : tester.widget<MessageList>(find.byType(MessageList)).messages;
+                : tester
+                    .widget<MessageList>(
+                      find.byType(MessageList, skipOffstage: false),
+                    )
+                    .messages;
         ConversationTaskCard? activeCard() =>
             tester
                 .widgetList<ConversationTaskCard>(
@@ -57,9 +65,14 @@ void conversationTaskAcceptanceTests({
                 .where((card) => !card.historical)
                 .firstOrNull;
         bool inputReady() =>
-            find.byType(MessageInput).evaluate().isNotEmpty &&
+            find
+                .byType(MessageInput, skipOffstage: false)
+                .evaluate()
+                .isNotEmpty &&
             !tester
-                .widget<MessageInput>(find.byType(MessageInput))
+                .widget<MessageInput>(
+                  find.byType(MessageInput, skipOffstage: false),
+                )
                 .requestInProgress;
         Future<void> send(String text) async {
           final input = find.descendant(
@@ -76,30 +89,35 @@ void conversationTaskAcceptanceTests({
           await driveTaskUi(tester);
         }
 
+        Future<void> toggleTasks() async {
+          await tester.tap(
+            find.byKey(const ValueKey('desktop-toolbar-conversation-tasks')),
+          );
+          await driveTaskUi(tester);
+        }
+
         await tester.pumpWidget(page());
         await driveTaskUi(tester);
+        final clear = find.byKey(const ValueKey('desktop-toolbar-clear-chat'));
+        final tasks = find.byKey(
+          const ValueKey('desktop-toolbar-conversation-tasks'),
+        );
+        expect(
+          tester.getCenter(tasks).dx,
+          greaterThan(tester.getCenter(clear).dx),
+        );
+        expect(find.byType(ConversationTasksPage), findsNothing);
+        expect(find.text('查看状态'), findsNothing);
         final firstCard = Stopwatch()..start();
         await send('读取报告并核验报告条目数');
         await driveTaskUi(
           tester,
           until:
-              () =>
-                  tester
-                      .widget<ConversationTasksPanel>(
-                        find.byType(ConversationTasksPanel),
-                      )
-                      .state
-                      .summaries
-                      .isNotEmpty,
+              () => messages().any(
+                (m) => m.taskMessageKind == TaskMessageKind.acknowledgement,
+              ),
         );
-        await tester.tap(
-          find
-              .descendant(
-                of: find.byType(ConversationTasksPanel),
-                matching: find.byType(TaskActionButton),
-              )
-              .first,
-        );
+        await toggleTasks();
         await driveTaskUi(
           tester,
           until:
@@ -120,6 +138,20 @@ void conversationTaskAcceptanceTests({
         record?.call({
           'ui.acceptanceToApprovalFrameUs': firstCard.elapsedMicroseconds,
         });
+        final taskContent = tester.getRect(
+          find.byKey(const ValueKey('conversation-tasks-content')),
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('desktop-toolbar-conversation-directory')),
+        );
+        await driveTaskUi(tester);
+        final directoryContent = tester.getRect(
+          find.byKey(const ValueKey('desktop-conversation-directory-content')),
+        );
+        expect(taskContent.left, directoryContent.left);
+        expect(taskContent.width, directoryContent.width);
+        expect(taskContent.top, directoryContent.top);
+        await toggleTasks();
         expect(
           messages().where(
             (m) => m.taskMessageKind == TaskMessageKind.acknowledgement,
@@ -138,14 +170,7 @@ void conversationTaskAcceptanceTests({
         await tester.runAsync(() => h.restart());
         await tester.pumpWidget(page());
         await driveTaskUi(tester);
-        await tester.tap(
-          find
-              .descendant(
-                of: find.byType(ConversationTasksPanel),
-                matching: find.byType(TaskActionButton),
-              )
-              .first,
-        );
+        await toggleTasks();
         await driveTaskUi(
           tester,
           until: () => activeCard()?.summary.progress.pendingApprovalId != null,
@@ -163,6 +188,8 @@ void conversationTaskAcceptanceTests({
         );
         expect(h.job.read()['starts'], 1);
         expect(inputReady(), isTrue);
+        await toggleTasks();
+        expect(find.byType(ConversationTasksPage), findsNothing);
         h.providers.route = 'directReply';
         await send('Hello');
         await driveTaskUi(
@@ -174,7 +201,9 @@ void conversationTaskAcceptanceTests({
                   ) &&
                   inputReady(),
         );
+        await toggleTasks();
         expect(activeCard()!.summary.taskId, acceptedId);
+        await toggleTasks();
         h.providers.route = 'taskStatusRequest';
         h.providers.failNarration = true;
         final statusFrame = Stopwatch()..start();

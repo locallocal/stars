@@ -12,6 +12,7 @@ abstract final class TaskSummaryRecord {
     'summaryRevision': value.summaryRevision,
     'progress': _progressToJson(value.progress),
     'updatedAt': value.updatedAt.microsecondsSinceEpoch,
+    'createdAt': value.createdAt.microsecondsSinceEpoch,
     'waitingReason': value.waitingReason?.name,
     'terminalSummary':
         value.terminalSummary == null
@@ -44,6 +45,7 @@ abstract final class TaskSummaryRecord {
       summaryRevision: row.integer('summaryRevision'),
       progress: _progressFromJson(row.object('progress')),
       updatedAt: row.time('updatedAt'),
+      createdAt: row.optionalTime('createdAt'),
       waitingReason: row.optionalEnum(
         'waitingReason',
         TaskWaitingReason.values,

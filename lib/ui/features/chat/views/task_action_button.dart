@@ -20,11 +20,13 @@ final class TaskActionButton extends StatelessWidget {
     return ghost
         ? ShadButton.ghost(
           size: ShadButtonSize.sm,
+          enabled: onPressed != null,
           onPressed: onPressed,
           child: Text(label),
         )
         : ShadButton.outline(
           size: ShadButtonSize.sm,
+          enabled: onPressed != null,
           onPressed: onPressed,
           child: Text(label),
         );

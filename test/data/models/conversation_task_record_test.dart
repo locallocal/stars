@@ -8,6 +8,32 @@ import 'package:stars/domain/models/models.dart';
 import '../../support/conversation_task_fixtures.dart';
 
 void main() {
+  test(
+    'task summaries preserve creation time and read older saved messages',
+    () {
+      final summary = ConversationTaskProgressSummary(
+        taskId: 'task-1',
+        chatId: 'chat-1',
+        title: 'Report',
+        status: ConversationTaskStatus.paused,
+        phase: ConversationTaskPhase.executing,
+        planRevision: 1,
+        summaryRevision: 2,
+        progress: TaskProgress(
+          totalSteps: 1,
+          lastMeaningfulProgressAt: taskTime,
+        ),
+        createdAt: taskTime,
+        updatedAt: taskTime.add(const Duration(hours: 1)),
+      );
+      final encoded = TaskSummaryRecord.encode(summary);
+      final restored = TaskSummaryRecord.decode(_jsonRoundTrip(encoded));
+      expect(restored.createdAt, taskTime);
+      expect(restored.observedAt(taskTime).createdAt, taskTime);
+      final legacy = {...encoded}..remove('createdAt');
+      expect(TaskSummaryRecord.decode(legacy).createdAt, summary.updatedAt);
+    },
+  );
   for (final status in ConversationTaskStatus.values) {
     test(
       'round-trips ${status.name} task, frozen policies and message identity',

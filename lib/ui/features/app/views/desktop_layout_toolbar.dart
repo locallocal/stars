@@ -8,6 +8,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   final bool sidebarVisible;
   final bool conversationInfoVisible;
   final bool conversationDirectoryVisible;
+  final bool conversationTasksVisible;
   final bool conversationInfoAvailable;
   final VoidCallback onToggleSidebar;
   final VoidCallback? onToggleConversationInfo;
@@ -15,6 +16,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
   final VoidCallback? onSearchRequested;
   final VoidCallback? onBrowseConversationDirectory;
   final VoidCallback? onClearChat;
+  final VoidCallback? onShowConversationTasks;
 
   const _UnifiedDesktopToolbar({
     required this.currentIndex,
@@ -24,6 +26,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     required this.sidebarVisible,
     required this.conversationInfoVisible,
     required this.conversationDirectoryVisible,
+    required this.conversationTasksVisible,
     required this.conversationInfoAvailable,
     required this.onToggleSidebar,
     required this.onToggleConversationInfo,
@@ -31,6 +34,7 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     required this.onSearchRequested,
     required this.onBrowseConversationDirectory,
     required this.onClearChat,
+    required this.onShowConversationTasks,
   });
 
   @override
@@ -165,6 +169,25 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                             ),
                             onPressed: onClearChat,
                             icon: LucideIcons.eraser,
+                          ),
+                        if (onShowConversationTasks != null)
+                          StarsDesktopIconAction(
+                            key: const ValueKey(
+                              'desktop-toolbar-conversation-tasks',
+                            ),
+                            label:
+                                TaskProgressStrings(
+                                  Localizations.localeOf(
+                                    context,
+                                  ).toLanguageTag(),
+                                ).tasks,
+                            onPressed: onShowConversationTasks,
+                            selected: conversationTasksVisible,
+                            variant:
+                                conversationTasksVisible
+                                    ? ShadButtonVariant.secondary
+                                    : ShadButtonVariant.ghost,
+                            icon: LucideIcons.listTodo,
                           ),
                         if (onBrowseConversationDirectory != null)
                           StarsDesktopIconAction(

@@ -236,6 +236,7 @@ ConversationTaskProgressSummary _summaryOf(ConversationTask task) =>
       summaryRevision: task.revision,
       progress: task.progress,
       updatedAt: task.updatedAt,
+      createdAt: task.createdAt,
       leaseExpiresAt: task.lease?.expiresAt,
       waitingReason: task.waitingReason,
       terminalSummary:

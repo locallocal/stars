@@ -1,0 +1,275 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/repositories/conversation_task_repository.dart';
+import 'package:stars/domain/repositories/message_repository.dart';
+import 'package:stars/domain/use_cases/conversation_task_commands.dart';
+import 'package:stars/domain/use_cases/present_conversation_task_progress.dart';
+import 'package:stars/domain/use_cases/prepare_conversation_task_retry.dart';
+import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
+import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
+import 'package:stars/ui/features/chat/views/conversation_tasks_page.dart';
+import 'package:stars/utils/theme.dart';
+
+import '../../../../support/widget_test_support.dart' show shadHarness;
+import 'conversation_task_card_test.dart' show cardSummary;
+
+void main() {
+  late _Tasks repository;
+  late ConversationTasksViewModel vm;
+  setUp(() {
+    repository = _Tasks();
+    vm = ConversationTasksViewModel(
+      chatId: 'chat-1',
+      botId: 'bot-1',
+      observe: ObserveConversationTasks(repository),
+      commands: ConversationTaskCommands(repository: repository, wake: (_) {}),
+      prepareRetry: PrepareConversationTaskRetry(
+        tasks: repository,
+        messages: _Messages(),
+      ),
+    );
+  });
+  tearDown(() async {
+    vm.dispose();
+    await repository.events.close();
+  });
+
+  for (final width in [320.0, 1200.0]) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        'task search, sorting and approval fit $width in $brightness',
+        (tester) async {
+          tester.view.physicalSize = Size(width, 1200);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          final actions = <String>[];
+          await vm.start();
+          await tester.pumpWidget(
+            shadHarness(
+              brightness: brightness,
+              homeBuilder:
+                  (context) => Scaffold(
+                    body: ConversationTasksPage(
+                      viewModel: vm,
+                      embedded: width > 600,
+                      onAction:
+                          (summary, action) =>
+                              actions.add('${summary.taskId}/${action.name}'),
+                    ),
+                  ),
+            ),
+          );
+          final older = _summary('old-task', 'Alpha report', 0);
+          final newer = _summary('new-task', 'Beta report', 1);
+          repository.events.add([newer, older]);
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          expect(find.text('查看状态'), findsNothing);
+          expect(
+            find.byKey(const ValueKey('conversation-tasks-refresh')),
+            findsNothing,
+          );
+          final searchRect = tester.getRect(
+            find.byKey(const ValueKey('conversation-tasks-search')),
+          );
+          final sortRect = tester.getRect(
+            find.byKey(const ValueKey('conversation-tasks-sort')),
+          );
+          expect(sortRect.height, searchRect.height);
+          expect(vm.visibleSummaries.first.taskId, 'old-task');
+          if (width > 600) {
+            expect(sortRect.top, searchRect.top);
+            expect(sortRect.bottom, searchRect.bottom);
+            expect(
+              tester
+                  .getSize(
+                    find.byKey(const ValueKey('conversation-tasks-content')),
+                  )
+                  .width,
+              lessThanOrEqualTo(StarsDesktopThemeSpec.contentMaxWidth),
+            );
+          }
+          final search = find.descendant(
+            of: find.byKey(const ValueKey('conversation-tasks-search')),
+            matching: find.byType(EditableText),
+          );
+          await tester.enterText(search, '  BETA  ');
+          await tester.pumpAndSettle();
+          expect(find.byKey(const ValueKey('task-old-task')), findsNothing);
+          expect(find.byKey(const ValueKey('task-new-task')), findsOneWidget);
+          await tester.tap(find.text('批准'));
+          await tester.pump();
+          expect(actions, ['new-task/approve']);
+          await tester.enterText(search, 'missing');
+          await tester.pumpAndSettle();
+          expect(find.text('未找到匹配的任务'), findsOneWidget);
+          await tester.tap(
+            find.byKey(const ValueKey('conversation-tasks-clear-search')),
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(const ValueKey('conversation-tasks-sort')),
+          );
+          await tester.pumpAndSettle();
+          expect(vm.sort, ConversationTaskSort.newestFirst);
+          expect(
+            tester
+                .widgetList<ConversationTaskCard>(
+                  find.byType(ConversationTaskCard),
+                )
+                .first
+                .summary
+                .taskId,
+            'new-task',
+          );
+          repository.events.add([older, newer]);
+          await tester.pumpAndSettle();
+          expect(vm.visibleSummaries.first.taskId, 'new-task');
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox.shrink());
+        },
+      );
+    }
+  }
+
+  testWidgets('stream failure can refresh into an empty task list', (
+    tester,
+  ) async {
+    await vm.start();
+    await tester.pumpWidget(
+      shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (_) => Scaffold(
+              body: ConversationTasksPage(viewModel: vm, onAction: (_, _) {}),
+            ),
+      ),
+    );
+    repository.events.addError(StateError('private storage failure'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('conversation-tasks-error')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('private storage failure'), findsNothing);
+    expect(vm.state.loading, isFalse);
+    await tester.tap(
+      find.byKey(const ValueKey('conversation-tasks-retry-load')),
+    );
+    // The controller is created in setUp, outside WidgetTester's fake clock.
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pump();
+    expect(repository.subscriptions, 2);
+    expect(vm.state.error, isFalse);
+    repository.events.add([]);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('conversation-tasks-error')),
+      findsNothing,
+    );
+    expect(find.text('当前会话没有任务。'), findsOneWidget);
+    expect(repository.subscriptions, 2);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('card refresh restores progress and retains search and sorting', (
+    tester,
+  ) async {
+    await vm.start();
+    await tester.pumpWidget(
+      shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (_) => Scaffold(
+              body: ConversationTasksPage(viewModel: vm, onAction: (_, _) {}),
+            ),
+      ),
+    );
+    repository.events.add([_summary('task-1', 'Report', 0)]);
+    await tester.pumpAndSettle();
+    final search = find.descendant(
+      of: find.byKey(const ValueKey('conversation-tasks-search')),
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(search, 'Report');
+    await tester.tap(find.byKey(const ValueKey('conversation-tasks-sort')));
+    repository.events.addError(StateError('storage unavailable'));
+    await tester.pumpAndSettle();
+    final refresh = find.descendant(
+      of: find.byKey(const ValueKey('task-task-1')),
+      matching: find.byKey(const ValueKey('task-refresh-task-1')),
+    );
+    expect(refresh, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('conversation-tasks-retry-load')),
+      findsNothing,
+    );
+    await tester.tap(refresh);
+    await tester.pump();
+    final button = find.descendant(
+      of: refresh,
+      matching: find.byType(ShadButton),
+    );
+    expect(tester.widget<ShadButton>(button).enabled, isFalse);
+    // Subscription cancellation runs outside WidgetTester's fake clock.
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pump();
+    expect(repository.subscriptions, 2);
+    await tester.tap(refresh);
+    await tester.pump();
+    expect(repository.subscriptions, 2);
+    expect(find.byKey(const ValueKey('task-task-1')), findsOneWidget);
+    repository.events.add([_summary('task-1', 'Updated report', 0)]);
+    await tester.pumpAndSettle();
+    expect(vm.query, 'Report');
+    expect(vm.sort, ConversationTaskSort.newestFirst);
+    expect(find.textContaining('Updated report'), findsOneWidget);
+    expect(tester.widget<ShadButton>(button).enabled, isTrue);
+    expect(
+      find.byKey(const ValueKey('conversation-tasks-error')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+}
+
+ConversationTaskProgressSummary _summary(String id, String title, int minutes) {
+  final source = cardSummary(ConversationTaskStatus.waitingForUser);
+  return ConversationTaskProgressSummary(
+    taskId: id,
+    chatId: source.chatId,
+    title: title,
+    status: source.status,
+    phase: source.phase,
+    planRevision: source.planRevision,
+    summaryRevision: source.summaryRevision,
+    progress: source.progress,
+    waitingReason: source.waitingReason,
+    createdAt: source.createdAt.add(Duration(minutes: minutes)),
+    updatedAt: source.updatedAt.add(const Duration(hours: 2)),
+  );
+}
+
+final class _Tasks implements ConversationTaskRepository {
+  final events =
+      StreamController<List<ConversationTaskProgressSummary>>.broadcast();
+  int subscriptions = 0;
+  @override
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) {
+    subscriptions++;
+    return events.stream;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+final class _Messages implements MessageRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
