@@ -10,6 +10,10 @@ class Deepseek extends Provider {
   Deepseek(super.bot);
 
   @override
+  ForegroundRoutingTransport get foregroundRoutingTransport =>
+      ForegroundRoutingTransport.bufferedText;
+
+  @override
   bool supportWebSearch() {
     return false;
   }

@@ -1,0 +1,30 @@
+import 'package:stars/domain/models/ai_models.dart';
+import 'package:stars/domain/models/bot.dart';
+import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/turn_disposition.dart';
+
+final class TurnRoutingRequest {
+  TurnRoutingRequest({
+    required this.bot,
+    required this.userMessage,
+    required this.language,
+    required List<ChatMessage> messages,
+    required Set<String> allowedToolNames,
+  }) : messages = List.unmodifiable(messages),
+       allowedToolNames = Set.unmodifiable(allowedToolNames);
+  final Bot bot;
+  final Message userMessage;
+  final String language;
+  final List<ChatMessage> messages;
+  final Set<String> allowedToolNames;
+}
+
+abstract interface class ConversationTurnRouter {
+  /// One tool-free main reply call. Raw Provider JSON never crosses this boundary.
+  Stream<TurnRoutingEvent> route(TurnRoutingRequest request);
+}
+
+abstract interface class ConversationTaskEnqueuer {
+  /// A notification after commit. The durable queued row is the recovery source.
+  Future<void> enqueue(String taskId);
+}

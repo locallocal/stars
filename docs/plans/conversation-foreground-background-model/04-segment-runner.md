@@ -1,6 +1,6 @@
 # 04：有界执行分段与长工具协议
 
-[总计划](README.md) | [上一阶段](03-foreground-dispatch.md) | [下一阶段：调度与恢复](05-scheduling-and-recovery.md)
+[总计划](README.md) | [前台分流（已实现）](../../reference/conversation-turn-dispatch.md) | [下一阶段：调度与恢复](05-scheduling-and-recovery.md)
 
 前置依赖：阶段 01、02，以及阶段 03 确定的任务输入契约。对应目标规格第 5、6、8.1、10、11 节。
 

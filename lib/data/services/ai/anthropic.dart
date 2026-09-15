@@ -16,6 +16,10 @@ class Anthropic extends Provider {
   final http.Client? _skillToolClient;
 
   @override
+  ForegroundRoutingTransport get foregroundRoutingTransport =>
+      ForegroundRoutingTransport.modelSession;
+
+  @override
   AiProviderCapabilities get capabilities => const AiProviderCapabilities(
     supportsStructuredToolCalls: true,
     supportsToolResults: true,
