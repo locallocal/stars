@@ -105,17 +105,18 @@ final class ConversationTaskModelTurn {
     final done = Completer<TaskModelTurn>();
     final calls = <ToolCallRequest>[];
     GroundedAnswerCandidate? candidate;
+    var active = true;
     var completed = false;
     var argumentBytes = 0;
     void fail(Object error) {
-      if (!done.isCompleted) done.completeError(error);
+      if (active && !done.isCompleted) done.completeError(error);
     }
 
     try {
       cancellation.throwIfCancelled();
       unawaited(
         cancellation.whenCancelled.then((_) {
-          if (!done.isCompleted) {
+          if (active && !done.isCompleted) {
             fail(const AgentRunCancelledException());
             unawaited(session.cancel().catchError((Object _) {}));
           }
@@ -127,7 +128,7 @@ final class ConversationTaskModelTurn {
               : session.synthesizeGroundedAnswer(synthesis);
       subscription = events.listen(
         (event) {
-          if (done.isCompleted) return;
+          if (!active || done.isCompleted) return;
           try {
             if (completed) throw const TaskModelProtocolException();
             switch (event) {
@@ -182,7 +183,7 @@ final class ConversationTaskModelTurn {
         },
         onError: (Object error) => fail(error),
         onDone: () {
-          if (done.isCompleted) return;
+          if (!active || done.isCompleted) return;
           if (!completed || (synthesis != null && candidate == null)) {
             fail(const TaskModelProtocolException());
             return;
@@ -222,6 +223,9 @@ final class ConversationTaskModelTurn {
       );
       return await done.future;
     } finally {
+      // Session startup can throw before done.future has a listener. Ignore
+      // later cancellation in that case instead of completing an orphan future.
+      active = false;
       // Never retain a Provider stream while a segment waits for external work.
       unawaited(subscription?.cancel());
       session.close();

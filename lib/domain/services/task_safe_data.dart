@@ -3,6 +3,7 @@ String taskSafeText(
   String text, {
   int maximum = 2000,
   bool structured = false,
+  bool preserveWhitespace = false,
 }) {
   var value = text
       .replaceAll(
@@ -27,18 +28,17 @@ String taskSafeText(
         RegExp(r'https?://[^\s/@]+:[^\s/@]+@', caseSensitive: false),
         'https://[redacted]@',
       );
-  value =
-      value
-          .split('\n')
-          .where(
-            (line) =>
-                !RegExp(
-                  r'^\s*(#\d+\s|at\s+\S+\s*\(|Traceback\b|File ".*", line \d+)',
-                  caseSensitive: false,
-                ).hasMatch(line),
-          )
-          .join('\n')
-          .trim();
+  value = value
+      .split('\n')
+      .where(
+        (line) =>
+            !RegExp(
+              r'^\s*(#\d+\s|at\s+\S+\s*\(|Traceback\b|File ".*", line \d+)',
+              caseSensitive: false,
+            ).hasMatch(line),
+      )
+      .join('\n');
+  if (!preserveWhitespace) value = value.trim();
   if (!structured &&
       (value.startsWith('{') ||
           value.startsWith('[') && !value.startsWith('[redacted]'))) {
@@ -48,7 +48,13 @@ String taskSafeText(
   return value.isEmpty && text.isNotEmpty ? '[details omitted]' : value;
 }
 
-Object? taskSafeObject(Object? value, {String key = ''}) {
+/// [preserveFormatting] is for size-bounded execution data whose exact bytes
+/// determine a tool call. Credential and diagnostic redaction still applies.
+Object? taskSafeObject(
+  Object? value, {
+  String key = '',
+  bool preserveFormatting = false,
+}) {
   if (RegExp(
     r'^(api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret|authorization|cookie|reasoning|rawArguments|rawOutput|stackTrace)$',
     caseSensitive: false,
@@ -58,22 +64,34 @@ Object? taskSafeObject(Object? value, {String key = ''}) {
   if (value is Map<String, Object?>) {
     return {
       for (final entry in value.entries)
-        entry.key: taskSafeObject(entry.value, key: entry.key),
+        entry.key: taskSafeObject(
+          entry.value,
+          key: entry.key,
+          preserveFormatting: preserveFormatting,
+        ),
     };
   }
   if (value is List<Object?>) {
-    return value.map((item) => taskSafeObject(item)).toList();
+    return value
+        .map(
+          (item) =>
+              taskSafeObject(item, preserveFormatting: preserveFormatting),
+        )
+        .toList();
   }
   if (value is String) {
     return taskSafeText(
       value,
       maximum:
-          key == 'content'
+          preserveFormatting
+              ? value.length
+              : key == 'content'
               ? 128000
               : key == 'objective'
               ? 16000
               : 2000,
-      structured: key == 'content' || key == 'objective',
+      structured: preserveFormatting || key == 'content' || key == 'objective',
+      preserveWhitespace: preserveFormatting,
     );
   }
   return value;

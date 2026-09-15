@@ -10,6 +10,8 @@ import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner.dart';
 
 import '../../support/task_runner_harness.dart';
+import '../../support/task_scheduler_harness.dart'
+    show createRunnerScheduler, until;
 
 void main() {
   late TaskRunnerHarness h;
@@ -17,6 +19,66 @@ void main() {
     h = TaskRunnerHarness();
   });
   tearDown(() => h.close());
+
+  test(
+    'model session state failures back off across restart and stop at the retry limit',
+    () async {
+      await h.open(limits: TaskSegmentLimits(maxSameCallRetries: 2));
+      h.models.completeStep();
+      for (var i = 0; i < 3; i++) {
+        h.models.turns.add(
+          () => throw StateError('private model session details'),
+        );
+      }
+      var scheduler = createRunnerScheduler(h);
+      addTearDown(() => scheduler.stop());
+      await scheduler.start(periodic: false);
+      await until(
+        () async =>
+            scheduler.runningCount == 0 && (await h.db.task).nextRunAt != null,
+      );
+      expect(
+        (await h.db.task).nextRunAt!.difference(h.clock.time),
+        const Duration(seconds: 15),
+      );
+      expect((await h.snapshot).checkpoint!.execution!.backoffCount, 1);
+      expect(h.models.requests, hasLength(2));
+      await scheduler.stop();
+      await h.db.reopen();
+      scheduler = createRunnerScheduler(h);
+      await scheduler.start(periodic: false);
+      await scheduler.tick();
+      expect(h.models.requests, hasLength(2));
+      await h.advanceToDue();
+      await scheduler.tick();
+      await until(
+        () async =>
+            scheduler.runningCount == 0 &&
+            (await h.snapshot).checkpoint!.execution!.backoffCount == 2,
+      );
+      expect(
+        (await h.db.task).nextRunAt!.difference(h.clock.time),
+        const Duration(seconds: 30),
+      );
+      await h.advanceToDue();
+      await scheduler.tick();
+      await until(
+        () async =>
+            scheduler.runningCount == 0 &&
+            (await h.db.task).status == ConversationTaskStatus.waitingForUser,
+      );
+      expect((await h.db.task).waitingReason, TaskWaitingReason.requiredInput);
+      expect((await h.db.task).nextRunAt, isNull);
+      expect(h.models.requests, hasLength(4));
+      h.clock.advance(const Duration(hours: 1));
+      await scheduler.tick();
+      expect(h.models.requests, hasLength(4));
+      expect(
+        jsonEncode(await h.db.facts()),
+        isNot(contains('private model session details')),
+      );
+    },
+  );
 
   test(
     'an invalid write response cannot prove that no side effect occurred',

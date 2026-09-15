@@ -404,16 +404,23 @@ Future<void> _writeCheckpoint(
   final values = {
     ...ConversationTaskCheckpointRecord.fromDomain(checkpoint).values,
   };
-  values['checkpoint_json'] = jsonEncode(
-    _safeObject(jsonDecode(values['checkpoint_json']! as String)),
-  );
-  if (checkpoint.execution != null &&
-      jsonEncode(checkpoint.execution!.toJson()) !=
-          jsonEncode(_safeObject(checkpoint.execution!.toJson()))) {
-    throw ArgumentError(
-      'Task continuation must be safe without changing execution semantics.',
+  final sanitized =
+      _safeObject(jsonDecode(values['checkpoint_json']! as String))!
+          as Map<String, Object?>;
+  if (checkpoint.execution case final execution?) {
+    final safeExecution = taskSafeObject(
+      execution.toJson(),
+      preserveFormatting: true,
     );
+    if (jsonEncode(execution.toJson()) != jsonEncode(safeExecution)) {
+      throw ArgumentError(
+        'Task continuation must be safe without changing execution semantics.',
+      );
+    }
+    // Summary sanitization must not trim or rewrite a pending file payload.
+    sanitized['execution'] = safeExecution;
   }
+  values['checkpoint_json'] = jsonEncode(sanitized);
   final rows = await tx.query(
     'conversation_task_checkpoints',
     where: 'task_id = ? AND plan_revision = ?',

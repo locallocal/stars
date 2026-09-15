@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:stars/data/services/ai/anthropic.dart';
+import 'package:stars/data/services/ai/moonshot.dart';
 import 'package:stars/data/services/ai/openai.dart';
 import 'package:stars/data/services/ai/provider_conversation_turn_router.dart';
 import 'package:stars/domain/models/ai_models.dart';
@@ -298,6 +299,126 @@ void main() {
       expect(provider.legacyCalls, 0);
     },
   );
+
+  for (final model in ['moonshot-v1-128k', 'kimi-k2.6', 'kimi-k3']) {
+    for (final kind in TurnDispositionKind.values) {
+      test(
+        'Moonshot $model routes ${kind.name} through one tool-free call',
+        () async {
+          final bot = foregroundBot(
+            apiType: 'moonshot',
+            provider: 'moonshot',
+            model: model,
+          );
+          final body = routeFrames(kind.name, switch (kind) {
+            TurnDispositionKind.directReply => [
+              {'text': 'Hello.'},
+            ],
+            TurnDispositionKind.backgroundTaskPlan => [foregroundPlan()],
+            TurnDispositionKind.taskStatusRequest => [
+              {'taskId': null},
+            ],
+          });
+          final requests = <Map<String, dynamic>>[];
+          final client = MockClient((request) async {
+            expect(request.url.path, endsWith('/chat/completions'));
+            requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+            return http.Response(
+              [
+                'data: ${jsonEncode({
+                  'choices': [
+                    {
+                      'delta': {'content': body, 'reasoning_content': 'private provider reasoning'},
+                      'finish_reason': 'stop',
+                    },
+                  ],
+                  'usage': {'prompt_tokens': 5, 'completion_tokens': 7},
+                })}',
+                'data: [DONE]',
+                '',
+              ].join('\n\n'),
+              200,
+              headers: {'content-type': 'text/event-stream; charset=utf-8'},
+            );
+          });
+          addTearDown(client.close);
+          final provider =
+              Moonshot(bot, client: client)
+                ..setWebSearch(true)
+                ..setDeepThinking(true);
+          final events =
+              await ProviderConversationTurnRouter(
+                    providers: ForegroundProviders((_) => provider),
+                  )
+                  .route(
+                    TurnRoutingRequest(
+                      bot: bot,
+                      userMessage: input.userMessage,
+                      language: input.language,
+                      messages: request().messages,
+                      allowedToolNames: {'read_file'},
+                    ),
+                  )
+                  .toList();
+
+          expect(
+            events.whereType<TurnRoutingFailed>().map((event) => event.reason),
+            isEmpty,
+          );
+          expect(
+            events
+                .whereType<TurnRoutingCallStarted>()
+                .single
+                .providerSupportsAgentLoop,
+            isTrue,
+          );
+          expect(
+            events
+                .whereType<TurnDispositionCompleted>()
+                .single
+                .disposition
+                .kind,
+            kind,
+          );
+          expect(
+            events
+                .whereType<DirectReplyDelta>()
+                .map((event) => event.text)
+                .join(),
+            kind == TurnDispositionKind.directReply ? 'Hello.' : '',
+          );
+          expect(
+            events.whereType<TurnRoutingUsage>().single.usage.outputTokens,
+            7,
+          );
+          expect(requests, hasLength(1));
+          final sent = requests.single;
+          expect(sent['model'], model);
+          expect(sent['stream'], isTrue);
+          for (final key in [
+            'tools',
+            'tool_choice',
+            'parallel_tool_calls',
+            'web_search_options',
+          ]) {
+            expect(sent, isNot(contains(key)), reason: key);
+          }
+          expect(
+            jsonEncode(sent['messages']),
+            isNot(contains('private thought')),
+          );
+          if (model == 'kimi-k3') {
+            expect(sent['reasoning_effort'], 'low');
+          } else if (model == 'kimi-k2.6') {
+            expect(sent['thinking'], {'type': 'disabled'});
+          } else {
+            expect(sent, isNot(contains('thinking')));
+            expect(sent, isNot(contains('reasoning_effort')));
+          }
+        },
+      );
+    }
+  }
 
   for (final vendor in ['openai', 'anthropic']) {
     test(

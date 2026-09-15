@@ -228,6 +228,17 @@ final class _TaskSegment {
           rethrow;
         } on _TaskFenceLost {
           rethrow;
+        } on StateError {
+          // A model-session contract failure must not escape to the scheduler's
+          // one-second recovery loop. Keep retries durable and bounded.
+          modelTurns++;
+          await _save(TaskEventKind.modelTurnCompleted, modelCount: 1);
+          if (backoffs >= limits.maxSameCallRetries) {
+            return await _finishFinalization(
+              TaskReasonCode.providerUnavailable,
+            );
+          }
+          return await _backoff();
         } on Exception {
           modelTurns++;
           await _save(TaskEventKind.modelTurnCompleted, modelCount: 1);

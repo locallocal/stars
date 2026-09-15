@@ -86,14 +86,24 @@ final class TaskRuntimeFactory {
         );
       }
     }
+    final snapshot = await tasks.getExecutionSnapshot(task.taskId);
+    if (snapshot == null) {
+      throw const TaskRuntimeUnavailable(
+        TaskWaitingReason.requiredInput,
+        TaskReasonCode.invalidPlan,
+      );
+    }
+    // Acceptance freezes the candidate tool scope. Only the committed plan's
+    // selected tools are execution dependencies, including after a restart.
+    final requiredTools = snapshot.plan.allowedToolNames;
     final available = {
-      for (final name in task.acceptance.allowedToolNames)
+      for (final name in requiredTools)
         if (registry.find(name) case final tool?) name: tool,
       for (final tool in await scopedTools?.call(task) ?? <ExecutableTool>[])
         tool.definition.name: tool,
     };
     final resolved = <TaskToolAdapter>[];
-    for (final name in task.acceptance.allowedToolNames) {
+    for (final name in requiredTools) {
       final supplied = adapters[name];
       if (supplied != null) {
         resolved.add(supplied);

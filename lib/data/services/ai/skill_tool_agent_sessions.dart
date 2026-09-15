@@ -104,9 +104,7 @@ final class OpenAiResponsesAgentModelSession implements AgentModelSession {
     GroundedAnswerSynthesisRequest request, {
     List<ToolResult> pendingToolResults = const [],
   }) {
-    if (!_started) {
-      throw StateError('Agent model session has not started.');
-    }
+    _started = true;
     _appendToolResults(pendingToolResults, includePayload: false);
     _input.add({
       'role': 'user',
@@ -369,9 +367,7 @@ final class AnthropicAgentModelSession implements AgentModelSession {
     GroundedAnswerSynthesisRequest request, {
     List<ToolResult> pendingToolResults = const [],
   }) {
-    if (!_started) {
-      throw StateError('Agent model session has not started.');
-    }
+    _started = true;
     _appendToolResults(pendingToolResults, includePayload: false);
     _messages.add({
       'role': 'user',
