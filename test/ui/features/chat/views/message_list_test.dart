@@ -11,10 +11,162 @@ import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/l10n/app_localizations.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/ui/features/chat/views/message_avatar.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
+  for (final desktop in [true, false]) {
+    for (final strict in [true, false]) {
+      testWidgets(
+        'assistant details stay outside the bubble and align left (desktop: $desktop, strict: $strict)',
+        (tester) async {
+          tester.view.devicePixelRatio = 1;
+          tester.view.physicalSize = Size(desktop ? 900 : 320, 1100);
+          addTearDown(tester.view.reset);
+          final controller = ScrollController();
+          addTearDown(controller.dispose);
+          final message = _groundedMessage(
+            id: 'metadata-layout',
+            trust: AnswerTrustLevel.partiallyVerified,
+            claimTrust: ClaimTrustLevel.unverified,
+            evidenceIds: const [_evidenceId],
+            reasonCode: 'claim_has_no_evidence',
+            content: 'Unverified factual detail.',
+            processInfo: const MessageProcessInfo(durationMs: 1200),
+          ).copyWith(reasoning: 'Reasoning details.');
+          final list = MessageList(
+            messages: [message],
+            scrollController: controller,
+            isStreaming: false,
+            streamingResponse: '',
+            currentUserId: 'me',
+            isDesktop: desktop,
+            strictGroundingMode: strict,
+          );
+          await tester.pumpWidget(
+            desktop
+                ? _harness(
+                  isStreaming: false,
+                  disableAnimations: true,
+                  body: Column(children: [list]),
+                )
+                : _messageListHarness(list),
+          );
+          await tester.pumpAndSettle();
+
+          final bubble = find.byKey(
+            const ValueKey<String>('message-bubble-surface'),
+          );
+          final bubbleRect = tester.getRect(bubble);
+          final details = [
+            if (!strict) find.byType(ReasoningSection),
+            if (strict)
+              find.byKey(
+                const ValueKey<String>('message-strict-grounding-notice'),
+              ),
+            find.byKey(const ValueKey<String>('message-trust-status')),
+            find.byType(ProcessInfoSection),
+          ];
+          for (final detail in details) {
+            expect(detail, findsOneWidget);
+            expect(find.descendant(of: bubble, matching: detail), findsNothing);
+            final rect = tester.getRect(detail);
+            expect(rect.left, closeTo(bubbleRect.left, 0.01));
+            expect(
+              rect.right,
+              lessThanOrEqualTo(tester.view.physicalSize.width),
+            );
+            expect(
+              rect.bottom <= bubbleRect.top || rect.top >= bubbleRect.bottom,
+              isTrue,
+            );
+          }
+          expect(
+            find.descendant(
+              of: bubble,
+              matching: find.textContaining('Verified portion.'),
+            ),
+            findsOneWidget,
+          );
+          if (strict) {
+            expect(find.byType(ReasoningSection), findsNothing);
+            expect(
+              find.textContaining('Unverified factual detail.'),
+              findsNothing,
+            );
+            expect(find.text('严格验证模式'), findsOneWidget);
+          }
+          await tester.tap(
+            find.byKey(const ValueKey<String>('message-trust-details-toggle')),
+          );
+          await tester.pumpAndSettle();
+          expect(
+            tester
+                .getTopLeft(
+                  find.byKey(const ValueKey<String>('message-trust-card')),
+                )
+                .dx,
+            closeTo(tester.getTopLeft(bubble).dx, 0.01),
+          );
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+
+    testWidgets(
+      'streaming reasoning keeps its state when the bubble appears (desktop: $desktop)',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(desktop ? 900 : 320, 800);
+        addTearDown(tester.view.reset);
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        Widget buildList(String response) {
+          final list = MessageList(
+            messages: const [],
+            scrollController: controller,
+            isStreaming: true,
+            streamingResponse: response,
+            currentUserId: 'me',
+            isDesktop: desktop,
+            deepThinking: true,
+            reasoningResponse: 'Streaming reasoning.',
+            streamingProcessInfo: const MessageProcessInfo(durationMs: 1000),
+          );
+          return desktop
+              ? _harness(
+                isStreaming: true,
+                disableAnimations: true,
+                body: Column(children: [list]),
+              )
+              : _messageListHarness(list);
+        }
+
+        await tester.pumpWidget(buildList(''));
+        await tester.pumpAndSettle();
+        final bubble = find.byKey(
+          const ValueKey<String>('message-bubble-surface'),
+        );
+        expect(bubble, findsNothing);
+        final reasoning = find.byType(ReasoningSection);
+        final originalState = tester.state(reasoning);
+
+        await tester.pumpWidget(buildList('Visible answer.'));
+        await tester.pumpAndSettle();
+        expect(bubble, findsOneWidget);
+        expect(tester.state(reasoning), same(originalState));
+        expect(find.descendant(of: bubble, matching: reasoning), findsNothing);
+        expect(tester.getTopLeft(reasoning).dx, tester.getTopLeft(bubble).dx);
+        expect(
+          tester.getBottomLeft(reasoning).dy,
+          lessThan(tester.getTopLeft(bubble).dy),
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('message list starts at the latest lazily built messages', (
     tester,
   ) async {
@@ -349,13 +501,37 @@ void main() => print('done');
         'desktop-message-viewport',
       );
       final userViewport = messagePart(userMessage, 'desktop-message-viewport');
+      final assistantAvatar = find.descendant(
+        of: assistantMessage,
+        matching: find.byType(MessageAvatar),
+      );
+      final userAvatar = find.descendant(
+        of: userMessage,
+        matching: find.byType(MessageAvatar),
+      );
       expect(
-        tester.getTopLeft(assistantRegion).dx,
+        tester.getTopLeft(assistantAvatar).dx,
         closeTo(tester.getTopLeft(assistantViewport).dx, 0.01),
       );
       expect(
-        tester.getBottomRight(userRegion).dx,
+        tester.getBottomRight(userAvatar).dx,
         closeTo(tester.getBottomRight(userViewport).dx, 0.01),
+      );
+      expect(
+        tester.getTopLeft(assistantRegion).dx,
+        closeTo(tester.getBottomRight(assistantAvatar).dx + 12, 0.01),
+      );
+      expect(
+        tester.getBottomRight(userRegion).dx,
+        closeTo(tester.getTopLeft(userAvatar).dx - 12, 0.01),
+      );
+      expect(
+        tester.getTopLeft(assistantAvatar).dy,
+        tester.getTopLeft(assistantRegion).dy,
+      );
+      expect(
+        tester.getTopLeft(userAvatar).dy,
+        tester.getTopLeft(userRegion).dy,
       );
 
       final userTimestamp = messagePart(
@@ -918,6 +1094,15 @@ void main() => print('done');
       expect(find.text('Secret unverified reasoning.'), findsNothing);
       final notice = find.textContaining('关于“这颗卫星什么时候发射？”');
       expect(notice, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('strict-message')),
+          matching: find.byKey(
+            const ValueKey<String>('message-bubble-surface'),
+          ),
+        ),
+        findsNothing,
+      );
       expect(find.textContaining('因此不会猜测'), findsOneWidget);
       expect(find.textContaining('此回复没有可用的工具证据'), findsWidgets);
       await tester.tap(find.text('执行状态'));

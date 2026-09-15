@@ -12,6 +12,7 @@ import 'package:stars/utils/dot_curved_bottom_nav.dart';
 import 'package:stars/ui/core/dependency_injection/app_dependencies.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/common.dart';
+import 'package:stars/ui/core/widgets/user_profile_scope.dart';
 import 'package:stars/ui/features/app/view_models/app_view_model.dart';
 import 'package:stars/ui/features/app/view_models/main_shell_view_model.dart';
 import 'package:stars/ui/features/app/view_models/startup_view_model.dart';
@@ -331,10 +332,13 @@ class _MyAppState extends State<MyApp> {
         _setSystemUIOverlayStyle();
         return AppScope(
           dependencies: widget.dependencies,
-          child:
-              !isDesktopPlatform(context)
-                  ? _buildMobileApp()
-                  : _buildDesktopApp(),
+          child: UserProfileScope(
+            profile: _viewModel.profile,
+            child:
+                !isDesktopPlatform(context)
+                    ? _buildMobileApp()
+                    : _buildDesktopApp(),
+          ),
         );
       },
     );

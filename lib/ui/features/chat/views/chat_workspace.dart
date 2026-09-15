@@ -143,6 +143,8 @@ extension _ChatPageWorkspace on ChatPageState {
                   streamingProcessInfo: _buildStreamingProcessInfo(),
                   streamingTokenUsage: _streamingTokenUsage,
                   currentUserId: _currentUserId,
+                  currentUserProfile: UserProfileScope.maybeOf(context),
+                  bot: widget.bot,
                   deepThinking: _provider.getDeepThinking(),
                   reasoningResponse: '',
                   isDesktop: isDesktop,

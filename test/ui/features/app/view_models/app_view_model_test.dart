@@ -27,21 +27,22 @@ void main() {
       expect(viewModel.showVerificationStatus, isTrue);
       expect(viewModel.showExecutionStatus, isTrue);
       expect(viewModel.strictGroundingMode, isFalse);
+      expect(viewModel.profile, same(initialProfile));
 
-      repository.publish(
-        _profile(
-          showReasoning: false,
-          showVerificationStatus: false,
-          showExecutionStatus: false,
-          strictGroundingMode: true,
-        ),
-      );
+      final updatedProfile = _profile(
+        showReasoning: false,
+        showVerificationStatus: false,
+        showExecutionStatus: false,
+        strictGroundingMode: true,
+      ).copyWith(name: 'Updated User', avatar: '/avatars/user.png');
+      repository.publish(updatedProfile);
       await Future<void>.delayed(Duration.zero);
 
       expect(viewModel.showReasoning, isFalse);
       expect(viewModel.showVerificationStatus, isFalse);
       expect(viewModel.showExecutionStatus, isFalse);
       expect(viewModel.strictGroundingMode, isTrue);
+      expect(viewModel.profile, same(updatedProfile));
     },
   );
 }

@@ -15,6 +15,7 @@ import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/core/widgets/syntax_highlighted_code.dart';
 import 'package:stars/ui/features/chat/views/audio_player_widget.dart';
+import 'package:stars/ui/features/chat/views/message_avatar.dart';
 import 'package:stars/ui/features/chat/views/video_player_widget.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
 import 'package:stars/utils/theme.dart';
@@ -47,6 +48,8 @@ class MessageList extends StatefulWidget {
   final MessageProcessInfo streamingProcessInfo;
   final ModelTokenUsage streamingTokenUsage;
   final String currentUserId;
+  final Profile? currentUserProfile;
+  final Bot? bot;
   final bool? deepThinking;
   final String? reasoningResponse;
   final bool isDesktop;
@@ -67,6 +70,8 @@ class MessageList extends StatefulWidget {
     this.streamingProcessInfo = const MessageProcessInfo(),
     this.streamingTokenUsage = ModelTokenUsage.empty,
     required this.currentUserId,
+    this.currentUserProfile,
+    this.bot,
     this.deepThinking = false,
     this.reasoningResponse = '',
     this.isDesktop = false,
@@ -199,7 +204,7 @@ class _MessageListState extends State<MessageList> {
               key: const ValueKey<String>('streaming-message'),
               child: _buildMessageRow(
                 context,
-                bubble: _MessageBubble(
+                bubble: _MessageContent(
                   isCurrentUser: false,
                   isDesktop: isDesktop,
                   isStreaming: true,
@@ -254,7 +259,7 @@ class _MessageListState extends State<MessageList> {
             strictPresentation,
           );
           final exportContent = isMe ? message.content : displayedContent;
-          Widget bubble = _MessageBubble(
+          Widget bubble = _MessageContent(
             isCurrentUser: isMe,
             isDesktop: isDesktop,
             reasoning:
@@ -266,7 +271,12 @@ class _MessageListState extends State<MessageList> {
                 message.showsVerificationStatus(showVerificationStatus) &&
                 !isMe,
             showExecutionStatus: showExecutionStatus && !isMe,
-            content: displayedContent,
+            content: strictPresentation?.content ?? displayedContent,
+            strictGroundingNotice: _messageStrictGroundingNotice(
+              context,
+              message,
+              strictPresentation,
+            ),
             images: message.images,
             files:
                 isMe
@@ -289,19 +299,23 @@ class _MessageListState extends State<MessageList> {
             actionViewModel: widget.actionViewModel,
           );
           if (message.taskMessageKind == TaskMessageKind.status) {
-            bubble = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final summary in message.taskStatusSummaries)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ConversationTaskCard(
-                      summary: summary,
-                      historical: true,
+            bubble = _MessageBubbleSurface(
+              isCurrentUser: isMe,
+              isDesktop: isDesktop,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final summary in message.taskStatusSummaries)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: ConversationTaskCard(
+                        summary: summary,
+                        historical: true,
+                      ),
                     ),
-                  ),
-                Text(message.content),
-              ],
+                  Text(message.content),
+                ],
+              ),
             );
           }
           return RepaintBoundary(
@@ -346,6 +360,21 @@ class _MessageListState extends State<MessageList> {
   }) {
     final viewportMaxWidth =
         isDesktop ? StarsDesktopThemeSpec.contentMaxWidth : double.infinity;
+    final avatar = MessageAvatar(
+      isCurrentUser: isCurrentUser,
+      name:
+          (isCurrentUser
+              ? widget.currentUserProfile?.name
+              : widget.bot?.name) ??
+          '',
+      avatarPath:
+          (isCurrentUser
+              ? widget.currentUserProfile?.avatar
+              : widget.bot?.avatar) ??
+          '',
+      provider: isCurrentUser ? '' : widget.bot?.provider ?? '',
+    );
+    final gap = SizedBox(width: isDesktop ? 12 : 8);
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isDesktop ? 10 : 4),
@@ -356,20 +385,38 @@ class _MessageListState extends State<MessageList> {
                   ? const ValueKey<String>('desktop-message-viewport')
                   : null,
           constraints: BoxConstraints(maxWidth: viewportMaxWidth),
-          child: Align(
-            alignment:
-                isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth:
-                    isDesktop
-                        ? (isCurrentUser
-                            ? StarsDesktopThemeSpec.messageBubbleMaxWidth
-                            : StarsDesktopThemeSpec.contentMaxWidth)
-                        : MediaQuery.of(context).size.width * 0.8,
-              ),
-              child: bubble,
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final content = Flexible(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth:
+                        isDesktop
+                            ? (isCurrentUser
+                                ? StarsDesktopThemeSpec.messageBubbleMaxWidth
+                                : double.infinity)
+                            : constraints.maxWidth * 0.8,
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktop ? 0 : 8,
+                    ),
+                    child: bubble,
+                  ),
+                ),
+              );
+              return Row(
+                mainAxisAlignment:
+                    isCurrentUser
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:
+                    isCurrentUser
+                        ? [content, gap, avatar]
+                        : [avatar, gap, content],
+              );
+            },
           ),
         ),
       ),

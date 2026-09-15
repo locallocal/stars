@@ -2,7 +2,7 @@ part of 'message_list.dart';
 
 const double _mobileMessageImagePreviewSize = 136;
 
-class _MessageBubble extends StatelessWidget {
+class _MessageContent extends StatelessWidget {
   final bool isCurrentUser;
   final bool isDesktop;
   final bool isStreaming;
@@ -20,13 +20,14 @@ class _MessageBubble extends StatelessWidget {
   final String video;
   final MessageGrounding? grounding;
   final bool strictGroundingMode;
+  final String strictGroundingNotice;
   final bool hasNotFactCheckedContent;
   final String exportTrustAnnotation;
   final MessageTerminalOutcome? terminalOutcome;
   final bool hasPartialContent;
   final MessageActionViewModel? actionViewModel;
 
-  const _MessageBubble({
+  const _MessageContent({
     required this.isCurrentUser,
     required this.isDesktop,
     this.isStreaming = false,
@@ -44,6 +45,7 @@ class _MessageBubble extends StatelessWidget {
     this.video = '',
     this.grounding,
     this.strictGroundingMode = false,
+    this.strictGroundingNotice = '',
     this.hasNotFactCheckedContent = false,
     this.exportTrustAnnotation = '',
     this.terminalOutcome,
@@ -53,40 +55,87 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final metadata = <Widget>[
+      if (strictGroundingNotice.isNotEmpty)
+        _StatusCardSection(
+          key: const ValueKey<String>('message-strict-grounding-notice'),
+          isDesktop: isDesktop,
+          icon: LucideIcons.shieldCheck,
+          title: S.of(context).strictGroundingMode,
+          subtitle: '',
+          child: MarkdownBody(
+            data: strictGroundingNotice,
+            selectable: true,
+            styleSheet: _buildMarkdownStyleSheet(
+              context,
+              Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14,
+            ),
+          ),
+        ),
+      if (_showTrustStatus)
+        _MessageTrustStatus(
+          key: const ValueKey<String>('message-verification'),
+          grounding: grounding!,
+          isDesktop: isDesktop,
+          strictMode: strictGroundingMode,
+          hasNotFactCheckedContent: hasNotFactCheckedContent,
+          actionViewModel: actionViewModel,
+        ),
+      if (_showTerminalStatus)
+        _MessageTerminalStatus(
+          outcome: terminalOutcome!,
+          hasPartialContent: hasPartialContent,
+          reasonCode: grounding?.reasonCode ?? '',
+        ),
+      if (_showProcessInfo)
+        ProcessInfoSection(
+          key: const ValueKey<String>('message-execution'),
+          processInfo: processInfo,
+          tokenUsage: tokenUsage,
+          isDesktop: isDesktop,
+          isStreaming: isStreaming,
+          hasReasoningContent: _showReasoning,
+          grounding: grounding,
+        ),
+    ];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
+      children: [
+        if (_showReasoning)
+          ReasoningSection(
+            key: const ValueKey<String>('message-reasoning'),
+            reasoning: reasoning,
+            isDesktop: isDesktop,
+            isStreaming: isStreaming,
+            durationMs: processInfo.durationMs,
+            actionViewModel: actionViewModel,
+          ),
+        if (content.isNotEmpty || _hasStructuredMedia)
+          _MessageBubbleSurface(
+            isCurrentUser: isCurrentUser,
+            isDesktop: isDesktop,
+            child: _buildBody(context),
+          ),
+        if (metadata.isNotEmpty)
+          _MessageMetadata(
+            key: const ValueKey<String>('message-metadata'),
+            children: metadata,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
     final urlPreviews =
         isStreaming
             ? const <_UrlPreviewDescriptor>[]
             : _urlPreviewsFromMarkdown(content);
-    final useBubbleShell = !isDesktop || isCurrentUser;
-    final backgroundColor =
-        isCurrentUser
-            ? StarsDesktopTokens.of(context).selectedFill
-            : StarsDesktopTokens.of(context).contentBackground;
-
-    final body = Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_showReasoning)
-          Padding(
-            padding: EdgeInsets.only(
-              bottom:
-                  content.isNotEmpty ||
-                          _showProcessInfo ||
-                          _hasStructuredMedia ||
-                          _showTrustStatus ||
-                          _showTerminalStatus
-                      ? 14
-                      : 0,
-            ),
-            child: ReasoningSection(
-              reasoning: reasoning,
-              isDesktop: isDesktop,
-              isStreaming: isStreaming,
-              durationMs: processInfo.durationMs,
-              actionViewModel: actionViewModel,
-            ),
-          ),
         if (content.isNotEmpty)
           MarkdownBody(
             data: content,
@@ -121,34 +170,15 @@ class _MessageBubble extends StatelessWidget {
               actionViewModel: actionViewModel,
             ),
           ),
-        if (_showsProcessInfoBeforeMedia)
-          Padding(
-            padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
-            child: ProcessInfoSection(
-              processInfo: processInfo,
-              tokenUsage: tokenUsage,
-              isDesktop: isDesktop,
-              isStreaming: isStreaming,
-              hasReasoningContent: _showReasoning,
-              grounding: grounding,
-            ),
-          ),
         if (images.isNotEmpty)
           Padding(
-            padding: EdgeInsets.only(
-              top: content.isNotEmpty || _showsProcessInfoBeforeMedia ? 14 : 0,
-            ),
+            padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
             child: _buildImageSection(context),
           ),
         if (files.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(
-              top:
-                  content.isNotEmpty ||
-                          _showsProcessInfoBeforeMedia ||
-                          images.isNotEmpty
-                      ? 12
-                      : 0,
+              top: content.isNotEmpty || images.isNotEmpty ? 12 : 0,
             ),
             child: _StatusCardSection(
               isDesktop: isDesktop,
@@ -219,112 +249,18 @@ class _MessageBubble extends StatelessWidget {
               child: VideoPlayerWidget(videoFilePath: video),
             ),
           ),
-        if (_showTrustStatus)
-          Padding(
-            padding: EdgeInsets.only(
-              top:
-                  content.isNotEmpty ||
-                          _hasStructuredMedia ||
-                          _showsProcessInfoBeforeMedia
-                      ? 10
-                      : 0,
-            ),
-            child: _MessageTrustStatus(
-              grounding: grounding!,
-              isDesktop: isDesktop,
-              strictMode: strictGroundingMode,
-              hasNotFactCheckedContent: hasNotFactCheckedContent,
-              actionViewModel: actionViewModel,
-            ),
-          ),
-        if (_showTerminalStatus)
-          Padding(
-            padding: EdgeInsets.only(
-              top:
-                  content.isNotEmpty ||
-                          _hasStructuredMedia ||
-                          _showsProcessInfoBeforeMedia ||
-                          _showTrustStatus
-                      ? 10
-                      : 0,
-            ),
-            child: _MessageTerminalStatus(
-              outcome: terminalOutcome!,
-              hasPartialContent: hasPartialContent,
-              reasonCode: grounding?.reasonCode ?? '',
-            ),
-          ),
-        if (_showsProcessInfoAfterMessage)
-          Padding(
-            padding: EdgeInsets.only(
-              top:
-                  content.isNotEmpty ||
-                          _hasStructuredMedia ||
-                          _showTrustStatus ||
-                          _showTerminalStatus
-                      ? 14
-                      : 0,
-            ),
-            child: ProcessInfoSection(
-              processInfo: processInfo,
-              tokenUsage: tokenUsage,
-              isDesktop: isDesktop,
-              isStreaming: isStreaming,
-              hasReasoningContent: _showReasoning,
-              grounding: grounding,
-            ),
-          ),
       ],
-    );
-
-    if (!useBubbleShell) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 8),
-        child: body,
-      );
-    }
-
-    if (isDesktop) {
-      return Padding(
-        padding: EdgeInsets.zero,
-        child: ShadCard(
-          padding: const EdgeInsets.all(16),
-          backgroundColor: backgroundColor,
-          radius: StarsDesktopThemeSpec.bubbleRadius,
-          border: ShadBorder.all(
-            color: StarsDesktopTokens.of(context).separator,
-          ),
-          child: body,
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: body,
     );
   }
 
   bool get _hasMediaAbove =>
-      content.isNotEmpty ||
-      _showsProcessInfoBeforeMedia ||
-      images.isNotEmpty ||
-      files.isNotEmpty;
+      content.isNotEmpty || images.isNotEmpty || files.isNotEmpty;
 
   bool get _showProcessInfo =>
       showExecutionStatus &&
       (processInfo.hasData ||
           tokenUsage.inputTokens > 0 ||
           tokenUsage.outputTokens > 0);
-
-  bool get _showsProcessInfoBeforeMedia => _showProcessInfo && !isDesktop;
-
-  bool get _showsProcessInfoAfterMessage => _showProcessInfo && isDesktop;
 
   bool get _showReasoning => showReasoning && reasoning.isNotEmpty;
 
@@ -494,6 +430,47 @@ class _MessageBubble extends StatelessWidget {
         color: StarsDesktopTokens.of(context).secondaryText,
         fontSize: fontSize,
       ),
+    );
+  }
+}
+
+class _MessageBubbleSurface extends StatelessWidget {
+  const _MessageBubbleSurface({
+    required this.isCurrentUser,
+    required this.isDesktop,
+    required this.child,
+  });
+
+  final bool isCurrentUser;
+  final bool isDesktop;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor =
+        isCurrentUser
+            ? StarsDesktopTokens.of(context).selectedFill
+            : MessageAvatar.backgroundColorOf(context);
+
+    if (isDesktop) {
+      return ShadCard(
+        key: const ValueKey<String>('message-bubble-surface'),
+        padding: const EdgeInsets.all(16),
+        backgroundColor: backgroundColor,
+        radius: StarsDesktopThemeSpec.bubbleRadius,
+        border: ShadBorder.all(color: StarsDesktopTokens.of(context).separator),
+        child: child,
+      );
+    }
+
+    return Container(
+      key: const ValueKey<String>('message-bubble-surface'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
     );
   }
 }
