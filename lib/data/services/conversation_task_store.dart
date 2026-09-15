@@ -11,6 +11,7 @@ import 'package:stars/data/services/task_persistence_metrics.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
+import 'package:stars/domain/models/task_scheduling.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
@@ -18,6 +19,7 @@ import 'package:stars/domain/repositories/conversation_task_repository.dart';
 part 'conversation_task_store_execution.dart';
 part 'conversation_task_store_writes.dart';
 part 'conversation_task_store_commands.dart';
+part 'conversation_task_store_scheduling.dart';
 part 'conversation_task_store_facts.dart';
 part 'conversation_task_store_projection.dart';
 part 'conversation_task_store_validation.dart';
@@ -122,16 +124,22 @@ final class ConversationTaskStore {
   Future<List<ConversationTask>> listDue({
     required DateTime now,
     int limit = 100,
+    String? afterTaskId,
   }) {
     _limit(limit);
     return _list(
-      "status IN ('queued', 'paused') AND cancellation_source IS NULL "
+      "status IN ('queued', 'paused', 'cancelRequested') AND phase != 'committing' "
           'AND (next_run_at IS NULL OR next_run_at <= ?) '
           'AND (lease_expires_at IS NULL OR lease_expires_at <= ?) '
-          'AND NOT EXISTS (SELECT 1 FROM conversation_task_approvals a '
-          'WHERE a.task_id = conversation_tasks.task_id AND a.decision IS NULL)',
-      [now.microsecondsSinceEpoch, now.microsecondsSinceEpoch],
-      'COALESCE(next_run_at, created_at), task_id',
+          "AND (status = 'cancelRequested' OR NOT EXISTS (SELECT 1 FROM conversation_task_approvals a "
+          'WHERE a.task_id = conversation_tasks.task_id AND a.decision IS NULL))'
+          '${afterTaskId == null ? '' : ' AND task_id > ?'}',
+      [
+        now.microsecondsSinceEpoch,
+        now.microsecondsSinceEpoch,
+        if (afterTaskId != null) afterTaskId,
+      ],
+      'task_id',
       limit: limit,
     );
   }

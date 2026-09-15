@@ -1,6 +1,6 @@
 # 06：跨分段验证与整体终态回复
 
-[总计划](README.md) | [上一阶段](05-scheduling-and-recovery.md) | [下一阶段：会话交互](07-chat-ui-and-task-actions.md)
+[总计划](README.md) | [调度与恢复（已实现）](../../reference/conversation-task-scheduling.md) | [下一阶段：会话交互](07-chat-ui-and-task-actions.md)
 
 前置依赖：阶段 02、04、05。对应目标规格第 8、9、12、13 节。
 

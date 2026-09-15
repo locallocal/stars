@@ -3,20 +3,24 @@ import 'dart:async';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
+import 'package:stars/domain/use_cases/delete_conversation.dart';
 import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
 
 class ChatListViewModel extends DisposableChangeNotifier {
   ChatListViewModel({
     required ChatRepository chatRepository,
     required BotRepository botRepository,
+    DeleteConversation? deleteConversation,
   }) : _chatRepository = chatRepository,
-       _botRepository = botRepository {
+       _botRepository = botRepository,
+       _deleteConversation = deleteConversation {
     _chatSubscription = _chatRepository.changes.listen((_) => load());
     _botSubscription = _botRepository.changes.listen((_) => load());
   }
 
   final ChatRepository _chatRepository;
   final BotRepository _botRepository;
+  final DeleteConversation? _deleteConversation;
   late final StreamSubscription<List<Chat>> _chatSubscription;
   late final StreamSubscription<List<Bot>> _botSubscription;
 
@@ -67,7 +71,8 @@ class ChatListViewModel extends DisposableChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> deleteChat(String id) => _chatRepository.deleteChat(id);
+  Future<void> deleteChat(String id) =>
+      _deleteConversation?.call(id) ?? _chatRepository.deleteChat(id);
 
   Future<void> updateChatName(String id, String name) =>
       _chatRepository.updateChatName(id, name);

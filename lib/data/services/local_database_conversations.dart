@@ -1,6 +1,18 @@
 part of 'local_database_service.dart';
 
 extension LocalDatabaseConversations on LocalDatabaseService {
+  Future<void> guardConversationDeletion(String chatId) async =>
+      _guardTaskDeletion(await _databaseProvider(), 'chat_id = ?', [
+        chatId,
+      ], 'conversation_tasks_stopping');
+
+  Future<void> guardBotDeletion(String botId) async => _guardTaskDeletion(
+    await _databaseProvider(),
+    'bot_id = ? OR chat_id IN (SELECT id FROM chats WHERE bot_id = ?)',
+    [botId, botId],
+    'bot_has_active_tasks',
+  );
+
   Future<List<Map<String, Object?>>> loadChats() async {
     final database = await _databaseProvider();
     return database.query('chats', orderBy: 'last_message_timestamp DESC');
@@ -19,6 +31,14 @@ extension LocalDatabaseConversations on LocalDatabaseService {
   Future<void> deleteChat(String id) async {
     final database = await _databaseProvider();
     await database.transaction((transaction) async {
+      await _guardTaskDeletion(transaction, 'chat_id = ?', [
+        id,
+      ], 'conversation_tasks_stopping');
+      await transaction.delete(
+        'conversation_tasks',
+        where: 'chat_id = ?',
+        whereArgs: [id],
+      );
       await transaction.delete(
         'messages',
         where: 'chat_id = ?',
@@ -70,6 +90,14 @@ extension LocalDatabaseConversations on LocalDatabaseService {
   Future<void> clearChatHistory(String id, DateTime timestamp) async {
     final database = await _databaseProvider();
     await database.transaction((transaction) async {
+      await _guardTaskDeletion(transaction, 'chat_id = ?', [
+        id,
+      ], 'conversation_tasks_stopping');
+      await transaction.delete(
+        'conversation_tasks',
+        where: 'chat_id = ?',
+        whereArgs: [id],
+      );
       await transaction.delete(
         'agent_run_answer_checkpoints',
         where: 'chat_id = ?',
@@ -460,4 +488,20 @@ extension LocalDatabaseConversations on LocalDatabaseService {
       whereArgs: [chatId],
     );
   }
+}
+
+Future<void> _guardTaskDeletion(
+  DatabaseExecutor tx,
+  String scope,
+  List<Object?> args,
+  String code,
+) async {
+  final tasks = await tx.query(
+    'conversation_tasks',
+    columns: ['task_id'],
+    where: 'completed_at IS NULL AND ($scope)',
+    whereArgs: args,
+    limit: 1,
+  );
+  if (tasks.isNotEmpty) throw AppFailure.validation(code);
 }

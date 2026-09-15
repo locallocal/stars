@@ -4,6 +4,7 @@ import 'package:stars/data/services/task_persistence_metrics.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
+import 'package:stars/domain/models/task_scheduling.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
 /// Durable conversation tasks, shared with the message database boundary.
@@ -49,7 +50,8 @@ final class SqliteConversationTaskRepository
   Future<List<ConversationTask>> listDue({
     required DateTime now,
     int limit = 100,
-  }) => _store.listDue(now: now, limit: limit);
+    String? afterTaskId,
+  }) => _store.listDue(now: now, limit: limit, afterTaskId: afterTaskId);
   @override
   Future<List<ConversationTask>> listRecoverable({
     String? afterTaskId,
@@ -73,10 +75,48 @@ final class SqliteConversationTaskRepository
     required int expectedRevision,
     required TaskLease lease,
     required DateTime now,
+    TaskConcurrencyLimits limits = const TaskConcurrencyLimits(),
   }) => _store.tryAcquireLease(
     taskId: taskId,
     expectedRevision: expectedRevision,
     lease: lease,
+    now: now,
+    limits: limits,
+  );
+  @override
+  Future<TaskWriteResult<ConversationTask>> recoverTask({
+    required String taskId,
+    required int expectedRevision,
+    required DateTime now,
+  }) => _store.recoverTask(
+    taskId: taskId,
+    expectedRevision: expectedRevision,
+    now: now,
+  );
+  @override
+  Future<TaskWriteResult<ConversationTask>> waitForTaskInput({
+    required String taskId,
+    required int expectedRevision,
+    required DateTime now,
+    required TaskWaitingReason reason,
+    required String reasonCode,
+    TaskLease? lease,
+  }) => _store.waitForTaskInput(
+    taskId: taskId,
+    expectedRevision: expectedRevision,
+    now: now,
+    reason: reason,
+    reasonCode: reasonCode,
+    lease: lease,
+  );
+  @override
+  Future<TaskWriteResult<ConversationTask>> resumeTask({
+    required String taskId,
+    required int expectedRevision,
+    required DateTime now,
+  }) => _store.resumeTask(
+    taskId: taskId,
+    expectedRevision: expectedRevision,
     now: now,
   );
   @override

@@ -16,6 +16,15 @@ extension LocalDatabaseGroundingReliability on LocalDatabaseService {
     final database = await _databaseProvider();
     return database.query(
       'agent_run_answer_checkpoints',
+      where:
+          'NOT EXISTS (SELECT 1 FROM conversation_tasks t '
+          'WHERE t.task_id = agent_run_answer_checkpoints.run_id '
+          'OR t.origin_turn_id = agent_run_answer_checkpoints.run_id '
+          "OR t.task_id || ':result' = agent_run_answer_checkpoints.message_id) "
+          'AND NOT EXISTS (SELECT 1 FROM conversation_task_checkpoints c '
+          'WHERE c.segment_id = agent_run_answer_checkpoints.run_id) '
+          'AND NOT EXISTS (SELECT 1 FROM conversation_task_tool_attempts a '
+          'WHERE a.segment_id = agent_run_answer_checkpoints.run_id)',
       orderBy: 'created_at ASC, run_id ASC',
     );
   }
@@ -43,6 +52,8 @@ extension LocalDatabaseGroundingReliability on LocalDatabaseService {
         ON latest.attempt_id = event.attempt_id
        AND latest.latest_sequence = event.sequence
       WHERE event.status IN ('requested', 'awaitingApproval', 'running')
+        AND NOT EXISTS (SELECT 1 FROM conversation_task_tool_attempts t
+          WHERE t.attempt_id = event.attempt_id)
       ORDER BY event.occurred_at ASC, event.event_id ASC
     ''');
   }
@@ -52,6 +63,14 @@ extension LocalDatabaseGroundingReliability on LocalDatabaseService {
   ) async {
     final database = await _databaseProvider();
     await database.transaction((transaction) async {
+      if ((await transaction.query(
+        'conversation_task_tool_attempts',
+        where: 'attempt_id = ?',
+        whereArgs: [event['attempt_id']],
+        limit: 1,
+      )).isNotEmpty) {
+        return;
+      }
       await _insertImmutableLedgerRecord(
         transaction,
         table: 'tool_invocation_events',
@@ -83,6 +102,8 @@ extension LocalDatabaseGroundingReliability on LocalDatabaseService {
       LEFT JOIN messages AS message
         ON message.message_id = evidence.message_id
       WHERE evidence.message_id != ''
+        AND NOT EXISTS (SELECT 1 FROM conversation_task_evidence_links t
+          WHERE t.evidence_id = evidence.evidence_id)
         AND (
           message.message_id IS NULL
           OR message.terminal_state = ''

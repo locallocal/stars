@@ -6,6 +6,7 @@ extension ConversationTaskStoreCommands on ConversationTaskStore {
     required int expectedRevision,
     required TaskLease lease,
     required DateTime now,
+    TaskConcurrencyLimits limits = const TaskConcurrencyLimits(),
   }) => _write(taskId, (tx) async {
     final old = await _current(tx, taskId, expectedRevision);
     if (lease.taskId != taskId ||
@@ -18,8 +19,26 @@ extension ConversationTaskStoreCommands on ConversationTaskStore {
             (old.lease!.expiresAt.isAfter(now) ||
                 old.lease!.token == lease.token)) ||
         (old.nextRunAt != null && old.nextRunAt!.isAfter(now)) ||
-        (old.status == ConversationTaskStatus.waitingForUser &&
-            old.cancelRequestedAt == null)) {
+        old.status == ConversationTaskStatus.waitingForUser) {
+      throw _TaskConflict(
+        TaskWriteConflictReason.leaseUnavailable,
+        old.revision,
+      );
+    }
+    if (limits.global < 1 || limits.perProvider < 1) {
+      throw ArgumentError('Concurrency limits must be positive.');
+    }
+    final holders = await tx.rawQuery(
+      'SELECT chat_id, json_extract(acceptance_json, \'\$.providerId\') AS provider '
+      'FROM conversation_tasks WHERE completed_at IS NULL AND lease_expires_at > ?',
+      [now.microsecondsSinceEpoch],
+    );
+    if (holders.length >= limits.global ||
+        holders.any((row) => row['chat_id'] == old.chatId) ||
+        holders
+                .where((row) => row['provider'] == old.acceptance.providerId)
+                .length >=
+            limits.perProvider) {
       throw _TaskConflict(
         TaskWriteConflictReason.leaseUnavailable,
         old.revision,
@@ -224,6 +243,11 @@ extension ConversationTaskStoreCommands on ConversationTaskStore {
     final saved = await _saveTask(tx, {
       ...ConversationTaskRecord.fromDomain(old).values,
       'status': ConversationTaskStatus.cancelRequested.name,
+      // A completion candidate must be reconsidered after cancellation wins.
+      'phase':
+          old.phase == ConversationTaskPhase.committing
+              ? ConversationTaskPhase.observing.name
+              : old.phase.name,
       'waiting_reason': null,
       'cancellation_source': source.name,
       'cancel_requested_at': requestedAt.microsecondsSinceEpoch,

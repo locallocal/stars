@@ -3,8 +3,8 @@
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) | [阶段计划](../plans/conversation-foreground-background-model/README.md)
 
 `ConversationTaskRunner` 推进一个已接受任务的有界分段。任务、计划、工具尝试、审批、证据和
-检查点来自数据库；模型 session 只在一次模型请求期间存在。调度接入属于阶段 05，最终验证和
-唯一结果消息提交属于阶段 06，应用组合根和交互接入属于阶段 07。
+检查点来自数据库；模型 session 只在一次模型请求期间存在。[应用调度与恢复](conversation-task-scheduling.md)
+已接入组合根；最终验证和唯一结果消息提交属于阶段 06，会话交互接入属于阶段 07。
 
 ## 调用与返回
 

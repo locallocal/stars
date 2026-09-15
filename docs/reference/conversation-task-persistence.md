@@ -4,7 +4,8 @@
 [后续实施阶段](../plans/conversation-foreground-background-model/README.md)
 
 会话任务的事务存储和查询已实现，[前台分流与接受](conversation-turn-dispatch.md)也已完成。
-runner、调度恢复、终态验证策略及 UI 接入仍由后续阶段完成；当前生产聊天入口尚未切换到后台任务模型。
+[分段执行](conversation-task-runner.md)与[调度恢复](conversation-task-scheduling.md)已实现；
+终态验证和 UI 接入由后续阶段完成，当前生产聊天入口尚未切换到后台任务模型。
 
 ## 入口与职责
 
@@ -82,12 +83,14 @@ lease，再使任务可被调度器重新评估。拒绝仍保留拒绝事实；
 重建仅修复可丢弃的投影，不增加任务 revision，也不生成新的进度事实。
 
 `listActiveForChat` 返回会话的非终态任务；`getLatestTerminalForChat` 按完成时间选择最近终态。
-`listDue` 扫描已到期、无有效 lease、未取消且无未决审批的 queued/paused 任务；
+`listDue` 按任务 ID 分页扫描已到期、无有效 lease 的 queued/paused/cancelRequested 任务；
+普通任务的未决审批阻止执行，取消协调仍可运行，committing 候选由终态处理器接收；
 `listRecoverable` 按任务 ID 分页列出所有非终态，包括等待和取消任务。
 
 lease 获取、续期和释放均比较 revision。续期只能延长有效 lease；释放 running 任务会将其
 保存为 paused，且可保存下次运行时间。过期持有者不能继续写入；重新获取使用新的 token。
-调度并发策略、等待恢复和副作用对账由调度阶段实现。
+获取 lease 的事务还检查同会话、全局和 Provider 并发上限；等待恢复和副作用对账见
+[调度实现参考](conversation-task-scheduling.md)。
 
 ## 净化、指标与数据库版本
 

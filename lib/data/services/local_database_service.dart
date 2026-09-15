@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:stars/data/services/conversation_task_store.dart';
 import 'package:stars/domain/models/conversation_memory.dart';
+import 'package:stars/domain/models/app_failure.dart';
 
 part 'local_database_mcp_skills.dart';
 part 'local_database_conversations.dart';
@@ -76,6 +77,18 @@ class LocalDatabaseService {
       whereArgs: [id],
     );
     await database.transaction((transaction) async {
+      await _guardTaskDeletion(
+        transaction,
+        'bot_id = ? OR chat_id IN (SELECT id FROM chats WHERE bot_id = ?)',
+        [id, id],
+        'bot_has_active_tasks',
+      );
+      await transaction.delete(
+        'conversation_tasks',
+        where:
+            'bot_id = ? OR chat_id IN (SELECT id FROM chats WHERE bot_id = ?)',
+        whereArgs: [id, id],
+      );
       await transaction.delete(
         'skill_activations',
         where: 'chat_id IN (SELECT id FROM chats WHERE bot_id = ?)',

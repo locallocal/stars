@@ -1,6 +1,7 @@
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/bot_skill_binding_repository.dart';
+import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
 final class BotDraft {
   const BotDraft({
@@ -140,10 +141,28 @@ final class UpdateBot {
 }
 
 final class DeleteBot {
-  const DeleteBot({required BotRepository repository})
-    : _repository = repository;
+  const DeleteBot({
+    required BotRepository repository,
+    ConversationTaskRepository? tasks,
+  }) : _repository = repository,
+       _tasks = tasks;
 
   final BotRepository _repository;
+  final ConversationTaskRepository? _tasks;
 
-  Future<void> call(String id) => _repository.deleteBot(id);
+  Future<void> call(String id) async {
+    final tasks = _tasks;
+    if (tasks != null) {
+      String? cursor;
+      do {
+        final page = await tasks.listRecoverable(afterTaskId: cursor);
+        if (page.isEmpty) break;
+        if (page.any((task) => task.botId == id)) {
+          throw const AppFailure.validation('bot_has_active_tasks');
+        }
+        cursor = page.last.taskId;
+      } while (true);
+    }
+    await _repository.deleteBot(id);
+  }
 }

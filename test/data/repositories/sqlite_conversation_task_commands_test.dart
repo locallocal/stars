@@ -397,7 +397,10 @@ void main() {
       expect(saved.status, ConversationTaskStatus.cancelRequested);
       expect(saved.cancelRequestedAt, requestedAt);
       expect(saved.cancellationSource, TaskCancellationSource.user);
-      expect(await h.repository.listDue(now: h.nextTime), isEmpty);
+      expect(
+        (await h.repository.listDue(now: h.nextTime)).single.status,
+        ConversationTaskStatus.cancelRequested,
+      );
       expect(
         (await h.repository.listRecoverable()).single.taskId,
         saved.taskId,

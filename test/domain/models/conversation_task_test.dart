@@ -9,6 +9,7 @@ void main() {
     ConversationTaskStatus.queued: {
       ConversationTaskStatus.running,
       ConversationTaskStatus.paused,
+      ConversationTaskStatus.waitingForUser,
       ConversationTaskStatus.failed,
       ConversationTaskStatus.cancelRequested,
     },

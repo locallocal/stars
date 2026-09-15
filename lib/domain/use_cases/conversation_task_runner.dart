@@ -13,6 +13,7 @@ import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
+import 'package:stars/domain/services/task_execution_gate.dart';
 import 'package:stars/domain/services/task_verification_preparation.dart';
 import 'package:stars/domain/services/tool_result_validator.dart';
 import 'package:stars/domain/use_cases/conversation_task_model_turn.dart';
@@ -51,11 +52,30 @@ final class ConversationTaskRunner {
     required TaskExecutionSnapshot input,
     required TaskLease lease,
     required String segmentId,
-  }) => _TaskSegment(this, input, lease, segmentId).run();
+    TaskExecutionGate? writeGate,
+    AgentCancellationToken? interruption,
+  }) =>
+      _TaskSegment(
+        this,
+        input,
+        lease,
+        segmentId,
+        writeGate ?? TaskExecutionGate(),
+        interruption,
+      ).run();
 }
 
 final class _TaskSegment {
-  _TaskSegment(this.runner, this.snapshot, this.lease, this.segmentId);
+  _TaskSegment(
+    this.runner,
+    this.snapshot,
+    this.lease,
+    this.segmentId,
+    this.writeGate,
+    this.interruption,
+  );
+  final TaskExecutionGate writeGate;
+  final AgentCancellationToken? interruption;
   final ConversationTaskRunner runner;
   TaskExecutionSnapshot snapshot;
   final TaskLease lease;
@@ -251,7 +271,12 @@ final class _TaskSegment {
     } on AgentRunCancelledException {
       try {
         await _check(allowCancellation: true);
-        if (task.cancelRequestedAt == null) return TaskLeaseLost(snapshot);
+        if (task.cancelRequestedAt == null) {
+          // An application pause is not a user cancellation. The previously
+          // committed intent remains available for reconciliation on resume.
+          await _release();
+          return TaskContinueSegment(snapshot);
+        }
         return await _cancel();
       } on _TaskFenceLost {
         return TaskLeaseLost(snapshot);
@@ -284,7 +309,14 @@ final class _TaskSegment {
     candidate = state?.candidate;
     finalizationReason = state?.finalizationReason;
     unknownEffects = state?.sideEffectsUnknown ?? false;
-    phase = checkpoint?.phase ?? task.phase;
+    if (checkpoint?.phase == ConversationTaskPhase.committing &&
+        task.phase != ConversationTaskPhase.committing) {
+      // Explicit resume of a configuration/reconciliation wait, retaining
+      // calls and handles without replaying the old finalization candidate.
+      finalizationReason = null;
+      unknownEffects = false;
+    }
+    phase = task.phase;
   }
 
   String? _nextStep() =>

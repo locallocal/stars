@@ -83,6 +83,7 @@ class SqliteChatRepository
 
   @override
   Future<void> deleteChat(String id) async {
+    await _localDatabase.guardConversationDeletion(id);
     final storage = _conversationSummaryStorage;
     final staged = await storage?.stageForChatDeletion(id);
     try {
@@ -109,6 +110,7 @@ class SqliteChatRepository
 
   @override
   Future<void> deleteChatsForBot(String botId) async {
+    await _localDatabase.guardBotDeletion(botId);
     final stage = await stageChatsForBotDeletion(botId);
     try {
       for (final id in stage.chatIds) {
@@ -124,6 +126,7 @@ class SqliteChatRepository
 
   @override
   Future<BotChatDeletionStage> stageChatsForBotDeletion(String botId) async {
+    await _localDatabase.guardBotDeletion(botId);
     final chats = await getChats(forceRefresh: true);
     final chatIds = <String>[
       for (final chat in chats)
@@ -229,6 +232,7 @@ class SqliteChatRepository
 
   @override
   Future<void> clearHistory(String id) async {
+    await _localDatabase.guardConversationDeletion(id);
     final timestamp = DateTime.now();
     final storage = _conversationSummaryStorage;
     final staged = await storage?.stageForChatClear(id);
