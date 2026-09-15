@@ -93,6 +93,23 @@ enum TaskEventKind {
 abstract final class TaskReasonCode {
   static const noProgress = 'task_no_progress';
   static const invalidPlan = 'task_invalid_plan';
+  static const toolUnavailable = 'task_tool_unavailable';
+
+  /// Only a bounded tool identifier may accompany a persisted obstacle code.
+  static String toolUnavailableFor(String name) =>
+      RegExp(r'^[A-Za-z0-9_-]{1,96}$').hasMatch(name)
+          ? '$toolUnavailable.$name'
+          : toolUnavailable;
+
+  static String? unavailableTool(String code) {
+    const prefix = '$toolUnavailable.';
+    if (!code.startsWith(prefix)) return null;
+    final name = code.substring(prefix.length);
+    return toolUnavailableFor(name) == code ? name : null;
+  }
+
+  static bool isToolUnavailable(String code) =>
+      code == toolUnavailable || unavailableTool(code) != null;
   static const permissionDenied = 'task_permission_denied';
   static const missingCredentials = 'task_missing_credentials';
   static const providerUnavailable = 'task_provider_unavailable';

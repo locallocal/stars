@@ -4,6 +4,7 @@ TaskAcceptanceSnapshot _freezeAcceptance(
   ConversationTurnInput input,
   PreparedChatGeneration prepared,
   ToolRegistry tools,
+  bool Function(ExecutableTool) supportsTaskTool,
 ) {
   final registry = OverlayToolRegistry(
     parent: tools,
@@ -18,6 +19,10 @@ TaskAcceptanceSnapshot _freezeAcceptance(
           ? <String>{}
           : registry
               .list(allowedNames: requested)
+              .where((definition) {
+                final tool = registry.find(definition.name);
+                return tool != null && supportsTaskTool(tool);
+              })
               .map((tool) => tool.name)
               .toSet();
   return TaskAcceptanceSnapshot(

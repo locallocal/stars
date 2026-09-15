@@ -1,5 +1,7 @@
 import 'package:stars/data/services/ai/task_model_session_factory.dart';
+import 'package:stars/data/services/shell_task_tool_adapter.dart';
 import 'package:stars/data/services/task_tool_adapters.dart';
+import 'package:stars/data/services/tools/shell_command_tool.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/task_scheduling.dart';
@@ -33,6 +35,33 @@ final class TaskRuntimeFactory {
   final Future<List<ExecutableTool>> Function(ConversationTask)? scopedTools;
   final Map<String, TaskToolAdapter> adapters;
   final TaskRunnerClock clock;
+
+  /// Shared by foreground acceptance and execution; this never invokes a tool.
+  bool supportsTool(ExecutableTool tool) =>
+      _adapter(tool.definition.name, tool) != null;
+
+  TaskToolAdapter? _adapter(String name, ExecutableTool? tool) {
+    final supplied = adapters[name];
+    if (supplied != null) {
+      if (supplied.definition.name != name ||
+          supplied.definition.source == ToolSource.providerNative ||
+          (tool != null &&
+              (tool.definition.source == ToolSource.providerNative ||
+                  supplied.definition.toolVersion !=
+                      tool.definition.toolVersion))) {
+        return null;
+      }
+      return supplied;
+    }
+    if (tool == null || tool.definition.source != ToolSource.builtIn) {
+      return null;
+    }
+    if (tool is ShellCommandTool) return ShellTaskToolAdapter(tool);
+    final arguments = taskCheckpointArguments[name];
+    return arguments == null
+        ? null
+        : SynchronousTaskToolAdapter(tool, checkpointArgumentNames: arguments);
+  }
 
   Future<TaskSegmentExecutor> resolve(ConversationTask task) async {
     Bot? bot;
@@ -104,23 +133,15 @@ final class TaskRuntimeFactory {
     };
     final resolved = <TaskToolAdapter>[];
     for (final name in requiredTools) {
-      final supplied = adapters[name];
-      if (supplied != null) {
-        resolved.add(supplied);
-        continue;
-      }
-      final tool = available[name];
-      final arguments = taskCheckpointArguments[name];
-      if (tool == null || arguments == null) {
+      final adapter = _adapter(name, available[name]);
+      if (adapter == null) {
         if (cancelling) continue;
-        throw const TaskRuntimeUnavailable(
+        throw TaskRuntimeUnavailable(
           TaskWaitingReason.requiredInput,
-          TaskReasonCode.invalidPlan,
+          TaskReasonCode.toolUnavailableFor(name),
         );
       }
-      resolved.add(
-        SynchronousTaskToolAdapter(tool, checkpointArgumentNames: arguments),
-      );
+      resolved.add(adapter);
     }
     return ConversationTaskRunner(
       repository: tasks,

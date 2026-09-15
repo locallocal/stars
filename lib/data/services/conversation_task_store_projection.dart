@@ -143,6 +143,23 @@ Future<TaskProgress> _project(
           : approvals.where((approval) => approval.decision == null).toList();
   if (pending.length > 1) throw StateError('task_multiple_pending_approvals');
   final approval = pending.isEmpty ? null : pending.single;
+  // The approval row keeps its short audit summary. The same transaction's
+  // checkpoint holds the exact, validated call that the user is approving.
+  final approvalCall =
+      approval?.attemptId == null
+          ? null
+          : checkpoint?.execution?.calls
+              .where((pending) => pending.attemptId == approval!.attemptId)
+              .firstOrNull;
+  final approvalSummary =
+      approval == null
+          ? null
+          : _safeText(
+            approvalCall == null
+                ? approval.safeActionSummary
+                : 'Approve ${approvalCall.call.name}: ${jsonEncode(approvalCall.call.arguments)}',
+            maximum: TaskProgress.maximumApprovalSummaryLength,
+          );
   final latestRows = attempts.where(
     (row) => row['attempt_id'] == latestAttempt,
   );
@@ -181,7 +198,7 @@ Future<TaskProgress> _project(
                 'approval':
                     approval == null
                         ? null
-                        : [approval.approvalId, approval.safeActionSummary],
+                        : [approval.approvalId, approvalSummary],
                 'jobs': [
                   for (final job
                       in checkpoint?.externalJobs ?? <TaskExternalJob>[])
@@ -209,8 +226,7 @@ Future<TaskProgress> _project(
     summaryHash: hash,
     latestTool: latestTool,
     pendingApprovalId: approval?.approvalId,
-    pendingApprovalSummary:
-        approval == null ? null : _safeText(approval.safeActionSummary),
+    pendingApprovalSummary: approvalSummary,
     approvalRequestedAt: approval?.requestedAt,
     reasonCode: reason,
     verificationStatus: verification,

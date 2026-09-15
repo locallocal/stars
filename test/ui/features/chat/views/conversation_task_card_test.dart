@@ -13,6 +13,8 @@ import '../../../../support/conversation_task_fixtures.dart';
 ConversationTaskProgressSummary cardSummary(
   ConversationTaskStatus status, {
   TaskWaitingReason waitingReason = TaskWaitingReason.approval,
+  String reasonCode = '',
+  String approvalSummary = 'Save notes',
 }) => ConversationTaskProgressSummary(
   taskId: 'task:abc12345678',
   chatId: 'chat-1',
@@ -25,6 +27,7 @@ ConversationTaskProgressSummary cardSummary(
   waitingReason:
       status == ConversationTaskStatus.waitingForUser ? waitingReason : null,
   progress: TaskProgress(
+    reasonCode: reasonCode,
     totalSteps: 5,
     completedSteps: 3,
     lastMeaningfulProgressAt: taskTime,
@@ -38,7 +41,7 @@ ConversationTaskProgressSummary cardSummary(
     pendingApprovalSummary:
         status == ConversationTaskStatus.waitingForUser &&
                 waitingReason == TaskWaitingReason.approval
-            ? 'Save notes'
+            ? approvalSummary
             : null,
     approvalRequestedAt:
         status == ConversationTaskStatus.waitingForUser &&
@@ -79,6 +82,64 @@ Widget host(Widget child, {bool desktop = true}) {
 }
 
 void main() {
+  testWidgets('approval card retains the end of a long command', (
+    tester,
+  ) async {
+    final summary = 'Approve run_shell_command: ${'x' * 3000} --final-option';
+    await tester.pumpWidget(
+      host(
+        ConversationTaskCard(
+          summary: cardSummary(
+            ConversationTaskStatus.waitingForUser,
+            approvalSummary: summary,
+          ),
+          onAction: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('--final-option'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  for (final entry
+      in {
+        TaskReasonCode.toolUnavailableFor('run_shell_command'):
+            'run_shell_command',
+        TaskReasonCode.invalidPlan: 'The task plan is invalid',
+        TaskReasonCode.missingCredentials:
+            'Provider credentials are unavailable',
+        TaskReasonCode.providerUnavailable: 'provider or model configuration',
+        TaskReasonCode.botUnavailable: 'bot used by this task is unavailable',
+        TaskReasonCode.reconciliationRequired: 'unknown outcome',
+      }.entries) {
+    testWidgets('card explains the persisted obstacle ${entry.key}', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(
+          ConversationTaskCard(
+            summary: cardSummary(
+              ConversationTaskStatus.waitingForUser,
+              waitingReason: TaskWaitingReason.requiredInput,
+              reasonCode: entry.key,
+            ),
+            showStatusAction: false,
+            onAction: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining(entry.value), findsOneWidget);
+      expect(
+        find.textContaining(
+          'Update the provider credentials or task configuration',
+        ),
+        findsNothing,
+      );
+      expect(find.text('Recheck and resume'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final width in [320.0, 680.0, 1200.0]) {
     for (final status in ConversationTaskStatus.values) {
       testWidgets(

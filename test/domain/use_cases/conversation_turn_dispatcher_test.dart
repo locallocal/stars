@@ -19,6 +19,66 @@ void main() {
     await h.close();
   });
 
+  test(
+    'unsupported tools are hidden from routing and cannot create a task',
+    () async {
+      final dispatcher = h.createDispatcher(supportsTaskTool: (_) => false);
+      h.background();
+      final failed =
+          await dispatcher.dispatch(foregroundInput()) as TurnDispatchFailed;
+      expect(failed.context.acceptance!.allowedToolNames, isEmpty);
+      expect(failed.code, TurnDispatchFailureCode.routingFailed);
+      expect(await h.count('conversation_tasks'), 0);
+      expect(await h.count('messages'), 1);
+      expect(h.enqueuer.calls, isEmpty);
+      expect(h.tool.calls, 0);
+    },
+  );
+
+  test(
+    'direct replies remain available when no background tools are supported',
+    () async {
+      final dispatcher = h.createDispatcher(supportsTaskTool: (_) => false);
+      final result =
+          await dispatcher.dispatch(foregroundInput()) as TurnDirectReplySaved;
+      expect(result.context.acceptance!.allowedToolNames, isEmpty);
+      expect(result.message.content, '你好！');
+    },
+  );
+
+  test(
+    'acceptance retries recheck tool support before committing the saved plan',
+    () async {
+      var available = true;
+      final dispatcher = h.createDispatcher(supportsTaskTool: (_) => available);
+      h.background();
+      await h.storage.failWrite('conversation_task_events');
+      final failed =
+          await dispatcher.dispatch(foregroundInput()) as TurnDispatchFailed;
+      await h.storage.clearFailure();
+      available = false;
+      final rejected =
+          await dispatcher.retry(failed.retry!) as TurnDispatchFailed;
+      expect(rejected.code, TurnDispatchFailureCode.routingFailed);
+      expect(await h.count('conversation_tasks'), 0);
+      expect(await h.count('messages'), 1);
+      expect(h.enqueuer.calls, isEmpty);
+      expect(h.mainCalls, 1);
+      h.response = routeFrames('backgroundTaskPlan', [
+        {...foregroundPlan(), 'allowedToolNames': <String>[]},
+      ]);
+      final accepted =
+          await dispatcher.retry(rejected.retry!) as TurnTaskAccepted;
+      final snapshot =
+          (await h.storage.repository.getExecutionSnapshot(
+            accepted.task.taskId,
+          ))!;
+      expect(snapshot.task.acceptance.allowedToolNames, isEmpty);
+      expect(snapshot.plan.allowedToolNames, isEmpty);
+      expect(h.mainCalls, 2);
+    },
+  );
+
   for (final content in ['你好', '解释一下递归，不需要外部资料', '把上面的句子改得更简洁']) {
     test('direct reply with tools available: $content', () async {
       final input = foregroundInput(content: content);

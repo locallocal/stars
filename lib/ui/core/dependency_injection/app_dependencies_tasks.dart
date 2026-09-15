@@ -151,6 +151,7 @@ AppConversationTasks createAppConversationTasks({
       tasks: repository,
       enqueuer: scheduler,
       toolRegistry: registry,
+      supportsTaskTool: runtime.supportsTool,
       now: clock.now,
     ),
     progress: PresentConversationTaskProgress(

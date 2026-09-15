@@ -76,15 +76,13 @@ final class ConversationTaskCard extends StatelessWidget {
           if (p.pendingApprovalId != null)
             row(
               w.approval,
-              '${taskSafeText(p.pendingApprovalSummary!)} · ${p.approvalRequestedAt!.toLocal()}',
+              '${taskSafeText(p.pendingApprovalSummary!, maximum: TaskProgress.maximumApprovalSummaryLength)} · ${p.approvalRequestedAt!.toLocal()}',
             ),
-          if (s.waitingReason != null) row(w.waiting, w.wait(s.waitingReason!)),
-          if (!historical &&
-              {
-                TaskWaitingReason.authentication,
-                TaskWaitingReason.requiredInput,
-              }.contains(s.waitingReason))
-            row(w.waiting, w.configurationInput),
+          if (s.waitingReason != null)
+            row(
+              w.waiting,
+              w.waitingDescription(s.waitingReason!, p.reasonCode),
+            ),
           row(w.recoveries, '${p.recoveries}'),
           row(w.verification, w.verified(p.verificationStatus)),
           if (!historical)

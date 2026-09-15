@@ -160,7 +160,7 @@ void main() {
           isA<TaskRuntimeUnavailable>().having(
             (e) => e.code,
             'code',
-            TaskReasonCode.invalidPlan,
+            TaskReasonCode.toolUnavailableFor('dynamic_tool'),
           ),
         ),
       );
@@ -253,20 +253,73 @@ void main() {
   );
 
   test(
-    'a shell tool required by the plan still needs an audited adapter',
+    'a shell tool required by the plan resolves through the built-in adapter',
     () async {
       final accepted = task(tools: {'run_shell_command'});
       committed(await h.accept(task: accepted));
-      await expectLater(
-        runtime().resolve(accepted),
-        throwsA(
-          isA<TaskRuntimeUnavailable>().having(
-            (error) => error.code,
-            'reason',
-            TaskReasonCode.invalidPlan,
-          ),
+      expect(
+        runtime().supportsTool(
+          ShellCommandTool(platform: NativeShellPlatform.linux),
         ),
+        isTrue,
       );
+      await runtime().resolve(accepted);
+    },
+  );
+
+  test(
+    'scheduler persists the missing tool name across a database reopen',
+    () async {
+      final accepted = task(tools: {'missing_tool'});
+      committed(await h.accept(task: accepted));
+      final clock = RunnerClock();
+      final scheduler = ConversationTaskScheduler(
+        repository: h.repository,
+        resolve: runtime(clock: clock).resolve,
+        ownerId: 'missing-tool-worker',
+        newId: () => 'missing-tool-lease',
+        clock: clock,
+        onReady: (_) async => fail('No runner should start without the tool'),
+      );
+      addTearDown(scheduler.stop);
+      await scheduler.start(periodic: false);
+      await until(
+        () async =>
+            (await h.task).status == ConversationTaskStatus.waitingForUser,
+      );
+      await scheduler.stop();
+      await h.reopen();
+      final progress =
+          (await h.repository.getProgressSummary(accepted.taskId))!;
+      expect(progress.waitingReason, TaskWaitingReason.requiredInput);
+      expect(
+        progress.progress.reasonCode,
+        TaskReasonCode.toolUnavailableFor('missing_tool'),
+      );
+      expect(progress.progress.modelTurns, 0);
+      expect(progress.progress.toolAttempts, 0);
+    },
+  );
+
+  test(
+    'untrusted tool identifiers cannot become persisted obstacle details',
+    () {
+      for (final name in [
+        'Bearer private-credential',
+        '../private',
+        'x' * 200,
+      ]) {
+        expect(
+          TaskReasonCode.toolUnavailableFor(name),
+          TaskReasonCode.toolUnavailable,
+        );
+        expect(
+          TaskReasonCode.unavailableTool(
+            '${TaskReasonCode.toolUnavailable}.$name',
+          ),
+          isNull,
+        );
+      }
     },
   );
 
