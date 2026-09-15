@@ -1,3 +1,16 @@
+import 'dart:math';
+import 'package:stars/data/repositories/sqlite_conversation_task_repository.dart';
+import 'package:stars/data/services/task_runtime_factory.dart';
+import 'package:stars/domain/repositories/conversation_task_repository.dart';
+import 'package:stars/domain/services/task_history_access.dart';
+import 'package:stars/domain/services/task_execution_gate.dart';
+import 'package:stars/domain/use_cases/conversation_task_scheduler.dart';
+import 'package:stars/domain/use_cases/conversation_task_commands.dart';
+import 'package:stars/domain/use_cases/delete_conversation.dart';
+import 'package:stars/domain/use_cases/bot_commands.dart';
+import 'package:stars/domain/use_cases/conversation_history_tools.dart';
+import 'package:stars/domain/use_cases/skill_inventory_tools.dart';
+import 'package:stars/domain/use_cases/mcp_inventory_tools.dart';
 import 'package:stars/data/repositories/ai_provider_repository_impl.dart';
 import 'package:stars/data/repositories/attachment_repository_impl.dart';
 import 'package:stars/data/repositories/feedback_repository_impl.dart';
@@ -130,6 +143,7 @@ import 'package:stars/ui/features/skills/view_models/skill_library_view_model.da
 
 part 'app_dependencies_chat.dart';
 part 'app_dependencies_startup.dart';
+part 'app_dependencies_tasks.dart';
 
 /// Application composition root. Production implementations are assembled in
 /// one place; views only receive repositories through their ViewModels.
@@ -185,6 +199,7 @@ class AppDependencies {
     this.skillCatalogService,
     this.skillOrganizationPolicyBundleService,
     this.startupRecoveryInitializer,
+    this.conversationTasks,
   }) : conversationDraftRepository =
            conversationDraftRepository ?? MemoryConversationDraftRepository(),
        conversationDirectoryRepository =
@@ -473,7 +488,19 @@ class AppDependencies {
       allowSkillScripts: true,
       allowProcessExecution: true,
     );
+    final conversationTasks = _createConversationTasks(
+      database: localDatabase,
+      bots: botRepository,
+      chats: chatRepository,
+      providers: aiProviderRepository,
+      registry: toolRegistry,
+      policy: toolPolicy,
+      history: conversationHistoryRepository,
+      skills: skillInventoryRepository,
+      mcp: mcpInventoryRepository,
+    );
     return AppDependencies(
+      conversationTasks: conversationTasks,
       botRepository: botRepository,
       chatRepository: chatRepository,
       messageRepository: messageRepository,
@@ -553,7 +580,9 @@ class AppDependencies {
           skillOrganizationPolicyBundleService,
       conversationDraftRepository: conversationDraftRepository,
       startupRecoveryInitializer: () async {
+        await databaseService.database;
         await recoverAgentRuns();
+        await conversationTasks.start();
       },
     );
   }
@@ -610,6 +639,7 @@ class AppDependencies {
   final SkillOrganizationPolicyBundleService?
   skillOrganizationPolicyBundleService;
   final Future<void> Function()? startupRecoveryInitializer;
+  final AppConversationTasks? conversationTasks;
 
   AppViewModel createAppViewModel(Profile initialProfile) => AppViewModel(
     initialProfile: initialProfile,
@@ -620,11 +650,13 @@ class AppDependencies {
       MainShellViewModel(botRepository: botRepository);
 
   ChatListViewModel createChatListViewModel() => ChatListViewModel(
+    deleteConversation: conversationTasks?.deleteConversation,
     chatRepository: chatRepository,
     botRepository: botRepository,
   );
 
   BotListViewModel createBotListViewModel() => BotListViewModel(
+    deleteBot: conversationTasks?.deleteBot,
     botRepository: botRepository,
     createChat: createChat,
     aiProviderRepository: aiProviderRepository,

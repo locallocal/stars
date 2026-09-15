@@ -104,6 +104,7 @@ class SqliteBotRepository implements BotAggregateRepository {
 
   @override
   Future<void> deleteBot(String id) async {
+    await _localDatabase.guardBotDeletion(id);
     final chatRepository = _chatRepository;
     final BotChatDeletionParticipant? deletionParticipant =
         chatRepository is BotChatDeletionParticipant

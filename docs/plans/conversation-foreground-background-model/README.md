@@ -14,7 +14,7 @@
 | 02 | [事务持久化与进度事实（实现参考）](../../reference/conversation-task-persistence.md) | 01 | 已实现：原子接受、进度、审批、取消、终态和 lease 存储；一致性查询及投影重建 |
 | 03 | [前台三路分流与回执（实现参考）](../../reference/conversation-turn-dispatch.md) | 01、02 | 已实现：一次主回复模型调用产生三种处置之一；无工具路由、提交后确认接受、原始身份重试及状态查询 |
 | 04 | [有界执行分段与长工具协议（实现参考）](../../reference/conversation-task-runner.md) | 01、02、03 的任务输入契约 | 已实现：冻结上下文恢复、有界 runner、持久审批、长 job、退避、对账和受控候选；后台没有任务总时限 |
-| 05 | [调度、恢复与副作用对账](05-scheduling-and-recovery.md) | 02、04 | lease、并发、退避、审批恢复和取消可持久恢复；中断写操作不会盲目重放 |
+| 05 | [调度、恢复与副作用对账（实现参考）](../../reference/conversation-task-scheduling.md) | 02、04 | 已实现：应用级扫描、lease 续期与限流、审批/取消恢复、对账等待、配置恢复和删除保护 |
 | 06 | [跨分段验证与整体终态回复](06-verification-and-terminal-results.md) | 02、04、05 | 成功、失败、取消均能安全地原子提交唯一结果消息 |
 | 07 | [会话交互与任务状态展示](07-chat-ui-and-task-actions.md) | 03、05、06 | 后台运行期间可聊天、查状态、审批和取消；完整流程接入应用依赖组合根 |
 | 08 | [旧路径清理与正式切换](08-cutover-and-cleanup.md) | 01—07 | 新路径闭环后删除旧恢复与兼容路径；生产入口只使用新模型 |

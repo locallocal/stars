@@ -29,6 +29,8 @@ import 'package:stars/ui/features/skills/view_models/skill_library_view_model.da
 import 'package:stars/ui/features/skills/views/skill_library.dart';
 import 'package:stars/utils/theme.dart';
 
+part 'stars_app_task_lifecycle.dart';
+
 class StarsBootstrapApp extends StatefulWidget {
   const StarsBootstrapApp({super.key, this.dependencies});
 
@@ -41,16 +43,21 @@ class StarsBootstrapApp extends StatefulWidget {
 class _StarsBootstrapAppState extends State<StarsBootstrapApp> {
   late final AppDependencies _dependencies;
   late final StartupViewModel _viewModel;
+  _TaskAppLifecycle? _taskLifecycle;
 
   @override
   void initState() {
     super.initState();
     _dependencies = widget.dependencies ?? AppDependencies.production();
+    if (_dependencies.conversationTasks case final tasks?) {
+      _taskLifecycle = _TaskAppLifecycle(tasks);
+    }
     _viewModel = _dependencies.createStartupViewModel()..load();
   }
 
   @override
   void dispose() {
+    _taskLifecycle?.dispose();
     _viewModel.dispose();
     super.dispose();
   }

@@ -151,6 +151,7 @@ final class ConversationTaskProgressSummary {
     required this.updatedAt,
     this.waitingReason,
     this.terminalSummary,
+    this.leaseExpiresAt,
   }) {
     _taskText(taskId, 'taskId', maximum: 256);
     _taskText(chatId, 'chatId', maximum: 256);
@@ -170,4 +171,26 @@ final class ConversationTaskProgressSummary {
   final DateTime updatedAt;
   final TaskWaitingReason? waitingReason;
   final TaskTerminalSummary? terminalSummary;
+  final DateTime? leaseExpiresAt;
+
+  /// Query-time presentation must not treat an abandoned database row as live.
+  ConversationTaskProgressSummary observedAt(DateTime now) =>
+      ConversationTaskProgressSummary(
+        taskId: taskId,
+        chatId: chatId,
+        title: title,
+        status:
+            status == ConversationTaskStatus.running &&
+                    (leaseExpiresAt == null || !leaseExpiresAt!.isAfter(now))
+                ? ConversationTaskStatus.paused
+                : status,
+        phase: phase,
+        planRevision: planRevision,
+        summaryRevision: summaryRevision,
+        progress: progress,
+        updatedAt: updatedAt,
+        waitingReason: waitingReason,
+        terminalSummary: terminalSummary,
+        leaseExpiresAt: leaseExpiresAt,
+      );
 }

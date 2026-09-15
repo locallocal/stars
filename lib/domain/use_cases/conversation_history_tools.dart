@@ -13,8 +13,10 @@ final class ConversationHistoryToolSession {
     required this.runId,
     this.resultTokenBudget = 4096,
     Set<String> initiallyAllowedReferences = const {},
+    Set<String> initiallyAllowedCursors = const {},
   }) : _repository = repository,
-       _allowedReferences = {...initiallyAllowedReferences} {
+       _allowedReferences = {...initiallyAllowedReferences},
+       _allowedCursors = {...initiallyAllowedCursors} {
     if (resultTokenBudget < 1) {
       throw ArgumentError.value(
         resultTokenBudget,
@@ -29,7 +31,7 @@ final class ConversationHistoryToolSession {
   final String runId;
   final int resultTokenBudget;
   final Set<String> _allowedReferences;
-  final Set<String> _allowedCursors = {};
+  final Set<String> _allowedCursors;
   final Map<String, ToolResult> _cache = {};
   int _searchCalls = 0;
   int _readCalls = 0;

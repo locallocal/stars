@@ -26,7 +26,10 @@ void main() {
       );
       final repository = _Tasks(summary);
       final get = GetConversationTaskProgress(repository: repository);
-      expect(await get(chatId: 'chat-1', taskId: 'task-1'), same(summary));
+      final observed = (await get(chatId: 'chat-1', taskId: 'task-1'))!;
+      expect(observed.summaryRevision, summary.summaryRevision);
+      expect(observed.progress, same(summary.progress));
+      expect(observed.status, ConversationTaskStatus.paused);
       expect(await get(chatId: 'foreign-chat', taskId: 'task-1'), isNull);
       expect(await get(chatId: 'chat-1', taskId: 'missing'), isNull);
       expect(repository.reads, ['task-1', 'task-1', 'missing']);

@@ -14,7 +14,8 @@ extension _TaskSegmentPersistence on _TaskSegment {
         !held.isValidAt(now)) {
       throw const _TaskFenceLost();
     }
-    if (!allowCancellation && task.cancelRequestedAt != null) {
+    if (!allowCancellation &&
+        (task.cancelRequestedAt != null || interruption?.isCancelled == true)) {
       throw const AgentRunCancelledException();
     }
   }
@@ -30,6 +31,13 @@ extension _TaskSegmentPersistence on _TaskSegment {
     if (!cleanup) {
       unawaited(
         cancellation.whenCancelled.then((_) {
+          if (!finished) token.cancel();
+        }),
+      );
+    }
+    if (interruption != null) {
+      unawaited(
+        interruption!.whenCancelled.then((_) {
           if (!finished) token.cancel();
         }),
       );
@@ -66,28 +74,28 @@ extension _TaskSegmentPersistence on _TaskSegment {
     String? reason,
     DateTime? nextRunAt,
     bool cleanup = false,
-  }) async {
+  }) => writeGate.run(() async {
     await _check(allowCancellation: cleanup);
     final at = now;
     final old = task;
-    if (plan != null) {
+    if (plan case final acceptedPlan?) {
       plan = ConversationTaskPlan(
-        taskId: plan.taskId,
-        revision: plan.revision,
-        objective: plan.objective,
-        steps: plan.steps,
-        allowedToolNames: plan.allowedToolNames,
+        taskId: acceptedPlan.taskId,
+        revision: acceptedPlan.revision,
+        objective: acceptedPlan.objective,
+        steps: acceptedPlan.steps,
+        allowedToolNames: acceptedPlan.allowedToolNames,
         createdAt: at,
       );
     }
-    if (approval != null) {
+    if (approval case final requestedApproval?) {
       approval = TaskApprovalRecord(
-        approvalId: approval.approvalId,
-        taskId: approval.taskId,
+        approvalId: requestedApproval.approvalId,
+        taskId: requestedApproval.taskId,
         requestRevision: old.revision + 1,
-        safeActionSummary: approval.safeActionSummary,
+        safeActionSummary: requestedApproval.safeActionSummary,
         requestedAt: at,
-        attemptId: approval.attemptId,
+        attemptId: requestedApproval.attemptId,
       );
     }
     final updated = ConversationTask(
@@ -187,9 +195,9 @@ extension _TaskSegmentPersistence on _TaskSegment {
       throw const _TaskFenceLost();
     }
     snapshot = (await runner.repository.getExecutionSnapshot(task.taskId))!;
-  }
+  });
 
-  Future<void> _release({DateTime? nextRunAt}) async {
+  Future<void> _release({DateTime? nextRunAt}) => writeGate.run(() async {
     await _check(allowCancellation: true);
     final result = await runner.repository.releaseLease(
       lease: lease,
@@ -201,7 +209,7 @@ extension _TaskSegmentPersistence on _TaskSegment {
       throw const _TaskFenceLost();
     }
     snapshot = (await runner.repository.getExecutionSnapshot(task.taskId))!;
-  }
+  });
 
   Future<TaskSegmentResult> _finishCandidate() async {
     phase = ConversationTaskPhase.committing;

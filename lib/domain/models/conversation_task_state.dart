@@ -17,7 +17,7 @@ enum ConversationTaskStatus {
     if (isTerminal || next == this) return false;
     if (next == cancelRequested || next == failed) return true;
     return switch (this) {
-      queued => next == running || next == paused,
+      queued => {running, paused, waitingForUser}.contains(next),
       running => {queued, waitingForUser, paused, succeeded}.contains(next),
       waitingForUser => {queued, running, paused}.contains(next),
       paused => {queued, running, waitingForUser}.contains(next),

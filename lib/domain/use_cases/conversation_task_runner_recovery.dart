@@ -129,6 +129,7 @@ extension _TaskSegmentRecovery on _TaskSegment {
             if (validated.result.isError &&
                 adapter.definition.riskLevel != ToolRiskLevel.readOnly) {
               unknown = true;
+              continue;
             }
             await _end(
               pending,

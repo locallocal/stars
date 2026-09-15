@@ -1,6 +1,7 @@
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
+import 'package:stars/domain/models/task_scheduling.dart';
 import 'package:stars/domain/models/tool.dart';
 
 /// Durable task operations. Implementations publish changes only after commit.
@@ -34,10 +35,11 @@ abstract interface class ConversationTaskRepository {
     required Message acknowledgement,
   });
 
-  /// Queued/paused tasks whose persisted next-run time has arrived.
+  /// Due queued/paused/cancelRequested tasks, excluding committing candidates.
   Future<List<ConversationTask>> listDue({
     required DateTime now,
     int limit = 100,
+    String? afterTaskId,
   });
 
   /// Includes all nonterminal tasks; recovery distinguishes waiting decisions,
@@ -55,6 +57,33 @@ abstract interface class ConversationTaskRepository {
     required String taskId,
     required int expectedRevision,
     required TaskLease lease,
+    required DateTime now,
+    TaskConcurrencyLimits limits = const TaskConcurrencyLimits(),
+  });
+
+  /// Reclaims only an expired lease, preserving checkpoint, waits and backoff.
+  Future<TaskWriteResult<ConversationTask>> recoverTask({
+    required String taskId,
+    required int expectedRevision,
+    required DateTime now,
+  });
+
+  /// Parks a worker/result with an actionable reason. A live lease requires its
+  /// owner token; after release the expected revision protects this command.
+  Future<TaskWriteResult<ConversationTask>> waitForTaskInput({
+    required String taskId,
+    required int expectedRevision,
+    required TaskWaitingReason reason,
+    required String reasonCode,
+    required DateTime now,
+    TaskLease? lease,
+  });
+
+  /// Explicitly retry configuration/reconciliation after user intervention.
+  /// Approval waits can only be resumed by decideApproval.
+  Future<TaskWriteResult<ConversationTask>> resumeTask({
+    required String taskId,
+    required int expectedRevision,
     required DateTime now,
   });
   Future<TaskWriteResult<TaskLease>> renewLease({
