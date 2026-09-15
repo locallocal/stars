@@ -190,6 +190,7 @@ final class ConversationTaskCheckpointRecord {
       'evidenceCursor': value.evidenceCursor,
       'completedStepIds': value.completedStepIds,
       'pendingAttemptIds': value.pendingAttemptIds,
+      'execution': value.execution?.toJson(),
       'context': value.context.map(_contextToJson).toList(),
       'externalJobs':
           value.externalJobs
@@ -215,6 +216,7 @@ final class ConversationTaskCheckpointRecord {
       'evidenceCursor',
       'completedStepIds',
       'pendingAttemptIds',
+      'execution',
       'context',
       'externalJobs',
     });
@@ -229,6 +231,12 @@ final class ConversationTaskCheckpointRecord {
       evidenceCursor: state.integer('evidenceCursor'),
       completedStepIds: state.strings('completedStepIds'),
       pendingAttemptIds: state.strings('pendingAttemptIds'),
+      execution:
+          state.values['execution'] == null
+              ? null
+              : TaskExecutionState.fromJson(
+                Map<String, Object?>.from(state.values['execution']! as Map),
+              ),
       context: _contexts(state.require<List<Object?>>('context')),
       externalJobs:
           state.require<List<Object?>>('externalJobs').map((value) {

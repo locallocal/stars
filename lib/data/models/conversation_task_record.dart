@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/task_execution_state.dart';
 import 'package:stars/domain/models/tool.dart';
 
 part 'conversation_task_snapshot_record.dart';

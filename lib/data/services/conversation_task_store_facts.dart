@@ -46,6 +46,32 @@ Future<void> _validateProgressFacts(
   }
   final checkpoint = update.checkpoint;
   if (checkpoint != null) {
+    final execution = checkpoint.execution;
+    if (execution != null) {
+      final pendingIds =
+          execution.calls.map((call) => call.attemptId).nonNulls.toSet();
+      if (!pendingIds.containsAll(checkpoint.pendingAttemptIds) ||
+          !checkpoint.pendingAttemptIds.toSet().containsAll(pendingIds) ||
+          execution.calls.any(
+            (call) => !currentPlan.allowedToolNames.contains(call.call.name),
+          )) {
+        throw ArgumentError(
+          'Continuation calls must match the plan and pending attempts.',
+        );
+      }
+      for (final evidenceId in execution.candidate?.evidenceIds ?? <String>[]) {
+        if (evidenceId == update.evidence?.evidenceId) continue;
+        if ((await tx.query(
+          'conversation_task_evidence_links',
+          where: 'task_id = ? AND evidence_id = ?',
+          whereArgs: [task.taskId, evidenceId],
+        )).isEmpty) {
+          throw ArgumentError(
+            'Candidate references evidence outside this task.',
+          );
+        }
+      }
+    }
     if (checkpoint.sequence != event.sequence ||
         checkpoint.savedAt != event.occurredAt ||
         checkpoint.phase != task.phase ||
@@ -380,6 +406,13 @@ Future<void> _writeCheckpoint(
   values['checkpoint_json'] = jsonEncode(
     _safeObject(jsonDecode(values['checkpoint_json']! as String)),
   );
+  if (checkpoint.execution != null &&
+      jsonEncode(checkpoint.execution!.toJson()) !=
+          jsonEncode(_safeObject(checkpoint.execution!.toJson()))) {
+    throw ArgumentError(
+      'Task continuation must be safe without changing execution semantics.',
+    );
+  }
   final rows = await tx.query(
     'conversation_task_checkpoints',
     where: 'task_id = ? AND plan_revision = ?',

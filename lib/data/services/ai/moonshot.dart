@@ -1,4 +1,6 @@
 import 'dart:async';
+
+import 'package:stars/data/services/ai/provider_transport.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -60,6 +62,8 @@ class Moonshot extends Provider {
     return OpenAiAgentModelSession(
       bot: bot,
       request: request,
+      requestTimeout:
+          request.options.requestTimeout ?? defaultProviderGenerationTimeout,
       formattedMessages: processMessagesWithImages(request.messages),
       uri: _chatCompletionsUri,
       headers: _headers,

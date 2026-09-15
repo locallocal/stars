@@ -16,6 +16,7 @@
 | 实现计划 | [会话前后台模型分阶段实现](plans/conversation-foreground-background-model/README.md) | 9 个实施阶段及其当前状态、依赖和验收条件 |
 | 实现参考 | [会话任务持久化与进度查询](reference/conversation-task-persistence.md) | 原子接受、进度、审批、取消、终态、lease、一致性查询和投影重建 |
 | 实现参考 | [会话前台分流与任务接受](reference/conversation-turn-dispatch.md) | 单次三路分流、流式协议、无工具边界、原子回执、幂等重试、状态查询与指标 |
+| 实现参考 | [会话任务分段执行与长工具协议](reference/conversation-task-runner.md) | 分段预算、检查点恢复、持久审批、长 job、对账与受控结果候选 |
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |

@@ -65,6 +65,8 @@ class OpenAI extends Provider {
       return OpenAiResponsesAgentModelSession(
         bot: bot,
         request: request,
+        requestTimeout:
+            request.options.requestTimeout ?? defaultProviderGenerationTimeout,
         formattedInput: _processMessagesForResponses(request.messages),
         uri: uri,
         headers: _headers,
@@ -79,6 +81,8 @@ class OpenAI extends Provider {
     return OpenAiAgentModelSession(
       bot: bot,
       request: request,
+      requestTimeout:
+          request.options.requestTimeout ?? defaultProviderGenerationTimeout,
       formattedMessages: processMessagesWithImages(request.messages),
       uri: uri,
       headers: _headers,

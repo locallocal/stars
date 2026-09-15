@@ -123,6 +123,7 @@ final class ConversationTaskCheckpoint {
     List<String> pendingAttemptIds = const [],
     List<TaskContextMessage> context = const [],
     List<TaskExternalJob> externalJobs = const [],
+    this.execution,
   }) : completedStepIds = _taskStrings(completedStepIds, 'completedStepIds'),
        pendingAttemptIds = _taskStrings(pendingAttemptIds, 'pendingAttemptIds'),
        context = List.unmodifiable(context),
@@ -147,4 +148,5 @@ final class ConversationTaskCheckpoint {
   final List<TaskContextMessage> context;
   final List<TaskExternalJob> externalJobs;
   final DateTime savedAt;
+  final TaskExecutionState? execution;
 }

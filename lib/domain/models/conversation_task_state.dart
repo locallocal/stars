@@ -85,6 +85,9 @@ enum TaskEventKind {
   processRecovered,
   retryScheduled,
   noProgress,
+  modelTurnCompleted,
+  segmentCheckpoint,
+  segmentProgress,
 }
 
 abstract final class TaskReasonCode {

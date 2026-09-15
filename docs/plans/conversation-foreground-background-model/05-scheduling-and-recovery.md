@@ -1,6 +1,6 @@
 # 05：调度、恢复与副作用对账
 
-[总计划](README.md) | [上一阶段](04-segment-runner.md) | [下一阶段：验证与终态回复](06-verification-and-terminal-results.md)
+[总计划](README.md) | [执行分段（已实现）](../../reference/conversation-task-runner.md) | [下一阶段：验证与终态回复](06-verification-and-terminal-results.md)
 
 前置依赖：阶段 02、04。对应目标规格第 5、6.3、10、11.4、13、15.2 节。
 

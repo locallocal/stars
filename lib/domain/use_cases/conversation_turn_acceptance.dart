@@ -25,20 +25,7 @@ TaskAcceptanceSnapshot _freezeAcceptance(
     modelId: input.bot.model,
     // Credentials remain runtime-only. Endpoint and options are represented by
     // a digest, never by an arbitrary Provider-configuration map in task JSON.
-    configurationDigest:
-        sha256
-            .convert(
-              utf8.encode(
-                jsonEncode({
-                  'apiType': input.bot.apiType,
-                  'model': input.bot.model,
-                  'endpoint': input.bot.baseURL,
-                  'systemPrompt': input.bot.systemPrompt,
-                  'parameters': input.bot.parameters,
-                }),
-              ),
-            )
-            .toString(),
+    configurationDigest: taskProviderConfigurationDigest(input.bot),
     language: input.language,
     context: [
       for (final message in prepared.messages)

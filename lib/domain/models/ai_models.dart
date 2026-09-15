@@ -26,8 +26,11 @@ final class ModelGenerationOptions {
     this.webSearch = false,
     this.deepThinking = false,
     this.foregroundRouting = false,
+    this.requestTimeout,
   });
 
+  /// An attempt budget supplied by durable tasks; null keeps provider defaults.
+  final Duration? requestTimeout;
   final bool stream;
   final bool allowParallelToolCalls;
   final bool webSearch;
