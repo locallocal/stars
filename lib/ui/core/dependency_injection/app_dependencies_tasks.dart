@@ -5,18 +5,18 @@ final class AppConversationTasks {
   AppConversationTasks({
     required this.repository,
     this.clock = const SystemTaskRunnerClock(),
-    this.dispatcher,
-    this.progress,
-    this.retry,
+    required this.dispatcher,
+    required this.progress,
+    required this.retry,
     required this.scheduler,
     required this.commands,
     required this.deleteConversation,
     required this.deleteBot,
   });
   final TaskRunnerClock clock;
-  final ConversationTurnDispatcher? dispatcher;
-  final PresentConversationTaskProgress? progress;
-  final PrepareConversationTaskRetry? retry;
+  final ConversationTurnDispatcher dispatcher;
+  final PresentConversationTaskProgress progress;
+  final PrepareConversationTaskRetry retry;
   final ConversationTaskRepository repository;
   final ConversationTaskScheduler scheduler;
   final ConversationTaskCommands commands;

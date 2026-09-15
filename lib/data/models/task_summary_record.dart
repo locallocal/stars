@@ -21,8 +21,12 @@ abstract final class TaskSummaryRecord {
   };
 
   static List<ConversationTaskProgressSummary> decodeList(Object? raw) {
-    if (raw == null) return const [];
-    final decoded = jsonDecode(raw as String) as List<Object?>;
+    if (raw is! String) {
+      throw const FormatException(
+        "Task summaries require current JSON storage.",
+      );
+    }
+    final decoded = jsonDecode(raw) as List<Object?>;
     return [
       for (final entry in decoded) decode(entry! as Map<String, Object?>),
     ];

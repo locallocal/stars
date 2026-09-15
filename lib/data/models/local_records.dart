@@ -85,7 +85,7 @@ final class ChatRecord {
     return Chat(
       id: _string(values['id']),
       botId: _string(values['bot_id']),
-      name: _optionalString(values['name']),
+      name: _string(values['name']),
       lastMessage: _string(values['last_message']),
       lastMessageTimestamp: _timestamp(values['last_message_timestamp']),
       createTimestamp: _timestamp(values['create_timestamp']),
@@ -167,14 +167,7 @@ final class MessageGroundingRecord {
       'trust_level': grounding.trustLevel.name,
       'reason_code': grounding.reasonCode,
       'evidence_ids': grounding.evidenceIds,
-      if (grounding.protocolVersion >= 2)
-        'claims': [
-          for (final claim in grounding.claims)
-            _claimToMap(
-              claim,
-              includeReasonCode: grounding.protocolVersion >= 3,
-            ),
-        ],
+      'claims': [for (final claim in grounding.claims) _claimToMap(claim)],
     });
   }
 
@@ -182,7 +175,7 @@ final class MessageGroundingRecord {
     if (raw == null || raw == '') {
       return const MessageGroundingRecord._(
         <String, Object?>{},
-        fallbackReasonCode: legacyReasonCode,
+        fallbackReasonCode: invalidReasonCode,
       );
     }
     if (raw is! String) {
@@ -203,18 +196,14 @@ final class MessageGroundingRecord {
     }
   }
 
-  static const String legacyReasonCode = 'legacy_grounding_missing';
   static const String invalidReasonCode = 'invalid_grounding_metadata';
   static const String unsupportedReasonCode = 'unsupported_grounding_protocol';
 
-  static const Set<String> _legacyFields = <String>{
+  static const Set<String> _currentFields = <String>{
     'protocol_version',
     'trust_level',
     'reason_code',
     'evidence_ids',
-  };
-  static const Set<String> _currentFields = <String>{
-    ..._legacyFields,
     'claims',
   };
 
@@ -231,14 +220,10 @@ final class MessageGroundingRecord {
     if (protocolVersion is! int) {
       return _unverifiedGrounding(invalidReasonCode);
     }
-    if (protocolVersion != 0 &&
-        protocolVersion != 1 &&
-        protocolVersion != 2 &&
-        protocolVersion != MessageGrounding.currentProtocolVersion) {
+    if (protocolVersion != MessageGrounding.currentProtocolVersion) {
       return _unverifiedGrounding(unsupportedReasonCode);
     }
-    final expectedFields =
-        protocolVersion >= 2 ? _currentFields : _legacyFields;
+    const expectedFields = _currentFields;
     if (!_setsEqual(values.keys.toSet(), expectedFields)) {
       return _unverifiedGrounding(invalidReasonCode);
     }
@@ -246,8 +231,7 @@ final class MessageGroundingRecord {
     final trustLevel = _answerTrustLevel(values['trust_level']);
     final reasonCode = values['reason_code'];
     final rawEvidenceIds = values['evidence_ids'];
-    final rawClaims =
-        protocolVersion >= 2 ? values['claims'] : const <Object?>[];
+    final rawClaims = values['claims'];
     if (trustLevel == null ||
         reasonCode is! String ||
         rawEvidenceIds is! List<Object?> ||
@@ -255,22 +239,13 @@ final class MessageGroundingRecord {
         rawClaims is! List<Object?>) {
       return _unverifiedGrounding(invalidReasonCode);
     }
-    if (protocolVersion == 0 &&
-        (trustLevel != AnswerTrustLevel.unverified ||
-            rawEvidenceIds.isNotEmpty)) {
-      return _unverifiedGrounding(invalidReasonCode);
-    }
-
     try {
       return MessageGrounding(
         protocolVersion: protocolVersion,
         trustLevel: trustLevel,
         reasonCode: reasonCode,
         evidenceIds: rawEvidenceIds.cast<String>(),
-        claims: [
-          for (final value in rawClaims)
-            _claimFromValue(value, includeReasonCode: protocolVersion >= 3),
-        ],
+        claims: [for (final value in rawClaims) _claimFromValue(value)],
       );
     } on Object {
       return _unverifiedGrounding(invalidReasonCode);
@@ -278,23 +253,17 @@ final class MessageGroundingRecord {
   }
 }
 
-Map<String, Object?> _claimToMap(
-  MessageClaimGrounding grounding, {
-  required bool includeReasonCode,
-}) => {
+Map<String, Object?> _claimToMap(MessageClaimGrounding grounding) => {
   'claim_id': grounding.claim.claimId,
   'text': grounding.claim.text,
   'kind': grounding.claim.kind.wireName,
   'proposed_evidence_ids': grounding.claim.evidenceIds,
   'trust_level': grounding.trustLevel.name,
   'accepted_evidence_ids': grounding.acceptedEvidenceIds,
-  if (includeReasonCode) 'reason_code': grounding.reasonCode,
+  'reason_code': grounding.reasonCode,
 };
 
-MessageClaimGrounding _claimFromValue(
-  Object? raw, {
-  required bool includeReasonCode,
-}) {
+MessageClaimGrounding _claimFromValue(Object? raw) {
   final values = _requiredStringMap(raw, 'Message claim grounding');
   final fields = <String>{
     'claim_id',
@@ -303,7 +272,7 @@ MessageClaimGrounding _claimFromValue(
     'proposed_evidence_ids',
     'trust_level',
     'accepted_evidence_ids',
-    if (includeReasonCode) 'reason_code',
+    'reason_code',
   };
   if (!_setsEqual(values.keys.toSet(), fields)) {
     throw const FormatException('Message claim grounding fields are invalid.');
@@ -312,7 +281,7 @@ MessageClaimGrounding _claimFromValue(
   final text = values['text'];
   final proposed = values['proposed_evidence_ids'];
   final accepted = values['accepted_evidence_ids'];
-  final reasonCode = includeReasonCode ? values['reason_code'] : '';
+  final reasonCode = values['reason_code'];
   if (claimId is! String ||
       text is! String ||
       proposed is! List<Object?> ||
@@ -442,7 +411,7 @@ final class MessageRecord {
 }
 
 MessageGrounding _unverifiedGrounding(String reasonCode) => MessageGrounding(
-  protocolVersion: 0,
+  protocolVersion: MessageGrounding.currentProtocolVersion,
   trustLevel: AnswerTrustLevel.unverified,
   reasonCode: reasonCode,
 );
@@ -488,23 +457,13 @@ final class ProfileRecord {
       fontSize: _storageDouble(values['font_size']),
       themeMode: _storageInt(values['theme_mode']),
       language: _string(values['language']),
-      showReasoning: _storageBoolOrDefault(
-        values['show_reasoning'],
-        defaultValue: true,
-      ),
-      showVerificationStatus: _storageBoolOrDefault(
-        values['show_verification_status'],
-        defaultValue: true,
-      ),
+      showReasoning: _storageBool(values['show_reasoning']),
+      showVerificationStatus: _storageBool(values['show_verification_status']),
       showExecutionStatus: _storageBool(values['show_execution_status']),
-      injectApplicationPrompt: _storageBoolOrDefault(
+      injectApplicationPrompt: _storageBool(
         values['inject_application_prompt'],
-        defaultValue: true,
       ),
-      strictGroundingMode: _storageBoolOrDefault(
-        values['strict_grounding_mode'],
-        defaultValue: false,
-      ),
+      strictGroundingMode: _storageBool(values['strict_grounding_mode']),
       createTimestamp: _timestamp(values['create_timestamp']),
       modifyTimestamp: _timestamp(values['modify_timestamp']),
     );
@@ -561,24 +520,12 @@ Map<String, Object?> _toolCallToMap(MessageToolCall call) => {
 };
 
 MessageToolCall _toolCallFromMap(Map<String, Object?> values) {
-  final executionId = _optionalString(values['execution_id']);
   final callId = _string(values['call_id']);
   return MessageToolCall(
-    // Identity fields were added incrementally. Historical calls legitimately
-    // omit them, so the legacy execution/call IDs are safe fallback metadata.
-    executionId: executionId,
-    invocationId:
-        _optionalString(values['invocation_id']).isEmpty
-            ? executionId
-            : _optionalString(values['invocation_id']),
-    attemptId:
-        _optionalString(values['attempt_id']).isEmpty
-            ? executionId
-            : _optionalString(values['attempt_id']),
-    providerCallId:
-        _optionalString(values['provider_call_id']).isEmpty
-            ? callId
-            : _optionalString(values['provider_call_id']),
+    executionId: _string(values['execution_id']),
+    invocationId: _string(values['invocation_id']),
+    attemptId: _string(values['attempt_id']),
+    providerCallId: _string(values['provider_call_id']),
     callId: callId,
     name: _string(values['name']),
     title: _string(values['title']),
@@ -673,8 +620,6 @@ String _string(Object? value) {
   throw const FormatException('Stored value must be a string.');
 }
 
-String _optionalString(Object? value) => value == null ? '' : _string(value);
-
 int _storageInt(Object? value) {
   if (value is int) return value;
   throw const FormatException('Stored value must be an integer.');
@@ -694,9 +639,6 @@ bool _storageBool(Object? value) {
     _ => throw const FormatException('Stored value must be 0 or 1.'),
   };
 }
-
-bool _storageBoolOrDefault(Object? value, {required bool defaultValue}) =>
-    value == null ? defaultValue : _storageBool(value);
 
 DateTime _timestamp(Object? value) =>
     DateTime.fromMillisecondsSinceEpoch(_storageInt(value));

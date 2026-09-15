@@ -1,3 +1,4 @@
+import '../test/support/idle_chat_generation.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -193,9 +194,7 @@ class _DesktopWorkflowHarnessState extends State<_DesktopWorkflowHarness> {
       clock: () => DateTime(2026, 8, 12, 9, 42),
     );
     _composer = TextEditingController();
-    _generationRegistry = ChatGenerationRegistry(
-      messagePersister: (message) async => message,
-      lastMessageUpdater: (_, _) async {},
+    _generationRegistry = idleChatGenerationRegistry(
       providerFactory: _WorkflowProvider.new,
     );
   }

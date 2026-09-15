@@ -3,8 +3,8 @@
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
 [会话交互](conversation-task-chat-ui.md) | [事实依据与防幻觉协议](conversation-loop-grounding.md)
 
-本文描述生产文本发送的前台与后台路径。旧 Agent Run 恢复及未注入 dispatcher 的旧测试路径
-仍待阶段 08 清理；生产 `AppDependencies` 已组装完整前后台链。
+本文描述生产文本发送的前台与后台路径。生产 `AppDependencies` 必须组装完整前后台链；
+旧 Agent Run 恢复和可选 dispatcher 回退已删除，见[正式运行边界](conversation-task-cutover.md)。
 
 ## 总览
 
@@ -113,7 +113,7 @@ MCP inventory 工具，并从受信内置工具中发现事实验证工具。最
 ```
 
 媒体路径由 `ChatInteractionFacade` 在 registry 中登记外部 canceller，支持导航前停止；它不组装
-文本 Memory/Skill 上下文，不运行 `AgentRunCoordinator`，也不执行文本回答的 claim-evidence
+文本 Memory/Skill 上下文，不运行后台任务 runner，也不执行文本回答的 claim-evidence
 门禁。Provider 或保存失败时，只要用户消息已经落库，就会尽力保存一个 `failed` 助手终态；
 如果失败发生在用户消息落库前，页面恢复原 prompt 和附件。
 

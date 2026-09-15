@@ -144,7 +144,7 @@ void main() {
 
   group('database version reset policy', () {
     test(
-      'migrates the current legacy database into the Stars directory',
+      'creates an isolated database without importing shared data',
       () async {
         final directory = await Directory.systemTemp.createTemp(
           'stars_legacy_database_',
@@ -179,7 +179,7 @@ void main() {
             where: 'id = ?',
             whereArgs: const <Object?>['legacy-bot'],
           ),
-          hasLength(1),
+          isEmpty,
         );
         expect(
           await File(
@@ -189,96 +189,93 @@ void main() {
               'legacy-chat',
               'asset.txt',
             ),
-          ).readAsString(),
-          'legacy asset',
+          ).exists(),
+          isFalse,
         );
         expect(await File(legacyDatabasePath).exists(), isTrue);
         expect(await legacyAsset.exists(), isTrue);
       },
     );
 
-    test(
-      'recovers a Stars backup when another app owns the legacy database',
-      () async {
-        final directory = await Directory.systemTemp.createTemp(
-          'stars_shared_database_collision_',
-        );
-        addTearDown(() => directory.delete(recursive: true));
-        final legacyDatabasePath = path.join(directory.path, 'app.db');
-        final otherAppDatabase = await databaseFactoryFfi.openDatabase(
-          legacyDatabasePath,
-          options: OpenDatabaseOptions(
-            version: DatabaseService.databaseVersion,
-            onCreate:
-                (database, _) => database.execute(
-                  'CREATE TABLE other_app_data (id TEXT PRIMARY KEY)',
-                ),
-          ),
-        );
-        await otherAppDatabase.close();
+    test('does not import a shared-directory backup', () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'stars_shared_database_collision_',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final legacyDatabasePath = path.join(directory.path, 'app.db');
+      final otherAppDatabase = await databaseFactoryFfi.openDatabase(
+        legacyDatabasePath,
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onCreate:
+              (database, _) => database.execute(
+                'CREATE TABLE other_app_data (id TEXT PRIMARY KEY)',
+              ),
+        ),
+      );
+      await otherAppDatabase.close();
 
-        final backup = Directory(
-          path.join(directory.path, '.stars_backup_current'),
-        );
-        await backup.create(recursive: true);
-        final backupDatabase = await databaseFactoryFfi.openDatabase(
-          path.join(backup.path, 'app.db'),
-          options: OpenDatabaseOptions(
-            version: DatabaseService.databaseVersion,
-            onConfigure: DatabaseService.configure,
-            onCreate: DatabaseService.createSchema,
-          ),
-        );
-        await backupDatabase.insert('bots', _botRow('backup-bot'));
-        await backupDatabase.close();
-        await File(path.join(backup.path, 'manifest.json')).writeAsString(
-          jsonEncode(<String, Object?>{
-            'schema_version': DatabaseService.databaseVersion,
-          }),
-        );
-        final backupAsset = File(
-          path.join(backup.path, 'chats', 'backup-chat', 'asset.txt'),
-        );
-        await backupAsset.parent.create(recursive: true);
-        await backupAsset.writeAsString('backup asset');
+      final backup = Directory(
+        path.join(directory.path, '.stars_backup_current'),
+      );
+      await backup.create(recursive: true);
+      final backupDatabase = await databaseFactoryFfi.openDatabase(
+        path.join(backup.path, 'app.db'),
+        options: OpenDatabaseOptions(
+          version: DatabaseService.databaseVersion,
+          onConfigure: DatabaseService.configure,
+          onCreate: DatabaseService.createSchema,
+        ),
+      );
+      await backupDatabase.insert('bots', _botRow('backup-bot'));
+      await backupDatabase.close();
+      await File(path.join(backup.path, 'manifest.json')).writeAsString(
+        jsonEncode(<String, Object?>{
+          'schema_version': DatabaseService.databaseVersion,
+        }),
+      );
+      final backupAsset = File(
+        path.join(backup.path, 'chats', 'backup-chat', 'asset.txt'),
+      );
+      await backupAsset.parent.create(recursive: true);
+      await backupAsset.writeAsString('backup asset');
 
-        final service = DatabaseService(
-          applicationDocumentsDirectoryProvider: () async => directory,
-        );
-        final recoveredDatabase = await service.initDatabase();
-        addTearDown(recoveredDatabase.close);
+      final service = DatabaseService(
+        applicationDocumentsDirectoryProvider: () async => directory,
+      );
+      final recoveredDatabase = await service.initDatabase();
+      addTearDown(recoveredDatabase.close);
 
-        expect(
-          await recoveredDatabase.query(
-            'bots',
-            where: 'id = ?',
-            whereArgs: const <Object?>['backup-bot'],
+      expect(
+        await recoveredDatabase.query(
+          'bots',
+          where: 'id = ?',
+          whereArgs: const <Object?>['backup-bot'],
+        ),
+        isEmpty,
+      );
+      expect(
+        await File(
+          path.join(
+            _applicationDataDirectory(directory).path,
+            'chats',
+            'backup-chat',
+            'asset.txt',
           ),
-          hasLength(1),
-        );
-        expect(
-          await File(
-            path.join(
-              _applicationDataDirectory(directory).path,
-              'chats',
-              'backup-chat',
-              'asset.txt',
-            ),
-          ).readAsString(),
-          'backup asset',
-        );
-        final untouchedOtherDatabase = await databaseFactoryFfi.openDatabase(
-          legacyDatabasePath,
-          options: OpenDatabaseOptions(readOnly: true, singleInstance: false),
-        );
-        expect(
-          await untouchedOtherDatabase.getVersion(),
-          DatabaseService.databaseVersion,
-        );
-        expect(await untouchedOtherDatabase.query('other_app_data'), isEmpty);
-        await untouchedOtherDatabase.close();
-      },
-    );
+        ).exists(),
+        isFalse,
+      );
+      final untouchedOtherDatabase = await databaseFactoryFfi.openDatabase(
+        legacyDatabasePath,
+        options: OpenDatabaseOptions(readOnly: true, singleInstance: false),
+      );
+      expect(
+        await untouchedOtherDatabase.getVersion(),
+        DatabaseService.databaseVersion,
+      );
+      expect(await untouchedOtherDatabase.query('other_app_data'), isEmpty);
+      await untouchedOtherDatabase.close();
+    });
 
     test('reopens a database that already uses the current schema', () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -468,7 +465,6 @@ Future<void> _expectCurrentSchema(Database database) async {
       'tool_invocation_events',
       'tool_evidence_records',
       'answer_claim_evidence',
-      'agent_run_answer_checkpoints',
       'grounding_metric_counters',
       'grounding_metric_observations',
       'token_usage_records',

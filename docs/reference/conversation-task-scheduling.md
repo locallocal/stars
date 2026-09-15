@@ -69,8 +69,8 @@ running 尝试，只有确认停止或结果后才提供取消候选；调度层
 ## 应用启动、暂停与删除
 
 [AppConversationTasks](../../lib/ui/core/dependency_injection/app_dependencies_tasks.dart) 由应用组合根
-创建。数据库就绪后先运行与新任务隔离的旧恢复器，再恢复并启动任务 scheduler，最后发布启动完成。
-旧恢复查询和迟到中断写入均排除新任务关联记录，避免旧逻辑把新任务证据误判为孤立回复。
+创建。数据库就绪后只运行任务恢复器，再启动 scheduler，最后发布启动完成。
+旧恢复器与旧消息提交入口已删除，版本边界见[正式运行边界](conversation-task-cutover.md)。
 
 任务不属于页面 ViewModel。平台 paused/detached 时停止调度并取消当前 I/O，已提交的调用意图
 可在 resumed 后重新对账；这不是用户取消，不生成取消终态。进程被系统终止后的持续计算不在支持范围内。
@@ -90,12 +90,12 @@ summaryRevision。直接使用 repository 的事实快照时，可调用摘要�
 指标不包含用户内容；持久恢复次数和分段进度仍以事件账本及 `TaskProgress` 为准。
 
 自动化测试使用真实临时 SQLite、可控时钟、独立调度实例和工具故障注入，覆盖并发限流与公平性、
-lease 接管与迟到提交、审批长等待、取消重启、job 创建/句柄保存边界、对账重试、配置缺失、旧恢复隔离、
+lease 接管与迟到提交、审批长等待、取消重启、job 创建/句柄保存边界、对账重试、配置缺失、
 删除保护和应用启动/暂停顺序。入口见：
 
 - [调度测试](../../test/domain/use_cases/conversation_task_scheduler_test.dart)
 - [恢复集成测试](../../test/domain/use_cases/conversation_task_scheduling_recovery_test.dart)
 - [数据库及删除保护](../../test/data/repositories/conversation_task_scheduling_guards_test.dart)
-- [旧恢复隔离](../../test/data/repositories/conversation_task_legacy_recovery_test.dart)
+- [生产组合与重启续跑](../../test/ui/features/chat/views/chat_task_flow_test.dart)
 - [运行配置与 job 适配器](../../test/data/services/task_runtime_factory_test.dart)
 - [启动与平台生命周期](../../test/ui/features/app/view_models/conversation_task_startup_test.dart)

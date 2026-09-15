@@ -88,7 +88,6 @@ extension ChatPageSendCommands on ChatPageState {
     final messageText = _messageController.text;
     final imageAttachmentDetail = S.of(context).imageAttachment;
     final fileAttachmentDetail = S.of(context).fileAttachment;
-    final history = List<Message>.of(_messages);
     final language = Localizations.localeOf(context).toLanguageTag();
     _pendingDraftText = messageText;
     _pendingDraftImages = List<File>.of(_selectedImages);
@@ -123,27 +122,15 @@ extension ChatPageSendCommands on ChatPageState {
         _scheduleScrollToLatest(force: true, animate: true);
       }
 
-      final started =
-          _generationViewModel.dispatcher != null
-              ? await _generationViewModel.dispatchText(
-                userMessage: userMessage,
-                language: language,
-                verification: VerificationPolicySnapshot(
-                  reliabilityEnabled: true,
-                  strictGroundingEnabled: widget.strictGroundingMode,
-                  showVerificationStatus: widget.showVerificationStatus,
-                ),
-              )
-              : await _generationViewModel.startTextWithPreparation(
-                userMessage: userMessage,
-                prepare:
-                    (identifiedUserMessage) =>
-                        _chatViewModel.prepareTextGeneration(
-                          history: history,
-                          userMessage: identifiedUserMessage,
-                          currentUserId: _currentUserId,
-                        ),
-              );
+      final started = await _generationViewModel.dispatchText(
+        userMessage: userMessage,
+        language: language,
+        verification: VerificationPolicySnapshot(
+          reliabilityEnabled: true,
+          strictGroundingEnabled: widget.strictGroundingMode,
+          showVerificationStatus: widget.showVerificationStatus,
+        ),
+      );
       if (started || _generationViewModel.snapshot.userPersisted) {
         _clearPendingDraft();
       }

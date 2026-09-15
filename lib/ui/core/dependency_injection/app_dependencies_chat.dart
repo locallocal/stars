@@ -1,21 +1,18 @@
 part of 'app_dependencies.dart';
 
 extension AppDependenciesChatFactories on AppDependencies {
-  ConversationTasksViewModel? createConversationTasksViewModel(
+  ConversationTasksViewModel createConversationTasksViewModel(
     String chatId,
     String botId,
   ) {
     final tasks = conversationTasks;
-    if (tasks == null || tasks.progress == null || tasks.retry == null) {
-      return null;
-    }
     return ConversationTasksViewModel(
       chatId: chatId,
       botId: botId,
       observe: ObserveConversationTasks(tasks.repository, clock: tasks.clock),
-      present: tasks.progress!,
+      present: tasks.progress,
       commands: tasks.commands,
-      prepareRetry: tasks.retry!,
+      prepareRetry: tasks.retry,
     );
   }
 

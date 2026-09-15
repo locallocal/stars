@@ -144,34 +144,6 @@ class ChatViewModel extends DisposableChangeNotifier {
     currentUserId: currentUserId,
   );
 
-  Future<PreparedTextGeneration> prepareTextGeneration({
-    required List<Message> history,
-    required Message userMessage,
-    required String currentUserId,
-  }) async {
-    final prepared = await _workflow.prepareTextGeneration(
-      history: history,
-      userMessage: userMessage,
-      currentUserId: currentUserId,
-    );
-    return PreparedTextGeneration(
-      userMessage: prepared.userMessage,
-      messages: prepared.messages,
-      activatedSkills: prepared.activatedSkills,
-      activationAttempts: prepared.activationAttempts,
-      skillToolCalls: prepared.skillToolCalls,
-      preflightTokenUsage: prepared.preflightTokenUsage,
-      requestedToolNames: prepared.requestedToolNames,
-      verificationToolNames: prepared.verificationToolNames,
-      approvalExemptToolNames: prepared.approvalExemptToolNames,
-      runScopedTools: prepared.runScopedTools,
-      contextAssemblyReport: prepared.contextAssemblyReport,
-      maxModelTurns: prepared.maxModelTurns,
-      reliabilityPolicyEnabled: prepared.reliabilityPolicyEnabled,
-      verificationUnavailableReason: prepared.verificationUnavailableReason,
-    );
-  }
-
   Future<String?> captureImage() => _workflow.captureImage();
 
   Future<String?> selectImage() => _workflow.selectImage();

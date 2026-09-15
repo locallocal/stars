@@ -139,28 +139,13 @@ void main() {
       );
     });
 
-    test('legacy footer maps Provider calls and is never rendered', () {
-      final candidate = GroundedAnswerCandidate.parseProviderOutput(
-        'Legacy answer.\n<stars_evidence call_ids="call-1" />',
-        allowedEvidenceIds: const {evidenceId},
-        providerCallToEvidenceId: const {'call-1': evidenceId},
-      );
-
-      expect(candidate.isLegacy, isTrue);
-      expect(candidate.renderedText, 'Legacy answer.');
-      expect(candidate.renderedText, isNot(contains('stars_evidence')));
-      expect(candidate.evidenceIds, [evidenceId]);
-      expect(candidate.claims.single.kind, ClaimKind.nonFactual);
-    });
-
-    test('legacy footer rejects unknown Provider calls', () {
+    test('rejects legacy evidence footers without converting call IDs', () {
       expect(
-        () => GroundedAnswerCandidate.parseProviderOutput(
-          'Legacy answer.\n<stars_evidence call_ids="unknown" />',
-          allowedEvidenceIds: const {evidenceId},
-          providerCallToEvidenceId: const {'call-1': evidenceId},
+        () => GroundedAnswerCandidate.parseJson(
+          'Done. <stars_evidence call_ids="call-1"/>',
+          allowedEvidenceIds: {'evidence-1'},
         ),
-        throwsA(_formatFailure('legacy_evidence_id_out_of_range')),
+        throwsA(_formatFailure('invalid_grounded_json')),
       );
     });
 

@@ -103,7 +103,7 @@ lease 获取、续期和释放均比较 revision。续期只能延长有效 leas
 回执与任务的原子提交保证孤立回执计数为零。应用级遥测接入可读取这些计数。
 
 新建 schema 的事件事实字段用于独立重建，分段扩展见[执行参考](conversation-task-runner.md)。当前版本以
-[DatabaseService](../../lib/data/services/database_service.dart)为准。旧版本仍按既有策略要求重建，
+[DatabaseService](../../lib/data/services/database_service.dart)为准。旧版本按[正式运行边界](conversation-task-cutover.md)要求重建，
 不迁移、不回填，也不自动删除用户数据库。
 
 ## 验证入口

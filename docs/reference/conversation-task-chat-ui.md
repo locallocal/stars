@@ -5,8 +5,8 @@
 [终态验证](conversation-task-terminal-results.md)
 
 生产文本发送已接入前台 dispatcher；后台任务由应用级 scheduler 执行。前台接受、任务执行、
-状态查询和唯一终态提交组成完整流程。旧 coordinator、旧恢复及未注入 dispatcher 的测试入口
-仍待[阶段 08](../plans/conversation-foreground-background-model/08-cutover-and-cleanup.md)清理。
+状态查询和唯一终态提交组成完整流程。旧 coordinator、旧恢复和可选 dispatcher 回退已删除，
+生产组合与数据库边界见[正式运行边界](conversation-task-cutover.md)。
 
 ## 生命周期与依赖组合
 

@@ -6,7 +6,8 @@
 
 本文定义 Stars 会话内前台响应、后台任务和状态展示的长期约束。领域模型、事务持久化、
 前台分流、分段执行、调度恢复、终态验证及[生产会话交互](../reference/conversation-task-chat-ui.md)
-已实现。旧恢复/兼容路径清理和完整产品验收仍按[后续阶段](../plans/conversation-foreground-background-model/README.md)推进。
+已实现。[旧路径清理与正式切换](../reference/conversation-task-cutover.md)已完成，完整产品验收
+仍按[阶段 09](../plans/conversation-foreground-background-model/09-verification-and-documentation.md)推进。
 
 规范使用以下关键词：
 
@@ -273,9 +274,9 @@ queued -> running <-> waitingForUser
 “整体无超时时间”只取消任务墙钟 deadline，不等于允许不可取消、无限循环或无限成本的单次
 操作。
 
-### 6.1 必须移除
+### 6.1 不允许的任务生命周期限制
 
-- 从后台路径移除 `AgentRunLimits.totalTimeout`；
+- 后台不能使用任务总 deadline；
 - 不使用 `synthesisTimeout` 作为整个任务剩余时间的延伸；
 - 用户审批等待不再因 `approvalTimeout` 自动失败；
 - 导航、页面销毁和布局切换不得取消后台任务。
@@ -283,16 +284,14 @@ queued -> running <-> waitingForUser
 ### 6.2 必须保留的护栏
 
 - Provider 单次请求、工具单次连接和轮询请求仍有较宽松的技术超时；
-- 单个执行分段仍限制模型回合数、工具调用数、相同参数重试数和连续失败数，但后台默认预算必须
-  明显大于当前前台 Agent Run；
+- 单个执行分段仍限制模型回合数、工具调用数、相同参数重试数和连续失败数，后台预算以 `TaskSegmentLimits` 为准；
 - 分段达到上限但确有进展时，保存检查点并排入下一分段，而不是结束整个任务；
 - 连续多个分段的进展摘要哈希相同，且没有新证据、外部 job 状态或用户输入时，以
   `task_no_progress` 安全失败；
 - 用户取消、权限永久拒绝、无效计划、缺少必需密钥等可以成为明确终态；
 - 每次重试采用有上限的指数退避，等待期间不占用 runner 并发槽。
 
-后台任务使用独立的 `TaskSegmentLimits`，不得直接复用当前 `AgentRunLimits` 的短运行默认值。目标
-默认值如下：
+后台任务使用独立的 `TaskSegmentLimits`；旧短运行配置已删除。默认值如下：
 
 | 限制项 | 后台默认值 | 达到上限后的行为 |
 | --- | ---: | --- |
@@ -683,8 +682,8 @@ abstract interface class ConversationTaskRepository {
 6. 无法确定副作用是否发生时进入 `waitingForUser`，不得盲目重放；
 7. 恢复后继续积累同一 `taskId` 的证据，最终只提交一次结果消息。
 
-现有 `RecoverAgentRuns` 的“把未完成调用标记为中断并提交安全失败消息”不再作为后台任务恢复
-策略；它应被任务恢复用例替换，而不是在 UI 层增加例外。
+恢复必须由 `RecoverConversationTasks` 依据任务状态与检查点处理。不得把所有中断任务直接
+提交为安全失败消息；旧消息恢复器已删除。
 
 ### 10.3 删除与取消
 
@@ -725,7 +724,7 @@ View -> ViewModel -> Domain Use Case -> Repository Contract
 - `use_cases/narrate_conversation_task_progress.dart`：调用模型润色状态摘要并执行安全回退；
 - `use_cases/narrate_conversation_task_terminal.dart`：生成友好失败/取消回复并执行安全回退；
 - `use_cases/recover_conversation_tasks.dart`：启动恢复与副作用对账；
-- 将 `AgentRunCoordinator` 可复用的规划、执行、观察、验证和合成能力下沉为分段协调组件。
+- 分段 runner 复用工具策略、证据与写后验证；应用级 finalizer 负责最终门禁与提交。
 
 Domain 层不依赖 Flutter、SQLite 或具体 Provider。任务状态变换集中在实体/用例中并进行单元测试。
 
@@ -773,8 +772,8 @@ provider session factory 和 tool executor。
 | [`chat_generation_view_model.dart`](../../lib/ui/features/chat/view_models/chat_generation_view_model.dart) | 收缩为前台 run 生命周期；移出工具长任务、后台恢复和最终结果提交职责 |
 | [`chat_generation_registry.dart`](../../lib/ui/features/chat/view_models/chat_generation_registry.dart) | 只管理前台会话交互，不再代表后台任务注册表 |
 | [`prepare_text_generation.dart`](../../lib/domain/use_cases/prepare_text_generation.dart) 与 [`compose_chat_turn.dart`](../../lib/domain/use_cases/compose_chat_turn.dart) | 保留上下文和工具白名单准备，输出交给三路 dispatcher |
-| [`agent_run_coordinator.dart`](../../lib/domain/use_cases/agent_run_coordinator.dart) | 拆出可检查点化的任务分段协调器，取消任务级 deadline |
-| [`recover_agent_runs.dart`](../../lib/domain/use_cases/recover_agent_runs.dart) | 由持久化任务恢复用例替代，不再把所有未完成任务直接转为安全失败 |
+| [`conversation_task_runner.dart`](../../lib/domain/use_cases/conversation_task_runner.dart) | 从检查点推进有界分段，没有任务级 deadline |
+| [`recover_conversation_tasks.dart`](../../lib/domain/use_cases/recover_conversation_tasks.dart) | 持久化任务恢复，不把所有未完成任务直接转为安全失败 |
 | [`message.dart`](../../lib/domain/models/message.dart) | 增加任务关联与消息语义类型，区分回执、状态和最终结果 |
 | [`tool_evidence.dart`](../../lib/domain/models/tool_evidence.dart) | 增加任务/分段作用域，支持跨分段、同任务验证 |
 | [`answer_trust_policy.dart`](../../lib/domain/services/answer_trust_policy.dart) 与 [`strict_grounding_policy.dart`](../../lib/domain/services/strict_grounding_policy.dart) | 接收任务创建时的验证策略快照，只为直接回答和任务结果计算可信终态 |

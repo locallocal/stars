@@ -11,58 +11,38 @@
 
 ## 当前流程与稳定保护
 
-当前文本生成链路如下：
+当前文本发送只使用[前台分流](conversation-turn-dispatch.md)和[后台任务链](conversation-task-cutover.md)：
 
 ```text
-PrepareTextGeneration
-  -> ComposeChatTurn / PrepareConversationContext
-  -> ChatGenerationViewModel
-       |-- Provider 不支持 Agent Loop，或本轮没有可用工具
-       |     -> provider.generateText
-       |     -> AnswerTrustPolicy（只能 unverified / failed）
-       |
-       `-- Provider 支持 Agent Loop，且本轮有应用工具或已归一化的原生工具
-             -> AgentRunCoordinator
-                  -> model turn
-                  -> ToolCallRequested
-                  -> 参数校验 / 策略 / 审批 / 执行 / 结果校验
-                  -> ToolResult 回送模型
-                  -> 等待调用终态事件与可构造证据提交
-                  -> model draft turn
-                  -> Provider adapter 结构化合成
-                  -> 严格解析 GroundedAnswerCandidate
-             -> 原子提交最终消息与 claim-evidence 关系
-             -> 发布 UI 终态
+ConversationTurnDispatcher
+  -> PrepareTextGeneration / ComposeChatTurn / PrepareConversationContext
+  -> DirectReply: 提交完整直接回复，可信等级为 unverified
+  -> TaskStatusRequest: 查询已提交任务事实
+  -> BackgroundTaskPlan: 原子提交任务和回执
+       -> ConversationTaskScheduler / RecoverConversationTasks
+       -> ConversationTaskRunner: 计划、持久审批、工具意图、观测与检查点
+       -> 结构化 GroundedAnswerCandidate
+       -> FinalizeConversationTask: 证据验证、写后验证、终态消息事务
 ```
 
-以下机制构成稳定协议，后续改动必须保留：
+稳定保护如下：
 
-- `AgentRunCoordinator` 对模型轮数、工具次数、同一调用重试、总超时、工具超时和审批超时设有
-  上限，并支持取消。
-- 工具只从 `requestedToolNames` 暴露；参数和声明了 `outputSchema` 的结果会经过 JSON Schema
-  校验；写入、进程、网络等能力进入策略与审批。
-- `ToolResult` 回送模型时由 `encodeToolResultForModel` 包装，包含 `evidence_id`、来源、成功或
-  失败、错误码和截断状态。
-- 普通模型文本只作为草稿暂存；Provider adapter 的独立合成入口必须返回统一的
-  `GroundedAnswerCandidate`，协调器只把结构化 claim 与 `nonFactual` 段落发布为 `TextDelta`。
-- `ToolExecutionRecord` 和消息中的 `MessageToolCall` 记录工具状态，并对敏感参数做摘要、哈希
-  或脱敏。
-- OpenAI Responses 的原生 web search 会归一化为应用统一的调用生命周期和 observation 证据；
-  未实现该适配的 Provider 仍保持 `unverified`。
-- 会话摘要和 Memory 中的助手事实只接收 verified claim，并保留来源与观测时间；用户原文可
-  形成 `userAssertion`、偏好、决策或待办，但不会升级为外部事实。消息中其他声明不会随之
-  获得信任。
-
-这些措施共同保证：没有合格工具证据的回复不会被授予 `verified`，空、截断、跨运行或未持久化
-的证据不能为声明背书，修复轮也不会重复执行副作用。
+- runner 限制单个分段的模型/工具次数、重试与预算；单次 I/O 有超时。任务没有总时限，审批不自动超时。
+- 工具受冻结的白名单、当前策略和持久审批约束。输入及声明了 `outputSchema` 的结果经过 Schema 校验。
+- 执行前提交调用意图；终态工具结果、可用证据及任务进度使用原子事务。重启先对账，未知副作用不重放。
+- 普通模型草稿与 reasoning 不写消息表。只有结构化候选经过应用门禁后才能形成最终任务结果。
+- 任务与 `taskId:result`、claim-evidence 关系一次提交；页面只展示已提交事实。
+- 文件/MCP 工具的证据与写后验证继续使用共享协议；Provider 原生工具 adapter 保留归一化，
+  任务 runner 拒绝未取得应用调用意图和 attempt 身份的原生结果。
+- 会话摘要和 Memory 只把 verified assistant claim 当作事实，用户来源保持 `userAssertion` 边界。
 
 ## 关键可信性不变量
 
-### 无工具路径统一降级
+### 无证据不能升级为已验证
 
-Agent Loop、legacy Provider 和无工具路径都经过 `AnswerTrustPolicy`。`completed` 只表示生成
-结束；没有合格证据时最多保存为 `unverified`，Provider、门禁或关键持久化失败时保存为
-`failed`。模型输出不能自行指定可信等级。
+直接回复没有工具循环，只能保存为 `unverified`。任务终态和可信度分别计算：成功不自动代表
+已验证，失败/取消可以保留已验证的部分成果。依据冻结策略，由 `AnswerTrustPolicy` 和声明门禁
+计算可信等级，Provider 不能自行指定。
 
 ### 声明必须由相关证据支持
 
@@ -72,15 +52,15 @@ kind、能力、subject、scope、有效期、Schema、完整性和持久化状�
 
 ### 证据和回答采用可恢复提交协议
 
-调用事件、不可变证据、claim-evidence 关系和最终消息遵守“证据先于回答”的提交顺序。最终
-消息与声明关系在同一数据库事务中写入；关键证据失败会关闭运行。独立 final answer checkpoint
-允许启动恢复只重试本地提交，不重新连接模型或执行工具。
+任务检查点、调用事件和不可变证据遵守“证据先于回答”的顺序。统一 finalizer 从持久化的
+`committing` 检查点复验候选，原子提交终态、结果消息和声明关系。提交失败可用同一身份重试，
+不重新执行已成功的工具。旧独立 final answer 表和旧运行恢复器均已删除。
 
 ### 调用、尝试和证据身份独立
 
-应用分别生成 `invocationId`、`attemptId` 和 evidence ID，Provider `callId` 只用于关联。相同
-参数的重复调用复用首次结果并追加审计事件，不覆盖首次成功；冲突参数生成独立失败尝试，也不
-执行副作用。
+应用生成 `invocationId`、`attemptId` 和 evidence ID，Provider `callId` 只用于关联。任务工具
+执行意图、幂等键和证据属于同一 task；跨分段可以复用已提交成功事实，不能覆盖首次成功。
+写操作中断时必须查询外部 job 或 reconcile；无法证明结果时进入持久等待。
 
 ### 跨轮上下文保留声明边界
 
@@ -91,17 +71,14 @@ kind、能力、subject、scope、有效期、Schema、完整性和持久化状�
 
 ### Provider 原生工具按 adapter 明确授予证据资格
 
-OpenAI Responses 的 `web_search_call` 和 `url_citation` 已归一化为
-`ProviderNativeToolResult`，再由协调器生成统一的 requested、running 和终态事件，并按 GRD-011
-契约复核后进入同一事实账本。请求会显式取得 action sources；只有已完成且引用能绑定到来源的
-结果才能产生 observation。查询正文只保留摘要，URL 去除凭据、query 和 fragment，引用正文、
-标题与数量均有上限并经过凭据脱敏。Provider 引用 ID 保存在 structured fact 属性中，应用生成
-的 evidence ID 仍由 attempt ID 推导，两类身份不会混用。
+OpenAI Responses adapter 保留 `web_search_call`、`url_citation` 到 `ProviderNativeToolResult`
+的确定性归一化和净化测试，包括来源绑定、URL 凭据/query/fragment 清理、内容上限与摘要。
+该共享能力不等于任务链已经授予原生执行权限。当前任务 runner 拒绝未经应用记录调用意图的
+原生结果；未来接入必须补齐任务 attempt、权限和恢复语义，不能事后伪造审批。
 
-Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获得此能力标志，其搜索正文只能
-保持 `unverified`；扩展计划见[会话事实化后续工作](../specs/conversation-grounding-future-work.md)。
-传输失败由 `ProviderFailure` 保存状态码、端点类别、请求追踪 ID 和可重试性等安全诊断字段，
-响应正文不进入回答或普通日志。
+Anthropic、Moonshot 等未完成归一化的 Provider 不会从引用正文获得证据资格。扩展计划见
+[原生工具设计](../specs/provider-native-tool-evidence-normalization.md)。传输失败使用
+`ProviderFailure` 的安全诊断字段，原始响应不进入回答或普通日志。
 
 ### 错误证据与业务事实分离
 
@@ -127,7 +104,7 @@ Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获�
 应标记为 `userAssertion`，表示“用户确实这样说过”，不等价于外部事实。
 
 产品提供严格模式：只展示已验证事实以及 `userAssertion`/`nonFactual` 等无需外部验证的段落，
-抑制未验证的事实段并追加应用生成的“无法验证”状态和原因；没有结构化声明边界的旧消息按事实
+抑制未验证的事实段并追加应用生成的“无法验证”状态和原因；没有结构化声明边界的内容按事实
 内容失败关闭。默认模式可以展示未验证内容，但视觉、持久化和后续召回都必须保留该标签。
 
 ### 工具证据记录
@@ -137,7 +114,7 @@ Anthropic、Moonshot 等尚未实现原生搜索归一化的 Provider 不会获�
 ```text
 ToolEvidenceRecord
   evidenceId             全局稳定 ID，不直接复用可冲突的 Provider call_id
-  runId / turnId
+  taskId / segmentId / runId / turnId
   invocationId / attemptId / providerCallId
   toolName / toolVersion / source / capabilities
   terminalStatus         succeeded、failed、denied、timedOut、cancelled
@@ -194,7 +171,7 @@ Authorization 或原始私有命令。
 
 模型可以提出绑定关系，但可信等级只能由应用计算。确定性门禁逐条检查：
 
-1. 证据存在于本轮的持久化事实账本；历史事实必须先通过本轮历史读取工具重新取得。
+1. 证据存在于当前任务的持久化事实账本；跨分段可以复用，同任务之外的历史事实必须重新读取。
 2. 终态、完整性、Schema、来源、作用域和有效期符合该声明类型的策略。
 3. 每个 `external_fact`、`current_fact` 和 `completed_action` 都至少绑定一个合格证据。
 4. 错误证据只绑定 `execution_failure`；动作回执不能越权绑定读取后的状态。
@@ -258,8 +235,8 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
   `MessageToolCall` 只保存调用身份、来源/风险、参数与结果摘要、审批、错误和耗时等 UI 投影；
   `truncated`、`schemaValid`、`observedAt` 等证据完整性字段由 `ToolResult` 和
   `ToolEvidenceRecord` 保存。
-- `AgentRunCoordinator` 已接入独立 Loop 状态机、覆盖率验证和最终声明门禁；工具执行、限制与
-  取消继续由协调器统一拥有。
+- `ConversationTaskRunner` 推进可恢复分段并生成候选，`FinalizeConversationTask` 负责最终声明
+  门禁和结果提交；scheduler 拥有运行生命周期。
 - `VerificationToolDiscovery` 只检查应用显式允许的候选名称，根据读风险、证据能力和
   contract 去重生成独立的 `verificationToolNames`；`ToolPolicyContext` 保留 Skill 与验证两条
   授权来源，发现本身不授予执行权。
@@ -267,8 +244,8 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
   server；它不发现新工具或扩大权限。验证反馈轮拒绝所有写入和进程工具，幂等提示也不会放宽
   该限制。
 - `AnswerClaim`、`ClaimKind` 和 `GroundedAnswerCandidate` 已替代消息级
-  `_validateFinalAnswer`；`GroundedAnswerValidator` 使用应用侧语义约束校验每条声明。旧
-  `<stars_evidence ... />` 仅用于 adapter 迁移兼容，不能保存或授予 `verified`。
+  字符串页脚；`GroundedAnswerValidator` 使用应用侧语义约束校验每条声明。
+  `<stars_evidence ... />` 不再作为兼容输入解析。
 
 ### Data
 
@@ -276,21 +253,11 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
   claim-evidence 关联表使用幂等键和摘要校验。
 - “工具终态 + 证据 + 最终消息 + 声明关系”使用可恢复提交协议。外部调用结束后先提交证据，再
   提交回答；回答提交失败可重试，证据提交失败则不得发布 `verified`。
-- 当前提交边界由运行协调器拥有：所有调用事件按尝试内单调序号排队，终态会等待事实账本提交
-  并使用同一幂等身份重试，重试不会重新执行工具。账本成功且验证需求覆盖率已计算后才允许进入
-  回答合成与提交。
-- 最终回答与 claim-evidence 关系在一个本地数据库事务中写入；事务前保存的 `unverified` 部分
-  检查点以及独立的 final answer 恢复检查点，使“证据已提交、回答未提交”的中断状态可在重启
-  后仅重试数据库提交。启动恢复先把 `requested`、`awaitingApproval` 或 `running` 的最后事件
-  追加为 `interrupted`，绝不重新打开 Provider session 或调用工具；若证据摘要、身份或 final
-  检查点无法复验，则保留不可变证据并写入无正文的安全失败消息。自由文本工具以及未在
-  GRD-015 状态机中通过声明级门禁的回答仍只能得到 `unverified`，不能因提交成功提前升级为
-  `verified`。
-- 不再吞掉关键证据持久化异常。UI 增量快照写失败可以降级，但最终事实账本写失败必须让运行
-  进入明确失败状态。
-- Provider 适配器把原生 web search 等结果转换成统一的调用和证据事件。Provider HTTP 失败
-  转换为结构化 `ProviderFailure`，保存安全字段：状态码、端点种类、请求追踪 ID、是否可重试；
-  响应正文只进入脱敏诊断。
+- runner 在 lease 与 revision 检查后提交任务检查点、工具事件和证据；finalizer 从持久候选复验，
+  不信任回调携带的草稿。结果事务失败保留候选供恢复器再次交给 finalizer，不重做副作用。
+- 前台只提交完整直接回复。UI 不定时保存 partial，后台草稿不会形成最终消息。
+- Provider HTTP 失败转换为结构化 `ProviderFailure`，保留状态码、端点类别、请求追踪 ID、是否
+  可重试等安全字段；原始响应不作为业务事实。
 - 内置目录列表、文件查询和完整文件读取输出 `observation`；目录创建/删除与文件写入、复制、
   移动、删除输出 `actionReceipt`，并携带精确参数 scope 和结构化完成事实。目录列表与文件查询
   的截断状态同时写入结构化结果和顶层工具信封；任何分段或截断结果仍可作为不可信工具数据
@@ -335,28 +302,18 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 败、停止事实合成并给出配置诊断；不得重用缓存文本或生成“操作已完成”。404 通常不应进行同
 一端点的盲目重试，只有端点发现或配置被纠正后才发起新运行。
 
-## 已交付能力矩阵
+## 恢复与观测边界
 
-原实施清单 GRD-001 至 GRD-020 已全部完成。稳定能力按层次归纳如下；具体行为以本协议、代码和
-自动化测试为准，不再维护已完成任务的排期文档。
+启动必须先验证当前数据库，再恢复任务队列。过期 lease、平台挂起和分段切换不直接构成失败；
+恢复在同一 task 身份下复用检查点，已提交终态不重复生成消息。细节见
+[调度恢复](conversation-task-scheduling.md)和[终态验证](conversation-task-terminal-results.md)。
 
-| 层次 | 已交付编号 | 稳定能力 |
-| --- | --- | --- |
-| P0 | GRD-001–007 | 消息可信模型与兼容序列化、统一终态门禁、调用身份分离、Provider 失败分类、不可信历史隔离和最小可信状态 UI |
-| P1 | GRD-008–012 | 不可变事实账本、可恢复提交、证据型工具契约，以及 OpenAI Responses 原生搜索与本地/MCP 工具的统一证据协议 |
-| P2 | GRD-013–017 | 结构化 claims、确定性证据门禁、Observe–Verify–Synthesize 状态机、写后验证和最小权限验证工具发现 |
-| P3 | GRD-018–020 | 声明级历史与 Memory、证据详情和严格模式、启动恢复、脱敏指标及发布门禁 |
+前台分流、scheduler、runner 和 finalizer 的指标只保存安全枚举、类别、计数和耗时，不包含
+消息、工具原文、URL、请求参数、凭据或异常正文。共享 grounding 指标模型和存储继续保留，
+旧 ViewModel/coordinator 的回调已删除，不能把旧回调视为当前生产观测入口。
 
-运行可靠性遵守以下固定约束：
-
-1. 启动完成前执行本地恢复。恢复只允许追加 `interrupted` 审计终态、重试 final answer 本地事务
-   或生成安全失败状态，不持有工具执行器或模型会话依赖；对同一数据库状态重复执行必须幂等。
-2. 指标只接受应用枚举、脱敏类别和计数，不接受消息正文、工具原文、URL、请求参数、凭据或
-   异常文本。
-3. 发布门禁固定检查三个不变量：unsupported claim 通过数为零、verified 证据持久化率为
-   100%、重复副作用数为零；任一不变量失败必须使发布测试失败。
-4. 尚未交付的可选扩展统一记录在[会话事实化后续工作](../specs/conversation-grounding-future-work.md)，
-   未完成前不得改变现有降级语义。
+验证门禁必须保持：无依据声明不能被授予 verified、verified 证据已持久化、重启不重复执行
+已成功的副作用。可选扩展记录在[后续工作](../specs/conversation-grounding-future-work.md)。
 
 ## 验收标准
 
@@ -369,7 +326,7 @@ inventory。该通道与 Skill 请求工具分离，但同样经过 `ToolPolicy`
 - 写工具返回成功但没有满足回读策略时，最终状态声明不能通过。
 - 重复 `call_id` 不重复副作用，也不覆盖第一次成功证据；冲突参数产生独立失败尝试。
 - 证据持久化失败时不发布可信回答；进程重启后可依据账本复验已完成消息。
-- Provider 原生 web search 产生与 MCP/内置工具相同形态的证据。
+- Provider 原生结果 adapter 的归一化继续通过共享契约测试；未提交调用意图的任务原生结果被拒绝。
 - 404、超时、401/403、429 和 5xx 得到正确的安全分类与重试策略，且不会生成事实答案。
 - 失败、取消和 partial assistant 消息不会在下一轮或摘要中被当作事实。
 - 同一助手消息中，一条有证据、一条无证据时只能是 `partiallyVerified`，不能整条升级。

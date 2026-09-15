@@ -113,9 +113,7 @@ void main() {
     _expectPrimaryTextColor(
       tester,
       find.descendant(
-        of: find.byKey(
-          const ValueKey<String>('bot-mcp-tools-dialog-server-1'),
-        ),
+        of: find.byKey(const ValueKey<String>('bot-mcp-tools-dialog-server-1')),
         matching: find.text('Docs'),
       ),
     );

@@ -70,7 +70,6 @@ extension _ChatPageWorkspace on ChatPageState {
             children: [
               _buildAttachmentsBar(desktopMode: true),
               _buildTasksPanel(),
-              _buildToolApprovalCard(isDesktop: true),
               _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: true),
               MessageInput(
@@ -143,12 +142,11 @@ extension _ChatPageWorkspace on ChatPageState {
                   scrollController: _scrollController,
                   isStreaming: _isStreaming,
                   streamingResponse: _streamingResponse,
-                  streamingFiles: _streamingFiles,
                   streamingProcessInfo: _buildStreamingProcessInfo(),
                   streamingTokenUsage: _streamingTokenUsage,
                   currentUserId: _currentUserId,
                   deepThinking: _provider.getDeepThinking(),
-                  reasoningResponse: _reasoningResponse,
+                  reasoningResponse: '',
                   isDesktop: isDesktop,
                   showReasoning: widget.showReasoning,
                   showVerificationStatus: widget.showVerificationStatus,
@@ -261,16 +259,6 @@ extension _ChatPageWorkspace on ChatPageState {
       return;
     }
     unawaited(_loadMessages());
-  }
-
-  Widget _buildToolApprovalCard({required bool isDesktop}) {
-    final approval = _generationViewModel.snapshot.pendingToolApproval;
-    if (approval == null) return const SizedBox.shrink();
-    return ToolApprovalCard(
-      request: approval,
-      desktopMode: isDesktop,
-      onDecision: _generationViewModel.resolveToolApproval,
-    );
   }
 
   void _dismissGenerationError() {

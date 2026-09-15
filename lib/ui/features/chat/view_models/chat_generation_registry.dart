@@ -1,71 +1,22 @@
 part of 'chat_generation_view_model.dart';
 
+/// Tracks foreground text and media interactions, never durable task ownership.
 class ChatGenerationRegistry {
   ChatGenerationRegistry({
-    this.dispatcher,
-    this.taskProgress,
-    required MessagePersister messagePersister,
-    GroundedMessagePersister? groundedMessagePersister,
-    AnswerRecoveryCheckpointPersister? answerRecoveryCheckpointPersister,
-    AnswerRecoveryCheckpointClearer? answerRecoveryCheckpointClearer,
-    required LastMessageUpdater lastMessageUpdater,
-    AssistantPreviewBuilder assistantPreviewBuilder =
-        _defaultAssistantPreviewBuilder,
+    required this.dispatcher,
+    required this.taskProgress,
     required ProviderFactory providerFactory,
     MessageIdFactory messageIdFactory = _defaultMessageIdFactory,
-    SkillActivationPersister? skillActivationPersister,
-    ToolInvocationPersister? toolInvocationPersister,
-    GroundedAnswerValidator? groundedAnswerValidator,
-    TerminalMessageObserver? terminalMessageObserver,
-    ProviderFailureObserver? providerFailureObserver,
-    TerminalGroundingMetricsObserver? terminalGroundingMetricsObserver,
-    ToolRegistry? toolRegistry,
-    ToolPolicy toolPolicy = const DefaultToolPolicy(),
-    AgentRunLimits agentRunLimits = const AgentRunLimits(),
-    Duration partialPersistenceInterval =
-        ChatGenerationViewModel.defaultPartialPersistenceInterval,
-  }) : _messagePersister = messagePersister,
-       _groundedMessagePersister = groundedMessagePersister,
-       _answerRecoveryCheckpointPersister = answerRecoveryCheckpointPersister,
-       _answerRecoveryCheckpointClearer = answerRecoveryCheckpointClearer,
-       _lastMessageUpdater = lastMessageUpdater,
-       _assistantPreviewBuilder = assistantPreviewBuilder,
-       _providerFactory = providerFactory,
-       _messageIdFactory = messageIdFactory,
-       _skillActivationPersister = skillActivationPersister,
-       _toolInvocationPersister = toolInvocationPersister,
-       _groundedAnswerValidator = groundedAnswerValidator,
-       _terminalMessageObserver = terminalMessageObserver,
-       _providerFailureObserver = providerFailureObserver,
-       _terminalGroundingMetricsObserver = terminalGroundingMetricsObserver,
-       _toolRegistry = toolRegistry ?? StaticToolRegistry(const []),
-       _toolPolicy = toolPolicy,
-       _agentRunLimits = agentRunLimits,
-       _partialPersistenceInterval = partialPersistenceInterval;
+  }) : _providerFactory = providerFactory,
+       _messageIdFactory = messageIdFactory;
 
-  final ConversationTurnDispatcher? dispatcher;
-  final PresentConversationTaskProgress? taskProgress;
+  final ConversationTurnDispatcher dispatcher;
+  final PresentConversationTaskProgress taskProgress;
+  final ProviderFactory _providerFactory;
+  final MessageIdFactory _messageIdFactory;
   final Map<String, ChatGenerationViewModel> _viewModels = {};
   final Set<String> _nonCancellableRuns = {};
   final Map<String, Future<bool> Function()> _externalRunCancellers = {};
-  final MessagePersister _messagePersister;
-  final GroundedMessagePersister? _groundedMessagePersister;
-  final AnswerRecoveryCheckpointPersister? _answerRecoveryCheckpointPersister;
-  final AnswerRecoveryCheckpointClearer? _answerRecoveryCheckpointClearer;
-  final LastMessageUpdater _lastMessageUpdater;
-  final AssistantPreviewBuilder _assistantPreviewBuilder;
-  final ProviderFactory _providerFactory;
-  final MessageIdFactory _messageIdFactory;
-  final SkillActivationPersister? _skillActivationPersister;
-  final ToolInvocationPersister? _toolInvocationPersister;
-  final GroundedAnswerValidator? _groundedAnswerValidator;
-  final TerminalMessageObserver? _terminalMessageObserver;
-  final ProviderFailureObserver? _providerFailureObserver;
-  final TerminalGroundingMetricsObserver? _terminalGroundingMetricsObserver;
-  final ToolRegistry _toolRegistry;
-  final ToolPolicy _toolPolicy;
-  final AgentRunLimits _agentRunLimits;
-  final Duration _partialPersistenceInterval;
 
   ChatGenerationViewModel viewModelFor(String chatId, Bot bot) {
     final viewModel = _viewModels.putIfAbsent(
@@ -75,24 +26,8 @@ class ChatGenerationRegistry {
         dispatcher: dispatcher,
         taskProgress: taskProgress,
         bot: bot,
-        messagePersister: _messagePersister,
-        groundedMessagePersister: _groundedMessagePersister,
-        answerRecoveryCheckpointPersister: _answerRecoveryCheckpointPersister,
-        answerRecoveryCheckpointClearer: _answerRecoveryCheckpointClearer,
-        lastMessageUpdater: _lastMessageUpdater,
-        assistantPreviewBuilder: _assistantPreviewBuilder,
         providerFactory: _providerFactory,
         messageIdFactory: _messageIdFactory,
-        skillActivationPersister: _skillActivationPersister,
-        toolInvocationPersister: _toolInvocationPersister,
-        groundedAnswerValidator: _groundedAnswerValidator,
-        terminalMessageObserver: _terminalMessageObserver,
-        providerFailureObserver: _providerFailureObserver,
-        terminalGroundingMetricsObserver: _terminalGroundingMetricsObserver,
-        toolRegistry: _toolRegistry,
-        toolPolicy: _toolPolicy,
-        agentRunLimits: _agentRunLimits,
-        partialPersistenceInterval: _partialPersistenceInterval,
       ),
     );
     viewModel.updateBot(bot);

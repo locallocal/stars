@@ -474,13 +474,6 @@ class _EvidenceTrustDetails extends StatelessWidget {
   final strings = S.of(context);
   final colors = Theme.of(context).colorScheme;
   final tokens = StarsDesktopTokens.of(context);
-  if (_isGenerationTimeout(grounding.reasonCode)) {
-    return (
-      foreground: colors.error,
-      icon: LucideIcons.clock3,
-      label: strings.statusTimedOut,
-    );
-  }
   if (grounding.trustLevel == AnswerTrustLevel.failed) {
     return (
       foreground: colors.error,
@@ -555,9 +548,6 @@ String _answerTrustLabel(
   MessageGrounding grounding,
   bool hasNotFactCheckedContent,
 ) {
-  if (_isGenerationTimeout(grounding.reasonCode)) {
-    return strings.statusTimedOut;
-  }
   return switch (grounding.trustLevel) {
     AnswerTrustLevel.verified => strings.answerTrustVerified,
     AnswerTrustLevel.partiallyVerified => strings.answerTrustPartiallyVerified,
@@ -568,10 +558,6 @@ String _answerTrustLabel(
           : strings.answerTrustUnverified,
   };
 }
-
-bool _isGenerationTimeout(String reasonCode) =>
-    reasonCode == 'agent_run_timeout' ||
-    reasonCode == 'agent_synthesis_timeout';
 
 String _claimTrustLabel(S strings, ClaimTrustLevel trustLevel) =>
     switch (trustLevel) {
@@ -618,8 +604,6 @@ String _answerTrustReason(S strings, String reasonCode) {
     'provider_tools_unsupported' =>
       strings.answerTrustReasonProviderUnsupported,
     'tool_rejected' => strings.answerTrustReasonToolRejected,
-    'agent_run_timeout' ||
-    'agent_synthesis_timeout' => strings.answerTrustReasonGenerationTimedOut,
     'provider_failed' ||
     'provider_generation_failed' ||
     'provider_authentication_failed' ||
@@ -640,7 +624,6 @@ String _answerTrustReason(S strings, String reasonCode) {
     'generation_response_persist_failed' => strings.answerTrustReasonGateFailed,
     'no_tool_evidence' ||
     'no_usable_evidence' ||
-    'legacy_evidence_unverified' ||
     'tool_unavailable' ||
     'tool_failed' ||
     'incomplete_tool_execution' => strings.answerTrustReasonNoTool,

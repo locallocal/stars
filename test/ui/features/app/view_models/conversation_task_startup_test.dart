@@ -1,3 +1,6 @@
+import '../../../../support/idle_chat_generation.dart';
+import 'package:stars/domain/use_cases/prepare_conversation_task_retry.dart';
+import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/repositories/sqlite_chat_repository.dart';
 import 'package:stars/domain/models/profile.dart';
@@ -24,6 +27,12 @@ void main() {
       clock: h.clock,
     );
     tasks = AppConversationTasks(
+      dispatcher: unusedForegroundDispatcher(),
+      progress: unusedTaskProgress(),
+      retry: PrepareConversationTaskRetry(
+        tasks: h.db.repository,
+        messages: SqliteMessageRepository(localDatabase: h.db.local),
+      ),
       repository: h.db.repository,
       scheduler: scheduler,
       commands: commands,

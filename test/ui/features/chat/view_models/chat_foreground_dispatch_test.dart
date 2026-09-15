@@ -21,8 +21,6 @@ void main() {
     registry = ChatGenerationRegistry(
       dispatcher: h.dispatcher,
       taskProgress: progress,
-      messagePersister: h.messages.upsertMessage,
-      lastMessageUpdater: (_, _) async {},
       providerFactory: h.providers.create,
     );
     vm = registry.viewModelFor('chat-1', foregroundBot());
@@ -165,8 +163,6 @@ void main() {
         bot: foregroundBot(),
         dispatcher: h.dispatcher,
         taskProgress: customProgress,
-        messagePersister: h.messages.upsertMessage,
-        lastMessageUpdater: (_, _) async {},
         providerFactory: h.providers.create,
       );
       addTearDown(statusVm.dispose);

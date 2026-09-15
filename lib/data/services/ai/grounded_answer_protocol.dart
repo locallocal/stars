@@ -61,10 +61,9 @@ ModelEvent _parseGroundedAnswerOutput(
 ) {
   try {
     return GroundedAnswerProduced(
-      GroundedAnswerCandidate.parseProviderOutput(
+      GroundedAnswerCandidate.parseJson(
         source,
         allowedEvidenceIds: request.allowedEvidenceIds,
-        providerCallToEvidenceId: request.legacyEvidenceAliases,
       ),
     );
   } on GroundedAnswerFormatException catch (error) {

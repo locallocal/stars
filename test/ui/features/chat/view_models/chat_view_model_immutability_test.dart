@@ -1,3 +1,4 @@
+import '../../../../support/idle_chat_generation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
@@ -107,9 +108,7 @@ _ChatHarness _createHarness(_MutableMessageRepository messages) {
       aiProviderRepository: providers,
     ),
   );
-  final generationRegistry = ChatGenerationRegistry(
-    messagePersister: (message) async => message,
-    lastMessageUpdater: (_, _) async {},
+  final generationRegistry = idleChatGenerationRegistry(
     providerFactory: providers.create,
   );
   final generationViewModel = generationRegistry.viewModelFor(

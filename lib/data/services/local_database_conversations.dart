@@ -105,11 +105,6 @@ extension LocalDatabaseConversations on LocalDatabaseService {
         whereArgs: [id],
       );
       await transaction.delete(
-        'agent_run_answer_checkpoints',
-        where: 'chat_id = ?',
-        whereArgs: [id],
-      );
-      await transaction.delete(
         'tool_evidence_records',
         where: 'chat_id = ?',
         whereArgs: [id],
