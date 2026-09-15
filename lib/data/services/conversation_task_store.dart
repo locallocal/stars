@@ -10,9 +10,12 @@ import 'package:stars/data/models/tool_execution_record.dart';
 import 'package:stars/data/services/task_persistence_metrics.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/tool.dart';
+import 'package:stars/domain/services/task_safe_data.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
+part 'conversation_task_store_execution.dart';
 part 'conversation_task_store_writes.dart';
 part 'conversation_task_store_commands.dart';
 part 'conversation_task_store_facts.dart';

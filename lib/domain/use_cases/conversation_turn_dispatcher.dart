@@ -13,6 +13,7 @@ import 'package:stars/domain/repositories/conversation_turn_router.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/services/answer_trust_policy.dart';
 import 'package:stars/domain/services/task_acknowledgement_policy.dart';
+import 'package:stars/domain/services/task_provider_configuration.dart';
 import 'package:stars/domain/use_cases/get_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 

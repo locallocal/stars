@@ -1,5 +1,6 @@
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/tool.dart';
 
 /// Durable task operations. Implementations publish changes only after commit.
@@ -9,6 +10,7 @@ import 'package:stars/domain/models/tool.dart';
 /// No method invokes a Provider or external tool while holding a transaction.
 abstract interface class ConversationTaskRepository {
   Future<ConversationTask?> getById(String taskId);
+  Future<TaskExecutionSnapshot?> getExecutionSnapshot(String taskId);
   Future<ConversationTask?> getByOriginTurnId(String originTurnId);
   Future<List<ConversationTask>> listActiveForChat(String chatId);
   Future<ConversationTask?> getLatestTerminalForChat(String chatId);

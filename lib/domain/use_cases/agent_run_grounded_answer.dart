@@ -15,19 +15,7 @@ extension _AgentRunGroundedAnswer on AgentRunCoordinator {
     final request = GroundedAnswerSynthesisRequest(
       draftText: draftText,
       evidence: _groundedEvidenceReferences(invocations),
-      requiredClaims: [
-        for (final requirement in verificationRequirements)
-          GroundedClaimSynthesisRequirement(
-            claimId: requirement.claimId,
-            claimKind: requirement.claimKind,
-            subject: requirement.subject,
-            scope: requirement.scope,
-            requiredFactNames: requirement.requiredFactNames,
-            requiredFactValues: requirement.requiredFactValues,
-            toolName: requirement.toolName,
-            verificationAvailable: requirement.verificationAvailable,
-          ),
-      ],
+      requiredClaims: groundedSynthesisRequirements(verificationRequirements),
       reliabilityFeedback: reliabilityFeedback,
     );
     GroundedAnswerCandidate? candidate;

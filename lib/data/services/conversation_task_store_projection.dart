@@ -85,9 +85,22 @@ Future<TaskProgress> _project(
     if (event.segmentId != null) segments.add(event.segmentId!);
     if (event.kind == TaskEventKind.processRecovered) recoveries++;
     if (event.kind == TaskEventKind.noProgress) noProgress++;
-    if (meaningfulKinds.contains(event.kind)) {
-      meaningfulAt = event.occurredAt;
+    if ({
+      TaskEventKind.segmentProgress,
+      TaskEventKind.approvalApproved,
+      TaskEventKind.approvalDenied,
+    }.contains(event.kind)) {
       noProgress = 0;
+    }
+    if (event.kind == TaskEventKind.segmentProgress ||
+        (meaningfulKinds.contains(event.kind) &&
+            (checkpoint?.execution == null ||
+                !{
+                  TaskEventKind.planRevised,
+                  TaskEventKind.toolFailed,
+                }.contains(event.kind)))) {
+      meaningfulAt = event.occurredAt;
+      if (checkpoint?.execution == null) noProgress = 0;
     }
     if (event.reasonCode != null) reason = _safeCode(event.reasonCode!);
     if (event.kind == TaskEventKind.approvalApproved) reason = '';
@@ -169,6 +182,15 @@ Future<TaskProgress> _project(
                     approval == null
                         ? null
                         : [approval.approvalId, approval.safeActionSummary],
+                'jobs': [
+                  for (final job
+                      in checkpoint?.externalJobs ?? <TaskExternalJob>[])
+                    [job.attemptId, job.externalJobId, job.safeStatus],
+                ],
+                'decisions': [
+                  for (final item in approvals)
+                    [item.approvalId, item.decision?.name],
+                ],
                 'evidence': evidence.map((item) => item.evidenceId).toList(),
               }),
             ),

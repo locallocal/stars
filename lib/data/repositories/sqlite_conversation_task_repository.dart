@@ -3,6 +3,7 @@ import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/data/services/task_persistence_metrics.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
 /// Durable conversation tasks, shared with the message database boundary.
@@ -14,6 +15,10 @@ final class SqliteConversationTaskRepository
 
   final ConversationTaskStore _store;
   TaskPersistenceMetrics get metrics => _store.metrics;
+
+  @override
+  Future<TaskExecutionSnapshot?> getExecutionSnapshot(String taskId) =>
+      _store.getExecutionSnapshot(taskId);
 
   @override
   Future<ConversationTask?> getById(String taskId) => _store.getById(taskId);

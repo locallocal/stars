@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/provider_service.dart';
+import 'package:stars/data/services/ai/provider_transport.dart';
 import 'package:stars/data/services/ai/skill_tool_sessions.dart';
 import 'package:stars/domain/models/models.dart';
 
@@ -41,6 +42,8 @@ class Anthropic extends Provider {
     return AnthropicAgentModelSession(
       bot: bot,
       request: request,
+      requestTimeout:
+          request.options.requestTimeout ?? defaultProviderGenerationTimeout,
       system: formatted['system']?.toString() ?? '',
       formattedMessages: messages,
       uri: Uri.parse(_getMessageUrl()),
