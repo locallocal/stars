@@ -5,6 +5,11 @@ import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 
 export 'package:stars/domain/models/grounded_answer.dart' show ClaimTrustLevel;
 
+/// An application-owned ledger scope, independent of a Provider's claim IDs.
+abstract interface class EvidenceValidationScope {
+  bool contains(ToolEvidenceRecord evidence, String scopeId);
+}
+
 /// Application-owned semantic constraints for one answer claim.
 ///
 /// These constraints must be derived from the verification request or a typed
@@ -24,7 +29,12 @@ final class ClaimEvidenceRequirement {
     this.toolName = '',
     this.attemptId = '',
     this.verificationAvailable = true,
+    Set<String>? allowedAttemptIds,
   }) : claimId = _normalizedRequiredText(claimId, 'claimId'),
+       allowedAttemptIds =
+           allowedAttemptIds == null
+               ? null
+               : Set.unmodifiable(allowedAttemptIds),
        allowedEvidenceKinds = Set<EvidenceKind>.unmodifiable(
          allowedEvidenceKinds,
        ),
@@ -70,6 +80,9 @@ final class ClaimEvidenceRequirement {
   /// False when policy requires a state claim to remain unverified because no
   /// authorized verifier was available for this run.
   final bool verificationAvailable;
+
+  /// Task postconditions restrict support to reads started after their write.
+  final Set<String>? allowedAttemptIds;
 }
 
 /// A conservative semantic review performed after deterministic validation.
@@ -227,11 +240,14 @@ final class GroundedAnswerValidator {
   const GroundedAnswerValidator({
     required ToolEvidenceRepository evidenceRepository,
     ClaimEvidenceReviewer? reviewer,
+    EvidenceValidationScope? scope,
   }) : _evidenceRepository = evidenceRepository,
-       _reviewer = reviewer;
+       _reviewer = reviewer,
+       _scope = scope;
 
   final ToolEvidenceRepository _evidenceRepository;
   final ClaimEvidenceReviewer? _reviewer;
+  final EvidenceValidationScope? _scope;
 
   Future<GroundedAnswerValidationResult> validate({
     required String runId,
@@ -509,7 +525,7 @@ final class GroundedAnswerValidator {
     }
     final evidence = ledgerEvidence.record;
     if (evidence == null) return EvidenceRejectionReason.evidenceNotFound;
-    if (evidence.runId != runId) {
+    if (!(_scope?.contains(evidence, runId) ?? (evidence.runId == runId))) {
       return EvidenceRejectionReason.evidenceRunMismatch;
     }
     if (!evidence.persisted) {
@@ -536,6 +552,10 @@ final class GroundedAnswerValidator {
     }
     if (requirement.attemptId.isNotEmpty &&
         evidence.attemptId != requirement.attemptId) {
+      return EvidenceRejectionReason.evidenceSubjectMismatch;
+    }
+    if (requirement.allowedAttemptIds != null &&
+        !requirement.allowedAttemptIds!.contains(evidence.attemptId)) {
       return EvidenceRejectionReason.evidenceSubjectMismatch;
     }
     if (evidence.evidenceKind != EvidenceKind.executionFailure) {

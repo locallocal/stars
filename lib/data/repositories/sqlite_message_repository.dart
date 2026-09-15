@@ -12,9 +12,17 @@ class SqliteMessageRepository
         CachedMessageRepository,
         PaginatedMessageRepository,
         BotScopedMessageMetricsRepository,
+        TaskMessageNotifications,
         GroundedMessageRepository {
   SqliteMessageRepository({required LocalDatabaseService localDatabase})
-    : _localDatabase = localDatabase;
+    : _localDatabase = localDatabase {
+    _taskSubscription = localDatabase.taskMessageChanges.listen((chatId) {
+      _messageCache.remove(chatId);
+      _changes.add(null);
+    });
+  }
+
+  late final StreamSubscription<String> _taskSubscription;
 
   final LocalDatabaseService _localDatabase;
   final StreamController<void> _changes = StreamController<void>.broadcast();
@@ -29,6 +37,9 @@ class SqliteMessageRepository
 
   @override
   Stream<void> get changes => _changes.stream;
+
+  @override
+  Stream<String> get taskMessageChanges => _localDatabase.taskMessageChanges;
 
   @override
   Stream<Set<String>> get botMetricChanges => _botMetricChanges.stream;
@@ -314,6 +325,7 @@ class SqliteMessageRepository
 
   @visibleForTesting
   Future<void> dispose() async {
+    await _taskSubscription.cancel();
     await _changes.close();
     await _botMetricChanges.close();
   }

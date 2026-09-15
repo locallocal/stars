@@ -86,6 +86,7 @@ class ChatPageState extends State<ChatPage> {
   final List<File> _selectedImages = [];
   final List<File> _selectedFiles = [];
   List<Message> _messages = [];
+  StreamSubscription<void>? _taskMessageSubscription;
   int _messageRevision = 0;
   String _streamingResponse = '';
   List<String> _streamingFiles = const [];
@@ -123,6 +124,9 @@ class ChatPageState extends State<ChatPage> {
         _chatViewModel.generationViewModel
           ..addListener(_handleGenerationChanged);
     _handleGenerationChanged();
+    _taskMessageSubscription = _chatViewModel.taskMessageChanges.listen((_) {
+      if (mounted) unawaited(_loadMessages());
+    });
     unawaited(_restoreConversationDraft());
     _loadMessages();
   }
@@ -313,6 +317,7 @@ class ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    unawaited(_taskMessageSubscription?.cancel());
     if (_dependenciesInitialized) unawaited(_persistDraft());
     if (_dependenciesInitialized) {
       _generationViewModel.removeListener(_handleGenerationChanged);

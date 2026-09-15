@@ -2,6 +2,20 @@ import 'dart:convert';
 
 import 'package:stars/domain/models/models.dart';
 
+TaskResultPresentationPolicy? _taskResultPolicy(Object? raw) {
+  if (raw is! String) return null;
+  final value = jsonDecode(raw);
+  if (value is! Map<String, Object?> ||
+      value['strictGroundingEnabled'] is! bool ||
+      value['showVerificationStatus'] is! bool) {
+    throw const FormatException('Invalid saved task presentation policy.');
+  }
+  return TaskResultPresentationPolicy(
+    strictGroundingEnabled: value['strictGroundingEnabled']! as bool,
+    showVerificationStatus: value['showVerificationStatus']! as bool,
+  );
+}
+
 /// SQLite representation of a [Bot].
 final class BotRecord {
   const BotRecord(this.values);
@@ -392,6 +406,7 @@ final class MessageRecord {
                 values['task_message_kind']! as String,
               ),
       summaryRevision: values['summary_revision'] as int?,
+      taskResultPolicy: _taskResultPolicy(values['task_verification_json']),
       chatId: _string(values['chat_id']),
       botId: _string(values['bot_id']),
       senderId: _string(values['sender_id']),

@@ -1,5 +1,10 @@
 import 'package:stars/domain/models/models.dart';
 
+/// Durable background messages committed outside the foreground generation.
+abstract interface class TaskMessageNotifications {
+  Stream<String> get taskMessageChanges;
+}
+
 abstract interface class MessageRepository {
   Stream<void> get changes;
 

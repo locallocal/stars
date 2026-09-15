@@ -219,7 +219,37 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
       }
       await _event(tx, event);
       final saved = await _saveTask(tx, values);
-      await _insertMessage(tx, messageValues);
+      await _insertMessage(tx, messageValues, terminal: true);
+      for (final claim in message.grounding.claims) {
+        for (final evidenceId in claim.acceptedEvidenceIds) {
+          final evidence = await tx.rawQuery(
+            'SELECT e.* FROM conversation_task_evidence_links link '
+            'JOIN tool_evidence_records e ON e.evidence_id = link.evidence_id '
+            'JOIN tool_execution_records a ON a.attempt_id = link.attempt_id '
+            "WHERE link.task_id = ? AND link.evidence_id = ? AND a.status = 'succeeded' "
+            "AND e.terminal_status = 'succeeded' AND e.persisted = 1 AND e.schema_valid = 1 AND e.truncated = 0 "
+            'AND e.observed_at <= ? AND (e.valid_until IS NULL OR e.valid_until > ?)',
+            [
+              old.taskId,
+              evidenceId,
+              now.millisecondsSinceEpoch,
+              now.millisecondsSinceEpoch,
+            ],
+          );
+          if (evidence.length != 1 ||
+              !ToolEvidenceDbRecord(evidence.single).hasValidDigest) {
+            throw ArgumentError(
+              'Terminal claim requires intact task evidence.',
+            );
+          }
+          await tx.insert('answer_claim_evidence', {
+            'message_id': message.messageId,
+            'claim_id': claim.claim.claimId,
+            'evidence_id': evidenceId,
+            'created_at': now.millisecondsSinceEpoch,
+          });
+        }
+      }
       return TaskWriteCommitted(saved, revision: saved.revision);
     },
     message: true,
@@ -229,8 +259,23 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
 
 Future<void> _insertMessage(
   DatabaseExecutor tx,
-  Map<String, Object?> values,
-) async {
+  Map<String, Object?> input, {
+  bool terminal = false,
+}) async {
+  final values = {...input};
+  if (terminal) {
+    final latest =
+        (await tx.rawQuery(
+              'SELECT MAX(timestamp) AS latest FROM messages WHERE chat_id = ?',
+              [values['chat_id']],
+            )).single['latest']
+            as int?;
+    if (latest != null && (values['timestamp']! as int) <= latest) {
+      // Monotonic per-conversation commit order, including equal millisecond
+      // clocks and older requests finishing after newer foreground replies.
+      values['timestamp'] = latest + 1;
+    }
+  }
   final existing = await tx.query(
     'messages',
     columns: ['message_id'],

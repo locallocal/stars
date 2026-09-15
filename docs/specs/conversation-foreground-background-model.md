@@ -6,9 +6,10 @@
 
 本文定义 Stars 会话内用户与智能体交互的目标模型，以及基于现有实现进行调整的落地规范。
 它是长期设计，不代表当前生产聊天入口已经切换。领域模型、schema、事务持久化、前台分流、
-[分段执行](../reference/conversation-task-runner.md)和[调度恢复](../reference/conversation-task-scheduling.md)已实现。
+[分段执行](../reference/conversation-task-runner.md)、[调度恢复](../reference/conversation-task-scheduling.md)和
+[终态验证与提交](../reference/conversation-task-terminal-results.md)已实现。
 持久化与接受行为见[任务持久化](../reference/conversation-task-persistence.md)和
-[前台分流与任务接受](../reference/conversation-turn-dispatch.md)；终态验证与 UI 接入按
+[前台分流与任务接受](../reference/conversation-turn-dispatch.md)；新的会话交互入口接入按
 [后续阶段](../plans/conversation-foreground-background-model/README.md)推进。
 
 规范使用以下关键词：

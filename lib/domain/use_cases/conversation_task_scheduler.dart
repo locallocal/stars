@@ -59,7 +59,7 @@ final class ConversationTaskScheduler {
   final TaskSchedulingMetrics metrics;
   late final RecoverConversationTasks recovery;
   final _workers = <String, _TaskWorker>{};
-  final _delivered = <String, int>{};
+  final _finalizers = <String, Future<void>>{};
   Timer? _timer;
   Future<void>? _scanning;
   bool _enabled = false;
@@ -298,12 +298,18 @@ final class ConversationTaskScheduler {
   }
 
   Future<void> _deliver(TaskSegmentResult result) async {
-    final task = result.snapshot.task;
-    if (onReady == null || _delivered[task.taskId] == task.revision) return;
-    // Stage 06 must use its own revision/lease-fenced terminal transaction.
-    await onReady!(result);
-    _delivered[task.taskId] = task.revision;
-    if (_delivered.length > 1000) _delivered.remove(_delivered.keys.first);
+    // A callback can lose a lease/capacity race. Only a committed terminal row
+    // acknowledges delivery; the durable scan retries every unfinished result.
+    final id = result.snapshot.task.taskId;
+    if (!_enabled || onReady == null || _finalizers.containsKey(id)) return;
+    // Narration cannot block heartbeat scans for unrelated executing tasks.
+    _finalizers[id] = Future<void>.sync(() => onReady!(result))
+        .catchError((Object _) {
+          metrics.failures++;
+        })
+        .whenComplete(() {
+          _finalizers.remove(id);
+        });
   }
 
   /// Cooperatively stops I/O; committed intents survive application suspension.
@@ -320,6 +326,7 @@ final class ConversationTaskScheduler {
       worker.interruption.cancel();
     }
     await Future.wait(_workers.values.map((worker) => worker.done));
+    await Future.wait(_finalizers.values.toList());
   }
 }
 

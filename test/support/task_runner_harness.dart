@@ -207,9 +207,15 @@ final class TaskRunnerHarness {
   RunnerTool tool = RunnerTool();
   int segment = 0;
   ConversationTaskRepository? repositoryOverride;
-  Future<void> open({TaskSegmentLimits? limits, int steps = 1}) async {
+  Future<void> open({
+    TaskSegmentLimits? limits,
+    int steps = 1,
+    TaskAcceptanceSnapshot? acceptance,
+  }) async {
     await db.open();
-    final task = taskFixture(acceptance: taskAcceptance(limits: limits));
+    final task = taskFixture(
+      acceptance: acceptance ?? taskAcceptance(limits: limits),
+    );
     committed(
       await db.accept(
         task: task,

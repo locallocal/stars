@@ -538,6 +538,7 @@ String _markdownSafeInline(String source) => source.replaceAllMapped(
 );
 
 String _messageTrustExportAnnotation(BuildContext context, Message message) {
+  if (!message.participatesInAnswerTrust) return '';
   final strings = S.of(context);
   final status = _answerTrustLabel(
     strings,

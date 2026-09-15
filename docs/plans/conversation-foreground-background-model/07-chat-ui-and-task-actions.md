@@ -1,6 +1,6 @@
 # 07：会话交互与任务状态展示
 
-[总计划](README.md) | [上一阶段](06-verification-and-terminal-results.md) | [下一阶段：旧路径清理](08-cutover-and-cleanup.md)
+[总计划](README.md) | [验证与终态回复（已实现）](../../reference/conversation-task-terminal-results.md) | [下一阶段：旧路径清理](08-cutover-and-cleanup.md)
 
 前置依赖：阶段 03、05、06。对应目标规格第 4、7、10.3、11、12、13 节。
 

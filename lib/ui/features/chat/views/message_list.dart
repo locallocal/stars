@@ -239,7 +239,7 @@ class _MessageListState extends State<MessageList> {
           final message = messages[messageIndex];
           final isMe = message.senderId == currentUserId;
           final strictPresentation =
-              !isMe && widget.strictGroundingMode
+              !isMe && message.usesStrictGrounding(widget.strictGroundingMode)
                   ? const StrictGroundingPolicy().present(
                     message,
                     userMessage: _userContextByMessage[messageIndex],
@@ -259,7 +259,9 @@ class _MessageListState extends State<MessageList> {
             processInfo: _displayedProcessInfo[messageIndex],
             tokenUsage: message.tokenUsage,
             showReasoning: showReasoning && !isMe,
-            showVerificationStatus: showVerificationStatus && !isMe,
+            showVerificationStatus:
+                message.showsVerificationStatus(showVerificationStatus) &&
+                !isMe,
             showExecutionStatus: showExecutionStatus && !isMe,
             content: displayedContent,
             images: message.images,
@@ -271,7 +273,9 @@ class _MessageListState extends State<MessageList> {
             music: message.music,
             video: message.video,
             grounding: message.grounding,
-            strictGroundingMode: widget.strictGroundingMode,
+            strictGroundingMode: message.usesStrictGrounding(
+              widget.strictGroundingMode,
+            ),
             hasNotFactCheckedContent:
                 strictPresentation?.hasNotFactCheckedContent ??
                 _hasNotFactCheckedContent(message),

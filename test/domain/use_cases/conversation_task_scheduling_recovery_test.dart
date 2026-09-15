@@ -490,7 +490,7 @@ void main() {
   );
 
   test(
-    'recovery delivers a committed candidate once without rerunning tools or synthesis',
+    'recovery retries uncommitted delivery without rerunning tools or synthesis',
     () async {
       h.models.completeStep();
       h.models.candidate();
@@ -502,7 +502,8 @@ void main() {
       await value.start(periodic: false);
       await value.tick();
       await value.tick();
-      expect(ready.single, isA<TaskCompletionCandidate>());
+      expect(ready, hasLength(3));
+      expect(ready, everyElement(isA<TaskCompletionCandidate>()));
       expect(h.models.requests.length, before);
       expect(value.runningCount, 0);
       expect((await h.db.repository.listDue(now: h.clock.now())), isEmpty);

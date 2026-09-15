@@ -30,6 +30,7 @@ class ChatViewModel extends DisposableChangeNotifier {
   int _historyLoadGeneration = 0;
 
   List<Message> get messages => _messages;
+  Stream<void> get taskMessageChanges => _workflow.taskMessageChanges;
   List<Message>? get cachedMessages {
     final history = _workflow.peekHistory();
     if (history == null) return null;

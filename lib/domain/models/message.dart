@@ -347,6 +347,7 @@ class Message {
     this.runId = '',
     this.taskId,
     this.taskMessageKind,
+    this.taskResultPolicy,
     this.summaryRevision,
     required this.chatId,
     required this.botId,
@@ -378,6 +379,8 @@ class Message {
         terminalOutcome == MessageTerminalOutcome.failed ||
         terminalOutcome == MessageTerminalOutcome.emptyResponse;
     if (hasUnsuccessfulTerminalOutcome &&
+        (taskMessageKind != TaskMessageKind.result ||
+            trustLevel == AnswerTrustLevel.verified) &&
         trustLevel != AnswerTrustLevel.unverified &&
         trustLevel != AnswerTrustLevel.failed) {
       throw ArgumentError.value(
@@ -393,6 +396,16 @@ class Message {
   final String runId;
   final String? taskId;
   final TaskMessageKind? taskMessageKind;
+  final TaskResultPresentationPolicy? taskResultPolicy;
+
+  bool get participatesInAnswerTrust =>
+      taskMessageKind?.participatesInAnswerTrust ?? true;
+  bool usesStrictGrounding(bool currentSetting) =>
+      participatesInAnswerTrust &&
+      (taskResultPolicy?.strictGroundingEnabled ?? currentSetting);
+  bool showsVerificationStatus(bool currentSetting) =>
+      participatesInAnswerTrust &&
+      (taskResultPolicy?.showVerificationStatus ?? currentSetting);
   final int? summaryRevision;
   final String chatId;
   final String botId;
@@ -417,6 +430,7 @@ class Message {
     String? runId,
     String? taskId,
     TaskMessageKind? taskMessageKind,
+    TaskResultPresentationPolicy? taskResultPolicy,
     int? summaryRevision,
     String? chatId,
     String? botId,
@@ -442,6 +456,7 @@ class Message {
       runId: runId ?? this.runId,
       taskId: taskId ?? this.taskId,
       taskMessageKind: taskMessageKind ?? this.taskMessageKind,
+      taskResultPolicy: taskResultPolicy ?? this.taskResultPolicy,
       summaryRevision: summaryRevision ?? this.summaryRevision,
       chatId: chatId ?? this.chatId,
       botId: botId ?? this.botId,

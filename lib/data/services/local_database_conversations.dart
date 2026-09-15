@@ -1,5 +1,11 @@
 part of 'local_database_service.dart';
 
+const _taskMessageColumns = [
+  'messages.*',
+  "(SELECT json_extract(t.acceptance_json, '\$.verification') FROM conversation_tasks t "
+      'WHERE t.task_id = messages.task_id) AS task_verification_json',
+];
+
 extension LocalDatabaseConversations on LocalDatabaseService {
   Future<void> guardConversationDeletion(String chatId) async =>
       _guardTaskDeletion(await _databaseProvider(), 'chat_id = ?', [
@@ -142,6 +148,7 @@ extension LocalDatabaseConversations on LocalDatabaseService {
     final database = await _databaseProvider();
     return database.query(
       'messages',
+      columns: _taskMessageColumns,
       where: 'chat_id = ?',
       whereArgs: [chatId],
       orderBy: 'timestamp ASC, message_id ASC',
@@ -161,6 +168,7 @@ extension LocalDatabaseConversations on LocalDatabaseService {
     final hasCursor = beforeTimestamp != null && beforeMessageId != null;
     return database.query(
       'messages',
+      columns: _taskMessageColumns,
       where:
           hasCursor
               ? 'chat_id = ? AND '

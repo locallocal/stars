@@ -166,6 +166,7 @@ Future<void> _validateProgressFacts(
   }
   if (event.kind == TaskEventKind.verificationCompleted &&
       !{
+        TaskVerificationStatus.notStarted,
         TaskVerificationStatus.verified,
         TaskVerificationStatus.partial,
         TaskVerificationStatus.failed,

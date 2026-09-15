@@ -48,7 +48,7 @@ Future<TaskProgress> _project(
         'JOIN tool_evidence_records evidence ON evidence.evidence_id = link.evidence_id '
         'WHERE link.task_id = ? ORDER BY link.evidence_id',
         [taskId],
-      )).map((row) => ToolEvidenceDbRecord(row).toDomain()).toList();
+      )).map(_readTaskEvidence).whereType<ToolEvidenceRecord>().toList();
   final completed = {
     for (final step in plan.steps)
       if (step.status == TaskPlanStepStatus.completed) step.stepId,

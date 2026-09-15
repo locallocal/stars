@@ -52,6 +52,50 @@ final class AnswerTrustPolicyInput {
 final class AnswerTrustPolicy {
   const AnswerTrustPolicy();
 
+  /// Task execution outcome and the trust of retained facts are independent.
+  /// Operational cancellation/failure narration does not require tool evidence.
+  MessageGrounding evaluateTaskResult({
+    required MessageTerminalOutcome outcome,
+    required bool reliabilityEnabled,
+    required List<MessageClaimGrounding> claims,
+    bool incomplete = false,
+  }) {
+    final facts =
+        claims
+            .where((claim) => claim.trustLevel != ClaimTrustLevel.notVerifiable)
+            .toList();
+    final verified =
+        facts
+            .where((claim) => claim.trustLevel == ClaimTrustLevel.verified)
+            .length;
+    final ids =
+        claims.expand((claim) => claim.acceptedEvidenceIds).toSet().toList();
+    return MessageGrounding(
+      trustLevel:
+          !reliabilityEnabled || verified == 0
+              ? AnswerTrustLevel.unverified
+              : outcome != MessageTerminalOutcome.completed ||
+                  incomplete ||
+                  verified != facts.length
+              ? AnswerTrustLevel.partiallyVerified
+              : AnswerTrustLevel.verified,
+      reasonCode:
+          facts.isEmpty
+              ? 'no_verifiable_claims'
+              : !reliabilityEnabled
+              ? 'reliability_policy_disabled'
+              : verified == 0
+              ? 'no_claims_verified'
+              : outcome != MessageTerminalOutcome.completed ||
+                  incomplete ||
+                  verified != facts.length
+              ? 'some_claims_verified'
+              : 'all_claims_verified',
+      evidenceIds: ids,
+      claims: claims,
+    );
+  }
+
   MessageGrounding evaluate(AnswerTrustPolicyInput input) {
     if (!input.criticalPersistenceSucceeded) {
       return _failed(
