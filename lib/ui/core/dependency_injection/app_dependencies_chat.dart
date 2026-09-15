@@ -3,16 +3,31 @@ part of 'app_dependencies.dart';
 extension AppDependenciesChatFactories on AppDependencies {
   ConversationTasksViewModel createConversationTasksViewModel(
     String chatId,
-    String botId,
+    Bot bot,
   ) {
     final tasks = conversationTasks;
     return ConversationTasksViewModel(
       chatId: chatId,
-      botId: botId,
+      botId: bot.id,
       observe: ObserveConversationTasks(tasks.repository, clock: tasks.clock),
-      present: tasks.progress,
       commands: tasks.commands,
       prepareRetry: tasks.retry,
+      retryAvailable: () => !generationRegistry.hasBlockingRun(chatId),
+      dispatchRetry: (draft, input, language, verification) async {
+        final generation = generationRegistry.viewModelFor(chatId, bot);
+        final accepted = await generation.dispatchText(
+          userMessage: createUserMessage(
+            chatId: chatId,
+            botId: bot.id,
+            senderId: 'me',
+            content: input,
+          ),
+          language: language,
+          verification: verification,
+          retryOfTaskId: draft.taskId,
+        );
+        if (!accepted) throw StateError('task_retry_dispatch_failed');
+      },
     );
   }
 

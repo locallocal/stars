@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:stars/ui/features/chat/views/conversation_task_retry_dialog.dart';
 import 'package:stars/ui/features/chat/views/task_action_button.dart';
 import 'package:stars/domain/services/task_progress_strings.dart';
-import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
-import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
-import 'package:stars/ui/features/chat/views/conversation_tasks_panel.dart';
+import 'package:stars/ui/features/chat/views/conversation_tasks_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
@@ -30,7 +27,6 @@ import 'package:stars/utils/utils.dart';
 
 // 聊天页面
 part 'chat_workspace.dart';
-part 'chat_task_actions.dart';
 part 'chat_draft_and_media.dart';
 part 'chat_send_commands.dart';
 part 'chat_session_commands.dart';
@@ -69,7 +65,6 @@ class ChatPageState extends State<ChatPage> {
 
   late final ChatGenerationViewModel _generationViewModel;
   late final ChatViewModel _chatViewModel;
-  ConversationTasksViewModel? _tasksViewModel;
   bool _sendPending = false;
   bool _dependenciesInitialized = false;
   AiProvider get _provider => _generationViewModel.capabilityProvider;
@@ -127,11 +122,6 @@ class ChatPageState extends State<ChatPage> {
     _generationViewModel =
         _chatViewModel.generationViewModel
           ..addListener(_handleGenerationChanged);
-    _tasksViewModel = AppScope.of(
-      context,
-    ).createConversationTasksViewModel(widget.id, widget.bot.id);
-    _tasksViewModel?.addListener(_handleTaskChanges);
-    unawaited(_tasksViewModel?.start());
     _handleGenerationChanged();
     _taskMessageSubscription = _chatViewModel.taskMessageChanges.listen((_) {
       if (mounted) unawaited(_loadMessages(preserveViewport: true));
@@ -316,8 +306,6 @@ class ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     unawaited(_taskMessageSubscription?.cancel());
-    _tasksViewModel?.removeListener(_handleTaskChanges);
-    _tasksViewModel?.dispose();
     if (_dependenciesInitialized) unawaited(_persistDraft());
     if (_dependenciesInitialized) {
       _generationViewModel.removeListener(_handleGenerationChanged);
@@ -462,12 +450,33 @@ class ChatPageState extends State<ChatPage> {
             onPressed: requestBrowseConversationDirectory,
           ),
           IconButton(
+            key: const ValueKey('chat-clear-history'),
             icon: Icon(Icons.cleaning_services_rounded, size: 24),
             tooltip: desktopConversationText(
               context,
               S.of(context).clearChatHistory,
             ),
             onPressed: requestClearChat,
+          ),
+          IconButton(
+            key: const ValueKey('chat-conversation-tasks'),
+            icon: const Icon(LucideIcons.listTodo, size: 22),
+            tooltip:
+                TaskProgressStrings(
+                  Localizations.localeOf(context).toLanguageTag(),
+                ).tasks,
+            onPressed:
+                () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder:
+                        (_) => ConversationTasksScreen(
+                          chatId: widget.id,
+                          bot: widget.bot,
+                          strictGroundingMode: widget.strictGroundingMode,
+                          showVerificationStatus: widget.showVerificationStatus,
+                        ),
+                  ),
+                ),
           ),
         ],
       ),
@@ -478,7 +487,6 @@ class ChatPageState extends State<ChatPage> {
             children: [
               Expanded(child: _buildConversationBody(context, fontSize)),
               _buildAttachmentsBar(),
-              _buildTasksPanel(),
               _buildHistoryAlert(),
               _buildGenerationAlert(isDesktop: false),
               MessageInput(

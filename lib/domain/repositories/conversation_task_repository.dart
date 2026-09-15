@@ -21,6 +21,7 @@ abstract interface class ConversationTaskRepository {
   Stream<ConversationTaskProgressSummary> watchProgress(String taskId);
 
   /// Subscribes before reading an initial snapshot, including newly accepted tasks.
+  /// Includes all terminal tasks in this conversation for history browsing.
   Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId);
 
   /// One immutable card snapshot per status message; repeat queries keep the

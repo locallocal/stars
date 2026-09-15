@@ -489,6 +489,7 @@ void main() {
     var selectedChatId = '';
     var directoryRequests = 0;
     var clearRequests = 0;
+    var taskRequests = 0;
 
     await withDesktopPlatform(() async {
       await tester.pumpWidget(
@@ -504,6 +505,7 @@ void main() {
             onChatSelected: (chatId, _) => selectedChatId = chatId,
             onChatDirectoryRequested: () => directoryRequests += 1,
             onChatClearRequested: () => clearRequests += 1,
+            onChatTasksRequested: () => taskRequests += 1,
           ),
         ),
       );
@@ -529,6 +531,7 @@ void main() {
         'chat-context-directory-chat-details-menu',
         'chat-context-details-chat-details-menu',
         'chat-context-clear-chat-details-menu',
+        'chat-context-tasks-chat-details-menu',
         'chat-context-delete-chat-details-menu',
       ]);
       expect(
@@ -557,10 +560,14 @@ void main() {
       final deleteAction = find.byKey(
         const ValueKey<String>('chat-delete-chat-details-menu'),
       );
+      final tasksAction = find.byKey(
+        const ValueKey('chat-tasks-chat-details-menu'),
+      );
       expect(dataAction, findsOneWidget);
       expect(detailsAction, findsOneWidget);
       expect(clearAction, findsOneWidget);
       expect(deleteAction, findsOneWidget);
+      expect(tasksAction, findsOneWidget);
       expect(find.text('开始聊天'), findsNothing);
       expect(find.text('数据'), findsOneWidget);
       expect(find.text('清空'), findsOneWidget);
@@ -569,10 +576,11 @@ void main() {
           dataAction,
           detailsAction,
           clearAction,
+          tasksAction,
           deleteAction,
         ].map((finder) => tester.getTopLeft(finder).dy).toList(growable: false),
         orderedEquals(
-          [dataAction, detailsAction, clearAction, deleteAction]
+          [dataAction, detailsAction, clearAction, tasksAction, deleteAction]
             .map((finder) => tester.getTopLeft(finder).dy)
             .toList(growable: false)..sort(),
         ),
@@ -623,6 +631,15 @@ void main() {
 
       expect(selectedChatId, chat.id);
       expect(directoryRequests, 1);
+
+      await tester.tap(find.byIcon(LucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('chat-tasks-chat-details-menu')),
+      );
+      await tester.pumpAndSettle();
+      expect(selectedChatId, chat.id);
+      expect(taskRequests, 1);
 
       await tester.tap(find.byIcon(LucideIcons.ellipsis));
       await tester.pumpAndSettle();

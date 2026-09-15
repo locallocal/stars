@@ -13,12 +13,18 @@ final class ConversationTaskCard extends StatelessWidget {
     super.key,
     required this.summary,
     this.onAction,
+    this.onRefresh,
     this.busy = false,
+    this.refreshing = false,
     this.historical = false,
+    this.showStatusAction = true,
   });
   final ConversationTaskProgressSummary summary;
   final ValueChanged<TaskCardAction>? onAction;
+  final VoidCallback? onRefresh;
   final bool busy, historical;
+  final bool refreshing;
+  final bool showStatusAction;
 
   @override
   Widget build(BuildContext context) {
@@ -81,14 +87,24 @@ final class ConversationTaskCard extends StatelessWidget {
             row(w.waiting, w.configurationInput),
           row(w.recoveries, '${p.recoveries}'),
           row(w.verification, w.verified(p.verificationStatus)),
-          row(w.updated, '${s.updatedAt.toLocal()}'),
-          if (onAction != null) ...[
+          if (!historical)
+            row(
+              w.created,
+              DateFormat.yMd().add_Hm().format(s.createdAt.toLocal()),
+            ),
+          row(
+            w.updated,
+            DateFormat.yMd().add_Hm().format(s.updatedAt.toLocal()),
+          ),
+          if (onAction != null || (!historical && onRefresh != null)) ...[
             const SizedBox(height: 10),
             Wrap(
               spacing: 6,
               runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                action(TaskCardAction.status, w.viewStatus),
+                if (showStatusAction)
+                  action(TaskCardAction.status, w.viewStatus),
                 if (!historical && !s.status.isTerminal) ...[
                   if (s.status != ConversationTaskStatus.cancelRequested)
                     action(TaskCardAction.cancel, w.cancel),
@@ -107,6 +123,16 @@ final class ConversationTaskCard extends StatelessWidget {
                     s.terminalSummary?.sideEffectStatus ==
                         TaskSideEffectStatus.none)
                   action(TaskCardAction.retry, w.retry),
+                if (!historical && onRefresh != null)
+                  Semantics(
+                    label: '${w.refresh} · ${taskShortId(s.taskId)}',
+                    button: true,
+                    child: TaskActionButton(
+                      key: ValueKey('task-refresh-${s.taskId}'),
+                      label: w.refresh,
+                      onPressed: busy || refreshing ? null : onRefresh,
+                    ),
+                  ),
               ],
             ),
           ],

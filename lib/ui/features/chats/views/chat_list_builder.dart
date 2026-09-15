@@ -7,9 +7,11 @@ import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/conversation_clear_scope.dart';
 import 'package:stars/ui/core/widgets/conversation_directory_scope.dart';
 import 'package:stars/ui/core/widgets/conversation_information_scope.dart';
+import 'package:stars/ui/core/widgets/conversation_tasks_scope.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';
+import 'package:stars/ui/features/chat/views/conversation_tasks_screen.dart';
 import 'package:stars/ui/features/chat/views/clear_chat_dialog.dart';
 import 'package:stars/ui/features/chats/views/chat_item.dart';
 import 'package:stars/ui/features/chats/views/rename_chat_dialog.dart';
@@ -35,6 +37,7 @@ class ChatListBuilder extends StatelessWidget {
   final void Function(String chatId, String name)? onChatRenamed;
   final VoidCallback? onChatDetailsRequested;
   final VoidCallback? onChatDirectoryRequested;
+  final VoidCallback? onChatTasksRequested;
   final VoidCallback? onChatClearRequested;
   final ChatGenerationRegistry generationRegistry;
   final Future<bool> Function(String chatId)? hasActiveTasks;
@@ -56,6 +59,7 @@ class ChatListBuilder extends StatelessWidget {
     this.onChatRenamed,
     this.onChatDetailsRequested,
     this.onChatDirectoryRequested,
+    this.onChatTasksRequested,
     this.onChatClearRequested,
     required this.generationRegistry,
     this.hasActiveTasks,
@@ -73,6 +77,9 @@ class ChatListBuilder extends StatelessWidget {
     final clearConversation =
         onChatClearRequested ??
         StarsConversationClearScope.maybeOf(context)?.onClear;
+    final showConversationTasks =
+        onChatTasksRequested ??
+        StarsConversationTasksScope.maybeOf(context)?.onShow;
     return ListView.separated(
       padding: EdgeInsets.only(bottom: isDesktop ? 8 : 0),
       itemCount: chatList.length,
@@ -289,6 +296,26 @@ class ChatListBuilder extends StatelessWidget {
           showConversationInformation();
         }
 
+        void openTasks() {
+          if (isOrphaned) return;
+          if (isDesktop && showConversationTasks != null) {
+            onChatSelected(chat.id, bot);
+            showConversationTasks();
+            return;
+          }
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder:
+                  (_) => ConversationTasksScreen(
+                    chatId: chat.id,
+                    bot: bot,
+                    strictGroundingMode: strictGroundingMode,
+                    showVerificationStatus: showVerificationStatus,
+                  ),
+            ),
+          );
+        }
+
         void openDirectory() {
           if (isOrphaned || showConversationDirectory == null) return;
           onChatSelected(chat.id, bot);
@@ -373,6 +400,17 @@ class ChatListBuilder extends StatelessWidget {
               onPressed: clearChat,
               child: Text(S.of(context).conversationClearMenuLabel),
             ),
+            ShadContextMenuItem(
+              key: ValueKey<String>('chat-context-tasks-${chat.id}'),
+              leading: const Icon(LucideIcons.listTodo, size: 16),
+              enabled: !isOrphaned,
+              onPressed: openTasks,
+              child: Text(
+                TaskProgressStrings(
+                  Localizations.localeOf(context).toLanguageTag(),
+                ).tasks,
+              ),
+            ),
             const ShadSeparator.horizontal(
               margin: EdgeInsets.symmetric(vertical: 4),
             ),
@@ -401,15 +439,18 @@ class ChatListBuilder extends StatelessWidget {
                 canShowDirectory:
                     !isOrphaned && showConversationDirectory != null,
                 canClear: !isOrphaned && clearConversation != null,
+                canShowTasks: !isOrphaned,
                 onRename: renameChat,
                 onShowDetails: openDetails,
                 onShowDirectory: openDirectory,
                 onClear: clearChat,
+                onShowTasks: openTasks,
                 onDelete: deleteChat,
                 renameKey: ValueKey<String>('chat-rename-${chat.id}'),
                 detailsKey: ValueKey<String>('chat-details-${chat.id}'),
                 directoryKey: ValueKey<String>('chat-directory-${chat.id}'),
                 clearKey: ValueKey<String>('chat-clear-${chat.id}'),
+                tasksKey: ValueKey<String>('chat-tasks-${chat.id}'),
                 deleteKey: ValueKey<String>('chat-delete-${chat.id}'),
               ),
             ),
@@ -421,6 +462,22 @@ class ChatListBuilder extends StatelessWidget {
           endActionPane: ActionPane(
             motion: const ScrollMotion(),
             children: [
+              CustomSlidableAction(
+                key: ValueKey('chat-tasks-${chat.id}'),
+                onPressed: isOrphaned ? null : (_) => openTasks(),
+                backgroundColor:
+                    Theme.of(context).colorScheme.secondaryContainer,
+                foregroundColor:
+                    Theme.of(context).colorScheme.onSecondaryContainer,
+                child: Icon(
+                  LucideIcons.listTodo,
+                  size: 20,
+                  semanticLabel:
+                      TaskProgressStrings(
+                        Localizations.localeOf(context).toLanguageTag(),
+                      ).tasks,
+                ),
+              ),
               CustomSlidableAction(
                 onPressed: (_) => openChat(),
                 backgroundColor: Theme.of(context).colorScheme.primary,
@@ -458,15 +515,18 @@ class _ChatRowActions extends StatefulWidget {
     required this.canShowDetails,
     required this.canShowDirectory,
     required this.canClear,
+    required this.canShowTasks,
     required this.onRename,
     required this.onShowDetails,
     required this.onShowDirectory,
     required this.onClear,
+    required this.onShowTasks,
     required this.onDelete,
     required this.renameKey,
     required this.detailsKey,
     required this.directoryKey,
     required this.clearKey,
+    required this.tasksKey,
     required this.deleteKey,
   });
 
@@ -474,15 +534,18 @@ class _ChatRowActions extends StatefulWidget {
   final bool canShowDetails;
   final bool canShowDirectory;
   final bool canClear;
+  final bool canShowTasks;
   final VoidCallback onRename;
   final VoidCallback onShowDetails;
   final VoidCallback onShowDirectory;
   final VoidCallback onClear;
+  final VoidCallback onShowTasks;
   final VoidCallback onDelete;
   final Key renameKey;
   final Key detailsKey;
   final Key directoryKey;
   final Key clearKey;
+  final Key tasksKey;
   final Key deleteKey;
 
   @override
@@ -574,6 +637,19 @@ class _ChatRowActionsState extends State<_ChatRowActions> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     leading: const Icon(LucideIcons.eraser, size: 16),
                     child: Text(S.of(context).conversationClearMenuLabel),
+                  ),
+                  ShadButton.ghost(
+                    key: widget.tasksKey,
+                    size: ShadButtonSize.sm,
+                    enabled: widget.canShowTasks,
+                    onPressed: () => _invoke(widget.onShowTasks),
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    leading: const Icon(LucideIcons.listTodo, size: 16),
+                    child: Text(
+                      TaskProgressStrings(
+                        Localizations.localeOf(context).toLanguageTag(),
+                      ).tasks,
+                    ),
                   ),
                   ShadButton.raw(
                     key: widget.deleteKey,

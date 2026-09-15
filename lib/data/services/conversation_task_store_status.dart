@@ -30,12 +30,10 @@ extension ConversationTaskStoreStatus on ConversationTaskStore {
         final initial = await db.transaction((tx) async {
           final rows = await tx.rawQuery(
             '''
-            SELECT task_id FROM conversation_tasks WHERE chat_id = ? AND
-            (completed_at IS NULL OR task_id = (SELECT task_id FROM conversation_tasks
-              WHERE chat_id = ? AND completed_at IS NOT NULL
-              ORDER BY completed_at DESC, task_id DESC LIMIT 1)) ORDER BY created_at, task_id
+            SELECT task_id FROM conversation_tasks WHERE chat_id = ?
+            ORDER BY created_at, task_id
           ''',
-            [chatId, chatId],
+            [chatId],
           );
           return [
             for (final row in rows)

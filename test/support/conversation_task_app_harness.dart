@@ -7,6 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stars/data/models/local_records.dart';
 import 'package:stars/data/repositories/file_skill_repository.dart';
 import 'package:stars/data/repositories/memory_conversation_draft_repository.dart';
+import 'package:stars/data/repositories/local_conversation_directory_repository.dart';
 import 'package:stars/data/repositories/sqlite_bot_repository.dart';
 import 'package:stars/data/repositories/sqlite_bot_skill_binding_repository.dart';
 import 'package:stars/data/repositories/sqlite_chat_repository.dart';
@@ -31,6 +32,7 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
+import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
@@ -77,6 +79,24 @@ final class ConversationTaskAppHarness implements AppDependencies {
   @override
   late ChatGenerationRegistry generationRegistry;
   Bot get bot => foregroundBot(provider: 'openai');
+
+  @override
+  SqliteConversationMemoryRepository get conversationMemoryRepository => memory;
+  @override
+  ConversationArtifactsDirectoryProvider
+  get conversationArtifactsDirectoryProvider =>
+      (id) async => '${directory.path}/Stars/chats/$id';
+  @override
+  CompactConversation get compactConversation => CompactConversation(
+    messageRepository: messageRepository,
+    memoryRepository: memory,
+    summarizerFactory: (_) => throw UnsupportedError('Unexpected compaction'),
+  );
+  @override
+  LocalConversationDirectoryRepository get conversationDirectoryRepository =>
+      LocalConversationDirectoryRepository(
+        directoryProvider: conversationArtifactsDirectoryProvider,
+      );
 
   Future<void> open() async {
     sqfliteFfiInit();

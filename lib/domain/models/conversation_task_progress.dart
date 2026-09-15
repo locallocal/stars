@@ -149,10 +149,11 @@ final class ConversationTaskProgressSummary {
     required this.summaryRevision,
     required this.progress,
     required this.updatedAt,
+    DateTime? createdAt,
     this.waitingReason,
     this.terminalSummary,
     this.leaseExpiresAt,
-  }) {
+  }) : createdAt = createdAt ?? updatedAt {
     _taskText(taskId, 'taskId', maximum: 256);
     _taskText(chatId, 'chatId', maximum: 256);
     _taskText(title, 'title', maximum: 200);
@@ -169,6 +170,9 @@ final class ConversationTaskProgressSummary {
   final int summaryRevision;
   final TaskProgress progress;
   final DateTime updatedAt;
+
+  /// Older frozen status messages fall back to their recorded update time.
+  final DateTime createdAt;
   final TaskWaitingReason? waitingReason;
   final TaskTerminalSummary? terminalSummary;
   final DateTime? leaseExpiresAt;
@@ -189,6 +193,7 @@ final class ConversationTaskProgressSummary {
         summaryRevision: summaryRevision,
         progress: progress,
         updatedAt: updatedAt,
+        createdAt: createdAt,
         waitingReason: waitingReason,
         terminalSummary: terminalSummary,
         leaseExpiresAt: leaseExpiresAt,

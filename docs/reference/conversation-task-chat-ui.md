@@ -24,6 +24,23 @@ clock、身份生成器、Provider factory、工具 registry 和执行 adapter �
 订阅已提交摘要，并暴露不可变状态和领域命令。Data 先订阅提交事件，再读取初始数据库快照，
 按每任务 revision 合并，避免初始加载漏掉接受或进度变化。页面销毁只释放订阅；重入读取持久事实。
 
+## 独立任务页面
+
+会话工具栏的“任务”入口位于“清空会话记录”右侧；会话列表项的菜单也提供入口，移动端可通过
+会话列表滑动操作打开。桌面任务页沿用会话数据目录的工作区、内容宽度与留白，切换回聊天保留草稿。
+聊天输入区不再放置任务面板，消息旁不再提供“查看状态”按钮。
+
+[ConversationTasksScreen](../../lib/ui/features/chat/views/conversation_tasks_screen.dart)负责页面订阅生命周期与
+审批、取消、恢复和重试的交互；[ConversationTasksPage](../../lib/ui/features/chat/views/conversation_tasks_page.dart)
+只展示 ViewModel 状态。列表包含当前会话的全部活动及历史任务，支持按标题、短 ID/完整 ID、当前
+步骤与工具名称搜索。默认按创建时间从早到晚排列，可切换为从晚到早；状态更新时间不会改变排序。
+搜索与排序在实时更新和刷新时保留，加载失败可刷新恢复。
+排序按钮与搜索框保持同高；顶部不放刷新按钮。刷新位于每张任务卡片的操作行，与取消、恢复或重试
+按钮使用相同尺寸及样式，重新读取当前会话的持久摘要；刷新期间禁用重复点击。首次加载失败时，
+错误提示内提供重试入口。
+
+摘要携带持久化创建时间；旧状态消息缺少该字段时使用其原更新时间，读取兼容且不修改原消息。
+
 ## 状态选择与确定性卡片
 
 [SelectConversationTask / PresentConversationTaskProgress](../../lib/domain/use_cases/present_conversation_task_progress.dart)
@@ -33,16 +50,17 @@ clock、身份生成器、Provider factory、工具 registry 和执行 adapter �
 | --- | --- |
 | 显式任务 ID | 验证会话归属；只读该任务或显示未找到 |
 | 无 ID、一个活动任务 | 直接展示该任务 |
-| 无 ID、多个活动任务 | 展示短 ID、标题、状态和各任务查询按钮 |
+| 无 ID、多个活动任务 | 展示短 ID、标题和状态，可通过任务页管理 |
 | 无活动任务 | 展示最近终态；没有任务则显示本地化说明 |
 
-卡片和结构化引用直接调用领域查询；自然语言问题由前台模型返回 `TaskStatusRequest`，随后读取
-相同的持久化事实，不启动工具循环。任务面板展示当前快照，时间线卡片保留查询当时的版本。
+结构化引用直接调用领域查询；自然语言问题由前台模型返回 `TaskStatusRequest`，随后读取
+相同的持久化事实，不启动工具循环。任务页展示当前快照，时间线卡片保留查询当时的版本。
+打开任务页、搜索、排序和刷新只读取摘要，不创建状态消息或调用模型。
 
 [ConversationTaskCard](../../lib/ui/features/chat/views/conversation_task_card.dart)呈现状态、执行阶段、
 已完成/总步骤、当前步骤、最近工具、审批与时间、等待原因、恢复次数、验证状态和更新时间。
 步骤使用 `3/5`，不推断百分比、完成时间或剩余时间。桌面使用 shadcn 语义 token，动作可用键盘
-访问，状态带文字和屏幕阅读标签；窄屏动作换行，展开的任务面板具有独立滚动范围。
+访问，状态带文字和屏幕阅读标签；窄屏工具栏与动作换行，任务列表使用独立滚动区域。
 
 ## 同一 revision 的卡片与文字
 
@@ -94,7 +112,10 @@ clock、身份生成器、Provider factory、工具 registry 和执行 adapter �
 - [前台生命周期](../../test/ui/features/chat/view_models/chat_foreground_dispatch_test.dart)：重复提交、
   取消、接受后释放输入、原身份重试、状态保存恢复和非阻塞润色。
 - [任务 ViewModel](../../test/ui/features/chat/view_models/conversation_tasks_view_model_test.dart)：重入、
-  持久取消、过期命令、长时间审批及数据库重启、配置恢复。
+  全部历史任务、搜索排序、持久取消、过期命令、长时间审批及数据库重启、配置恢复和重试去重。
+- [任务页](../../test/ui/features/chat/views/conversation_tasks_page_test.dart)与
+  [页面导航](../../test/ui/features/chat/views/conversation_tasks_navigation_test.dart)：搜索、排序、刷新、
+  明暗主题和窄屏布局、工具栏与会话列表入口、返回后草稿保留。
 - [卡片与重试对话框](../../test/ui/features/chat/views/conversation_task_card_test.dart)：所有生命周期状态、
   手机/桌面宽度、键盘、语义标签与历史卡片动作限制。
 - [状态持久化](../../test/domain/use_cases/present_conversation_task_progress_test.dart)、

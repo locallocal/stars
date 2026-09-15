@@ -6,46 +6,54 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_retry_dialog.dart';
+import 'package:stars/ui/features/chat/views/task_action_button.dart';
 import 'package:stars/utils/theme.dart';
 import '../../../../support/conversation_task_fixtures.dart';
 
-ConversationTaskProgressSummary cardSummary(ConversationTaskStatus status) =>
-    ConversationTaskProgressSummary(
-      taskId: 'task:abc12345678',
-      chatId: 'chat-1',
-      title: 'Report',
-      status: status,
-      phase: ConversationTaskPhase.executing,
-      planRevision: 1,
-      summaryRevision: 4,
-      updatedAt: taskTime,
-      waitingReason:
-          status == ConversationTaskStatus.waitingForUser
-              ? TaskWaitingReason.approval
-              : null,
-      progress: TaskProgress(
-        totalSteps: 5,
-        completedSteps: 3,
-        lastMeaningfulProgressAt: taskTime,
-        currentStepSummary: 'Read notes',
-        recoveries: 2,
-        pendingApprovalId:
-            status == ConversationTaskStatus.waitingForUser ? 'approval' : null,
-        pendingApprovalSummary:
-            status == ConversationTaskStatus.waitingForUser
-                ? 'Save notes'
-                : null,
-        approvalRequestedAt:
-            status == ConversationTaskStatus.waitingForUser ? taskTime : null,
-      ),
-      terminalSummary:
-          {
-                ConversationTaskStatus.failed,
-                ConversationTaskStatus.cancelled,
-              }.contains(status)
-              ? taskTerminal(status)
-              : null,
-    );
+ConversationTaskProgressSummary cardSummary(
+  ConversationTaskStatus status, {
+  TaskWaitingReason waitingReason = TaskWaitingReason.approval,
+}) => ConversationTaskProgressSummary(
+  taskId: 'task:abc12345678',
+  chatId: 'chat-1',
+  title: 'Report',
+  status: status,
+  phase: ConversationTaskPhase.executing,
+  planRevision: 1,
+  summaryRevision: 4,
+  updatedAt: taskTime,
+  waitingReason:
+      status == ConversationTaskStatus.waitingForUser ? waitingReason : null,
+  progress: TaskProgress(
+    totalSteps: 5,
+    completedSteps: 3,
+    lastMeaningfulProgressAt: taskTime,
+    currentStepSummary: 'Read notes',
+    recoveries: 2,
+    pendingApprovalId:
+        status == ConversationTaskStatus.waitingForUser &&
+                waitingReason == TaskWaitingReason.approval
+            ? 'approval'
+            : null,
+    pendingApprovalSummary:
+        status == ConversationTaskStatus.waitingForUser &&
+                waitingReason == TaskWaitingReason.approval
+            ? 'Save notes'
+            : null,
+    approvalRequestedAt:
+        status == ConversationTaskStatus.waitingForUser &&
+                waitingReason == TaskWaitingReason.approval
+            ? taskTime
+            : null,
+  ),
+  terminalSummary:
+      {
+            ConversationTaskStatus.failed,
+            ConversationTaskStatus.cancelled,
+          }.contains(status)
+          ? taskTerminal(status)
+          : null,
+);
 Widget host(Widget child, {bool desktop = true}) {
   Widget app(BuildContext? shad) => MaterialApp(
     locale: const Locale('en'),
@@ -87,6 +95,7 @@ void main() {
                 ConversationTaskCard(
                   summary: cardSummary(status),
                   onAction: (_) {},
+                  onRefresh: () {},
                 ),
                 desktop: width != 320,
               ),
@@ -95,6 +104,7 @@ void main() {
             expect(tester.takeException(), isNull);
             expect(find.text('Steps: 3/5'), findsOneWidget);
             expect(find.textContaining('%'), findsNothing);
+            expect(find.text('Refresh tasks'), findsOneWidget);
             expect(
               find.bySemanticsLabel(RegExp('Tasks: Report.*abc12345')),
               findsWidgets,
@@ -141,6 +151,7 @@ void main() {
           summary: cardSummary(ConversationTaskStatus.waitingForUser),
           historical: true,
           onAction: (_) {},
+          onRefresh: () {},
         ),
       ),
     );
@@ -148,7 +159,49 @@ void main() {
     expect(find.text('View status'), findsOneWidget);
     expect(find.text('Approve'), findsNothing);
     expect(find.text('Cancel task'), findsNothing);
+    expect(find.text('Refresh tasks'), findsNothing);
   });
+
+  for (final width in [320.0, 680.0]) {
+    testWidgets('refresh shares task action sizing and busy state at $width', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      var refreshes = 0;
+      Widget card({bool busy = false}) => host(
+        ConversationTaskCard(
+          summary: cardSummary(
+            ConversationTaskStatus.waitingForUser,
+            waitingReason: TaskWaitingReason.requiredInput,
+          ),
+          showStatusAction: false,
+          busy: busy,
+          onAction: (_) {},
+          onRefresh: () => refreshes++,
+        ),
+      );
+      await tester.pumpWidget(card());
+      await tester.pumpAndSettle();
+      final refresh = find.byKey(
+        const ValueKey('task-refresh-task:abc12345678'),
+      );
+      final refreshRect = tester.getRect(refresh);
+      for (final element in find.byType(TaskActionButton).evaluate()) {
+        final rect = tester.getRect(find.byWidget(element.widget));
+        expect(rect.height, refreshRect.height);
+        if (width > 600) expect(rect.top, refreshRect.top);
+      }
+      await tester.tap(refresh);
+      expect(refreshes, 1);
+      await tester.pumpWidget(card(busy: true));
+      await tester.pumpAndSettle();
+      await tester.tap(refresh);
+      expect(refreshes, 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
   for (final desktop in [true, false]) {
     testWidgets(
       'retry dialog reviews input and policy before creating a task ($desktop)',

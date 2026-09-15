@@ -11,6 +11,8 @@ import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/conversation_clear_scope.dart';
 import 'package:stars/ui/core/widgets/conversation_directory_scope.dart';
 import 'package:stars/ui/core/widgets/conversation_information_scope.dart';
+import 'package:stars/ui/core/widgets/conversation_tasks_scope.dart';
+import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/core/widgets/logo.dart';
 import 'package:stars/ui/core/widgets/model_modalities.dart';
@@ -22,6 +24,7 @@ import 'package:stars/ui/features/chat/view_models/conversation_memory_view_mode
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';
 import 'package:stars/ui/features/chat/views/conversation_directory_page.dart';
+import 'package:stars/ui/features/chat/views/conversation_tasks_screen.dart';
 import 'package:stars/ui/features/chat/views/conversation_memory_panel.dart';
 import 'package:stars/ui/features/chat/views/conversation_model_controls.dart';
 import 'package:stars/ui/features/chat/views/token_usage_chart.dart';
@@ -38,7 +41,7 @@ part 'desktop_layout_resizing.dart';
 
 enum _ChatOverlay { sidebar }
 
-enum _ChatWorkspacePane { messages, information, directory }
+enum _ChatWorkspacePane { messages, information, directory, tasks }
 
 /// Adaptive desktop shell for macOS, Windows and Linux.
 ///
@@ -133,6 +136,9 @@ class _DesktopLayoutState extends State<DesktopLayout> {
 
   bool get _conversationDirectoryOpen =>
       _chatWorkspacePane == _ChatWorkspacePane.directory;
+
+  bool get _conversationTasksOpen =>
+      _chatWorkspacePane == _ChatWorkspacePane.tasks;
 
   Bot? get _activeBot => switch (widget.currentIndex) {
     0 => widget.selectedChatBot,
@@ -359,6 +365,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                               conversationInfoVisible: _conversationInfoOpen,
                               conversationDirectoryVisible:
                                   _conversationDirectoryOpen,
+                              conversationTasksVisible: _conversationTasksOpen,
                               conversationInfoAvailable:
                                   conversationInfoAvailable,
                               compact: isChat && overlaySidebar,
@@ -391,6 +398,12 @@ class _DesktopLayoutState extends State<DesktopLayout> {
                                   widget.currentIndex == 0 &&
                                           widget.selectedChatId != null
                                       ? _toggleConversationDirectory
+                                      : null,
+                              onShowConversationTasks:
+                                  widget.currentIndex == 0 &&
+                                          widget.selectedChatId != null &&
+                                          widget.selectedChatBot != null
+                                      ? _toggleConversationTasks
                                       : null,
                             ),
                             Expanded(child: _buildWorkspace(context)),

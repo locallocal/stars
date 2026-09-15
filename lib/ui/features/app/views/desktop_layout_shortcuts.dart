@@ -157,6 +157,29 @@ extension _DesktopLayoutShortcuts on _DesktopLayoutState {
     });
   }
 
+  void _toggleConversationTasks() {
+    if (_conversationTasksOpen) {
+      _updateState(() => _chatWorkspacePane = _ChatWorkspacePane.messages);
+    } else {
+      _openConversationTasks();
+    }
+  }
+
+  void _openConversationTasks() {
+    if (widget.selectedChatId == null || widget.selectedChatBot == null) return;
+    _updateState(() {
+      _chatWorkspacePane = _ChatWorkspacePane.tasks;
+      _compactSidebarOpen = false;
+    });
+    if (_activeChatOverlay != null) unawaited(_dismissActiveChatOverlay());
+  }
+
+  void _showConversationTasks() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _openConversationTasks();
+    });
+  }
+
   void _showConversationInfo() {
     _updateState(() {
       _chatWorkspacePane = _ChatWorkspacePane.information;

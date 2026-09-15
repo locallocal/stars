@@ -38,6 +38,15 @@ final class TaskProgressStrings {
   }
 
   String get tasks => pick('Tasks', '任务');
+  String get pageDescription => pick(
+    'View progress and manage tasks in this conversation.',
+    '查看当前会话的任务进度，管理审批和执行操作。',
+  );
+  String get searchTasks => pick('Search tasks', '搜索任务');
+  String get noMatchingTasks => pick('No matching tasks', '未找到匹配的任务');
+  String get oldestFirst => pick('Oldest first', '时间：从早到晚');
+  String get newestFirst => pick('Newest first', '时间：从晚到早');
+  String get created => pick('Created', '创建时间');
   String get statusLabel => pick('Status', '状态');
   String get phaseLabel => pick('Phase', '阶段');
   String get steps => pick('Steps', '步骤');

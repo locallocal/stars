@@ -288,8 +288,13 @@ void main() {
             (await tester.runAsync(
               () => h.storage.repository.listActiveForChat('chat-1'),
             ))!.single;
-        tester.widget<MessageList>(find.byType(MessageList)).onTaskStatus!(
-          task.taskId,
+        await tester.runAsync(
+          () => deps.conversationTasks.progress(
+            chatId: 'chat-1',
+            botId: task.botId,
+            language: 'en',
+            taskId: task.taskId,
+          ),
         );
         await _drive(
           tester,
