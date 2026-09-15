@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:stars/data/services/conversation_task_store.dart';
 import 'package:stars/domain/models/conversation_memory.dart';
 
 part 'local_database_mcp_skills.dart';
@@ -17,6 +18,10 @@ class LocalDatabaseService {
     : _databaseProvider = databaseProvider;
 
   final DatabaseProvider _databaseProvider;
+  late final conversationTasks = ConversationTaskStore(
+    databaseProvider: _databaseProvider,
+    onMessageCommitted: _advanceMessageRevision,
+  );
   final Map<String, int> _messageRevisions = <String, int>{};
 
   int messageRevision(String chatId) => _messageRevisions[chatId] ?? 0;

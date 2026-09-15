@@ -1,6 +1,6 @@
 # 03：前台三路分流与回执
 
-[总计划](README.md) | [上一阶段](02-persistence-and-progress.md) | [下一阶段：有界执行分段](04-segment-runner.md)
+[总计划](README.md) | [事务持久化（已实现）](../../reference/conversation-task-persistence.md) | [下一阶段：有界执行分段](04-segment-runner.md)
 
 前置依赖：阶段 01、02。对应目标规格第 3、4、7.1、11、12 节。
 

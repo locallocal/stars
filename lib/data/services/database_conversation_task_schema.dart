@@ -129,6 +129,10 @@ Future<void> _createConversationTaskSchema(DatabaseExecutor db) async {
         'resultCommitting', 'leaseExpired', 'processRecovered', 'retryScheduled', 'noProgress')),
       occurred_at INTEGER NOT NULL,
       safe_summary TEXT NOT NULL CHECK (length(safe_summary) BETWEEN 1 AND 2000),
+      plan_revision INTEGER NOT NULL DEFAULT 1 CHECK (plan_revision > 0),
+      model_turns INTEGER NOT NULL DEFAULT 0 CHECK (model_turns >= 0),
+      verification_status TEXT CHECK (verification_status IN (
+        'notStarted', 'verifying', 'verified', 'partial', 'failed')),
       segment_id TEXT, step_id TEXT, attempt_id TEXT, approval_id TEXT, evidence_id TEXT,
       reason_code TEXT,
       PRIMARY KEY (task_id, sequence),

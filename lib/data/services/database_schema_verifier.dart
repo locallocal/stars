@@ -57,6 +57,11 @@ Future<void> _verifyCurrentDatabaseSchema(Database database) async {
           'segment_id',
         },
         'conversation_task_progress': {'progress_json', 'summary_revision'},
+        'conversation_task_events': {
+          'plan_revision',
+          'model_turns',
+          'verification_status',
+        },
       }.entries) {
     final columns = await database.rawQuery('PRAGMA table_info(${entry.key})');
     final names = columns.map((column) => column['name']).toSet();
