@@ -74,6 +74,7 @@ bool _sameAcceptance(Map<String, Object?> a, Map<String, Object?> b) => [
   'bot_id',
   'origin_turn_id',
   'origin_user_message_id',
+  'retry_of_task_id',
   'title',
   'objective',
   'acceptance_json',

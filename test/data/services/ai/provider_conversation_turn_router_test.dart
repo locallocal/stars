@@ -18,15 +18,49 @@ import '../../../support/foreground_turn_fixtures.dart';
 
 void main() {
   final input = foregroundInput();
-  TurnRoutingRequest request() => TurnRoutingRequest(
-    bot: input.bot,
-    userMessage: input.userMessage,
-    language: input.language,
-    messages: [
-      ChatMessage(role: 'user', content: 'hello', reasoning: 'private thought'),
-    ],
-    allowedToolNames: {'read_file'},
-  );
+  TurnRoutingRequest request({AgentCancellationToken? cancellation}) =>
+      TurnRoutingRequest(
+        cancellation: cancellation,
+        bot: input.bot,
+        userMessage: input.userMessage,
+        language: input.language,
+        messages: [
+          ChatMessage(
+            role: 'user',
+            content: 'hello',
+            reasoning: 'private thought',
+          ),
+        ],
+        allowedToolNames: {'read_file'},
+      );
+
+  test('foreground cancellation closes a stalled provider session', () async {
+    final stream = StreamController<ModelEvent>();
+    final started = Completer<void>();
+    final token = AgentCancellationToken();
+    final provider = ForegroundProvider(
+      input.bot,
+      events: () {
+        started.complete();
+        return stream.stream;
+      },
+    );
+    final router = ProviderConversationTurnRouter(
+      providers: ForegroundProviders((_) => provider),
+    );
+    final result = router.route(request(cancellation: token)).toList();
+    await started.future;
+    token.cancel();
+    final events = await result.timeout(const Duration(seconds: 1));
+    expect(
+      events.whereType<TurnRoutingFailed>().single.reason,
+      TurnRoutingFailure.cancelled,
+    );
+    expect(events.whereType<TurnDispositionCompleted>(), isEmpty);
+    expect(provider.sessions.single.closed, isTrue);
+    expect(provider.sessions.single.cancellations, 1);
+    await stream.close();
+  });
 
   test(
     'one tool-free call; direct frames stream before the Provider terminal',

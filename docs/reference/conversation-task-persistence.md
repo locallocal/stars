@@ -5,7 +5,7 @@
 
 会话任务的事务存储和查询已实现，[前台分流与接受](conversation-turn-dispatch.md)也已完成。
 [分段执行](conversation-task-runner.md)与[调度恢复](conversation-task-scheduling.md)已实现；
-终态验证和 UI 接入由后续阶段完成，当前生产聊天入口尚未切换到后台任务模型。
+[终态验证](conversation-task-terminal-results.md)和[生产会话交互](conversation-task-chat-ui.md)已连通。
 
 ## 入口与职责
 
@@ -102,7 +102,7 @@ lease 获取、续期和释放均比较 revision。续期只能延长有效 leas
 的接受、接受失败、写失败、进度更新、幂等复用、冲突原因和提交耗时统计，不记录用户内容。
 回执与任务的原子提交保证孤立回执计数为零。应用级遥测接入可读取这些计数。
 
-新建 schema 为版本 26；事件事实字段用于独立重建，分段扩展见[执行参考](conversation-task-runner.md)。当前版本以
+新建 schema 的事件事实字段用于独立重建，分段扩展见[执行参考](conversation-task-runner.md)。当前版本以
 [DatabaseService](../../lib/data/services/database_service.dart)为准。旧版本仍按既有策略要求重建，
 不迁移、不回填，也不自动删除用户数据库。
 

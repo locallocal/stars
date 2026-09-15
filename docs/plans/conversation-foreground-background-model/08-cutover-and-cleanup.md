@@ -1,6 +1,6 @@
 # 08：旧路径清理与正式切换
 
-[总计划](README.md) | [上一阶段](07-chat-ui-and-task-actions.md) | [下一阶段：完整验收](09-verification-and-documentation.md)
+[总计划](README.md) | [会话交互（已实现）](../../reference/conversation-task-chat-ui.md) | [下一阶段：完整验收](09-verification-and-documentation.md)
 
 前置依赖：阶段 01—07 的退出条件全部满足。对应目标规格第 9.4、10.2、11、14 节。
 

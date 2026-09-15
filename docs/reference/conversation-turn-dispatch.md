@@ -3,9 +3,7 @@
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
 [任务持久化](conversation-task-persistence.md) | [后续阶段](../plans/conversation-foreground-background-model/README.md)
 
-前台三路分流、直接回复提交、任务接受、状态查询及失败重试已实现。当前通过构造函数注入和
-真实 SQLite 测试验证；生产聊天入口仍沿用现有流程。runner、调度与终态路径就绪后，阶段 07
-接入新的 dispatcher，阶段 08 删除旧入口。
+前台三路分流、直接回复提交、任务接受、状态查询及失败重试已实现。已接入[生产会话交互](conversation-task-chat-ui.md)，并通过真实 SQLite 和完整页面流程测试；阶段 08 清理旧入口与恢复。
 
 ## 职责与入口
 
@@ -68,7 +66,7 @@ router；工具可用不触发 Agent Loop。run-scoped 工具仍由准备结果�
 | --- | --- |
 | 直接回复 | 只提交完整的 `turnId:assistant`，应用现有终态与 `AnswerTrustPolicy`；没有工具证据时不标为已验证 |
 | 接受任务 | 原子提交任务、初始计划、事件、进度投影及 `taskId:ack`，提交后调用 `enqueue` |
-| 查询状态 | 只返回持久化进度摘要；状态卡片、状态消息与模型润色属于阶段 07 |
+| 查询状态 | 返回持久化摘要；由 PresentConversationTaskProgress 保存卡片并启动同版本润色 |
 
 直接回复的 delta 仅供显示，不落 partial 消息；流中断或格式错误时返回失败，UI 应丢弃展示中的
 临时文本。有效的空回复按 `emptyResponse` 保存；失败或取消的类型化直接结果不保存半段正文。
@@ -114,7 +112,7 @@ router；工具可用不触发 Agent Loop。run-scoped 工具仍由准备结果�
 
 `TurnDispatchMetrics` 分别记录准备流水线调用次数、preflight Token、准备耗时和主回复调用次数，
 以及直接回复首字符/提交延迟、回执提交延迟、路由可恢复回退和回执兜底次数。延迟按每次派发的
-单调时钟计算；持久化重试的主回复调用数为零。未来状态润色不属于这个主回复调用统计。
+单调时钟计算；持久化重试的主回复调用数为零。状态润色单独记录指标，不属于这个主回复调用统计。
 
 - [协议与流式校验](../../test/data/services/ai/turn_routing_protocol_test.dart)
 - [Provider 传输与禁止工具边界](../../test/data/services/ai/provider_conversation_turn_router_test.dart)
@@ -123,4 +121,4 @@ router；工具可用不触发 Agent Loop。run-scoped 工具仍由准备结果�
 - [状态选择与会话隔离](../../test/domain/use_cases/conversation_turn_status_test.dart)
 
 测试使用 fake 模型输出和 HTTP transport、真实临时 SQLite，以及 fake 调度通知；不要求 API Key
-或外部模型服务。自然语言分类质量和真实 UI 首字符体验仍需在阶段 07/09 的产品验收中验证。
+或外部模型服务。完整页面流程见[会话交互测试](conversation-task-chat-ui.md#指标与验证)；外部模型分类质量和真实首字符体验仍需产品验收。

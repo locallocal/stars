@@ -16,6 +16,9 @@ final class DeleteConversation {
   final ConversationTaskRepository tasks;
   final ConversationTaskCommands commands;
 
+  Future<bool> hasActiveTasks(String chatId) async =>
+      (await tasks.listActiveForChat(chatId)).isNotEmpty;
+
   Future<void> call(String chatId) async {
     for (final task in await tasks.listActiveForChat(chatId)) {
       var current = task;

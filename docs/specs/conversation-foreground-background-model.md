@@ -4,13 +4,9 @@
 [现有消息流转](../reference/user-message-agent-response-flow.md) |
 [事实依据与防幻觉协议](../reference/conversation-loop-grounding.md)
 
-本文定义 Stars 会话内用户与智能体交互的目标模型，以及基于现有实现进行调整的落地规范。
-它是长期设计，不代表当前生产聊天入口已经切换。领域模型、schema、事务持久化、前台分流、
-[分段执行](../reference/conversation-task-runner.md)、[调度恢复](../reference/conversation-task-scheduling.md)和
-[终态验证与提交](../reference/conversation-task-terminal-results.md)已实现。
-持久化与接受行为见[任务持久化](../reference/conversation-task-persistence.md)和
-[前台分流与任务接受](../reference/conversation-turn-dispatch.md)；新的会话交互入口接入按
-[后续阶段](../plans/conversation-foreground-background-model/README.md)推进。
+本文定义 Stars 会话内前台响应、后台任务和状态展示的长期约束。领域模型、事务持久化、
+前台分流、分段执行、调度恢复、终态验证及[生产会话交互](../reference/conversation-task-chat-ui.md)
+已实现。旧恢复/兼容路径清理和完整产品验收仍按[后续阶段](../plans/conversation-foreground-background-model/README.md)推进。
 
 规范使用以下关键词：
 
@@ -44,11 +40,11 @@
 保持可恢复状态，并在应用恢复或平台后台执行窗口可用时继续。平台不允许执行期间，不虚构“仍在
 运行”。
 
-## 2. 当前实现与目标差异
+## 2. 运行边界的调整
 
-现有路径详见[现有消息流转](../reference/user-message-agent-response-flow.md)。需要替换的关键边界如下：
+当前路径详见[消息流转](../reference/user-message-agent-response-flow.md)。新模型确立以下边界；旧路径的残余代码仍需在清理阶段移除：
 
-| 当前实现 | 目标实现 |
+| 原运行边界 | 新模型边界 |
 | --- | --- |
 | 会话有可用工具时倾向进入 Agent Loop | 首个前台模型回合明确返回“直接回复”或“后台任务计划” |
 | 一个 `ChatGenerationViewModel` 管理会话内唯一阻塞 run | 前台回复与后台任务分别管理；后台任务不占用会话输入锁 |

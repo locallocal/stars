@@ -1,5 +1,5 @@
 import 'package:stars/domain/models/grounded_answer.dart';
-import 'package:stars/domain/models/task_message_kind.dart';
+import 'package:stars/domain/models/conversation_task.dart';
 
 class MessageToolCall {
   const MessageToolCall({
@@ -349,6 +349,7 @@ class Message {
     this.taskMessageKind,
     this.taskResultPolicy,
     this.summaryRevision,
+    List<ConversationTaskProgressSummary> taskStatusSummaries = const [],
     required this.chatId,
     required this.botId,
     required this.senderId,
@@ -365,7 +366,19 @@ class Message {
     this.terminalOutcome,
     this.hasPartialContent = false,
     required this.timestamp,
-  }) {
+  }) : taskStatusSummaries = List.unmodifiable(taskStatusSummaries) {
+    if (taskStatusSummaries.isNotEmpty &&
+        (taskMessageKind != TaskMessageKind.status ||
+            taskStatusSummaries.any((s) => s.chatId != chatId) ||
+            (taskId != null &&
+                (taskStatusSummaries.length != 1 ||
+                    taskStatusSummaries.single.taskId != taskId ||
+                    taskStatusSummaries.single.summaryRevision !=
+                        summaryRevision)))) {
+      throw ArgumentError(
+        "Status cards must match their message scope and revision.",
+      );
+    }
     if (taskMessageKind == null &&
         (taskId != null || summaryRevision != null)) {
       throw ArgumentError('Task metadata requires explicit message semantics.');
@@ -407,6 +420,7 @@ class Message {
       participatesInAnswerTrust &&
       (taskResultPolicy?.showVerificationStatus ?? currentSetting);
   final int? summaryRevision;
+  final List<ConversationTaskProgressSummary> taskStatusSummaries;
   final String chatId;
   final String botId;
   final String senderId;
@@ -432,6 +446,7 @@ class Message {
     TaskMessageKind? taskMessageKind,
     TaskResultPresentationPolicy? taskResultPolicy,
     int? summaryRevision,
+    List<ConversationTaskProgressSummary>? taskStatusSummaries,
     String? chatId,
     String? botId,
     String? senderId,
@@ -458,6 +473,7 @@ class Message {
       taskMessageKind: taskMessageKind ?? this.taskMessageKind,
       taskResultPolicy: taskResultPolicy ?? this.taskResultPolicy,
       summaryRevision: summaryRevision ?? this.summaryRevision,
+      taskStatusSummaries: taskStatusSummaries ?? this.taskStatusSummaries,
       chatId: chatId ?? this.chatId,
       botId: botId ?? this.botId,
       senderId: senderId ?? this.senderId,

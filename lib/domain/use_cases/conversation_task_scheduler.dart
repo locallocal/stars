@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:stars/domain/repositories/conversation_turn_router.dart';
 
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
@@ -22,7 +23,7 @@ typedef TaskRuntimeResolver =
 
 /// Application-owned durable queue. Notifications reduce latency; periodic
 /// database scans recover lost notifications and abandoned workers.
-final class ConversationTaskScheduler {
+final class ConversationTaskScheduler implements ConversationTaskEnqueuer {
   ConversationTaskScheduler({
     required this.repository,
     required this.resolve,
@@ -84,7 +85,8 @@ final class ConversationTaskScheduler {
   }
 
   /// Deliberately does not hold a task in memory or perform acceptance writes.
-  void enqueue(String taskId) => _wake();
+  @override
+  Future<void> enqueue(String taskId) async => _wake();
   void _wake() {
     if (_enabled) {
       unawaited(

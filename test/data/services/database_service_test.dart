@@ -542,6 +542,7 @@ Future<void> _expectCurrentSchema(Database database) async {
       'task_id',
       'task_message_kind',
       'summary_revision',
+      'task_summary_json',
       'chat_id',
       'bot_id',
       'sender_id',

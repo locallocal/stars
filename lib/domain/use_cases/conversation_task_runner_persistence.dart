@@ -104,6 +104,7 @@ extension _TaskSegmentPersistence on _TaskSegment {
       botId: old.botId,
       originTurnId: old.originTurnId,
       originUserMessageId: old.originUserMessageId,
+      retryOfTaskId: old.retryOfTaskId,
       title: old.title,
       objective: old.objective,
       acceptance: old.acceptance,

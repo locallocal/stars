@@ -7,6 +7,10 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Added
 
+- Background conversation tasks now leave the chat input available after acceptance.
+  Durable progress cards support status queries, approvals, cancellation and reviewed
+  retries, survive page rebuilds, and receive a single final result when work ends.
+
 - GitHub Actions quality gates for locked dependency resolution, localization
   generation, formatting, analysis, architecture/database tests, the complete
   test suite, and a Linux release build.

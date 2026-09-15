@@ -36,6 +36,7 @@ final class ConversationTask {
     this.nextRunAt,
     this.cancellationSource,
     this.cancelRequestedAt,
+    this.retryOfTaskId,
   }) {
     for (final id in [
       taskId,
@@ -45,6 +46,12 @@ final class ConversationTask {
       originUserMessageId,
     ]) {
       _taskText(id, 'identity', maximum: 256);
+    }
+    if (retryOfTaskId != null) {
+      _taskText(retryOfTaskId!, 'retryOfTaskId', maximum: 256);
+      if (retryOfTaskId == taskId) {
+        throw ArgumentError('A task cannot retry itself.');
+      }
     }
     _taskText(title, 'title', maximum: 200);
     _taskText(objective, 'objective');
@@ -110,6 +117,7 @@ final class ConversationTask {
   final String botId;
   final String originTurnId;
   final String originUserMessageId;
+  final String? retryOfTaskId;
   final String title;
   final String objective;
   final TaskAcceptanceSnapshot acceptance;
@@ -162,6 +170,7 @@ final class ConversationTask {
       botId: botId,
       originTurnId: originTurnId,
       originUserMessageId: originUserMessageId,
+      retryOfTaskId: retryOfTaskId,
       title: title,
       objective: objective,
       acceptance: acceptance,

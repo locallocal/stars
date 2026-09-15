@@ -25,6 +25,7 @@ final class ForegroundDispatchHarness {
   late ForegroundProviders providers;
   final mainProviders = <ForegroundProvider>[];
   late ConversationTurnDispatcher dispatcher;
+  late PrepareTextGeneration prepare;
   final metrics = <TurnDispatchMetrics>[];
   String response = routeFrames('directReply', [
     {'text': '你好！'},
@@ -66,7 +67,7 @@ final class ForegroundDispatchHarness {
     ForegroundTurnGate? gate,
     Duration enqueueTimeout = const Duration(seconds: 1),
   }) {
-    final prepare = PrepareTextGeneration(
+    prepare = PrepareTextGeneration(
       aiProviderRepository: providers,
       composeChatTurn: ({
         required bot,

@@ -43,29 +43,40 @@ extension ChatPageSendCommands on ChatPageState {
   }
 
   Future<void> _sendMessage() async {
-    if (_isTyping) {
+    if (_isTyping || _sendPending) {
       return;
     }
-    if (_generationError != null) {
-      _updateState(() {
-        _generationError = null;
-      });
+    _updateState(() => _sendPending = true);
+    try {
+      if (_generationError != null) {
+        _updateState(() {
+          _generationError = null;
+        });
+      }
+      if (_provider.getOutputModalites().contains(OutputModality.image) &&
+          _selectedImageSize.isNotEmpty) {
+        await _generateImage();
+        return;
+      } else if (_provider.getOutputModalites().contains(
+        OutputModality.speech,
+      )) {
+        await _generateSpeech();
+        return;
+      } else if (_provider.getOutputModalites().contains(
+        OutputModality.music,
+      )) {
+        await _generateMusic();
+        return;
+      } else if (_provider.getOutputModalites().contains(
+        OutputModality.video,
+      )) {
+        await _generateVideo();
+        return;
+      }
+      await _generateText();
+    } finally {
+      if (mounted) _updateState(() => _sendPending = false);
     }
-    if (_provider.getOutputModalites().contains(OutputModality.image) &&
-        _selectedImageSize.isNotEmpty) {
-      await _generateImage();
-      return;
-    } else if (_provider.getOutputModalites().contains(OutputModality.speech)) {
-      await _generateSpeech();
-      return;
-    } else if (_provider.getOutputModalites().contains(OutputModality.music)) {
-      await _generateMusic();
-      return;
-    } else if (_provider.getOutputModalites().contains(OutputModality.video)) {
-      await _generateVideo();
-      return;
-    }
-    await _generateText();
   }
 
   Future<void> _generateText() async {
@@ -78,6 +89,7 @@ extension ChatPageSendCommands on ChatPageState {
     final imageAttachmentDetail = S.of(context).imageAttachment;
     final fileAttachmentDetail = S.of(context).fileAttachment;
     final history = List<Message>.of(_messages);
+    final language = Localizations.localeOf(context).toLanguageTag();
     _pendingDraftText = messageText;
     _pendingDraftImages = List<File>.of(_selectedImages);
     _pendingDraftFiles = List<File>.of(_selectedFiles);
@@ -111,15 +123,27 @@ extension ChatPageSendCommands on ChatPageState {
         _scheduleScrollToLatest(force: true, animate: true);
       }
 
-      final started = await _generationViewModel.startTextWithPreparation(
-        userMessage: userMessage,
-        prepare:
-            (identifiedUserMessage) => _chatViewModel.prepareTextGeneration(
-              history: history,
-              userMessage: identifiedUserMessage,
-              currentUserId: _currentUserId,
-            ),
-      );
+      final started =
+          _generationViewModel.dispatcher != null
+              ? await _generationViewModel.dispatchText(
+                userMessage: userMessage,
+                language: language,
+                verification: VerificationPolicySnapshot(
+                  reliabilityEnabled: true,
+                  strictGroundingEnabled: widget.strictGroundingMode,
+                  showVerificationStatus: widget.showVerificationStatus,
+                ),
+              )
+              : await _generationViewModel.startTextWithPreparation(
+                userMessage: userMessage,
+                prepare:
+                    (identifiedUserMessage) =>
+                        _chatViewModel.prepareTextGeneration(
+                          history: history,
+                          userMessage: identifiedUserMessage,
+                          currentUserId: _currentUserId,
+                        ),
+              );
       if (started || _generationViewModel.snapshot.userPersisted) {
         _clearPendingDraft();
       }

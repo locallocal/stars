@@ -3,8 +3,7 @@
 [文档导航](../README.md) | [目标规格](../specs/conversation-foreground-background-model.md) |
 [分段执行](conversation-task-runner.md) | [后续阶段](../plans/conversation-foreground-background-model/README.md)
 
-应用级调度、lease 续期、重启恢复、审批/取消命令和删除保护已实现。生产聊天发送入口仍使用
-现有路径；[候选验证与唯一终态消息提交](conversation-task-terminal-results.md)已实现，阶段 07 接入新的会话交互。
+应用级调度、lease 续期、重启恢复、审批/取消命令和删除保护已实现。[生产会话交互](conversation-task-chat-ui.md)和[候选验证与唯一终态消息提交](conversation-task-terminal-results.md)已接入完整流程。
 
 ## 队列与执行所有权
 

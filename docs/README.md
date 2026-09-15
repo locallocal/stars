@@ -19,10 +19,11 @@
 | 实现参考 | [会话任务分段执行与长工具协议](reference/conversation-task-runner.md) | 分段预算、检查点恢复、持久审批、长 job、对账与受控结果候选 |
 | 实现参考 | [会话任务调度、恢复与副作用对账](reference/conversation-task-scheduling.md) | 应用级调度、lease 续期与并发、重启恢复、取消对账和删除保护 |
 | 实现参考 | [会话任务跨分段验证与终态回复](reference/conversation-task-terminal-results.md) | 任务级证据、冻结验证策略、安全终态表达、原子结果与时间线通知 |
+| 实现参考 | [会话任务交互与状态展示](reference/conversation-task-chat-ui.md) | 前后台独立生命周期、持久卡片与润色、审批取消、安全重试和生产组合根 |
 | 功能规范 | [会话事实化后续工作](specs/conversation-grounding-future-work.md) | 已交付能力之外、尚未排期的可信性扩展 |
 | 功能设计 | [Provider 原生工具证据归一化](specs/provider-native-tool-evidence-normalization.md) | FUT-GRD-001 的架构、分阶段计划与验收门禁 |
 | 实现参考 | [Skill 脚本沙箱](reference/skill-script-sandbox.md) | 安全边界、执行协议、授权、部署与排障 |
-| 实现参考 | [用户消息到智能体回复的现有流转](reference/user-message-agent-response-flow.md) | 从发送、上下文准备、Agent Loop 到终态落库的完整代码路径 |
+| 实现参考 | [用户消息到智能体回复的现有流转](reference/user-message-agent-response-flow.md) | 从前台分流、上下文准备、后台任务到终态落库的完整代码路径 |
 | 实现参考 | [会话 Loop 的事实依据与防幻觉协议](reference/conversation-loop-grounding.md) | 工具证据、声明门禁、跨轮信任与落地验收标准 |
 
 ## 代码事实来源
