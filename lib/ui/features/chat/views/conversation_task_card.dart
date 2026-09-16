@@ -101,7 +101,8 @@ final class ConversationTaskCard extends StatelessWidget {
             w.updated,
             DateFormat.yMd().add_Hm().format(s.updatedAt.toLocal()),
           ),
-          if (onAction != null || (!historical && onRefresh != null)) ...[
+          if (onAction != null ||
+              (!historical && !s.status.isTerminal && onRefresh != null)) ...[
             const SizedBox(height: 10),
             Wrap(
               spacing: 6,
@@ -128,7 +129,7 @@ final class ConversationTaskCard extends StatelessWidget {
                     s.terminalSummary?.sideEffectStatus ==
                         TaskSideEffectStatus.none)
                   action(TaskCardAction.retry, w.retry),
-                if (!historical && onRefresh != null)
+                if (!historical && !s.status.isTerminal && onRefresh != null)
                   Semantics(
                     label: '${w.refresh} · ${taskShortId(s.taskId)}',
                     button: true,

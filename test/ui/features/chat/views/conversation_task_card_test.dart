@@ -198,7 +198,10 @@ void main() {
             expect(tester.takeException(), isNull);
             expect(find.text('Steps: 3/5'), findsOneWidget);
             expect(find.textContaining('%'), findsNothing);
-            expect(find.text('Refresh tasks'), findsOneWidget);
+            expect(
+              find.text('Refresh tasks'),
+              status.isTerminal ? findsNothing : findsOneWidget,
+            );
             expect(
               find.bySemanticsLabel(RegExp('Tasks: Report.*abc12345')),
               findsWidgets,
