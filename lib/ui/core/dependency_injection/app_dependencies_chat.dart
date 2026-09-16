@@ -31,10 +31,14 @@ extension AppDependenciesChatFactories on AppDependencies {
     );
   }
 
-  MessageActionViewModel createMessageActionViewModel() =>
+  MessageActionViewModel createMessageActionViewModel({String? chatId}) =>
       MessageActionViewModel(
         repository: messageActionRepository,
         evidenceRepository: toolEvidenceRepository,
+        localFilesDirectoryProvider:
+            chatId == null
+                ? null
+                : () => conversationArtifactsDirectoryProvider(chatId),
       );
 
   ChatTokenUsageViewModel createChatTokenUsageViewModel(String chatId) =>
@@ -79,7 +83,7 @@ extension AppDependenciesChatFactories on AppDependencies {
     return ChatViewModel(
       interaction: ChatInteractionFacade(
         workflow: workflow,
-        messageActions: createMessageActionViewModel(),
+        messageActions: createMessageActionViewModel(chatId: chatId),
         generationRegistry: generationRegistry,
         generationViewModel: generationRegistry.viewModelFor(chatId, bot),
       ),

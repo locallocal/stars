@@ -7,11 +7,22 @@ final class MessageActionViewModel {
   const MessageActionViewModel({
     required MessageActionRepository repository,
     ToolEvidenceRepository? evidenceRepository,
+    Future<String> Function()? localFilesDirectoryProvider,
   }) : _repository = repository,
-       _evidenceRepository = evidenceRepository;
+       _evidenceRepository = evidenceRepository,
+       _localFilesDirectoryProvider = localFilesDirectoryProvider;
 
   final MessageActionRepository _repository;
   final ToolEvidenceRepository? _evidenceRepository;
+  final Future<String> Function()? _localFilesDirectoryProvider;
+
+  Future<String?> loadLocalFilesDirectory() async {
+    try {
+      return await _localFilesDirectoryProvider?.call();
+    } on Object {
+      return null;
+    }
+  }
 
   Future<Map<String, ToolEvidenceRecord?>> loadEvidenceRecords(
     Iterable<String> evidenceIds,

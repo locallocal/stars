@@ -19,8 +19,7 @@ class _LocalFileCard extends StatelessWidget {
     final theme = ShadTheme.of(context);
     return ShadTooltip(
       builder:
-          (context) =>
-              Text('${S.of(context).openFile}: ${descriptor.fileName}'),
+          (context) => Text('${S.of(context).preview}: ${descriptor.fileName}'),
       child: ShadButton.outline(
         key: ValueKey<String>('message-local-file-$filePath'),
         width: isDesktop ? 280 : 230,
@@ -54,7 +53,7 @@ class _LocalFileCard extends StatelessWidget {
           ),
         ),
         trailing: Icon(
-          LucideIcons.externalLink,
+          LucideIcons.eye,
           size: 16,
           color: theme.colorScheme.mutedForeground,
         ),

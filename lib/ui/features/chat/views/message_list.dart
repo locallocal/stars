@@ -10,6 +10,7 @@ import 'package:intl/intl.dart' as intl;
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
 import 'package:stars/domain/services/strict_grounding_policy.dart';
+import 'package:stars/domain/services/local_file_reference_parser.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -21,6 +22,7 @@ import 'package:stars/ui/features/chat/view_models/message_action_view_model.dar
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -232,10 +234,7 @@ class _MessageListState extends State<MessageList> {
                   showVerificationStatus: showVerificationStatus,
                   showExecutionStatus: showExecutionStatus,
                   content: widget.strictGroundingMode ? '' : streamingResponse,
-                  files: _localFilesFromMarkdown(
-                    widget.strictGroundingMode ? '' : streamingResponse,
-                    widget.streamingFiles,
-                  ),
+                  files: widget.streamingFiles,
                   actionViewModel: widget.actionViewModel,
                 ),
               ),
@@ -278,10 +277,7 @@ class _MessageListState extends State<MessageList> {
               strictPresentation,
             ),
             images: message.images,
-            files:
-                isMe
-                    ? message.files
-                    : _localFilesFromMarkdown(displayedContent, message.files),
+            files: message.files,
             audio: message.audio,
             music: message.music,
             video: message.video,
