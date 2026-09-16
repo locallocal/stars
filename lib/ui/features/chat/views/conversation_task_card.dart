@@ -241,7 +241,10 @@ final class _TaskSummaryHeader extends StatelessWidget {
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              ShadBadge.outline(child: Text(words.status(summary.status))),
+              _TaskStatusBadge(
+                status: summary.status,
+                label: words.status(summary.status),
+              ),
               Text(
                 '${words.steps}: ${summary.progress.completedSteps}/${summary.progress.totalSteps}',
                 style: theme.textTheme.muted,
@@ -255,6 +258,70 @@ final class _TaskSummaryHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+final class _TaskStatusBadge extends StatelessWidget {
+  const _TaskStatusBadge({required this.status, required this.label});
+
+  final ConversationTaskStatus status;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    // Semantic shades stay readable on tinted surfaces in both theme modes.
+    final (lightForeground, darkForeground) = switch (status) {
+      ConversationTaskStatus.queued => (
+        const Color(0xFF334155),
+        const Color(0xFFCBD5E1),
+      ),
+      ConversationTaskStatus.running => (
+        const Color(0xFF1D4ED8),
+        const Color(0xFF93C5FD),
+      ),
+      ConversationTaskStatus.waitingForUser => (
+        const Color(0xFF92400E),
+        const Color(0xFFFCD34D),
+      ),
+      ConversationTaskStatus.paused => (
+        const Color(0xFF6D28D9),
+        const Color(0xFFC4B5FD),
+      ),
+      ConversationTaskStatus.cancelRequested => (
+        const Color(0xFF9A3412),
+        const Color(0xFFFDBA74),
+      ),
+      ConversationTaskStatus.succeeded => (
+        const Color(0xFF166534),
+        const Color(0xFF86EFAC),
+      ),
+      ConversationTaskStatus.failed => (
+        const Color(0xFFB91C1C),
+        const Color(0xFFFCA5A5),
+      ),
+      ConversationTaskStatus.cancelled => (
+        colors.secondaryForeground,
+        colors.secondaryForeground,
+      ),
+    };
+    final foreground = isDark ? darkForeground : lightForeground;
+    final background =
+        status == ConversationTaskStatus.cancelled
+            ? colors.secondary
+            : Color.alphaBlend(
+              foreground.withValues(alpha: isDark ? 0.16 : 0.10),
+              colors.card,
+            );
+    return ShadBadge.secondary(
+      key: ValueKey('task-status-${status.name}'),
+      backgroundColor: background,
+      hoverBackgroundColor: background,
+      foregroundColor: foreground,
+      child: Text(label),
     );
   }
 }
