@@ -175,36 +175,15 @@ class _MessageContent extends StatelessWidget {
             padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
             child: _buildImageSection(context),
           ),
-        if (files.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(
-              top: content.isNotEmpty || images.isNotEmpty ? 12 : 0,
-            ),
-            child: _StatusCardSection(
-              isDesktop: isDesktop,
-              icon:
-                  isDesktop ? LucideIcons.paperclip : Icons.attach_file_rounded,
-              title:
-                  isCurrentUser
-                      ? S.of(context).fileAttachment
-                      : S.of(context).fileResult,
-              subtitle: S.of(context).fileCount(files.length.toString()),
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children:
-                    files
-                        .map(
-                          (filePath) => _buildFilePreview(
-                            context,
-                            filePath,
-                            isCurrentUser,
-                          ),
-                        )
-                        .toList(),
-              ),
-            ),
-          ),
+        _MessageLocalFiles(
+          content: content,
+          files: files,
+          isCurrentUser: isCurrentUser,
+          isDesktop: isDesktop,
+          hasContentAbove: content.isNotEmpty || images.isNotEmpty,
+          isStreaming: isStreaming,
+          actions: actionViewModel,
+        ),
         if (audio.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(top: _hasMediaAbove ? 12 : 0),
@@ -365,17 +344,6 @@ class _MessageContent extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildFilePreview(
-    BuildContext context,
-    String filePath,
-    bool isCurrentUser,
-  ) => _LocalFileCard(
-    filePath: filePath,
-    isCurrentUser: isCurrentUser,
-    isDesktop: isDesktop,
-    actionViewModel: actionViewModel,
-  );
 
   MarkdownStyleSheet _buildMarkdownStyleSheet(
     BuildContext context,

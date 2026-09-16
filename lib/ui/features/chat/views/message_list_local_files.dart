@@ -239,91 +239,136 @@ String _codeTypeLabel(String fileName, String extension, String language) {
   };
 }
 
-List<String> _localFilesFromMarkdown(
-  String markdown,
-  List<String> explicitFiles,
-) {
-  final files = List<String>.of(explicitFiles);
-  if (markdown.trim().isEmpty) return files;
+LocalFileReferenceParser _localFileParser({String? baseDirectory}) =>
+    LocalFileReferenceParser(
+      baseDirectory: baseDirectory,
+      homeDirectory:
+          Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'],
+    );
 
-  try {
-    final nodes = md.Document().parseLines(markdown.split('\n'));
-    for (final node in nodes) {
-      _collectMarkdownLocalFiles(node, files);
-    }
-  } on Object {
-    return files;
-  }
-  return files;
+class _MessageLocalFiles extends StatefulWidget {
+  const _MessageLocalFiles({
+    required this.content,
+    required this.files,
+    required this.isCurrentUser,
+    required this.isDesktop,
+    required this.hasContentAbove,
+    required this.isStreaming,
+    required this.actions,
+  });
+
+  final String content;
+  final List<String> files;
+  final bool isCurrentUser;
+  final bool isDesktop;
+  final bool hasContentAbove;
+  final bool isStreaming;
+  final MessageActionViewModel? actions;
+
+  @override
+  State<_MessageLocalFiles> createState() => _MessageLocalFilesState();
 }
 
-void _collectMarkdownLocalFiles(
-  md.Node node,
-  List<String> files, {
-  bool insideCodeBlock = false,
-}) {
-  if (node is! md.Element) return;
-  final isInsideCodeBlock = insideCodeBlock || node.tag == 'pre';
+class _MessageLocalFilesState extends State<_MessageLocalFiles> {
+  List<String> _files = const [];
+  int _generation = 0;
+  Timer? _debounce;
 
-  String? reference;
-  if (node.tag == 'a') {
-    reference = node.attributes['href'];
-  } else if (node.tag == 'img') {
-    reference = node.attributes['src'];
-  } else if (node.tag == 'code' && !isInsideCodeBlock) {
-    reference = node.textContent;
-  }
-  final localPath = _localFilePathFromReference(reference ?? '');
-  if (localPath != null &&
-      File(localPath).existsSync() &&
-      !files.contains(localPath)) {
-    files.add(localPath);
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
   }
 
-  for (final child in node.children ?? const <md.Node>[]) {
-    _collectMarkdownLocalFiles(
-      child,
-      files,
-      insideCodeBlock: isInsideCodeBlock,
+  @override
+  void didUpdateWidget(covariant _MessageLocalFiles oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.content != widget.content ||
+        !listEquals(oldWidget.files, widget.files) ||
+        oldWidget.isStreaming != widget.isStreaming ||
+        oldWidget.isCurrentUser != widget.isCurrentUser ||
+        oldWidget.actions != widget.actions) {
+      _refresh(
+        retainFiles:
+            oldWidget.isStreaming &&
+            widget.content.startsWith(oldWidget.content) &&
+            listEquals(oldWidget.files, widget.files) &&
+            oldWidget.isCurrentUser == widget.isCurrentUser &&
+            oldWidget.actions == widget.actions,
+      );
+    }
+  }
+
+  void _refresh({bool retainFiles = false}) {
+    final generation = ++_generation;
+    _debounce?.cancel();
+    if (!retainFiles) _files = widget.files.toSet().toList(growable: false);
+    if (widget.isCurrentUser) return;
+    if (widget.isStreaming) {
+      _debounce = Timer(const Duration(milliseconds: 200), () {
+        unawaited(_resolveFiles(generation));
+      });
+    } else {
+      unawaited(_resolveFiles(generation));
+    }
+  }
+
+  Future<void> _resolveFiles(int generation) async {
+    final content = widget.content;
+    final explicitFiles = List<String>.of(widget.files);
+    final directory = await widget.actions?.loadLocalFilesDirectory();
+    if (!mounted || generation != _generation) return;
+    final parser = _localFileParser(baseDirectory: directory);
+    final files = <String>{
+      for (final reference in explicitFiles)
+        parser.resolve(reference) ?? reference,
+    };
+    for (final candidate in parser.pathsFromMarkdown(content)) {
+      if (!mounted || generation != _generation) return;
+      if (files.contains(candidate)) continue;
+      try {
+        if (await File(candidate).exists()) files.add(candidate);
+      } on FileSystemException {
+        // An inaccessible reference must not prevent other files from showing.
+      }
+    }
+    if (!mounted || generation != _generation) return;
+    setState(() => _files = List.unmodifiable(files));
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_files.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(top: widget.hasContentAbove ? 12 : 0),
+      child: _StatusCardSection(
+        isDesktop: widget.isDesktop,
+        icon: LucideIcons.paperclip,
+        title:
+            widget.isCurrentUser
+                ? S.of(context).fileAttachment
+                : S.of(context).fileResult,
+        subtitle: S.of(context).fileCount(_files.length.toString()),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final filePath in _files)
+              _LocalFileCard(
+                filePath: filePath,
+                isCurrentUser: widget.isCurrentUser,
+                isDesktop: widget.isDesktop,
+                actionViewModel: widget.actions,
+              ),
+          ],
+        ),
+      ),
     );
   }
-}
-
-String? _localFilePathFromReference(String reference) {
-  var normalized = reference.trim();
-  if (normalized.length >= 2 &&
-      ((normalized.startsWith('<') && normalized.endsWith('>')) ||
-          (normalized.startsWith('"') && normalized.endsWith('"')) ||
-          (normalized.startsWith("'") && normalized.endsWith("'")))) {
-    normalized = normalized.substring(1, normalized.length - 1).trim();
-  }
-  if (normalized.isEmpty) return null;
-
-  try {
-    normalized = Uri.decodeFull(normalized);
-  } on ArgumentError {
-    // Native paths may contain raw Unicode that is valid for the file system
-    // but is not an encoded URI. Keep that path unchanged.
-  }
-  if (path_context.isAbsolute(normalized)) {
-    return path_context.normalize(normalized);
-  }
-
-  final uri = Uri.tryParse(normalized);
-  if (uri == null) return null;
-  if (uri.scheme == 'file') {
-    try {
-      return path_context.normalize(
-        uri.toFilePath(windows: Platform.isWindows),
-      );
-    } on UnsupportedError {
-      return null;
-    } on StateError {
-      return null;
-    }
-  }
-  if (uri.scheme == 'sandbox' && path_context.isAbsolute(uri.path)) {
-    return path_context.normalize(uri.path);
-  }
-  return null;
 }

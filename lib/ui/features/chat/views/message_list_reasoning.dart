@@ -295,7 +295,11 @@ Future<void> _openMarkdownLink(
 ) async {
   if (href == null || href.trim().isEmpty) return;
   final normalized = href.trim();
-  final localPath = _localFilePathFromReference(normalized);
+  final directory = await actions?.loadLocalFilesDirectory();
+  if (!context.mounted) return;
+  final localPath = _localFileParser(
+    baseDirectory: directory,
+  ).resolve(normalized);
   if (localPath != null) {
     _showLocalFileDialog(
       context,

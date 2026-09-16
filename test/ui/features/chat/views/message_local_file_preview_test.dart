@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -122,6 +123,158 @@ cat "${file.path}"
       find.byKey(ValueKey<String>('message-local-file-${file.path}')),
       findsNothing,
     );
+  });
+
+  testWidgets('plain text paths produce a shadcn file card and preview', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync('stars-plain-path-');
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/学习报告.md')
+      ..writeAsStringSync('# 已完成的报告');
+
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '已生成：${file.path}，点击文件预览。',
+      size: const Size(360, 800),
+      isDesktop: false,
+      brightness: Brightness.dark,
+    );
+
+    final card = find.byKey(
+      ValueKey<String>('message-local-file-${file.path}'),
+    );
+    expect(card, findsOneWidget);
+    expect(tester.widget(card), isA<ShadButton>());
+    expect(tester.takeException(), isNull);
+    await tester.tap(card);
+    await _pumpDialog(tester);
+    expect(find.byType(ShadDialog), findsOneWidget);
+    expect(find.text('已完成的报告'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('relative links resolve in the conversation and deduplicate', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'stars-relative-path-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/报告 final.md')
+      ..writeAsStringSync('# 会话报告');
+    final actions = MessageActionViewModel(
+      repository: _FakeMessageActionRepository(),
+      localFilesDirectoryProvider: () async => directory.path,
+    );
+    await _pumpFileMessage(
+      tester,
+      files: [file.path],
+      content: '[打开报告](<./报告 final.md>)\n\n`${file.path}:12`',
+      actions: actions,
+    );
+
+    expect(
+      find.byKey(ValueKey<String>('message-local-file-${file.path}')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('打开报告'));
+    await _pumpDialog(tester);
+    expect(find.text('会话报告'), findsOneWidget);
+  });
+
+  testWidgets('missing paths and directories do not become result cards', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'stars-missing-path-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/real.txt')..writeAsStringSync('real');
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '${directory.path}/missing.md，${directory.path}，${file.path}',
+    );
+    expect(
+      find.byKey(ValueKey<String>('message-local-file-${file.path}')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey<String>('message-local-file-${directory.path}')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(
+        ValueKey<String>('message-local-file-${directory.path}/missing.md'),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('streamed paths resolve and remain visible after completion', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'stars-streamed-path-',
+    );
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/streamed.txt')
+      ..writeAsStringSync('done');
+    final card = find.byKey(
+      ValueKey<String>('message-local-file-${file.path}'),
+    );
+
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '生成中',
+      isStreaming: true,
+    );
+    expect(card, findsNothing);
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '已生成：${file.path}',
+      isStreaming: true,
+    );
+    expect(card, findsOneWidget);
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '已生成：${file.path}。',
+    );
+    expect(card, findsOneWidget);
+    await tester.tap(card);
+    await _pumpDialog(tester);
+    expect(find.text('done'), findsOneWidget);
+  });
+
+  testWidgets('stale discovery cannot restore files from an earlier message', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync('stars-stale-path-');
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/old.txt')..writeAsStringSync('old');
+    final pendingDirectory = Completer<String>();
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '`old.txt`',
+      actions: MessageActionViewModel(
+        repository: _FakeMessageActionRepository(),
+        localFilesDirectoryProvider: () => pendingDirectory.future,
+      ),
+    );
+    await _pumpFileMessage(tester, files: const [], content: '回复已更新');
+    pendingDirectory.complete(directory.path);
+    await _finishFileDiscovery(tester);
+    expect(
+      find.byKey(ValueKey<String>('message-local-file-${file.path}')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('text file opens in a preview dialog and closes', (tester) async {
@@ -517,37 +670,43 @@ Future<void> _pumpFileMessage(
   required List<String> files,
   String content = 'Generated artifacts',
   MessageActionViewModel? actions,
+  Size size = const Size(1100, 850),
+  bool isDesktop = true,
+  Brightness brightness = Brightness.light,
+  bool isStreaming = false,
 }) async {
   tester.view.devicePixelRatio = 1;
-  tester.view.physicalSize = const Size(1100, 850);
+  tester.view.physicalSize = size;
   addTearDown(tester.view.reset);
   final scrollController = ScrollController();
   addTearDown(scrollController.dispose);
 
   await tester.pumpWidget(
     shadHarness(
-      brightness: Brightness.light,
+      brightness: brightness,
       homeBuilder:
           (context) => Scaffold(
             body: Column(
               children: [
                 MessageList(
                   messages: [
-                    Message(
-                      messageId: 'message-with-local-files',
-                      chatId: 'chat-1',
-                      botId: 'bot-1',
-                      senderId: 'bot-1',
-                      content: content,
-                      files: files,
-                      timestamp: DateTime(2026),
-                    ),
+                    if (!isStreaming)
+                      Message(
+                        messageId: 'message-with-local-files',
+                        chatId: 'chat-1',
+                        botId: 'bot-1',
+                        senderId: 'bot-1',
+                        content: content,
+                        files: files,
+                        timestamp: DateTime(2026),
+                      ),
                   ],
                   scrollController: scrollController,
-                  isStreaming: false,
-                  streamingResponse: '',
+                  isStreaming: isStreaming,
+                  streamingResponse: isStreaming ? content : '',
+                  streamingFiles: isStreaming ? files : const [],
                   currentUserId: 'user-1',
-                  isDesktop: true,
+                  isDesktop: isDesktop,
                   actionViewModel: actions,
                 ),
               ],
@@ -555,6 +714,20 @@ Future<void> _pumpFileMessage(
           ),
     ),
   );
+  await tester.pumpAndSettle();
+  if (isStreaming) await tester.pump(const Duration(milliseconds: 250));
+  await _finishFileDiscovery(tester);
+}
+
+Future<void> _finishFileDiscovery(WidgetTester tester) async {
+  // File I/O runs outside FakeAsync; pump between completions to drain the
+  // widget's continuations, including when several references are checked.
+  for (var attempt = 0; attempt < 10; attempt++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
   await tester.pumpAndSettle();
 }
 
