@@ -18,6 +18,7 @@ final class ConversationTaskCard extends StatelessWidget {
     this.refreshing = false,
     this.historical = false,
     this.showStatusAction = true,
+    this.expansionController,
   });
   final ConversationTaskProgressSummary summary;
   final ValueChanged<TaskCardAction>? onAction;
@@ -26,6 +27,9 @@ final class ConversationTaskCard extends StatelessWidget {
   final bool refreshing;
   final bool showStatusAction;
 
+  /// The task list owns expansion across pagination and live updates.
+  final ShadAccordionController<String>? expansionController;
+
   @override
   Widget build(BuildContext context) {
     final w = TaskProgressStrings(
@@ -33,6 +37,7 @@ final class ConversationTaskCard extends StatelessWidget {
     );
     final s = summary, p = summary.progress;
     final theme = ShadTheme.maybeOf(context);
+    final collapsible = expansionController != null && theme != null;
     final textStyle =
         theme?.textTheme.small ?? Theme.of(context).textTheme.bodySmall!;
     Widget row(String label, String text) => Padding(
@@ -59,13 +64,15 @@ final class ConversationTaskCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${taskSafeText(s.title, maximum: 200)} · ${taskShortId(s.taskId)}',
-            style: textStyle.copyWith(fontWeight: FontWeight.w600),
-          ),
-          row(w.statusLabel, w.status(s.status)),
+          if (!collapsible) ...[
+            Text(
+              '${taskSafeText(s.title, maximum: 200)} · ${taskShortId(s.taskId)}',
+              style: textStyle.copyWith(fontWeight: FontWeight.w600),
+            ),
+            row(w.statusLabel, w.status(s.status)),
+            row(w.steps, '${p.completedSteps}/${p.totalSteps}'),
+          ],
           row(w.phaseLabel, w.phase(s.phase)),
-          row(w.steps, '${p.completedSteps}/${p.totalSteps}'),
           if (p.currentStepSummary.isNotEmpty)
             row(w.currentStep, taskSafeText(p.currentStepSummary)),
           if (p.latestTool != null)
@@ -85,7 +92,7 @@ final class ConversationTaskCard extends StatelessWidget {
             ),
           row(w.recoveries, '${p.recoveries}'),
           row(w.verification, w.verified(p.verificationStatus)),
-          if (!historical)
+          if (!historical && !collapsible)
             row(
               w.created,
               DateFormat.yMd().add_Hm().format(s.createdAt.toLocal()),
@@ -157,10 +164,96 @@ final class ConversationTaskCard extends StatelessWidget {
               )
               : ShadCard(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: collapsible ? 0 : 12,
+                ),
                 radius: StarsDesktopThemeSpec.statusRadius,
-                child: content,
+                child:
+                    collapsible
+                        ? ShadAccordion<String>.multiple(
+                          controller: expansionController,
+                          children: [
+                            ShadAccordionItem<String>(
+                              key: ValueKey('task-toggle-${s.taskId}'),
+                              value: s.taskId,
+                              separator: const SizedBox.shrink(),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              underlineTitleOnHover: false,
+                              duration:
+                                  MediaQuery.disableAnimationsOf(context)
+                                      ? Duration.zero
+                                      : const Duration(milliseconds: 180),
+                              title: ListenableBuilder(
+                                listenable: expansionController!,
+                                builder:
+                                    (context, child) => Semantics(
+                                      key: ValueKey('task-heading-${s.taskId}'),
+                                      button: true,
+                                      expanded: expansionController!.value
+                                          .contains(s.taskId),
+                                      onTap:
+                                          () => expansionController!.toggle(
+                                            s.taskId,
+                                          ),
+                                      child: child,
+                                    ),
+                                child: _TaskSummaryHeader(summary: s, words: w),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: content,
+                              ),
+                            ),
+                          ],
+                        )
+                        : content,
               ),
+    );
+  }
+}
+
+final class _TaskSummaryHeader extends StatelessWidget {
+  const _TaskSummaryHeader({required this.summary, required this.words});
+
+  final ConversationTaskProgressSummary summary;
+  final TaskProgressStrings words;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${taskSafeText(summary.title, maximum: 200)} · ${taskShortId(summary.taskId)}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.small.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ShadBadge.outline(child: Text(words.status(summary.status))),
+              Text(
+                '${words.steps}: ${summary.progress.completedSteps}/${summary.progress.totalSteps}',
+                style: theme.textTheme.muted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${words.created}: ${DateFormat.yMd().add_Hm().format(summary.createdAt.toLocal())}',
+            style: theme.textTheme.muted,
+          ),
+        ],
+      ),
     );
   }
 }
