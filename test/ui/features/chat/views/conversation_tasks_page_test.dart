@@ -244,6 +244,46 @@ void main() {
     });
   }
 
+  for (final status in [
+    ConversationTaskStatus.succeeded,
+    ConversationTaskStatus.failed,
+  ]) {
+    testWidgets('live $status task hides refresh while expanded', (
+      tester,
+    ) async {
+      await vm.start();
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (_) => Scaffold(
+                body: ConversationTasksPage(viewModel: vm, onAction: (_, _) {}),
+              ),
+        ),
+      );
+      final active = cardSummary(ConversationTaskStatus.queued);
+      repository.events.add([active]);
+      await tester.pumpAndSettle();
+      await _tapTaskHeading(tester, active.taskId);
+      await tester.pumpAndSettle();
+      final refresh = find.byKey(ValueKey('task-refresh-${active.taskId}'));
+      expect(refresh, findsOneWidget);
+
+      repository.events.add([cardSummary(status)]);
+      await tester.pumpAndSettle();
+
+      expect(refresh, findsNothing);
+      expect(find.text('刷新任务'), findsNothing);
+      final heading = tester.widget<Semantics>(
+        find.byKey(ValueKey('task-heading-${active.taskId}')),
+      );
+      expect(heading.properties.expanded, isTrue);
+      expect(repository.subscriptions, 1);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   testWidgets('stream failure can refresh into an empty task list', (
     tester,
   ) async {
