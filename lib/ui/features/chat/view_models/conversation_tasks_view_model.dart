@@ -33,6 +33,8 @@ final class ConversationTasksState {
 /// Observes durable facts. Disposal releases subscriptions only; tasks belong
 /// to the app scheduler, and ordinary chat input never changes their objective.
 final class ConversationTasksViewModel extends DisposableChangeNotifier {
+  static const pageSize = 20;
+
   ConversationTasksViewModel({
     required this.chatId,
     required this.botId,
@@ -49,12 +51,30 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
   final TaskRetryDispatcher? dispatchRetry;
   final bool Function()? retryAvailable;
   String _query = '';
-  ConversationTaskSort _sort = ConversationTaskSort.oldestFirst;
+  ConversationTaskSort _sort = ConversationTaskSort.newestFirst;
+  List<ConversationTaskProgressSummary> _filteredSummaries = const [];
+  int _pageIndex = 0;
   String get query => _query;
   ConversationTaskSort get sort => _sort;
   bool get canRetry =>
       dispatchRetry != null && (retryAvailable?.call() ?? true);
+  int get filteredCount => _filteredSummaries.length;
+  int get totalPages => (filteredCount + pageSize - 1) ~/ pageSize;
+  int get currentPage => filteredCount == 0 ? 0 : _pageIndex + 1;
+  bool get hasPreviousPage => _pageIndex > 0;
+  bool get hasNextPage => _pageIndex + 1 < totalPages;
+  int get firstVisibleItem =>
+      filteredCount == 0 ? 0 : _pageIndex * pageSize + 1;
+  int get lastVisibleItem =>
+      ((_pageIndex + 1) * pageSize).clamp(0, filteredCount);
+
   List<ConversationTaskProgressSummary> get visibleSummaries {
+    return List.unmodifiable(
+      _filteredSummaries.skip(_pageIndex * pageSize).take(pageSize),
+    );
+  }
+
+  void _filterAndSort() {
     final terms = query.toLowerCase().trim().split(RegExp(r'\s+'));
     final result =
         state.summaries.where((summary) {
@@ -70,12 +90,27 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
       final order = time == 0 ? a.taskId.compareTo(b.taskId) : time;
       return sort == ConversationTaskSort.oldestFirst ? order : -order;
     });
-    return List.unmodifiable(result);
+    _filteredSummaries = List.unmodifiable(result);
+    _pageIndex = totalPages == 0 ? 0 : _pageIndex.clamp(0, totalPages - 1);
+  }
+
+  void previousPage() {
+    if (isDisposed || !hasPreviousPage) return;
+    _pageIndex--;
+    notifyListeners();
+  }
+
+  void nextPage() {
+    if (isDisposed || !hasNextPage) return;
+    _pageIndex++;
+    notifyListeners();
   }
 
   void search(String value) {
     if (isDisposed || _query == value) return;
     _query = value;
+    _pageIndex = 0;
+    _filterAndSort();
     notifyListeners();
   }
 
@@ -85,6 +120,8 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         sort == ConversationTaskSort.oldestFirst
             ? ConversationTaskSort.newestFirst
             : ConversationTaskSort.oldestFirst;
+    _pageIndex = 0;
+    _filterAndSort();
     notifyListeners();
   }
 
@@ -112,6 +149,7 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         pendingCommands: state.pendingCommands,
         loading: false,
       );
+      _filterAndSort();
       notifyListeners();
     }, onError: (Object _) => _error());
   }

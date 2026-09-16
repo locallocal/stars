@@ -82,6 +82,39 @@ Widget host(Widget child, {bool desktop = true}) {
 }
 
 void main() {
+  testWidgets('collapsed task details can be toggled with the keyboard', (
+    tester,
+  ) async {
+    final controller = ShadAccordionController<String>.multiple();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      host(
+        ConversationTaskCard(
+          summary: cardSummary(ConversationTaskStatus.waitingForUser),
+          expansionController: controller,
+          onAction: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Approve'), findsNothing);
+    expect(find.text('Steps: 3/5'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.text('Approve'), findsOneWidget);
+    final heading = tester.widget<Semantics>(
+      find.byKey(const ValueKey('task-heading-task:abc12345678')),
+    );
+    expect(heading.properties.expanded, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pumpAndSettle();
+    expect(find.text('Approve'), findsNothing);
+    expect(controller.value, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('approval card retains the end of a long command', (
     tester,
   ) async {

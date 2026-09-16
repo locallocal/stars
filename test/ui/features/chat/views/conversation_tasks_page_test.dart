@@ -10,6 +10,7 @@ import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_task_retry.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
+import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_tasks_page.dart';
 import 'package:stars/utils/theme.dart';
@@ -80,7 +81,7 @@ void main() {
             find.byKey(const ValueKey('conversation-tasks-sort')),
           );
           expect(sortRect.height, searchRect.height);
-          expect(vm.visibleSummaries.first.taskId, 'old-task');
+          expect(vm.visibleSummaries.first.taskId, 'new-task');
           if (width > 600) {
             expect(sortRect.top, searchRect.top);
             expect(sortRect.bottom, searchRect.bottom);
@@ -101,6 +102,9 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.byKey(const ValueKey('task-old-task')), findsNothing);
           expect(find.byKey(const ValueKey('task-new-task')), findsOneWidget);
+          expect(find.text('批准'), findsNothing);
+          await _tapTaskHeading(tester, 'new-task');
+          await tester.pumpAndSettle();
           await tester.tap(find.text('批准'));
           await tester.pump();
           expect(actions, ['new-task/approve']);
@@ -115,7 +119,7 @@ void main() {
             find.byKey(const ValueKey('conversation-tasks-sort')),
           );
           await tester.pumpAndSettle();
-          expect(vm.sort, ConversationTaskSort.newestFirst);
+          expect(vm.sort, ConversationTaskSort.oldestFirst);
           expect(
             tester
                 .widgetList<ConversationTaskCard>(
@@ -124,16 +128,120 @@ void main() {
                 .first
                 .summary
                 .taskId,
-            'new-task',
+            'old-task',
           );
           repository.events.add([older, newer]);
           await tester.pumpAndSettle();
-          expect(vm.visibleSummaries.first.taskId, 'new-task');
+          expect(vm.visibleSummaries.first.taskId, 'old-task');
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox.shrink());
         },
       );
     }
+  }
+
+  for (final width in [320.0, 1200.0]) {
+    testWidgets('pagination and expansion survive updates at $width', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await vm.start();
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.dark,
+          homeBuilder:
+              (_) => Scaffold(
+                body: ConversationTasksPage(
+                  viewModel: vm,
+                  embedded: width > 600,
+                  onAction: (_, _) {},
+                ),
+              ),
+        ),
+      );
+      final summaries = List.generate(
+        41,
+        (index) => _summary('task-$index', 'Report $index', index),
+      );
+      repository.events.add(summaries);
+      await tester.pumpAndSettle();
+      final previous = find.byKey(
+        const ValueKey('conversation-tasks-previous-page'),
+      );
+      final next = find.byKey(const ValueKey('conversation-tasks-next-page'));
+      final indicator = find.byKey(
+        const ValueKey('conversation-tasks-page-indicator'),
+      );
+      final listFinder = find.byKey(const ValueKey('conversation-tasks-list'));
+      expect(tester.widget<Text>(indicator).data, '1 / 3');
+      expect(tester.widget<StarsDesktopIconAction>(previous).enabled, isFalse);
+      expect(
+        tester
+            .widget<ListView>(listFinder)
+            .childrenDelegate
+            .estimatedChildCount,
+        39,
+      );
+      expect(find.byKey(const ValueKey('task-task-40')), findsOneWidget);
+      expect(find.byKey(const ValueKey('task-refresh-task-40')), findsNothing);
+      await _tapTaskHeading(tester, 'task-40');
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('task-refresh-task-40')),
+        findsOneWidget,
+      );
+      repository.events.add(summaries.reversed.toList());
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('task-refresh-task-40')),
+        findsOneWidget,
+      );
+
+      final scroll = tester.widget<ListView>(listFinder).controller!;
+      scroll.jumpTo(scroll.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(vm.visibleSummaries, hasLength(20));
+      expect(tester.widget<Text>(indicator).data, '2 / 3');
+      expect(scroll.offset, 0);
+      expect(find.byKey(const ValueKey('task-task-20')), findsOneWidget);
+      expect(find.byKey(const ValueKey('task-task-40')), findsNothing);
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(tester.widget<Text>(indicator).data, '3 / 3');
+      expect(tester.widget<StarsDesktopIconAction>(next).enabled, isFalse);
+      expect(find.byType(ConversationTaskCard), findsOneWidget);
+      expect(find.byKey(const ValueKey('task-task-0')), findsOneWidget);
+      await tester.tap(previous);
+      await tester.pumpAndSettle();
+      await tester.tap(previous);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('task-refresh-task-40')),
+        findsOneWidget,
+      );
+      await _tapTaskHeading(tester, 'task-40');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('task-refresh-task-40')), findsNothing);
+
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      final search = find.descendant(
+        of: find.byKey(const ValueKey('conversation-tasks-search')),
+        matching: find.byType(EditableText),
+      );
+      await tester.enterText(search, 'Report 40');
+      await tester.pumpAndSettle();
+      expect(vm.currentPage, 1);
+      expect(tester.widget<Text>(indicator).data, '1 / 1');
+      expect(tester.widget<StarsDesktopIconAction>(next).enabled, isFalse);
+      expect(find.byKey(const ValueKey('task-task-40')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   }
 
   testWidgets('stream failure can refresh into an empty task list', (
@@ -199,6 +307,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('conversation-tasks-sort')));
     repository.events.addError(StateError('storage unavailable'));
     await tester.pumpAndSettle();
+    await _tapTaskHeading(tester, 'task-1');
+    await tester.pumpAndSettle();
     final refresh = find.descendant(
       of: find.byKey(const ValueKey('task-task-1')),
       matching: find.byKey(const ValueKey('task-refresh-task-1')),
@@ -226,7 +336,7 @@ void main() {
     repository.events.add([_summary('task-1', 'Updated report', 0)]);
     await tester.pumpAndSettle();
     expect(vm.query, 'Report');
-    expect(vm.sort, ConversationTaskSort.newestFirst);
+    expect(vm.sort, ConversationTaskSort.oldestFirst);
     expect(find.textContaining('Updated report'), findsOneWidget);
     expect(tester.widget<ShadButton>(button).enabled, isTrue);
     expect(
@@ -237,6 +347,15 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 }
+
+Future<void> _tapTaskHeading(WidgetTester tester, String taskId) => tester.tap(
+  find
+      .descendant(
+        of: find.byKey(ValueKey('task-heading-$taskId')),
+        matching: find.byType(Text),
+      )
+      .first,
+);
 
 ConversationTaskProgressSummary _summary(String id, String title, int minutes) {
   final source = cardSummary(ConversationTaskStatus.waitingForUser);

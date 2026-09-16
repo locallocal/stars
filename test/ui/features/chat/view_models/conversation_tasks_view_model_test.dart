@@ -6,6 +6,7 @@ import 'package:stars/data/models/conversation_task_record.dart';
 import 'package:stars/data/models/local_records.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart'
     show ObserveConversationTasks;
@@ -55,6 +56,111 @@ void main() {
     await messages.dispose();
     await h.close();
   });
+
+  Future<_SnapshotTasks> watchSnapshots() async {
+    vm.dispose();
+    final repository = _SnapshotTasks();
+    addTearDown(repository.events.close);
+    vm = ConversationTasksViewModel(
+      chatId: 'chat-1',
+      botId: 'bot-1',
+      observe: ObserveConversationTasks(repository, clock: clock),
+      commands: ConversationTaskCommands(repository: repository, wake: (_) {}),
+      prepareRetry: PrepareConversationTaskRetry(
+        tasks: repository,
+        messages: messages,
+      ),
+    );
+    await vm.start();
+    return repository;
+  }
+
+  test(
+    'paginates sorted tasks in groups of 20 and resets for search and sort',
+    () async {
+      final repository = await watchSnapshots();
+      repository.events.add(List.generate(41, _pageSummary));
+      await until(() => !vm.state.loading);
+      expect(vm.sort, ConversationTaskSort.newestFirst);
+      expect(vm.currentPage, 1);
+      expect(vm.totalPages, 3);
+      expect(vm.filteredCount, 41);
+      expect(vm.visibleSummaries, hasLength(20));
+      expect(vm.visibleSummaries.first.taskId, 'task-40');
+      expect(vm.visibleSummaries.last.taskId, 'task-21');
+      expect(vm.firstVisibleItem, 1);
+      expect(vm.lastVisibleItem, 20);
+      expect(vm.hasPreviousPage, isFalse);
+      vm.previousPage();
+      expect(vm.currentPage, 1);
+
+      vm.nextPage();
+      expect(vm.currentPage, 2);
+      expect(vm.visibleSummaries, hasLength(20));
+      expect(vm.visibleSummaries.first.taskId, 'task-20');
+      expect(vm.visibleSummaries.last.taskId, 'task-01');
+      expect(vm.firstVisibleItem, 21);
+      expect(vm.lastVisibleItem, 40);
+      vm.nextPage();
+      expect(vm.visibleSummaries.single.taskId, 'task-00');
+      expect(vm.currentPage, 3);
+      expect(vm.hasNextPage, isFalse);
+      vm.nextPage();
+      expect(vm.currentPage, 3);
+      expect(vm.firstVisibleItem, 41);
+      expect(vm.lastVisibleItem, 41);
+      expect(() => vm.visibleSummaries.clear(), throwsUnsupportedError);
+
+      vm.search('Report task-0');
+      expect(vm.currentPage, 1);
+      expect(vm.totalPages, 1);
+      expect(vm.filteredCount, 10);
+      expect(vm.visibleSummaries.first.taskId, 'task-09');
+      vm.search('');
+      vm.nextPage();
+      vm.toggleSort();
+      expect(vm.currentPage, 1);
+      expect(vm.visibleSummaries.first.taskId, 'task-00');
+      expect(vm.visibleSummaries.last.taskId, 'task-19');
+      vm.search('missing');
+      expect(vm.visibleSummaries, isEmpty);
+      expect(vm.currentPage, 0);
+      expect(vm.totalPages, 0);
+      expect(vm.hasNextPage, isFalse);
+      expect(vm.hasPreviousPage, isFalse);
+    },
+  );
+
+  test(
+    'live updates retain the page and clamp it when tasks disappear',
+    () async {
+      final repository = await watchSnapshots();
+      repository.events.add(List.generate(41, _pageSummary));
+      await until(() => !vm.state.loading);
+      vm.nextPage();
+      repository.events.add(List.generate(42, _pageSummary));
+      await until(() => vm.filteredCount == 42);
+      expect(vm.currentPage, 2);
+      await vm.start();
+      repository.events.add(List.generate(42, _pageSummary));
+      await until(() => !vm.state.loading);
+      expect(vm.currentPage, 2);
+      vm.nextPage();
+      repository.events.add(List.generate(21, _pageSummary));
+      await until(() => vm.filteredCount == 21);
+      expect(vm.currentPage, 2);
+      expect(vm.visibleSummaries.single.taskId, 'task-00');
+      repository.events.add([_pageSummary(0)]);
+      await until(() => vm.filteredCount == 1);
+      expect(vm.currentPage, 1);
+      repository.events.add([]);
+      await until(() => vm.filteredCount == 0);
+      expect(vm.currentPage, 0);
+      expect(vm.visibleSummaries, isEmpty);
+      expect(vm.firstVisibleItem, 0);
+      expect(vm.lastVisibleItem, 0);
+    },
+  );
 
   test(
     'reviewed retry revalidates the task, forwards current policy, and prevents duplicate submission',
@@ -158,8 +264,11 @@ void main() {
       await add('other-task', 'Other report', 0, chat: 'other-chat');
       await until(() => vm.state.summaries.length == 3);
       List<String> ids() => vm.visibleSummaries.map((s) => s.taskId).toList();
-      expect(ids(), ['task-z', 'task-a', 'task-b']);
-      expect(vm.visibleSummaries.first.createdAt, taskTime);
+      expect(ids(), ['task-b', 'task-a', 'task-z']);
+      expect(
+        vm.visibleSummaries.first.createdAt,
+        taskTime.add(const Duration(minutes: 1)),
+      );
       expect(() => vm.visibleSummaries.clear(), throwsUnsupportedError);
       vm.search('  REPORT beta  ');
       expect(ids(), ['task-b']);
@@ -169,7 +278,7 @@ void main() {
       expect(ids(), isEmpty);
       vm.search('');
       vm.toggleSort();
-      expect(ids(), ['task-b', 'task-a', 'task-z']);
+      expect(ids(), ['task-z', 'task-a', 'task-b']);
       clock.advance(const Duration(hours: 1));
       await vm.cancel(vm.visibleSummaries.last);
       await until(
@@ -177,14 +286,14 @@ void main() {
             vm.visibleSummaries.last.status ==
             ConversationTaskStatus.cancelRequested,
       );
-      expect(ids(), ['task-b', 'task-a', 'task-z']);
+      expect(ids(), ['task-z', 'task-a', 'task-b']);
       expect(vm.visibleSummaries.last.updatedAt, clock.time);
       vm.search('report');
       await vm.start();
       await until(() => !vm.state.loading);
       expect(vm.query, 'report');
-      expect(vm.sort, ConversationTaskSort.newestFirst);
-      expect(ids(), ['task-b', 'task-z']);
+      expect(vm.sort, ConversationTaskSort.oldestFirst);
+      expect(ids(), ['task-z', 'task-b']);
     },
   );
 
@@ -346,4 +455,31 @@ void main() {
       expect(wakes, ['task-1']);
     },
   );
+}
+
+ConversationTaskProgressSummary _pageSummary(int index) {
+  final time = taskTime.add(Duration(minutes: index));
+  final number = index.toString().padLeft(2, '0');
+  return ConversationTaskProgressSummary(
+    taskId: 'task-$number',
+    chatId: 'chat-1',
+    title: 'Report $number',
+    status: ConversationTaskStatus.queued,
+    phase: ConversationTaskPhase.executing,
+    planRevision: 1,
+    summaryRevision: 0,
+    progress: TaskProgress(totalSteps: 1, lastMeaningfulProgressAt: time),
+    createdAt: time,
+    updatedAt: time,
+  );
+}
+
+final class _SnapshotTasks implements ConversationTaskRepository {
+  final events =
+      StreamController<List<ConversationTaskProgressSummary>>.broadcast();
+  @override
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) =>
+      events.stream;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

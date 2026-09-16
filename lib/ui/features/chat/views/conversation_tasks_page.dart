@@ -28,23 +28,60 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
   final _scrollController = ScrollController();
+  final _expansionController = ShadAccordionController<String>.multiple();
+  late (int, String, ConversationTaskSort) _listLocation;
+
+  (int, String, ConversationTaskSort) get _currentListLocation => (
+    widget.viewModel.currentPage,
+    widget.viewModel.query,
+    widget.viewModel.sort,
+  );
 
   @override
   void initState() {
     super.initState();
     _searchController.text = widget.viewModel.query;
+    _listLocation = _currentListLocation;
+    widget.viewModel.addListener(_handleViewModelChanged);
   }
 
   @override
   void didUpdateWidget(covariant ConversationTasksPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.viewModel != widget.viewModel) {
+      oldWidget.viewModel.removeListener(_handleViewModelChanged);
+      widget.viewModel.addListener(_handleViewModelChanged);
+      _expansionController.value = [];
       _searchController.text = widget.viewModel.query;
+      _listLocation = _currentListLocation;
+      _resetScroll();
     }
+  }
+
+  void _handleViewModelChanged() {
+    final location = _currentListLocation;
+    if (location != _listLocation) {
+      _listLocation = location;
+      _resetScroll();
+    }
+    final taskIds =
+        widget.viewModel.state.summaries.map((s) => s.taskId).toSet();
+    if (_expansionController.value.any((id) => !taskIds.contains(id))) {
+      _expansionController.value =
+          _expansionController.value.where(taskIds.contains).toList();
+    }
+  }
+
+  void _resetScroll() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) _scrollController.jumpTo(0);
+    });
   }
 
   @override
   void dispose() {
+    widget.viewModel.removeListener(_handleViewModelChanged);
+    _expansionController.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     _scrollController.dispose();
@@ -241,6 +278,7 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                         return ConversationTaskCard(
                           key: ValueKey('task-${summary.taskId}'),
                           summary: summary,
+                          expansionController: _expansionController,
                           showStatusAction: false,
                           busy: state.pendingCommands.contains(summary.taskId),
                           refreshing: state.loading,
@@ -252,7 +290,91 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                     ),
                   ),
         ),
+        if (vm.filteredCount > 0) ...[
+          const SizedBox(height: 12),
+          _TaskPagination(
+            currentPage: vm.currentPage,
+            totalPages: vm.totalPages,
+            firstItem: vm.firstVisibleItem,
+            lastItem: vm.lastVisibleItem,
+            totalItems: vm.filteredCount,
+            onPrevious: vm.hasPreviousPage ? vm.previousPage : null,
+            onNext: vm.hasNextPage ? vm.nextPage : null,
+          ),
+        ],
       ],
+    );
+  }
+}
+
+final class _TaskPagination extends StatelessWidget {
+  const _TaskPagination({
+    required this.currentPage,
+    required this.totalPages,
+    required this.firstItem,
+    required this.lastItem,
+    required this.totalItems,
+    this.onPrevious,
+    this.onNext,
+  });
+
+  final int currentPage, totalPages, firstItem, lastItem, totalItems;
+  final VoidCallback? onPrevious, onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    final range = Text(
+      localizations.pageRowsInfoTitle(firstItem, lastItem, totalItems, false),
+      key: const ValueKey('conversation-tasks-page-range'),
+      style: ShadTheme.of(context).textTheme.muted,
+    );
+    final controls = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StarsDesktopIconAction(
+          key: const ValueKey('conversation-tasks-previous-page'),
+          icon: LucideIcons.chevronLeft,
+          label: localizations.previousPageTooltip,
+          variant: ShadButtonVariant.outline,
+          enabled: onPrevious != null,
+          onPressed: onPrevious,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Semantics(
+            liveRegion: true,
+            child: Text(
+              '$currentPage / $totalPages',
+              key: const ValueKey('conversation-tasks-page-indicator'),
+              style: ShadTheme.of(context).textTheme.small,
+            ),
+          ),
+        ),
+        StarsDesktopIconAction(
+          key: const ValueKey('conversation-tasks-next-page'),
+          icon: LucideIcons.chevronRight,
+          label: localizations.nextPageTooltip,
+          variant: ShadButtonVariant.outline,
+          enabled: onNext != null,
+          onPressed: onNext,
+        ),
+      ],
+    );
+    return LayoutBuilder(
+      builder:
+          (context, constraints) =>
+              constraints.maxWidth < 500
+                  ? Column(
+                    children: [range, const SizedBox(height: 8), controls],
+                  )
+                  : Row(
+                    children: [
+                      Expanded(child: range),
+                      const SizedBox(width: 12),
+                      controls,
+                    ],
+                  ),
     );
   }
 }
