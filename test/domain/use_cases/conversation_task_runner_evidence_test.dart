@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stars/data/services/tools/local_file_system_tools.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
@@ -9,6 +11,8 @@ import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner.dart';
 
 import '../../support/task_runner_harness.dart';
+import '../../support/task_scheduler_harness.dart'
+    show createRunnerScheduler, until;
 
 void main() {
   late TaskRunnerHarness h;
@@ -21,6 +25,7 @@ void main() {
     bool write = false,
     bool invalid = false,
     bool sensitive = false,
+    String content = 'Report processed.',
   }) {
     final kind = write ? EvidenceKind.actionReceipt : EvidenceKind.observation;
     h.tool = RunnerTool(
@@ -62,7 +67,7 @@ void main() {
         ToolResult(
           callId: call.callId,
           name: call.name,
-          content: 'Report processed.',
+          content: content,
           structuredContent:
               invalid
                   ? {'wrong': true}
@@ -82,6 +87,143 @@ void main() {
       );
     };
   }
+
+  for (final (name, content, expectedSummary) in [
+    (
+      'multiline Markdown and control characters',
+      '# Report\r\n\nCount:\t42\u0000\u007f',
+      '# Report Count: 42',
+    ),
+    ('control-only output', '\u0000\u007f\t\r\n', 'Tool attempt completed.'),
+    (
+      'sensitive text and diagnostic lines',
+      'Report\npassword="private value"\n#0 internalFunction (private.dart:1)\nCount: 42',
+      'Report password=[redacted] Count: 42',
+    ),
+    (
+      'credential assignment exposed by normalization',
+      'Report\npassword\u0000=private-value',
+      'Report password=[redacted]',
+    ),
+    (
+      'structured output after a leading control',
+      '\u0000{"count":42}',
+      '[details omitted]',
+    ),
+    ('long output', 'Report\n${'x' * 2500}', 'Report ${'x' * 1993}'),
+  ]) {
+    test('$name persists successful evidence across restart', () async {
+      await h.open(limits: TaskSegmentLimits(maxToolCalls: 1));
+      evidenceTool(content: content);
+      final produce = h.tool.onStart!;
+      late ToolResult original;
+      h.tool.onStart = (call) async {
+        final completed = await produce(call) as ToolCompleted;
+        original = completed.result;
+        return completed;
+      };
+      h.models.tool();
+
+      expect(await h.run(), isA<TaskContinueSegment>());
+      await h.db.reopen();
+      final snapshot = await h.snapshot;
+      expect(snapshot.attempts.single.status, ToolInvocationStatus.succeeded);
+      expect(snapshot.attempts.single.resultSummary, expectedSummary);
+      expect(snapshot.checkpoint!.pendingAttemptIds, isEmpty);
+      expect(snapshot.checkpoint!.evidenceCursor, 1);
+      final evidence = snapshot.evidence.single;
+      expect(evidence.persisted, isTrue);
+      expect(evidence.resultSummary, expectedSummary);
+      expect(evidence.resultDigest, original.resultDigest);
+      expect(evidence.structuredFacts.single.name, 'report.count');
+      expect(evidence.structuredFacts.single.value, 42);
+      expect(original.content, content);
+    });
+  }
+
+  test(
+    'approved multiline file read reaches completion without interruption or retry',
+    () async {
+      final acceptance = taskAcceptance();
+      await h.open(
+        acceptance: TaskAcceptanceSnapshot(
+          providerId: acceptance.providerId,
+          modelId: acceptance.modelId,
+          configurationDigest: acceptance.configurationDigest,
+          language: acceptance.language,
+          context: acceptance.context,
+          allowedToolNames: {'read_local_file'},
+          verification: acceptance.verification,
+          segmentLimits: TaskSegmentLimits(),
+        ),
+      );
+      const content = '# Report\n\n## Findings\n\nA multiline file.\n';
+      final file = File('${h.db.directory.path}/report.md');
+      await file.writeAsString(content);
+      // The real file adapter timestamps its evidence with the system clock.
+      h.clock.time = DateTime.now().toUtc().add(const Duration(minutes: 1));
+      final tool = ReadLocalFileTool();
+      late ToolResult original;
+      h.tool = RunnerTool(definition: tool.definition);
+      h.tool.onStart = (call) async {
+        original = await tool.execute(call, AgentCancellationToken());
+        return ToolCompleted(original);
+      };
+      h.policy.outcome = ToolPolicyOutcome.requireApproval;
+      h.models.tool(name: 'read_local_file', arguments: {'path': file.path});
+      h.models.completeStep();
+      h.models.candidate();
+      final ready = <TaskSegmentResult>[];
+      final scheduler = createRunnerScheduler(
+        h,
+        onReady: (result) async => ready.add(result),
+      );
+      try {
+        await scheduler.start(periodic: false);
+        await until(
+          () async =>
+              (await h.db.task).status ==
+                  ConversationTaskStatus.waitingForUser &&
+              scheduler.runningCount == 0,
+        );
+        final waiting = await h.snapshot;
+        committed(
+          await h.db.repository.decideApproval(
+            taskId: waiting.task.taskId,
+            approvalId: waiting.approvals.single.approvalId,
+            expectedRevision: waiting.task.revision,
+            decision: TaskApprovalDecision.approved,
+            actorId: 'test-user',
+            decidedAt: h.clock.now(),
+          ),
+        );
+        await scheduler.tick();
+        await scheduler.tick();
+        await until(() => ready.isNotEmpty && scheduler.runningCount == 0);
+
+        expect(ready.single, isA<TaskCompletionCandidate>());
+        expect(scheduler.metrics.failures, 0);
+        expect(scheduler.metrics.retries, 0);
+        expect(h.tool.starts, 1);
+        expect(original.isError, isFalse);
+        expect(original.content, content);
+        final snapshot = await h.snapshot;
+        expect(snapshot.attempts.single.status, ToolInvocationStatus.succeeded);
+        expect(snapshot.evidence.single.resultDigest, original.resultDigest);
+        expect(snapshot.task.progress.completedSteps, 1);
+        final events = await h.db.database.query('conversation_task_events');
+        expect(
+          events.map((row) => row['kind']),
+          isNot(
+            anyElement(isIn(['toolFailed', 'retryScheduled', 'leaseExpired'])),
+          ),
+        );
+        expect(await file.readAsString(), content);
+      } finally {
+        await scheduler.stop();
+      }
+    },
+  );
 
   test(
     'accepted evidence and tool success share a transaction and survive restart for synthesis',

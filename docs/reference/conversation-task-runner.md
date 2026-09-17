@@ -32,6 +32,10 @@ runner 不提交聊天消息，也不把步骤说明、工具观察、reasoning 
 目标的接口。`TaskProviderSessionFactory` 校验接受时的配置摘要、Provider 和模型身份；运行时凭据
 仍由 bot/Provider 持有。配置摘要与任务接受共用实现，参数键顺序不影响摘要。
 
+`read_local_file` 的正文通过独立的 `file_reads` 观察传入后续回合，保留 Markdown 换行、编码及
+源文件字节偏移；工具审计摘要只供展示，不代替正文。模型根据 `truncated` 和 `next_offset_bytes`
+继续分页，已成功的工具不会携带失败原因码；旧记录中错误的成功原因码也不会传入模型。
+
 模型通过 `stars_revise_task_plan` 修订剩余步骤。应用保留已完成步骤及原目标和工具白名单，追加
 新的计划版本。普通回合结束且没有工具调用时完成当前步骤；全部步骤完成后记录验证开始并请求
 结构化合成。合成准备复用写后验证策略，从已提交 action receipt 重建完成动作及最终状态要求。
@@ -77,6 +81,11 @@ job 协议。
 写操作跨计划修订保持逻辑键。新增尝试保留相同键和递增尝试号，达到重试或连续失败阈值后请求
 重规划，不能因此直接把整个任务标为 failed。
 
+内置文件读取会补齐默认编码、偏移和读取大小来生成逻辑键。同一步骤中已保留且覆盖请求的页面
+直接复用，包括完整正文已经存在时仅增大 `max_bytes` 的请求。成功写操作使已保留页面失效；
+跨步骤的读取仍执行，允许写后验证。旧检查点只有摘要、页面被淘汰或写后失效时，使用新的读取
+身份按原策略审批和执行，保留旧成功尝试；已有审批和待对账尝试的身份与参数不变。
+
 写操作只有适配器明确保证 `guaranteesIdempotency`，或对账确认未开始，才允许自动重试。
 `ToolDefinition.isIdempotent` 本身不足以证明外部幂等。未知写入超时保留 running 尝试及对账标志；
 下个分段先对账。进程在工具完成后、完成事务提交前退出，同样通过原幂等键对账。
@@ -93,7 +102,12 @@ job 协议。
 检查点的 `TaskExecutionState` 保存待执行调用、工具版本、重试及对账状态、步骤状态和候选。
 参数只保留适配器显式声明的 `checkpointArgumentNames` 非敏感字段，深度冻结、限制长度，并须原样通过持久化安全检查；包含凭据或 reasoning 等字段的调用
 在执行前拒绝，不能把被净化后语义不同的参数用于审批恢复。普通工具包装器默认不允许任何参数进入检查点；接入时须审查可恢复字段，大载荷使用适配器管理的引用。工具审计摘要继续省略参数原文。
-恢复句柄、调用参数和结构化候选采用不同字段；完整 Provider session 和普通观察原文不序列化。
+恢复句柄、调用参数、文件页面和结构化候选采用不同字段；完整 Provider session 和其他普通观察原文不序列化。
+
+文件页面仅允许关联本任务已成功的内置 `read_local_file` 尝试，与成功状态及证据原子提交。
+每页最多保留 64 KiB 源字节，UTF-8 页末按完整字符截断；所有页面合计最多 262144 个字符、16 页，
+超限淘汰最旧页面。正文沿用凭据和诊断脱敏，标记 `content_redacted`；偏移始终指向源文件字节，
+脱敏结果不冒充精确副本或业务证据。页面可跨进程恢复，旧检查点没有该字段时按空页面集读取。
 
 ## 代码与验证入口
 
@@ -108,6 +122,7 @@ job 协议。
 | [分段测试](../../test/domain/use_cases/conversation_task_runner_test.dart) | 超过旧预算、审批、job、重规划和无进展 |
 | [恢复故障测试](../../test/domain/use_cases/conversation_task_runner_recovery_test.dart) | fake clock、提交失败、lease、取消与幂等 |
 | [证据测试](../../test/domain/use_cases/conversation_task_runner_evidence_test.dart) | 证据原子性、重启合成、修复与动态计划 |
+| [文件读取测试](../../test/domain/use_cases/conversation_task_file_reads_test.dart) | 正文恢复、分页、重复读取复用、写后失效和原子提交 |
 | [Provider 超时测试](../../test/data/services/ai/task_provider_timeout_test.dart) | 无网络的实际 HTTP 适配器超时验证 |
 
 数据库测试使用真实 SQLite，并通过失败 trigger 验证外部调用前后的事务边界；时钟、Provider

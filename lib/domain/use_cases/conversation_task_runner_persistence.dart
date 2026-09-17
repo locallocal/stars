@@ -144,6 +144,7 @@ extension _TaskSegmentPersistence on _TaskSegment {
       externalJobs: jobs,
       execution: TaskExecutionState(
         calls: calls,
+        fileReads: fileReads,
         stepStarted: stepStarted,
         replanRequired: replan,
         consecutiveFailures: failures,

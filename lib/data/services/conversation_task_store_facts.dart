@@ -408,6 +408,21 @@ Future<void> _writeCheckpoint(
       _safeObject(jsonDecode(values['checkpoint_json']! as String))!
           as Map<String, Object?>;
   if (checkpoint.execution case final execution?) {
+    if (execution.fileReads.isNotEmpty) {
+      final attempts = await tx.rawQuery(
+        'SELECT execution.attempt_id FROM conversation_task_tool_attempts link '
+        'JOIN tool_execution_records execution ON execution.attempt_id = link.attempt_id '
+        "WHERE link.task_id = ? AND execution.tool_name = 'read_local_file' "
+        "AND execution.source = 'builtIn' AND execution.status = 'succeeded'",
+        [checkpoint.taskId],
+      );
+      final ids = attempts.map((row) => row['attempt_id']).toSet();
+      if (execution.fileReads.any((page) => !ids.contains(page.attemptId))) {
+        throw ArgumentError(
+          'File observations require a successful task read.',
+        );
+      }
+    }
     final safeExecution = taskSafeObject(
       execution.toJson(),
       preserveFormatting: true,
