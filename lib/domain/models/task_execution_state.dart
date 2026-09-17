@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:stars/domain/models/grounded_answer.dart';
+import 'package:stars/domain/models/task_file_read_observation.dart';
 import 'package:stars/domain/models/tool.dart';
 
 /// Portable continuation data. Tool arguments must be credential-free; adapters
@@ -91,10 +92,11 @@ final class TaskPendingCall {
   }
 }
 
-/// No Provider session, reasoning, raw observation or credential belongs here.
+/// Prepared file pages may cross turns; Provider sessions and credentials do not.
 final class TaskExecutionState {
   TaskExecutionState({
     List<TaskPendingCall> calls = const [],
+    List<TaskFileReadObservation> fileReads = const [],
     this.stepStarted = false,
     this.replanRequired = false,
     this.consecutiveFailures = 0,
@@ -103,16 +105,23 @@ final class TaskExecutionState {
     this.finalizationReason,
     this.sideEffectsUnknown = false,
     this.segmentStartDigest = '',
-  }) : calls = List.unmodifiable(calls) {
+  }) : calls = List.unmodifiable(calls),
+       fileReads = List.unmodifiable(fileReads) {
     if (calls.length > 4096 ||
         consecutiveFailures < 0 ||
         backoffCount < 0 ||
-        calls.any((call) => call.retryCount < 0)) {
+        calls.any((call) => call.retryCount < 0) ||
+        fileReads.length > TaskFileReadObservation.maxRetainedPages ||
+        fileReads.fold(0, (sum, page) => sum + page.content.length) >
+            TaskFileReadObservation.maxRetainedCharacters ||
+        fileReads.map((page) => page.attemptId).toSet().length !=
+            fileReads.length) {
       throw ArgumentError('Invalid task continuation.');
     }
   }
 
   final List<TaskPendingCall> calls;
+  final List<TaskFileReadObservation> fileReads;
   final bool stepStarted;
   final bool replanRequired;
   final int consecutiveFailures;
@@ -124,6 +133,8 @@ final class TaskExecutionState {
 
   Map<String, Object?> toJson() => {
     'calls': calls.map((call) => call.toJson()).toList(),
+    if (fileReads.isNotEmpty)
+      'fileReads': fileReads.map((page) => page.toJson()).toList(),
     'stepStarted': stepStarted,
     'replanRequired': replanRequired,
     'consecutiveFailures': consecutiveFailures,
@@ -137,6 +148,7 @@ final class TaskExecutionState {
   factory TaskExecutionState.fromJson(Map<String, Object?> json) {
     _only(json, {
       'calls',
+      if (json.containsKey('fileReads')) 'fileReads',
       'stepStarted',
       'replanRequired',
       'consecutiveFailures',
@@ -150,6 +162,12 @@ final class TaskExecutionState {
     final candidateMap =
         candidate == null ? null : Map<String, Object?>.from(candidate as Map);
     return TaskExecutionState(
+      fileReads: [
+        for (final page in json['fileReads'] as List? ?? const [])
+          TaskFileReadObservation.fromJson(
+            Map<String, Object?>.from(page as Map),
+          ),
+      ],
       calls:
           (json['calls']! as List)
               .map(

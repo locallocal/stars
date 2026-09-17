@@ -6,6 +6,8 @@ import 'package:stars/data/models/conversation_task_record.dart';
 import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_execution_repository.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/task_execution_state.dart';
+import 'package:stars/domain/models/task_file_read_observation.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
@@ -824,4 +826,54 @@ void main() {
       );
     },
   );
+
+  for (final attempt in ['missing-attempt', 'attempt-1']) {
+    test('file pages cannot borrow an unqualified attempt: $attempt', () async {
+      await h.start();
+      final started = await beginTool();
+      // This succeeds under read_file, not the audited read_local_file tool.
+      await finishTool(started);
+      final before = await h.facts();
+      final update = await h.update(
+        TaskEventKind.segmentCheckpoint,
+        segmentId: 'segment-1',
+        checkpoint: ConversationTaskCheckpoint(
+          taskId: 'task-1',
+          segmentId: 'segment-1',
+          planRevision: 1,
+          sequence: 5,
+          phase: ConversationTaskPhase.planning,
+          savedAt: h.nextTime,
+          execution: TaskExecutionState(
+            fileReads: [
+              TaskFileReadObservation(
+                attemptId: attempt,
+                stepId: 'read',
+                requestedPath: '/report.md',
+                path: '/report.md',
+                encoding: 'utf8',
+                content: 'Forged content',
+                offsetBytes: 0,
+                nextOffsetBytes: 14,
+                sizeBytes: 14,
+                maxBytes: 65536,
+                redacted: false,
+              ),
+            ],
+          ),
+        ),
+      );
+      await expectLater(
+        h.repository.appendProgress(update),
+        throwsA(
+          isA<ArgumentError>().having(
+            (error) => error.message,
+            'reason',
+            'File observations require a successful task read.',
+          ),
+        ),
+      );
+      expect(await h.facts(), before);
+    });
+  }
 }

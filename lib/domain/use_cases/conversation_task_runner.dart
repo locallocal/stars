@@ -9,10 +9,12 @@ import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/provider_failure.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_execution_state.dart';
+import 'package:stars/domain/models/task_file_read_observation.dart';
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
+import 'package:stars/domain/services/task_file_read_policy.dart';
 import 'package:stars/domain/services/task_execution_gate.dart';
 import 'package:stars/domain/services/task_verification_preparation.dart';
 import 'package:stars/domain/services/tool_result_validator.dart';
@@ -83,6 +85,7 @@ final class _TaskSegment {
   final cancellation = AgentCancellationToken();
   final completed = <String>{};
   final calls = <TaskPendingCall>[];
+  final fileReads = <TaskFileReadObservation>[];
   final jobs = <TaskExternalJob>[];
   String? nextStep;
   bool stepStarted = false, replan = false, unknownEffects = false;
@@ -312,6 +315,7 @@ final class _TaskSegment {
     );
     nextStep = checkpoint?.nextStepId ?? _nextStep();
     calls.addAll(state?.calls ?? []);
+    fileReads.addAll(state?.fileReads ?? []);
     jobs.addAll(checkpoint?.externalJobs ?? []);
     stepStarted = state?.stepStarted ?? false;
     replan = state?.replanRequired ?? false;

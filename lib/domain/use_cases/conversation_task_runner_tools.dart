@@ -20,16 +20,45 @@ extension _TaskSegmentTools on _TaskSegment {
             .isNotEmpty) {
       throw ArgumentError('Invalid or unsafe task tool request.');
     }
+    final fileRead = retainsTaskFileRead(adapter.definition);
+    var key =
+        'task-call:${_hash([
+          task.taskId, call.name,
+          if (adapter.definition.riskLevel == ToolRiskLevel.readOnly) nextStep,
+          // Version the read context so old summary-only successes can be read once
+          // under normal approval without changing any existing attempt identity.
+          if (fileRead) 'file-context-v1',
+          fileRead ? taskFileReadArguments(call.arguments) : call.arguments,
+        ])}';
+    if (fileRead &&
+        !fileReads.any((page) => taskFileReadCovers(page, call, nextStep))) {
+      final base = key;
+      final ids =
+          snapshot.attemptLinks
+              .where(
+                (link) =>
+                    link.idempotencyKey == base ||
+                    link.idempotencyKey.startsWith('$base:read:'),
+              )
+              .map((link) => link.attemptId)
+              .toSet();
+      final previous =
+          snapshot.events
+              .where(
+                (event) =>
+                    event.kind == TaskEventKind.toolSucceeded &&
+                    ids.contains(event.attemptId),
+              )
+              .lastOrNull;
+      if (previous != null) {
+        // An evicted page or a subsequent write requires a fresh approved read.
+        key = '$base:read:${_hash(previous.attemptId)}';
+      }
+    }
     return TaskPendingCall(
       call: call,
       toolVersion: adapter.definition.toolVersion,
-      idempotencyKey:
-          'task-call:${_hash([
-            task.taskId, call.name,
-            // Reads in distinct steps may intentionally observe changed state.
-            if (adapter.definition.riskLevel == ToolRiskLevel.readOnly) nextStep,
-            call.arguments,
-          ])}',
+      idempotencyKey: key,
     );
   }
 
@@ -70,6 +99,21 @@ extension _TaskSegmentTools on _TaskSegment {
               attempt.riskLevel != ToolRiskLevel.readOnly,
         ),
       );
+    }
+    if (pending.attemptId == null &&
+        retainsTaskFileRead(adapter.definition) &&
+        fileReads.any(
+          (page) => taskFileReadCovers(page, pending.call, nextStep),
+        )) {
+      calls.removeAt(0);
+      await _save(TaskEventKind.segmentCheckpoint);
+      return null;
+    }
+    if (pending.attemptId == null && retainsTaskFileRead(adapter.definition)) {
+      // Earlier calls in the same model batch may have invalidated or evicted
+      // this page since the pending call was prepared.
+      pending = _prepare(pending.call);
+      calls[0] = pending;
     }
     var record =
         snapshot.attempts
@@ -440,9 +484,7 @@ extension _TaskSegmentTools on _TaskSegment {
     }
     jobs.removeWhere((job) => job.attemptId == record.attemptId);
     phase = ConversationTaskPhase.observing;
-    final summary = taskSafeText(
-      result.content.isEmpty ? 'Tool attempt completed.' : result.content,
-    );
+    final summary = _toolResultSummary(result.content);
     ToolEvidenceRecord? fact;
     if (evidence != null) {
       // Evidence cannot be redacted after its digest has been established.
@@ -481,6 +523,23 @@ extension _TaskSegmentTools on _TaskSegment {
         );
       }
     }
+    if (status == ToolInvocationStatus.succeeded) {
+      if (retainsTaskFileRead(adapter.definition)) {
+        final page = prepareTaskFileRead(
+          call: pending.call,
+          result: result,
+          attemptId: record.attemptId,
+          stepId: nextStep!,
+        );
+        final retained = TaskFileReadObservation.retain([...fileReads, page]);
+        fileReads
+          ..clear()
+          ..addAll(retained);
+      } else if (adapter.definition.riskLevel != ToolRiskLevel.readOnly) {
+        // A successful mutation can invalidate any file observed in this step.
+        fileReads.clear();
+      }
+    }
     await _save(
       status == ToolInvocationStatus.succeeded
           ? TaskEventKind.toolSucceeded
@@ -491,7 +550,10 @@ extension _TaskSegmentTools on _TaskSegment {
         status,
         previous: record,
         summary: summary,
-        errorCode: _safeToolCode(result.errorCode),
+        errorCode:
+            status == ToolInvocationStatus.succeeded
+                ? ''
+                : _safeToolCode(result.errorCode),
       ),
       evidence: fact,
       cleanup: cleanup,
@@ -537,6 +599,17 @@ extension _TaskSegmentTools on _TaskSegment {
       updatedAt: at,
     );
   }
+}
+
+String _toolResultSummary(String content) {
+  // Redact while line boundaries still identify diagnostics, then meet the
+  // evidence summary's single-line contract without changing the result digest.
+  final safe = taskSafeText(content);
+  final normalized = safe.replaceAll(RegExp(r'[\x00-\x1f\x7f\s]+'), ' ').trim();
+  // Normalization can expose a leading JSON object or a credential assignment.
+  return taskSafeText(
+    normalized.isEmpty ? 'Tool attempt completed.' : normalized,
+  );
 }
 
 String _safeToolCode(String code) =>

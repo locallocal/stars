@@ -115,6 +115,7 @@ final class RunnerTool implements TaskToolAdapter {
     ToolRiskLevel risk = ToolRiskLevel.readOnly,
     this.guaranteesIdempotency = false,
     ToolDefinition? definition,
+    this.checkpointArgumentNames = const {'path', 'page', 'scope'},
   }) : definition =
            definition ??
            ToolDefinition(
@@ -129,7 +130,7 @@ final class RunnerTool implements TaskToolAdapter {
   @override
   final bool guaranteesIdempotency;
   @override
-  Set<String> get checkpointArgumentNames => {'path', 'page', 'scope'};
+  final Set<String> checkpointArgumentNames;
   int starts = 0, polls = 0, cancels = 0, reconciles = 0;
   final keys = <String>[];
   final tokens = <AgentCancellationToken>[];
@@ -205,6 +206,7 @@ final class TaskRunnerHarness {
   final models = RunnerModels();
   final policy = RunnerPolicy();
   RunnerTool tool = RunnerTool();
+  List<TaskToolAdapter>? toolOverrides;
   int segment = 0;
   ConversationTaskRepository? repositoryOverride;
   Future<void> open({
@@ -266,7 +268,7 @@ final class TaskRunnerHarness {
   ConversationTaskRunner get runner => ConversationTaskRunner(
     repository: repositoryOverride ?? db.repository,
     sessions: models.open,
-    tools: [tool],
+    tools: toolOverrides ?? [tool],
     policy: policy,
     clock: clock,
     jitter: () => 0.5,
