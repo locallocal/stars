@@ -34,7 +34,10 @@ void main() {
             reasonCode: 'claim_has_no_evidence',
             content: 'Unverified factual detail.',
             processInfo: const MessageProcessInfo(durationMs: 1200),
-          ).copyWith(reasoning: 'Reasoning details.');
+          ).copyWith(
+            reasoning: 'Reasoning details.',
+            files: const ['/tmp/result.html'],
+          );
           final list = MessageList(
             messages: [message],
             scrollController: controller,
@@ -60,6 +63,7 @@ void main() {
           );
           final bubbleRect = tester.getRect(bubble);
           final details = [
+            find.byKey(const ValueKey<String>('message-file-results')),
             if (!strict) find.byType(ReasoningSection),
             if (strict)
               find.byKey(
@@ -82,6 +86,20 @@ void main() {
               isTrue,
             );
           }
+          final fileResult = find.byKey(
+            const ValueKey<String>('message-file-results'),
+          );
+          expect(
+            tester.getTopLeft(fileResult).dy,
+            closeTo(bubbleRect.bottom + 12, 0.01),
+          );
+          expect(
+            tester.getSize(fileResult).width,
+            closeTo(
+              tester.getSize(find.byType(ProcessInfoSection)).width,
+              0.01,
+            ),
+          );
           expect(
             find.descendant(
               of: bubble,

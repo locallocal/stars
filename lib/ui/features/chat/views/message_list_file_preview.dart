@@ -4,13 +4,13 @@ class _LocalFileCard extends StatelessWidget {
   const _LocalFileCard({
     required this.filePath,
     required this.isCurrentUser,
-    required this.isDesktop,
+    required this.width,
     required this.actionViewModel,
   });
 
   final String filePath;
   final bool isCurrentUser;
-  final bool isDesktop;
+  final double width;
   final MessageActionViewModel? actionViewModel;
 
   @override
@@ -22,8 +22,9 @@ class _LocalFileCard extends StatelessWidget {
           (context) => Text('${S.of(context).preview}: ${descriptor.fileName}'),
       child: ShadButton.outline(
         key: ValueKey<String>('message-local-file-$filePath'),
-        width: isDesktop ? 280 : 230,
-        height: 76,
+        width: width,
+        // Let wrapped filenames and accessibility text scaling set the height.
+        height: 0,
         padding: const EdgeInsets.all(10),
         backgroundColor:
             isCurrentUser ? theme.colorScheme.accent : theme.colorScheme.card,
@@ -57,28 +58,32 @@ class _LocalFileCard extends StatelessWidget {
           size: 16,
           color: theme.colorScheme.mutedForeground,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              descriptor.fileName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.start,
-              style: theme.textTheme.small,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              descriptor.typeLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.muted.copyWith(
-                fontSize: 11,
-                letterSpacing: 0.5,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                descriptor.fileName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.start,
+                style: theme.textTheme.small,
               ),
-            ),
-          ],
+              const SizedBox(height: 3),
+              Text(
+                descriptor.typeLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.muted.copyWith(
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

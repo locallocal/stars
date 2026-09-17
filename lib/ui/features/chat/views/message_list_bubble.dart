@@ -54,8 +54,25 @@ class _MessageContent extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => _MessageLocalFilesBuilder(
+    content: content,
+    files: files,
+    isCurrentUser: isCurrentUser,
+    isStreaming: isStreaming,
+    actions: actionViewModel,
+    builder: _buildContent,
+  );
+
+  Widget _buildContent(BuildContext context, List<String> localFiles) {
     final metadata = <Widget>[
+      if (!isCurrentUser && localFiles.isNotEmpty)
+        _MessageFileSection(
+          key: const ValueKey<String>('message-file-results'),
+          files: localFiles,
+          isCurrentUser: false,
+          isDesktop: isDesktop,
+          actions: actionViewModel,
+        ),
       if (strictGroundingNotice.isNotEmpty)
         _StatusCardSection(
           key: const ValueKey<String>('message-strict-grounding-notice'),
@@ -116,7 +133,7 @@ class _MessageContent extends StatelessWidget {
           _MessageBubbleSurface(
             isCurrentUser: isCurrentUser,
             isDesktop: isDesktop,
-            child: _buildBody(context),
+            child: _buildBody(context, localFiles),
           ),
         if (metadata.isNotEmpty)
           _MessageMetadata(
@@ -127,7 +144,7 @@ class _MessageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildBody(BuildContext context, List<String> localFiles) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
     final urlPreviews =
         isStreaming
@@ -175,15 +192,18 @@ class _MessageContent extends StatelessWidget {
             padding: EdgeInsets.only(top: content.isNotEmpty ? 14 : 0),
             child: _buildImageSection(context),
           ),
-        _MessageLocalFiles(
-          content: content,
-          files: files,
-          isCurrentUser: isCurrentUser,
-          isDesktop: isDesktop,
-          hasContentAbove: content.isNotEmpty || images.isNotEmpty,
-          isStreaming: isStreaming,
-          actions: actionViewModel,
-        ),
+        if (isCurrentUser && localFiles.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(
+              top: content.isNotEmpty || images.isNotEmpty ? 12 : 0,
+            ),
+            child: _MessageFileSection(
+              files: localFiles,
+              isCurrentUser: true,
+              isDesktop: isDesktop,
+              actions: actionViewModel,
+            ),
+          ),
         if (audio.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(top: _hasMediaAbove ? 12 : 0),
@@ -233,7 +253,9 @@ class _MessageContent extends StatelessWidget {
   }
 
   bool get _hasMediaAbove =>
-      content.isNotEmpty || images.isNotEmpty || files.isNotEmpty;
+      content.isNotEmpty ||
+      images.isNotEmpty ||
+      (isCurrentUser && files.isNotEmpty);
 
   bool get _showProcessInfo =>
       showExecutionStatus &&
@@ -255,7 +277,7 @@ class _MessageContent extends StatelessWidget {
 
   bool get _hasStructuredMedia =>
       images.isNotEmpty ||
-      files.isNotEmpty ||
+      (isCurrentUser && files.isNotEmpty) ||
       audio.isNotEmpty ||
       music.isNotEmpty ||
       video.isNotEmpty;
