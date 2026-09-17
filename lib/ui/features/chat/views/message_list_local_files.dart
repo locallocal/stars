@@ -246,30 +246,30 @@ LocalFileReferenceParser _localFileParser({String? baseDirectory}) =>
           Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'],
     );
 
-class _MessageLocalFiles extends StatefulWidget {
-  const _MessageLocalFiles({
+/// Resolves references once for both the bubble and its adjacent result cards.
+/// The builder receives the same immutable list throughout message rendering.
+class _MessageLocalFilesBuilder extends StatefulWidget {
+  const _MessageLocalFilesBuilder({
     required this.content,
     required this.files,
     required this.isCurrentUser,
-    required this.isDesktop,
-    required this.hasContentAbove,
     required this.isStreaming,
     required this.actions,
+    required this.builder,
   });
 
   final String content;
   final List<String> files;
   final bool isCurrentUser;
-  final bool isDesktop;
-  final bool hasContentAbove;
   final bool isStreaming;
   final MessageActionViewModel? actions;
+  final Widget Function(BuildContext context, List<String> files) builder;
 
   @override
-  State<_MessageLocalFiles> createState() => _MessageLocalFilesState();
+  State<_MessageLocalFilesBuilder> createState() => _MessageLocalFilesState();
 }
 
-class _MessageLocalFilesState extends State<_MessageLocalFiles> {
+class _MessageLocalFilesState extends State<_MessageLocalFilesBuilder> {
   List<String> _files = const [];
   int _generation = 0;
   Timer? _debounce;
@@ -281,7 +281,7 @@ class _MessageLocalFilesState extends State<_MessageLocalFiles> {
   }
 
   @override
-  void didUpdateWidget(covariant _MessageLocalFiles oldWidget) {
+  void didUpdateWidget(covariant _MessageLocalFilesBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.content != widget.content ||
         !listEquals(oldWidget.files, widget.files) ||
@@ -302,7 +302,7 @@ class _MessageLocalFilesState extends State<_MessageLocalFiles> {
   void _refresh({bool retainFiles = false}) {
     final generation = ++_generation;
     _debounce?.cancel();
-    if (!retainFiles) _files = widget.files.toSet().toList(growable: false);
+    if (!retainFiles) _files = List.unmodifiable(widget.files.toSet());
     if (widget.isCurrentUser) return;
     if (widget.isStreaming) {
       _debounce = Timer(const Duration(milliseconds: 200), () {
@@ -333,7 +333,8 @@ class _MessageLocalFilesState extends State<_MessageLocalFiles> {
       }
     }
     if (!mounted || generation != _generation) return;
-    setState(() => _files = List.unmodifiable(files));
+    final resolved = List<String>.unmodifiable(files);
+    if (!listEquals(_files, resolved)) setState(() => _files = resolved);
   }
 
   @override
@@ -343,32 +344,51 @@ class _MessageLocalFilesState extends State<_MessageLocalFiles> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_files.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: EdgeInsets.only(top: widget.hasContentAbove ? 12 : 0),
-      child: _StatusCardSection(
-        isDesktop: widget.isDesktop,
-        icon: LucideIcons.paperclip,
-        title:
-            widget.isCurrentUser
-                ? S.of(context).fileAttachment
-                : S.of(context).fileResult,
-        subtitle: S.of(context).fileCount(_files.length.toString()),
-        child: Wrap(
+  Widget build(BuildContext context) => widget.builder(context, _files);
+}
+
+class _MessageFileSection extends StatelessWidget {
+  const _MessageFileSection({
+    super.key,
+    required this.files,
+    required this.isCurrentUser,
+    required this.isDesktop,
+    required this.actions,
+  });
+
+  final List<String> files;
+  final bool isCurrentUser;
+  final bool isDesktop;
+  final MessageActionViewModel? actions;
+
+  @override
+  Widget build(BuildContext context) => _StatusCardSection(
+    isDesktop: isDesktop,
+    icon: LucideIcons.paperclip,
+    iconKey: const ValueKey<String>('message-file-section-icon'),
+    title:
+        isCurrentUser ? S.of(context).fileAttachment : S.of(context).fileResult,
+    subtitle: S.of(context).fileCount(files.length.toString()),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = math.min(
+          isDesktop ? 280.0 : 230.0,
+          constraints.maxWidth,
+        );
+        return Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
-            for (final filePath in _files)
+            for (final filePath in files)
               _LocalFileCard(
                 filePath: filePath,
-                isCurrentUser: widget.isCurrentUser,
-                isDesktop: widget.isDesktop,
-                actionViewModel: widget.actions,
+                isCurrentUser: isCurrentUser,
+                width: cardWidth,
+                actionViewModel: actions,
               ),
           ],
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
 }

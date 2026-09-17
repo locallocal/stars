@@ -399,7 +399,12 @@ class _ProcessHeaderMetric extends StatelessWidget {
           child: Center(child: Icon(icon, size: 14, color: color)),
         ),
         const SizedBox(width: 6),
-        Text(label, style: _processMetricTextStyle.copyWith(color: color)),
+        Flexible(
+          child: Text(
+            label,
+            style: _processMetricTextStyle.copyWith(color: color),
+          ),
+        ),
       ],
     );
   }
@@ -587,7 +592,7 @@ class _ToolLifecycleStages extends StatelessWidget {
                       size: 12,
                     ),
                     const SizedBox(width: 4),
-                    Text(stage.$2),
+                    Flexible(child: Text(stage.$2)),
                   ],
                 ),
               ),

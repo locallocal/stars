@@ -14,6 +14,139 @@ import 'package:stars/ui/features/chat/views/video_player_widget.dart';
 import '../../../../support/widget_test_support.dart';
 
 void main() {
+  for (final desktop in [true, false]) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        'file-only results fit the status area without an empty bubble ($desktop, $brightness)',
+        (tester) async {
+          const filePath = '/tmp/一份用于验证窄屏和大字体的很长很长的调研报告.html';
+          await _pumpFileMessage(
+            tester,
+            files: const [filePath],
+            content: '',
+            size: Size(desktop ? 900 : 320, 900),
+            isDesktop: desktop,
+            brightness: brightness,
+            textScaler: const TextScaler.linear(1.8),
+            processInfo: const MessageProcessInfo(durationMs: 1200),
+          );
+          final results = find.byKey(
+            const ValueKey<String>('message-file-results'),
+          );
+          final file = find.byKey(
+            const ValueKey<String>('message-local-file-$filePath'),
+          );
+          final status = find.byType(ProcessInfoSection);
+          expect(results, findsOneWidget);
+          expect(file.hitTestable(), findsOneWidget);
+          expect(
+            find.byKey(const ValueKey<String>('message-bubble-surface')),
+            findsNothing,
+          );
+          final resultRect = tester.getRect(results);
+          final fileRect = tester.getRect(file);
+          final statusRect = tester.getRect(status);
+          expect(resultRect.left, closeTo(statusRect.left, 0.01));
+          expect(resultRect.width, closeTo(statusRect.width, 0.01));
+          expect(statusRect.top, greaterThanOrEqualTo(resultRect.bottom + 12));
+          expect(fileRect.left, greaterThanOrEqualTo(resultRect.left));
+          expect(fileRect.right, lessThanOrEqualTo(resultRect.right));
+          expect(
+            resultRect.right,
+            lessThanOrEqualTo(tester.view.physicalSize.width),
+          );
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
+  testWidgets('user file attachments remain inside their message bubble', (
+    tester,
+  ) async {
+    const filePath = '/tmp/uploaded-report.md';
+    await _pumpFileMessage(
+      tester,
+      files: const [filePath],
+      content: '',
+      isCurrentUser: true,
+    );
+    final bubble = find.byKey(const ValueKey<String>('message-bubble-surface'));
+    expect(bubble, findsOneWidget);
+    expect(
+      find.descendant(
+        of: bubble,
+        matching: find.byKey(
+          const ValueKey<String>('message-local-file-$filePath'),
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('message-file-results')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('file results and execution details fit a narrow message', (
+    tester,
+  ) async {
+    await _pumpFileMessage(
+      tester,
+      files: const ['/tmp/report.html', '/tmp/report.md'],
+      content: '报告已生成。',
+      isDesktop: false,
+      size: const Size(320, 1200),
+      processInfo: const MessageProcessInfo(
+        durationMs: 1200,
+        toolCalls: [
+          MessageToolCall(name: 'write_local_file', status: 'succeeded'),
+        ],
+      ),
+    );
+    expect(
+      find.byKey(const ValueKey<String>('message-file-results')),
+      findsOneWidget,
+    );
+    expect(find.byType(ProcessInfoSection), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('tool-lifecycle-')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('streaming files stay outside when the reply text appears', (
+    tester,
+  ) async {
+    const filePath = '/tmp/streamed-report.md';
+    final results = find.byKey(const ValueKey<String>('message-file-results'));
+    final bubble = find.byKey(const ValueKey<String>('message-bubble-surface'));
+    await _pumpFileMessage(
+      tester,
+      files: const [filePath],
+      content: '',
+      isStreaming: true,
+    );
+    expect(results, findsOneWidget);
+    expect(bubble, findsNothing);
+    final original = tester.element(results);
+
+    await _pumpFileMessage(
+      tester,
+      files: const [filePath],
+      content: '报告已生成。',
+      isStreaming: true,
+    );
+    expect(results, findsOneWidget);
+    expect(tester.element(results), same(original));
+    expect(bubble, findsOneWidget);
+    expect(find.descendant(of: bubble, matching: results), findsNothing);
+    expect(find.byType(ProcessInfoSection), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Kimi003 Markdown result is visible and opens a preview', (
     tester,
   ) async {
@@ -674,6 +807,9 @@ Future<void> _pumpFileMessage(
   bool isDesktop = true,
   Brightness brightness = Brightness.light,
   bool isStreaming = false,
+  bool isCurrentUser = false,
+  TextScaler textScaler = TextScaler.noScaling,
+  MessageProcessInfo processInfo = const MessageProcessInfo(),
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -685,31 +821,35 @@ Future<void> _pumpFileMessage(
     shadHarness(
       brightness: brightness,
       homeBuilder:
-          (context) => Scaffold(
-            body: Column(
-              children: [
-                MessageList(
-                  messages: [
-                    if (!isStreaming)
-                      Message(
-                        messageId: 'message-with-local-files',
-                        chatId: 'chat-1',
-                        botId: 'bot-1',
-                        senderId: 'bot-1',
-                        content: content,
-                        files: files,
-                        timestamp: DateTime(2026),
-                      ),
-                  ],
-                  scrollController: scrollController,
-                  isStreaming: isStreaming,
-                  streamingResponse: isStreaming ? content : '',
-                  streamingFiles: isStreaming ? files : const [],
-                  currentUserId: 'user-1',
-                  isDesktop: isDesktop,
-                  actionViewModel: actions,
-                ),
-              ],
+          (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+            child: Scaffold(
+              body: Column(
+                children: [
+                  MessageList(
+                    messages: [
+                      if (!isStreaming)
+                        Message(
+                          messageId: 'message-with-local-files',
+                          chatId: 'chat-1',
+                          botId: 'bot-1',
+                          senderId: isCurrentUser ? 'user-1' : 'bot-1',
+                          content: content,
+                          files: files,
+                          processInfo: processInfo,
+                          timestamp: DateTime(2026),
+                        ),
+                    ],
+                    scrollController: scrollController,
+                    isStreaming: isStreaming,
+                    streamingResponse: isStreaming ? content : '',
+                    streamingFiles: isStreaming ? files : const [],
+                    currentUserId: 'user-1',
+                    isDesktop: isDesktop,
+                    actionViewModel: actions,
+                  ),
+                ],
+              ),
             ),
           ),
     ),

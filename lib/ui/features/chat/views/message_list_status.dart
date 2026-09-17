@@ -97,6 +97,7 @@ class _MessageTerminalStatus extends StatelessWidget {
 class _StatusCardSection extends StatelessWidget {
   final bool isDesktop;
   final IconData icon;
+  final Key? iconKey;
   final String title;
   final String subtitle;
   final Widget? subtitleContent;
@@ -106,6 +107,7 @@ class _StatusCardSection extends StatelessWidget {
     super.key,
     required this.isDesktop,
     required this.icon,
+    this.iconKey = const ValueKey<String>('execution-status-icon'),
     required this.title,
     required this.subtitle,
     this.subtitleContent,
@@ -121,6 +123,7 @@ class _StatusCardSection extends StatelessWidget {
         _StatusCardHeader(
           isDesktop: isDesktop,
           icon: icon,
+          iconKey: iconKey,
           title: title,
           subtitle: subtitle,
           subtitleContent: subtitleContent,
