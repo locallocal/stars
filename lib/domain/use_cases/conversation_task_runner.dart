@@ -181,11 +181,22 @@ final class _TaskSegment {
                             repairs == 0
                                 ? ''
                                 : 'Return exactly one structured grounded answer; no tools or ordinary text.',
-                        requiredClaims: groundedSynthesisRequirements(
+                        availableClaims: groundedSynthesisRequirements(
                           taskVerificationRequirements(snapshot, definitions),
                         ),
                         draftText:
-                            'Complete the accepted objective using only committed evidence: ${task.objective}',
+                            'Write the final reply to the user for this completed task: ${task.objective}\n'
+                            'Use the accepted conversation context and committed results. '
+                            'Reply in ${task.acceptance.language} with plain, natural wording. '
+                            'Lead with the outcome. For a simple completion request, a brief '
+                            'confirmation and the useful deliverable or file link are enough. '
+                            'Include substantive findings only when the user asked for them. '
+                            'Choose the wording and level of detail from the context; do not use '
+                            'a fixed completion template. Do not narrate tool calls, repeated reads, '
+                            'evidence records, byte counts or hashes unless the user requested '
+                            'those details or they are needed to explain the result. '
+                            'Use available claims only for relevant factual statements. '
+                            'Do not claim an action or verification beyond the committed evidence.',
                         evidence: [
                           for (final evidence in snapshot.evidence)
                             GroundedEvidenceReference(

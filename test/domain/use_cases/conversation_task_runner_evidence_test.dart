@@ -320,7 +320,9 @@ void main() {
       h.models.completeStep();
       h.models.candidate();
       await h.run();
-      final claims = h.models.synthesisRequests.single.requiredClaims;
+      final synthesis = h.models.synthesisRequests.single;
+      expect(synthesis.requiredClaims, isEmpty);
+      final claims = synthesis.availableClaims;
       expect(claims, hasLength(2));
       expect(claims.first.requiredFactValues, {'action.completed': true});
       expect(claims.last.verificationAvailable, isFalse);

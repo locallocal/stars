@@ -16,6 +16,131 @@ void main() {
   tearDown(() => h.close());
 
   test(
+    'a natural completion reply omits repeated expired reads and keeps write verification internal',
+    () async {
+      await h.open(toolName: 'write_report');
+      h.configureTool();
+      for (var i = 0; i < 10; i++) {
+        await h.observe(call: 'read-$i');
+      }
+      h.runner.clock.advance(const Duration(hours: 2));
+      h.configureTool(write: true, name: 'write_report');
+      await h.observe(call: 'write');
+      h.configureTool();
+      await h.observe(call: 'read-back');
+      final snapshot = await h.runner.snapshot;
+      final receipt = snapshot.evidence.singleWhere(
+        (e) => e.evidenceKind == EvidenceKind.actionReceipt,
+      );
+      const reply = '报告已经整理好，可以查看了。';
+      h.runner.models.completeStep();
+      h.runner.models.candidate(
+        GroundedAnswerCandidate(
+          claims: [
+            AnswerClaim(
+              claimId: '${receipt.attemptId}:action',
+              text: reply,
+              kind: ClaimKind.completedAction,
+              evidenceIds: [receipt.evidenceId],
+            ),
+          ],
+        ),
+      );
+      await h.runner.run();
+      final synthesis = h.runner.models.synthesisRequests.single;
+      expect(synthesis.requiredClaims, isEmpty);
+      expect(synthesis.availableClaims, hasLength(13));
+      expect(synthesis.draftText, contains(snapshot.task.objective));
+      expect(synthesis.draftText, contains('zh-CN'));
+      expect(
+        h.runner.models.requests.last.messages.map((m) => m.content),
+        contains('整理报告'),
+      );
+
+      await h.runner.db.reopen();
+      await h.finalizer()('task-1');
+      final result = await h.result();
+      expect(result.content, reply);
+      expect(result.terminalOutcome, MessageTerminalOutcome.completed);
+      expect(result.grounding.trustLevel, AnswerTrustLevel.verified);
+      expect(result.grounding.claims, hasLength(1));
+      expect((await h.runner.snapshot).evidence, hasLength(12));
+      expect(
+        (await h.runner.db.task).progress.verificationStatus,
+        TaskVerificationStatus.verified,
+      );
+    },
+  );
+
+  test(
+    'a read-only task can finish without reciting its observations',
+    () async {
+      await h.open();
+      await h.observe();
+      await h.candidate(omit: true);
+      await h.finalizer()('task-1');
+      final result = await h.result();
+      expect(result.content, '已整理。');
+      expect(result.terminalOutcome, MessageTerminalOutcome.completed);
+      expect((await h.runner.snapshot).evidence, hasLength(1));
+    },
+  );
+
+  test('requested findings still use the selected evidence binding', () async {
+    await h.open();
+    await h.observe();
+    await h.observe(call: 'read-2');
+    final evidence = (await h.runner.snapshot).evidence.last;
+    const reply = '整理完了，报告共有 42 条记录。';
+    h.runner.models.completeStep();
+    h.runner.models.candidate(
+      GroundedAnswerCandidate(
+        claims: [
+          AnswerClaim(
+            claimId: '${evidence.attemptId}:fact',
+            text: reply,
+            kind: ClaimKind.currentFact,
+            evidenceIds: [evidence.evidenceId],
+          ),
+        ],
+      ),
+    );
+    await h.runner.run();
+    await h.finalizer()('task-1');
+    final result = await h.result();
+    expect(result.content, reply);
+    expect(result.grounding.trustLevel, AnswerTrustLevel.verified);
+    expect(result.grounding.evidenceIds, [evidence.evidenceId]);
+  });
+
+  for (final readback in ['missing', 'before_write', 'expired']) {
+    test('a short reply cannot bypass $readback write verification', () async {
+      await h.open(write: true, toolName: 'write_report');
+      final write = h.runner.tool;
+      if (readback == 'before_write') {
+        h.configureTool();
+        await h.observe();
+      }
+      h.runner.tool = write;
+      await h.observe(call: 'write');
+      h.configureTool();
+      if (readback == 'expired') {
+        await h.observe(call: 'read-back');
+        h.runner.clock.advance(const Duration(hours: 2));
+      }
+      await h.candidate(omit: true);
+      await h.finalizer()('task-1');
+      final task = await h.runner.db.task;
+      expect(task.status, ConversationTaskStatus.failed);
+      expect(
+        task.terminalSummary!.reasonCode,
+        TaskReasonCode.verificationFailed,
+      );
+      expect((await h.result()).content, isNot('已整理。'));
+    });
+  }
+
+  test(
     'one verified result uses evidence from multiple segments and survives reopen',
     () async {
       await h.open();

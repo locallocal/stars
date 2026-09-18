@@ -339,6 +339,7 @@ final class GroundedAnswerValidator {
   }) async {
     final normalizedRunId = _normalizedRequiredText(runId, 'runId');
     final ids = List<String>.unmodifiable(evidenceIds.toSet());
+    final instant = validatedAt.toUtc();
     final loadedEvidence = <String, Future<_LedgerEvidence>>{};
     Future<_LedgerEvidence> loadEvidence(String evidenceId) =>
         loadedEvidence.putIfAbsent(evidenceId, () => _load(evidenceId));
@@ -363,23 +364,28 @@ final class GroundedAnswerValidator {
           'Coverage requirements need an evidence-bearing claim kind.',
         );
       }
-      final claim = AnswerClaim(
-        claimId: requirement.claimId,
-        text: 'Verification requirement ${requirement.claimId}.',
-        kind: claimKind,
-        evidenceIds: ids,
-      );
-      final result = await _validateClaim(
-        claim: claim,
-        requirement: requirement,
-        runId: normalizedRunId,
-        validatedAt: validatedAt.toUtc(),
-        loadEvidence: loadEvidence,
-        applyReviewer: false,
-      );
-      if (result.trustLevel == ClaimTrustLevel.verified) {
+      final supportingIds = <String>{};
+      // The internal task ledger can exceed the evidence limit of a single
+      // user-visible claim. Check every record without truncating coverage.
+      for (final evidenceId in ids) {
+        final result = await _validateClaim(
+          claim: AnswerClaim(
+            claimId: requirement.claimId,
+            text: 'Verification requirement ${requirement.claimId}.',
+            kind: claimKind,
+            evidenceIds: [evidenceId],
+          ),
+          requirement: requirement,
+          runId: normalizedRunId,
+          validatedAt: instant,
+          loadEvidence: loadEvidence,
+          applyReviewer: false,
+        );
+        supportingIds.addAll(result.acceptedEvidenceIds);
+      }
+      if (supportingIds.isNotEmpty) {
         covered.add(requirement.claimId);
-        acceptedEvidenceIds.addAll(result.acceptedEvidenceIds);
+        acceptedEvidenceIds.addAll(supportingIds);
       } else {
         missing.add(requirement.claimId);
       }

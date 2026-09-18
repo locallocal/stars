@@ -206,10 +206,14 @@ final class GroundedAnswerSynthesisRequest {
     required this.draftText,
     List<GroundedEvidenceReference> evidence = const [],
     List<GroundedClaimSynthesisRequirement> requiredClaims = const [],
+    List<GroundedClaimSynthesisRequirement> availableClaims = const [],
     this.reliabilityFeedback = '',
   }) : evidence = List<GroundedEvidenceReference>.unmodifiable(evidence),
        requiredClaims = List<GroundedClaimSynthesisRequirement>.unmodifiable(
          requiredClaims,
+       ),
+       availableClaims = List<GroundedClaimSynthesisRequirement>.unmodifiable(
+         availableClaims,
        ) {
     final evidenceIds = <String>{};
     for (final reference in this.evidence) {
@@ -222,12 +226,15 @@ final class GroundedAnswerSynthesisRequest {
       }
     }
     final claimIds = <String>{};
-    for (final requirement in this.requiredClaims) {
+    for (final requirement in [
+      ...this.requiredClaims,
+      ...this.availableClaims,
+    ]) {
       if (!claimIds.add(requirement.claimId)) {
         throw ArgumentError.value(
           requirement.claimId,
-          'requiredClaims',
-          'Required claim IDs must be unique.',
+          'claims',
+          'Required and available claim IDs must be unique.',
         );
       }
     }
@@ -236,6 +243,10 @@ final class GroundedAnswerSynthesisRequest {
   final String draftText;
   final List<GroundedEvidenceReference> evidence;
   final List<GroundedClaimSynthesisRequirement> requiredClaims;
+
+  /// Optional evidence bindings the model may use for relevant answer claims.
+  /// Their facts constrain verification, not the amount of prose to publish.
+  final List<GroundedClaimSynthesisRequirement> availableClaims;
 
   /// Application-authored correction constraints from a prior synthesis.
   /// Provider output is never copied into this field.
