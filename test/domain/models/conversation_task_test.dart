@@ -159,6 +159,7 @@ void main() {
       ),
     ];
     final tools = {'read_file'};
+    final exemptions = {'read_file'};
     final snapshot = TaskAcceptanceSnapshot(
       providerId: 'provider',
       modelId: 'model',
@@ -166,6 +167,7 @@ void main() {
       language: 'zh',
       context: context,
       allowedToolNames: tools,
+      approvalExemptToolNames: exemptions,
       verification: taskAcceptance().verification,
       segmentLimits: TaskSegmentLimits(),
     );
@@ -183,9 +185,15 @@ void main() {
     assets.clear();
     context.clear();
     tools.clear();
+    exemptions.clear();
     completed.clear();
     expect(snapshot.context.single.assetReferences, ['asset:source']);
     expect(snapshot.allowedToolNames, {'read_file'});
+    expect(snapshot.approvalExemptToolNames, {'read_file'});
+    expect(
+      () => snapshot.approvalExemptToolNames.clear(),
+      throwsUnsupportedError,
+    );
     expect(checkpoint.completedStepIds, ['step-1']);
     expect(() => snapshot.context.clear(), throwsUnsupportedError);
     expect(

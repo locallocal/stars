@@ -4,7 +4,6 @@ import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/turn_disposition.dart';
 import 'package:stars/domain/repositories/conversation_turn_router.dart';
-import 'package:stars/domain/services/task_acknowledgement_policy.dart';
 
 part 'turn_routing_json.dart';
 
@@ -45,12 +44,16 @@ For backgroundTaskPlan emit exactly one complete payload frame:
 {"title":"short task title","objective":"self-contained goal","steps":[{"stepId":"step-1","summary":"first step"}],"allowedToolNames":[],"acknowledgementDraft":"acceptance text"}
 Use 1–32 distinct steps. Title <=200 chars, objective <=16000, step summary <=2000.
 Tools must be a subset of the allowed names. No arguments or execution results.
-The acknowledgement will be displayed ONLY after commit. Write a concise, natural
-reply about this task: it needs some time, is recorded, and full results will be
-sent when ready. Do not promise a completion time or claim execution has started.
-For acceptance-only wording, you may use this local fallback template,
-substituting the short title (at most 80 characters):
-${jsonEncode(const TaskAcknowledgementPolicy().template(request.language))}
+The acknowledgement will be displayed ONLY after the task is saved. Generate
+acknowledgementDraft yourself from the user's request and conversation context,
+using their language and tone. In one or two short, plain sentences, say you will
+handle the requested work and let them know here when it is finished. Mention
+the relevant task or deliverable naturally; pronouns are fine when context is clear.
+Mention that it takes time only if useful. Do not mechanically repeat the task
+title, plan, storage status, or a fixed acceptance template. Keep it <=280 chars.
+This is an acceptance, not an execution result: do not claim tools have run or
+work has started, finished, or been verified. Do not promise an exact completion
+time. Do not include credentials, tool arguments, or internal reasoning.
 For taskStatusRequest emit exactly one {"taskId":null} frame, or use an explicitly
 known task ID string from context. Never invent an ID.
 The last frame is exactly {"done":true}. Never change kind or add other fields.

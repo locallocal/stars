@@ -34,6 +34,7 @@ final class ForegroundDispatchHarness {
   String stopReason = 'stop';
   bool preparationFails = false;
   bool preparedReliability = true;
+  Set<String> approvalExemptToolNames = {'read_file'};
   int preparations = 0;
   List<Message>? preparedHistory;
   List<ChatMessage>? contextOverride;
@@ -104,7 +105,7 @@ final class ForegroundDispatchHarness {
               ],
           activatedSkills: const [],
           requestedToolNames: {'read_file', 'missing_tool'},
-          approvalExemptToolNames: {'read_file'},
+          approvalExemptToolNames: approvalExemptToolNames,
           reliabilityPolicyEnabled: preparedReliability,
           preflightTokenUsage: const ModelTokenUsage(
             inputTokens: 2,

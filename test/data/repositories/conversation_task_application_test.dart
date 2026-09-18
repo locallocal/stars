@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
@@ -44,6 +45,96 @@ void main() {
         actorId: 'user',
       ),
       isA<TaskWriteCommitted<TaskApprovalRecord>>(),
+    );
+  }
+
+  for (final requiresApproval in [false, true]) {
+    test(
+      'persisted Skill configuration requiresApproval=$requiresApproval reaches the background runtime after restart',
+      () async {
+        final source = Directory('${h.directory.path}/report-reader');
+        await source.create();
+        await File('${source.path}/SKILL.md').writeAsString('''
+---
+name: report-reader
+description: Read and verify report counts.
+allowed-tools: inspect_report
+---
+Use inspect_report to verify report counts.
+''');
+        final skill = await h.skills.install(
+          SkillImportSource(kind: SkillImportKind.directory, path: source.path),
+        );
+        final bot = foregroundBot(
+          parameters: {Bot.parameterSupportsAutomaticSkillActivation: false},
+        );
+        await h.botRepository.updateBot(bot);
+        await h.bindings.save(
+          BotSkillBinding(
+            botId: bot.id,
+            skillId: skill.id,
+            requiresApproval: requiresApproval,
+            createdAt: h.clock.now(),
+            updatedAt: h.clock.now(),
+          ),
+        );
+        await h.conversationTasks.setSuspended(true);
+        final accepted =
+            await h.conversationTasks.dispatcher.dispatch(
+                  foregroundInput(bot: bot),
+                )
+                as TurnTaskAccepted;
+        expect(accepted.context.prepared!.activatedSkills, isEmpty);
+        expect(accepted.task.acceptance.allowedToolNames, {'inspect_report'});
+        expect(
+          accepted.task.acceptance.approvalExemptToolNames,
+          requiresApproval ? isEmpty : {'inspect_report'},
+        );
+        expect(h.job.read(), isEmpty);
+
+        await h.restart();
+        await untilTask(
+          h,
+          requiresApproval
+              ? ConversationTaskStatus.waitingForUser
+              : ConversationTaskStatus.paused,
+        );
+        final snapshot =
+            (await h.conversationTasks.repository.getExecutionSnapshot(
+              accepted.task.taskId,
+            ))!;
+        if (requiresApproval) {
+          expect(snapshot.approvals, hasLength(1));
+          expect(snapshot.task.waitingReason, TaskWaitingReason.approval);
+          expect(h.job.read(), isEmpty);
+          return;
+        }
+        expect(snapshot.approvals, isEmpty);
+        expect(snapshot.checkpoint!.externalJobs, hasLength(1));
+        expect(h.job.read()['starts'], 1);
+
+        await h.restart(startImmediately: false);
+        h.job.ready();
+        h.clock.advance(const Duration(hours: 2));
+        await h.start();
+        await untilTask(h, ConversationTaskStatus.succeeded);
+        final completed =
+            (await h.conversationTasks.repository.getExecutionSnapshot(
+              accepted.task.taskId,
+            ))!;
+        expect(completed.approvals, isEmpty);
+        expect(
+          completed.events.map((event) => event.kind),
+          isNot(contains(TaskEventKind.approvalRequested)),
+        );
+        expect(h.job.read()['starts'], 1);
+        final result = (await h.messageRepository.getMessages(
+          'chat-1',
+        )).singleWhere((m) => m.taskMessageKind == TaskMessageKind.result);
+        expect(result.content, '报告共 42 条。');
+        expect(result.grounding.trustLevel, AnswerTrustLevel.verified);
+        expect(await h.integrity(), everyPairZero);
+      },
     );
   }
 

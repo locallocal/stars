@@ -2,23 +2,25 @@ import 'package:stars/domain/models/conversation_task.dart';
 
 final taskTime = DateTime.utc(2026, 9, 14, 10, 0, 0, 0, 123);
 
-TaskAcceptanceSnapshot taskAcceptance({TaskSegmentLimits? limits}) =>
-    TaskAcceptanceSnapshot(
-      providerId: 'provider-1',
-      modelId: 'model-1',
-      configurationDigest: 'config-digest',
-      language: 'zh-CN',
-      context: [
-        TaskContextMessage(role: TaskContextRole.user, content: '整理报告'),
-      ],
-      allowedToolNames: {'read_file'},
-      verification: VerificationPolicySnapshot(
-        reliabilityEnabled: true,
-        strictGroundingEnabled: true,
-        showVerificationStatus: true,
-      ),
-      segmentLimits: limits ?? TaskSegmentLimits(),
-    );
+TaskAcceptanceSnapshot taskAcceptance({
+  TaskSegmentLimits? limits,
+  Set<String> allowedToolNames = const {'read_file'},
+  Set<String> approvalExemptToolNames = const {},
+}) => TaskAcceptanceSnapshot(
+  providerId: 'provider-1',
+  modelId: 'model-1',
+  configurationDigest: 'config-digest',
+  language: 'zh-CN',
+  context: [TaskContextMessage(role: TaskContextRole.user, content: '整理报告')],
+  allowedToolNames: allowedToolNames,
+  approvalExemptToolNames: approvalExemptToolNames,
+  verification: VerificationPolicySnapshot(
+    reliabilityEnabled: true,
+    strictGroundingEnabled: true,
+    showVerificationStatus: true,
+  ),
+  segmentLimits: limits ?? TaskSegmentLimits(),
+);
 
 TaskTerminalSummary taskTerminal(ConversationTaskStatus status) =>
     TaskTerminalSummary(

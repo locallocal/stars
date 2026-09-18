@@ -20,6 +20,20 @@ void main() {
   });
 
   test(
+    'freezes only supported approval grants in the persisted task',
+    () async {
+      h.approvalExemptToolNames.add('missing_tool');
+      h.background();
+      final accepted =
+          await h.dispatcher.dispatch(foregroundInput()) as TurnTaskAccepted;
+      h.approvalExemptToolNames.clear();
+      final saved = (await h.storage.repository.getById(accepted.task.taskId))!;
+      expect(saved.acceptance.approvalExemptToolNames, {'read_file'});
+      expect(accepted.task.acceptance.approvalExemptToolNames, {'read_file'});
+    },
+  );
+
+  test(
     'unsupported tools are hidden from routing and cannot create a task',
     () async {
       final dispatcher = h.createDispatcher(supportsTaskTool: (_) => false);
@@ -27,6 +41,7 @@ void main() {
       final failed =
           await dispatcher.dispatch(foregroundInput()) as TurnDispatchFailed;
       expect(failed.context.acceptance!.allowedToolNames, isEmpty);
+      expect(failed.context.acceptance!.approvalExemptToolNames, isEmpty);
       expect(failed.code, TurnDispatchFailureCode.routingFailed);
       expect(await h.count('conversation_tasks'), 0);
       expect(await h.count('messages'), 1);
@@ -150,7 +165,7 @@ void main() {
   test(
     'task, plan, initial facts and acknowledgement are visible before enqueue',
     () async {
-      const draft = '这份报告需要一些时间，已经记录。完成后我会发送完整的结果。';
+      const draft = '我来整理这份报告，做好后在这里告诉你。';
       h.background(draft: draft);
       h.enqueuer.onEnqueue = (taskId) async {
         expect(h.dispatcher.isAccepting('chat-1'), isTrue);
@@ -202,7 +217,7 @@ void main() {
         (message) => message.messageId == result.task.ackMessageId,
       );
       expect(ack.messageId, result.task.ackMessageId);
-      expect(ack.content, '“整理报告”需要一些时间，已经记录。完成后我会发送完整的结果。');
+      expect(ack.content, '我会处理“整理报告”，完成后告诉你。');
       expect(result.metrics.acknowledgementFallbacks, 1);
       expect(h.mainCalls, 1);
     },

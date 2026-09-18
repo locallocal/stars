@@ -8,6 +8,47 @@ import 'package:stars/domain/models/models.dart';
 import '../../support/conversation_task_fixtures.dart';
 
 void main() {
+  test('approval exemptions round-trip and old snapshots grant none', () {
+    final values = TaskAcceptanceRecord.encode(
+      taskAcceptance(approvalExemptToolNames: {'read_file'}),
+    );
+    expect(
+      TaskAcceptanceRecord.decode(
+        _jsonRoundTrip(values),
+      ).approvalExemptToolNames,
+      {'read_file'},
+    );
+    final legacy = {...values}..remove('approvalExemptToolNames');
+    expect(
+      TaskAcceptanceRecord.decode(legacy).approvalExemptToolNames,
+      isEmpty,
+    );
+  });
+
+  test(
+    'approval grants cannot expand accepted tools or use malformed data',
+    () {
+      expect(
+        () => taskAcceptance(approvalExemptToolNames: {'unaccepted_tool'}),
+        throwsArgumentError,
+      );
+      final values = TaskAcceptanceRecord.encode(taskAcceptance());
+      for (final invalid in [
+        null,
+        'read_file',
+        [false],
+      ]) {
+        expect(
+          () => TaskAcceptanceRecord.decode({
+            ...values,
+            'approvalExemptToolNames': invalid,
+          }),
+          throwsFormatException,
+        );
+      }
+    },
+  );
+
   test(
     'task summaries preserve creation time and read older saved messages',
     () {

@@ -110,6 +110,10 @@ Map<String, Object?> _taskValues(ConversationTask task) {
   final acceptance = TaskAcceptanceRecord.encode(task.acceptance);
   acceptance['allowedToolNames'] =
       task.acceptance.allowedToolNames.toList()..sort();
+  if (task.acceptance.approvalExemptToolNames.isNotEmpty) {
+    acceptance['approvalExemptToolNames'] =
+        task.acceptance.approvalExemptToolNames.toList()..sort();
+  }
   values['acceptance_json'] = jsonEncode(_safeObject(acceptance));
   if (values['terminal_summary_json'] case final String summary) {
     values['terminal_summary_json'] = jsonEncode(

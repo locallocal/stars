@@ -18,6 +18,62 @@ void main() {
   });
   tearDown(() => h.close());
 
+  test('approval grant order does not change acceptance identity', () async {
+    TaskAcceptanceSnapshot acceptance(Set<String> grants) => taskAcceptance(
+      allowedToolNames: {'read_file', 'write_file'},
+      approvalExemptToolNames: grants,
+    );
+    committed(
+      await h.accept(
+        task: taskFixture(acceptance: acceptance({'read_file', 'write_file'})),
+      ),
+    );
+    await h.reopen();
+    final reused =
+        await h.accept(
+              seed: false,
+              task: taskFixture(
+                acceptance: acceptance({'write_file', 'read_file'}),
+              ),
+            )
+            as TaskWriteCommitted<ConversationTask>;
+    expect(reused.reused, isTrue);
+    expect(reused.value.acceptance.approvalExemptToolNames, {
+      'read_file',
+      'write_file',
+    });
+  });
+
+  test(
+    'legacy acceptance can resume without inventing approval grants',
+    () async {
+      committed(await h.accept());
+      final row = (await h.database.query('conversation_tasks')).single;
+      expect(
+        row['acceptance_json'],
+        isNot(contains('approvalExemptToolNames')),
+      );
+      await h.reopen();
+      expect((await h.task).acceptance.approvalExemptToolNames, isEmpty);
+      committed(
+        await h.repository.tryAcquireLease(
+          taskId: 'task-1',
+          expectedRevision: 0,
+          lease: taskLease(),
+          now: taskTime,
+        ),
+      );
+      committed(
+        await h.advance(
+          TaskEventKind.started,
+          status: ConversationTaskStatus.running,
+        ),
+      );
+      expect((await h.task).status, ConversationTaskStatus.running);
+      expect((await h.task).acceptance.approvalExemptToolNames, isEmpty);
+    },
+  );
+
   test(
     'accepts a saved user message and atomically persists acknowledgement and snapshots',
     () async {

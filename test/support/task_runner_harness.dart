@@ -205,6 +205,7 @@ final class TaskRunnerHarness {
   final clock = RunnerClock();
   final models = RunnerModels();
   final policy = RunnerPolicy();
+  ToolPolicy? policyOverride;
   RunnerTool tool = RunnerTool();
   List<TaskToolAdapter>? toolOverrides;
   int segment = 0;
@@ -269,7 +270,7 @@ final class TaskRunnerHarness {
     repository: repositoryOverride ?? db.repository,
     sessions: models.open,
     tools: toolOverrides ?? [tool],
-    policy: policy,
+    policy: policyOverride ?? policy,
     clock: clock,
     jitter: () => 0.5,
   );

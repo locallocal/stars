@@ -95,9 +95,9 @@ final class DefaultToolPolicy implements ToolPolicy {
         reason: 'bot_mcp_tool_approval_exempt',
       );
     }
-    final skillApprovalExempt =
-        requestedBySkill &&
-        context.approvalExemptToolNames.contains(definition.name);
+    final skillApprovalExempt = context.approvalExemptToolNames.contains(
+      definition.name,
+    );
     const historyTools = {
       'search_conversation_history',
       'read_conversation_history',

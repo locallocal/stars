@@ -47,6 +47,9 @@ TaskAcceptanceSnapshot _freezeAcceptance(
         ),
     ],
     allowedToolNames: allowed,
+    approvalExemptToolNames: prepared.approvalExemptToolNames.intersection(
+      allowed,
+    ),
     verification: VerificationPolicySnapshot(
       reliabilityEnabled:
           input.verification.reliabilityEnabled &&
@@ -70,7 +73,6 @@ _AcceptanceWrite _createAcceptance(
   final acknowledgement = const TaskAcknowledgementPolicy().evaluate(
     draft: proposal.acknowledgementDraft,
     title: proposal.title,
-    objective: proposal.objective,
     language: pending.input.language,
   );
   final task = ConversationTask(

@@ -8,6 +8,10 @@ abstract final class TaskAcceptanceRecord {
     'language': value.language,
     'context': value.context.map(_contextToJson).toList(),
     'allowedToolNames': value.allowedToolNames.toList(),
+    // Preserve the original encoding for legacy tasks with no saved grants;
+    // acceptance JSON is immutable in the database.
+    if (value.approvalExemptToolNames.isNotEmpty)
+      'approvalExemptToolNames': value.approvalExemptToolNames.toList(),
     'verification': {
       'reliabilityEnabled': value.verification.reliabilityEnabled,
       'strictGroundingEnabled': value.verification.strictGroundingEnabled,
@@ -25,6 +29,8 @@ abstract final class TaskAcceptanceRecord {
       'language',
       'context',
       'allowedToolNames',
+      if (values.containsKey('approvalExemptToolNames'))
+        'approvalExemptToolNames',
       'verification',
       'segmentLimits',
     });
@@ -41,6 +47,10 @@ abstract final class TaskAcceptanceRecord {
       language: row.text('language'),
       context: _contexts(row.require<List<Object?>>('context')),
       allowedToolNames: row.strings('allowedToolNames').toSet(),
+      approvalExemptToolNames:
+          values.containsKey('approvalExemptToolNames')
+              ? row.strings('approvalExemptToolNames').toSet()
+              : const {},
       verification: VerificationPolicySnapshot(
         reliabilityEnabled: policy.boolean('reliabilityEnabled'),
         strictGroundingEnabled: policy.boolean('strictGroundingEnabled'),

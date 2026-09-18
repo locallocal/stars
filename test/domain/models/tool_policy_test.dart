@@ -3,6 +3,23 @@ import 'package:stars/domain/models/models.dart';
 
 void main() {
   group('DefaultToolPolicy verification authorization', () {
+    test('configured exemptions apply to eligible verification reads', () {
+      final definition = _observationDefinition('verify_file');
+      final decision = const DefaultToolPolicy().evaluate(
+        definition,
+        ToolCallRequest(
+          callId: 'read-1',
+          name: definition.name,
+          arguments: const {},
+        ),
+        _context(
+          verificationToolNames: {definition.name},
+          approvalExemptToolNames: {definition.name},
+        ),
+      );
+      expect(decision.outcome, ToolPolicyOutcome.allow);
+    });
+
     test('keeps discovered reads behind their normal approval gates', () {
       final cases = <ToolDefinition, String>{
         _observationDefinition('verify_file'): 'local_read_requires_approval',
@@ -58,7 +75,10 @@ void main() {
             name: definition.name,
             arguments: const {},
           ),
-          _context(verificationToolNames: {definition.name}),
+          _context(
+            verificationToolNames: {definition.name},
+            approvalExemptToolNames: {definition.name},
+          ),
         );
 
         expect(decision.outcome, ToolPolicyOutcome.deny);
@@ -86,7 +106,7 @@ void main() {
           name: definition.name,
           arguments: const {},
         ),
-        _context(),
+        _context(approvalExemptToolNames: {definition.name}),
       );
 
       expect(decision.outcome, ToolPolicyOutcome.deny);
@@ -98,12 +118,14 @@ void main() {
 ToolPolicyContext _context({
   Set<String> requestedToolNames = const {},
   Set<String> verificationToolNames = const {},
+  Set<String> approvalExemptToolNames = const {},
 }) => ToolPolicyContext(
   runId: 'run-1',
   chatId: 'chat-1',
   botId: 'bot-1',
   requestedToolNames: requestedToolNames,
   verificationToolNames: verificationToolNames,
+  approvalExemptToolNames: approvalExemptToolNames,
 );
 
 ToolDefinition _observationDefinition(
