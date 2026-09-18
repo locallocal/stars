@@ -35,6 +35,58 @@ void main() {
         allowedToolNames: {'read_file'},
       );
 
+  test(
+    'one contextual routing call generates an untemplated acknowledgement',
+    () async {
+      const draft = '我来把这份报告排成 HTML，做好后在这里告诉你。';
+      const userText = '把刚才那份 RustFS 报告转成好看的 HTML';
+      final provider = ForegroundProvider(
+        input.bot,
+        events:
+            () => Stream.fromIterable([
+              TextDelta(
+                routeFrames('backgroundTaskPlan', [
+                  foregroundPlan(draft: draft),
+                ]),
+              ),
+              const ModelTurnCompleted(),
+            ]),
+      );
+      final events =
+          await ProviderConversationTurnRouter(
+                providers: ForegroundProviders((_) => provider),
+              )
+              .route(
+                TurnRoutingRequest(
+                  bot: input.bot,
+                  userMessage: input.userMessage,
+                  language: input.language,
+                  messages: [
+                    ChatMessage(role: 'assistant', content: 'RustFS 调研报告已保存。'),
+                    ChatMessage(role: 'user', content: userText),
+                  ],
+                  allowedToolNames: {'read_file'},
+                ),
+              )
+              .toList();
+      final plan =
+          events.whereType<TurnDispositionCompleted>().single.disposition
+              as BackgroundTaskPlan;
+      expect(plan.acknowledgementDraft, draft);
+      final session = provider.sessions.single;
+      expect(session.starts, 1);
+      expect(session.request.tools, isEmpty);
+      expect(session.request.messages[0].content, 'RustFS 调研报告已保存。');
+      expect(session.request.messages[1].content, userText);
+      final instruction = session.request.messages.last.content;
+      expect(instruction, contains('conversation context'));
+      expect(instruction, contains('let them know here when it is finished'));
+      expect(instruction, isNot(contains('{title}')));
+      expect(instruction, isNot(contains('需要一些时间，已经记录')));
+      expect(session.closed, isTrue);
+    },
+  );
+
   test('foreground cancellation closes a stalled provider session', () async {
     final stream = StreamController<ModelEvent>();
     final started = Completer<void>();

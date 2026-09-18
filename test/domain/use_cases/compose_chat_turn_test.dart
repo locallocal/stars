@@ -764,6 +764,48 @@ void main() {
     },
   );
 
+  for (final enabled in [true, false]) {
+    for (final requiresApproval in [true, false]) {
+      test(
+        'unselected file Skill keeps configured grants: enabled=$enabled, approval=$requiresApproval',
+        () async {
+          final skill = fixtureSystemLocalFileSystemSkill(directory: false);
+          final compose = ComposeChatTurn(
+            skillRepository: FixtureFakeSkillRepository(const {}),
+            bindingRepository: FixtureFakeBindingRepository([
+              fixtureBinding(
+                fileOperationsSkillId,
+                enabled: enabled,
+                requiresApproval: requiresApproval,
+              ),
+            ]),
+            conversationArtifactsDirectoryProvider:
+                fixtureTestConversationArtifactsDirectory,
+            bundledSkillLoader: () async => [skill],
+          );
+          final result = await compose(
+            bot: fixtureBot(),
+            history: const [],
+            userMessage: fixtureMessage(
+              senderId: 'user-1',
+              content: 'Read the report',
+            ),
+            currentUserId: 'user-1',
+            skillToolProvider: FixtureFakeSkillProvider([
+              SkillToolTurn(isComplete: true),
+            ]),
+          );
+          expect(result.activatedSkills, isEmpty);
+          expect(result.requestedToolNames, isEmpty);
+          expect(
+            result.approvalExemptToolNames,
+            enabled && !requiresApproval ? fileOperationsToolNames : isEmpty,
+          );
+        },
+      );
+    }
+  }
+
   test(
     'unbound Skills leave the Skill tool channel empty for verification discovery',
     () async {

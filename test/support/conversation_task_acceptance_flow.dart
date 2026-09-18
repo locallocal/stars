@@ -165,6 +165,7 @@ void conversationTaskAcceptanceTests({
                   (m) => m.taskMessageKind == TaskMessageKind.acknowledgement,
                 )
                 .content;
+        expect(acknowledgement, '我会读取报告并核验条目数，完成后回复。');
         record?.call(h.conversationTasks.telemetry.snapshot());
         await leave();
         await tester.runAsync(() => h.restart());

@@ -14,12 +14,16 @@
 | [TurnDisposition](../../lib/domain/models/turn_disposition.dart) | `DirectReply`、`BackgroundTaskPlan`、`TaskStatusRequest` 三个互斥领域结果 |
 | [ProviderConversationTurnRouter](../../lib/data/services/ai/provider_conversation_turn_router.dart) | 单次无工具的 Provider 传输、终态与超时检查、协议事件转换 |
 | [TurnRoutingProtocol](../../lib/data/services/ai/turn_routing_protocol.dart) | 路由协议、schema、长度、工具子集及重复字段校验 |
-| [TaskAcknowledgementPolicy](../../lib/domain/services/task_acknowledgement_policy.dart) | 接受语义校验和本地化兜底，不调用模型 |
+| [TaskAcknowledgementPolicy](../../lib/domain/services/task_acknowledgement_policy.dart) | 保留模型回执措辞，检查文本边界和明显不合适的声明，异常时本地化兜底 |
 | [任务接受构造](../../lib/domain/use_cases/conversation_turn_acceptance.dart) | 冻结配置、上下文、白名单、验证和分段策略；建立任务与回执身份 |
 
 `PrepareTextGeneration` 和 `ComposeChatTurn` 继续负责上下文、压缩、Skill/MCP 准备、工具发现与
 preflight Token。dispatcher 将请求工具与验证工具在实际 registry 中解析，再把名称白名单交给
 router；工具可用不触发 Agent Loop。run-scoped 工具仍由准备结果携带，接受时记录其允许名称。
+
+Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalExemptToolNames`，只保留实际允许的
+工具名称。已启用 Skill 的免确认设置也适用于通过验证发现加入的同名读取工具，不要求本轮再次
+激活该 Skill；免确认名单本身不暴露工具，也不扩大任务白名单。执行和重启恢复使用同一份快照。
 
 ## 单次分流协议
 
@@ -80,10 +84,14 @@ router；工具可用不触发 Agent Loop。run-scoped 工具仍由准备结果�
 
 ### 回执
 
-回执与计划由同一个主回复模型回合生成。策略保留符合任务引用、语言、简洁和接受语义约束的
-自然草稿；英语与简体中文使用保守的整句接受语法，不依赖可能漏掉虚假声明的关键词黑名单。
-不能确认合格的草稿使用应用支持语言的本地模板。空草稿、无关内容、已执行/完成声明和精确时间
-承诺均不会成为接受回执。模板说明需要时间、已经记录、完成后发送完整结果，不增加模型调用。
+回执与计划由同一个主回复模型回合根据原始请求、会话上下文和用户语言生成。提示词要求用一至两句
+直白的话说明会处理任务、完成后在这里通知用户；需要时自然提到任务内容或产物。无需重复完整标题、
+计划、“需要一些时间”或“已经记录”，也不向模型提供可照抄的回执模板。
+
+策略保留合格草稿原文，不要求固定主语、固定词组或整句语法，支持上下文代词及不同语言。
+本地仅检查长度、控制字符、凭据/诊断泄露、非正文格式，以及明显的提前执行声明和耗时承诺；这些
+检查不冒充完整的自然语言语义验证，相关性、通知意图和语气由主模型结合上下文判断。草稿为空或
+未通过检查时才使用简短的本地化兜底。回执仍只在任务事务提交后展示，不增加额外模型调用。
 
 ### 失败与幂等
 

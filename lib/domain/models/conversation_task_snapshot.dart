@@ -41,17 +41,24 @@ final class TaskAcceptanceSnapshot {
     required this.language,
     required List<TaskContextMessage> context,
     required Set<String> allowedToolNames,
+    Set<String> approvalExemptToolNames = const {},
     required this.verification,
     required this.segmentLimits,
   }) : context = List.unmodifiable(context),
        allowedToolNames = Set.unmodifiable(
          _taskStrings(allowedToolNames, 'tools'),
+       ),
+       approvalExemptToolNames = Set.unmodifiable(
+         _taskStrings(approvalExemptToolNames, 'approval-exempt tools'),
        ) {
     for (final value in [providerId, modelId, configurationDigest, language]) {
       _taskText(value, 'acceptance metadata', maximum: 256);
     }
     if (context.isEmpty || context.length > 1024) {
       throw ArgumentError('Task acceptance requires bounded prepared context.');
+    }
+    if (!allowedToolNames.containsAll(approvalExemptToolNames)) {
+      throw ArgumentError('Approval exemptions must name accepted tools.');
     }
   }
 
@@ -61,6 +68,9 @@ final class TaskAcceptanceSnapshot {
   final String language;
   final List<TaskContextMessage> context;
   final Set<String> allowedToolNames;
+
+  /// Bot grants frozen at acceptance; these do not authorize additional tools.
+  final Set<String> approvalExemptToolNames;
   final VerificationPolicySnapshot verification;
   final TaskSegmentLimits segmentLimits;
 }

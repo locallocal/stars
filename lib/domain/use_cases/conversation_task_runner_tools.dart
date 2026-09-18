@@ -87,6 +87,7 @@ extension _TaskSegmentTools on _TaskSegment {
         chatId: task.chatId,
         botId: task.botId,
         requestedToolNames: snapshot.plan.allowedToolNames,
+        approvalExemptToolNames: task.acceptance.approvalExemptToolNames,
       ),
     );
     if (decision.outcome == ToolPolicyOutcome.deny) {

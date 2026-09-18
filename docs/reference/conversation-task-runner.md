@@ -68,6 +68,11 @@ Anthropic 和 Moonshot 会把任务单次超时传入 HTTP 层，合成使用相
 `reconcile`。普通工具可通过 `SynchronousTaskToolAdapter` 接入；超过普通单次预算的操作必须使用
 job 协议。
 
+每次工具调用都将接受快照中的 `approvalExemptToolNames` 传入统一 `ToolPolicy`。已配置免确认的
+Skill 或 MCP 工具不再创建审批请求；工具白名单、参数校验和策略中的禁用规则仍然生效。名单随
+任务持久化，分段恢复及应用重启不丢失。旧任务缺少此字段时按空名单读取，已有审批决定仍保留；
+重新发起任务会按当前智能体设置建立新快照。
+
 - `ToolCompleted` 返回普通 `ToolResult`。输出 schema 与证据契约校验和旧 Agent Loop 共用
   `ToolResultValidator`；成功尝试、证据及检查点在同一事务提交。
 - `ToolJobStarted` 返回外部 job ID、`handle:...` 形式的不透明句柄、安全状态和下次轮询时间。
@@ -120,6 +125,8 @@ job 协议。
 | [持久化与让出](../../lib/domain/use_cases/conversation_task_runner_persistence.dart) | lease 检查、检查点、进度、退避和释放 |
 | [Provider factory](../../lib/data/services/ai/task_model_session_factory.dart) | 接受配置校验和运行时 Provider 创建 |
 | [分段测试](../../test/domain/use_cases/conversation_task_runner_test.dart) | 超过旧预算、审批、job、重规划和无进展 |
+| [免确认测试](../../test/domain/use_cases/conversation_task_approval_test.dart) | Skill 读写和 MCP 免确认、未授权工具审批及重启恢复 |
+| [应用整链路测试](../../test/data/repositories/conversation_task_application_test.dart) | 技能安装与免确认配置、任务接受、进程重建、job 轮询和最终结果 |
 | [恢复故障测试](../../test/domain/use_cases/conversation_task_runner_recovery_test.dart) | fake clock、提交失败、lease、取消与幂等 |
 | [证据测试](../../test/domain/use_cases/conversation_task_runner_evidence_test.dart) | 证据原子性、重启合成、修复与动态计划 |
 | [文件读取测试](../../test/domain/use_cases/conversation_task_file_reads_test.dart) | 正文恢复、分页、重复读取复用、写后失效和原子提交 |
