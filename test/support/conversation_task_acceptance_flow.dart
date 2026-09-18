@@ -176,6 +176,15 @@ void conversationTaskAcceptanceTests({
           until: () => activeCard()?.summary.progress.pendingApprovalId != null,
         );
         expect(activeCard()!.summary.taskId, acceptedId);
+        await tester.tap(
+          find
+              .descendant(
+                of: find.byKey(ValueKey('task-heading-$acceptedId')),
+                matching: find.byType(Text),
+              )
+              .first,
+        );
+        await driveTaskUi(tester);
         await tester.ensureVisible(find.text('批准'));
         await tester.tap(find.text('批准'));
         await driveTaskUi(

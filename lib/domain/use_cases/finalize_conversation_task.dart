@@ -121,13 +121,34 @@ final class FinalizeConversationTask {
           failure
               ? taskPartialCandidate(snapshot, acceptedTools)
               : state.candidate!;
+      // The model chooses which results are useful to say. Validate those
+      // claims, while checking write completion and postconditions separately
+      // even if the reply omits their metadata or consists of a short receipt.
+      final claimIds = candidate.claims.map((claim) => claim.claimId).toSet();
+      final completionCoverage =
+          failure
+              ? null
+              : await validator.evaluateCoverage(
+                runId: taskId,
+                requirements: taskVerificationRequirements(
+                  snapshot,
+                  acceptedTools,
+                  includeObservations: false,
+                ),
+                evidenceIds: snapshot.evidence.map((e) => e.evidenceId),
+                validatedAt: clock.now(),
+              );
       var validation = await validator.validate(
         runId: taskId,
         candidate: candidate,
-        requirements: requirements,
+        requirements:
+            failure
+                ? requirements
+                : requirements.where((r) => claimIds.contains(r.claimId)),
         validatedAt: clock.now(),
       );
       final incomplete =
+          (completionCoverage != null && !completionCoverage.isComplete) ||
           validation.unmatchedRequirementIds.isNotEmpty ||
           validation.claims.any(
             (claim) => claim.trustLevel == ClaimTrustLevel.unverified,
@@ -136,7 +157,11 @@ final class FinalizeConversationTask {
           validation.claims
               .where((c) => c.trustLevel != ClaimTrustLevel.notVerifiable)
               .length +
-          validation.unmatchedRequirementIds.length;
+          validation.unmatchedRequirementIds.length +
+          (completionCoverage?.missingRequirementIds
+                  .where((id) => !claimIds.contains(id))
+                  .length ??
+              0);
       final verifiedClaims =
           validation.claims
               .where((c) => c.trustLevel == ClaimTrustLevel.verified)

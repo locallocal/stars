@@ -7,18 +7,20 @@ import 'package:stars/domain/services/grounded_answer_validator.dart';
 import 'package:stars/domain/services/post_write_verification_policy.dart';
 import 'package:stars/domain/services/task_evidence_scope.dart';
 
-/// Rebuilds post-write requirements from committed receipts after a restart.
+/// Rebuilds claim bindings and post-write requirements from committed evidence.
 /// Final verification still belongs to the task's terminal-commit pipeline.
 List<ClaimEvidenceRequirement> taskVerificationRequirements(
   TaskExecutionSnapshot snapshot,
-  List<ToolDefinition> tools,
-) {
+  List<ToolDefinition> tools, {
+  bool includeObservations = true,
+}) {
   final requirements = <ClaimEvidenceRequirement>[];
   final scope = TaskEvidenceScope(snapshot);
   for (final evidence in snapshot.evidence) {
     if (!scope.contains(evidence, snapshot.task.taskId)) continue;
     if (evidence.evidenceKind != EvidenceKind.actionReceipt) {
-      if (evidence.subject.isEmpty ||
+      if (!includeObservations ||
+          evidence.subject.isEmpty ||
           evidence.scope.isEmpty ||
           evidence.structuredFacts.isEmpty) {
         continue;

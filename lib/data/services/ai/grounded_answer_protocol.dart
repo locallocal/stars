@@ -7,19 +7,13 @@ String _groundedAnswerSynthesisPrompt(GroundedAnswerSynthesisRequest request) {
       'application_validation_feedback': request.reliabilityFeedback,
     'required_claims': [
       for (final requirement in request.requiredClaims)
-        <String, Object?>{
-          'claim_id': requirement.claimId,
-          if (requirement.claimKind case final kind?)
-            'claim_kind': kind.wireName,
-          'subject': requirement.subject,
-          'scope': requirement.scope,
-          'required_fact_names': requirement.requiredFactNames.toList(),
-          'required_fact_values': requirement.requiredFactValues,
-          'verification_available': requirement.verificationAvailable,
-          if (requirement.toolName.isNotEmpty)
-            'verification_tool_name': requirement.toolName,
-        },
+        _synthesisClaimJson(requirement),
     ],
+    if (request.availableClaims.isNotEmpty)
+      'available_claims': [
+        for (final requirement in request.availableClaims)
+          _synthesisClaimJson(requirement),
+      ],
     'available_evidence': [
       for (final reference in request.evidence)
         <String, Object?>{
@@ -39,9 +33,14 @@ Rules:
 - Put every user-visible factual assertion in its own claims item.
 - Use only evidence_id values listed in available_evidence. Never output Provider call IDs.
 - Treat required_claims as application constraints. Preserve each claim_id and claim_kind, but do not invent a claim when matching evidence is absent.
+- available_claims is an optional catalog of evidence bindings, not a checklist
+  to report. Choose only claims that help answer the user's request, preserving
+  each selected claim_id and claim_kind. Omit irrelevant or repeated observations.
+  Fact names and values constrain evidence validation; they are not a requirement
+  to recite every value in the reply. Write the selected claims in natural language.
 - A failed evidence item may describe only execution_failure.
 - Preserve useful qualifications and failure disclosures from the draft.
-- When draft_text is empty, write a concise answer using only required_claims
+- When draft_text is empty, write a concise answer using relevant available_claims, required_claims
   and facts from preceding stars_tool_result envelopes whose evidence_id is
   listed in available_evidence; never infer facts those inputs do not establish.
 - If application_validation_feedback is present, correct only the structured
@@ -54,6 +53,20 @@ $envelope
 </stars_grounded_answer_protocol>
 '''.trim();
 }
+
+Map<String, Object?> _synthesisClaimJson(
+  GroundedClaimSynthesisRequirement requirement,
+) => {
+  'claim_id': requirement.claimId,
+  if (requirement.claimKind case final kind?) 'claim_kind': kind.wireName,
+  'subject': requirement.subject,
+  'scope': requirement.scope,
+  'required_fact_names': requirement.requiredFactNames.toList(),
+  'required_fact_values': requirement.requiredFactValues,
+  'verification_available': requirement.verificationAvailable,
+  if (requirement.toolName.isNotEmpty)
+    'verification_tool_name': requirement.toolName,
+};
 
 ModelEvent _parseGroundedAnswerOutput(
   String source,

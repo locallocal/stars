@@ -99,7 +99,7 @@ final class _AcceptanceSession implements AgentModelSession {
       GroundedAnswerCandidate(
         claims: [
           AnswerClaim(
-            claimId: synthesis.requiredClaims.single.claimId,
+            claimId: synthesis.availableClaims.single.claimId,
             text: '报告共 42 条。',
             kind: ClaimKind.currentFact,
             evidenceIds: [

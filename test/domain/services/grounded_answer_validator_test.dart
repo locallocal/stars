@@ -539,6 +539,29 @@ void main() {
     );
 
     test(
+      'internal coverage checks evidence beyond the per-claim reference limit',
+      () async {
+        final evidence = _observation(
+          validUntil: now.add(const Duration(hours: 1)),
+        );
+        final validator = GroundedAnswerValidator(
+          evidenceRepository: _FakeEvidenceRepository([evidence]),
+        );
+        final coverage = await validator.evaluateCoverage(
+          runId: 'run-1',
+          requirements: [_weatherRequirement(claimKind: ClaimKind.currentFact)],
+          evidenceIds: [
+            for (var i = 0; i < 80; i++) 'unrelated-$i:evidence',
+            evidence.evidenceId,
+          ],
+          validatedAt: now,
+        );
+        expect(coverage.isComplete, isTrue);
+        expect(coverage.evidenceIds, [evidence.evidenceId]);
+      },
+    );
+
+    test(
       'omitted required claim fails closed during final validation',
       () async {
         final evidence = _observation(

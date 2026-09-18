@@ -377,61 +377,83 @@ void main() {
     'Anthropic',
     'Moonshot',
   ]) {
-    test(
-      '$transport synthesizes on a fresh session with one request',
-      () async {
-        final requests = <Map<String, dynamic>>[];
-        final client = MockClient((request) async {
-          requests.add(jsonDecode(request.body) as Map<String, dynamic>);
-          final payload = switch (transport) {
-            'OpenAI Responses' => {
-              'status': 'completed',
-              'output': [
-                {
-                  'type': 'message',
-                  'role': 'assistant',
-                  'content': [
-                    {'type': 'output_text', 'text': _groundedJson},
-                  ],
-                },
-              ],
-            },
-            'Anthropic' => {
-              'content': [
-                {'type': 'text', 'text': _groundedJson},
-              ],
-              'stop_reason': 'end_turn',
-            },
-            _ => {
-              'choices': [
-                {
-                  'message': {'content': _groundedJson},
-                  'finish_reason': 'stop',
-                },
-              ],
-            },
+    for (final optional in [false, true]) {
+      test(
+        '$transport synthesizes ${optional ? 'optional' : 'required'} claims on a fresh session with one request',
+        () async {
+          final requests = <Map<String, dynamic>>[];
+          final client = MockClient((request) async {
+            requests.add(jsonDecode(request.body) as Map<String, dynamic>);
+            final payload = switch (transport) {
+              'OpenAI Responses' => {
+                'status': 'completed',
+                'output': [
+                  {
+                    'type': 'message',
+                    'role': 'assistant',
+                    'content': [
+                      {'type': 'output_text', 'text': _groundedJson},
+                    ],
+                  },
+                ],
+              },
+              'Anthropic' => {
+                'content': [
+                  {'type': 'text', 'text': _groundedJson},
+                ],
+                'stop_reason': 'end_turn',
+              },
+              _ => {
+                'choices': [
+                  {
+                    'message': {'content': _groundedJson},
+                    'finish_reason': 'stop',
+                  },
+                ],
+              },
+            };
+            return http.Response(jsonEncode(payload), 200);
+          });
+          addTearDown(client.close);
+          final AiProvider provider = switch (transport) {
+            'OpenAI Responses' => OpenAI(
+              _firstPartyBot,
+              skillToolClient: client,
+            ),
+            'Anthropic' => Anthropic(_bot, skillToolClient: client),
+            'Moonshot' => Moonshot(_bot, client: client),
+            _ => OpenAI(_bot, skillToolClient: client),
           };
-          return http.Response(jsonEncode(payload), 200);
-        });
-        addTearDown(client.close);
-        final AiProvider provider = switch (transport) {
-          'OpenAI Responses' => OpenAI(_firstPartyBot, skillToolClient: client),
-          'Anthropic' => Anthropic(_bot, skillToolClient: client),
-          'Moonshot' => Moonshot(_bot, client: client),
-          _ => OpenAI(_bot, skillToolClient: client),
-        };
-        final session = provider.openModelSession(_modelRequest);
-        addTearDown(session.close);
-        final events =
-            await session.synthesizeGroundedAnswer(_groundedRequest).toList();
-        _expectGroundedProtocol(events);
-        expect(requests, hasLength(1));
-        expect(requests.single, isNot(contains('tools')));
-        expect(requests.single, isNot(contains('include')));
-        expect(jsonEncode(requests.single), contains('required_claims'));
-        expect(session.start, throwsStateError);
-      },
-    );
+          final session = provider.openModelSession(_modelRequest);
+          addTearDown(session.close);
+          final synthesis =
+              optional
+                  ? GroundedAnswerSynthesisRequest(
+                    draftText: 'Reply naturally with the relevant result.',
+                    evidence: _groundedRequest.evidence,
+                    availableClaims: _groundedRequest.requiredClaims,
+                  )
+                  : _groundedRequest;
+          final events =
+              await session.synthesizeGroundedAnswer(synthesis).toList();
+          _expectGroundedProtocol(events);
+          expect(requests, hasLength(1));
+          expect(requests.single, isNot(contains('tools')));
+          expect(requests.single, isNot(contains('include')));
+          expect(jsonEncode(requests.single), contains('required_claims'));
+          if (optional) {
+            final body = jsonEncode(requests.single);
+            expect(body, contains(r'\"required_claims\":[]'));
+            expect(
+              body,
+              contains(r'\"available_claims\":[{\"claim_id\":\"claim-1\"'),
+            );
+            expect(body, contains('optional catalog of evidence bindings'));
+          }
+          expect(session.start, throwsStateError);
+        },
+      );
+    }
   }
 
   test('OpenAI Chat returns the shared grounded answer DTO', () async {
