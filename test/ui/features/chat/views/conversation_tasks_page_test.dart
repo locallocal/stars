@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/conversation_task_commands.dart';
@@ -13,9 +14,12 @@ import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_tasks_page.dart';
+import 'package:stars/ui/features/chat/views/conversation_task_execution_status.dart';
 import 'package:stars/utils/theme.dart';
 
 import '../../../../support/widget_test_support.dart' show shadHarness;
+import '../../../../support/conversation_task_repository_harness.dart'
+    show changeTask, taskFixture, taskPlan, taskTool, taskTime;
 import 'conversation_task_card_test.dart' show cardSummary;
 
 void main() {
@@ -38,6 +42,61 @@ void main() {
     vm.dispose();
     await repository.events.close();
   });
+
+  testWidgets(
+    'task expansion loads persisted details and reopening uses the cache',
+    (tester) async {
+      tester.view.physicalSize = const Size(1000, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final task = changeTask(taskFixture(), {'revision': 4});
+      repository.snapshot = TaskExecutionSnapshot(
+        task: task,
+        plan: taskPlan(task),
+        lastSequence: 1,
+        attempts: [taskTool(at: taskTime, arguments: '{"path":"report.md"}')],
+      );
+      await vm.start();
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (_) => Scaffold(
+                body: ConversationTasksPage(viewModel: vm, onAction: (_, _) {}),
+              ),
+        ),
+      );
+      repository.events.add([_summary('task-1', 'Report', 0)]);
+      await tester.pumpAndSettle();
+      expect(repository.detailReads, 0);
+      await _tapTaskHeading(tester, 'task-1');
+      await tester.pumpAndSettle();
+      expect(repository.detailReads, 1);
+      expect(find.byType(ConversationTaskExecutionStatus), findsOneWidget);
+      expect(find.textContaining('"path": "report.md"'), findsNothing);
+      await tester.tap(find.text('read_file'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('"path": "report.md"'), findsOneWidget);
+      final taskCard = find.byKey(const ValueKey('task-task-1'));
+      expect(
+        find.descendant(of: taskCard, matching: find.byType(Scrollbar)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: taskCard, matching: find.byType(Scrollable)),
+        findsNothing,
+      );
+      await _tapTaskHeading(tester, 'task-1');
+      await tester.pumpAndSettle();
+      expect(find.byType(ConversationTaskExecutionStatus), findsNothing);
+      await _tapTaskHeading(tester, 'task-1');
+      await tester.pumpAndSettle();
+      expect(repository.detailReads, 1);
+      expect(find.byType(ConversationTaskExecutionStatus), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   for (final width in [320.0, 1200.0]) {
     for (final brightness in Brightness.values) {
@@ -415,6 +474,14 @@ ConversationTaskProgressSummary _summary(String id, String title, int minutes) {
 }
 
 final class _Tasks implements ConversationTaskRepository {
+  TaskExecutionSnapshot? snapshot;
+  int detailReads = 0;
+  @override
+  Future<TaskExecutionSnapshot?> getExecutionSnapshot(String taskId) async {
+    detailReads++;
+    return snapshot;
+  }
+
   final events =
       StreamController<List<ConversationTaskProgressSummary>>.broadcast();
   int subscriptions = 0;

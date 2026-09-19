@@ -1,13 +1,28 @@
 import 'dart:async';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_execution.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart'
     show ObserveConversationTasks;
 import 'package:stars/domain/use_cases/prepare_conversation_task_retry.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
 import 'package:stars/ui/core/view_models/disposable_change_notifier.dart';
+import 'package:stars/ui/features/chat/view_models/task_execution_presentation.dart';
 
 enum ConversationTaskSort { oldestFirst, newestFirst }
+
+final class ConversationTaskExecutionState {
+  ConversationTaskExecutionState({
+    this.data,
+    this.loading = false,
+    this.error = false,
+  }) : presentation = data == null ? null : TaskExecutionPresentation(data);
+
+  final ConversationTaskExecution? data;
+  final TaskExecutionPresentation? presentation;
+  final bool loading, error;
+}
 
 typedef TaskRetryDispatcher =
     Future<void> Function(
@@ -43,13 +58,90 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
     required this.prepareRetry,
     this.dispatchRetry,
     this.retryAvailable,
-  });
+    GetConversationTaskExecution? getExecution,
+  }) : getExecution =
+           getExecution ?? GetConversationTaskExecution(observe.repository);
   final String chatId, botId;
   final ObserveConversationTasks observe;
   final ConversationTaskCommands commands;
   final PrepareConversationTaskRetry prepareRetry;
   final TaskRetryDispatcher? dispatchRetry;
   final bool Function()? retryAvailable;
+  final GetConversationTaskExecution getExecution;
+  final _execution = <String, ConversationTaskExecutionState>{};
+  Set<String> _expandedTaskIds = {};
+
+  ConversationTaskExecutionState executionFor(String taskId) =>
+      _execution[taskId] ?? ConversationTaskExecutionState(loading: true);
+
+  /// Expansion is view state; loading and refresh ownership stay in the VM.
+  void setExpandedTasks(Iterable<String> ids) {
+    if (isDisposed) return;
+    final expanded = ids.toSet();
+    final changed =
+        expanded.length != _expandedTaskIds.length ||
+        !expanded.containsAll(_expandedTaskIds);
+    _expandedTaskIds = expanded;
+    if (changed) notifyListeners();
+    _refreshExpandedExecutions();
+  }
+
+  void _refreshExpandedExecutions() {
+    for (final summary in state.summaries) {
+      if (_expandedTaskIds.contains(summary.taskId)) {
+        unawaited(loadExecution(summary.taskId));
+      }
+    }
+  }
+
+  Future<void> loadExecution(String taskId, {bool force = false}) async {
+    if (isDisposed || _execution[taskId]?.loading == true) return;
+    final summary =
+        state.summaries.where((s) => s.taskId == taskId).firstOrNull;
+    if (summary == null) return;
+    final previous = _execution[taskId]?.data;
+    if (!force &&
+        previous != null &&
+        previous.revision >= summary.summaryRevision) {
+      return;
+    }
+    _execution[taskId] = ConversationTaskExecutionState(
+      data: previous,
+      loading: true,
+    );
+    notifyListeners();
+    try {
+      final data = await getExecution(
+        taskId: taskId,
+        chatId: chatId,
+        botId: botId,
+      );
+      if (isDisposed || !state.summaries.any((s) => s.taskId == taskId)) return;
+      _execution[taskId] = ConversationTaskExecutionState(
+        data: data ?? previous,
+        error: data == null,
+      );
+      notifyListeners();
+      // A live update can arrive while the database read is in flight.
+      final latest =
+          state.summaries.where((s) => s.taskId == taskId).firstOrNull;
+      if (data != null &&
+          latest != null &&
+          latest.summaryRevision > summary.summaryRevision &&
+          latest.summaryRevision > data.revision &&
+          _expandedTaskIds.contains(taskId)) {
+        unawaited(loadExecution(taskId));
+      }
+    } on Object {
+      if (isDisposed || !state.summaries.any((s) => s.taskId == taskId)) return;
+      _execution[taskId] = ConversationTaskExecutionState(
+        data: previous,
+        error: true,
+      );
+      notifyListeners();
+    }
+  }
+
   String _query = '';
   ConversationTaskSort _sort = ConversationTaskSort.newestFirst;
   List<ConversationTaskProgressSummary> _filteredSummaries = const [];
@@ -150,7 +242,10 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         loading: false,
       );
       _filterAndSort();
+      final ids = summaries.map((s) => s.taskId).toSet();
+      _execution.removeWhere((id, _) => !ids.contains(id));
       notifyListeners();
+      _refreshExpandedExecutions();
     }, onError: (Object _) => _error());
   }
 

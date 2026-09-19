@@ -362,7 +362,7 @@ class _MessageFileSection extends StatelessWidget {
   final MessageActionViewModel? actions;
 
   @override
-  Widget build(BuildContext context) => _StatusCardSection(
+  Widget build(BuildContext context) => ExecutionStatusCard(
     isDesktop: isDesktop,
     icon: LucideIcons.paperclip,
     iconKey: const ValueKey<String>('message-file-section-icon'),

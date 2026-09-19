@@ -166,7 +166,16 @@ extension _TaskSegmentPersistence on _TaskSegment {
           sequence: sequence,
           kind: kind,
           occurredAt: at,
-          safeSummary: 'Task execution: ${kind.name}.',
+          safeSummary:
+              stepId == null
+                  ? 'Task execution: ${kind.name}.'
+                  : taskSafeText(
+                    snapshot.plan.steps
+                            .where((step) => step.stepId == stepId)
+                            .firstOrNull
+                            ?.summary ??
+                        stepId,
+                  ),
           planRevision: updated.planRevision,
           modelTurns: modelCount,
           segmentId: segmentId,

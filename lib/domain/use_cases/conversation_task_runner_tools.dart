@@ -551,6 +551,7 @@ extension _TaskSegmentTools on _TaskSegment {
         status,
         previous: record,
         summary: summary,
+        detail: taskExecutionOutput(result.content),
         errorCode:
             status == ToolInvocationStatus.succeeded
                 ? ''
@@ -567,6 +568,7 @@ extension _TaskSegmentTools on _TaskSegment {
     ToolInvocationStatus status, {
     ToolExecutionRecord? previous,
     String summary = '',
+    String detail = '',
     String errorCode = '',
   }) {
     final terminal =
@@ -589,9 +591,21 @@ extension _TaskSegmentTools on _TaskSegment {
       botId: task.botId,
       callId: previous?.callId ?? call.call.callId,
       name: definition.name,
+      title: definition.title,
+      mcpServerName: definition.mcpServerName,
       source: definition.source,
       riskLevel: definition.riskLevel,
       status: status,
+      argumentsSummary: taskExecutionArguments(jsonEncode(call.call.arguments)),
+      detail: detail,
+      approvalStatus: switch (snapshot.approvals
+          .where((approval) => approval.attemptId == call.attemptId)
+          .lastOrNull
+          ?.decision) {
+        TaskApprovalDecision.approved => 'allowOnce',
+        TaskApprovalDecision.denied => 'deny',
+        null => '',
+      },
       resultSummary: summary,
       errorCode: errorCode,
       startedAt: started,

@@ -29,14 +29,17 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/ui/features/chat/views/local_html_file_preview.dart';
 
+import 'package:stars/ui/features/chat/views/execution_status_card.dart';
+import 'package:stars/ui/features/chat/views/message_list_process.dart';
+
+export 'message_list_process.dart' show ProcessInfoSection;
+
 part 'message_list_actions.dart';
 part 'message_list_bubble.dart';
 part 'message_list_file_preview.dart';
 part 'message_list_local_files.dart';
 part 'message_list_link_preview.dart';
 part 'message_list_media_preview.dart';
-part 'message_list_process.dart';
-part 'message_list_process_labels.dart';
 part 'message_list_reasoning.dart';
 part 'message_list_status.dart';
 part 'message_list_trust.dart';

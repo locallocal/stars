@@ -243,7 +243,7 @@ class _MessageTrustStatusState extends State<_MessageTrustStatus> {
     required String title,
     required String subtitle,
   }) {
-    return _StatusCardHeader(
+    return ExecutionStatusHeader(
       isDesktop: isDesktop,
       icon: icon,
       iconKey: const ValueKey<String>('message-trust-status-icon'),
@@ -443,7 +443,7 @@ class _EvidenceTrustDetails extends StatelessWidget {
     final observedAt = intl.DateFormat.yMd(
       Localizations.localeOf(context).toString(),
     ).add_Hms().format(value.observedAt.toLocal());
-    final source = _toolSourceLabel(strings, value.source.name);
+    final source = toolSourceLabel(strings, value.source.name);
     final failure = value.errorCode.trim();
     return Container(
       key: ValueKey<String>('message-evidence-$evidenceId'),

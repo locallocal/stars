@@ -14,6 +14,7 @@ import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
+import 'package:stars/domain/services/task_execution_details.dart';
 import 'package:stars/domain/services/task_file_read_policy.dart';
 import 'package:stars/domain/services/task_execution_gate.dart';
 import 'package:stars/domain/services/task_verification_preparation.dart';

@@ -611,6 +611,9 @@ final class ToolExecutionRecord {
   final ToolSource source;
   final ToolRiskLevel riskLevel;
   final ToolInvocationStatus status;
+
+  /// Sanitized display detail. Background tasks retain bounded multiline output
+  /// here while [resultSummary] remains the compact evidence/progress summary.
   final String detail;
   final String argumentsSummary;
   final String resultSummary;

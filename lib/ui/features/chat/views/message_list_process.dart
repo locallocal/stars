@@ -1,24 +1,14 @@
-part of 'message_list.dart';
+import 'dart:io';
 
-class ReasoningSection extends StatefulWidget {
-  final String reasoning;
-  final bool isDesktop;
-  final bool isStreaming;
-  final int? durationMs;
-  final MessageActionViewModel? actionViewModel;
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:stars/domain/models/models.dart';
+import 'package:stars/generated/l10n.dart';
+import 'package:stars/utils/theme.dart';
+import 'package:stars/ui/features/chat/views/execution_status_card.dart';
 
-  const ReasoningSection({
-    super.key,
-    required this.reasoning,
-    this.isDesktop = false,
-    this.isStreaming = false,
-    this.durationMs,
-    this.actionViewModel,
-  });
-
-  @override
-  State<ReasoningSection> createState() => _ReasoningSectionState();
-}
+part 'message_list_process_labels.dart';
 
 class ProcessInfoSection extends StatefulWidget {
   final MessageProcessInfo processInfo;
@@ -88,7 +78,7 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
         _ProcessHeaderMetric(
           icon: LucideIcons.clock3,
           label: strings.processDuration(
-            _formatDuration(strings, widget.processInfo.durationMs!),
+            formatProcessDuration(strings, widget.processInfo.durationMs!),
           ),
         ),
       );
@@ -209,7 +199,7 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
                             _processDetailLabel(strings, item.detail),
                           if (item.durationMs != null)
                             strings.processDuration(
-                              _formatDuration(strings, item.durationMs!),
+                              formatProcessDuration(strings, item.durationMs!),
                             ),
                         ]),
                     statusBuilder: (item) => item.status,
@@ -267,7 +257,7 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
             );
 
     if (!widget.isDesktop || details == null) {
-      return _StatusCardSection(
+      return ExecutionStatusCard(
         isDesktop: widget.isDesktop,
         icon:
             widget.isDesktop
@@ -309,7 +299,7 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
                     expanded: _desktopController.value.contains(_itemValue),
                     child: child,
                   ),
-              child: _StatusCardHeader(
+              child: ExecutionStatusHeader(
                 isDesktop: true,
                 icon: LucideIcons.sparkles,
                 title: strings.executionStatus,
@@ -530,7 +520,7 @@ class _ProcessListCard<T> extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  _StatusBadge(status: statusBuilder(item)),
+                  ExecutionStatusBadge(status: statusBuilder(item)),
                 ],
               ),
             );
@@ -633,10 +623,19 @@ bool _toolStateReadBackVerified(
   );
 }
 
-class _StatusBadge extends StatelessWidget {
+class ExecutionStatusBadge extends StatelessWidget {
   final String status;
 
-  const _StatusBadge({required this.status});
+  const ExecutionStatusBadge({
+    super.key,
+    required this.status,
+    this.compact = false,
+    this.foregroundColor,
+    this.backgroundColor,
+  });
+
+  final bool compact;
+  final Color? foregroundColor, backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -655,8 +654,17 @@ class _StatusBadge extends StatelessWidget {
     };
 
     return ShadBadge.raw(
-      variant: variant,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      variant:
+          foregroundColor != null || backgroundColor != null
+              ? ShadBadgeVariant.secondary
+              : variant,
+      foregroundColor: foregroundColor,
+      backgroundColor: backgroundColor,
+      hoverBackgroundColor: backgroundColor,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 2 : 6,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       child: Text(
         _statusLabel(S.of(context), normalized),

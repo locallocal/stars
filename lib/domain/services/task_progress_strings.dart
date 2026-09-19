@@ -47,6 +47,77 @@ final class TaskProgressStrings {
   String get oldestFirst => pick('Oldest first', '时间：从早到晚');
   String get newestFirst => pick('Newest first', '时间：从晚到早');
   String get created => pick('Created', '创建时间');
+  String get executionArguments => pick('Arguments', '调用参数');
+  String get executionResult => pick('Result', '执行结果');
+  String get executionError => pick('Error', '错误信息');
+  String get executionTimeline => pick('Execution history', '执行流程');
+  String get executionCommand => pick('Command', '执行命令');
+  String get executionDirectory => pick('Working directory', '工作目录');
+  String get executionAttention => pick('Needs attention', '需关注');
+  String get executionStopped => pick('Stopped', '已停止');
+  String get executionMilestones => pick('Key progress', '关键进展');
+  String get executionAllEvents => pick('All events', '全部记录');
+  String get executionNewestFirst => pick('Latest first', '最近更新在前');
+  String get executionEmpty =>
+      pick('No tools have been called yet.', '尚未调用工具，执行后将在此显示。');
+  String get executionNoMilestones => pick(
+    'No key progress yet. View all events for the saved records.',
+    '暂无关键进展，可切换「全部记录」查看已保存的活动。',
+  );
+  String get executionNoOutput =>
+      pick('This call has no saved output.', '此调用没有已保存的输出。');
+  String get executionPendingOutput => pick(
+    'The result will appear when this call finishes.',
+    '调用结束后，结果将显示在这里。',
+  );
+  String get executionCopy => pick('Copy', '复制');
+  String get executionCopied => pick('Copied', '已复制');
+  String get executionCopyFailed => pick('Copy failed', '复制失败');
+  String executionCalls(int count) => pick('$count calls', '$count 次调用');
+  String executionEvents(int count) => pick('$count events', '$count 条记录');
+  String executionAttempt(int count) => pick('Attempt $count', '第 $count 次尝试');
+  String get executionLoadFailed =>
+      pick('Execution details could not be loaded.', '执行详情加载失败。');
+  String event(TaskEventKind kind) => switch (kind) {
+    TaskEventKind.queued => pick('Task queued', '任务已排队'),
+    TaskEventKind.started => pick('Task started', '开始执行任务'),
+    TaskEventKind.paused => pick('Task paused', '任务已暂停'),
+    TaskEventKind.resumed => pick('Task resumed', '继续执行任务'),
+    TaskEventKind.cancellationRequested => pick(
+      'Cancellation requested',
+      '已请求取消',
+    ),
+    TaskEventKind.terminal => pick('Task finished', '任务已结束'),
+    TaskEventKind.planCreated => pick('Plan created', '已创建计划'),
+    TaskEventKind.planRevised => pick('Plan revised', '已调整计划'),
+    TaskEventKind.stepStarted => pick('Step started', '开始执行步骤'),
+    TaskEventKind.stepCompleted => pick('Step completed', '步骤已完成'),
+    TaskEventKind.toolQueued => pick('Tool queued', '工具调用已排队'),
+    TaskEventKind.toolStarted => pick('Tool started', '开始调用工具'),
+    TaskEventKind.toolSucceeded => pick('Tool completed', '工具调用已完成'),
+    TaskEventKind.toolFailed => pick('Tool stopped', '工具调用未成功'),
+    TaskEventKind.toolRetry => pick('Tool retried', '重试工具调用'),
+    TaskEventKind.externalJobUpdated => pick('External job updated', '外部任务已更新'),
+    TaskEventKind.approvalRequested => pick('Approval requested', '已请求审批'),
+    TaskEventKind.waitingForUser => pick('Waiting for user', '等待用户处理'),
+    TaskEventKind.approvalApproved => pick('Approval granted', '已批准执行'),
+    TaskEventKind.approvalDenied => pick('Approval denied', '已拒绝执行'),
+    TaskEventKind.verificationStarted => pick('Verification started', '开始验证结果'),
+    TaskEventKind.evidenceAccepted => pick('Evidence accepted', '证据已接受'),
+    TaskEventKind.evidenceRejected => pick('Evidence rejected', '证据未通过'),
+    TaskEventKind.verificationCompleted => pick(
+      'Verification completed',
+      '结果验证已完成',
+    ),
+    TaskEventKind.resultCommitting => pick('Saving result', '保存执行结果'),
+    TaskEventKind.leaseExpired => pick('Execution interrupted', '执行已中断'),
+    TaskEventKind.processRecovered => pick('Execution recovered', '执行已恢复'),
+    TaskEventKind.retryScheduled => pick('Retry scheduled', '已安排重试'),
+    TaskEventKind.noProgress => pick('No new progress', '暂无新进展'),
+    TaskEventKind.modelTurnCompleted => pick('Model turn completed', '模型处理已完成'),
+    TaskEventKind.segmentCheckpoint => pick('Progress saved', '执行进度已保存'),
+    TaskEventKind.segmentProgress => pick('Progress updated', '执行进度已更新'),
+  };
   String get statusLabel => pick('Status', '状态');
   String get phaseLabel => pick('Phase', '阶段');
   String get steps => pick('Steps', '步骤');
