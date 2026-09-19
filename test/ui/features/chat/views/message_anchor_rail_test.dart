@@ -74,8 +74,76 @@ Finder anchor(int index) =>
     find.byKey(ValueKey('message-anchor-message-$index'));
 Finder line(int index) =>
     find.byKey(ValueKey('message-anchor-line-message-$index'));
+Finder preview(int index) =>
+    find.byKey(ValueKey('message-anchor-preview-message-$index'));
 
 void main() {
+  testWidgets('clicked anchors reset when the mouse leaves', (tester) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    // No scrolling is needed, so leaving must dismiss the clicked state itself.
+    await tester.pumpWidget(harness([message(0), message(1)], controller));
+    await tester.pumpAndSettle();
+    final idleWidth = tester.getSize(line(0)).width;
+    final idleDecoration = tester.widget<AnimatedContainer>(line(0)).decoration;
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    final target = tester.getCenter(anchor(0));
+    await mouse.moveTo(target);
+    await tester.pumpAndSettle();
+    await mouse.down(target);
+    await mouse.up();
+    await tester.pumpAndSettle();
+    await mouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+
+    expect(tester.getSize(line(0)).width, idleWidth);
+    expect(
+      tester.widget<AnimatedContainer>(line(0)).decoration,
+      idleDecoration,
+    );
+    expect(preview(0), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('scrolling dismisses anchors until the next interaction', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    final messages = [for (var i = 0; i < 40; i++) message(i)];
+    await tester.pumpWidget(harness(messages, controller));
+    await tester.pumpAndSettle();
+    final idleWidth = tester.getSize(line(12)).width;
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(anchor(12)));
+    await tester.pumpAndSettle();
+    expect(preview(12), findsOneWidget);
+
+    // Scrolling must dismiss even when the pointer remains over the same mark.
+    controller.jumpTo(100);
+    await tester.pumpAndSettle();
+    expect(preview(12), findsNothing);
+    expect(tester.getSize(line(12)).width, idleWidth);
+    await tester.pumpWidget(
+      harness([...messages], controller, streaming: true),
+    );
+    await tester.pumpAndSettle();
+    expect(preview(12), findsNothing);
+
+    await mouse.moveTo(Offset.zero);
+    await mouse.moveTo(tester.getCenter(anchor(12)));
+    await tester.pumpAndSettle();
+    expect(preview(12), findsOneWidget);
+    expect(tester.getSize(line(12)).width, greaterThan(idleWidth));
+    await mouse.moveTo(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   for (final reduceMotion in [false, true]) {
     testWidgets(
       'anchor tooltip survives rebuilds during animation (reduced: $reduceMotion)',
@@ -264,6 +332,12 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('message-0')), findsOneWidget);
+    expect(preview(0), findsNothing);
+    // Dismiss the preview without losing the user's place in keyboard traversal.
+    expect(button.focusNode!.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    expect(preview(2), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

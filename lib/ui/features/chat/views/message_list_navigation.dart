@@ -56,6 +56,7 @@ extension _MessageAnchorNavigation on _MessageListState {
               width: MessageAnchorRail.width,
               child: MessageAnchorRail(
                 entries: _messageAnchors,
+                scrollController: scrollController,
                 userName: widget.currentUserProfile?.name ?? '',
                 onSelected:
                     (entry) => unawaited(_scrollToMessageAnchor(entry.id)),
