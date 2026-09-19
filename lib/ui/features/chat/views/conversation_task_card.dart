@@ -6,6 +6,7 @@ import 'package:stars/domain/services/task_safe_data.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/ui/features/chat/views/task_action_button.dart';
 import 'package:stars/ui/features/chat/views/task_status_colors.dart';
+import 'package:stars/ui/features/chat/views/task_token_usage_metrics.dart';
 
 enum TaskCardAction { status, approve, deny, cancel, resume, retry }
 
@@ -74,6 +75,8 @@ final class ConversationTaskCard extends StatelessWidget {
             ),
             row(w.statusLabel, w.status(s.status)),
             row(w.steps, '${p.completedSteps}/${p.totalSteps}'),
+            const SizedBox(height: 8),
+            TaskTokenUsageMetrics(usage: p.tokenUsage),
           ],
           row(w.phaseLabel, w.phase(s.phase)),
           if (p.currentStepSummary.isNotEmpty)
@@ -258,6 +261,8 @@ final class _TaskSummaryHeader extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          TaskTokenUsageMetrics(usage: summary.progress.tokenUsage),
           const SizedBox(height: 6),
           Text(
             '${words.created}: ${DateFormat.yMd().add_Hm().format(summary.createdAt.toLocal())}',

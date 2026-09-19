@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/message.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_retry_dialog.dart';
 import 'package:stars/ui/features/chat/views/task_action_button.dart';
@@ -15,6 +16,7 @@ ConversationTaskProgressSummary cardSummary(
   TaskWaitingReason waitingReason = TaskWaitingReason.approval,
   String reasonCode = '',
   String approvalSummary = 'Save notes',
+  ModelTokenUsage? tokenUsage,
 }) => ConversationTaskProgressSummary(
   taskId: 'task:abc12345678',
   chatId: 'chat-1',
@@ -27,6 +29,7 @@ ConversationTaskProgressSummary cardSummary(
   waitingReason:
       status == ConversationTaskStatus.waitingForUser ? waitingReason : null,
   progress: TaskProgress(
+    tokenUsage: tokenUsage,
     reasonCode: reasonCode,
     totalSteps: 5,
     completedSteps: 3,
@@ -57,7 +60,11 @@ ConversationTaskProgressSummary cardSummary(
           ? taskTerminal(status)
           : null,
 );
-Widget host(Widget child, {bool desktop = true}) {
+Widget host(
+  Widget child, {
+  bool desktop = true,
+  Brightness brightness = Brightness.light,
+}) {
   Widget app(BuildContext? shad) => MaterialApp(
     locale: const Locale('en'),
     theme:
@@ -75,13 +82,65 @@ Widget host(Widget child, {bool desktop = true}) {
   );
   return desktop
       ? ShadApp.custom(
-        theme: buildStarsShadTheme(brightness: Brightness.light, fontSize: 14),
+        theme: buildStarsShadTheme(brightness: brightness, fontSize: 14),
         appBuilder: (context) => app(context),
       )
       : app(null);
 }
 
 void main() {
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'collapsed token metrics update and fit narrow $brightness cards',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final controller = ShadAccordionController<String>.multiple();
+        addTearDown(controller.dispose);
+        Future<void> show(ModelTokenUsage? usage) async {
+          await tester.pumpWidget(
+            host(
+              MediaQuery(
+                data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+                child: ConversationTaskCard(
+                  summary: cardSummary(
+                    ConversationTaskStatus.paused,
+                    tokenUsage: usage,
+                  ),
+                  expansionController: controller,
+                  executionDetails: const Text('Execution details'),
+                ),
+              ),
+              brightness: brightness,
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        await show(null);
+        expect(find.text('Input tokens —'), findsOneWidget);
+        expect(find.text('Output tokens —'), findsOneWidget);
+        expect(find.text('Execution details'), findsNothing);
+        await show(
+          const ModelTokenUsage(inputTokens: 123456789, outputTokens: 0),
+        );
+        expect(find.text('Input tokens 123456789'), findsOneWidget);
+        expect(find.text('Output tokens 0'), findsOneWidget);
+        expect(find.byIcon(Icons.login_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+        expect(find.text('Execution details'), findsNothing);
+        expect(tester.takeException(), isNull);
+        controller.value = ['task:abc12345678'];
+        await tester.pumpAndSettle();
+        expect(find.text('Input tokens 123456789'), findsOneWidget);
+        expect(find.text('Execution details'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('collapsed task details can be toggled with the keyboard', (
     tester,
   ) async {

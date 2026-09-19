@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 import 'package:stars/domain/models/task_terminal_metrics.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/services/task_terminal_narration_policy.dart';
@@ -10,10 +11,12 @@ final class TaskTerminalNarrationRequest {
     required this.summary,
     required this.language,
     required List<String> allowedNarrations,
+    this.onTokenUsage,
   }) : allowedNarrations = List.unmodifiable(allowedNarrations);
   final TaskTerminalSummary summary;
   final String language;
   final List<String> allowedNarrations;
+  final void Function(ModelTokenUsage)? onTokenUsage;
 }
 
 typedef TaskTerminalPolisher =
@@ -37,6 +40,7 @@ final class NarrateConversationTaskTerminal {
     required TaskTerminalSummary summary,
     required String language,
     TaskTerminalPolisher? polish,
+    void Function(ModelTokenUsage)? onTokenUsage,
   }) async {
     metrics.narrationAttempts++;
     final token = AgentCancellationToken();
@@ -48,6 +52,14 @@ final class NarrateConversationTaskTerminal {
             summary: summary,
             language: language,
             allowedNarrations: policy.alternatives(summary, language),
+            onTokenUsage: (usage) {
+              if (!token.isCancelled &&
+                  usage.inputTokens >= 0 &&
+                  usage.outputTokens >= 0 &&
+                  usage.totalTokens >= 0) {
+                onTokenUsage?.call(usage);
+              }
+            },
           ),
           token,
         ).timeout(timeout);

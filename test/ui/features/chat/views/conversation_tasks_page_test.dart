@@ -417,6 +417,8 @@ void main() {
       find.byKey(const ValueKey('conversation-tasks-retry-load')),
       findsNothing,
     );
+    await tester.ensureVisible(refresh);
+    await tester.pumpAndSettle();
     await tester.tap(refresh);
     await tester.pump();
     final button = find.descendant(

@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
+import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 import 'package:stars/domain/models/provider_failure.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_execution_state.dart';
@@ -97,6 +98,7 @@ final class _TaskSegment {
       planRevisions = 0,
       repairs = 0;
   GroundedAnswerCandidate? candidate;
+  ModelTokenUsage? pendingModelUsage;
   String? finalizationReason;
   String startDigest = '';
   ConversationTaskPhase phase = ConversationTaskPhase.planning;
@@ -167,14 +169,20 @@ final class _TaskSegment {
           await _save(TaskEventKind.stepStarted, stepId: nextStep);
         }
         TaskModelTurn turn;
+        pendingModelUsage = null;
+        var modelStarted = false;
         try {
-          turn = await _operation(
-            (token) => runner.model.run(
+          turn = await _operation((token) {
+            modelStarted = true;
+            return runner.model.run(
               snapshot: snapshot,
               tools: definitions,
               nextStepId: nextStep,
               replan: replan,
               cancellation: token,
+              onTokenUsage: (usage) {
+                if (!token.isCancelled) pendingModelUsage = usage;
+              },
               synthesis:
                   nextStep == null && !replan
                       ? GroundedAnswerSynthesisRequest(
@@ -211,9 +219,8 @@ final class _TaskSegment {
                         ],
                       )
                       : null,
-            ),
-            limits.providerTimeout,
-          );
+            );
+          }, limits.providerTimeout);
         } on TaskModelProtocolException {
           modelTurns++;
           await _save(TaskEventKind.modelTurnCompleted, modelCount: 1);
@@ -240,6 +247,14 @@ final class _TaskSegment {
           await _save(TaskEventKind.modelTurnCompleted, modelCount: 1);
           return await _backoff();
         } on AgentRunCancelledException {
+          if (modelStarted) {
+            modelTurns++;
+            await _save(
+              TaskEventKind.modelTurnCompleted,
+              modelCount: 1,
+              cleanup: true,
+            );
+          }
           rethrow;
         } on _TaskFenceLost {
           rethrow;

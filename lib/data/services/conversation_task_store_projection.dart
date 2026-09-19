@@ -230,6 +230,7 @@ Future<TaskProgress> _project(
     approvalRequestedAt: approval?.requestedAt,
     reasonCode: reason,
     verificationStatus: verification,
+    tokenUsage: await _taskTokenUsage(tx, task),
   );
 }
 

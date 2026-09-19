@@ -5,6 +5,7 @@ import 'package:stars/data/services/ai/task_terminal_polisher.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/services/task_provider_configuration.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_terminal.dart';
@@ -52,18 +53,25 @@ void main() {
       final narrator = NarrateConversationTaskTerminal();
       final summary = taskTerminal(ConversationTaskStatus.failed);
       final expected = narrator.policy.alternatives(summary, 'zh-CN').last;
+      final usages = <ModelTokenUsage>[];
       provider.events =
           () => Stream.fromIterable([
             const ReasoningDelta('private reasoning'),
             TextDelta(expected),
             const ModelTurnCompleted(stopReason: 'stop'),
+            const UsageReported(
+              ModelTokenUsage(inputTokens: 120, outputTokens: 15),
+            ),
           ]);
       final result = await narrator(
         summary: summary,
         language: 'zh-CN',
         polish: factory.forTask(task),
+        onTokenUsage: usages.add,
       );
       expect(result.usedFallback, isFalse);
+      expect(usages.single.inputTokens, 120);
+      expect(usages.single.outputTokens, 15);
       expect(bots.refreshed, isTrue);
       final session = provider.sessions.single;
       expect(session.request.tools, isEmpty);

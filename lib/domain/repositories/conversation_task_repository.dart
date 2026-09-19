@@ -189,7 +189,16 @@ final class ConversationTaskProgressUpdate {
     this.toolAttemptLink,
     this.evidence,
     this.evidenceLink,
+    this.modelUsage,
   }) {
+    if (modelUsage case final usage?) {
+      if (event.modelTurns != 1 ||
+          usage.inputTokens < 0 ||
+          usage.outputTokens < 0 ||
+          usage.totalTokens < 0) {
+        throw ArgumentError('Usage must describe one completed model attempt.');
+      }
+    }
     if (expectedRevision < 0 ||
         task.revision != expectedRevision + 1 ||
         task.status.isTerminal ||
@@ -237,4 +246,7 @@ final class ConversationTaskProgressUpdate {
   final TaskToolAttemptLink? toolAttemptLink;
   final ToolEvidenceRecord? evidence;
   final TaskEvidenceLink? evidenceLink;
+
+  /// Cumulative provider usage for this one attempt, including failed attempts.
+  final ModelTokenUsage? modelUsage;
 }

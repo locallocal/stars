@@ -38,6 +38,7 @@ final class TaskProgress {
     this.approvalRequestedAt,
     this.reasonCode = '',
     this.verificationStatus = TaskVerificationStatus.notStarted,
+    this.tokenUsage,
   }) {
     for (final entry
         in <String, int>{
@@ -50,6 +51,11 @@ final class TaskProgress {
           'noProgressSegments': noProgressSegments,
         }.entries) {
       _taskCount(entry.value, entry.key);
+    }
+    if (tokenUsage case final usage?) {
+      _taskCount(usage.inputTokens, 'inputTokens');
+      _taskCount(usage.outputTokens, 'outputTokens');
+      _taskCount(usage.totalTokens, 'totalTokens');
     }
     if (completedSteps > totalSteps || currentStepSummary.length > 2000) {
       throw ArgumentError('Invalid task step progress.');
@@ -94,6 +100,9 @@ final class TaskProgress {
   final DateTime? approvalRequestedAt;
   final String reasonCode;
   final TaskVerificationStatus verificationStatus;
+
+  /// Sum of committed usage reports; null means no usage has been recorded.
+  final ModelTokenUsage? tokenUsage;
 }
 
 final class TaskTerminalSummary {

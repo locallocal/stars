@@ -170,6 +170,7 @@ final class FinalizeConversationTask {
       final strictFailure =
           !failure && policy.strictGroundingEnabled && incomplete;
       TaskTerminalSummary? summary;
+      var narrationUsage = ModelTokenUsage.empty;
       String content;
       List<MessageClaimGrounding> claims;
       var status = ConversationTaskStatus.succeeded;
@@ -200,6 +201,7 @@ final class FinalizeConversationTask {
           summary: summary,
           language: snapshot.task.acceptance.language,
           polish: polisher?.call(snapshot.task),
+          onTokenUsage: (usage) => narrationUsage = narrationUsage.merge(usage),
         );
         content = narration.text;
         final partial =
@@ -253,6 +255,7 @@ final class FinalizeConversationTask {
         grounding: grounding,
         terminalOutcome: outcome,
         timestamp: clock.now(),
+        tokenUsage: narrationUsage,
       );
       if (policy.strictGroundingEnabled) {
         final safe = const StrictGroundingPolicy().present(message);
