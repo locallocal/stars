@@ -58,25 +58,16 @@ final class PreparedChatTurn {
 
 final class SkillContextBudget {
   const SkillContextBudget({
-    this.maxActivatedSkills = 3,
     this.maxTokensPerSkill = 5000,
     this.maxSkillContextTokens = 8000,
     this.maxResourceTokens = 2000,
-    this.maxToolTurns = 4,
-    this.maxToolCalls = 8,
-  }) : assert(maxActivatedSkills > 0),
-       assert(maxTokensPerSkill > 0),
+  }) : assert(maxTokensPerSkill > 0),
        assert(maxSkillContextTokens > 0),
-       assert(maxResourceTokens > 0),
-       assert(maxToolTurns > 0),
-       assert(maxToolCalls > 0);
+       assert(maxResourceTokens > 0);
 
-  final int maxActivatedSkills;
   final int maxTokensPerSkill;
   final int maxSkillContextTokens;
   final int maxResourceTokens;
-  final int maxToolTurns;
-  final int maxToolCalls;
 }
 
 /// Builds provider-neutral chat context and resolves Phase 2 Skill tools.
@@ -182,8 +173,7 @@ final class ComposeChatTurn {
         false;
     if (provider != null &&
         supportsAutomaticSkillActivation &&
-        catalog.isNotEmpty &&
-        state.contents.length < _budget.maxActivatedSkills) {
+        catalog.isNotEmpty) {
       try {
         await _resolveModelSelectedSkills(
           provider: provider,
