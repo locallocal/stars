@@ -343,9 +343,14 @@ Future<void> _writeTool(
       }
     }
   }
-  // No raw arguments or exception detail belongs in the task audit projection.
-  values['arguments_summary'] = '';
-  values['detail'] = _safeText(event.safeSummary);
+  // Keep display details separate from the compact progress/evidence summary.
+  // Reapply redaction at the transaction boundary, including structured keys.
+  values['arguments_summary'] = taskExecutionArguments(
+    tool.argumentsSummary.isEmpty && rows.isNotEmpty
+        ? rows.single['arguments_summary']! as String
+        : tool.argumentsSummary,
+  );
+  values['detail'] = taskExecutionOutput(tool.detail);
   for (final key in ['tool_title', 'mcp_server_name', 'result_summary']) {
     values[key] = _safeText(values[key]! as String);
   }

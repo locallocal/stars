@@ -171,7 +171,7 @@ Future<TaskProgress> _project(
       name: _safeText(tool.name, maximum: 256),
       status: tool.status,
       safeSummary: _safeText(
-        tool.resultSummary.isEmpty ? tool.detail : tool.resultSummary,
+        tool.resultSummary.isEmpty ? tool.status.name : tool.resultSummary,
       ),
     );
   }

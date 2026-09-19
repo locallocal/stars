@@ -181,8 +181,7 @@ String _safeCode(String value) =>
         ? value
         : 'task_detail_redacted';
 
-// Safety net for prepared summaries. It does not infer safe purposes from raw
-// tool arguments: those are deliberately omitted by the tool write boundary.
+// Compact progress summaries stay separate from sanitized execution details.
 String _safeText(String text, {int maximum = 2000, bool structured = false}) =>
     taskSafeText(text, maximum: maximum, structured: structured);
 Object? _safeObject(Object? value, {String key = ''}) =>

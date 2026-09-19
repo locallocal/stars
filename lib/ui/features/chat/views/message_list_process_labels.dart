@@ -1,4 +1,4 @@
-part of 'message_list.dart';
+part of 'message_list_process.dart';
 
 String _statusLabel(S strings, String status) {
   switch (status) {
@@ -90,7 +90,7 @@ String _toolCallTitle(MessageToolCall item) {
 String _toolCallSubtitle(S strings, MessageToolCall item) => _joinMeta([
   if (item.source.isNotEmpty || item.riskLevel.isNotEmpty)
     _joinMeta([
-      _toolSourceLabel(strings, item.source),
+      toolSourceLabel(strings, item.source),
       _toolRiskLabel(strings, item.riskLevel),
     ]),
   if (item.argumentsSummary.isNotEmpty) item.argumentsSummary,
@@ -100,10 +100,10 @@ String _toolCallSubtitle(S strings, MessageToolCall item) => _joinMeta([
   if (item.approvalStatus.isNotEmpty)
     _toolApprovalLabel(strings, item.approvalStatus),
   if (item.durationMs != null)
-    strings.processDuration(_formatDuration(strings, item.durationMs!)),
+    strings.processDuration(formatProcessDuration(strings, item.durationMs!)),
 ]);
 
-String _toolSourceLabel(S strings, String source) {
+String toolSourceLabel(S strings, String source) {
   switch (source) {
     case 'builtIn':
       return strings.toolSourceBuiltIn;
@@ -240,7 +240,7 @@ String _processDetailLabel(S strings, String detail) {
   return looksLikeInternalCode ? strings.statusFailed : detail;
 }
 
-String _formatDuration(S strings, int durationMs) {
+String formatProcessDuration(S strings, int durationMs) {
   final locale = intl.Intl.getCurrentLocale();
   if (durationMs < 1000) {
     final milliseconds = intl.NumberFormat.decimalPattern(

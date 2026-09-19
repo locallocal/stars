@@ -5,6 +5,7 @@ import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/ui/features/chat/views/task_action_button.dart';
+import 'package:stars/ui/features/chat/views/task_status_colors.dart';
 
 enum TaskCardAction { status, approve, deny, cancel, resume, retry }
 
@@ -19,6 +20,7 @@ final class ConversationTaskCard extends StatelessWidget {
     this.historical = false,
     this.showStatusAction = true,
     this.expansionController,
+    this.executionDetails,
   });
   final ConversationTaskProgressSummary summary;
   final ValueChanged<TaskCardAction>? onAction;
@@ -29,6 +31,7 @@ final class ConversationTaskCard extends StatelessWidget {
 
   /// The task list owns expansion across pagination and live updates.
   final ShadAccordionController<String>? expansionController;
+  final Widget? executionDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +144,10 @@ final class ConversationTaskCard extends StatelessWidget {
                   ),
               ],
             ),
+          ],
+          if (executionDetails != null) ...[
+            const SizedBox(height: 12),
+            executionDetails!,
           ],
         ],
       ),
@@ -271,51 +278,8 @@ final class _TaskStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
-    final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    // Semantic shades stay readable on tinted surfaces in both theme modes.
-    final (lightForeground, darkForeground) = switch (status) {
-      ConversationTaskStatus.queued => (
-        const Color(0xFF334155),
-        const Color(0xFFCBD5E1),
-      ),
-      ConversationTaskStatus.running => (
-        const Color(0xFF1D4ED8),
-        const Color(0xFF93C5FD),
-      ),
-      ConversationTaskStatus.waitingForUser => (
-        const Color(0xFF92400E),
-        const Color(0xFFFCD34D),
-      ),
-      ConversationTaskStatus.paused => (
-        const Color(0xFF6D28D9),
-        const Color(0xFFC4B5FD),
-      ),
-      ConversationTaskStatus.cancelRequested => (
-        const Color(0xFF9A3412),
-        const Color(0xFFFDBA74),
-      ),
-      ConversationTaskStatus.succeeded => (
-        const Color(0xFF166534),
-        const Color(0xFF86EFAC),
-      ),
-      ConversationTaskStatus.failed => (
-        const Color(0xFFB91C1C),
-        const Color(0xFFFCA5A5),
-      ),
-      ConversationTaskStatus.cancelled => (
-        colors.secondaryForeground,
-        colors.secondaryForeground,
-      ),
-    };
-    final foreground = isDark ? darkForeground : lightForeground;
-    final background =
-        status == ConversationTaskStatus.cancelled
-            ? colors.secondary
-            : Color.alphaBlend(
-              foreground.withValues(alpha: isDark ? 0.16 : 0.10),
-              colors.card,
-            );
+    final foreground = theme.taskStatusForeground(status);
+    final background = theme.taskStatusBackground(status);
     return ShadBadge.secondary(
       key: ValueKey('task-status-${status.name}'),
       backgroundColor: background,

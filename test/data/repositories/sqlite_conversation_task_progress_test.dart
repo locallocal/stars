@@ -760,7 +760,7 @@ void main() {
   );
 
   test(
-    'persisted progress excludes credentials, raw tool arguments and stack traces',
+    'execution arguments survive restart while progress excludes credentials and stack traces',
     () async {
       await h.start();
       final started = h.nextTime;
@@ -803,7 +803,6 @@ void main() {
         'private-token',
         'privateStack',
         'secretStack',
-        'private.txt',
       ]) {
         expect(rows, isNot(contains(secret)));
         expect(
@@ -815,7 +814,7 @@ void main() {
         (await h.database.query(
           'tool_execution_records',
         )).single['arguments_summary'],
-        '',
+        '{"path":"private.txt","api_key":"[redacted]"}',
       );
       final projection =
           (await h.database.query('conversation_task_progress')).single;

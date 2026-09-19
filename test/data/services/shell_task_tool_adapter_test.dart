@@ -14,6 +14,7 @@ import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/services/task_provider_configuration.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
 
 import '../../support/foreground_turn_fixtures.dart';
 import '../../support/task_runner_harness.dart';
@@ -149,6 +150,28 @@ void main() {
         ToolInvocationStatus.succeeded,
       );
       await h.reopen();
+      final details =
+          (await GetConversationTaskExecution(h.repository)(
+            taskId: 'task-1',
+            chatId: 'chat-1',
+            botId: 'bot-1',
+          ))!;
+      expect(details.processInfo.commandExecutions.single.command, command);
+      final call = details.processInfo.toolCalls.single;
+      expect(jsonDecode(call.argumentsSummary), arguments);
+      expect(call.resultSummary, contains('exit_code: 0'));
+      expect(call.resultSummary, contains('stdout:\ndone'));
+      expect(call.approvalStatus, 'allowOnce');
+      expect(
+        details.activities.map((a) => a.event.kind),
+        containsAllInOrder([
+          TaskEventKind.toolQueued,
+          TaskEventKind.approvalRequested,
+          TaskEventKind.approvalApproved,
+          TaskEventKind.toolStarted,
+          TaskEventKind.toolSucceeded,
+        ]),
+      );
       expect(await run(), isA<TaskCompletionCandidate>());
       expect(process.requests, hasLength(1));
     },
@@ -165,7 +188,59 @@ void main() {
     final result = await run() as TaskNeedsSafeFinalization;
     expect(result.reasonCode, TaskReasonCode.permissionDenied);
     expect(process.requests, isEmpty);
+    await h.reopen();
+    final details =
+        (await GetConversationTaskExecution(h.repository)(
+          taskId: 'task-1',
+          chatId: 'chat-1',
+          botId: 'bot-1',
+        ))!;
+    expect(details.processInfo.commandExecutions.single.command, 'echo denied');
+    expect(details.processInfo.toolCalls.single.status, 'denied');
+    expect(details.processInfo.toolCalls.single.approvalStatus, 'deny');
   });
+
+  test(
+    'failed command preserves stdout, stderr and exit code after restart',
+    () async {
+      models.tool(
+        name: 'run_shell_command',
+        arguments: {'command': 'flutter test'},
+      );
+      final wait = await run() as TaskApprovalWait;
+      await decide(wait, TaskApprovalDecision.approved);
+      process.onRun =
+          (request, _) async => ShellCommandExecutionResult(
+            platform: NativeShellPlatform.linux,
+            shell: 'POSIX sh',
+            workingDirectory: request.workingDirectory,
+            exitCode: 1,
+            stdout: 'Test started\nTest failed',
+            stderr: 'Failure details\npassword=private-output',
+            duration: const Duration(milliseconds: 25),
+          );
+      await run();
+      await h.reopen();
+      final query = GetConversationTaskExecution(h.repository);
+      final details =
+          (await query(taskId: 'task-1', chatId: 'chat-1', botId: 'bot-1'))!;
+      final call = details.processInfo.toolCalls.single;
+      expect(call.status, 'failed');
+      expect(call.errorCode, 'shell_command_failed');
+      expect(call.resultSummary, contains('exit_code: 1'));
+      expect(call.resultSummary, contains('Test started\nTest failed'));
+      expect(call.resultSummary, contains('Failure details'));
+      expect(call.resultSummary, isNot(contains('private-output')));
+      expect(
+        await query(taskId: 'task-1', chatId: 'another-chat', botId: 'bot-1'),
+        isNull,
+      );
+      expect(
+        await query(taskId: 'task-1', chatId: 'chat-1', botId: 'another-bot'),
+        isNull,
+      );
+    },
+  );
 
   test(
     'cancellation before an approved command starts never invokes the shell',

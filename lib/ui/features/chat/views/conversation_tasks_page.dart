@@ -6,6 +6,7 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
+import 'package:stars/ui/features/chat/views/conversation_task_execution_section.dart';
 import 'package:stars/utils/theme.dart';
 
 /// Shares the directory page's width, spacing and workspace surface.
@@ -43,6 +44,7 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
     _searchController.text = widget.viewModel.query;
     _listLocation = _currentListLocation;
     widget.viewModel.addListener(_handleViewModelChanged);
+    _expansionController.addListener(_handleExpansionChanged);
   }
 
   @override
@@ -50,6 +52,7 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.viewModel != widget.viewModel) {
       oldWidget.viewModel.removeListener(_handleViewModelChanged);
+      oldWidget.viewModel.setExpandedTasks(const []);
       widget.viewModel.addListener(_handleViewModelChanged);
       _expansionController.value = [];
       _searchController.text = widget.viewModel.query;
@@ -72,6 +75,10 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
     }
   }
 
+  void _handleExpansionChanged() {
+    widget.viewModel.setExpandedTasks(_expansionController.value);
+  }
+
   void _resetScroll() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _scrollController.hasClients) _scrollController.jumpTo(0);
@@ -81,6 +88,8 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
   @override
   void dispose() {
     widget.viewModel.removeListener(_handleViewModelChanged);
+    widget.viewModel.setExpandedTasks(const []);
+    _expansionController.removeListener(_handleExpansionChanged);
     _expansionController.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
@@ -279,6 +288,22 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                           key: ValueKey('task-${summary.taskId}'),
                           summary: summary,
                           expansionController: _expansionController,
+                          executionDetails:
+                              _expansionController.value.contains(
+                                    summary.taskId,
+                                  )
+                                  ? ConversationTaskExecutionSection(
+                                    key: ValueKey(
+                                      'task-execution-${summary.taskId}',
+                                    ),
+                                    state: vm.executionFor(summary.taskId),
+                                    onRetry:
+                                        () => vm.loadExecution(
+                                          summary.taskId,
+                                          force: true,
+                                        ),
+                                  )
+                                  : null,
                           showStatusAction: false,
                           busy: state.pendingCommands.contains(summary.taskId),
                           refreshing: state.loading,

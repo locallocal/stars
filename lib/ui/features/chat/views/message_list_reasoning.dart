@@ -1,5 +1,25 @@
 part of 'message_list.dart';
 
+class ReasoningSection extends StatefulWidget {
+  final String reasoning;
+  final bool isDesktop;
+  final bool isStreaming;
+  final int? durationMs;
+  final MessageActionViewModel? actionViewModel;
+
+  const ReasoningSection({
+    super.key,
+    required this.reasoning,
+    this.isDesktop = false,
+    this.isStreaming = false,
+    this.durationMs,
+    this.actionViewModel,
+  });
+
+  @override
+  State<ReasoningSection> createState() => _ReasoningSectionState();
+}
+
 class _ReasoningSectionState extends State<ReasoningSection>
     with SingleTickerProviderStateMixin {
   static const _itemValue = 'reasoning';
@@ -79,7 +99,7 @@ class _ReasoningSectionState extends State<ReasoningSection>
               : widget.durationMs == null
               ? strings.thinkingCompleted
               : strings.thinkingCompletedWithDuration(
-                _formatDuration(strings, widget.durationMs!),
+                formatProcessDuration(strings, widget.durationMs!),
               );
 
       return ShadCard(
@@ -112,7 +132,7 @@ class _ReasoningSectionState extends State<ReasoningSection>
                 child: Row(
                   children: [
                     ExcludeSemantics(
-                      child: _StatusHeaderIcon(
+                      child: ExecutionStatusIcon(
                         key: const ValueKey<String>('reasoning-status-icon'),
                         isDesktop: true,
                         child:

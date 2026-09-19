@@ -6,6 +6,7 @@ import 'package:stars/data/models/conversation_task_record.dart';
 import 'package:stars/data/models/local_records.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart'
@@ -74,6 +75,109 @@ void main() {
     await vm.start();
     return repository;
   }
+
+  test(
+    'loads expanded tasks only and refreshes committed history after cancellation',
+    () async {
+      committed(await h.accept());
+      await until(() => vm.state.summaries.isNotEmpty);
+      expect(vm.executionFor('task-1').data, isNull);
+      vm.setExpandedTasks(['task-1']);
+      await until(() => vm.executionFor('task-1').data != null);
+      final original = vm.executionFor('task-1').data!;
+      expect(original.activities.single.event.kind, TaskEventKind.queued);
+      vm.setExpandedTasks([]);
+      await vm.cancel(vm.state.summaries.single);
+      await until(
+        () =>
+            vm.state.summaries.single.status ==
+            ConversationTaskStatus.cancelRequested,
+      );
+      expect(vm.executionFor('task-1').data, same(original));
+      vm.setExpandedTasks(['task-1']);
+      await until(
+        () => vm.executionFor('task-1').data!.revision > original.revision,
+      );
+      expect(
+        vm.executionFor('task-1').data!.activities.last.event.kind,
+        TaskEventKind.cancellationRequested,
+      );
+      expect(
+        () => vm.executionFor('task-1').data!.activities.clear(),
+        throwsUnsupportedError,
+      );
+    },
+  );
+
+  test(
+    'coalesces live updates during a read and caches the newest revision',
+    () async {
+      committed(await h.accept());
+      final before = (await h.repository.getExecutionSnapshot('task-1'))!;
+      final repository = await watchSnapshots();
+      final pending = Completer<TaskExecutionSnapshot?>();
+      repository.onRead = (_) => pending.future;
+      repository.events.add([
+        (await h.repository.getProgressSummary('task-1'))!,
+      ]);
+      await until(() => !vm.state.loading);
+      vm.setExpandedTasks(['task-1']);
+      await until(() => repository.reads == 1);
+      await vm.loadExecution('task-1');
+      expect(repository.reads, 1);
+      committed(
+        await h.repository.requestCancellation(
+          taskId: 'task-1',
+          expectedRevision: 0,
+          source: TaskCancellationSource.user,
+          requestedAt: taskTime,
+        ),
+      );
+      final latest = (await h.repository.getExecutionSnapshot('task-1'))!;
+      repository.events.add([
+        (await h.repository.getProgressSummary('task-1'))!,
+      ]);
+      await until(
+        () => vm.state.summaries.single.summaryRevision == latest.task.revision,
+      );
+      repository.onRead = (_) async => latest;
+      pending.complete(before);
+      await until(
+        () => vm.executionFor('task-1').data?.revision == latest.task.revision,
+      );
+      expect(repository.reads, 2);
+      vm.setExpandedTasks([]);
+      vm.setExpandedTasks(['task-1']);
+      await vm.loadExecution('task-1');
+      expect(repository.reads, 2);
+    },
+  );
+
+  test(
+    'detail loading errors are local and can be retried; disposal ignores late reads',
+    () async {
+      committed(await h.accept());
+      final snapshot = (await h.repository.getExecutionSnapshot('task-1'))!;
+      final repository = await watchSnapshots();
+      repository.onRead = (_) async => throw StateError('storage unavailable');
+      repository.events.add([
+        (await h.repository.getProgressSummary('task-1'))!,
+      ]);
+      await until(() => !vm.state.loading);
+      vm.setExpandedTasks(['task-1']);
+      await until(() => vm.executionFor('task-1').error);
+      expect(vm.state.error, isFalse);
+      repository.onRead = (_) async => snapshot;
+      await vm.loadExecution('task-1', force: true);
+      expect(vm.executionFor('task-1').error, isFalse);
+      final pending = Completer<TaskExecutionSnapshot?>();
+      repository.onRead = (_) => pending.future;
+      final loading = vm.loadExecution('task-1', force: true);
+      vm.dispose();
+      pending.complete(snapshot);
+      await loading;
+    },
+  );
 
   test(
     'paginates sorted tasks in groups of 20 and resets for search and sort',
@@ -475,6 +579,14 @@ ConversationTaskProgressSummary _pageSummary(int index) {
 }
 
 final class _SnapshotTasks implements ConversationTaskRepository {
+  int reads = 0;
+  Future<TaskExecutionSnapshot?> Function(String)? onRead;
+  @override
+  Future<TaskExecutionSnapshot?> getExecutionSnapshot(String taskId) async {
+    reads++;
+    return onRead?.call(taskId);
+  }
+
   final events =
       StreamController<List<ConversationTaskProgressSummary>>.broadcast();
   @override

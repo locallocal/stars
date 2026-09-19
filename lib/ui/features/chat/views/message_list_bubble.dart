@@ -74,7 +74,7 @@ class _MessageContent extends StatelessWidget {
           actions: actionViewModel,
         ),
       if (strictGroundingNotice.isNotEmpty)
-        _StatusCardSection(
+        ExecutionStatusCard(
           key: const ValueKey<String>('message-strict-grounding-notice'),
           isDesktop: isDesktop,
           icon: LucideIcons.shieldCheck,
@@ -207,7 +207,7 @@ class _MessageContent extends StatelessWidget {
         if (audio.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(top: _hasMediaAbove ? 12 : 0),
-            child: _StatusCardSection(
+            child: ExecutionStatusCard(
               isDesktop: isDesktop,
               icon:
                   isDesktop ? LucideIcons.audioLines : Icons.graphic_eq_rounded,
@@ -221,7 +221,7 @@ class _MessageContent extends StatelessWidget {
             padding: EdgeInsets.only(
               top: _hasMediaAbove || audio.isNotEmpty ? 12 : 0,
             ),
-            child: _StatusCardSection(
+            child: ExecutionStatusCard(
               isDesktop: isDesktop,
               icon: isDesktop ? LucideIcons.music : Icons.music_note_rounded,
               title: S.of(context).musicResult,
@@ -237,7 +237,7 @@ class _MessageContent extends StatelessWidget {
                       ? 12
                       : 0,
             ),
-            child: _StatusCardSection(
+            child: ExecutionStatusCard(
               isDesktop: isDesktop,
               icon:
                   isDesktop
@@ -286,7 +286,7 @@ class _MessageContent extends StatelessWidget {
     key: const ValueKey<String>('message-image-section'),
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      _StatusCardHeader(
+      ExecutionStatusHeader(
         isDesktop: isDesktop,
         icon: isDesktop ? LucideIcons.image : Icons.image_outlined,
         iconKey: const ValueKey<String>('message-image-section-icon'),
