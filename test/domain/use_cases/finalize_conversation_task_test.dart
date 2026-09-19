@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/tool_evidence_repository.dart';
 import 'package:stars/domain/use_cases/recover_conversation_tasks.dart';
@@ -15,6 +17,87 @@ void main() {
   setUp(() => h = TaskTerminalHarness());
   tearDown(() => h.close());
 
+  test(
+    'failure reply uses execution context and keeps natural verified partial results after restart',
+    () async {
+      await h.open();
+      await h.observe();
+      h.runner.tool.onStart =
+          (call) async => ToolCompleted(
+            ToolResult(
+              callId: call.callId,
+              name: call.name,
+              content: 'Permission denied: sales.xlsx',
+              isError: true,
+              errorCode: 'permission_denied',
+            ),
+          );
+      await h.observe(call: 'missing-file');
+      const outcome = '报告还没整理完：没有权限读取 sales.xlsx。';
+      const partialText = '已经读取的资料里有 42 条记录。';
+      final finish = h.finalizer(
+        polish: (request, _) async {
+          final context = jsonDecode(request.context) as Map<String, dynamic>;
+          expect(context['objective'], (await h.runner.db.task).objective);
+          expect(context['conversation'], isNotEmpty);
+          expect(request.context, contains('Permission denied: sales.xlsx'));
+          expect(request.availableClaims, isNotEmpty);
+          final partial = request.verifiedClaims.first;
+          return GroundedAnswerCandidate(
+            claims: [
+              AnswerClaim(
+                claimId: 'outcome',
+                text: outcome,
+                kind: ClaimKind.nonFactual,
+              ),
+              AnswerClaim(
+                claimId: partial.claimId,
+                text: partialText,
+                kind: partial.kind,
+                evidenceIds: partial.evidenceIds,
+              ),
+            ],
+          );
+        },
+      );
+      await finish('task-1');
+      await h.runner.db.reopen();
+      final result = await h.result();
+      expect(result.content, '$outcome\n\n$partialText');
+      expect(result.terminalOutcome, MessageTerminalOutcome.failed);
+      expect(result.grounding.claims.last.trustLevel, ClaimTrustLevel.verified);
+      expect(result.grounding.evidenceIds, isNotEmpty);
+      expect(finish.metrics.narrationFallbacks, 0);
+      expect(result.content, isNot(contains('report.count')));
+      expect(result.content, isNot(contains('evidence:')));
+    },
+  );
+
+  test(
+    'invented partial results cannot bypass evidence validation in a failure reply',
+    () async {
+      await h.open(strict: false);
+      await h.fail();
+      final finish = h.finalizer(
+        polish:
+            (_, _) async => GroundedAnswerCandidate(
+              claims: [
+                AnswerClaim(
+                  claimId: 'invented',
+                  text: '销售汇总已经保存。',
+                  kind: ClaimKind.completedAction,
+                ),
+              ],
+              nonFactualText: '其余内容没有完成。',
+            ),
+      );
+      await finish('task-1');
+      expect((await h.result()).content, isNot(contains('已经保存')));
+      expect((await h.result()).terminalOutcome, MessageTerminalOutcome.failed);
+      expect(finish.metrics.narrationFallbacks, 1);
+    },
+  );
+
   test('terminal narration usage is persisted once with the result', () async {
     await h.open();
     await h.fail();
@@ -24,7 +107,7 @@ void main() {
         request.onTokenUsage?.call(
           const ModelTokenUsage(inputTokens: 120, outputTokens: 15),
         );
-        return request.allowedNarrations.first;
+        return terminalTestReply(request);
       },
     );
     await finish('task-1');
@@ -326,7 +409,8 @@ void main() {
       final result = await h.result();
       expect(result.terminalOutcome, MessageTerminalOutcome.failed);
       expect(result.content, contains('未能完成'));
-      expect(result.content, contains('调整请求'));
+      expect(result.content, contains('当前执行方案无法继续'));
+      expect(result.content, isNot(contains('调整请求')));
       expect(result.content, isNot(contains('sensitive')));
       expect(finish.metrics.narrationFallbacks, 1);
       expect(finish.metrics.narrationFailures, 1);

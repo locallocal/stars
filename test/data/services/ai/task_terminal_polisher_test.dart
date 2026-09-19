@@ -5,13 +5,19 @@ import 'package:stars/data/services/ai/task_terminal_polisher.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
+import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/services/task_provider_configuration.dart';
+import 'package:stars/domain/services/task_terminal_context.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_terminal.dart';
 
 import '../../../support/foreground_turn_fixtures.dart';
 import '../../../support/conversation_task_fixtures.dart';
+import '../../../support/conversation_task_repository_harness.dart'
+    show taskTool;
 
 void main() {
   late Bot bot;
@@ -37,7 +43,7 @@ void main() {
         context: [
           TaskContextMessage(
             role: TaskContextRole.user,
-            content: 'private conversation history',
+            content: '请读取 sales.xlsx，按地区汇总',
           ),
         ],
         allowedToolNames: {'read_file'},
@@ -48,16 +54,33 @@ void main() {
   });
 
   test(
-    'terminal Provider sees safe summary only and cannot invoke tools',
+    'terminal Provider uses redacted context and errors to write a natural reply',
     () async {
       final narrator = NarrateConversationTaskTerminal();
       final summary = taskTerminal(ConversationTaskStatus.failed);
-      final expected = narrator.policy.alternatives(summary, 'zh-CN').last;
+      const expected = '销售汇总没能生成：没有找到你指定的 sales.xlsx。请确认文件位置。';
+      final context = taskTerminalContext(
+        TaskExecutionSnapshot(
+          task: task,
+          plan: taskPlan(task),
+          lastSequence: 1,
+          attempts: [
+            taskTool(
+              at: taskTime,
+              status: ToolInvocationStatus.failed,
+              arguments: '{"path":"sales.xlsx","api_key":"private-value"}',
+              summary: 'File not found: sales.xlsx',
+            ),
+          ],
+        ),
+      );
       final usages = <ModelTokenUsage>[];
       provider.events =
           () => Stream.fromIterable([
             const ReasoningDelta('private reasoning'),
-            TextDelta(expected),
+            GroundedAnswerProduced(
+              GroundedAnswerCandidate(nonFactualText: expected),
+            ),
             const ModelTurnCompleted(stopReason: 'stop'),
             const UsageReported(
               ModelTokenUsage(inputTokens: 120, outputTokens: 15),
@@ -66,6 +89,7 @@ void main() {
       final result = await narrator(
         summary: summary,
         language: 'zh-CN',
+        context: context,
         polish: factory.forTask(task),
         onTokenUsage: usages.add,
       );
@@ -75,10 +99,28 @@ void main() {
       expect(bots.refreshed, isTrue);
       final session = provider.sessions.single;
       expect(session.request.tools, isEmpty);
+      expect(session.syntheses, hasLength(1));
+      expect(
+        session.request.options.requestTimeout,
+        const Duration(seconds: 15),
+      );
       expect(
         session.request.messages.map((m) => m.content).join(),
-        isNot(contains('private conversation history')),
+        contains('请读取 sales.xlsx，按地区汇总'),
       );
+      expect(
+        session.request.messages.last.content,
+        contains('File not found: sales.xlsx'),
+      );
+      expect(
+        session.request.messages.last.content,
+        isNot(contains('private-value')),
+      );
+      expect(
+        session.request.messages.last.content,
+        isNot(contains('allowed_narrations')),
+      );
+      expect(result.text, expected);
       expect(result.text, isNot(contains('private reasoning')));
       expect(session.closed, isTrue);
     },

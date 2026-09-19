@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/use_cases/conversation_task_scheduler.dart';
@@ -55,7 +56,7 @@ void main() {
       await h.finalizer(
         polish: (_, _) async {
           narrations++;
-          return '已取消';
+          return GroundedAnswerCandidate(nonFactualText: '已取消');
         },
       )('task-1');
       final task = await h.runner.db.task;
@@ -79,7 +80,7 @@ void main() {
       final stale = h.finalizer(
         polish: (request, _) async {
           h.runner.clock.advance(const Duration(seconds: 31));
-          return request.allowedNarrations.first;
+          return terminalTestReply(request);
         },
       );
       await stale('task-1');
@@ -106,7 +107,7 @@ void main() {
         polish: (request, _) async {
           entered.complete();
           await release.future;
-          return request.allowedNarrations.first;
+          return terminalTestReply(request);
         },
       )('task-1');
       await entered.future;
@@ -141,7 +142,7 @@ void main() {
   );
 
   test(
-    'evidence expiring during narration cannot be linked by the terminal transaction',
+    'evidence expiring during narration is omitted from the terminal reply',
     () async {
       await h.open();
       await h.observe();
@@ -150,19 +151,12 @@ void main() {
         polish: (request, _) async {
           // Keep the finalizer lease valid while crossing evidence expiry.
           h.runner.clock.advance(const Duration(seconds: 2));
-          return request.allowedNarrations.first;
+          return terminalTestReply(request);
         },
       );
       h.runner.clock.advance(const Duration(minutes: 59, seconds: 59));
-      await expectLater(finish('task-1'), throwsArgumentError);
-      expect((await h.runner.db.task).status.isTerminal, isFalse);
-      expect(
-        (await h.messages()).where(
-          (m) => m.taskMessageKind == TaskMessageKind.result,
-        ),
-        isEmpty,
-      );
-      await h.finalizer()('task-1');
+      await finish('task-1');
+      expect((await h.runner.db.task).status, ConversationTaskStatus.failed);
       expect((await h.result()).grounding.evidenceIds, isEmpty);
       expect((await h.result()).content, isNot(contains('report.count: 42')));
     },
@@ -182,7 +176,7 @@ void main() {
         polish: (request, _) async {
           entered.complete();
           await release.future;
-          return request.allowedNarrations.first;
+          return terminalTestReply(request);
         },
       );
       var ids = 0;

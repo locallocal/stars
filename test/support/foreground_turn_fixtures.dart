@@ -146,10 +146,20 @@ final class ForegroundModelSession implements AgentModelSession {
   int starts = 0;
   int cancellations = 0;
   bool closed = false;
+  final syntheses = <GroundedAnswerSynthesisRequest>[];
   @override
   Stream<ModelEvent> start() {
     starts++;
     return events();
+  }
+
+  @override
+  Stream<ModelEvent> synthesizeGroundedAnswer(
+    GroundedAnswerSynthesisRequest request, {
+    List<ToolResult> pendingToolResults = const [],
+  }) {
+    syntheses.add(request);
+    return start();
   }
 
   @override
@@ -162,7 +172,7 @@ final class ForegroundModelSession implements AgentModelSession {
     closed = true;
   }
 
-  // Unexpected continuation/synthesis calls fail the test immediately.
+  // Unexpected continuation calls fail the test immediately.
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
