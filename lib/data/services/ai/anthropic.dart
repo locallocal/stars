@@ -38,7 +38,11 @@ class Anthropic extends Provider {
                 .map((message) => Map<String, dynamic>.from(message))
                 .toList(growable: false)
             : <Map<String, dynamic>>[];
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(
+      _skillToolClient ?? http.Client(),
+      operation:
+          request.options.foregroundRouting ? 'foreground_routing' : 'model',
+    );
     return AnthropicAgentModelSession(
       bot: bot,
       request: request,
@@ -70,7 +74,10 @@ class Anthropic extends Provider {
                 .map((message) => Map<String, dynamic>.from(message))
                 .toList(growable: false)
             : <Map<String, dynamic>>[];
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(
+      _skillToolClient ?? http.Client(),
+      operation: 'skill_activation',
+    );
     return AnthropicSkillToolSession(
       bot: bot,
       request: request,
@@ -132,7 +139,7 @@ class Anthropic extends Provider {
     // 添加limit参数，设置为1000
     final uri = Uri.parse(url).replace(queryParameters: {'limit': '1000'});
 
-    final response = await http.get(
+    final response = await httpGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
@@ -183,7 +190,7 @@ class Anthropic extends Provider {
                 ],
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());

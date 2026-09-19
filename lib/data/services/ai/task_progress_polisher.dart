@@ -20,7 +20,7 @@ final class TaskProgressPolisherFactory {
     cancellation.throwIfCancelled();
     if (bot == null) throw StateError('task_bot_unavailable');
     final provider =
-        providers.create(bot)
+        providers.forConversation(request.chatId).create(bot)
           ..setWebSearch(false)
           ..setDeepThinking(false);
     final session = provider.openModelSession(

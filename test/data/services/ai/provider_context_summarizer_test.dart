@@ -11,7 +11,10 @@ void main() {
     final provider = _SummaryProvider();
     final summarizer = ProviderContextSummarizer(
       bot: _bot,
-      providerFactory: (_) => provider,
+      providerFactory: (_, chatId) {
+        expect(chatId, 'chat-1');
+        return provider;
+      },
       starsSystemPromptProvider: _testStarsSystemPrompt,
     );
 
@@ -52,7 +55,7 @@ void main() {
       final provider = _SummaryProvider();
       final summarizer = ProviderContextSummarizer(
         bot: _bot,
-        providerFactory: (_) => provider,
+        providerFactory: (_, _) => provider,
         starsSystemPromptProvider: _testStarsSystemPrompt,
         starsSystemPromptEnabledProvider: () async => false,
       );
@@ -90,7 +93,7 @@ void main() {
     final provider = _SummaryProvider();
     final summarizer = ProviderContextSummarizer(
       bot: _bot,
-      providerFactory: (_) => provider,
+      providerFactory: (_, _) => provider,
       starsSystemPromptProvider: _testStarsSystemPrompt,
       starsSystemPromptLanguageProvider: () async => 'ja_JP',
     );
@@ -126,7 +129,7 @@ void main() {
     );
     final summarizer = ProviderContextSummarizer(
       bot: _bot,
-      providerFactory: (_) => provider,
+      providerFactory: (_, _) => provider,
       starsSystemPromptProvider: _testStarsSystemPrompt,
     );
 
@@ -196,7 +199,7 @@ void main() {
       );
       final summarizer = ProviderContextSummarizer(
         bot: _bot,
-        providerFactory: (_) => provider,
+        providerFactory: (_, _) => provider,
         starsSystemPromptProvider: _testStarsSystemPrompt,
       );
 
@@ -250,7 +253,7 @@ void main() {
       final provider = _SummaryProvider(response: _userBoundaryResponse);
       final summarizer = ProviderContextSummarizer(
         bot: _bot,
-        providerFactory: (_) => provider,
+        providerFactory: (_, _) => provider,
         starsSystemPromptProvider: _testStarsSystemPrompt,
       );
 

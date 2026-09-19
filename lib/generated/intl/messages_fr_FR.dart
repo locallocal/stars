@@ -849,9 +849,43 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Les types de contenu que ce modèle peut traiter.",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("Copié"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Copie impossible. Sélectionnez le chemin et copiez-le manuellement.",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage(
+      "Copier le chemin",
+    ),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage(
+      "Dossier des journaux de cette conversation",
+    ),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "Impossible de charger les paramètres. Réessayez.",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage(
+      "Ouvrir le dossier",
+    ),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "Impossible d’ouvrir le dossier. Copiez le chemin pour l’ouvrir manuellement.",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "Impossible de sauvegarder. Le réglage précédent est conservé.",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "Écriture impossible. Vérifiez les autorisations et l’espace libre. Les requêtes ne sont pas affectées.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Sortie"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Les types de contenu que ce modèle peut générer.",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage(
+      "Journaux des requêtes du modèle",
+    ),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "Enregistre uniquement les requêtes et réponses de cette conversation en local, texte compris. Les identifiants et pièces jointes sont masqués.",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "Désactivé par défaut pour chaque conversation. Conserve 5 fichiers de 10 Mo maximum chacun.",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "Le modèle a atteint sa limite de tours de traitement. Simplifiez la demande et réessayez.",

@@ -838,9 +838,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Типы содержимого, которые может обрабатывать эта модель.",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("Скопировано"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось скопировать путь. Выделите и скопируйте вручную.",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("Копировать путь"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage(
+      "Папка журналов этой беседы",
+    ),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось загрузить настройки. Повторите попытку.",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage(
+      "Открыть папку",
+    ),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось открыть папку. Скопируйте путь и откройте вручную.",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось сохранить. Сохранено прежнее значение.",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось записать журнал. Проверьте права и свободное место. Запросы к модели не затронуты.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Вывод"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Типы содержимого, которые может создавать эта модель.",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage(
+      "Журнал запросов к модели",
+    ),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "Локально сохраняются только запросы и ответы этой беседы, включая текст. Учётные данные и вложения скрываются.",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "По умолчанию выключено для каждой беседы. До 5 файлов по 10 МБ.",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "Модель достигла лимита шагов обработки. Упростите запрос и повторите попытку.",

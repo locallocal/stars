@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/provider_service.dart';
 import 'package:stars/domain/models/models.dart';
 
@@ -102,7 +101,7 @@ class Flux extends Provider {
     }
 
     try {
-      final response = await http.post(
+      final response = await httpPost(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json', 'x-key': bot.apiKey},
         body: jsonEncode(requestBody),
@@ -120,7 +119,7 @@ class Flux extends Provider {
         for (int i = 0; i < 120; i++) {
           await Future.delayed(const Duration(milliseconds: 500));
 
-          final resultResponse = await http.get(
+          final resultResponse = await httpGet(
             Uri.parse(pollingUrl),
             headers: {'x-key': bot.apiKey},
           );
@@ -150,7 +149,7 @@ class Flux extends Provider {
         }
 
         // 下载生成的图片
-        final imageResponse = await http.get(Uri.parse(imageUrl));
+        final imageResponse = await httpGet(Uri.parse(imageUrl));
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final fileName = 'flux_$timestamp.png';

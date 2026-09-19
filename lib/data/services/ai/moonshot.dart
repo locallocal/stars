@@ -62,7 +62,11 @@ class Moonshot extends Provider {
 
   @override
   AgentModelSession openModelSession(ModelRequest request) {
-    final client = _client ?? http.Client();
+    final client = instrumentHttpClient(
+      _client ?? http.Client(),
+      operation:
+          request.options.foregroundRouting ? 'foreground_routing' : 'model',
+    );
     return OpenAiAgentModelSession(
       bot: bot,
       request: request,
@@ -83,7 +87,10 @@ class Moonshot extends Provider {
 
   @override
   SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
-    final client = _client ?? http.Client();
+    final client = instrumentHttpClient(
+      _client ?? http.Client(),
+      operation: 'skill_activation',
+    );
     return OpenAiSkillToolSession(
       bot: bot,
       request: request,
@@ -130,15 +137,12 @@ class Moonshot extends Provider {
         bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
-      final response = await (_client?.get(
-                Uri.parse(url),
-                headers: {'Authorization': 'Bearer ${bot.apiKey}'},
-              ) ??
-              http.get(
-                Uri.parse(url),
-                headers: {'Authorization': 'Bearer ${bot.apiKey}'},
-              ))
-          .timeout(const Duration(seconds: 10));
+      final response = await httpGet(
+        Uri.parse(url),
+        headers: {'Authorization': 'Bearer ${bot.apiKey}'},
+        client: _client,
+        operation: 'model_catalog',
+      ).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = decodeProviderResponse(utf8.decode(response.bodyBytes));
         return providerModelInfos(data['data']);
@@ -249,7 +253,7 @@ class Moonshot extends Provider {
             ..._reasoningConfiguration(),
           });
 
-    final streamedResponse = await (_client?.send(request) ?? request.send());
+    final streamedResponse = await sendHttpRequest(request, client: _client);
     if (streamedResponse.statusCode < 200 ||
         streamedResponse.statusCode >= 300) {
       final body = await streamedResponse.stream.bytesToString();

@@ -134,7 +134,7 @@ class AlibabaCloud extends Provider {
   Future<List<AiModelInfo>> fetchModels() async {
     final url =
         bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelUrl;
-    final response = await http.get(
+    final response = await httpGet(
       Uri.parse(url),
       headers: {
         'Accept': 'application/json',
@@ -173,7 +173,7 @@ class AlibabaCloud extends Provider {
               if (webSearch) 'enable_search': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -273,7 +273,7 @@ class AlibabaCloud extends Provider {
         'input': {'prompt': prompt},
         "parameters": {'size': newSize, 'n': 1, 'watermark': false},
       };
-      final response = await http.post(
+      final response = await httpPost(
         Uri.parse(url),
         headers: {
           'X-DashScope-Async': 'enable',
@@ -296,7 +296,7 @@ class AlibabaCloud extends Provider {
         for (int i = 0; i < 240; i++) {
           await Future.delayed(const Duration(milliseconds: 500));
 
-          final resultResponse = await http.get(
+          final resultResponse = await httpGet(
             Uri.parse(pollingUrl),
             headers: {'Authorization': 'Bearer ${bot.apiKey}'},
           );
@@ -330,7 +330,7 @@ class AlibabaCloud extends Provider {
         }
 
         // 下载生成的图片
-        final imageResponse = await http.get(Uri.parse(imageUrl));
+        final imageResponse = await httpGet(Uri.parse(imageUrl));
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final fileName = 'alibaba_cloud_$timestamp.png';

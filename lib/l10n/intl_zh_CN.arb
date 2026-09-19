@@ -1175,5 +1175,17 @@
     "answerTrustReasonUnavailable": "此回复尚未完成验证。",
     "answerTrustSemanticLabel": "{status}。{reason}",
     "userMessageNavigation": "用户消息",
-    "jumpToUserMessage": "跳转到第 {index} 条用户消息：{summary}"
+    "jumpToUserMessage": "跳转到第 {index} 条用户消息：{summary}",
+    "modelRequestLogging": "模型请求日志",
+    "modelRequestLoggingDescription": "仅记录本会话的模型请求和回复，包含对话正文；密钥和附件数据会隐藏。",
+    "modelRequestLoggingRetention": "每个会话默认关闭。每个文件最多 10 MB，本会话保留最近 5 个文件。",
+    "modelLogDirectory": "本会话日志目录",
+    "modelLogCopyPath": "复制路径",
+    "modelLogOpenDirectory": "打开目录",
+    "modelLogCopied": "已复制",
+    "modelLogLoadFailed": "无法读取日志设置，请重试。",
+    "modelLogSaveFailed": "无法保存设置，仍使用原来的开关状态。",
+    "modelLogWriteFailed": "日志写入失败，请检查目录权限和剩余空间。模型调用不受影响。",
+    "modelLogOpenFailed": "无法打开目录，可复制路径后手动打开。",
+    "modelLogCopyFailed": "无法复制路径，可选中路径后手动复制。"
 }

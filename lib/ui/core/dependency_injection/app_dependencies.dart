@@ -1,4 +1,8 @@
 import 'dart:math';
+import 'package:flutter/services.dart';
+import 'package:stars/data/repositories/file_conversation_model_log_repository.dart';
+import 'package:stars/domain/repositories/model_log_repository.dart';
+import 'package:stars/ui/features/chat/view_models/model_log_view_model.dart';
 
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
@@ -205,6 +209,7 @@ class AppDependencies {
     this.skillCatalogService,
     this.skillOrganizationPolicyBundleService,
     this.startupRecoveryInitializer,
+    this.modelLogRepository,
     required this.conversationTasks,
   }) : conversationDraftRepository =
            conversationDraftRepository ?? MemoryConversationDraftRepository(),
@@ -263,7 +268,10 @@ class AppDependencies {
     final feedbackRepository = FeedbackRepositoryImpl(
       service: const FeedbackService(),
     );
-    const aiProviderRepository = AiProviderRepositoryImpl();
+    final modelLogRepository = FileConversationModelLogRepository();
+    final aiProviderRepository = AiProviderRepositoryImpl(
+      conversationLogSink: modelLogRepository.forConversation,
+    );
     final systemConversationHistorySkill = SystemConversationHistorySkill();
     final systemDirectoryOperationsSkill = SystemDirectoryOperationsSkill();
     final systemFileOperationsSkill = SystemFileOperationsSkill();
@@ -300,7 +308,9 @@ class AppDependencies {
       summarizerFactory:
           (bot) => ProviderContextSummarizer(
             bot: bot,
-            providerFactory: aiProviderRepository.create,
+            providerFactory:
+                (bot, chatId) =>
+                    aiProviderRepository.forConversation(chatId).create(bot),
             starsSystemPromptEnabledProvider:
                 () async =>
                     (await profileRepository.getProfile())
@@ -483,6 +493,7 @@ class AppDependencies {
       mcp: mcpInventoryRepository,
     );
     return AppDependencies(
+      modelLogRepository: modelLogRepository,
       conversationTasks: conversationTasks,
       botRepository: botRepository,
       chatRepository: chatRepository,
@@ -549,6 +560,7 @@ class AppDependencies {
   final MessageRepository messageRepository;
   final ModelUsageRepository modelUsageRepository;
   final ProfileRepository profileRepository;
+  final ConversationModelLogRepository? modelLogRepository;
   final FeedbackRepository feedbackRepository;
   final AiProviderRepository aiProviderRepository;
   final AttachmentRepository attachmentRepository;
@@ -697,6 +709,18 @@ class AppDependencies {
                 .capabilities
                 .supportsAutomaticSkillActivation,
       );
+
+  ModelLogViewModel? createModelLogViewModel(String chatId) {
+    final repository = modelLogRepository;
+    return repository == null
+        ? null
+        : ModelLogViewModel(
+          chatId: chatId,
+          repository: repository.forConversation(chatId),
+          openDirectory: messageActionRepository.openExternal,
+          copyText: (text) => Clipboard.setData(ClipboardData(text: text)),
+        );
+  }
 
   ProfileViewModel createProfileViewModel() => ProfileViewModel(
     profileRepository: profileRepository,

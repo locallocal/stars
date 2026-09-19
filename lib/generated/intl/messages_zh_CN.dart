@@ -635,9 +635,33 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "此模型可以处理的内容类型。",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("已复制"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "无法复制路径，可选中路径后手动复制。",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("复制路径"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage("本会话日志目录"),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage("无法读取日志设置，请重试。"),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage("打开目录"),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "无法打开目录，可复制路径后手动打开。",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "无法保存设置，仍使用原来的开关状态。",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "日志写入失败，请检查目录权限和剩余空间。模型调用不受影响。",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("输出"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "此模型可以生成的内容类型。",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage("模型请求日志"),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "仅记录本会话的模型请求和回复，包含对话正文；密钥和附件数据会隐藏。",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "每个会话默认关闭。每个文件最多 10 MB，本会话保留最近 5 个文件。",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "模型已达到处理轮次上限，请简化请求后重试。",

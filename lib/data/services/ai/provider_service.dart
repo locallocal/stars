@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:stars/data/services/ai/built_in_model_catalog.dart';
 import 'package:stars/data/services/ai/provider_transport.dart';
+import 'package:stars/data/services/ai/provider_log_sink.dart';
+import 'package:stars/data/services/ai/provider_logging_client.dart';
 import 'package:stars/data/services/image_media_type.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
@@ -21,6 +24,69 @@ extension ChatMessageJson on ChatMessage {
 /// Shared implementation helpers for vendor-specific AI service adapters.
 abstract class Provider extends AiProvider {
   Provider(super.bot);
+
+  /// Optional diagnostics, configured once by the provider repository.
+  ProviderLogSink? logSink;
+
+  http.Client instrumentHttpClient(
+    http.Client client, {
+    String operation = 'model',
+  }) {
+    final sink = logSink;
+    return sink == null || client is ProviderLoggingClient
+        ? client
+        : ProviderLoggingClient(
+          inner: client,
+          sink: sink,
+          bot: bot,
+          operation: operation,
+        );
+  }
+
+  T _withLoggedHttp<T>(T Function() action, {String operation = 'model'}) {
+    if (logSink == null) return action();
+    final parent = Zone.current;
+    return http.runWithClient(
+      action,
+      () => instrumentHttpClient(
+        parent.run(http.Client.new),
+        operation: operation,
+      ),
+    );
+  }
+
+  Future<http.Response> httpGet(
+    Uri url, {
+    Map<String, String>? headers,
+    http.Client? client,
+    String operation = 'model',
+  }) =>
+      client == null
+          ? _withLoggedHttp(
+            () => http.get(url, headers: headers),
+            operation: operation,
+          )
+          : instrumentHttpClient(
+            client,
+            operation: operation,
+          ).get(url, headers: headers);
+
+  Future<http.Response> httpPost(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) => _withLoggedHttp(
+    () => http.post(url, headers: headers, body: body, encoding: encoding),
+  );
+
+  Future<http.StreamedResponse> sendHttpRequest(
+    http.BaseRequest request, {
+    http.Client? client,
+  }) =>
+      client == null
+          ? _withLoggedHttp(request.send)
+          : instrumentHttpClient(client).send(request);
 
   ModelTokenUsage _capturedTokenUsage = ModelTokenUsage.empty;
 
@@ -210,7 +276,7 @@ abstract class Provider extends AiProvider {
     bool includeWebSearch = true,
     http.Client? client,
   }) async {
-    final requestClient = client ?? http.Client();
+    final requestClient = instrumentHttpClient(client ?? http.Client());
     final closeClient = client == null;
     final uri = Uri.parse(url);
     final body = jsonEncode({

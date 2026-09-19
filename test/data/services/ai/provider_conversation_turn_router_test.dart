@@ -52,10 +52,9 @@ void main() {
               const ModelTurnCompleted(),
             ]),
       );
+      final providers = ForegroundProviders((_) => provider);
       final events =
-          await ProviderConversationTurnRouter(
-                providers: ForegroundProviders((_) => provider),
-              )
+          await ProviderConversationTurnRouter(providers: providers)
               .route(
                 TurnRoutingRequest(
                   bot: input.bot,
@@ -73,6 +72,7 @@ void main() {
           events.whereType<TurnDispositionCompleted>().single.disposition
               as BackgroundTaskPlan;
       expect(plan.acknowledgementDraft, draft);
+      expect(providers.conversationScopes, [input.userMessage.chatId]);
       final session = provider.sessions.single;
       expect(session.starts, 1);
       expect(session.request.tools, isEmpty);

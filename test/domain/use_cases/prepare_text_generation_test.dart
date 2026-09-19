@@ -47,6 +47,7 @@ void main() {
       );
 
       expect(composerProvider, same(provider));
+      expect(providers.conversationScopes, ['chat-1']);
       expect(result.userMessage, same(_userMessage));
       expect(result.messages.single.content, 'hello');
       expect(result.requestedToolNames, {'unavailable_tool'});
@@ -202,13 +203,20 @@ final _userMessage = Message(
   timestamp: DateTime(2026, 1, 2),
 );
 
-final class _FakeProviderRepository implements AiProviderRepository {
-  const _FakeProviderRepository(this.provider);
+final class _FakeProviderRepository
+    implements AiProviderRepository, ConversationScopedAiProviderRepository {
+  _FakeProviderRepository(this.provider);
 
   final AiProvider provider;
 
   @override
   AiProvider create(Bot bot) => provider;
+  final conversationScopes = <String>[];
+  @override
+  AiProviderRepository forConversation(String chatId) {
+    conversationScopes.add(chatId);
+    return this;
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

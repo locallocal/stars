@@ -101,7 +101,7 @@ class Mistral extends Provider {
         request.headers.addAll(headers);
         request.body = body;
 
-        final response = await http.Client().send(request);
+        final response = await sendHttpRequest(request);
 
         if (response.statusCode != 200) {
           final errorBody = await response.stream.bytesToString();
@@ -144,7 +144,7 @@ class Mistral extends Provider {
         onComplete?.call();
         return fullResponse.toString();
       } else {
-        final response = await http.post(url, headers: headers, body: body);
+        final response = await httpPost(url, headers: headers, body: body);
 
         if (response.statusCode != 200) {
           final errorMessage = _extractErrorMessage(response.body);

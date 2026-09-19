@@ -61,7 +61,11 @@ class OpenAI extends Provider {
   AgentModelSession openModelSession(ModelRequest request) {
     if (_usesResponsesApi) {
       final uri = Uri.parse(_endpoint('responses', defaultApiResponsesUrl));
-      final client = _skillToolClient ?? http.Client();
+      final client = instrumentHttpClient(
+        _skillToolClient ?? http.Client(),
+        operation:
+            request.options.foregroundRouting ? 'foreground_routing' : 'model',
+      );
       return OpenAiResponsesAgentModelSession(
         bot: bot,
         request: request,
@@ -77,7 +81,11 @@ class OpenAI extends Provider {
       );
     }
     final uri = Uri.parse(_endpoint('chat/completions', defaultApiChatUrl));
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(
+      _skillToolClient ?? http.Client(),
+      operation:
+          request.options.foregroundRouting ? 'foreground_routing' : 'model',
+    );
     return OpenAiAgentModelSession(
       bot: bot,
       request: request,
@@ -98,7 +106,10 @@ class OpenAI extends Provider {
   SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
     if (_usesResponsesApi) {
       final uri = Uri.parse(_endpoint('responses', defaultApiResponsesUrl));
-      final client = _skillToolClient ?? http.Client();
+      final client = instrumentHttpClient(
+        _skillToolClient ?? http.Client(),
+        operation: 'skill_activation',
+      );
       return OpenAiResponsesSkillToolSession(
         bot: bot,
         request: request,
@@ -111,7 +122,10 @@ class OpenAI extends Provider {
       );
     }
     final uri = Uri.parse(_endpoint('chat/completions', defaultApiChatUrl));
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(
+      _skillToolClient ?? http.Client(),
+      operation: 'skill_activation',
+    );
     return OpenAiSkillToolSession(
       bot: bot,
       request: request,
@@ -169,7 +183,10 @@ class OpenAI extends Provider {
 
   @override
   Future<List<AiModelInfo>> fetchModels() async {
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(
+      _skillToolClient ?? http.Client(),
+      operation: 'model_catalog',
+    );
     try {
       final response = await sendProviderRequest(
         send:
@@ -223,7 +240,7 @@ class OpenAI extends Provider {
 
   @override
   Future<void> generateText(List<ChatMessage> messages) async {
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(_skillToolClient ?? http.Client());
     try {
       resetCancelState();
       final spec = _selectedModelSpec;
@@ -358,7 +375,7 @@ class OpenAI extends Provider {
         'Model ${bot.model} does not support the OpenAI Images API.',
       );
     }
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(_skillToolClient ?? http.Client());
     try {
       late http.Response response;
       if (referenceImages.isEmpty) {
@@ -463,7 +480,7 @@ class OpenAI extends Provider {
         'Model ${bot.model} does not support the OpenAI Speech API.',
       );
     }
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(_skillToolClient ?? http.Client());
     try {
       final response = await sendProviderRequest(
         send:
@@ -521,7 +538,7 @@ class OpenAI extends Provider {
       );
     }
     final size = _videoSize(ratio);
-    final client = _skillToolClient ?? http.Client();
+    final client = instrumentHttpClient(_skillToolClient ?? http.Client());
     try {
       late http.Response createResponse;
       String? reference;

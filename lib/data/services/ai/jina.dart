@@ -61,7 +61,7 @@ class Jina extends Provider {
         cancelController?.close();
       });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       if (streamedResponse.statusCode != 200) {
         final errorBody = await streamedResponse.stream.bytesToString();
         throw Exception('${streamedResponse.statusCode}, $errorBody');

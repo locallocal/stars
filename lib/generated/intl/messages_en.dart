@@ -812,9 +812,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "The content types this model can process.",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("Copied"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy the path. Select and copy it manually.",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("Copy path"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage(
+      "This conversation’s log folder",
+    ),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not load log settings. Try again.",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage(
+      "Open folder",
+    ),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not open the folder. Copy the path to open it manually.",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not save the setting. The previous value is still in use.",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not write logs. Check folder permissions and free space. Model requests are unaffected.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Output"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "The content types this model can generate.",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage(
+      "Model request logs",
+    ),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "Save only this conversation’s requests and responses locally, including conversation text. Credentials and attachment data are hidden.",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "Off by default for each conversation. Keeps up to 5 files, 10 MB each.",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "The model reached its processing-turn limit. Simplify the request and try again.",

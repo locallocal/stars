@@ -848,9 +848,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Die Inhaltstypen, die dieses Modell verarbeiten kann.",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("Kopiert"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Kopieren fehlgeschlagen. Pfad auswählen und manuell kopieren.",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("Pfad kopieren"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage(
+      "Protokollordner dieses Gesprächs",
+    ),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "Einstellungen konnten nicht geladen werden. Erneut versuchen.",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage(
+      "Ordner öffnen",
+    ),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "Ordner konnte nicht geöffnet werden. Pfad kopieren und manuell öffnen.",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "Speichern fehlgeschlagen. Die bisherige Einstellung bleibt aktiv.",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "Schreiben fehlgeschlagen. Berechtigungen und freien Speicher prüfen. Modellanfragen sind nicht betroffen.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Ausgabe"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Die Inhaltstypen, die dieses Modell erzeugen kann.",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage(
+      "Modellanfrageprotokolle",
+    ),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "Speichert nur Anfragen und Antworten dieses Gesprächs lokal, einschließlich Gesprächstext. Zugangsdaten und Anhangsdaten werden ausgeblendet.",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "Für jedes Gespräch standardmäßig aus. Behält bis zu 5 Dateien mit je 10 MB.",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "Das Modell hat sein Verarbeitungslimit erreicht. Vereinfachen Sie die Anfrage und versuchen Sie es erneut.",

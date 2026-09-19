@@ -13,6 +13,7 @@ void main() {
   late ForegroundProvider provider;
   late TaskProgressPolisherFactory factory;
   late _Bots bots;
+  late ForegroundProviders providers;
   final summary = ConversationTaskProgressSummary(
     taskId: 'task-1',
     chatId: 'chat-1',
@@ -33,10 +34,8 @@ void main() {
       bots.bot!,
       events: () => const Stream.empty(),
     );
-    factory = TaskProgressPolisherFactory(
-      bots: bots,
-      providers: ForegroundProviders((_) => provider),
-    );
+    providers = ForegroundProviders((_) => provider);
+    factory = TaskProgressPolisherFactory(bots: bots, providers: providers);
   });
   test(
     'isolated session sees only sanitized summary, language and grammar',
@@ -64,6 +63,7 @@ void main() {
         expected,
       );
       expect(bots.refreshed, isTrue);
+      expect(providers.conversationScopes, ['chat-1']);
       final session = provider.sessions.single;
       expect(session.request.tools, isEmpty);
       expect(session.request.options.webSearch, isFalse);

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'package:stars/data/services/ai/provider_log_sink.dart';
+import 'package:stars/data/services/ai/provider_service.dart' show Provider;
 import 'package:stars/data/services/ai/ai_hub_mix.dart';
 import 'package:stars/data/services/ai/ai_mass.dart';
 import 'package:stars/data/services/ai/alibaba_cloud.dart';
@@ -50,20 +52,36 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 typedef AiMediaProviderFactory = AiProvider Function(Bot bot);
 
-class AiProviderRepositoryImpl implements CancelableMediaRepository {
+class AiProviderRepositoryImpl
+    implements
+        CancelableMediaRepository,
+        ConversationScopedAiProviderRepository {
   const AiProviderRepositoryImpl({
+    this.logSink,
+    this.conversationLogSink,
     this.mediaTimeout = const Duration(minutes: 2),
     AiMediaProviderFactory? mediaProviderFactory,
   }) : _mediaProviderFactory = mediaProviderFactory;
 
   static final Map<String, _ActiveMediaRequest> _activeMediaRequests = {};
 
+  final ProviderLogSink? logSink;
+  final ProviderLogSink Function(String chatId)? conversationLogSink;
   final Duration mediaTimeout;
   final AiMediaProviderFactory? _mediaProviderFactory;
 
   @override
+  AiProviderRepository forConversation(String chatId) =>
+      AiProviderRepositoryImpl(
+        mediaTimeout: mediaTimeout,
+        mediaProviderFactory: _mediaProviderFactory,
+        logSink: conversationLogSink?.call(chatId),
+        conversationLogSink: conversationLogSink,
+      );
+
+  @override
   AiProvider create(Bot bot) {
-    return switch (bot.apiType) {
+    final Provider provider = switch (bot.apiType) {
       Bot.apiTypeOpenAI => OpenAI(bot),
       Bot.apiTypeOllama => Ollama(bot),
       Bot.apiTypeDeepseek => Deepseek(bot),
@@ -110,6 +128,8 @@ class AiProviderRepositoryImpl implements CancelableMediaRepository {
       Bot.apiTypeMoonshot => Moonshot(bot),
       _ => throw UnsupportedError('Unsupported API type: ${bot.apiType}'),
     };
+    provider.logSink = logSink;
+    return provider;
   }
 
   @override
@@ -252,6 +272,8 @@ class AiProviderRepositoryImpl implements CancelableMediaRepository {
   Future<T> _runMediaIsolate<T>(Bot bot, _MediaRequest request) async {
     final responsePort = ReceivePort();
     final cancellation = Completer<void>();
+    final pendingLogs = <String, Map<String, Object?>>{};
+    var interruption = 'worker_terminated';
     Isolate? isolate;
     final active = _ActiveMediaRequest(
       cancellation: cancellation,
@@ -264,9 +286,15 @@ class AiProviderRepositoryImpl implements CancelableMediaRepository {
     );
     _activeMediaRequests[bot.id] = active;
     try {
-      isolate = await Isolate.spawn<(SendPort, _MediaRequest)>(
+      var loggingEnabled = false;
+      try {
+        loggingEnabled = await logSink?.enabled ?? false;
+      } on Object {
+        /* Optional diagnostics must not prevent media requests. */
+      }
+      isolate = await Isolate.spawn<(SendPort, _MediaRequest, bool)>(
         _runMediaWorker,
-        (responsePort.sendPort, request),
+        (responsePort.sendPort, request, loggingEnabled),
         debugName: 'stars-media-${bot.id}',
       );
       if (cancellation.isCompleted) {
@@ -274,7 +302,35 @@ class AiProviderRepositoryImpl implements CancelableMediaRepository {
         throw const AppFailure.cancelled();
       }
       final raw = await Future.any<Object?>([
-        responsePort.first,
+        responsePort.firstWhere((event) {
+          if (event is Map<String, Object?>) {
+            try {
+              final id = event['request_id'];
+              if (id is String) {
+                if (event['event'] == 'request') {
+                  pendingLogs[id] = {
+                    for (final key in [
+                      'request_id',
+                      'bot_id',
+                      'provider',
+                      'model',
+                      'operation',
+                    ])
+                      key: event[key],
+                  };
+                } else if (event['event'] == 'response' ||
+                    event['event'] == 'transport_error') {
+                  pendingLogs.remove(id);
+                }
+              }
+              logSink?.add(event);
+            } on Object {
+              /* Optional diagnostics. */
+            }
+            return false;
+          }
+          return true;
+        }),
         cancellation.future.then<Object?>(
           (_) => throw const AppFailure.cancelled(),
         ),
@@ -289,6 +345,7 @@ class AiProviderRepositoryImpl implements CancelableMediaRepository {
         retryable: raw[2] == true,
       );
     } on TimeoutException catch (error) {
+      interruption = 'timeout';
       isolate?.kill(priority: Isolate.immediate);
       throw AppFailure(
         kind: AppFailureKind.networkTimeout,
@@ -303,6 +360,18 @@ class AiProviderRepositoryImpl implements CancelableMediaRepository {
     } finally {
       isolate?.kill(priority: Isolate.immediate);
       responsePort.close();
+      for (final metadata in pendingLogs.values) {
+        try {
+          logSink?.add({
+            ...metadata,
+            'event': 'request_interrupted',
+            'timestamp': DateTime.now().toUtc().toIso8601String(),
+            'outcome': cancellation.isCompleted ? 'cancelled' : interruption,
+          });
+        } on Object {
+          /* Optional diagnostics. */
+        }
+      }
       if (identical(_activeMediaRequests[bot.id], active)) {
         _activeMediaRequests.remove(bot.id);
       }
@@ -393,10 +462,12 @@ final class _VideoMediaRequest extends _MediaRequest {
   final List<String> referenceImages;
 }
 
-Future<void> _runMediaWorker((SendPort, _MediaRequest) message) async {
-  final (sendPort, request) = message;
+Future<void> _runMediaWorker((SendPort, _MediaRequest, bool) message) async {
+  final (sendPort, request, loggingEnabled) = message;
   try {
-    final provider = const AiProviderRepositoryImpl().create(request.bot);
+    final provider = AiProviderRepositoryImpl(
+      logSink: loggingEnabled ? _MediaLogSink(sendPort) : null,
+    ).create(request.bot);
     final Object result = switch (request) {
       _ImageMediaRequest() => await provider.generateImage(
         request.prompt,
@@ -427,4 +498,14 @@ Future<void> _runMediaWorker((SendPort, _MediaRequest) message) async {
     final failure = AppFailure.from(error, code: 'media_provider_failed');
     sendPort.send(<Object?>[false, failure.code, failure.retryable]);
   }
+}
+
+/// Sends sanitized events to the owner isolate; only that isolate writes files.
+final class _MediaLogSink implements ProviderLogSink {
+  const _MediaLogSink(this.port);
+  final SendPort port;
+  @override
+  Future<bool> get enabled async => true;
+  @override
+  void add(Map<String, Object?> event) => port.send(event);
 }

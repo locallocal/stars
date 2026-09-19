@@ -1034,5 +1034,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "使用者訊息",
-    "jumpToUserMessage": "跳至第 {index} 則使用者訊息：{summary}"
+    "jumpToUserMessage": "跳至第 {index} 則使用者訊息：{summary}",
+    "modelRequestLogging": "模型請求日誌",
+    "modelRequestLoggingDescription": "僅記錄本對話的模型請求和回覆，包含對話正文；金鑰和附件資料會隱藏。",
+    "modelRequestLoggingRetention": "每個對話預設關閉。每個檔案最多 10 MB，本對話保留最近 5 個檔案。",
+    "modelLogDirectory": "本對話日誌目錄",
+    "modelLogCopyPath": "複製路徑",
+    "modelLogOpenDirectory": "開啟目錄",
+    "modelLogCopied": "已複製",
+    "modelLogLoadFailed": "無法讀取日誌設定，請重試。",
+    "modelLogSaveFailed": "無法儲存設定，仍使用原來的開關狀態。",
+    "modelLogWriteFailed": "日誌寫入失敗，請檢查目錄權限和剩餘空間。模型呼叫不受影響。",
+    "modelLogOpenFailed": "無法開啟目錄，可複製路徑後手動開啟。",
+    "modelLogCopyFailed": "無法複製路徑，可選取路徑後手動複製。"
 }

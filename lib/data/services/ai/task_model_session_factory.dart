@@ -11,9 +11,11 @@ final class TaskProviderSessionFactory {
   const TaskProviderSessionFactory({
     required this.providers,
     required this.bot,
+    required this.chatId,
   });
   final AiProviderRepository providers;
   final Bot bot;
+  final String chatId;
 
   AgentModelSession open(
     TaskAcceptanceSnapshot acceptance,
@@ -28,7 +30,7 @@ final class TaskProviderSessionFactory {
         code: 'task_provider_configuration_changed',
       );
     }
-    final provider = providers.create(bot);
+    final provider = providers.forConversation(chatId).create(bot);
     if (!provider.capabilities.supportsAgentLoop) {
       throw ProviderFailure.configuration(
         endpointKind: ProviderEndpointKind.unknown,

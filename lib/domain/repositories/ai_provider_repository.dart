@@ -238,4 +238,20 @@ abstract interface class CancelableMediaRepository
   Future<bool> cancelMedia(String botId);
 }
 
+/// Binds requests to a conversation without relying on the currently visible UI.
+abstract interface class ConversationScopedAiProviderRepository
+    implements AiProviderRepository {
+  AiProviderRepository forConversation(String chatId);
+}
+
+extension AiProviderConversationScope on AiProviderRepository {
+  AiProviderRepository forConversation(String chatId) {
+    final repository = this;
+    if (repository is ConversationScopedAiProviderRepository) {
+      return repository.forConversation(chatId);
+    }
+    return repository;
+  }
+}
+
 void _ignoreResponse(String _) {}

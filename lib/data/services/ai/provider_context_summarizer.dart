@@ -17,7 +17,7 @@ final class ProviderContextSummarizer implements ContextSummarizer {
   });
 
   final Bot bot;
-  final AiProvider Function(Bot bot) providerFactory;
+  final AiProvider Function(Bot bot, String chatId) providerFactory;
   final StarsSystemPromptProvider starsSystemPromptProvider;
   final StarsSystemPromptEnabledProvider starsSystemPromptEnabledProvider;
   final StarsSystemPromptLanguageProvider starsSystemPromptLanguageProvider;
@@ -25,7 +25,7 @@ final class ProviderContextSummarizer implements ContextSummarizer {
   @override
   Future<ContextSummaryResult> summarize(ContextSummaryRequest request) async {
     final provider =
-        providerFactory(bot)
+        providerFactory(bot, request.chatId)
           ..setWebSearch(false)
           ..setDeepThinking(false);
     final response = StringBuffer();

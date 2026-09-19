@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "사용자 메시지",
-    "jumpToUserMessage": "사용자 메시지 {index}(으)로 이동: {summary}"
+    "jumpToUserMessage": "사용자 메시지 {index}(으)로 이동: {summary}",
+    "modelRequestLogging": "모델 요청 로그",
+    "modelRequestLoggingDescription": "이 대화의 요청과 응답만 본문을 포함하여 로컬에 저장합니다. 인증 정보와 첨부 데이터는 숨겨집니다.",
+    "modelRequestLoggingRetention": "대화별 기본값은 꺼짐입니다. 각 10 MB의 파일을 최대 5개 보관합니다.",
+    "modelLogDirectory": "이 대화의 로그 폴더",
+    "modelLogCopyPath": "경로 복사",
+    "modelLogOpenDirectory": "폴더 열기",
+    "modelLogCopied": "복사됨",
+    "modelLogLoadFailed": "로그 설정을 불러올 수 없습니다. 다시 시도하세요.",
+    "modelLogSaveFailed": "설정을 저장할 수 없습니다. 이전 설정을 유지합니다.",
+    "modelLogWriteFailed": "로그를 쓸 수 없습니다. 폴더 권한과 여유 공간을 확인하세요. 모델 요청에는 영향이 없습니다.",
+    "modelLogOpenFailed": "폴더를 열 수 없습니다. 경로를 복사해 직접 열어주세요.",
+    "modelLogCopyFailed": "경로를 복사할 수 없습니다. 선택하여 직접 복사해주세요."
 }

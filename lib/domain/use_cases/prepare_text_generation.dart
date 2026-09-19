@@ -106,7 +106,9 @@ final class PrepareTextGeneration {
     history: history,
     userMessage: userMessage,
     currentUserId: currentUserId,
-    skillToolProvider: _aiProviderRepository.create(bot),
+    skillToolProvider: _aiProviderRepository
+        .forConversation(userMessage.chatId)
+        .create(bot),
   );
 
   Future<PreparedChatGeneration> call({

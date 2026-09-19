@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "Messaggi utente",
-    "jumpToUserMessage": "Vai al messaggio utente {index}: {summary}"
+    "jumpToUserMessage": "Vai al messaggio utente {index}: {summary}",
+    "modelRequestLogging": "Log delle richieste al modello",
+    "modelRequestLoggingDescription": "Salva in locale solo richieste e risposte di questa conversazione, incluso il testo. Credenziali e dati allegati vengono nascosti.",
+    "modelRequestLoggingRetention": "Disattivato per ogni conversazione. Fino a 5 file da 10 MB ciascuno.",
+    "modelLogDirectory": "Cartella dei log di questa conversazione",
+    "modelLogCopyPath": "Copia percorso",
+    "modelLogOpenDirectory": "Apri cartella",
+    "modelLogCopied": "Copiato",
+    "modelLogLoadFailed": "Impossibile caricare le impostazioni. Riprova.",
+    "modelLogSaveFailed": "Impossibile salvare. Rimane attiva l’impostazione precedente.",
+    "modelLogWriteFailed": "Impossibile scrivere i log. Controlla permessi e spazio libero. Le richieste non sono interessate.",
+    "modelLogOpenFailed": "Impossibile aprire la cartella. Copia il percorso per aprirla manualmente.",
+    "modelLogCopyFailed": "Impossibile copiare il percorso. Selezionalo e copialo manualmente."
 }

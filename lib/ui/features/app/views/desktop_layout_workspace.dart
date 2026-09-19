@@ -368,6 +368,13 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     ),
                     if (generationViewModel != null)
                       _buildConversationModelControls(generationViewModel),
+                    if (_modelLogViewModel case final viewModel?)
+                      ModelLogSettingsView(
+                        key: ValueKey(
+                          'conversation-model-logs-${viewModel.chatId}',
+                        ),
+                        viewModel: viewModel,
+                      ),
                   ],
                 ),
                 if (_tokenUsageViewModel != null) ...[

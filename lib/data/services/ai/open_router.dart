@@ -16,7 +16,7 @@ class OpenRouter extends Provider {
         bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
 
     try {
-      final response = await http.get(
+      final response = await httpGet(
         Uri.parse(url),
         headers: {'Authorization': 'Bearer ${bot.apiKey}'},
       );
@@ -51,7 +51,7 @@ class OpenRouter extends Provider {
         'stream': true,
       });
 
-      final response = await http.Client().send(request);
+      final response = await sendHttpRequest(request);
       if (response.statusCode != 200) {
         final errorBody = await response.stream.bytesToString();
         throw Exception('${response.statusCode} $errorBody');

@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "Сообщения пользователя",
-    "jumpToUserMessage": "Перейти к сообщению пользователя {index}: {summary}"
+    "jumpToUserMessage": "Перейти к сообщению пользователя {index}: {summary}",
+    "modelRequestLogging": "Журнал запросов к модели",
+    "modelRequestLoggingDescription": "Локально сохраняются только запросы и ответы этой беседы, включая текст. Учётные данные и вложения скрываются.",
+    "modelRequestLoggingRetention": "По умолчанию выключено для каждой беседы. До 5 файлов по 10 МБ.",
+    "modelLogDirectory": "Папка журналов этой беседы",
+    "modelLogCopyPath": "Копировать путь",
+    "modelLogOpenDirectory": "Открыть папку",
+    "modelLogCopied": "Скопировано",
+    "modelLogLoadFailed": "Не удалось загрузить настройки. Повторите попытку.",
+    "modelLogSaveFailed": "Не удалось сохранить. Сохранено прежнее значение.",
+    "modelLogWriteFailed": "Не удалось записать журнал. Проверьте права и свободное место. Запросы к модели не затронуты.",
+    "modelLogOpenFailed": "Не удалось открыть папку. Скопируйте путь и откройте вручную.",
+    "modelLogCopyFailed": "Не удалось скопировать путь. Выделите и скопируйте вручную."
 }

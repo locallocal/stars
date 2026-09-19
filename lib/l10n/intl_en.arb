@@ -1244,5 +1244,17 @@
                 "type": "String"
             }
         }
-    }
+    },
+    "modelRequestLogging": "Model request logs",
+    "modelRequestLoggingDescription": "Save only this conversation’s requests and responses locally, including conversation text. Credentials and attachment data are hidden.",
+    "modelRequestLoggingRetention": "Off by default for each conversation. Keeps up to 5 files, 10 MB each.",
+    "modelLogDirectory": "This conversation’s log folder",
+    "modelLogCopyPath": "Copy path",
+    "modelLogOpenDirectory": "Open folder",
+    "modelLogCopied": "Copied",
+    "modelLogLoadFailed": "Could not load log settings. Try again.",
+    "modelLogSaveFailed": "Could not save the setting. The previous value is still in use.",
+    "modelLogWriteFailed": "Could not write logs. Check folder permissions and free space. Model requests are unaffected.",
+    "modelLogOpenFailed": "Could not open the folder. Copy the path to open it manually.",
+    "modelLogCopyFailed": "Could not copy the path. Select and copy it manually."
 }

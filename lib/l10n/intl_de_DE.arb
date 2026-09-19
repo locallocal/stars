@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "Benutzernachrichten",
-    "jumpToUserMessage": "Zu Benutzernachricht {index} springen: {summary}"
+    "jumpToUserMessage": "Zu Benutzernachricht {index} springen: {summary}",
+    "modelRequestLogging": "Modellanfrageprotokolle",
+    "modelRequestLoggingDescription": "Speichert nur Anfragen und Antworten dieses Gesprächs lokal, einschließlich Gesprächstext. Zugangsdaten und Anhangsdaten werden ausgeblendet.",
+    "modelRequestLoggingRetention": "Für jedes Gespräch standardmäßig aus. Behält bis zu 5 Dateien mit je 10 MB.",
+    "modelLogDirectory": "Protokollordner dieses Gesprächs",
+    "modelLogCopyPath": "Pfad kopieren",
+    "modelLogOpenDirectory": "Ordner öffnen",
+    "modelLogCopied": "Kopiert",
+    "modelLogLoadFailed": "Einstellungen konnten nicht geladen werden. Erneut versuchen.",
+    "modelLogSaveFailed": "Speichern fehlgeschlagen. Die bisherige Einstellung bleibt aktiv.",
+    "modelLogWriteFailed": "Schreiben fehlgeschlagen. Berechtigungen und freien Speicher prüfen. Modellanfragen sind nicht betroffen.",
+    "modelLogOpenFailed": "Ordner konnte nicht geöffnet werden. Pfad kopieren und manuell öffnen.",
+    "modelLogCopyFailed": "Kopieren fehlgeschlagen. Pfad auswählen und manuell kopieren."
 }

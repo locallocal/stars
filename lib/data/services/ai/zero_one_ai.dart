@@ -88,7 +88,7 @@ class ZeroOneAI extends Provider {
       final request = http.Request('POST', Uri.parse(url));
       request.headers.addAll(headers);
       request.body = body;
-      final streamedResponse = await http.Client().send(request);
+      final streamedResponse = await sendHttpRequest(request);
       if (streamedResponse.statusCode != 200) {
         final response = await http.Response.fromStream(streamedResponse);
         throw Exception(

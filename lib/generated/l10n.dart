@@ -5649,6 +5649,121 @@ class S {
       args: [index, summary],
     );
   }
+
+  /// `Model request logs`
+  String get modelRequestLogging {
+    return Intl.message(
+      'Model request logs',
+      name: 'modelRequestLogging',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Save only this conversation’s requests and responses locally, including conversation text. Credentials and attachment data are hidden.`
+  String get modelRequestLoggingDescription {
+    return Intl.message(
+      'Save only this conversation’s requests and responses locally, including conversation text. Credentials and attachment data are hidden.',
+      name: 'modelRequestLoggingDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Off by default for each conversation. Keeps up to 5 files, 10 MB each.`
+  String get modelRequestLoggingRetention {
+    return Intl.message(
+      'Off by default for each conversation. Keeps up to 5 files, 10 MB each.',
+      name: 'modelRequestLoggingRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This conversation’s log folder`
+  String get modelLogDirectory {
+    return Intl.message(
+      'This conversation’s log folder',
+      name: 'modelLogDirectory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy path`
+  String get modelLogCopyPath {
+    return Intl.message(
+      'Copy path',
+      name: 'modelLogCopyPath',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open folder`
+  String get modelLogOpenDirectory {
+    return Intl.message(
+      'Open folder',
+      name: 'modelLogOpenDirectory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copied`
+  String get modelLogCopied {
+    return Intl.message('Copied', name: 'modelLogCopied', desc: '', args: []);
+  }
+
+  /// `Could not load log settings. Try again.`
+  String get modelLogLoadFailed {
+    return Intl.message(
+      'Could not load log settings. Try again.',
+      name: 'modelLogLoadFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not save the setting. The previous value is still in use.`
+  String get modelLogSaveFailed {
+    return Intl.message(
+      'Could not save the setting. The previous value is still in use.',
+      name: 'modelLogSaveFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not write logs. Check folder permissions and free space. Model requests are unaffected.`
+  String get modelLogWriteFailed {
+    return Intl.message(
+      'Could not write logs. Check folder permissions and free space. Model requests are unaffected.',
+      name: 'modelLogWriteFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not open the folder. Copy the path to open it manually.`
+  String get modelLogOpenFailed {
+    return Intl.message(
+      'Could not open the folder. Copy the path to open it manually.',
+      name: 'modelLogOpenFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not copy the path. Select and copy it manually.`
+  String get modelLogCopyFailed {
+    return Intl.message(
+      'Could not copy the path. Select and copy it manually.',
+      name: 'modelLogCopyFailed',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

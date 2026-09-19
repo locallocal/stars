@@ -16,12 +16,14 @@ final class TaskProgressMetrics {
 
 final class TaskProgressNarrationRequest {
   TaskProgressNarrationRequest({
+    required this.chatId,
     required this.summary,
     required this.language,
     required this.allowedNarrations,
     required this.repair,
   });
   final Map<String, Object?> summary;
+  final String chatId;
   final String language;
   final List<String> allowedNarrations;
   final bool repair;
@@ -58,6 +60,7 @@ final class NarrateConversationTaskProgress {
             metrics.modelCalls++;
             final draft = await polish(
               TaskProgressNarrationRequest(
+                chatId: summary.chatId,
                 summary: Map.unmodifiable(policy.facts(summary)),
                 language: language,
                 allowedNarrations: List.unmodifiable(
