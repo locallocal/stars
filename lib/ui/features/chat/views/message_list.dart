@@ -281,6 +281,7 @@ class _MessageListState extends State<MessageList> {
             ),
             images: message.images,
             files: message.files,
+            sourceMessage: message,
             audio: message.audio,
             music: message.music,
             video: message.video,

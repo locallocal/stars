@@ -15,6 +15,7 @@ class _MessageContent extends StatelessWidget {
   final String content;
   final List<String> images;
   final List<String> files;
+  final Message? sourceMessage;
   final String audio;
   final String music;
   final String video;
@@ -40,6 +41,7 @@ class _MessageContent extends StatelessWidget {
     required this.content,
     this.images = const [],
     this.files = const [],
+    this.sourceMessage,
     this.audio = '',
     this.music = '',
     this.video = '',
@@ -57,6 +59,7 @@ class _MessageContent extends StatelessWidget {
   Widget build(BuildContext context) => _MessageLocalFilesBuilder(
     content: content,
     files: files,
+    sourceMessage: sourceMessage,
     isCurrentUser: isCurrentUser,
     isStreaming: isStreaming,
     actions: actionViewModel,

@@ -17,6 +17,13 @@ final class PlatformMessageActionRepository implements MessageActionRepository {
   final ImageShare _imageShare;
 
   @override
+  String? get localFileHomeDirectory =>
+      Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'];
+
+  @override
+  Future<bool> localFileExists(String path) => File(path).exists();
+
+  @override
   Future<MediaExportResult> saveImage({
     required String sourcePath,
     required String dialogTitle,

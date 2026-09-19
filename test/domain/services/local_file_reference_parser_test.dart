@@ -21,6 +21,22 @@ void main() {
     );
   });
 
+  test('distinguishes explicit links from prose and inline code', () {
+    expect(
+      parser.linkedPathsFromMarkdown('''
+准备保存到 report.md 和 `/tmp/plan.md`。
+[打开报告](<./report final.md>)
+[同一个文件](file:///chats/current/report%20final.md)
+![图片](./image.png)
+[远程](https://example.com/result.md)
+```markdown
+[示例](/tmp/sample.md)
+```
+'''),
+      ['/chats/current/report final.md', '/chats/current/image.png'],
+    );
+  });
+
   test('resolves spaces, encoded names and source locations', () {
     expect(
       parser.pathsFromMarkdown('''

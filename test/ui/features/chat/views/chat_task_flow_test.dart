@@ -502,6 +502,12 @@ class _Attachments implements ConversationAssetRepository {
 
 class _Actions implements MessageActionRepository {
   @override
+  String? get localFileHomeDirectory => null;
+
+  @override
+  Future<bool> localFileExists(String path) async => false;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

@@ -233,6 +233,12 @@ final class _StubConversationDraftRepository
 
 final class _StubMessageActionRepository implements MessageActionRepository {
   @override
+  String? get localFileHomeDirectory => null;
+
+  @override
+  Future<bool> localFileExists(String path) async => false;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

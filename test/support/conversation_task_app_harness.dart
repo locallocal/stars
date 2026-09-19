@@ -341,6 +341,12 @@ final class _NoAttachments implements ConversationAssetRepository {
 
 final class _NoActions implements MessageActionRepository {
   @override
+  String? get localFileHomeDirectory => null;
+
+  @override
+  Future<bool> localFileExists(String path) async => false;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnsupportedError('Unexpected platform action');
 }
