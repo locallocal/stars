@@ -1266,53 +1266,65 @@ void main() {
     expect(result.skillToolCalls.single.detail, isNot(contains('sk-secret')));
   });
 
-  test('limits activation to three usable Skills', () async {
-    final skills = <String, SkillContent>{
-      for (var index = 0; index < 5; index++)
-        'user:skill-$index': fixtureSkill(
-          'user:skill-$index',
-          'skill-$index',
-          'Instructions $index',
-        ),
-    };
-    final compose = ComposeChatTurn(
-      skillRepository: FixtureFakeSkillRepository(skills),
-      bindingRepository: FixtureFakeBindingRepository([
-        for (var index = 0; index < 5; index++)
-          fixtureBinding('user:skill-$index', priority: index),
-      ]),
-      conversationArtifactsDirectoryProvider:
-          fixtureTestConversationArtifactsDirectory,
-    );
-    final provider = FixtureFakeSkillProvider([
-      SkillToolTurn(
-        calls: [
-          for (var index = 4; index >= 0; index--)
-            SkillToolCall(
-              callId: 'activate-$index',
-              name: 'activate_skill',
-              arguments: {'name': 'skill-$index'},
-            ),
-        ],
-      ),
-      SkillToolTurn(isComplete: true),
-    ]);
+  for (final batched in [true, false]) {
+    test('activates every model-selected Skill: batched=$batched', () async {
+      final skills = <String, SkillContent>{
+        for (var index = 0; index < 10; index++)
+          'user:skill-$index': fixtureSkill(
+            'user:skill-$index',
+            'skill-$index',
+            'Instructions $index',
+            requestedToolNames: {'tool-$index'},
+          ),
+      };
+      final repository = FixtureFakeSkillRepository(skills);
+      final compose = ComposeChatTurn(
+        skillRepository: repository,
+        bindingRepository: FixtureFakeBindingRepository([
+          for (var index = 0; index < 10; index++)
+            fixtureBinding('user:skill-$index', priority: index),
+        ]),
+        conversationArtifactsDirectoryProvider:
+            fixtureTestConversationArtifactsDirectory,
+      );
+      final calls = [
+        for (var index = 9; index >= 0; index--)
+          SkillToolCall(
+            callId: 'activate-$index',
+            name: 'activate_skill',
+            arguments: {'name': 'skill-$index'},
+          ),
+      ];
+      final provider = FixtureFakeSkillProvider([
+        if (batched)
+          SkillToolTurn(calls: calls)
+        else
+          for (final call in calls) SkillToolTurn(calls: [call]),
+        SkillToolTurn(isComplete: true),
+      ]);
 
-    final result = await compose(
-      bot: fixtureBot(),
-      history: const [],
-      userMessage: fixtureMessage(senderId: 'user-1', content: 'Question'),
-      currentUserId: 'user-1',
-      skillToolProvider: provider,
-    );
+      final result = await compose(
+        bot: fixtureBot(),
+        history: const [],
+        userMessage: fixtureMessage(senderId: 'user-1', content: 'Question'),
+        currentUserId: 'user-1',
+        skillToolProvider: provider,
+      );
 
-    expect(result.activatedSkills, hasLength(3));
-    expect(result.activatedSkills.map((skill) => skill.id), [
-      'user:skill-4',
-      'user:skill-3',
-      'user:skill-2',
-    ]);
-  });
+      expect(result.activatedSkills.map((skill) => skill.id), [
+        for (var index = 9; index >= 0; index--) 'user:skill-$index',
+      ]);
+      expect(repository.loadedIds, hasLength(10));
+      expect(result.requestedToolNames, {
+        for (var index = 0; index < 10; index++) 'tool-$index',
+      });
+      expect(
+        result.activationAttempts.map((attempt) => attempt.status),
+        everyElement(SkillActivationStatus.activated),
+      );
+      expect(provider.session.closed, isTrue);
+    });
+  }
 
   test('records Skills skipped by the context Token budget', () async {
     final oversized = fixtureSkill(
@@ -1360,7 +1372,7 @@ void main() {
   });
 
   test(
-    'skips unusable candidates before applying the activation limit',
+    'excludes unusable Skill candidates before automatic model activation',
     () async {
       final blocked = fixtureSkill(
         'user:blocked',

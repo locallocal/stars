@@ -58,23 +58,12 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     try {
       SkillToolTurn turn = await session.start();
       state.preflightTokenUsage = state.preflightTokenUsage + turn.tokenUsage;
-      var toolCalls = 0;
-      for (var modelTurn = 0; modelTurn < _budget.maxToolTurns; modelTurn++) {
-        if (turn.calls.isEmpty || turn.isComplete) break;
+      var retryingWithoutProgress = false;
+      while (turn.calls.isNotEmpty && !turn.isComplete) {
+        final previousSkillCount = state.contents.length;
+        final previousResourceCount = state.resources.length;
         final results = <SkillToolResult>[];
         for (final call in turn.calls) {
-          toolCalls += 1;
-          if (toolCalls > _budget.maxToolCalls) {
-            results.add(
-              SkillToolResult(
-                callId: call.callId,
-                name: call.name,
-                content: 'Skill tool call limit reached.',
-                isError: true,
-              ),
-            );
-            continue;
-          }
           results.add(
             await _executeSkillTool(
               call: call,
@@ -84,7 +73,13 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
             ),
           );
         }
-        if (modelTurn + 1 >= _budget.maxToolTurns) break;
+        final madeProgress =
+            state.contents.length > previousSkillCount ||
+            state.resources.length > previousResourceCount;
+        // Let the model correct an error or a redundant call once. New Skills
+        // and references keep discovery running without a fixed selection cap.
+        if (!madeProgress && retryingWithoutProgress) break;
+        retryingWithoutProgress = !madeProgress;
         turn = await session.continueWith(results);
         state.preflightTokenUsage = state.preflightTokenUsage + turn.tokenUsage;
       }
@@ -369,24 +364,20 @@ ${paths.map((path) => '- ${_escapeText(path)}').join('\n')}
     SkillContent? content;
     String errorCode = '';
     try {
-      if (state.contents.length >= _budget.maxActivatedSkills) {
-        errorCode = 'skill_count_limit';
+      content =
+          state.bundledContents[descriptor.id] ??
+          await _skillRepository.load(
+            descriptor.id,
+            contentDigest: descriptor.contentDigest,
+          );
+      final tokens = _estimateTokens(content.instructions);
+      if (tokens > _budget.maxTokensPerSkill) {
+        errorCode = 'per_skill_token_limit';
+      } else if (state.skillTokens + tokens > _budget.maxSkillContextTokens) {
+        errorCode = 'skill_context_token_limit';
       } else {
-        content =
-            state.bundledContents[descriptor.id] ??
-            await _skillRepository.load(
-              descriptor.id,
-              contentDigest: descriptor.contentDigest,
-            );
-        final tokens = _estimateTokens(content.instructions);
-        if (tokens > _budget.maxTokensPerSkill) {
-          errorCode = 'per_skill_token_limit';
-        } else if (state.skillTokens + tokens > _budget.maxSkillContextTokens) {
-          errorCode = 'skill_context_token_limit';
-        } else {
-          state.contents[descriptor.id] = (content: content, trigger: trigger);
-          state.skillTokens += tokens;
-        }
+        state.contents[descriptor.id] = (content: content, trigger: trigger);
+        state.skillTokens += tokens;
       }
     } catch (_) {
       errorCode = 'load_failed';
