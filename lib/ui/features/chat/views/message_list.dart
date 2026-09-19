@@ -388,7 +388,10 @@ class _MessageListState extends State<MessageList> {
           '',
       provider: isCurrentUser ? '' : widget.bot?.provider ?? '',
     );
-    final gap = SizedBox(width: isDesktop ? 12 : 8);
+    final avatarGap = isDesktop ? 12.0 : 8.0;
+    final gap = SizedBox(width: avatarGap);
+    // Reserve both avatar columns so every message shares the same bounds.
+    final oppositeAvatarSpace = SizedBox(width: MessageAvatar.size + avatarGap);
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: isDesktop ? 10 : 4),
@@ -427,8 +430,8 @@ class _MessageListState extends State<MessageList> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children:
                     isCurrentUser
-                        ? [content, gap, avatar]
-                        : [avatar, gap, content],
+                        ? [oppositeAvatarSpace, content, gap, avatar]
+                        : [avatar, gap, content, oppositeAvatarSpace],
               );
             },
           ),
