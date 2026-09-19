@@ -38,6 +38,7 @@ class MessageAnchorRail extends StatefulWidget {
     super.key,
     required this.entries,
     required this.onSelected,
+    required this.scrollController,
     this.userName = '',
   });
 
@@ -45,6 +46,7 @@ class MessageAnchorRail extends StatefulWidget {
 
   final List<MessageAnchorEntry> entries;
   final ValueChanged<MessageAnchorEntry> onSelected;
+  final ScrollController scrollController;
   final String userName;
 
   @override
@@ -52,17 +54,50 @@ class MessageAnchorRail extends StatefulWidget {
 }
 
 class _MessageAnchorRailState extends State<MessageAnchorRail> {
-  String? _hoveredId;
-  String? _focusedId;
-  String? _selectedId;
+  String? _activeId;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.scrollController.addListener(_dismissPreview);
+  }
+
+  @override
+  void didUpdateWidget(covariant MessageAnchorRail oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController.removeListener(_dismissPreview);
+      widget.scrollController.addListener(_dismissPreview);
+      _activeId = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_dismissPreview);
+    super.dispose();
+  }
+
+  void _dismissPreview() {
+    if (_activeId == null) return;
+    // Preview state is transient; keep keyboard focus for the next Tab/Enter.
+    setState(() => _activeId = null);
+  }
+
+  void _onActiveChanged(String id, bool active) {
+    if (active) {
+      if (_activeId != id) setState(() => _activeId = id);
+    } else if (_activeId == id) {
+      _dismissPreview();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     if (widget.entries.isEmpty) return const SizedBox.shrink();
     final colors = ShadTheme.of(context).colorScheme;
-    final activeId = _hoveredId ?? _focusedId;
     final activeIndex = widget.entries.indexWhere(
-      (entry) => entry.id == activeId,
+      (entry) => entry.id == _activeId,
     );
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return LayoutBuilder(
@@ -94,13 +129,13 @@ class _MessageAnchorRailState extends State<MessageAnchorRail> {
                             activeIndex < 0 || distance >= 3
                                 ? 0.0
                                 : (1 + math.cos(math.pi * distance / 3)) / 2;
-                        final selected = entry.id == _selectedId;
                         return _MessageAnchorTick(
                           key: ValueKey('message-anchor-${entry.id}'),
                           entry: entry,
                           index: index,
                           userName: widget.userName,
                           height: spacing,
+                          active: entry.id == _activeId,
                           previewAlignment: Alignment(
                             1,
                             index < widget.entries.length / 4
@@ -109,32 +144,9 @@ class _MessageAnchorRailState extends State<MessageAnchorRail> {
                                 ? 1
                                 : 0,
                           ),
-                          onHover: (hovered) {
-                            final next =
-                                hovered
-                                    ? entry.id
-                                    : _hoveredId == entry.id
-                                    ? null
-                                    : _hoveredId;
-                            if (_hoveredId != next) {
-                              setState(() => _hoveredId = next);
-                            }
-                          },
-                          onFocus: (focused) {
-                            final next =
-                                focused
-                                    ? entry.id
-                                    : _focusedId == entry.id
-                                    ? null
-                                    : _focusedId;
-                            if (_focusedId != next) {
-                              setState(() => _focusedId = next);
-                            }
-                          },
-                          onPressed: () {
-                            setState(() => _selectedId = entry.id);
-                            widget.onSelected(entry);
-                          },
+                          onActiveChanged:
+                              (active) => _onActiveChanged(entry.id, active),
+                          onPressed: () => widget.onSelected(entry),
                           child: Align(
                             alignment: Alignment.centerRight,
                             child: AnimatedContainer(
@@ -144,16 +156,13 @@ class _MessageAnchorRailState extends State<MessageAnchorRail> {
                                       ? Duration.zero
                                       : const Duration(milliseconds: 140),
                               curve: Curves.easeOutCubic,
-                              width: math.max(
-                                selected ? 10 : 6,
-                                6 + 14 * influence,
-                              ),
+                              width: 6 + 14 * influence,
                               height: math.min(2, spacing * .5),
                               decoration: BoxDecoration(
                                 color: Color.lerp(
                                   colors.mutedForeground.withValues(alpha: .4),
                                   colors.foreground,
-                                  selected ? 1 : influence,
+                                  influence,
                                 ),
                                 borderRadius: BorderRadius.circular(1),
                               ),
@@ -179,9 +188,9 @@ class _MessageAnchorTick extends StatefulWidget {
     required this.index,
     required this.userName,
     required this.height,
+    required this.active,
     required this.previewAlignment,
-    required this.onHover,
-    required this.onFocus,
+    required this.onActiveChanged,
     required this.onPressed,
     required this.child,
   });
@@ -190,9 +199,9 @@ class _MessageAnchorTick extends StatefulWidget {
   final int index;
   final String userName;
   final double height;
+  final bool active;
   final Alignment previewAlignment;
-  final ValueChanged<bool> onHover;
-  final ValueChanged<bool> onFocus;
+  final ValueChanged<bool> onActiveChanged;
   final VoidCallback onPressed;
   final Widget child;
 
@@ -203,9 +212,19 @@ class _MessageAnchorTick extends StatefulWidget {
 class _MessageAnchorTickState extends State<_MessageAnchorTick> {
   static const _previewDuration = Duration(milliseconds: 120);
   final _focusNode = FocusNode();
+  late final _previewController = ShadTooltipController(isOpen: widget.active);
+
+  @override
+  void didUpdateWidget(covariant _MessageAnchorTick oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) {
+      _previewController.setOpen(widget.active);
+    }
+  }
 
   @override
   void dispose() {
+    _previewController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -220,7 +239,7 @@ class _MessageAnchorTickState extends State<_MessageAnchorTick> {
     ).add_Hm().format(widget.entry.message.timestamp.toLocal());
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return ShadTooltip(
-      focusNode: _focusNode,
+      controller: _previewController,
       // ShadTooltip and its effects share a controller. Their durations must
       // agree even when an open tooltip rebuilds during a streaming update.
       duration: _previewDuration,
@@ -276,8 +295,11 @@ class _MessageAnchorTickState extends State<_MessageAnchorTick> {
         label: S.of(context).jumpToUserMessage(widget.index + 1, summary),
         child: ShadButton.ghost(
           focusNode: _focusNode,
-          onFocusChange: widget.onFocus,
-          onHoverChange: widget.onHover,
+          // The rail owns visibility so focus or touch hover cannot reopen a
+          // preview after scrolling. Mouse hover and keyboard focus still work.
+          hoverStrategies: const ShadHoverStrategies(),
+          onFocusChange: widget.onActiveChanged,
+          onHoverChange: widget.onActiveChanged,
           onPressed: widget.onPressed,
           width: MessageAnchorRail.width,
           height: widget.height,
