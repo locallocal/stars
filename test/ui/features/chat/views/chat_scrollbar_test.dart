@@ -53,8 +53,11 @@ void main() {
           until: () => find.byType(MessageList).evaluate().isNotEmpty,
         );
         final messageList = find.byType(MessageList);
-        final list = tester.widget<ListView>(
-          find.descendant(of: messageList, matching: find.byType(ListView)),
+        final list = tester.widget<BoxScrollView>(
+          find.descendant(
+            of: messageList,
+            matching: find.bySubtype<BoxScrollView>(),
+          ),
         );
         final bars = find.descendant(
           of: messageList,

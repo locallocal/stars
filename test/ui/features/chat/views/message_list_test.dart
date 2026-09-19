@@ -218,7 +218,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(tester.widget<ListView>(find.byType(ListView)).reverse, isTrue);
+    expect(
+      tester.widget<BoxScrollView>(find.bySubtype<BoxScrollView>()).reverse,
+      isTrue,
+    );
     expect(find.text('content-499'), findsOneWidget);
     expect(find.text('content-0'), findsNothing);
     expect(scrollController.offset, 0);

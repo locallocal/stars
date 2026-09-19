@@ -1,5 +1,7 @@
 part of 'message_list.dart';
 
+const _messageAnchorMotionDuration = Duration(milliseconds: 220);
+
 extension _MessageAnchorNavigation on _MessageListState {
   void _indexMessageAnchors() {
     _messageAnchorIds = [
@@ -8,6 +10,10 @@ extension _MessageAnchorNavigation on _MessageListState {
             ? 'legacy-${messages[index].timestamp.microsecondsSinceEpoch}-$index'
             : messages[index].messageId,
     ];
+    _messageIndexById = {
+      for (var index = 0; index < _messageAnchorIds.length; index++)
+        _messageAnchorIds[index]: index,
+    };
     final retainedIds = _messageAnchorIds.toSet();
     _messageAnchorKeys.removeWhere((id, _) => !retainedIds.contains(id));
     for (final id in _messageAnchorIds) {
@@ -44,8 +50,9 @@ extension _MessageAnchorNavigation on _MessageListState {
           children: [
             Positioned.fill(
               child: Listener(
-                onPointerDown: (_) => _anchorNavigationEpoch++,
-                onPointerSignal: (_) => _anchorNavigationEpoch++,
+                onPointerDown: (_) => _finishAnchorArrival(),
+                onPointerSignal: (_) => _finishAnchorArrival(),
+                onPointerPanZoomStart: (_) => _finishAnchorArrival(),
                 child: child,
               ),
             ),
@@ -58,8 +65,7 @@ extension _MessageAnchorNavigation on _MessageListState {
                 entries: _messageAnchors,
                 scrollController: scrollController,
                 userName: widget.currentUserProfile?.name ?? '',
-                onSelected:
-                    (entry) => unawaited(_scrollToMessageAnchor(entry.id)),
+                onSelected: (entry) => _scrollToMessageAnchor(entry.id),
               ),
             ),
           ],
@@ -68,67 +74,67 @@ extension _MessageAnchorNavigation on _MessageListState {
     );
   }
 
-  Future<void> _scrollToMessageAnchor(String id) async {
-    final epoch = ++_anchorNavigationEpoch;
+  Widget _buildAnchorArrival({required Widget child}) {
+    // Animate only the viewport's paint transform. Keep the scrollbar fixed and
+    // reuse the list child, without relaying out Markdown/media on every tick.
+    return ClipRect(
+      child: AnimatedBuilder(
+        animation: _anchorArrivalAnimation,
+        child: child,
+        builder:
+            (context, child) => Transform.translate(
+              offset: _anchorArrivalAnimation.value,
+              child: child,
+            ),
+      ),
+    );
+  }
+
+  void _finishAnchorArrival() {
+    if (_anchorArrivalController.value != 1) {
+      _anchorArrivalController.value = 1;
+    }
+  }
+
+  void _scrollToMessageAnchor(String id) {
+    _finishAnchorArrival();
+    if (!scrollController.hasClients || !_messageListController.isAttached) {
+      return;
+    }
+    final messageIndex = _messageIndexById[id];
+    if (messageIndex == null) return;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    bool? previousDirection;
-    var useViewportSteps = false;
-    while (mounted &&
-        epoch == _anchorNavigationEpoch &&
-        scrollController.hasClients) {
-      final targetIndex = _messageAnchorIds.indexOf(id);
-      if (targetIndex < 0) return;
-      final target = _messageAnchorKeys[id]?.currentContext;
-      if (target != null && target.mounted) {
-        // The list is reversed: alignment 1 reveals the top of the message.
-        await Scrollable.ensureVisible(
+    final target = _messageAnchorKeys[id]?.currentContext;
+    if (target != null && target.mounted) {
+      unawaited(
+        Scrollable.ensureVisible(
           target,
           alignment: 1,
-          duration:
-              reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+          duration: reduceMotion ? Duration.zero : _messageAnchorMotionDuration,
           curve: Curves.easeOutCubic,
-        );
-        return;
-      }
-
-      // Keep the history lazy. Seek using mounted rows, then use the actual
-      // target's geometry; message heights can change as media and replies load.
-      final mountedRows = <({int index, double height})>[];
-      for (var index = 0; index < _messageAnchorIds.length; index++) {
-        final render =
-            _messageAnchorKeys[_messageAnchorIds[index]]?.currentContext
-                ?.findRenderObject();
-        if (render is RenderBox && render.attached && render.hasSize) {
-          mountedRows.add((index: index, height: render.size.height));
-        }
-      }
-      if (mountedRows.isEmpty) return;
-      final older = targetIndex < mountedRows.first.index;
-      if (previousDirection != null && previousDirection != older) {
-        useViewportSteps = true;
-      }
-      previousDirection = older;
-      final position = scrollController.position;
-      final viewportStep = position.viewportDimension * .75;
-      final nearestIndex =
-          older ? mountedRows.first.index : mountedRows.last.index;
-      final averageHeight =
-          mountedRows.fold<double>(0, (sum, row) => sum + row.height) /
-          mountedRows.length;
-      final step =
-          useViewportSteps
-              ? viewportStep
-              : ((nearestIndex - targetIndex).abs() * averageHeight).clamp(
-                viewportStep,
-                position.viewportDimension * 8,
-              );
-      final offset = (position.pixels + (older ? step : -step)).clamp(
-        position.minScrollExtent,
-        position.maxScrollExtent,
+        ),
       );
-      if (offset == position.pixels) return;
-      position.jumpTo(offset);
-      await WidgetsBinding.instance.endOfFrame;
+      return;
     }
+
+    final index = messages.length - 1 - messageIndex + (isStreaming ? 1 : 0);
+    if (!reduceMotion) {
+      final visibleRange = _messageListController.visibleRange;
+      final towardsOlder = visibleRange == null || index > visibleRange.$2;
+      final travel = math.min(
+        48.0,
+        scrollController.position.viewportDimension * .08,
+      );
+      _anchorArrivalTween.begin = Offset(0, towardsOlder ? -travel : travel);
+      _anchorArrivalController.forward(from: 0);
+    }
+    // Resolve the target once, then slide it into place over a bounded distance.
+    // The transition never traverses or rebuilds the intervening history.
+    // The list is reversed: alignment 1 reveals the top of the target row.
+    _messageListController.jumpToItem(
+      index: index,
+      scrollController: scrollController,
+      alignment: 1,
+    );
   }
 }
