@@ -1173,5 +1173,7 @@
     "answerTrustReasonGenerationTimedOut": "生成在最终回复完成验证前超时；已完成的工具证据仍可查看。",
     "answerTrustReasonGateFailed": "此回复未通过应用可信门禁。",
     "answerTrustReasonUnavailable": "此回复尚未完成验证。",
-    "answerTrustSemanticLabel": "{status}。{reason}"
+    "answerTrustSemanticLabel": "{status}。{reason}",
+    "userMessageNavigation": "用户消息",
+    "jumpToUserMessage": "跳转到第 {index} 条用户消息：{summary}"
 }

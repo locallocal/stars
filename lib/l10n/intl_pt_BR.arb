@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "A verificação desta resposta não foi concluída.",
     "answerTrustSemanticLabel": "{status}. {reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "Mensagens do usuário",
+    "jumpToUserMessage": "Ir para a mensagem do usuário {index}: {summary}"
 }

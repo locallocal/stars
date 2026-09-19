@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "この回答の検証は完了していません。",
     "answerTrustSemanticLabel": "{status}。{reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "ユーザーのメッセージ",
+    "jumpToUserMessage": "ユーザーのメッセージ {index} に移動：{summary}"
 }

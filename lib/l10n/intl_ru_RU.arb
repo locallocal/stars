@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "Проверка этого ответа не завершена.",
     "answerTrustSemanticLabel": "{status}. {reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "Сообщения пользователя",
+    "jumpToUserMessage": "Перейти к сообщению пользователя {index}: {summary}"
 }

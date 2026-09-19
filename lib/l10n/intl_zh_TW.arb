@@ -1032,5 +1032,7 @@
     "answerTrustReasonUnavailable": "此回覆尚未完成驗證。",
     "answerTrustSemanticLabel": "{status}。{reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "使用者訊息",
+    "jumpToUserMessage": "跳至第 {index} 則使用者訊息：{summary}"
 }
