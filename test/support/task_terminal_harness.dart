@@ -12,6 +12,19 @@ import 'package:stars/domain/use_cases/narrate_conversation_task_terminal.dart';
 import 'task_runner_harness.dart';
 export 'task_runner_harness.dart';
 
+GroundedAnswerCandidate terminalTestReply(
+  TaskTerminalNarrationRequest request,
+) => GroundedAnswerCandidate(
+  claims: [
+    AnswerClaim(
+      claimId: 'test:outcome',
+      text: '报告还没整理完，后续处理无法继续。',
+      kind: ClaimKind.nonFactual,
+    ),
+    ...request.verifiedClaims,
+  ],
+);
+
 final class TaskTerminalHarness {
   final runner = TaskRunnerHarness();
   int identities = 0;

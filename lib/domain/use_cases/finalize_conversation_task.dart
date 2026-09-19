@@ -1,4 +1,5 @@
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
@@ -12,6 +13,7 @@ import 'package:stars/domain/services/grounded_answer_validator.dart';
 import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/domain/services/task_evidence_scope.dart';
 import 'package:stars/domain/services/task_terminal_summary_policy.dart';
+import 'package:stars/domain/services/task_terminal_context.dart';
 import 'package:stars/domain/services/task_verification_preparation.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_terminal.dart';
@@ -197,17 +199,8 @@ final class FinalizeConversationTask {
           validation: validation,
         );
         status = summary.status;
-        final narration = await narrator(
-          summary: summary,
-          language: snapshot.task.acceptance.language,
-          polish: polisher?.call(snapshot.task),
-          onTokenUsage: (usage) => narrationUsage = narrationUsage.merge(usage),
-        );
-        content = narration.text;
         final partial =
-            validation
-                .toMessageGrounding()
-                .claims
+            validation.claims
                 .where(
                   (claim) =>
                       claim.trustLevel == ClaimTrustLevel.verified &&
@@ -216,12 +209,68 @@ final class FinalizeConversationTask {
                           .contains(claim.claim.text),
                 )
                 .toList();
-        // Keep each validated factual block distinct from operational narration.
-        claims = _narratedClaims(
-          content,
-          summary.completedWorkSummary,
-          partial,
+        final partialIds = partial.map((claim) => claim.claim.claimId).toSet();
+        final evidenceIds =
+            partial.expand((claim) => claim.acceptedEvidenceIds).toSet();
+        final availableRequirements =
+            requirements.where((r) => partialIds.contains(r.claimId)).toList();
+        Future<GroundedAnswerValidationResult> validateNarration(
+          GroundedAnswerCandidate draft,
+        ) => validator.validate(
+          runId: taskId,
+          candidate: draft,
+          requirements: availableRequirements.where(
+            (r) => draft.claims.any((c) => c.claimId == r.claimId),
+          ),
+          validatedAt: clock.now(),
         );
+        GroundedAnswerValidationResult? narratedValidation;
+        final narration = await narrator(
+          summary: summary,
+          language: snapshot.task.acceptance.language,
+          context: taskTerminalContext(snapshot),
+          verifiedClaims: [
+            for (final claim in partial)
+              AnswerClaim(
+                claimId: claim.claim.claimId,
+                text: claim.claim.text,
+                kind: claim.claim.kind,
+                evidenceIds: claim.acceptedEvidenceIds,
+              ),
+          ],
+          availableClaims: groundedSynthesisRequirements(availableRequirements),
+          evidence: [
+            for (final evidence in snapshot.evidence)
+              if (evidenceIds.contains(evidence.evidenceId))
+                GroundedEvidenceReference(
+                  evidenceId: evidence.evidenceId,
+                  providerCallId: evidence.providerCallId,
+                  toolName: evidence.toolName,
+                  isError:
+                      evidence.terminalStatus != ToolInvocationStatus.succeeded,
+                ),
+          ],
+          polish: polisher?.call(snapshot.task),
+          validate: (draft) async {
+            narratedValidation = await validateNarration(draft);
+            return narratedValidation!.claims.every(
+              (claim) => claim.trustLevel != ClaimTrustLevel.unverified,
+            );
+          },
+          onTokenUsage: (usage) => narrationUsage = narrationUsage.merge(usage),
+        );
+        content = narration.text;
+        if (narration.usedFallback) {
+          narratedValidation = await validateNarration(narration.candidate);
+        }
+        claims =
+            narratedValidation!
+                .toMessageGrounding()
+                .claims
+                .where(
+                  (claim) => claim.trustLevel != ClaimTrustLevel.unverified,
+                )
+                .toList();
       } else {
         content = candidate.renderedText;
         claims = validation.toMessageGrounding().claims;
@@ -410,29 +459,3 @@ ConversationTask _verificationTask(ConversationTask old, DateTime at) =>
       cancellationSource: old.cancellationSource,
       cancelRequestedAt: old.cancelRequestedAt,
     );
-
-List<MessageClaimGrounding> _narratedClaims(
-  String text,
-  String partialText,
-  List<MessageClaimGrounding> partial,
-) {
-  MessageClaimGrounding operation(String value, int index) =>
-      MessageClaimGrounding(
-        claim: AnswerClaim(
-          claimId: 'terminal:operation:$index',
-          text: value,
-          kind: ClaimKind.nonFactual,
-        ),
-        trustLevel: ClaimTrustLevel.notVerifiable,
-        reasonCode: 'not_fact_checked',
-      );
-  if (partialText.isEmpty) return [operation(text, 0)];
-  final at = text.indexOf(partialText);
-  return [
-    if (text.substring(0, at).trim().isNotEmpty)
-      operation(text.substring(0, at).trim(), 0),
-    ...partial,
-    if (text.substring(at + partialText.length).trim().isNotEmpty)
-      operation(text.substring(at + partialText.length).trim(), 1),
-  ];
-}
