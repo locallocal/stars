@@ -34,7 +34,7 @@ class Cohere extends Provider {
         bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelKey;
     final uri = Uri.parse(url).replace(queryParameters: {'page_size': '1000'});
 
-    final response = await http.get(
+    final response = await httpGet(
       uri,
       headers: {
         'Accept': 'application/json',
@@ -74,7 +74,7 @@ class Cohere extends Provider {
         cancelController?.close();
       });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       if (streamedResponse.statusCode != 200) {
         final errorBody = await streamedResponse.stream.bytesToString();
         throw Exception('${streamedResponse.statusCode}, $errorBody');

@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "Mensagens do usuário",
-    "jumpToUserMessage": "Ir para a mensagem do usuário {index}: {summary}"
+    "jumpToUserMessage": "Ir para a mensagem do usuário {index}: {summary}",
+    "modelRequestLogging": "Logs de solicitações ao modelo",
+    "modelRequestLoggingDescription": "Salva localmente apenas solicitações e respostas desta conversa, incluindo o texto. Credenciais e dados de anexos ficam ocultos.",
+    "modelRequestLoggingRetention": "Desativado por padrão em cada conversa. Até 5 arquivos de 10 MB cada.",
+    "modelLogDirectory": "Pasta de logs desta conversa",
+    "modelLogCopyPath": "Copiar caminho",
+    "modelLogOpenDirectory": "Abrir pasta",
+    "modelLogCopied": "Copiado",
+    "modelLogLoadFailed": "Não foi possível carregar as configurações. Tente novamente.",
+    "modelLogSaveFailed": "Não foi possível salvar. A configuração anterior foi mantida.",
+    "modelLogWriteFailed": "Não foi possível gravar logs. Verifique permissões e espaço livre. As solicitações não são afetadas.",
+    "modelLogOpenFailed": "Não foi possível abrir a pasta. Copie o caminho para abrir manualmente.",
+    "modelLogCopyFailed": "Não foi possível copiar o caminho. Selecione e copie manualmente."
 }

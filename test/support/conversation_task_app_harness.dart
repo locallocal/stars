@@ -41,6 +41,7 @@ import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/ui/core/dependency_injection/app_dependencies.dart';
 import 'package:stars/ui/features/app/view_models/startup_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
+import 'package:stars/ui/features/chat/view_models/model_log_view_model.dart';
 
 import 'foreground_turn_fixtures.dart' show foregroundBot, routeFrames;
 import 'task_runner_harness.dart' show RunnerClock;
@@ -78,6 +79,11 @@ final class ConversationTaskAppHarness implements AppDependencies {
   late AppConversationTasks conversationTasks;
   @override
   late ChatGenerationRegistry generationRegistry;
+  ModelLogViewModel? Function(String chatId)? modelLogViewModelFactory;
+  @override
+  ModelLogViewModel? createModelLogViewModel(String chatId) =>
+      modelLogViewModelFactory?.call(chatId);
+
   Bot get bot => foregroundBot(provider: 'openai');
 
   @override

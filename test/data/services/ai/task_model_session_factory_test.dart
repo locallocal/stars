@@ -74,6 +74,7 @@ void main() {
       });
       addTearDown(client.close);
       final sessions = TaskProviderSessionFactory(
+        chatId: 'chat-a',
         providers: ForegroundProviders((bot) => Moonshot(bot, client: client)),
         bot: bot,
       );
@@ -156,8 +157,10 @@ void main() {
         bot,
         events: () => const Stream.empty(),
       );
+      final providers = ForegroundProviders((_) => provider);
       final factory = TaskProviderSessionFactory(
-        providers: ForegroundProviders((_) => provider),
+        chatId: 'chat-a',
+        providers: providers,
         bot: bot,
       );
       final acceptance = TaskAcceptanceSnapshot(
@@ -180,6 +183,7 @@ void main() {
         messages: [ChatMessage(role: 'user', content: 'accepted')],
       );
       factory.open(acceptance, request).close();
+      expect(providers.conversationScopes, ['chat-a']);
       expect(provider.sessions, hasLength(1));
       bot.parameters!['z'] = 3;
       expect(

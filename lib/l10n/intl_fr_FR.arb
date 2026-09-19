@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "Messages utilisateur",
-    "jumpToUserMessage": "Aller au message utilisateur {index} : {summary}"
+    "jumpToUserMessage": "Aller au message utilisateur {index} : {summary}",
+    "modelRequestLogging": "Journaux des requêtes du modèle",
+    "modelRequestLoggingDescription": "Enregistre uniquement les requêtes et réponses de cette conversation en local, texte compris. Les identifiants et pièces jointes sont masqués.",
+    "modelRequestLoggingRetention": "Désactivé par défaut pour chaque conversation. Conserve 5 fichiers de 10 Mo maximum chacun.",
+    "modelLogDirectory": "Dossier des journaux de cette conversation",
+    "modelLogCopyPath": "Copier le chemin",
+    "modelLogOpenDirectory": "Ouvrir le dossier",
+    "modelLogCopied": "Copié",
+    "modelLogLoadFailed": "Impossible de charger les paramètres. Réessayez.",
+    "modelLogSaveFailed": "Impossible de sauvegarder. Le réglage précédent est conservé.",
+    "modelLogWriteFailed": "Écriture impossible. Vérifiez les autorisations et l’espace libre. Les requêtes ne sont pas affectées.",
+    "modelLogOpenFailed": "Impossible d’ouvrir le dossier. Copiez le chemin pour l’ouvrir manuellement.",
+    "modelLogCopyFailed": "Copie impossible. Sélectionnez le chemin et copiez-le manuellement."
 }

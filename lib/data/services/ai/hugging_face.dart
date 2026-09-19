@@ -146,7 +146,7 @@ class HuggingFace extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -235,7 +235,7 @@ class HuggingFace extends Provider {
     };
 
     try {
-      final response = await http.post(
+      final response = await httpPost(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json', 'x-key': bot.apiKey},
         body: jsonEncode(requestBody),

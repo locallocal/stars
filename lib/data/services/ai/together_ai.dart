@@ -106,7 +106,7 @@ class TogetherAI extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -241,7 +241,7 @@ class TogetherAI extends Provider {
     };
 
     try {
-      final response = await http.post(
+      final response = await httpPost(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ class TogetherAI extends Provider {
       if (response.statusCode == 200) {
         final data = decodeProviderResponse(utf8.decode(response.bodyBytes));
         final imageUrl = data['data'][0]['url'];
-        final imageResponse = await http.get(Uri.parse(imageUrl));
+        final imageResponse = await httpGet(Uri.parse(imageUrl));
 
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;

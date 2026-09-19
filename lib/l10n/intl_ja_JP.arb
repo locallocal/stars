@@ -1014,5 +1014,17 @@
     "maximizePreview": "Maximize preview",
     "restorePreview": "Restore preview",
     "userMessageNavigation": "ユーザーのメッセージ",
-    "jumpToUserMessage": "ユーザーのメッセージ {index} に移動：{summary}"
+    "jumpToUserMessage": "ユーザーのメッセージ {index} に移動：{summary}",
+    "modelRequestLogging": "モデルリクエストログ",
+    "modelRequestLoggingDescription": "この会話のリクエストと応答のみを本文を含めてローカルに保存します。認証情報と添付データは非表示になります。",
+    "modelRequestLoggingRetention": "会話ごとに初期設定はオフ。各 10 MB、最大 5 ファイルを保持します。",
+    "modelLogDirectory": "この会話のログフォルダー",
+    "modelLogCopyPath": "パスをコピー",
+    "modelLogOpenDirectory": "フォルダーを開く",
+    "modelLogCopied": "コピーしました",
+    "modelLogLoadFailed": "ログ設定を読み込めません。再試行してください。",
+    "modelLogSaveFailed": "設定を保存できません。以前の状態を維持します。",
+    "modelLogWriteFailed": "ログを書き込めません。権限と空き容量を確認してください。モデルの呼び出しには影響しません。",
+    "modelLogOpenFailed": "フォルダーを開けません。パスをコピーして手動で開いてください。",
+    "modelLogCopyFailed": "パスをコピーできません。選択して手動でコピーしてください。"
 }

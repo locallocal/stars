@@ -148,7 +148,11 @@ final class TaskRuntimeFactory {
       sessions:
           bot == null
               ? (_, _) => throw StateError('cancel_has_no_model_session')
-              : TaskProviderSessionFactory(providers: providers, bot: bot).open,
+              : TaskProviderSessionFactory(
+                providers: providers,
+                bot: bot,
+                chatId: task.chatId,
+              ).open,
       tools: resolved,
       policy: policy,
       clock: clock,

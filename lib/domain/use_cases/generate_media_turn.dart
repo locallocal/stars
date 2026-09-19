@@ -203,35 +203,38 @@ final class GenerateMediaTurn {
     MediaTurnRequest request,
     List<String> assets,
     String outputDirectory,
-  ) => switch (request.kind) {
-    MediaTurnKind.image => _providers.generateImage(
-      bot: request.bot,
-      prompt: request.prompt,
-      size: request.imageSize,
-      outputDirectory: outputDirectory,
-      referenceImages: assets,
-      style: request.imageStyle,
-    ),
-    MediaTurnKind.speech => _providers.generateSpeech(
-      bot: request.bot,
-      prompt: request.prompt,
-      voiceType: _voiceType(request),
-      outputDirectory: outputDirectory,
-    ),
-    MediaTurnKind.music => _providers.generateMusic(
-      bot: request.bot,
-      prompt: request.prompt,
-      outputDirectory: outputDirectory,
-      referenceMusic: assets.isEmpty ? '' : assets.first,
-    ),
-    MediaTurnKind.video => _providers.generateVideo(
-      bot: request.bot,
-      prompt: request.prompt,
-      ratio: request.videoRatio,
-      outputDirectory: outputDirectory,
-      referenceImages: assets,
-    ),
-  };
+  ) {
+    final providers = _providers.forConversation(request.chatId);
+    return switch (request.kind) {
+      MediaTurnKind.image => providers.generateImage(
+        bot: request.bot,
+        prompt: request.prompt,
+        size: request.imageSize,
+        outputDirectory: outputDirectory,
+        referenceImages: assets,
+        style: request.imageStyle,
+      ),
+      MediaTurnKind.speech => providers.generateSpeech(
+        bot: request.bot,
+        prompt: request.prompt,
+        voiceType: _voiceType(request),
+        outputDirectory: outputDirectory,
+      ),
+      MediaTurnKind.music => providers.generateMusic(
+        bot: request.bot,
+        prompt: request.prompt,
+        outputDirectory: outputDirectory,
+        referenceMusic: assets.isEmpty ? '' : assets.first,
+      ),
+      MediaTurnKind.video => providers.generateVideo(
+        bot: request.bot,
+        prompt: request.prompt,
+        ratio: request.videoRatio,
+        outputDirectory: outputDirectory,
+        referenceImages: assets,
+      ),
+    };
+  }
 
   String _voiceType(MediaTurnRequest request) {
     if (request.voiceType.isNotEmpty) return request.voiceType;

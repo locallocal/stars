@@ -37,7 +37,7 @@ class Tencent extends Provider {
   Future<List<AiModelInfo>> fetchModels() async {
     final url =
         bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelsUrl;
-    final response = await http.get(
+    final response = await httpGet(
       Uri.parse(url),
       headers: {
         'Accept': 'application/json',
@@ -73,7 +73,7 @@ class Tencent extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());

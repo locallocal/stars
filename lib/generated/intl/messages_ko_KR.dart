@@ -710,9 +710,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "이 모델이 처리할 수 있는 콘텐츠 유형입니다.",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("복사됨"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "경로를 복사할 수 없습니다. 선택하여 직접 복사해주세요.",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("경로 복사"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage("이 대화의 로그 폴더"),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "로그 설정을 불러올 수 없습니다. 다시 시도하세요.",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage("폴더 열기"),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "폴더를 열 수 없습니다. 경로를 복사해 직접 열어주세요.",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "설정을 저장할 수 없습니다. 이전 설정을 유지합니다.",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "로그를 쓸 수 없습니다. 폴더 권한과 여유 공간을 확인하세요. 모델 요청에는 영향이 없습니다.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("출력"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "이 모델이 생성할 수 있는 콘텐츠 유형입니다.",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage("모델 요청 로그"),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "이 대화의 요청과 응답만 본문을 포함하여 로컬에 저장합니다. 인증 정보와 첨부 데이터는 숨겨집니다.",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "대화별 기본값은 꺼짐입니다. 각 10 MB의 파일을 최대 5개 보관합니다.",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "모델이 처리 턴 한도에 도달했습니다. 요청을 단순화한 후 다시 시도하세요.",

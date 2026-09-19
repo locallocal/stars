@@ -34,6 +34,7 @@ final class TaskTerminalPolisherFactory {
     final session = TaskProviderSessionFactory(
       providers: providers,
       bot: bot,
+      chatId: task.chatId,
     ).open(
       task.acceptance,
       ModelRequest(

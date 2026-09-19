@@ -89,7 +89,7 @@ class VolcanoEngine extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -197,7 +197,7 @@ class VolcanoEngine extends Provider {
     };
 
     try {
-      final response = await http.post(
+      final response = await httpPost(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +210,7 @@ class VolcanoEngine extends Provider {
         final data = decodeProviderResponse(utf8.decode(response.bodyBytes));
 
         final imageUrl = data['data'][0]['url'];
-        final imageResponse = await http.get(Uri.parse(imageUrl));
+        final imageResponse = await httpGet(Uri.parse(imageUrl));
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final fileName = 'volcano_engine_image_$timestamp.png';
@@ -312,7 +312,7 @@ class VolcanoEngine extends Provider {
           })
           ..body = jsonEncode(body);
 
-    final response = await request.send();
+    final response = await sendHttpRequest(request);
     if (response.statusCode != 200) {
       final errorBody = await response.stream.bytesToString();
       throw Exception(
@@ -333,7 +333,7 @@ class VolcanoEngine extends Provider {
             : '$defaultApiVideoUrl/$taskId';
 
     for (var i = 0; i < 3000; i++) {
-      final response = await http.get(
+      final response = await httpGet(
         Uri.parse(url),
         headers: {
           'Authorization': 'Bearer ${bot.apiKey}',
@@ -357,7 +357,7 @@ class VolcanoEngine extends Provider {
 
   Future<String> _downloadVideo(String videoUrl, String outputDirPath) async {
     // 下载真正的视频文件
-    final videoResponse = await http.get(Uri.parse(videoUrl));
+    final videoResponse = await httpGet(Uri.parse(videoUrl));
     if (videoResponse.statusCode == 200) {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'volcano_engine_video_$timestamp.mp4';

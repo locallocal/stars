@@ -848,9 +848,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Los tipos de contenido que este modelo puede procesar.",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("Copiado"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "No se pudo copiar la ruta. Selecciónala y cópiala manualmente.",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("Copiar ruta"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage(
+      "Carpeta de registros de esta conversación",
+    ),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "No se pudieron cargar los ajustes. Inténtalo de nuevo.",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage(
+      "Abrir carpeta",
+    ),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "No se pudo abrir la carpeta. Copia la ruta para abrirla manualmente.",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "No se pudo guardar. Se conserva el ajuste anterior.",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "No se pudo escribir el registro. Revisa los permisos y el espacio libre. Las solicitudes no se ven afectadas.",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("Salida"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "Los tipos de contenido que este modelo puede generar.",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage(
+      "Registros de solicitudes al modelo",
+    ),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "Guarda localmente solo las solicitudes y respuestas de esta conversación, incluido el texto. Oculta credenciales y datos adjuntos.",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "Desactivado por defecto en cada conversación. Hasta 5 archivos de 10 MB cada uno.",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "El modelo alcanzó el límite de turnos de procesamiento. Simplifica la solicitud e inténtalo de nuevo.",

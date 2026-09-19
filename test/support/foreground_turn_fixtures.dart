@@ -83,10 +83,18 @@ String routeFrames(
   if (done) {'done': true},
 ].map(jsonEncode).join('\n');
 
-final class ForegroundProviders implements AiProviderRepository {
+final class ForegroundProviders
+    implements AiProviderRepository, ConversationScopedAiProviderRepository {
   ForegroundProviders(this.factory);
   final AiProvider Function(Bot) factory;
   int creates = 0;
+  final conversationScopes = <String>[];
+  @override
+  AiProviderRepository forConversation(String chatId) {
+    conversationScopes.add(chatId);
+    return this;
+  }
+
   @override
   AiProvider create(Bot bot) {
     creates++;

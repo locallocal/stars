@@ -22,6 +22,8 @@ import 'package:stars/ui/features/chat/view_models/chat_token_usage_view_model.d
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
+import 'package:stars/ui/features/chat/view_models/model_log_view_model.dart';
+import 'package:stars/ui/features/chat/views/model_log_settings.dart';
 import 'package:stars/ui/features/chat/views/chat.dart';
 import 'package:stars/ui/features/chat/views/conversation_directory_page.dart';
 import 'package:stars/ui/features/chat/views/conversation_tasks_screen.dart';
@@ -128,6 +130,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
   AppDependencies? _dependencies;
   ChatTokenUsageViewModel? _tokenUsageViewModel;
   ConversationMemoryViewModel? _memoryViewModel;
+  ModelLogViewModel? _modelLogViewModel;
   ConversationDirectoryViewModel? _conversationDirectoryViewModel;
   MessageActionViewModel? _conversationDirectoryActionViewModel;
 
@@ -153,14 +156,17 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     if (_dependencies == dependencies) return;
     _tokenUsageViewModel?.dispose();
     _memoryViewModel?.dispose();
+    _modelLogViewModel?.dispose();
     _conversationDirectoryViewModel?.dispose();
     _tokenUsageViewModel = null;
     _memoryViewModel = null;
+    _modelLogViewModel = null;
     _conversationDirectoryViewModel = null;
     _conversationDirectoryActionViewModel = null;
     _dependencies = dependencies;
     _replaceTokenUsageViewModel();
     _replaceMemoryViewModel();
+    _replaceModelLogViewModel();
     if (_conversationDirectoryOpen) _ensureConversationDirectoryViewModel();
   }
 
@@ -172,6 +178,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
       _chatPageKey = null;
       _replaceTokenUsageViewModel();
       _replaceMemoryViewModel();
+      _replaceModelLogViewModel();
       _conversationDirectoryViewModel?.dispose();
       _conversationDirectoryViewModel = null;
       _conversationDirectoryActionViewModel = null;
@@ -209,6 +216,7 @@ class _DesktopLayoutState extends State<DesktopLayout> {
     _conversationInfoScrollController.dispose();
     _tokenUsageViewModel?.dispose();
     _memoryViewModel?.dispose();
+    _modelLogViewModel?.dispose();
     _conversationDirectoryViewModel?.dispose();
     super.dispose();
   }
@@ -224,6 +232,14 @@ class _DesktopLayoutState extends State<DesktopLayout> {
             : dependencies.createChatTokenUsageViewModel(chatId);
     final viewModel = _tokenUsageViewModel;
     if (viewModel != null) unawaited(viewModel.load());
+  }
+
+  void _replaceModelLogViewModel() {
+    final chatId = widget.selectedChatId;
+    if (_modelLogViewModel?.chatId == chatId && chatId != null) return;
+    _modelLogViewModel?.dispose();
+    _modelLogViewModel =
+        chatId == null ? null : _dependencies?.createModelLogViewModel(chatId);
   }
 
   void _replaceMemoryViewModel() {

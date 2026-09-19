@@ -37,6 +37,16 @@ void main() {
           r'S\.of\([^)]*\)\s*\.\s*([A-Za-z0-9_]+)',
         ).allMatches(profileSource).map((match) => match.group(1)!).toSet();
 
+    final modelLogSource =
+        File(
+          'lib/ui/features/chat/views/model_log_settings.dart',
+        ).readAsStringSync();
+    settingsKeys.addAll(
+      RegExp(
+        r'\bs\.(model\w+)',
+      ).allMatches(modelLogSource).map((match) => match[1]!),
+    );
+    expect(settingsKeys, contains('modelRequestLogging'));
     expect(settingsKeys, contains('enterDisplayName'));
     expect(profileSource, isNot(contains('.enterBotName')));
 

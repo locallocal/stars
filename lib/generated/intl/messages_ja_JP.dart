@@ -714,9 +714,35 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "このモデルが処理できるコンテンツの種類です。",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("コピーしました"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "パスをコピーできません。選択して手動でコピーしてください。",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("パスをコピー"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage("この会話のログフォルダー"),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "ログ設定を読み込めません。再試行してください。",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage("フォルダーを開く"),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "フォルダーを開けません。パスをコピーして手動で開いてください。",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "設定を保存できません。以前の状態を維持します。",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "ログを書き込めません。権限と空き容量を確認してください。モデルの呼び出しには影響しません。",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("出力"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "このモデルが生成できるコンテンツの種類です。",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage("モデルリクエストログ"),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "この会話のリクエストと応答のみを本文を含めてローカルに保存します。認証情報と添付データは非表示になります。",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "会話ごとに初期設定はオフ。各 10 MB、最大 5 ファイルを保持します。",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "モデルの処理ターン上限に達しました。依頼を簡潔にして再試行してください。",

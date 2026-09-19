@@ -125,7 +125,7 @@ class Stability extends Provider {
       });
 
       // 发送请求并获取响应
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 200) {
         final responseData = decodeProviderResponse(response.body);

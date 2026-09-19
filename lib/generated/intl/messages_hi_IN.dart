@@ -826,9 +826,41 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelInputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "वे सामग्री प्रकार जिन्हें यह मॉडल संसाधित कर सकता है।",
     ),
+    "modelLogCopied": MessageLookupByLibrary.simpleMessage("कॉपी किया गया"),
+    "modelLogCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "पथ कॉपी नहीं हो सका। उसे चुनकर स्वयं कॉपी करें।",
+    ),
+    "modelLogCopyPath": MessageLookupByLibrary.simpleMessage("पथ कॉपी करें"),
+    "modelLogDirectory": MessageLookupByLibrary.simpleMessage(
+      "इस बातचीत का लॉग फ़ोल्डर",
+    ),
+    "modelLogLoadFailed": MessageLookupByLibrary.simpleMessage(
+      "लॉग सेटिंग लोड नहीं हो सकी। फिर से कोशिश करें।",
+    ),
+    "modelLogOpenDirectory": MessageLookupByLibrary.simpleMessage(
+      "फ़ोल्डर खोलें",
+    ),
+    "modelLogOpenFailed": MessageLookupByLibrary.simpleMessage(
+      "फ़ोल्डर नहीं खुल सका। पथ कॉपी करके स्वयं खोलें।",
+    ),
+    "modelLogSaveFailed": MessageLookupByLibrary.simpleMessage(
+      "सेटिंग सहेजी नहीं जा सकी। पिछली सेटिंग बनी रहेगी।",
+    ),
+    "modelLogWriteFailed": MessageLookupByLibrary.simpleMessage(
+      "लॉग नहीं लिखा जा सका। अनुमतियाँ और खाली स्थान जाँचें। मॉडल अनुरोध प्रभावित नहीं होते।",
+    ),
     "modelOutputModalities": MessageLookupByLibrary.simpleMessage("आउटपुट"),
     "modelOutputModalitiesDescription": MessageLookupByLibrary.simpleMessage(
       "वे सामग्री प्रकार जिन्हें यह मॉडल बना सकता है।",
+    ),
+    "modelRequestLogging": MessageLookupByLibrary.simpleMessage(
+      "मॉडल अनुरोध लॉग",
+    ),
+    "modelRequestLoggingDescription": MessageLookupByLibrary.simpleMessage(
+      "केवल इस बातचीत के अनुरोध और उत्तर पाठ सहित स्थानीय रूप से सहेजें। क्रेडेंशियल और संलग्नक डेटा छिपाए जाते हैं।",
+    ),
+    "modelRequestLoggingRetention": MessageLookupByLibrary.simpleMessage(
+      "हर बातचीत के लिए डिफ़ॉल्ट रूप से बंद। 10 MB की अधिकतम 5 फ़ाइलें रखी जाती हैं।",
     ),
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "मॉडल अपनी प्रोसेसिंग-टर्न सीमा तक पहुँच गया। अनुरोध को सरल करके फिर प्रयास करें।",

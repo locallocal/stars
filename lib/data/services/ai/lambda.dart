@@ -35,7 +35,7 @@ class Lambda extends Provider {
     final url =
         bot.baseURL.isNotEmpty ? '${bot.baseURL}models' : defaultApiModelKey;
 
-    final response = await http.get(
+    final response = await httpGet(
       Uri.parse(url),
       headers: {
         'Accept': 'application/json',
@@ -77,7 +77,7 @@ class Lambda extends Provider {
         cancelController?.close();
       });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       if (streamedResponse.statusCode != 200) {
         final errorBody = await streamedResponse.stream.bytesToString();
         throw Exception('${streamedResponse.statusCode}, $errorBody');

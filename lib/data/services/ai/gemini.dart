@@ -120,7 +120,7 @@ class Gemini extends Provider {
             : defaultApiChatUrl;
 
     final body = _generateGeminiContent(messages);
-    final response = await http.post(
+    final response = await httpPost(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: body,

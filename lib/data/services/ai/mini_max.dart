@@ -172,7 +172,7 @@ class MiniMax extends Provider {
         cancelController?.close();
       });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       if (streamedResponse.statusCode != 200) {
         final errorBody = await streamedResponse.stream.bytesToString();
         throw Exception('${streamedResponse.statusCode}, $errorBody');
@@ -280,7 +280,7 @@ class MiniMax extends Provider {
     }
 
     try {
-      final response = await http.post(
+      final response = await httpPost(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
@@ -298,7 +298,7 @@ class MiniMax extends Provider {
         }
 
         final imageUrl = data['data']['image_urls'][0];
-        final imageResponse = await http.get(Uri.parse(imageUrl));
+        final imageResponse = await httpGet(Uri.parse(imageUrl));
         if (imageResponse.statusCode == 200) {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final fileName = 'mini_max_image_$timestamp.png';
@@ -354,7 +354,7 @@ class MiniMax extends Provider {
             'audio_setting': {'format': 'mp3'},
             'output_format': 'hex',
           });
-    final response = await request.send();
+    final response = await sendHttpRequest(request);
     if (response.statusCode != 200) {
       final errorBody = await response.stream.bytesToString();
       throw Exception(
@@ -410,7 +410,7 @@ class MiniMax extends Provider {
             'lyrics': lyrics,
             'audio_setting': {'format': 'mp3'},
           });
-    final response = await request.send();
+    final response = await sendHttpRequest(request);
     if (response.statusCode != 200) {
       final errorBody = await response.stream.bytesToString();
       throw Exception(
@@ -470,7 +470,7 @@ class MiniMax extends Provider {
           })
           ..body = jsonEncode(body);
 
-    final response = await request.send();
+    final response = await sendHttpRequest(request);
     if (response.statusCode != 200) {
       final errorBody = await response.stream.bytesToString();
       throw Exception(
@@ -519,7 +519,7 @@ class MiniMax extends Provider {
     );
 
     // 发送请求
-    final response = await request.send();
+    final response = await sendHttpRequest(request);
     if (response.statusCode != 200) {
       final errorBody = await response.stream.bytesToString();
       throw Exception('获取音乐上传授权失败, ${response.statusCode}, $errorBody');
@@ -539,7 +539,7 @@ class MiniMax extends Provider {
             : '$defaultApiVideoTaskQueryUrl?task_id=$taskId';
 
     for (var i = 0; i < 3000; i++) {
-      final response = await http.get(
+      final response = await httpGet(
         Uri.parse(url),
         headers: {
           'Authorization': 'Bearer ${bot.apiKey}',
@@ -567,7 +567,7 @@ class MiniMax extends Provider {
             ? '${bot.baseURL}files/retrieve?file_id=$fileId'
             : '$defaultApiFileDownloadUrl?file_id=$fileId';
 
-    final response = await http.get(
+    final response = await httpGet(
       Uri.parse(url),
       headers: {
         'Authorization': 'Bearer ${bot.apiKey}',
@@ -585,7 +585,7 @@ class MiniMax extends Provider {
       final videoUrl = data['file']['download_url'];
 
       // 下载真正的视频文件
-      final videoResponse = await http.get(Uri.parse(videoUrl));
+      final videoResponse = await httpGet(Uri.parse(videoUrl));
       if (videoResponse.statusCode == 200) {
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final fileName = 'mini_max_video_$timestamp.mp4';

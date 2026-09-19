@@ -12,9 +12,9 @@ class AiHubMix extends Provider {
   static const String defaultApiChatUrl =
       'https://aihubmix.com/v1/chat/completions';
   AiHubMix(super.bot, {AiHubMixRequestSender? requestSender})
-    : _requestSender = requestSender ?? ((request) => request.send());
+    : _requestSender = requestSender;
 
-  final AiHubMixRequestSender _requestSender;
+  final AiHubMixRequestSender? _requestSender;
 
   @override
   bool supportWebSearch() {
@@ -109,7 +109,8 @@ class AiHubMix extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await _requestSender(request);
+      final streamedResponse =
+          await (_requestSender?.call(request) ?? sendHttpRequest(request));
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -196,7 +197,8 @@ class AiHubMix extends Provider {
             "modalities": ["text", "image"],
           });
 
-    final response = await _requestSender(request);
+    final response =
+        await (_requestSender?.call(request) ?? sendHttpRequest(request));
     if (isCancelled) {
       if (onError != null) {
         onError!('Request cancelled');

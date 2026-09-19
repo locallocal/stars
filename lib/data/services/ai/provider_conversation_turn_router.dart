@@ -26,7 +26,9 @@ final class ProviderConversationTurnRouter implements ConversationTurnRouter {
     var succeeded = false;
     try {
       request.cancellation?.throwIfCancelled();
-      provider = _providers.create(request.bot);
+      provider = _providers
+          .forConversation(request.userMessage.chatId)
+          .create(request.bot);
       final mode = provider.foregroundRoutingTransport;
       if (mode == ForegroundRoutingTransport.unavailable) {
         yield const TurnRoutingFailed(TurnRoutingFailure.unsupportedProvider);

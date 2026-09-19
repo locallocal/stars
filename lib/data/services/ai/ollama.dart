@@ -16,7 +16,7 @@ class Ollama extends Provider {
             ? '${bot.baseURL}/api/tags'
             : 'http://localhost:11434/api/tags';
 
-    final response = await http.get(Uri.parse(url));
+    final response = await httpGet(Uri.parse(url));
 
     if (response.statusCode == 200) {
       final data = decodeProviderResponse(utf8.decode(response.bodyBytes));
@@ -47,7 +47,7 @@ class Ollama extends Provider {
               'stream': true,
             });
 
-      final streamedResponse = await request.send();
+      final streamedResponse = await sendHttpRequest(request);
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(LineSplitter());

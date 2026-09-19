@@ -38,6 +38,7 @@ void main() {
     );
 
     expect(submitted, result.userMessage);
+    expect(providers.conversationScopes, ['chat']);
     expect(result.userMessage.images, ['/conversation/reference.png']);
     expect(result.response.images, ['/conversation/generated.png']);
     expect(result.response.terminalOutcome, MessageTerminalOutcome.completed);
@@ -195,7 +196,15 @@ final class _FakeAssets implements ConversationAssetRepository {
   Future<String?> selectImage() async => null;
 }
 
-final class _FakeProviders implements AiProviderRepository {
+final class _FakeProviders
+    implements AiProviderRepository, ConversationScopedAiProviderRepository {
+  final conversationScopes = <String>[];
+  @override
+  AiProviderRepository forConversation(String chatId) {
+    conversationScopes.add(chatId);
+    return this;
+  }
+
   Object? error;
 
   @override
