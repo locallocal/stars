@@ -96,7 +96,6 @@ class ChatPageState extends State<ChatPage> {
   String _streamingResponse = '';
   ModelTokenUsage _streamingTokenUsage = ModelTokenUsage.empty;
   bool _followLatest = true;
-  bool _showJumpToLatest = false;
   String? _generationError;
   String? _handledTerminalRunId;
   String? _pendingDraftText;
@@ -234,7 +233,6 @@ class ChatPageState extends State<ChatPage> {
         _historyRetryLoadsEarlier = false;
         if (!preserveViewport) {
           _followLatest = true;
-          _showJumpToLatest = false;
         }
       });
       return;
@@ -261,7 +259,6 @@ class ChatPageState extends State<ChatPage> {
         _historyRetryLoadsEarlier = false;
         if (!preserveViewport) {
           _followLatest = true;
-          _showJumpToLatest = false;
         }
       });
     } catch (error) {
@@ -352,23 +349,15 @@ class ChatPageState extends State<ChatPage> {
   }
 
   void _handleScrollPositionChanged() {
-    if (!_scrollController.hasClients) return;
+    if (!mounted || !_scrollController.hasClients) return;
 
-    final nearLatest =
+    _followLatest =
         _scrollController.position.extentBefore <= _followLatestThreshold;
     if (_scrollController.position.extentAfter <= 240 &&
         _chatViewModel.hasEarlierMessages &&
         !_isLoadingEarlier) {
       unawaited(_loadEarlierMessages());
     }
-    if (_followLatest == nearLatest && _showJumpToLatest == !nearLatest) {
-      return;
-    }
-    if (!mounted) return;
-    setState(() {
-      _followLatest = nearLatest;
-      _showJumpToLatest = !nearLatest;
-    });
   }
 
   Future<void> _loadEarlierMessages() async {
@@ -416,14 +405,6 @@ class ChatPageState extends State<ChatPage> {
         _scrollController.jumpTo(target);
       }
     });
-  }
-
-  void _jumpToLatest() {
-    setState(() {
-      _followLatest = true;
-      _showJumpToLatest = false;
-    });
-    _scheduleScrollToLatest(force: true, animate: true);
   }
 
   @override
