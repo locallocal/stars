@@ -17,7 +17,8 @@ import 'package:stars/ui/features/chat/views/conversation_tasks_page.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_execution_status.dart';
 import 'package:stars/utils/theme.dart';
 
-import '../../../../support/widget_test_support.dart' show shadHarness;
+import '../../../../support/widget_test_support.dart'
+    show shadHarness, withDesktopPlatform;
 import '../../../../support/conversation_task_repository_harness.dart'
     show changeTask, taskFixture, taskPlan, taskTool, taskTime;
 import 'conversation_task_card_test.dart' show cardSummary;
@@ -42,6 +43,61 @@ void main() {
     vm.dispose();
     await repository.events.close();
   });
+
+  for (final width in [560.0, 1200.0]) {
+    testWidgets('task scrollbar stays outside the centered cards at $width', (
+      tester,
+    ) async {
+      await withDesktopPlatform(() async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await vm.start();
+        await tester.pumpWidget(
+          shadHarness(
+            brightness: Brightness.light,
+            homeBuilder:
+                (_) => Scaffold(
+                  body: ConversationTasksPage(
+                    viewModel: vm,
+                    onAction: (_, _) {},
+                  ),
+                ),
+          ),
+        );
+        repository.events.add([
+          for (var index = 0; index < 20; index++)
+            _summary('task-$index', 'Report $index', index),
+        ]);
+        await tester.pumpAndSettle();
+        final list = find.byKey(const ValueKey('conversation-tasks-list'));
+        final controller = tester.widget<ListView>(list).controller!;
+        final bar = find.byWidgetPredicate(
+          (widget) => widget is Scrollbar && widget.controller == controller,
+        );
+        expect(bar, findsOneWidget);
+        expect(tester.getRect(bar).right, width);
+        expect(tester.getRect(bar).left, 0);
+        final cardRect = tester.getRect(
+          find.byType(ConversationTaskCard).first,
+        );
+        final searchRect = tester.getRect(
+          find.byKey(const ValueKey('conversation-tasks-search')),
+        );
+        expect(cardRect.left, closeTo(searchRect.left, .01));
+        expect(
+          cardRect.width,
+          lessThanOrEqualTo(StarsDesktopThemeSpec.contentMaxWidth),
+        );
+        expect(width - cardRect.right, greaterThanOrEqualTo(32));
+        await tester.drag(list, const Offset(0, -300));
+        await tester.pumpAndSettle();
+        expect(controller.offset, greaterThan(0));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      });
+    });
+  }
 
   testWidgets(
     'task expansion loads persisted details and reopening uses the cache',

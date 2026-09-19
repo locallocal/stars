@@ -5,45 +5,18 @@ part of 'chat.dart';
 
 extension _ChatPageWorkspace on ChatPageState {
   Widget _buildDesktopWorkspace(BuildContext context, double? fontSize) {
-    return Container(
+    return ColoredBox(
       color: StarsDesktopTokens.of(context).contentBackground,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: StarsDesktopTokens.of(context).contentBackground,
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  StarsDesktopThemeSpec.formPagePadding.left,
-                  0,
-                  StarsDesktopThemeSpec.formPagePadding.right,
-                  0,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: StarsDesktopThemeSpec.contentMaxWidth,
-                    ),
-                    child: SizedBox(
-                      key: const ValueKey<String>('desktop-chat-content'),
-                      width: double.infinity,
-                      height: double.infinity,
-                      child: _buildConversationBody(
-                        context,
-                        fontSize,
-                        isDesktop: true,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+      child: Column(
+        children: [
+          Expanded(
+            child: SizedBox.expand(
+              key: const ValueKey<String>('desktop-chat-content'),
+              child: _buildConversationBody(context, fontSize, isDesktop: true),
             ),
-            _buildDesktopInputSection(context),
-          ],
-        ),
+          ),
+          _buildDesktopInputSection(context),
+        ],
       ),
     );
   }
