@@ -1228,5 +1228,21 @@
             "status": {"type": "String"},
             "reason": {"type": "String"}
         }
+    },
+    "userMessageNavigation": "User messages",
+    "jumpToUserMessage": "Jump to user message {index}: {summary}",
+    "@userMessageNavigation": {
+        "description": "Accessible label for the user-message anchor rail beside the conversation"
+    },
+    "@jumpToUserMessage": {
+        "description": "Accessible action label for a message anchor",
+        "placeholders": {
+            "index": {
+                "type": "int"
+            },
+            "summary": {
+                "type": "String"
+            }
+        }
     }
 }

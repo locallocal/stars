@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "이 응답의 검증이 완료되지 않았습니다.",
     "answerTrustSemanticLabel": "{status}. {reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "사용자 메시지",
+    "jumpToUserMessage": "사용자 메시지 {index}(으)로 이동: {summary}"
 }

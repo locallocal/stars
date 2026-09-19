@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "La vérification de cette réponse n'a pas été effectuée.",
     "answerTrustSemanticLabel": "{status}. {reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "Messages utilisateur",
+    "jumpToUserMessage": "Aller au message utilisateur {index} : {summary}"
 }

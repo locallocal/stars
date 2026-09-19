@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "La verifica di questa risposta non è stata completata.",
     "answerTrustSemanticLabel": "{status}. {reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "Messaggi utente",
+    "jumpToUserMessage": "Vai al messaggio utente {index}: {summary}"
 }

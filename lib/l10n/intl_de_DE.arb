@@ -1012,5 +1012,7 @@
     "answerTrustReasonUnavailable": "Die Verifizierung dieser Antwort wurde nicht abgeschlossen.",
     "answerTrustSemanticLabel": "{status}. {reason}",
     "maximizePreview": "Maximize preview",
-    "restorePreview": "Restore preview"
+    "restorePreview": "Restore preview",
+    "userMessageNavigation": "Benutzernachrichten",
+    "jumpToUserMessage": "Zu Benutzernachricht {index} springen: {summary}"
 }
