@@ -1,5 +1,6 @@
 import 'dart:ui' show PointerDeviceKind;
 
+import 'package:flutter/gestures.dart' show PointerScrollEvent;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,6 +79,204 @@ Finder preview(int index) =>
     find.byKey(ValueKey('message-anchor-preview-message-$index'));
 
 void main() {
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+      'distant anchors use bounded arrival motion (reduced: $reduceMotion)',
+      (tester) async {
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        var scrollStarts = 0;
+        final messages = [for (var i = 0; i < 300; i++) message(i)];
+        await tester.pumpWidget(
+          NotificationListener<ScrollStartNotification>(
+            onNotification: (notification) {
+              if (notification.depth == 0) scrollStarts++;
+              return false;
+            },
+            child: harness(messages, controller, reduceMotion: reduceMotion),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final rail = find.byKey(const ValueKey('message-anchor-rail'));
+        final scrollbar = find.byKey(
+          const ValueKey('conversation-messages-scrollbar'),
+        );
+        final railRect = tester.getRect(rail);
+        final scrollbarRect = tester.getRect(scrollbar);
+
+        // Exercise both directions without building the intervening history.
+        for (final target in [10, 280]) {
+          final row = find.byKey(ValueKey('message-$target'));
+          expect(row, findsNothing);
+          scrollStarts = 0;
+          await tester.tap(anchor(target));
+          await tester.pump();
+          expect(row, findsOneWidget);
+          final arrivalTop = tester.getRect(row).top;
+          expect(tester.getRect(rail), railRect);
+          expect(tester.getRect(scrollbar), scrollbarRect);
+          if (reduceMotion) {
+            expect(arrivalTop, closeTo(0, 1));
+            expect(controller.position.isScrollingNotifier.value, isFalse);
+          } else {
+            expect(arrivalTop.abs(), inInclusiveRange(1, 64));
+            expect(arrivalTop, target == 10 ? isNegative : isPositive);
+            await tester.pump(const Duration(milliseconds: 16));
+            await tester.pump(const Duration(milliseconds: 60));
+            final movingTop = tester.getRect(row).top;
+            expect(movingTop.abs(), lessThan(arrivalTop.abs()));
+            expect(movingTop.abs(), greaterThan(0));
+          }
+          await tester.pumpAndSettle();
+          expect(tester.getRect(row).top, closeTo(0, 1));
+          expect(
+            scrollStarts,
+            1,
+            reason:
+                'The arrival animation must not restart scrolling per frame.',
+          );
+          expect(tester.takeException(), isNull);
+        }
+      },
+    );
+  }
+
+  testWidgets('manual scrolling ends a distant anchor arrival immediately', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      harness([for (var i = 0; i < 100; i++) message(i)], controller),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(anchor(10));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    final row = find.byKey(const ValueKey('message-10'));
+    expect(tester.getRect(row).top, isNegative);
+
+    await tester.sendEventToBinding(
+      const PointerScrollEvent(
+        position: Offset(300, 300),
+        scrollDelta: Offset(0, -40),
+      ),
+    );
+    await tester.pump();
+    final stoppedRect = tester.getRect(row);
+    final stoppedOffset = controller.offset;
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.getRect(row), stoppedRect);
+    expect(controller.offset, stoppedOffset);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('enabling reduced motion stops an active anchor arrival', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    final messages = [for (var i = 0; i < 100; i++) message(i)];
+    await tester.pumpWidget(harness(messages, controller));
+    await tester.pumpAndSettle();
+    await tester.tap(anchor(10));
+    await tester.pump();
+    final row = find.byKey(const ValueKey('message-10'));
+    expect(tester.getRect(row).top, isNegative);
+
+    await tester.pumpWidget(harness(messages, controller, reduceMotion: true));
+    expect(tester.getRect(row).top, closeTo(0, 1));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.getRect(row).top, closeTo(0, 1));
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+      'nearby anchor motion is interruptible (reduced: $reduceMotion)',
+      (tester) async {
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        await tester.pumpWidget(
+          harness(
+            [for (var i = 0; i < 20; i++) message(i, content: 'Item $i')],
+            controller,
+            reduceMotion: reduceMotion,
+          ),
+        );
+        await tester.pumpAndSettle();
+        controller.jumpTo(400);
+        await tester.pumpAndSettle();
+        // Use a visible message with room to animate toward the viewport top.
+        final initialOffset = controller.offset;
+        final target = [for (var i = 0; i < 20; i += 2) i].firstWhere((index) {
+          final row = find.byKey(ValueKey('message-$index'));
+          if (row.evaluate().isEmpty) return false;
+          final top = tester.getRect(row).top;
+          return top > 30 && top < initialOffset;
+        });
+        await tester.tap(anchor(target));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 40));
+        expect(controller.offset, lessThan(initialOffset));
+        expect(controller.position.isScrollingNotifier.value, !reduceMotion);
+
+        await tester.sendEventToBinding(
+          const PointerScrollEvent(
+            position: Offset(300, 300),
+            scrollDelta: Offset(0, -40),
+          ),
+        );
+        await tester.pump();
+        final interruptedOffset = controller.offset;
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(controller.offset, closeTo(interruptedOffset, .01));
+        expect(controller.position.isScrollingNotifier.value, isFalse);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('indexed anchors follow history and streaming insertions', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      harness([for (var i = 20; i < 80; i++) message(i)], controller),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(anchor(20));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(
+      harness(
+        [for (var i = 0; i < 80; i++) message(i)],
+        controller,
+        streaming: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(anchor(2));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byKey(const ValueKey('message-2'))).top,
+      closeTo(0, 1),
+    );
+
+    await tester.pumpWidget(
+      harness([for (var i = 0; i < 100; i++) message(i)], controller),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(anchor(88));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byKey(const ValueKey('message-88'))).top,
+      closeTo(0, 1),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('clicked anchors reset when the mouse leaves', (tester) async {
     final controller = ScrollController();
     addTearDown(controller.dispose);

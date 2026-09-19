@@ -63,6 +63,7 @@ dependencies:
   flutter_secure_storage: ^11.0.0
   cryptography: ^2.7.0
   highlight: ^0.7.0
+  super_sliver_list: ^0.4.1
 
 dev_dependencies:
   flutter_test:

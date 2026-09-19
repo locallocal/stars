@@ -28,6 +28,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:super_sliver_list/super_sliver_list.dart';
 import 'package:stars/ui/features/chat/views/local_html_file_preview.dart';
 
 import 'package:stars/ui/features/chat/views/execution_status_card.dart';
@@ -94,15 +95,23 @@ class MessageList extends StatefulWidget {
   State<MessageList> createState() => _MessageListState();
 }
 
-class _MessageListState extends State<MessageList> {
+class _MessageListState extends State<MessageList>
+    with SingleTickerProviderStateMixin {
   late List<MessageProcessInfo> _displayedProcessInfo;
   late List<String> _userContextByMessage;
   List<MessageSkillActivation> _streamingSkillActivations = const [];
   List<MessageToolCall> _streamingSkillToolCalls = const [];
   final _messageAnchorKeys = <String, GlobalKey>{};
+  final _messageListController = ListController();
   List<String> _messageAnchorIds = const [];
+  Map<String, int> _messageIndexById = const {};
   List<MessageAnchorEntry> _messageAnchors = const [];
-  int _anchorNavigationEpoch = 0;
+  final _anchorArrivalTween = Tween<Offset>(
+    begin: Offset.zero,
+    end: Offset.zero,
+  );
+  late final AnimationController _anchorArrivalController;
+  late final Animation<Offset> _anchorArrivalAnimation;
 
   List<Message> get messages => widget.messages;
   ScrollController get scrollController => widget.scrollController;
@@ -121,7 +130,28 @@ class _MessageListState extends State<MessageList> {
   @override
   void initState() {
     super.initState();
+    _anchorArrivalController = AnimationController(
+      vsync: this,
+      value: 1,
+      duration: _messageAnchorMotionDuration,
+    );
+    _anchorArrivalAnimation = _anchorArrivalTween
+        .chain(CurveTween(curve: Curves.easeOutCubic))
+        .animate(_anchorArrivalController);
     _indexMessagePresentation();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) _finishAnchorArrival();
+  }
+
+  @override
+  void dispose() {
+    _anchorArrivalController.dispose();
+    _messageListController.dispose();
+    super.dispose();
   }
 
   @override
@@ -208,179 +238,191 @@ class _MessageListState extends State<MessageList> {
             key: const ValueKey<String>('conversation-messages-scrollbar'),
             controller: scrollController,
             scrollbarOrientation: ScrollbarOrientation.right,
-            child: ListView.builder(
-              controller: scrollController,
-              reverse: true,
-              itemCount: messages.length + (isStreaming ? 1 : 0),
-              findChildIndexCallback: (key) {
-                if (key == const ValueKey<String>('streaming-message')) {
-                  return isStreaming ? 0 : null;
-                }
-                if (key is! ValueKey<String>) return null;
-                final index = _messageAnchorIds.indexOf(key.value);
-                return index < 0
-                    ? null
-                    : messages.length - 1 - index + (isStreaming ? 1 : 0);
-              },
-              padding: EdgeInsets.fromLTRB(
-                isDesktop ? StarsDesktopThemeSpec.formPagePadding.left : 12,
-                isDesktop ? 12 : 8,
-                isDesktop ? StarsDesktopThemeSpec.formPagePadding.right : 12,
-                isDesktop ? 36 : 8,
-              ),
-              itemBuilder: (context, index) {
-                if (isStreaming && index == 0) {
-                  return RepaintBoundary(
-                    key: const ValueKey<String>('streaming-message'),
-                    child: _buildMessageRow(
-                      context,
-                      bubble: _MessageContent(
-                        isCurrentUser: false,
-                        isDesktop: isDesktop,
-                        isStreaming: true,
-                        reasoning:
-                            widget.strictGroundingMode
-                                ? ''
-                                : deepThinking == true
-                                ? reasoningResponse ?? ''
-                                : '',
-                        processInfo: _replaceSkillActivations(
-                          _replaceToolCalls(
-                            streamingProcessInfo,
-                            _mergeToolCalls(
-                              streamingProcessInfo.toolCalls,
-                              _streamingSkillToolCalls,
+            child: _buildAnchorArrival(
+              child: SuperListView.builder(
+                controller: scrollController,
+                listController: _messageListController,
+                delayPopulatingCacheArea: true,
+                physics: const SuperRangeMaintainingScrollPhysics(),
+                reverse: true,
+                itemCount: messages.length + (isStreaming ? 1 : 0),
+                findChildIndexCallback: (key) {
+                  if (key == const ValueKey<String>('streaming-message')) {
+                    return isStreaming ? 0 : null;
+                  }
+                  if (key is! ValueKey<String>) return null;
+                  final index = _messageIndexById[key.value];
+                  return index == null
+                      ? null
+                      : messages.length - 1 - index + (isStreaming ? 1 : 0);
+                },
+                padding: EdgeInsets.fromLTRB(
+                  isDesktop ? StarsDesktopThemeSpec.formPagePadding.left : 12,
+                  isDesktop ? 12 : 8,
+                  isDesktop ? StarsDesktopThemeSpec.formPagePadding.right : 12,
+                  isDesktop ? 36 : 8,
+                ),
+                itemBuilder: (context, index) {
+                  if (isStreaming && index == 0) {
+                    return RepaintBoundary(
+                      key: const ValueKey<String>('streaming-message'),
+                      child: _buildMessageRow(
+                        context,
+                        bubble: _MessageContent(
+                          isCurrentUser: false,
+                          isDesktop: isDesktop,
+                          isStreaming: true,
+                          reasoning:
+                              widget.strictGroundingMode
+                                  ? ''
+                                  : deepThinking == true
+                                  ? reasoningResponse ?? ''
+                                  : '',
+                          processInfo: _replaceSkillActivations(
+                            _replaceToolCalls(
+                              streamingProcessInfo,
+                              _mergeToolCalls(
+                                streamingProcessInfo.toolCalls,
+                                _streamingSkillToolCalls,
+                              ),
+                            ),
+                            _mergeSkillActivations(
+                              streamingProcessInfo.skillActivations,
+                              _streamingSkillActivations,
                             ),
                           ),
-                          _mergeSkillActivations(
-                            streamingProcessInfo.skillActivations,
-                            _streamingSkillActivations,
-                          ),
+                          tokenUsage: streamingTokenUsage,
+                          showReasoning: showReasoning,
+                          showVerificationStatus: showVerificationStatus,
+                          showExecutionStatus: showExecutionStatus,
+                          content:
+                              widget.strictGroundingMode
+                                  ? ''
+                                  : streamingResponse,
+                          files: widget.streamingFiles,
+                          actionViewModel: widget.actionViewModel,
                         ),
-                        tokenUsage: streamingTokenUsage,
-                        showReasoning: showReasoning,
-                        showVerificationStatus: showVerificationStatus,
-                        showExecutionStatus: showExecutionStatus,
-                        content:
-                            widget.strictGroundingMode ? '' : streamingResponse,
-                        files: widget.streamingFiles,
-                        actionViewModel: widget.actionViewModel,
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                final messageIndex =
-                    messages.length - 1 - index + (isStreaming ? 1 : 0);
-                final message = messages[messageIndex];
-                final isMe = message.senderId == currentUserId;
-                final strictPresentation =
-                    !isMe &&
-                            message.usesStrictGrounding(
-                              widget.strictGroundingMode,
-                            )
-                        ? const StrictGroundingPolicy().present(
-                          message,
-                          userMessage: _userContextByMessage[messageIndex],
-                        )
-                        : null;
-                final displayedContent = _messageDisplayContent(
-                  context,
-                  message,
-                  strictPresentation,
-                );
-                final exportContent = isMe ? message.content : displayedContent;
-                Widget bubble = _MessageContent(
-                  isCurrentUser: isMe,
-                  isDesktop: isDesktop,
-                  reasoning:
-                      widget.strictGroundingMode && !isMe
-                          ? ''
-                          : message.reasoning,
-                  processInfo: _displayedProcessInfo[messageIndex],
-                  tokenUsage: message.tokenUsage,
-                  showReasoning: showReasoning && !isMe,
-                  showVerificationStatus:
-                      message.showsVerificationStatus(showVerificationStatus) &&
-                      !isMe,
-                  showExecutionStatus: showExecutionStatus && !isMe,
-                  content: strictPresentation?.content ?? displayedContent,
-                  strictGroundingNotice: _messageStrictGroundingNotice(
+                  final messageIndex =
+                      messages.length - 1 - index + (isStreaming ? 1 : 0);
+                  final message = messages[messageIndex];
+                  final isMe = message.senderId == currentUserId;
+                  final strictPresentation =
+                      !isMe &&
+                              message.usesStrictGrounding(
+                                widget.strictGroundingMode,
+                              )
+                          ? const StrictGroundingPolicy().present(
+                            message,
+                            userMessage: _userContextByMessage[messageIndex],
+                          )
+                          : null;
+                  final displayedContent = _messageDisplayContent(
                     context,
                     message,
                     strictPresentation,
-                  ),
-                  images: message.images,
-                  files: message.files,
-                  sourceMessage: message,
-                  audio: message.audio,
-                  music: message.music,
-                  video: message.video,
-                  grounding: message.grounding,
-                  strictGroundingMode: message.usesStrictGrounding(
-                    widget.strictGroundingMode,
-                  ),
-                  hasNotFactCheckedContent:
-                      strictPresentation?.hasNotFactCheckedContent ??
-                      _hasNotFactCheckedContent(message),
-                  exportTrustAnnotation:
-                      isMe
-                          ? ''
-                          : _messageTrustExportAnnotation(context, message),
-                  terminalOutcome: message.terminalOutcome,
-                  hasPartialContent: message.hasPartialContent,
-                  actionViewModel: widget.actionViewModel,
-                );
-                if (message.taskMessageKind == TaskMessageKind.status) {
-                  bubble = _MessageBubbleSurface(
+                  );
+                  final exportContent =
+                      isMe ? message.content : displayedContent;
+                  Widget bubble = _MessageContent(
                     isCurrentUser: isMe,
                     isDesktop: isDesktop,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (final summary in message.taskStatusSummaries)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: ConversationTaskCard(
-                              summary: summary,
-                              historical: true,
+                    reasoning:
+                        widget.strictGroundingMode && !isMe
+                            ? ''
+                            : message.reasoning,
+                    processInfo: _displayedProcessInfo[messageIndex],
+                    tokenUsage: message.tokenUsage,
+                    showReasoning: showReasoning && !isMe,
+                    showVerificationStatus:
+                        message.showsVerificationStatus(
+                          showVerificationStatus,
+                        ) &&
+                        !isMe,
+                    showExecutionStatus: showExecutionStatus && !isMe,
+                    content: strictPresentation?.content ?? displayedContent,
+                    strictGroundingNotice: _messageStrictGroundingNotice(
+                      context,
+                      message,
+                      strictPresentation,
+                    ),
+                    images: message.images,
+                    files: message.files,
+                    sourceMessage: message,
+                    audio: message.audio,
+                    music: message.music,
+                    video: message.video,
+                    grounding: message.grounding,
+                    strictGroundingMode: message.usesStrictGrounding(
+                      widget.strictGroundingMode,
+                    ),
+                    hasNotFactCheckedContent:
+                        strictPresentation?.hasNotFactCheckedContent ??
+                        _hasNotFactCheckedContent(message),
+                    exportTrustAnnotation:
+                        isMe
+                            ? ''
+                            : _messageTrustExportAnnotation(context, message),
+                    terminalOutcome: message.terminalOutcome,
+                    hasPartialContent: message.hasPartialContent,
+                    actionViewModel: widget.actionViewModel,
+                  );
+                  if (message.taskMessageKind == TaskMessageKind.status) {
+                    bubble = _MessageBubbleSurface(
+                      isCurrentUser: isMe,
+                      isDesktop: isDesktop,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final summary in message.taskStatusSummaries)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: ConversationTaskCard(
+                                summary: summary,
+                                historical: true,
+                              ),
                             ),
-                          ),
-                        Text(message.content),
-                      ],
+                          Text(message.content),
+                        ],
+                      ),
+                    );
+                  }
+                  return RepaintBoundary(
+                    key: ValueKey<String>(_messageAnchorIds[messageIndex]),
+                    child: KeyedSubtree(
+                      key: _messageAnchorKeys[_messageAnchorIds[messageIndex]],
+                      child: _buildMessageRow(
+                        context,
+                        isCurrentUser: isMe,
+                        bubble:
+                            isDesktop
+                                ? _DesktopMessageActions(
+                                  content: exportContent,
+                                  isCurrentUser: isMe,
+                                  timestamp: message.timestamp,
+                                  child: bubble,
+                                )
+                                : GestureDetector(
+                                  onLongPress:
+                                      exportContent.isEmpty
+                                          ? null
+                                          : () {
+                                            Clipboard.setData(
+                                              ClipboardData(
+                                                text: exportContent,
+                                              ),
+                                            );
+                                          },
+                                  child: bubble,
+                                ),
+                      ),
                     ),
                   );
-                }
-                return RepaintBoundary(
-                  key: ValueKey<String>(_messageAnchorIds[messageIndex]),
-                  child: KeyedSubtree(
-                    key: _messageAnchorKeys[_messageAnchorIds[messageIndex]],
-                    child: _buildMessageRow(
-                      context,
-                      isCurrentUser: isMe,
-                      bubble:
-                          isDesktop
-                              ? _DesktopMessageActions(
-                                content: exportContent,
-                                isCurrentUser: isMe,
-                                timestamp: message.timestamp,
-                                child: bubble,
-                              )
-                              : GestureDetector(
-                                onLongPress:
-                                    exportContent.isEmpty
-                                        ? null
-                                        : () {
-                                          Clipboard.setData(
-                                            ClipboardData(text: exportContent),
-                                          );
-                                        },
-                                child: bubble,
-                              ),
-                    ),
-                  ),
-                );
-              },
+                },
+              ),
             ),
           ),
         ),
