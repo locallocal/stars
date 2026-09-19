@@ -8,6 +8,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/ui/features/chat/views/message_anchor_rail.dart';
 import 'package:stars/ui/features/chat/views/message_avatar.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/utils/theme.dart';
 
 import '../../../../support/widget_test_support.dart' show shadHarness;
 
@@ -34,29 +35,36 @@ Widget harness(
 }) => shadHarness(
   brightness: brightness,
   homeBuilder:
-      (context) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
-        child: Scaffold(
-          body: Column(
-            children: [
-              MessageList(
-                messages: messages,
-                scrollController: controller,
-                currentUserId: 'me',
-                currentUserProfile: Profile(
-                  name: 'Alex',
-                  avatar: '',
-                  fontSize: 14,
-                  themeMode: 0,
-                  language: 'en',
-                  createTimestamp: DateTime(2026),
-                  modifyTimestamp: DateTime(2026),
+      (context) => ShadTheme(
+        // The shared harness disables tooltip effects. Exercise the real
+        // animation theme here so intermediate-frame failures stay covered.
+        data: buildStarsShadTheme(brightness: brightness, fontSize: 16),
+        child: MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
+          child: Scaffold(
+            body: Column(
+              children: [
+                MessageList(
+                  messages: messages,
+                  scrollController: controller,
+                  currentUserId: 'me',
+                  currentUserProfile: Profile(
+                    name: 'Alex',
+                    avatar: '',
+                    fontSize: 14,
+                    themeMode: 0,
+                    language: 'en',
+                    createTimestamp: DateTime(2026),
+                    modifyTimestamp: DateTime(2026),
+                  ),
+                  isDesktop: desktop,
+                  isStreaming: streaming,
+                  streamingResponse: streaming ? 'Incoming reply' : '',
                 ),
-                isDesktop: desktop,
-                isStreaming: streaming,
-                streamingResponse: streaming ? 'Incoming reply' : '',
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -68,6 +76,59 @@ Finder line(int index) =>
     find.byKey(ValueKey('message-anchor-line-message-$index'));
 
 void main() {
+  for (final reduceMotion in [false, true]) {
+    testWidgets(
+      'anchor tooltip survives rebuilds during animation (reduced: $reduceMotion)',
+      (tester) async {
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        final messages = [for (var i = 0; i < 8; i++) message(i)];
+        await tester.pumpWidget(
+          harness(messages, controller, reduceMotion: reduceMotion),
+        );
+        await tester.pumpAndSettle();
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        await mouse.addPointer(location: Offset.zero);
+        addTearDown(mouse.removePointer);
+        await mouse.moveTo(tester.getCenter(anchor(2)));
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 16));
+        expect(
+          find.byKey(const ValueKey('message-anchor-preview-message-2')),
+          findsOneWidget,
+        );
+
+        // New stream snapshots rebuild an open tooltip before its fade completes.
+        for (var frame = 0; frame < 10; frame++) {
+          await tester.pumpWidget(
+            harness(
+              [...messages],
+              controller,
+              reduceMotion: reduceMotion,
+              streaming: true,
+            ),
+          );
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(
+            tester.takeException(),
+            isNull,
+            reason: 'animation frame $frame',
+          );
+        }
+        for (final index in [4, 6, 2]) {
+          await mouse.moveTo(tester.getCenter(anchor(index)));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 16));
+          expect(tester.takeException(), isNull);
+        }
+        await mouse.moveTo(Offset.zero);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   for (final width in [800.0, 1400.0]) {
     testWidgets('anchors fit between the avatars and scrollbar at $width', (
       tester,

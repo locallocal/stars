@@ -117,7 +117,6 @@ extension ChatPageSendCommands on ChatPageState {
           _selectedImages.clear();
           _selectedFiles.clear();
           _followLatest = true;
-          _showJumpToLatest = false;
         });
         _scheduleScrollToLatest(force: true, animate: true);
       }

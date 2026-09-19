@@ -135,34 +135,7 @@ extension _ChatPageWorkspace on ChatPageState {
               ],
             );
 
-    return Stack(
-      children: [
-        Positioned.fill(child: conversation),
-        if (_showJumpToLatest && _messages.isNotEmpty)
-          Positioned(
-            right: isDesktop ? 20 : 12,
-            bottom: _isTyping ? 60 : 12,
-            child:
-                isDesktop
-                    ? ShadButton.secondary(
-                      size: ShadButtonSize.sm,
-                      onPressed: _jumpToLatest,
-                      leading: const Icon(LucideIcons.arrowDown, size: 16),
-                      child: Text(S.of(context).jumpToLatest),
-                    )
-                    : FilledButton.tonalIcon(
-                      onPressed: _jumpToLatest,
-                      icon: const Icon(Icons.arrow_downward_rounded, size: 16),
-                      label: Text(S.of(context).jumpToLatest),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 32),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-          ),
-      ],
-    );
+    return conversation;
   }
 
   Widget _buildAttachmentsBar({bool desktopMode = false}) {

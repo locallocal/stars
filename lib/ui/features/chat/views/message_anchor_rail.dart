@@ -201,6 +201,7 @@ class _MessageAnchorTick extends StatefulWidget {
 }
 
 class _MessageAnchorTickState extends State<_MessageAnchorTick> {
+  static const _previewDuration = Duration(milliseconds: 120);
   final _focusNode = FocusNode();
 
   @override
@@ -220,8 +221,28 @@ class _MessageAnchorTickState extends State<_MessageAnchorTick> {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return ShadTooltip(
       focusNode: _focusNode,
-      duration:
-          reduceMotion ? Duration.zero : const Duration(milliseconds: 120),
+      // ShadTooltip and its effects share a controller. Their durations must
+      // agree even when an open tooltip rebuilds during a streaming update.
+      duration: _previewDuration,
+      effects:
+          reduceMotion
+              ? const []
+              : const [
+                FadeEffect(
+                  duration: _previewDuration,
+                  curve: Curves.easeOutCubic,
+                ),
+                ScaleEffect(
+                  duration: _previewDuration,
+                  begin: Offset(.95, .95),
+                  end: Offset(1, 1),
+                ),
+                MoveEffect(
+                  duration: _previewDuration,
+                  begin: Offset(0, 2),
+                  end: Offset.zero,
+                ),
+              ],
       anchor: ShadAnchor(
         overlayAlignment: Alignment.centerLeft,
         childAlignment: widget.previewAlignment,
