@@ -9,7 +9,7 @@ import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_execution_section.dart';
 import 'package:stars/utils/theme.dart';
 
-/// Shares the directory page's width, spacing and workspace surface.
+/// Keeps the scroll viewport full-width while centering its page contents.
 final class ConversationTasksPage extends StatefulWidget {
   const ConversationTasksPage({
     super.key,
@@ -111,47 +111,66 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
     final content = ColoredBox(
       key: const ValueKey('conversation-tasks-page'),
       color: StarsDesktopThemeSpec.workspaceSurface(context),
-      child: Padding(
-        padding:
-            widget.embedded
-                ? StarsDesktopThemeSpec.profilePagePadding
-                : const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            key: const ValueKey('conversation-tasks-content'),
-            constraints: const BoxConstraints(
-              maxWidth: StarsDesktopThemeSpec.contentMaxWidth,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (widget.embedded) ...[
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final pagePadding =
+              widget.embedded
+                  ? StarsDesktopThemeSpec.profilePagePadding
+                  : const EdgeInsets.all(16);
+          final centeredInset =
+              (constraints.maxWidth - StarsDesktopThemeSpec.contentMaxWidth) /
+              2;
+          final horizontalInset =
+              centeredInset > pagePadding.left
+                  ? centeredInset
+                  : pagePadding.left;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalInset,
+                  pagePadding.top,
+                  horizontalInset,
+                  32,
+                ),
+                child: Column(
+                  key: const ValueKey('conversation-tasks-content'),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (widget.embedded) ...[
+                      Text(
+                        words.tasks,
+                        style: StarsDesktopThemeSpec.pageTitleStyle(context),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
                     Text(
-                      words.tasks,
-                      style: StarsDesktopThemeSpec.pageTitleStyle(context),
+                      words.pageDescription,
+                      style: StarsDesktopThemeSpec.bodyStyle(context)?.copyWith(
+                        color: StarsDesktopThemeSpec.mutedText(context),
+                      ),
                     ),
-                    const SizedBox(height: 6),
                   ],
-                  Text(
-                    words.pageDescription,
-                    style: StarsDesktopThemeSpec.bodyStyle(context)?.copyWith(
-                      color: StarsDesktopThemeSpec.mutedText(context),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Expanded(
-                    child: ListenableBuilder(
-                      listenable: widget.viewModel,
-                      builder: (context, _) => _browser(context, words),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: pagePadding.bottom),
+                  child: ListenableBuilder(
+                    listenable: widget.viewModel,
+                    builder:
+                        (context, _) => _browser(
+                          context,
+                          words,
+                          horizontalInset: horizontalInset,
+                        ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
     return widget.embedded
@@ -162,7 +181,11 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
         );
   }
 
-  Widget _browser(BuildContext context, TaskProgressStrings words) {
+  Widget _browser(
+    BuildContext context,
+    TaskProgressStrings words, {
+    required double horizontalInset,
+  }) {
     final vm = widget.viewModel;
     final state = vm.state;
     final summaries = vm.visibleSummaries;
@@ -200,41 +223,50 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LayoutBuilder(
-          builder:
-              (context, constraints) =>
-                  constraints.maxWidth < 600
-                      ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          search,
-                          const SizedBox(height: 10),
-                          Align(alignment: Alignment.centerRight, child: sort),
-                        ],
-                      )
-                      : Row(
-                        children: [
-                          Expanded(child: search),
-                          const SizedBox(width: 12),
-                          sort,
-                        ],
-                      ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalInset),
+          child: LayoutBuilder(
+            builder:
+                (context, constraints) =>
+                    constraints.maxWidth < 600
+                        ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            search,
+                            const SizedBox(height: 10),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: sort,
+                            ),
+                          ],
+                        )
+                        : Row(
+                          children: [
+                            Expanded(child: search),
+                            const SizedBox(width: 12),
+                            sort,
+                          ],
+                        ),
+          ),
         ),
         const SizedBox(height: 16),
         if (state.error) ...[
-          ShadAlert.destructive(
-            key: const ValueKey('conversation-tasks-error'),
-            icon: const Icon(LucideIcons.circleAlert),
-            title: Text(words.commandFailed),
-            description:
-                state.summaries.isEmpty
-                    ? ShadButton.outline(
-                      key: const ValueKey('conversation-tasks-retry-load'),
-                      size: ShadButtonSize.sm,
-                      onPressed: vm.start,
-                      child: Text(S.of(context).retry),
-                    )
-                    : null,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalInset),
+            child: ShadAlert.destructive(
+              key: const ValueKey('conversation-tasks-error'),
+              icon: const Icon(LucideIcons.circleAlert),
+              title: Text(words.commandFailed),
+              description:
+                  state.summaries.isEmpty
+                      ? ShadButton.outline(
+                        key: const ValueKey('conversation-tasks-retry-load'),
+                        size: ShadButtonSize.sm,
+                        onPressed: vm.start,
+                        child: Text(S.of(context).retry),
+                      )
+                      : null,
+            ),
           ),
           const SizedBox(height: 12),
         ],
@@ -274,57 +306,74 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                       ],
                     ),
                   )
-                  : Scrollbar(
-                    controller: _scrollController,
-                    child: ListView.separated(
-                      key: const ValueKey('conversation-tasks-list'),
+                  : ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(
+                      context,
+                    ).copyWith(scrollbars: false),
+                    child: Scrollbar(
+                      key: const ValueKey('conversation-tasks-scrollbar'),
                       controller: _scrollController,
-                      padding: const EdgeInsets.only(bottom: 16),
-                      itemCount: summaries.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final summary = summaries[index];
-                        return ConversationTaskCard(
-                          key: ValueKey('task-${summary.taskId}'),
-                          summary: summary,
-                          expansionController: _expansionController,
-                          executionDetails:
-                              _expansionController.value.contains(
-                                    summary.taskId,
-                                  )
-                                  ? ConversationTaskExecutionSection(
-                                    key: ValueKey(
-                                      'task-execution-${summary.taskId}',
-                                    ),
-                                    state: vm.executionFor(summary.taskId),
-                                    onRetry:
-                                        () => vm.loadExecution(
-                                          summary.taskId,
-                                          force: true,
-                                        ),
-                                  )
-                                  : null,
-                          showStatusAction: false,
-                          busy: state.pendingCommands.contains(summary.taskId),
-                          refreshing: state.loading,
-                          onRefresh: vm.start,
-                          onAction:
-                              (action) => widget.onAction(summary, action),
-                        );
-                      },
+                      scrollbarOrientation: ScrollbarOrientation.right,
+                      child: ListView.separated(
+                        key: const ValueKey('conversation-tasks-list'),
+                        controller: _scrollController,
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalInset,
+                          0,
+                          horizontalInset,
+                          16,
+                        ),
+                        itemCount: summaries.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final summary = summaries[index];
+                          return ConversationTaskCard(
+                            key: ValueKey('task-${summary.taskId}'),
+                            summary: summary,
+                            expansionController: _expansionController,
+                            executionDetails:
+                                _expansionController.value.contains(
+                                      summary.taskId,
+                                    )
+                                    ? ConversationTaskExecutionSection(
+                                      key: ValueKey(
+                                        'task-execution-${summary.taskId}',
+                                      ),
+                                      state: vm.executionFor(summary.taskId),
+                                      onRetry:
+                                          () => vm.loadExecution(
+                                            summary.taskId,
+                                            force: true,
+                                          ),
+                                    )
+                                    : null,
+                            showStatusAction: false,
+                            busy: state.pendingCommands.contains(
+                              summary.taskId,
+                            ),
+                            refreshing: state.loading,
+                            onRefresh: vm.start,
+                            onAction:
+                                (action) => widget.onAction(summary, action),
+                          );
+                        },
+                      ),
                     ),
                   ),
         ),
         if (vm.filteredCount > 0) ...[
           const SizedBox(height: 12),
-          _TaskPagination(
-            currentPage: vm.currentPage,
-            totalPages: vm.totalPages,
-            firstItem: vm.firstVisibleItem,
-            lastItem: vm.lastVisibleItem,
-            totalItems: vm.filteredCount,
-            onPrevious: vm.hasPreviousPage ? vm.previousPage : null,
-            onNext: vm.hasNextPage ? vm.nextPage : null,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalInset),
+            child: _TaskPagination(
+              currentPage: vm.currentPage,
+              totalPages: vm.totalPages,
+              firstItem: vm.firstVisibleItem,
+              lastItem: vm.lastVisibleItem,
+              totalItems: vm.filteredCount,
+              onPrevious: vm.hasPreviousPage ? vm.previousPage : null,
+              onNext: vm.hasNextPage ? vm.nextPage : null,
+            ),
           ),
         ],
       ],

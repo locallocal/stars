@@ -193,162 +193,176 @@ class _MessageListState extends State<MessageList> {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: ListView.builder(
-        controller: scrollController,
-        reverse: true,
-        itemCount: messages.length + (isStreaming ? 1 : 0),
-        padding: EdgeInsets.fromLTRB(
-          0,
-          isDesktop ? 12 : 8,
-          0,
-          isDesktop ? 36 : 8,
-        ),
-        itemBuilder: (context, index) {
-          if (isStreaming && index == 0) {
-            return RepaintBoundary(
-              key: const ValueKey<String>('streaming-message'),
-              child: _buildMessageRow(
-                context,
-                bubble: _MessageContent(
-                  isCurrentUser: false,
-                  isDesktop: isDesktop,
-                  isStreaming: true,
-                  reasoning:
-                      widget.strictGroundingMode
-                          ? ''
-                          : deepThinking == true
-                          ? reasoningResponse ?? ''
-                          : '',
-                  processInfo: _replaceSkillActivations(
-                    _replaceToolCalls(
-                      streamingProcessInfo,
-                      _mergeToolCalls(
-                        streamingProcessInfo.toolCalls,
-                        _streamingSkillToolCalls,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: Scrollbar(
+          key: const ValueKey<String>('conversation-messages-scrollbar'),
+          controller: scrollController,
+          scrollbarOrientation: ScrollbarOrientation.right,
+          child: ListView.builder(
+            controller: scrollController,
+            reverse: true,
+            itemCount: messages.length + (isStreaming ? 1 : 0),
+            padding: EdgeInsets.fromLTRB(
+              isDesktop ? StarsDesktopThemeSpec.formPagePadding.left : 12,
+              isDesktop ? 12 : 8,
+              isDesktop ? StarsDesktopThemeSpec.formPagePadding.right : 12,
+              isDesktop ? 36 : 8,
+            ),
+            itemBuilder: (context, index) {
+              if (isStreaming && index == 0) {
+                return RepaintBoundary(
+                  key: const ValueKey<String>('streaming-message'),
+                  child: _buildMessageRow(
+                    context,
+                    bubble: _MessageContent(
+                      isCurrentUser: false,
+                      isDesktop: isDesktop,
+                      isStreaming: true,
+                      reasoning:
+                          widget.strictGroundingMode
+                              ? ''
+                              : deepThinking == true
+                              ? reasoningResponse ?? ''
+                              : '',
+                      processInfo: _replaceSkillActivations(
+                        _replaceToolCalls(
+                          streamingProcessInfo,
+                          _mergeToolCalls(
+                            streamingProcessInfo.toolCalls,
+                            _streamingSkillToolCalls,
+                          ),
+                        ),
+                        _mergeSkillActivations(
+                          streamingProcessInfo.skillActivations,
+                          _streamingSkillActivations,
+                        ),
                       ),
-                    ),
-                    _mergeSkillActivations(
-                      streamingProcessInfo.skillActivations,
-                      _streamingSkillActivations,
+                      tokenUsage: streamingTokenUsage,
+                      showReasoning: showReasoning,
+                      showVerificationStatus: showVerificationStatus,
+                      showExecutionStatus: showExecutionStatus,
+                      content:
+                          widget.strictGroundingMode ? '' : streamingResponse,
+                      files: widget.streamingFiles,
+                      actionViewModel: widget.actionViewModel,
                     ),
                   ),
-                  tokenUsage: streamingTokenUsage,
-                  showReasoning: showReasoning,
-                  showVerificationStatus: showVerificationStatus,
-                  showExecutionStatus: showExecutionStatus,
-                  content: widget.strictGroundingMode ? '' : streamingResponse,
-                  files: widget.streamingFiles,
-                  actionViewModel: widget.actionViewModel,
-                ),
-              ),
-            );
-          }
+                );
+              }
 
-          final messageIndex =
-              messages.length - 1 - index + (isStreaming ? 1 : 0);
-          final message = messages[messageIndex];
-          final isMe = message.senderId == currentUserId;
-          final strictPresentation =
-              !isMe && message.usesStrictGrounding(widget.strictGroundingMode)
-                  ? const StrictGroundingPolicy().present(
-                    message,
-                    userMessage: _userContextByMessage[messageIndex],
-                  )
-                  : null;
-          final displayedContent = _messageDisplayContent(
-            context,
-            message,
-            strictPresentation,
-          );
-          final exportContent = isMe ? message.content : displayedContent;
-          Widget bubble = _MessageContent(
-            isCurrentUser: isMe,
-            isDesktop: isDesktop,
-            reasoning:
-                widget.strictGroundingMode && !isMe ? '' : message.reasoning,
-            processInfo: _displayedProcessInfo[messageIndex],
-            tokenUsage: message.tokenUsage,
-            showReasoning: showReasoning && !isMe,
-            showVerificationStatus:
-                message.showsVerificationStatus(showVerificationStatus) &&
-                !isMe,
-            showExecutionStatus: showExecutionStatus && !isMe,
-            content: strictPresentation?.content ?? displayedContent,
-            strictGroundingNotice: _messageStrictGroundingNotice(
-              context,
-              message,
-              strictPresentation,
-            ),
-            images: message.images,
-            files: message.files,
-            sourceMessage: message,
-            audio: message.audio,
-            music: message.music,
-            video: message.video,
-            grounding: message.grounding,
-            strictGroundingMode: message.usesStrictGrounding(
-              widget.strictGroundingMode,
-            ),
-            hasNotFactCheckedContent:
-                strictPresentation?.hasNotFactCheckedContent ??
-                _hasNotFactCheckedContent(message),
-            exportTrustAnnotation:
-                isMe ? '' : _messageTrustExportAnnotation(context, message),
-            terminalOutcome: message.terminalOutcome,
-            hasPartialContent: message.hasPartialContent,
-            actionViewModel: widget.actionViewModel,
-          );
-          if (message.taskMessageKind == TaskMessageKind.status) {
-            bubble = _MessageBubbleSurface(
-              isCurrentUser: isMe,
-              isDesktop: isDesktop,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final summary in message.taskStatusSummaries)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: ConversationTaskCard(
-                        summary: summary,
-                        historical: true,
-                      ),
-                    ),
-                  Text(message.content),
-                ],
-              ),
-            );
-          }
-          return RepaintBoundary(
-            key: ValueKey<String>(
-              message.messageId.isEmpty
-                  ? 'legacy-${message.timestamp.microsecondsSinceEpoch}-$messageIndex'
-                  : message.messageId,
-            ),
-            child: _buildMessageRow(
-              context,
-              isCurrentUser: isMe,
-              bubble:
-                  isDesktop
-                      ? _DesktopMessageActions(
-                        content: exportContent,
-                        isCurrentUser: isMe,
-                        timestamp: message.timestamp,
-                        child: bubble,
+              final messageIndex =
+                  messages.length - 1 - index + (isStreaming ? 1 : 0);
+              final message = messages[messageIndex];
+              final isMe = message.senderId == currentUserId;
+              final strictPresentation =
+                  !isMe &&
+                          message.usesStrictGrounding(
+                            widget.strictGroundingMode,
+                          )
+                      ? const StrictGroundingPolicy().present(
+                        message,
+                        userMessage: _userContextByMessage[messageIndex],
                       )
-                      : GestureDetector(
-                        onLongPress:
-                            exportContent.isEmpty
-                                ? null
-                                : () {
-                                  Clipboard.setData(
-                                    ClipboardData(text: exportContent),
-                                  );
-                                },
-                        child: bubble,
-                      ),
-            ),
-          );
-        },
+                      : null;
+              final displayedContent = _messageDisplayContent(
+                context,
+                message,
+                strictPresentation,
+              );
+              final exportContent = isMe ? message.content : displayedContent;
+              Widget bubble = _MessageContent(
+                isCurrentUser: isMe,
+                isDesktop: isDesktop,
+                reasoning:
+                    widget.strictGroundingMode && !isMe
+                        ? ''
+                        : message.reasoning,
+                processInfo: _displayedProcessInfo[messageIndex],
+                tokenUsage: message.tokenUsage,
+                showReasoning: showReasoning && !isMe,
+                showVerificationStatus:
+                    message.showsVerificationStatus(showVerificationStatus) &&
+                    !isMe,
+                showExecutionStatus: showExecutionStatus && !isMe,
+                content: strictPresentation?.content ?? displayedContent,
+                strictGroundingNotice: _messageStrictGroundingNotice(
+                  context,
+                  message,
+                  strictPresentation,
+                ),
+                images: message.images,
+                files: message.files,
+                sourceMessage: message,
+                audio: message.audio,
+                music: message.music,
+                video: message.video,
+                grounding: message.grounding,
+                strictGroundingMode: message.usesStrictGrounding(
+                  widget.strictGroundingMode,
+                ),
+                hasNotFactCheckedContent:
+                    strictPresentation?.hasNotFactCheckedContent ??
+                    _hasNotFactCheckedContent(message),
+                exportTrustAnnotation:
+                    isMe ? '' : _messageTrustExportAnnotation(context, message),
+                terminalOutcome: message.terminalOutcome,
+                hasPartialContent: message.hasPartialContent,
+                actionViewModel: widget.actionViewModel,
+              );
+              if (message.taskMessageKind == TaskMessageKind.status) {
+                bubble = _MessageBubbleSurface(
+                  isCurrentUser: isMe,
+                  isDesktop: isDesktop,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final summary in message.taskStatusSummaries)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: ConversationTaskCard(
+                            summary: summary,
+                            historical: true,
+                          ),
+                        ),
+                      Text(message.content),
+                    ],
+                  ),
+                );
+              }
+              return RepaintBoundary(
+                key: ValueKey<String>(
+                  message.messageId.isEmpty
+                      ? 'legacy-${message.timestamp.microsecondsSinceEpoch}-$messageIndex'
+                      : message.messageId,
+                ),
+                child: _buildMessageRow(
+                  context,
+                  isCurrentUser: isMe,
+                  bubble:
+                      isDesktop
+                          ? _DesktopMessageActions(
+                            content: exportContent,
+                            isCurrentUser: isMe,
+                            timestamp: message.timestamp,
+                            child: bubble,
+                          )
+                          : GestureDetector(
+                            onLongPress:
+                                exportContent.isEmpty
+                                    ? null
+                                    : () {
+                                      Clipboard.setData(
+                                        ClipboardData(text: exportContent),
+                                      );
+                                    },
+                            child: bubble,
+                          ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
