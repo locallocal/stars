@@ -114,9 +114,9 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
       await tx.insert('conversation_tasks', taskValues);
       await tx.insert('conversation_task_plans', planValues);
       await _event(tx, initialEvent);
+      await _insertMessage(tx, messageValues);
       final progress = await _project(tx, taskValues);
       await _saveProjection(tx, taskValues, progress);
-      await _insertMessage(tx, messageValues);
       final saved = ConversationTaskRecord(
         taskValues,
       ).toDomain(progress: progress);
@@ -151,6 +151,7 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
     await _writeCheckpoint(tx, update);
     await _writeEvidence(tx, update);
     await _event(tx, update.event);
+    await _writeModelUsage(tx, update);
     final saved = await _saveTask(tx, _taskValues(update.task));
     return TaskWriteCommitted(saved, revision: saved.revision);
   }, progress: true);
@@ -230,8 +231,8 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
         throw ArgumentError('Pending approval cannot be reported as success.');
       }
       await _event(tx, event);
-      final saved = await _saveTask(tx, values);
       await _insertMessage(tx, messageValues, terminal: true);
+      final saved = await _saveTask(tx, values);
       for (final claim in message.grounding.claims) {
         for (final evidenceId in claim.acceptedEvidenceIds) {
           final evidence = await tx.rawQuery(

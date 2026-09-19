@@ -15,6 +15,27 @@ void main() {
   setUp(() => h = TaskTerminalHarness());
   tearDown(() => h.close());
 
+  test('terminal narration usage is persisted once with the result', () async {
+    await h.open();
+    await h.fail();
+    final finish = h.finalizer(
+      polish: (request, cancellation) async {
+        request.onTokenUsage?.call(const ModelTokenUsage(inputTokens: 120));
+        request.onTokenUsage?.call(
+          const ModelTokenUsage(inputTokens: 120, outputTokens: 15),
+        );
+        return request.allowedNarrations.first;
+      },
+    );
+    await finish('task-1');
+    await finish('task-1');
+    await h.runner.db.reopen();
+    expect((await h.result()).tokenUsage.inputTokens, 120);
+    expect((await h.result()).tokenUsage.outputTokens, 15);
+    expect((await h.runner.db.task).progress.tokenUsage!.inputTokens, 120);
+    expect((await h.runner.db.task).progress.tokenUsage!.outputTokens, 15);
+  });
+
   test(
     'a natural completion reply omits repeated expired reads and keeps write verification internal',
     () async {

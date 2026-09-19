@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 import 'package:stars/domain/models/task_execution_state.dart';
 import 'package:stars/domain/models/tool.dart';
 
@@ -149,12 +150,22 @@ Map<String, Object?> _progressToJson(TaskProgress value) => {
   'approvalRequestedAt': value.approvalRequestedAt?.microsecondsSinceEpoch,
   'reasonCode': value.reasonCode,
   'verificationStatus': value.verificationStatus.name,
+  'tokenUsage': switch (value.tokenUsage) {
+    final usage? => {
+      'inputTokens': usage.inputTokens,
+      'outputTokens': usage.outputTokens,
+      'totalTokens': usage.effectiveTotalTokens,
+    },
+    null => null,
+  },
 };
 
 TaskProgress _progressFromJson(Map<String, Object?> value) {
   final row = _TaskRow(value);
   final tool =
       value['latestTool'] == null ? null : _TaskRow(row.object('latestTool'));
+  final usage =
+      value['tokenUsage'] == null ? null : _TaskRow(row.object('tokenUsage'));
   return TaskProgress(
     completedSteps: row.integer('completedSteps'),
     totalSteps: row.integer('totalSteps'),
@@ -183,6 +194,14 @@ TaskProgress _progressFromJson(Map<String, Object?> value) {
       'verificationStatus',
       TaskVerificationStatus.values,
     ),
+    tokenUsage:
+        usage == null
+            ? null
+            : ModelTokenUsage(
+              inputTokens: usage.integer('inputTokens'),
+              outputTokens: usage.integer('outputTokens'),
+              totalTokens: usage.integer('totalTokens'),
+            ),
   );
 }
 

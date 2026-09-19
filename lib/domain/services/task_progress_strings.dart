@@ -47,6 +47,12 @@ final class TaskProgressStrings {
   String get oldestFirst => pick('Oldest first', '时间：从早到晚');
   String get newestFirst => pick('Newest first', '时间：从晚到早');
   String get created => pick('Created', '创建时间');
+  String get inputTokens => pick('Input tokens', '输入 Token');
+  String get outputTokens => pick('Output tokens', '输出 Token');
+  String get tokenUsageHint => pick(
+    'Recorded model usage for this task. Usage not reported or saved is not estimated; — means unavailable.',
+    '此任务已记录的模型用量。未返回或未保存的用量不估算；— 表示暂无数据。',
+  );
   String get executionArguments => pick('Arguments', '调用参数');
   String get executionResult => pick('Result', '执行结果');
   String get executionError => pick('Error', '错误信息');

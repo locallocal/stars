@@ -198,6 +198,7 @@ final class _TaskAttemptRow extends StatelessWidget {
                       compact: true,
                       foregroundColor: badgeColors.foreground,
                       backgroundColor: badgeColors.background,
+                      shape: theme.secondaryBadgeTheme.shape,
                     ),
                   ],
                 ),

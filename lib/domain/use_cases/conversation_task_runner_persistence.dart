@@ -191,6 +191,7 @@ extension _TaskSegmentPersistence on _TaskSegment {
         toolAttemptLink: link,
         approval: approval,
         evidence: evidence,
+        modelUsage: modelCount == 1 ? pendingModelUsage : null,
         evidenceLink:
             evidence == null
                 ? null
@@ -205,6 +206,7 @@ extension _TaskSegmentPersistence on _TaskSegment {
     if (result is! TaskWriteCommitted<ConversationTask>) {
       throw const _TaskFenceLost();
     }
+    if (modelCount == 1) pendingModelUsage = null;
     snapshot = (await runner.repository.getExecutionSnapshot(task.taskId))!;
   });
 

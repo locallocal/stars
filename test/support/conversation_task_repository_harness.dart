@@ -111,6 +111,7 @@ final class TaskRepositoryHarness {
     String safeSummary = 'Task progress recorded.',
     String? reasonCode,
     int modelTurns = 0,
+    ModelTokenUsage? modelUsage,
     TaskVerificationStatus? verificationStatus,
     int? sequence,
   }) async {
@@ -158,6 +159,7 @@ final class TaskRepositoryHarness {
       toolAttemptLink: attemptLink,
       evidence: evidence,
       evidenceLink: evidenceLink,
+      modelUsage: modelUsage,
     );
   }
 

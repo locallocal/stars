@@ -85,7 +85,7 @@ final class TaskTerminalPolisherFactory {
       subscription = session.start().listen(
         (event) {
           if (done.isCompleted) return;
-          if (completed) {
+          if (completed && event is! UsageReported) {
             fail();
             return;
           }
@@ -96,8 +96,11 @@ final class TaskTerminalPolisherFactory {
             case ModelTurnCompleted():
               completed = true;
             case ReasoningDelta():
-            case UsageReported():
               break;
+            case UsageReported():
+              if (!cancellation.isCancelled) {
+                request.onTokenUsage?.call(event.usage);
+              }
             default:
               fail();
           }

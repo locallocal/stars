@@ -195,6 +195,7 @@ void main() {
       approvalRequestedAt: taskTime,
       reasonCode: TaskReasonCode.reconciliationRequired,
       verificationStatus: TaskVerificationStatus.verifying,
+      tokenUsage: const ModelTokenUsage(inputTokens: 1234, outputTokens: 56),
     );
     final record = TaskProgressRecord.fromDomain('task-1', 8, progress);
     final restored =
@@ -203,6 +204,14 @@ void main() {
       TaskProgressRecord.fromDomain('task-1', 8, restored).values,
       record.values,
     );
+    expect(restored.tokenUsage!.inputTokens, 1234);
+    expect(restored.tokenUsage!.outputTokens, 56);
+    final legacy = _jsonRoundTrip(record.values);
+    final progressJson =
+        jsonDecode(legacy['progress_json']! as String) as Map<String, dynamic>;
+    progressJson.remove('tokenUsage');
+    legacy['progress_json'] = jsonEncode(progressJson);
+    expect(TaskProgressRecord(legacy).toDomain().tokenUsage, isNull);
   });
 
   test('plan and checkpoint include safe external job recovery state', () {

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
+import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 import 'package:stars/domain/models/provider_failure.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/tool.dart';
@@ -25,6 +26,7 @@ final class ConversationTaskModelTurn {
     bool repairRequired = false,
     required AgentCancellationToken cancellation,
     GroundedAnswerSynthesisRequest? synthesis,
+    TokenUsageCallback? onTokenUsage,
   }) async {
     final task = snapshot.task;
     final request = ModelRequest(
@@ -120,6 +122,7 @@ final class ConversationTaskModelTurn {
     var active = true;
     var completed = false;
     var argumentBytes = 0;
+    var usage = ModelTokenUsage.empty;
     void fail(Object error) {
       if (active && !done.isCompleted) done.completeError(error);
     }
@@ -142,7 +145,9 @@ final class ConversationTaskModelTurn {
         (event) {
           if (!active || done.isCompleted) return;
           try {
-            if (completed) throw const TaskModelProtocolException();
+            if (completed && event is! UsageReported) {
+              throw const TaskModelProtocolException();
+            }
             switch (event) {
               case ToolCallRequested():
                 if (synthesis != null ||
@@ -186,8 +191,15 @@ final class ConversationTaskModelTurn {
               case ReasoningDelta():
               case ToolCallStarted():
               case ToolCallArgumentsDelta():
-              case UsageReported():
                 break;
+              case UsageReported():
+                if (event.usage.inputTokens < 0 ||
+                    event.usage.outputTokens < 0 ||
+                    event.usage.totalTokens < 0) {
+                  throw const TaskModelProtocolException();
+                }
+                usage = usage.merge(event.usage);
+                onTokenUsage?.call(usage);
             }
           } on Object catch (error) {
             fail(error);

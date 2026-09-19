@@ -7,6 +7,7 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/ui/features/chat/views/execution_status_card.dart';
+import 'package:stars/ui/features/chat/views/execution_metric.dart';
 
 part 'message_list_process_labels.dart';
 
@@ -75,7 +76,7 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
 
     if (widget.processInfo.durationMs != null) {
       headerMetrics.add(
-        _ProcessHeaderMetric(
+        ExecutionMetric(
           icon: LucideIcons.clock3,
           label: strings.processDuration(
             formatProcessDuration(strings, widget.processInfo.durationMs!),
@@ -88,13 +89,13 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
         widget.tokenUsage.outputTokens > 0) {
       headerMetrics
         ..add(
-          _ProcessHeaderMetric(
+          ExecutionMetric(
             icon: Icons.login_rounded,
             label: '${strings.inputTokens} ${widget.tokenUsage.inputTokens}',
           ),
         )
         ..add(
-          _ProcessHeaderMetric(
+          ExecutionMetric(
             icon: Icons.logout_rounded,
             label: '${strings.outputTokens} ${widget.tokenUsage.outputTokens}',
           ),
@@ -365,41 +366,6 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
   }
 }
 
-const _processMetricTextStyle = TextStyle(
-  fontSize: 12,
-  height: 1.2,
-  fontWeight: FontWeight.w400,
-  leadingDistribution: TextLeadingDistribution.even,
-);
-
-class _ProcessHeaderMetric extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _ProcessHeaderMetric({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = StarsDesktopTokens.of(context).secondaryText;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox.square(
-          dimension: 14,
-          child: Center(child: Icon(icon, size: 14, color: color)),
-        ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            label,
-            style: _processMetricTextStyle.copyWith(color: color),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ProcessChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -428,7 +394,7 @@ class _ProcessChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: _processMetricTextStyle.copyWith(
+            style: executionMetricTextStyle.copyWith(
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -632,10 +598,16 @@ class ExecutionStatusBadge extends StatelessWidget {
     this.compact = false,
     this.foregroundColor,
     this.backgroundColor,
+    this.shape = const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(6)),
+    ),
   });
 
   final bool compact;
   final Color? foregroundColor, backgroundColor;
+
+  /// Null inherits the shape from the active shadcn badge theme.
+  final ShapeBorder? shape;
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +637,7 @@ class ExecutionStatusBadge extends StatelessWidget {
         horizontal: compact ? 8 : 10,
         vertical: compact ? 2 : 6,
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      shape: shape,
       child: Text(
         _statusLabel(S.of(context), normalized),
         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

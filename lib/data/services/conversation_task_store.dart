@@ -24,6 +24,7 @@ part 'conversation_task_store_commands.dart';
 part 'conversation_task_store_scheduling.dart';
 part 'conversation_task_store_facts.dart';
 part 'conversation_task_store_projection.dart';
+part 'conversation_task_store_usage.dart';
 part 'conversation_task_store_validation.dart';
 
 /// SQLite transaction boundary for task facts. No external work runs here.

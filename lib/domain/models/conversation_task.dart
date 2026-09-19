@@ -1,3 +1,4 @@
+import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 import 'package:stars/domain/models/task_execution_state.dart';
 import 'package:stars/domain/models/task_message_kind.dart';
 import 'package:stars/domain/models/task_segment_limits.dart';
