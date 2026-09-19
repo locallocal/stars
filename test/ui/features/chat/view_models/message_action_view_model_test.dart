@@ -61,6 +61,12 @@ void main() {
 }
 
 final class _FakeMessageActionRepository implements MessageActionRepository {
+  @override
+  String? get localFileHomeDirectory => null;
+
+  @override
+  Future<bool> localFileExists(String path) async => false;
+
   MediaExportResult saveResult = MediaExportResult.saved;
   Object? saveError;
   int openCalls = 0;

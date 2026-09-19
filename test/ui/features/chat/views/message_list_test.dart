@@ -1448,6 +1448,12 @@ final class _MessageActions implements MessageActionRepository {
   const _MessageActions();
 
   @override
+  String? get localFileHomeDirectory => null;
+
+  @override
+  Future<bool> localFileExists(String path) async => false;
+
+  @override
   Future<bool> openExternal(Uri uri) async => true;
 
   @override

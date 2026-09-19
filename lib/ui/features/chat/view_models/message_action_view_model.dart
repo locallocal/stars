@@ -1,7 +1,11 @@
 import 'package:stars/domain/models/app_failure.dart';
+import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/models/task_message_kind.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/message_action_repository.dart';
 import 'package:stars/domain/repositories/tool_evidence_repository.dart';
+import 'package:stars/domain/services/local_file_preview_policy.dart';
+import 'package:stars/domain/services/local_file_reference_parser.dart';
 
 final class MessageActionViewModel {
   const MessageActionViewModel({
@@ -22,6 +26,73 @@ final class MessageActionViewModel {
     } on Object {
       return null;
     }
+  }
+
+  Future<List<String>> resolveLocalFiles({
+    required String content,
+    required List<String> files,
+    Message? sourceMessage,
+  }) async {
+    final parser = LocalFileReferenceParser(
+      baseDirectory: await loadLocalFilesDirectory(),
+      homeDirectory: _repository.localFileHomeDirectory,
+    );
+    final resolved = <String>{
+      for (final file in files) parser.resolve(file) ?? file,
+    };
+    final linked = parser.linkedPathsFromMarkdown(content).toSet();
+    final mentions =
+        parser.pathsFromMarkdown(content).toSet()
+          ..removeAll(linked)
+          ..removeAll(resolved);
+    final supported = const LocalFilePreviewPolicy().supportedPaths(
+      parser: parser,
+      evidence:
+          mentions.isEmpty ? const [] : await _fileEvidence(sourceMessage),
+    );
+    for (final candidate in {
+      ...linked,
+      ...mentions.where(supported.contains),
+    }) {
+      if (resolved.contains(candidate)) continue;
+      try {
+        if (await _repository.localFileExists(candidate)) {
+          resolved.add(candidate);
+        }
+      } on Object {
+        // One inaccessible reference must not hide other attachments.
+      }
+    }
+    return List.unmodifiable(resolved);
+  }
+
+  Future<List<ToolEvidenceRecord>> _fileEvidence(Message? message) async {
+    final repository = _evidenceRepository;
+    if (repository == null || message == null || message.messageId.isEmpty) {
+      return const [];
+    }
+    // Task attempts are stored under the acceptance message. Their timestamps
+    // prevent later output from appearing in an earlier message on re-render.
+    final owners = {
+      message.messageId,
+      if (message.taskId case final taskId?)
+        ConversationMessageIdentity.acknowledgement(taskId),
+    };
+    final records = <String, ToolEvidenceRecord>{};
+    for (final owner in owners) {
+      try {
+        for (final record in await repository.getForMessage(owner)) {
+          if (record.chatId == message.chatId &&
+              record.canSupportBusinessFactsAt(message.timestamp) &&
+              await repository.verifyDigest(record.evidenceId)) {
+            records[record.evidenceId] = record;
+          }
+        }
+      } on Object {
+        // Missing or damaged evidence never promotes a prose mention.
+      }
+    }
+    return List.unmodifiable(records.values);
   }
 
   Future<Map<String, ToolEvidenceRecord?>> loadEvidenceRecords(

@@ -1,6 +1,10 @@
 enum MediaExportResult { saved, cancelled }
 
 abstract interface class MessageActionRepository {
+  String? get localFileHomeDirectory;
+
+  Future<bool> localFileExists(String path);
+
   Future<MediaExportResult> saveImage({
     required String sourcePath,
     required String dialogTitle,

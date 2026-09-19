@@ -13,7 +13,17 @@ final class LocalFileReferenceParser {
   final String? baseDirectory;
   final String? homeDirectory;
 
-  List<String> pathsFromMarkdown(String markdown) {
+  List<String> pathsFromMarkdown(String markdown) =>
+      _pathsFromMarkdown(markdown, includeTextReferences: true);
+
+  /// Explicit links express navigation intent; prose and code do not.
+  List<String> linkedPathsFromMarkdown(String markdown) =>
+      _pathsFromMarkdown(markdown, includeTextReferences: false);
+
+  List<String> _pathsFromMarkdown(
+    String markdown, {
+    required bool includeTextReferences,
+  }) {
     final paths = <String>{};
     void add(String reference) {
       final resolved = resolve(reference);
@@ -22,6 +32,7 @@ final class LocalFileReferenceParser {
 
     void visit(md.Node node) {
       if (node is md.Text) {
+        if (!includeTextReferences) return;
         for (final match in _plainReference.allMatches(node.text)) {
           add(_trimPunctuation(match.group(0)!));
         }
@@ -36,7 +47,7 @@ final class LocalFileReferenceParser {
           add(node.attributes['src'] ?? '');
           return;
         case 'code':
-          add(node.textContent);
+          if (includeTextReferences) add(node.textContent);
           return;
       }
       for (final child in node.children ?? const <md.Node>[]) {

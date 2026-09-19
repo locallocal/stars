@@ -252,6 +252,7 @@ class _MessageLocalFilesBuilder extends StatefulWidget {
   const _MessageLocalFilesBuilder({
     required this.content,
     required this.files,
+    required this.sourceMessage,
     required this.isCurrentUser,
     required this.isStreaming,
     required this.actions,
@@ -260,6 +261,7 @@ class _MessageLocalFilesBuilder extends StatefulWidget {
 
   final String content;
   final List<String> files;
+  final Message? sourceMessage;
   final bool isCurrentUser;
   final bool isStreaming;
   final MessageActionViewModel? actions;
@@ -287,6 +289,7 @@ class _MessageLocalFilesState extends State<_MessageLocalFilesBuilder> {
         !listEquals(oldWidget.files, widget.files) ||
         oldWidget.isStreaming != widget.isStreaming ||
         oldWidget.isCurrentUser != widget.isCurrentUser ||
+        oldWidget.sourceMessage != widget.sourceMessage ||
         oldWidget.actions != widget.actions) {
       _refresh(
         retainFiles:
@@ -294,6 +297,7 @@ class _MessageLocalFilesState extends State<_MessageLocalFilesBuilder> {
             widget.content.startsWith(oldWidget.content) &&
             listEquals(oldWidget.files, widget.files) &&
             oldWidget.isCurrentUser == widget.isCurrentUser &&
+            oldWidget.sourceMessage == widget.sourceMessage &&
             oldWidget.actions == widget.actions,
       );
     }
@@ -303,7 +307,7 @@ class _MessageLocalFilesState extends State<_MessageLocalFilesBuilder> {
     final generation = ++_generation;
     _debounce?.cancel();
     if (!retainFiles) _files = List.unmodifiable(widget.files.toSet());
-    if (widget.isCurrentUser) return;
+    if (widget.isCurrentUser || widget.actions == null) return;
     if (widget.isStreaming) {
       _debounce = Timer(const Duration(milliseconds: 200), () {
         unawaited(_resolveFiles(generation));
@@ -314,26 +318,12 @@ class _MessageLocalFilesState extends State<_MessageLocalFilesBuilder> {
   }
 
   Future<void> _resolveFiles(int generation) async {
-    final content = widget.content;
-    final explicitFiles = List<String>.of(widget.files);
-    final directory = await widget.actions?.loadLocalFilesDirectory();
+    final resolved = await widget.actions!.resolveLocalFiles(
+      content: widget.content,
+      files: List<String>.of(widget.files),
+      sourceMessage: widget.sourceMessage,
+    );
     if (!mounted || generation != _generation) return;
-    final parser = _localFileParser(baseDirectory: directory);
-    final files = <String>{
-      for (final reference in explicitFiles)
-        parser.resolve(reference) ?? reference,
-    };
-    for (final candidate in parser.pathsFromMarkdown(content)) {
-      if (!mounted || generation != _generation) return;
-      if (files.contains(candidate)) continue;
-      try {
-        if (await File(candidate).exists()) files.add(candidate);
-      } on FileSystemException {
-        // An inaccessible reference must not prevent other files from showing.
-      }
-    }
-    if (!mounted || generation != _generation) return;
-    final resolved = List<String>.unmodifiable(files);
     if (!listEquals(_files, resolved)) setState(() => _files = resolved);
   }
 

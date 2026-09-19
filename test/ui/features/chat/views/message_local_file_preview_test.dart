@@ -12,6 +12,7 @@ import 'package:stars/ui/features/chat/views/message_list.dart';
 import 'package:stars/ui/features/chat/views/video_player_widget.dart';
 
 import '../../../../support/widget_test_support.dart';
+import '../../../../support/file_preview_test_support.dart';
 
 void main() {
   for (final desktop in [true, false]) {
@@ -178,7 +179,12 @@ cat "${file.path}"
 学习计划内容完整：五个阶段（12 周），从所有权基础到并发编程，并结合您对 io_uring 的兴趣推荐了系统编程方向。🦀
 ''';
 
-    await _pumpFileMessage(tester, files: const [], content: content);
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: content,
+      evidence: [filePreviewEvidence(path: file.path)],
+    );
 
     final card = find.byKey(
       ValueKey<String>('message-local-file-${file.path}'),
@@ -270,6 +276,7 @@ cat "${file.path}"
       tester,
       files: const [],
       content: '已生成：${file.path}，点击文件预览。',
+      evidence: [filePreviewEvidence(path: file.path)],
       size: const Size(360, 800),
       isDesktop: false,
       brightness: Brightness.dark,
@@ -317,6 +324,85 @@ cat "${file.path}"
     expect(find.text('会话报告'), findsOneWidget);
   });
 
+  for (final desktop in [true, false]) {
+    testWidgets(
+      'task acknowledgement does not turn an existing filename into a result ($desktop)',
+      (tester) async {
+        final directory = Directory.systemTemp.createTempSync(
+          'stars-ack-file-',
+        );
+        addTearDown(() => directory.deleteSync(recursive: true));
+        final file = File('${directory.path}/登月小说第六章.md')
+          ..writeAsStringSync('# 月背回声\n\n第六章正文');
+        const content = '好的，我会把《月背回声》第六章正文保存到本地的 登月小说第六章.md，完成后把保存路径和校验结果告诉你。';
+        await _pumpFileMessage(
+          tester,
+          files: const [],
+          content: content,
+          taskMessageKind: TaskMessageKind.acknowledgement,
+          isDesktop: desktop,
+          size: Size(desktop ? 900 : 360, 800),
+          actions: MessageActionViewModel(
+            repository: _FakeMessageActionRepository(),
+            localFilesDirectoryProvider: () async => directory.path,
+            evidenceRepository: FilePreviewEvidenceRepository([
+              filePreviewEvidence(
+                path: file.path,
+                messageId: 'task-with-local-files:ack',
+                observedAt: DateTime(2026, 1, 1, 0, 0, 1),
+              ),
+            ]),
+          ),
+        );
+
+        expect(find.textContaining('好的，我会把'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('message-file-results')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(ValueKey<String>('message-local-file-${file.path}')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('task results still resolve and preview their local files', (
+    tester,
+  ) async {
+    final directory = Directory.systemTemp.createTempSync('stars-task-file-');
+    addTearDown(() => directory.deleteSync(recursive: true));
+    final file = File('${directory.path}/登月小说第六章.md')
+      ..writeAsStringSync('# 月背回声\n\n第六章正文');
+    await _pumpFileMessage(
+      tester,
+      files: const [],
+      content: '已将《月背回声》第六章保存到本地的 登月小说第六章.md。',
+      taskMessageKind: TaskMessageKind.result,
+      actions: MessageActionViewModel(
+        repository: _FakeMessageActionRepository(),
+        localFilesDirectoryProvider: () async => directory.path,
+        evidenceRepository: FilePreviewEvidenceRepository([
+          filePreviewEvidence(
+            path: file.path,
+            messageId: 'task-with-local-files:ack',
+          ),
+        ]),
+      ),
+    );
+
+    final card = find.byKey(
+      ValueKey<String>('message-local-file-${file.path}'),
+    );
+    expect(card, findsOneWidget);
+    await tester.tap(card);
+    await _pumpDialog(tester);
+    expect(find.text('月背回声'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('missing paths and directories do not become result cards', (
     tester,
   ) async {
@@ -329,6 +415,14 @@ cat "${file.path}"
       tester,
       files: const [],
       content: '${directory.path}/missing.md，${directory.path}，${file.path}',
+      evidence: [
+        filePreviewEvidence(path: file.path),
+        filePreviewEvidence(path: directory.path, id: 'directory'),
+        filePreviewEvidence(
+          path: '${directory.path}/missing.md',
+          id: 'missing',
+        ),
+      ],
     );
     expect(
       find.byKey(ValueKey<String>('message-local-file-${file.path}')),
@@ -369,14 +463,14 @@ cat "${file.path}"
     await _pumpFileMessage(
       tester,
       files: const [],
-      content: '已生成：${file.path}',
+      content: '已生成：[打开文件](${file.uri})',
       isStreaming: true,
     );
     expect(card, findsOneWidget);
     await _pumpFileMessage(
       tester,
       files: const [],
-      content: '已生成：${file.path}。',
+      content: '已生成：[打开文件](${file.uri})。',
     );
     expect(card, findsOneWidget);
     await tester.tap(card);
@@ -394,7 +488,7 @@ cat "${file.path}"
     await _pumpFileMessage(
       tester,
       files: const [],
-      content: '`old.txt`',
+      content: '[打开文件](old.txt)',
       actions: MessageActionViewModel(
         repository: _FakeMessageActionRepository(),
         localFilesDirectoryProvider: () => pendingDirectory.future,
@@ -810,6 +904,8 @@ Future<void> _pumpFileMessage(
   bool isCurrentUser = false,
   TextScaler textScaler = TextScaler.noScaling,
   MessageProcessInfo processInfo = const MessageProcessInfo(),
+  TaskMessageKind? taskMessageKind,
+  List<ToolEvidenceRecord> evidence = const [],
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -830,7 +926,31 @@ Future<void> _pumpFileMessage(
                     messages: [
                       if (!isStreaming)
                         Message(
-                          messageId: 'message-with-local-files',
+                          messageId: switch (taskMessageKind) {
+                            TaskMessageKind.acknowledgement =>
+                              ConversationMessageIdentity.acknowledgement(
+                                'task-with-local-files',
+                              ),
+                            TaskMessageKind.result =>
+                              ConversationMessageIdentity.result(
+                                'task-with-local-files',
+                              ),
+                            TaskMessageKind.directReply =>
+                              ConversationMessageIdentity.directReply('turn-1'),
+                            TaskMessageKind.status ||
+                            null => 'message-with-local-files',
+                          },
+                          turnId: 'turn-1',
+                          taskId: switch (taskMessageKind) {
+                            TaskMessageKind.acknowledgement ||
+                            TaskMessageKind.result => 'task-with-local-files',
+                            _ => null,
+                          },
+                          taskMessageKind: taskMessageKind,
+                          terminalOutcome:
+                              taskMessageKind == TaskMessageKind.result
+                                  ? MessageTerminalOutcome.completed
+                                  : null,
                           chatId: 'chat-1',
                           botId: 'bot-1',
                           senderId: isCurrentUser ? 'user-1' : 'bot-1',
@@ -846,7 +966,14 @@ Future<void> _pumpFileMessage(
                     streamingFiles: isStreaming ? files : const [],
                     currentUserId: 'user-1',
                     isDesktop: isDesktop,
-                    actionViewModel: actions,
+                    actionViewModel:
+                        actions ??
+                        MessageActionViewModel(
+                          repository: _FakeMessageActionRepository(),
+                          evidenceRepository: FilePreviewEvidenceRepository(
+                            evidence,
+                          ),
+                        ),
                   ),
                 ],
               ),
@@ -909,6 +1036,12 @@ Future<void> _finishHtmlBackgroundWork(WidgetTester tester) async {
 }
 
 final class _FakeMessageActionRepository implements MessageActionRepository {
+  @override
+  String? get localFileHomeDirectory => null;
+
+  @override
+  Future<bool> localFileExists(String path) => File(path).exists();
+
   final List<String> openedFiles = [];
   final List<Uri> openedLinks = [];
 
