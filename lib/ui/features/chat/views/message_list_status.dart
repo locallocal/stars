@@ -40,6 +40,7 @@ class _MessageTerminalStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
     final (icon, label, variant) = switch (outcome) {
       MessageTerminalOutcome.cancelled => (
         LucideIcons.square,
@@ -83,7 +84,23 @@ class _MessageTerminalStatus extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 14),
+              Icon(
+                icon,
+                size: 14,
+                color: switch (outcome) {
+                  MessageTerminalOutcome.failed =>
+                    theme.colorScheme.destructiveForeground,
+                  MessageTerminalOutcome.cancelled =>
+                    theme.colorScheme.mutedForeground,
+                  MessageTerminalOutcome.emptyResponse => StarsStatusTone
+                      .warning
+                      .foregroundFor(theme),
+                  MessageTerminalOutcome.completed => (hasPartialContent
+                          ? StarsStatusTone.warning
+                          : StarsStatusTone.success)
+                      .foregroundFor(theme),
+                },
+              ),
               const SizedBox(width: 6),
               Flexible(child: Text(label)),
             ],

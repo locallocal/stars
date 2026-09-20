@@ -90,6 +90,10 @@ class _ReasoningSectionState extends State<ReasoningSection>
   Widget build(BuildContext context) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
     final strings = S.of(context);
+    final iconColor = (widget.isStreaming
+            ? StarsStatusTone.info
+            : StarsStatusTone.reasoning)
+        .foreground(context);
 
     if (widget.isDesktop) {
       final disableAnimations = MediaQuery.disableAnimationsOf(context);
@@ -135,6 +139,7 @@ class _ReasoningSectionState extends State<ReasoningSection>
                       child: ExecutionStatusIcon(
                         key: const ValueKey<String>('reasoning-status-icon'),
                         isDesktop: true,
+                        foregroundColor: iconColor,
                         child:
                             widget.isStreaming
                                 ? RotationTransition(
@@ -145,14 +150,13 @@ class _ReasoningSectionState extends State<ReasoningSection>
                                   child: Icon(
                                     LucideIcons.loaderCircle,
                                     size: 16,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
+                                    color: iconColor,
                                   ),
                                 )
                                 : Icon(
                                   LucideIcons.brain,
                                   size: 16,
-                                  color: Theme.of(context).colorScheme.primary,
+                                  color: iconColor,
                                 ),
                       ),
                     ),
@@ -199,19 +203,14 @@ class _ReasoningSectionState extends State<ReasoningSection>
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  ExecutionStatusIcon(
+                    key: const ValueKey<String>('reasoning-status-icon'),
+                    isDesktop: false,
+                    foregroundColor: iconColor,
                     child: Icon(
                       Icons.psychology_alt_rounded,
                       size: 16,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: iconColor,
                     ),
                   ),
                   const SizedBox(width: 10),
