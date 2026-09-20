@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -66,18 +67,53 @@ void main() {
         await tester.pumpAndSettle();
         expect(repository.settings.enabled, isFalse);
         final copy = find.byKey(const ValueKey('model-log-copy-path'));
+        final path = find.text(repository.settings.directoryPath);
+        final copyOpacity = find.ancestor(
+          of: copy,
+          matching: find.byType(AnimatedOpacity),
+        );
         await tester.ensureVisible(copy);
         await tester.pumpAndSettle();
-        await tester.tap(copy);
+        if (platform == TargetPlatform.linux) {
+          expect(tester.widget<AnimatedOpacity>(copyOpacity).opacity, 0);
+          final originalPathBounds = tester.getRect(path);
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          await mouse.addPointer(location: Offset.zero);
+          addTearDown(mouse.removePointer);
+          await mouse.moveTo(tester.getCenter(path));
+          await tester.pumpAndSettle();
+          expect(tester.widget<AnimatedOpacity>(copyOpacity).opacity, 1);
+          expect(tester.getRect(path), originalPathBounds);
+          await mouse.moveTo(tester.getCenter(copy));
+          await tester.pumpAndSettle();
+          expect(tester.widget<AnimatedOpacity>(copyOpacity).opacity, 1);
+          await mouse.moveTo(Offset.zero);
+          await tester.pumpAndSettle();
+          expect(tester.widget<AnimatedOpacity>(copyOpacity).opacity, 0);
+
+          // The hidden action remains reachable without a mouse.
+          final copyFocusable = tester.widget<ShadFocusable>(
+            find.descendant(of: copy, matching: find.byType(ShadFocusable)),
+          );
+          copyFocusable.focusNode!.requestFocus();
+          await tester.pumpAndSettle();
+          expect(tester.widget<AnimatedOpacity>(copyOpacity).opacity, 1);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        } else {
+          expect(tester.widget<AnimatedOpacity>(copyOpacity).opacity, 1);
+          await tester.tap(copy);
+        }
         await tester.pumpAndSettle();
         expect(copied, repository.settings.directoryPath);
-        expect(find.text('已复制'), findsOneWidget);
-        final open = find.byKey(const ValueKey('model-log-open-directory'));
-        await tester.ensureVisible(open);
-        await tester.pumpAndSettle();
-        await tester.tap(open);
-        await tester.pumpAndSettle();
-        expect(opened, Uri.directory(repository.settings.directoryPath));
+        expect(find.byIcon(LucideIcons.check), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('model-log-open-directory')),
+          findsNothing,
+        );
+        expect(find.text('打开目录'), findsNothing);
+        expect(opened, isNull);
         expect(tester.takeException(), isNull);
       } finally {
         tester.view.reset();

@@ -20,6 +20,10 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Aligned model request log descriptions with other conversation detail fields
+  and replaced the path buttons with an inline copy icon shown on hover or
+  keyboard focus, with direct access on touch devices.
+
 - Completed the foreground/background cutover: text dispatch and durable tasks
   now use one production lifecycle. Removed old run recovery, partial reply writes
   and page-owned tool approvals; background work resumes from committed task checkpoints.
