@@ -88,12 +88,14 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
           chatId: chatId,
           botId: input.bot.id,
           language: input.language,
+          question: input.userMessage.content,
           turnId: input.userMessage.turnId,
           taskId: result.explicitTaskId,
           summaries: result.summaries,
+          cancellation: token,
         );
       } on Object {
-        if (_acceptsAsyncCallbacks) {
+        if (_acceptsAsyncCallbacks && !token.isCancelled) {
           _statusRetry = result;
           statusFailed = true;
         }
@@ -104,6 +106,7 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
     _foregroundCancellation = null;
     final failed = result is TurnDispatchFailed;
     final cancelled =
+        token.isCancelled ||
         failed && result.code == TurnDispatchFailureCode.cancelled;
     final lifecycle =
         cancelled
@@ -132,6 +135,9 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
     _completeTerminal(lifecycle);
     _applyPendingBot();
     _notifyView();
-    return !failed && !statusFailed && result is! TurnDispatchBusy;
+    return !cancelled &&
+        !failed &&
+        !statusFailed &&
+        result is! TurnDispatchBusy;
   }
 }

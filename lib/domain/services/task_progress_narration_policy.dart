@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:stars/domain/models/conversation_task.dart';
-import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
 
 final class TaskProgressNarrationPolicy {
@@ -37,55 +36,34 @@ final class TaskProgressNarrationPolicy {
             },
     'updatedAt': summary.updatedAt.toUtc().toIso8601String(),
     'waitingReason': summary.waitingReason?.name,
+    'reasonCode': taskSafeText(summary.progress.reasonCode),
+    'lastMeaningfulProgressAt':
+        summary.progress.lastMeaningfulProgressAt.toUtc().toIso8601String(),
     'recoveries': summary.progress.recoveries,
     'verification': summary.progress.verificationStatus.name,
+    if (summary.terminalSummary case final terminal?)
+      'terminal': {
+        'reason': taskSafeText(terminal.safeReason),
+        'completedWork': taskSafeText(terminal.completedWorkSummary),
+        'sideEffects': terminal.sideEffectStatus.name,
+        'canRetry': terminal.canRetry,
+        'retainedArtifacts':
+            terminal.retainedArtifacts.map(taskSafeText).toList(),
+      },
   };
 
-  List<String> alternatives(
-    ConversationTaskProgressSummary s,
-    String language,
-  ) {
-    final w = TaskProgressStrings(language);
-    final p = s.progress;
-    final blocks = [
-      '${taskSafeText(s.title, maximum: 200)} · ${taskShortId(s.taskId)}',
-      '${w.statusLabel}: ${w.status(s.status)}',
-      '${w.phaseLabel}: ${w.phase(s.phase)}',
-      '${w.steps}: ${p.completedSteps}/${p.totalSteps}',
-      if (p.currentStepSummary.isNotEmpty)
-        '${w.currentStep}: ${taskSafeText(p.currentStepSummary)}',
-      if (p.latestTool != null)
-        '${w.latestTool}: ${taskSafeText(p.latestTool!.name)} · ${w.toolStatus(p.latestTool!.status.name)} · ${taskSafeText(p.latestTool!.safeSummary)}',
-      if (p.pendingApprovalId != null)
-        '${w.approval}: ${taskSafeText(p.pendingApprovalSummary!)} · ${p.approvalRequestedAt!.toUtc().toIso8601String()}',
-      if (s.waitingReason != null) '${w.waiting}: ${w.wait(s.waitingReason!)}',
-      '${w.recoveries}: ${p.recoveries}',
-      '${w.verification}: ${w.verified(p.verificationStatus)}',
-      '${w.updated}: ${s.updatedAt.toUtc().toIso8601String()}',
-    ];
-    return [blocks.join('\n'), blocks.join('\n\n')];
-  }
-
-  String? validate(
-    String draft,
-    ConversationTaskProgressSummary summary,
-    String language,
-  ) {
-    try {
-      final value = jsonDecode(draft);
-      if (value is! Map<String, Object?> ||
-          value.length != 3 ||
-          value['taskId'] != summary.taskId ||
-          value['summaryRevision'] != summary.summaryRevision ||
-          value['content'] is! String) {
-        return null;
-      }
-      final text = (value['content']! as String).trim();
-      // Whole-text grammar validation protects numerical, tool, approval and
-      // terminal facts; a keyword blacklist cannot provide this guarantee.
-      return alternatives(summary, language).contains(text) ? text : null;
-    } on Object {
+  /// Checks response shape, not a prose template or a claim of factual proof.
+  /// Task identity and revisions remain bound to the request in the use case.
+  String? validate(String draft) {
+    final text = draft.trim();
+    if (text.isEmpty || text.length > 12000 || text.startsWith('```')) {
       return null;
+    }
+    try {
+      jsonDecode(text);
+      return null;
+    } on FormatException {
+      return taskSafeText(text, maximum: 12000, structured: true);
     }
   }
 }

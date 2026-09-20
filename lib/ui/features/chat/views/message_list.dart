@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
-
 import 'package:path/path.dart' as path_context;
 import 'package:intl/intl.dart' as intl;
 import 'package:stars/domain/models/models.dart';
@@ -327,7 +325,7 @@ class _MessageListState extends State<MessageList>
                   );
                   final exportContent =
                       isMe ? message.content : displayedContent;
-                  Widget bubble = _MessageContent(
+                  final bubble = _MessageContent(
                     isCurrentUser: isMe,
                     isDesktop: isDesktop,
                     reasoning:
@@ -370,26 +368,6 @@ class _MessageListState extends State<MessageList>
                     hasPartialContent: message.hasPartialContent,
                     actionViewModel: widget.actionViewModel,
                   );
-                  if (message.taskMessageKind == TaskMessageKind.status) {
-                    bubble = _MessageBubbleSurface(
-                      isCurrentUser: isMe,
-                      isDesktop: isDesktop,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (final summary in message.taskStatusSummaries)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: ConversationTaskCard(
-                                summary: summary,
-                                historical: true,
-                              ),
-                            ),
-                          Text(message.content),
-                        ],
-                      ),
-                    );
-                  }
                   return RepaintBoundary(
                     key: ValueKey<String>(_messageAnchorIds[messageIndex]),
                     child: KeyedSubtree(

@@ -70,7 +70,7 @@ Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalEx
 | --- | --- |
 | 直接回复 | 只提交完整的 `turnId:assistant`，应用现有终态与 `AnswerTrustPolicy`；没有工具证据时不标为已验证 |
 | 接受任务 | 原子提交任务、初始计划、事件、进度投影及 `taskId:ack`，提交后调用 `enqueue` |
-| 查询状态 | 返回持久化摘要；由 PresentConversationTaskProgress 保存卡片并启动同版本润色 |
+| 查询状态 | 返回持久化摘要；由 PresentConversationTaskProgress 结合用户原问题生成自然语言回复，再保存同一查询快照 |
 
 直接回复的 delta 仅供显示，不落 partial 消息；流中断或格式错误时返回失败，UI 应丢弃展示中的
 临时文本。有效的空回复按 `emptyResponse` 保存；失败或取消的类型化直接结果不保存半段正文。
@@ -107,11 +107,11 @@ Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalEx
 
 ## 状态选择
 
-显式任务引用直接调用 `GetConversationTaskProgress`，跳过准备和模型请求。普通自然语言状态
+显式任务引用直接调用 `GetConversationTaskProgress`，跳过准备和路由模型请求，但仍需模型生成进度回复。普通自然语言状态
 问题由主回复回合产生 `TaskStatusRequest`，再读取持久化事实：
 
 1. 有任务 ID：只查询该会话内的指定任务，不存在或属于其他会话时返回空结果。
-2. 无 ID：返回非终态候选；一个候选可直接展示，多个候选要求用户选择。
+2. 无 ID：返回非终态候选；所有候选交给回复模型，按用户问题概括或请求澄清。
 3. 没有活动任务：查询最近终态；没有历史任务则返回空结果。
 
 进度、工具次数、审批与验证均来自 repository 摘要，不从聊天内容推测，不启动 Agent Loop。
@@ -120,7 +120,7 @@ Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalEx
 
 `TurnDispatchMetrics` 分别记录准备流水线调用次数、preflight Token、准备耗时和主回复调用次数，
 以及直接回复首字符/提交延迟、回执提交延迟、路由可恢复回退和回执兜底次数。延迟按每次派发的
-单调时钟计算；持久化重试的主回复调用数为零。状态润色单独记录指标，不属于这个主回复调用统计。
+单调时钟计算；持久化重试的主回复调用数为零。状态回复生成单独记录指标，不属于这个主回复调用统计。
 
 - [协议与流式校验](../../test/data/services/ai/turn_routing_protocol_test.dart)
 - [Provider 传输与禁止工具边界](../../test/data/services/ai/provider_conversation_turn_router_test.dart)
