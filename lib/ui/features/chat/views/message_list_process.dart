@@ -8,6 +8,7 @@ import 'package:stars/generated/l10n.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/ui/features/chat/views/execution_status_card.dart';
 import 'package:stars/ui/features/chat/views/execution_metric.dart';
+import 'package:stars/ui/features/chat/views/task_status_colors.dart';
 
 part 'message_list_process_labels.dart';
 
@@ -66,6 +67,7 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
       summaryChips.add(
         _ProcessChip(
           icon: LucideIcons.brain,
+          iconColor: StarsStatusTone.reasoning.foreground(context),
           label: _reasoningStatusLabel(
             strings,
             widget.processInfo.reasoningStatus,
@@ -369,8 +371,9 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
 class _ProcessChip extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color? iconColor;
 
-  const _ProcessChip({required this.icon, required this.label});
+  const _ProcessChip({required this.icon, required this.label, this.iconColor});
 
   @override
   Widget build(BuildContext context) {
@@ -387,7 +390,7 @@ class _ProcessChip extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 14,
-                color: StarsDesktopTokens.of(context).secondaryText,
+                color: iconColor ?? StarsStatusTone.info.foreground(context),
               ),
             ),
           ),
@@ -441,7 +444,7 @@ class _ProcessListCard<T> extends StatelessWidget {
               Icon(
                 icon,
                 size: 16,
-                color: StarsDesktopTokens.of(context).secondaryText,
+                color: StarsStatusTone.info.foreground(context),
               ),
               const SizedBox(width: 8),
               Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -546,6 +549,10 @@ class _ToolLifecycleStages extends StatelessWidget {
                     Icon(
                       stage.$1 ? LucideIcons.checkCircle : LucideIcons.circleX,
                       size: 12,
+                      color: (stage.$1
+                              ? StarsStatusTone.success
+                              : StarsStatusTone.warning)
+                          .foreground(context),
                     ),
                     const SizedBox(width: 4),
                     Flexible(child: Text(stage.$2)),
@@ -612,27 +619,12 @@ class ExecutionStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = status.isEmpty ? 'unknown' : status;
-    final variant = switch (normalized) {
-      'completed' ||
-      'created' ||
-      'attached' ||
-      'succeeded' ||
-      'activated' => ShadBadgeVariant.secondary,
-      'failed' ||
-      'error' ||
-      'denied' ||
-      'timedOut' => ShadBadgeVariant.destructive,
-      _ => ShadBadgeVariant.outline,
-    };
+    final colors = ShadTheme.of(context).toolStatusBadgeColors(normalized);
 
-    return ShadBadge.raw(
-      variant:
-          foregroundColor != null || backgroundColor != null
-              ? ShadBadgeVariant.secondary
-              : variant,
-      foregroundColor: foregroundColor,
-      backgroundColor: backgroundColor,
-      hoverBackgroundColor: backgroundColor,
+    return ShadBadge.secondary(
+      foregroundColor: foregroundColor ?? colors.foreground,
+      backgroundColor: backgroundColor ?? colors.background,
+      hoverBackgroundColor: backgroundColor ?? colors.background,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 8 : 10,
         vertical: compact ? 2 : 6,

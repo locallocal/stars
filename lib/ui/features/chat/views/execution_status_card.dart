@@ -120,6 +120,7 @@ class ExecutionStatusCard extends StatelessWidget {
   final bool isDesktop;
   final IconData icon;
   final Key? iconKey;
+  final Color? iconColor;
   final String title;
   final String subtitle;
   final Widget? subtitleContent;
@@ -130,6 +131,7 @@ class ExecutionStatusCard extends StatelessWidget {
     required this.isDesktop,
     required this.icon,
     this.iconKey = const ValueKey<String>('execution-status-icon'),
+    this.iconColor,
     required this.title,
     required this.subtitle,
     this.subtitleContent,
@@ -146,6 +148,7 @@ class ExecutionStatusCard extends StatelessWidget {
           isDesktop: isDesktop,
           icon: icon,
           iconKey: iconKey,
+          iconColor: iconColor,
           title: title,
           subtitle: subtitle,
           subtitleContent: subtitleContent,
@@ -200,16 +203,14 @@ class ExecutionStatusHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final foreground = iconColor ?? StarsStatusTone.info.foreground(context);
     return Row(
       children: [
         ExecutionStatusIcon(
           key: iconKey,
           isDesktop: isDesktop,
-          child: Icon(
-            icon,
-            size: 16,
-            color: iconColor ?? Theme.of(context).colorScheme.primary,
-          ),
+          foregroundColor: foreground,
+          child: Icon(icon, size: 16, color: foreground),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -252,18 +253,26 @@ class ExecutionStatusIcon extends StatelessWidget {
     super.key,
     required this.isDesktop,
     required this.child,
+    this.foregroundColor,
   });
 
   final bool isDesktop;
   final Widget child;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final foreground =
+        foregroundColor ?? StarsStatusTone.info.foreground(context);
+    final brightness =
+        ShadTheme.maybeOf(context)?.brightness ?? Theme.of(context).brightness;
     return Container(
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+        color: foreground.withValues(
+          alpha: brightness == Brightness.dark ? 0.16 : 0.10,
+        ),
         borderRadius:
             isDesktop
                 ? StarsDesktopThemeSpec.itemRadius

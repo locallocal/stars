@@ -473,31 +473,32 @@ class _EvidenceTrustDetails extends StatelessWidget {
   bool hasNotFactCheckedContent,
 ) {
   final strings = S.of(context);
-  final colors = Theme.of(context).colorScheme;
-  final tokens = StarsDesktopTokens.of(context);
   if (grounding.trustLevel == AnswerTrustLevel.failed) {
     return (
-      foreground: colors.error,
+      foreground: StarsStatusTone.danger.foreground(context),
       icon: LucideIcons.triangleAlert,
       label: strings.answerTrustFailed,
     );
   }
   if (grounding.trustLevel == AnswerTrustLevel.verified) {
     return (
-      foreground: colors.primary,
+      foreground: StarsStatusTone.success.foreground(context),
       icon: LucideIcons.shieldCheck,
       label: strings.answerTrustVerified,
     );
   }
   if (grounding.trustLevel == AnswerTrustLevel.partiallyVerified) {
     return (
-      foreground: colors.tertiary,
+      foreground: StarsStatusTone.warning.foreground(context),
       icon: LucideIcons.shieldAlert,
       label: strings.answerTrustPartiallyVerified,
     );
   }
   return (
-    foreground: tokens.secondaryText,
+    foreground: (hasNotFactCheckedContent
+            ? StarsStatusTone.info
+            : StarsStatusTone.warning)
+        .foreground(context),
     icon: hasNotFactCheckedContent ? LucideIcons.info : LucideIcons.shieldAlert,
     label:
         hasNotFactCheckedContent

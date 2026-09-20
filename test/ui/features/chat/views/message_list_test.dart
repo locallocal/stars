@@ -744,7 +744,23 @@ void main() => print('done');
     final trustIconBackground = tester.widget<DecoratedBox>(
       find.descendant(of: trustIcon, matching: find.byType(DecoratedBox)),
     );
-    expect(trustIconBackground.decoration, executionIconBackground.decoration);
+    final trustDecoration = trustIconBackground.decoration as BoxDecoration;
+    final executionDecoration =
+        executionIconBackground.decoration as BoxDecoration;
+    expect(trustDecoration.borderRadius, executionDecoration.borderRadius);
+    expect(trustDecoration.color, isNot(executionDecoration.color));
+    expect(
+      tester.widget<Icon>(find.byIcon(LucideIcons.shieldCheck)).color,
+      StarsStatusTone.success.foreground(tester.element(trustIcon)),
+    );
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(of: executionIcon, matching: find.byType(Icon)),
+          )
+          .color,
+      StarsStatusTone.info.foreground(tester.element(executionIcon)),
+    );
     expect(find.byIcon(LucideIcons.shieldCheck), findsOneWidget);
   });
 

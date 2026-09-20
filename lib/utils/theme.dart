@@ -9,6 +9,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 part 'desktop_theme_spec.dart';
 part 'theme_components.dart';
 part 'theme_list_components.dart';
+part 'status_colors.dart';
 
 const _starsChartColorKeys = <String>[
   'chart-1',
@@ -316,7 +317,11 @@ ShadThemeData buildStarsShadTheme({
           ? const ShadZincColorScheme.dark()
           : const ShadZincColorScheme.light())
       .copyWith(
-        custom: isDark ? _starsDarkChartColors : _starsLightChartColors,
+        custom: {
+          ...(isDark ? _starsDarkChartColors : _starsLightChartColors),
+          for (final tone in StarsStatusTone.values)
+            tone.token: tone._defaultForeground(brightness),
+        },
       );
   final colorScheme =
       highContrast

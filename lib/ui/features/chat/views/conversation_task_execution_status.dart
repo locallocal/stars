@@ -7,6 +7,7 @@ import 'package:stars/ui/features/chat/views/execution_status_card.dart';
 import 'package:stars/ui/features/chat/views/message_list_process.dart';
 import 'package:stars/ui/features/chat/views/task_execution_value.dart';
 import 'package:stars/ui/features/chat/views/task_status_colors.dart';
+import 'package:stars/utils/theme.dart';
 
 final class ConversationTaskExecutionStatus extends StatelessWidget {
   const ConversationTaskExecutionStatus({
@@ -70,10 +71,18 @@ final class ConversationTaskExecutionStatus extends StatelessWidget {
                           Icon(
                             icon,
                             size: 13,
-                            color:
-                                tone == TaskAttemptTone.attention
-                                    ? theme.colorScheme.destructive
-                                    : theme.colorScheme.mutedForeground,
+                            color: switch (tone) {
+                              TaskAttemptTone.completed => StarsStatusTone
+                                  .success
+                                  .foregroundFor(theme),
+                              TaskAttemptTone.active => StarsStatusTone.info
+                                  .foregroundFor(theme),
+                              TaskAttemptTone.attention => StarsStatusTone
+                                  .warning
+                                  .foregroundFor(theme),
+                              TaskAttemptTone.stopped =>
+                                theme.colorScheme.mutedForeground,
+                            },
                           ),
                           const SizedBox(width: 5),
                           Text(
@@ -174,7 +183,7 @@ final class _TaskAttemptRow extends StatelessWidget {
             child: Icon(
               attempt.isCommand ? LucideIcons.terminal : LucideIcons.wrench,
               size: 16,
-              color: theme.colorScheme.mutedForeground,
+              color: badgeColors.foreground,
             ),
           ),
           const SizedBox(width: 10),
