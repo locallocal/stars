@@ -6,7 +6,7 @@ import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_draft.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
-import 'package:stars/domain/models/tool.dart';
+import 'package:stars/domain/models/tool.dart' show AgentCancellationToken;
 import 'package:stars/domain/models/turn_disposition.dart';
 import 'package:stars/domain/repositories/conversation_draft_repository.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
@@ -31,8 +31,6 @@ final class ConversationTurnDispatcher {
     required ConversationDraftRepository drafts,
     required ConversationTaskRepository tasks,
     required ConversationTaskEnqueuer enqueuer,
-    required ToolRegistry toolRegistry,
-    required this.supportsTaskTool,
     ForegroundTurnGate? gate,
     DateTime Function()? now,
     this.enqueueTimeout = const Duration(seconds: 1),
@@ -43,7 +41,6 @@ final class ConversationTurnDispatcher {
        _drafts = drafts,
        _tasks = tasks,
        _enqueuer = enqueuer,
-       _tools = toolRegistry,
        _gate = gate ?? ForegroundTurnGate(),
        _now = now ?? DateTime.now;
 
@@ -53,8 +50,6 @@ final class ConversationTurnDispatcher {
   final ConversationDraftRepository _drafts;
   final ConversationTaskRepository _tasks;
   final ConversationTaskEnqueuer _enqueuer;
-  final ToolRegistry _tools;
-  final bool Function(ExecutableTool) supportsTaskTool;
   final ForegroundTurnGate _gate;
   final DateTime Function() _now;
   final Duration enqueueTimeout;
@@ -160,6 +155,8 @@ final class ConversationTurnDispatcher {
                     .toList(),
             userMessage: user,
             currentUserId: user.senderId,
+            foregroundOnly: true,
+            cancellation: pending.cancellation,
           ),
           pending.cancellation,
         );
@@ -172,12 +169,7 @@ final class ConversationTurnDispatcher {
       }
       final prepared = pending.prepared!;
       metrics.preflightUsage = prepared.preflightTokenUsage;
-      pending.acceptance ??= _freezeAcceptance(
-        input,
-        prepared,
-        _tools,
-        supportsTaskTool,
-      );
+      pending.acceptance ??= _freezeAcceptance(input, prepared);
       if (pending.disposition == null) {
         await _foregroundWait(
           _route(pending, metrics, onUpdate),
@@ -188,7 +180,8 @@ final class ConversationTurnDispatcher {
         throw const _DispatchProblem(TurnDispatchFailureCode.cancelled);
       }
       final disposition = pending.disposition!;
-      if (input.retryOfTaskId != null && disposition is! BackgroundTaskPlan) {
+      if (input.retryOfTaskId != null &&
+          disposition is! BackgroundTaskRequest) {
         pending.disposition = null;
         throw const _DispatchProblem(
           TurnDispatchFailureCode.taskCreationFailed,
@@ -197,19 +190,7 @@ final class ConversationTurnDispatcher {
       switch (disposition) {
         case DirectReply():
           return await _direct(pending, disposition, metrics);
-        case BackgroundTaskPlan():
-          if (!pending.acceptance!.allowedToolNames.containsAll(
-                disposition.allowedToolNames,
-              ) ||
-              !_supportsPlan(prepared, disposition.allowedToolNames)) {
-            pending.disposition = null;
-            pending.acceptance = null;
-            pending.acceptanceWrite = null;
-            throw const _DispatchProblem(
-              TurnDispatchFailureCode.routingFailed,
-              routing: TurnRoutingFailure.invalidProtocol,
-            );
-          }
+        case BackgroundTaskRequest():
           if (pending.acceptanceWrite == null) {
             pending.acceptanceWrite = _createAcceptance(
               pending,
@@ -287,17 +268,6 @@ final class ConversationTurnDispatcher {
     }
   }
 
-  bool _supportsPlan(PreparedChatGeneration prepared, Set<String> names) {
-    final registry = OverlayToolRegistry(
-      parent: _tools,
-      overlayTools: prepared.runScopedTools,
-    );
-    return names.every((name) {
-      final tool = registry.find(name);
-      return tool != null && supportsTaskTool(tool);
-    });
-  }
-
   Future<void> _route(
     _PendingTurn pending,
     _DispatchTiming metrics,
@@ -313,7 +283,6 @@ final class ConversationTurnDispatcher {
       cancellation: pending.cancellation,
       requiresBackgroundTask: pending.input.retryOfTaskId != null,
       messages: pending.prepared!.messages,
-      allowedToolNames: pending.acceptance!.allowedToolNames,
     );
     void invalid() =>
         throw const _DispatchProblem(

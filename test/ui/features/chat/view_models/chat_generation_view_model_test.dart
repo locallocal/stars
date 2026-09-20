@@ -84,7 +84,7 @@ void main() {
         vm.snapshot.tokenUsage.outputTokens,
         saved.tokenUsage.outputTokens,
       );
-      expect(vm.snapshot.tokenUsage.outputTokens, 14);
+      expect(vm.snapshot.tokenUsage.outputTokens, 11);
       vm.acknowledgeTerminal();
       expect(vm.snapshot.lifecycle, ChatRunLifecycle.idle);
       expect(vm.snapshot.streamingResponse, isEmpty);

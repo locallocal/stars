@@ -71,6 +71,16 @@ void main() {
     h.background();
     backgroundGate = Completer<void>();
     models = RunnerModels();
+    models.tool(
+      name: 'stars_revise_task_plan',
+      arguments: {
+        'steps': [
+          {'id': 'read', 'summary': '读取资料'},
+          {'id': 'write', 'summary': '整理报告'},
+        ],
+        'allowedToolNames': ['read_file'],
+      },
+    );
     models.turns.add(() async* {
       await backgroundGate.future;
       yield const TextDelta('private draft');
@@ -95,13 +105,15 @@ void main() {
   test(
     'production composition resumes a persisted checkpoint after database restart',
     () async {
-      // Complete the first plan step before the second model turn is interrupted.
+      // Complete planning and the first step, then interrupt the second step.
+      final planning = models.turns.removeFirst();
       models.turns.addFirst(() async* {
         yield const TextDelta('first step private draft');
         yield const ModelTurnCompleted();
       });
+      models.turns.addFirst(planning);
       await deps.conversationTasks.dispatcher.dispatch(foregroundInput());
-      await _until(() async => models.requests.length == 2);
+      await _until(() async => models.requests.length == 3);
       final task =
           (await deps.conversationTasks.repository.listActiveForChat(
             'chat-1',

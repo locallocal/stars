@@ -28,6 +28,7 @@ export 'conversation_task_runner_contracts.dart';
 part 'conversation_task_runner_persistence.dart';
 part 'conversation_task_runner_tools.dart';
 part 'conversation_task_runner_recovery.dart';
+part 'conversation_task_runner_preparation.dart';
 
 /// Advances one accepted task segment. Every external operation follows a
 /// committed checkpoint and a lease check. This use case never writes messages.
@@ -37,6 +38,7 @@ final class ConversationTaskRunner {
     required TaskModelSessionFactory sessions,
     required Iterable<TaskToolAdapter> tools,
     required this.policy,
+    this.prepare,
     this.clock = const SystemTaskRunnerClock(),
     double Function()? jitter,
   }) : model = ConversationTaskModelTurn(sessions),
@@ -49,6 +51,7 @@ final class ConversationTaskRunner {
   final ConversationTaskModelTurn model;
   final Map<String, TaskToolAdapter> tools;
   final ToolPolicy policy;
+  final TaskExecutionPreparer? prepare;
   final TaskRunnerClock clock;
   final double Function() jitter;
 
@@ -81,6 +84,7 @@ final class _TaskSegment {
   final TaskExecutionGate writeGate;
   final AgentCancellationToken? interruption;
   final ConversationTaskRunner runner;
+  late Map<String, TaskToolAdapter> tools = runner.tools;
   TaskExecutionSnapshot snapshot;
   final TaskLease lease;
   final String segmentId;
@@ -107,7 +111,7 @@ final class _TaskSegment {
   DateTime get now => runner.clock.now();
   List<ToolDefinition> get definitions => [
     for (final name in snapshot.plan.allowedToolNames)
-      if (runner.tools[name] case final adapter?) adapter.definition,
+      if (tools[name] case final adapter?) adapter.definition,
   ];
 
   Future<TaskSegmentResult> run() async {
@@ -147,6 +151,10 @@ final class _TaskSegment {
       );
       while (true) {
         await _check();
+        if (snapshot.plan.isPending && snapshot.plan.preparation == null) {
+          final result = await _prepareExecution();
+          if (result != null) return result;
+        }
         if (modelTurns >= limits.maxModelTurns ||
             toolCalls >= limits.maxToolCalls) {
           return await _continue();
@@ -176,7 +184,10 @@ final class _TaskSegment {
             modelStarted = true;
             return runner.model.run(
               snapshot: snapshot,
-              tools: definitions,
+              tools:
+                  replan
+                      ? tools.values.map((tool) => tool.definition).toList()
+                      : definitions,
               nextStepId: nextStep,
               replan: replan,
               cancellation: token,
@@ -281,7 +292,7 @@ final class _TaskSegment {
             await _save(TaskEventKind.modelTurnCompleted, modelCount: 1);
             return await _continue();
           }
-          final result = await _revise(steps);
+          final result = await _revise(steps, turn.allowedToolNames);
           if (result != null) return result;
         } else if (turn.candidate case final answer?) {
           candidate = answer;
@@ -345,7 +356,7 @@ final class _TaskSegment {
     fileReads.addAll(state?.fileReads ?? []);
     jobs.addAll(checkpoint?.externalJobs ?? []);
     stepStarted = state?.stepStarted ?? false;
-    replan = state?.replanRequired ?? false;
+    replan = snapshot.plan.isPending || (state?.replanRequired ?? false);
     failures = state?.consecutiveFailures ?? 0;
     backoffs = state?.backoffCount ?? 0;
     candidate = state?.candidate;
@@ -367,9 +378,16 @@ final class _TaskSegment {
           .firstOrNull
           ?.stepId;
 
-  Future<TaskSegmentResult?> _revise(List<TaskPlanStep> steps) async {
+  Future<TaskSegmentResult?> _revise(
+    List<TaskPlanStep> steps,
+    Set<String>? selectedTools,
+  ) async {
     final previous = snapshot.plan;
-    if (steps.map((s) => s.stepId).toSet().length != steps.length ||
+    final allowed = selectedTools ?? previous.allowedToolNames;
+    if (steps.isEmpty ||
+        !snapshot.toolScope.containsAll(allowed) ||
+        !tools.keys.toSet().containsAll(allowed) ||
+        steps.map((s) => s.stepId).toSet().length != steps.length ||
         steps.any((s) => completed.contains(s.stepId))) {
       await _save(TaskEventKind.modelTurnCompleted, modelCount: 1);
       return _finishFinalization(TaskReasonCode.invalidPlan);
@@ -388,7 +406,8 @@ final class _TaskSegment {
             ),
         ...steps,
       ],
-      allowedToolNames: previous.allowedToolNames,
+      allowedToolNames: allowed,
+      preparation: previous.preparation,
       createdAt: now,
     );
     nextStep = steps.first.stepId;

@@ -431,11 +431,25 @@ final class SkillToolSessionRequest {
   SkillToolSessionRequest({
     required List<ChatMessage> messages,
     required List<SkillCatalogEntry> catalog,
+    this.requireExplicitCompletion = false,
   }) : messages = List<ChatMessage>.unmodifiable(messages),
        catalog = List<SkillCatalogEntry>.unmodifiable(catalog);
 
   final List<ChatMessage> messages;
   final List<SkillCatalogEntry> catalog;
+
+  /// Background discovery must explicitly finish selecting Skills; ordinary
+  /// assistant text is not evidence that discovery completed.
+  final bool requireExplicitCompletion;
+}
+
+const finishSkillSelectionToolName = 'finish_skill_selection';
+
+final class SkillSelectionIncompleteException implements Exception {
+  const SkillSelectionIncompleteException();
+
+  @override
+  String toString() => 'Skill selection did not complete.';
 }
 
 abstract interface class SkillToolSession {

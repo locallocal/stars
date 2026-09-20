@@ -12,6 +12,80 @@ import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 
 void main() {
+  for (final transport in ['openai', 'responses', 'moonshot', 'anthropic']) {
+    test('$transport exposes explicit background Skill completion', () async {
+      late Map<String, dynamic> payload;
+      final arguments = {
+        'selectedSkills': ['release-notes'],
+        'reason': 'The Skill covers the accepted objective.',
+      };
+      final client = MockClient((request) async {
+        payload = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({
+            'choices': [
+              {
+                'message': {
+                  'tool_calls': [
+                    {
+                      'id': 'finish',
+                      'function': {
+                        'name': finishSkillSelectionToolName,
+                        'arguments': jsonEncode(arguments),
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+            'output': [
+              {
+                'type': 'function_call',
+                'call_id': 'finish',
+                'name': finishSkillSelectionToolName,
+                'arguments': jsonEncode(arguments),
+              },
+            ],
+            'content': [
+              {
+                'type': 'tool_use',
+                'id': 'finish',
+                'name': finishSkillSelectionToolName,
+                'input': arguments,
+              },
+            ],
+          }),
+          200,
+        );
+      });
+      addTearDown(client.close);
+      final AiProvider provider = switch (transport) {
+        'responses' => OpenAI(_firstPartyBot, skillToolClient: client),
+        'moonshot' => Moonshot(_bot, client: client),
+        'anthropic' => Anthropic(_bot, skillToolClient: client),
+        _ => OpenAI(_bot, skillToolClient: client),
+      };
+      final session = provider.openSkillToolSession(
+        SkillToolSessionRequest(
+          messages: _request.messages,
+          catalog: _request.catalog,
+          requireExplicitCompletion: true,
+        ),
+      );
+      addTearDown(session.close);
+      final result = await session.start();
+      expect(result.calls.single.name, finishSkillSelectionToolName);
+      expect(result.calls.single.arguments, arguments);
+      final tools = (payload['tools'] as List).cast<Map>();
+      final finish = tools
+          .map((tool) => tool['function'] as Map? ?? tool)
+          .singleWhere((tool) => tool['name'] == finishSkillSelectionToolName);
+      final schema = (finish['parameters'] ?? finish['input_schema']) as Map;
+      expect(schema['required'], ['selectedSkills', 'reason']);
+      expect(schema['additionalProperties'], isFalse);
+    });
+  }
+
   test('OpenAI uses structured Skill tools and returns tool results', () async {
     final requests = <Map<String, Object?>>[];
     var requestIndex = 0;

@@ -107,9 +107,7 @@ final class FinalizeConversationTask {
       final acceptedTools =
           tools
               .where(
-                (tool) => snapshot!.task.acceptance.allowedToolNames.contains(
-                  tool.name,
-                ),
+                (tool) => snapshot!.plan.allowedToolNames.contains(tool.name),
               )
               .toList();
       final requirements = taskVerificationRequirements(

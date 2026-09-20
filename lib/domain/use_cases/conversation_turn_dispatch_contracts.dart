@@ -186,8 +186,8 @@ final class TurnDispatchMetrics {
   final String chatId;
   final String turnId;
 
-  /// Invocations of the existing preparation pipeline, which may itself call
-  /// models for Skill activation or compaction; not main reply classifications.
+  /// Local context preparations; foreground preparation never activates Skills
+  /// or invokes models for compaction.
   final int preparationCalls;
   final int mainReplyCalls;
   final ModelTokenUsage preflightUsage;

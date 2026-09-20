@@ -1,9 +1,11 @@
 part of 'conversation_task_app_harness.dart';
 
 final class AcceptanceProviders implements AiProviderRepository {
-  String route = 'backgroundTaskPlan';
+  String route = 'backgroundTask';
   bool unsupportedClaim = false, failNarration = false;
   int mainReplies = 0, backgroundSessions = 0, closed = 0, cancelled = 0;
+  final skillRequests = <SkillToolSessionRequest>[];
+  Future<void> Function()? beforeSkillActivation;
   @override
   AiProvider create(Bot bot) => _AcceptanceProvider(bot, this);
   @override
@@ -26,8 +28,54 @@ final class _AcceptanceProvider extends AiProvider {
   AgentModelSession openModelSession(ModelRequest request) =>
       _AcceptanceSession(owner, request);
   @override
+  SkillToolSession openSkillToolSession(SkillToolSessionRequest request) {
+    owner.skillRequests.add(request);
+    return _AcceptanceSkillSession(owner, request);
+  }
+
+  @override
   Future<void> generateText(List<ChatMessage> messages) async =>
       throw StateError('Must use foreground routing');
+}
+
+final class _AcceptanceSkillSession implements SkillToolSession {
+  _AcceptanceSkillSession(this.owner, this.request);
+  final AcceptanceProviders owner;
+  final SkillToolSessionRequest request;
+  @override
+  Future<SkillToolTurn> start() async {
+    await owner.beforeSkillActivation?.call();
+    return SkillToolTurn(
+      calls: [
+        SkillToolCall(
+          callId: 'activate-report',
+          name: 'activate_skill',
+          arguments: {'name': request.catalog.single.name},
+        ),
+      ],
+      tokenUsage: const ModelTokenUsage(inputTokens: 1, outputTokens: 2),
+    );
+  }
+
+  @override
+  Future<SkillToolTurn> continueWith(List<SkillToolResult> results) async =>
+      SkillToolTurn(
+        isComplete: !request.requireExplicitCompletion,
+        calls: [
+          if (request.requireExplicitCompletion)
+            SkillToolCall(
+              callId: 'selection-complete',
+              name: finishSkillSelectionToolName,
+              arguments: {
+                'selectedSkills': [request.catalog.single.name],
+                'reason': 'The selected Skill provides report inspection.',
+              },
+            ),
+        ],
+        tokenUsage: const ModelTokenUsage(inputTokens: 1, outputTokens: 1),
+      );
+  @override
+  void close() {}
 }
 
 final class _AcceptanceSession implements AgentModelSession {
@@ -46,11 +94,6 @@ final class _AcceptanceSession implements AgentModelSession {
             _ => {
               'title': '读取报告',
               'objective': '读取报告并核验报告条目数',
-              'steps': [
-                {'stepId': 'read', 'summary': '读取报告'},
-                {'stepId': 'verify', 'summary': '核验结果'},
-              ],
-              'allowedToolNames': ['inspect_report'],
               'acknowledgementDraft': '我会读取报告并核验条目数，完成后回复。',
             },
           },
@@ -66,6 +109,21 @@ final class _AcceptanceSession implements AgentModelSession {
       owner.backgroundSessions++;
       final state =
           jsonDecode(request.messages.last.content) as Map<String, dynamic>;
+      if (state['replan_required'] == true) {
+        yield ToolCallRequested(
+          callId: 'plan-report',
+          name: 'stars_revise_task_plan',
+          arguments: {
+            'steps': [
+              {'id': 'read', 'summary': '读取报告'},
+              {'id': 'verify', 'summary': '核验结果'},
+            ],
+            'allowedToolNames': ['inspect_report'],
+          },
+        );
+        yield const ModelTurnCompleted(stopReason: 'tool_calls');
+        return;
+      }
       final observations = state['observations'] as List;
       if (!observations.any((raw) => (raw as Map)['status'] == 'succeeded')) {
         yield ToolCallRequested(

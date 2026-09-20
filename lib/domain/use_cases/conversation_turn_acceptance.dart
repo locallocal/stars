@@ -3,28 +3,7 @@ part of 'conversation_turn_dispatcher.dart';
 TaskAcceptanceSnapshot _freezeAcceptance(
   ConversationTurnInput input,
   PreparedChatGeneration prepared,
-  ToolRegistry tools,
-  bool Function(ExecutableTool) supportsTaskTool,
 ) {
-  final registry = OverlayToolRegistry(
-    parent: tools,
-    overlayTools: prepared.runScopedTools,
-  );
-  final requested = {
-    ...prepared.requestedToolNames,
-    ...prepared.verificationToolNames,
-  };
-  final allowed =
-      requested.isEmpty
-          ? <String>{}
-          : registry
-              .list(allowedNames: requested)
-              .where((definition) {
-                final tool = registry.find(definition.name);
-                return tool != null && supportsTaskTool(tool);
-              })
-              .map((tool) => tool.name)
-              .toSet();
   return TaskAcceptanceSnapshot(
     providerId: input.bot.apiType,
     modelId: input.bot.model,
@@ -46,10 +25,8 @@ TaskAcceptanceSnapshot _freezeAcceptance(
           assetReferences: [...message.images, ...message.files],
         ),
     ],
-    allowedToolNames: allowed,
-    approvalExemptToolNames: prepared.approvalExemptToolNames.intersection(
-      allowed,
-    ),
+    deferredPreparation: true,
+    allowedToolNames: const {},
     verification: VerificationPolicySnapshot(
       reliabilityEnabled:
           input.verification.reliabilityEnabled &&
@@ -64,7 +41,7 @@ TaskAcceptanceSnapshot _freezeAcceptance(
 
 _AcceptanceWrite _createAcceptance(
   _PendingTurn pending,
-  BackgroundTaskPlan proposal,
+  BackgroundTaskRequest proposal,
   DateTime at,
 ) {
   final user = pending.input.userMessage;
@@ -85,10 +62,7 @@ _AcceptanceWrite _createAcceptance(
     title: proposal.title,
     objective: proposal.objective,
     acceptance: pending.acceptance!,
-    progress: TaskProgress(
-      totalSteps: proposal.steps.length,
-      lastMeaningfulProgressAt: at,
-    ),
+    progress: TaskProgress(totalSteps: 0, lastMeaningfulProgressAt: at),
     createdAt: at,
     updatedAt: at,
   );
@@ -98,8 +72,9 @@ _AcceptanceWrite _createAcceptance(
       taskId: taskId,
       revision: 1,
       objective: proposal.objective,
-      steps: proposal.steps,
-      allowedToolNames: proposal.allowedToolNames,
+      isPending: true,
+      steps: const [],
+      allowedToolNames: const {},
       createdAt: at,
     ),
     event: ConversationTaskEvent(

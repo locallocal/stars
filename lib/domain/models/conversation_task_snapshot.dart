@@ -44,6 +44,7 @@ final class TaskAcceptanceSnapshot {
     Set<String> approvalExemptToolNames = const {},
     required this.verification,
     required this.segmentLimits,
+    this.deferredPreparation = false,
   }) : context = List.unmodifiable(context),
        allowedToolNames = Set.unmodifiable(
          _taskStrings(allowedToolNames, 'tools'),
@@ -57,7 +58,8 @@ final class TaskAcceptanceSnapshot {
     if (context.isEmpty || context.length > 1024) {
       throw ArgumentError('Task acceptance requires bounded prepared context.');
     }
-    if (!allowedToolNames.containsAll(approvalExemptToolNames)) {
+    if (!allowedToolNames.containsAll(approvalExemptToolNames) ||
+        (deferredPreparation && allowedToolNames.isNotEmpty)) {
       throw ArgumentError('Approval exemptions must name accepted tools.');
     }
   }
@@ -73,6 +75,36 @@ final class TaskAcceptanceSnapshot {
   final Set<String> approvalExemptToolNames;
   final VerificationPolicySnapshot verification;
   final TaskSegmentLimits segmentLimits;
+
+  /// New tasks select their execution context and tools after durable acceptance.
+  /// False preserves the scope of tasks created by earlier application versions.
+  final bool deferredPreparation;
+}
+
+/// Context and candidate tools selected by a fresh background Skill activation.
+/// Persisted with the plan so restarts do not reactivate or broaden its grants.
+final class TaskPreparationSnapshot {
+  TaskPreparationSnapshot({
+    required List<TaskContextMessage> context,
+    required Set<String> allowedToolNames,
+    Set<String> approvalExemptToolNames = const {},
+  }) : context = List.unmodifiable(context),
+       allowedToolNames = Set.unmodifiable(
+         _taskStrings(allowedToolNames, 'tools'),
+       ),
+       approvalExemptToolNames = Set.unmodifiable(
+         _taskStrings(approvalExemptToolNames, 'approval-exempt tools'),
+       ) {
+    if (context.isEmpty ||
+        context.length > 1024 ||
+        !allowedToolNames.containsAll(approvalExemptToolNames)) {
+      throw ArgumentError('Invalid background preparation.');
+    }
+  }
+
+  final List<TaskContextMessage> context;
+  final Set<String> allowedToolNames;
+  final Set<String> approvalExemptToolNames;
 }
 
 final class TaskPlanStep {
@@ -98,6 +130,8 @@ final class ConversationTaskPlan {
     required List<TaskPlanStep> steps,
     required Set<String> allowedToolNames,
     required this.createdAt,
+    this.isPending = false,
+    this.preparation,
   }) : steps = List.unmodifiable(steps),
        allowedToolNames = Set.unmodifiable(
          _taskStrings(allowedToolNames, 'tools'),
@@ -105,7 +139,11 @@ final class ConversationTaskPlan {
     _taskText(taskId, 'taskId', maximum: 256);
     _taskText(objective, 'objective');
     _taskCount(revision, 'planRevision', minimum: 1);
-    if (steps.isEmpty ||
+    if ((isPending
+            ? steps.isNotEmpty || allowedToolNames.isNotEmpty
+            : steps.isEmpty) ||
+        (preparation != null &&
+            !preparation!.allowedToolNames.containsAll(allowedToolNames)) ||
         steps.map((step) => step.stepId).toSet().length != steps.length) {
       throw ArgumentError('Plans require distinct steps.');
     }
@@ -117,6 +155,8 @@ final class ConversationTaskPlan {
   final List<TaskPlanStep> steps;
   final Set<String> allowedToolNames;
   final DateTime createdAt;
+  final bool isPending;
+  final TaskPreparationSnapshot? preparation;
 }
 
 final class ConversationTaskCheckpoint {

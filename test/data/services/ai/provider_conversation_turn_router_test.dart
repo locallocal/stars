@@ -32,7 +32,6 @@ void main() {
             reasoning: 'private thought',
           ),
         ],
-        allowedToolNames: {'read_file'},
       );
 
   test(
@@ -45,9 +44,7 @@ void main() {
         events:
             () => Stream.fromIterable([
               TextDelta(
-                routeFrames('backgroundTaskPlan', [
-                  foregroundPlan(draft: draft),
-                ]),
+                routeFrames('backgroundTask', [foregroundPlan(draft: draft)]),
               ),
               const ModelTurnCompleted(),
             ]),
@@ -64,13 +61,12 @@ void main() {
                     ChatMessage(role: 'assistant', content: 'RustFS 调研报告已保存。'),
                     ChatMessage(role: 'user', content: userText),
                   ],
-                  allowedToolNames: {'read_file'},
                 ),
               )
               .toList();
       final plan =
           events.whereType<TurnDispositionCompleted>().single.disposition
-              as BackgroundTaskPlan;
+              as BackgroundTaskRequest;
       expect(plan.acknowledgementDraft, draft);
       expect(providers.conversationScopes, [input.userMessage.chatId]);
       final session = provider.sessions.single;
@@ -244,7 +240,7 @@ void main() {
     ),
     'output token limit': (
       [
-        TextDelta(routeFrames('backgroundTaskPlan', [foregroundPlan()])),
+        TextDelta(routeFrames('backgroundTask', [foregroundPlan()])),
         const ModelTurnCompleted(stopReason: 'length'),
       ],
       TurnRoutingFailure.incompleteResponse,
@@ -366,7 +362,7 @@ void main() {
             TurnDispositionKind.directReply => [
               {'text': 'Hello.'},
             ],
-            TurnDispositionKind.backgroundTaskPlan => [foregroundPlan()],
+            TurnDispositionKind.backgroundTask => [foregroundPlan()],
             TurnDispositionKind.taskStatusRequest => [
               {'taskId': null},
             ],
@@ -408,7 +404,6 @@ void main() {
                       userMessage: input.userMessage,
                       language: input.language,
                       messages: request().messages,
-                      allowedToolNames: {'read_file'},
                     ),
                   )
                   .toList();
@@ -593,7 +588,6 @@ void main() {
                   userMessage: input.userMessage,
                   language: 'en',
                   messages: request().messages,
-                  allowedToolNames: {'read_file'},
                 ),
               )
               .toList();

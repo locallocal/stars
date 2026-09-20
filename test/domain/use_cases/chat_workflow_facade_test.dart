@@ -51,6 +51,8 @@ void main() {
                 required userMessage,
                 required currentUserId,
                 skillToolProvider,
+                bool foregroundOnly = false,
+                String? backgroundTaskObjective,
               }) async => PreparedChatTurn(
                 messages: const [],
                 activatedSkills: const [],
@@ -124,6 +126,8 @@ void main() {
           required userMessage,
           required currentUserId,
           skillToolProvider,
+          bool foregroundOnly = false,
+          String? backgroundTaskObjective,
         }) async {
           preparedBot = bot;
           return PreparedChatTurn(

@@ -79,6 +79,8 @@ AppConversationTasks createAppConversationTasks({
         (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
       ).join();
   final runtime = TaskRuntimeFactory(
+    prepare: prepare,
+    messages: messages,
     tasks: repository,
     adapters: adapters,
     clock: clock,
@@ -150,8 +152,6 @@ AppConversationTasks createAppConversationTasks({
       drafts: drafts,
       tasks: repository,
       enqueuer: scheduler,
-      toolRegistry: registry,
-      supportsTaskTool: runtime.supportsTool,
       now: clock.now,
     ),
     progress: PresentConversationTaskProgress(

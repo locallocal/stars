@@ -22,6 +22,8 @@ void main() {
           required userMessage,
           required currentUserId,
           skillToolProvider,
+          bool foregroundOnly = false,
+          String? backgroundTaskObjective,
         }) async {
           expect(bot, same(_bot));
           expect(history, [_historyMessage]);
@@ -78,6 +80,8 @@ void main() {
               required userMessage,
               required currentUserId,
               skillToolProvider,
+              bool foregroundOnly = false,
+              String? backgroundTaskObjective,
             }) async => PreparedChatTurn(
               messages: [],
               activatedSkills: const [],
@@ -118,6 +122,8 @@ void main() {
             required userMessage,
             required currentUserId,
             skillToolProvider,
+            bool foregroundOnly = false,
+            String? backgroundTaskObjective,
           }) async => PreparedChatTurn(messages: [], activatedSkills: const []),
     );
 
@@ -151,6 +157,8 @@ void main() {
             required userMessage,
             required currentUserId,
             skillToolProvider,
+            bool foregroundOnly = false,
+            String? backgroundTaskObjective,
           }) async => PreparedChatTurn(messages: [], activatedSkills: const []),
     );
 

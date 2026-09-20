@@ -11,24 +11,29 @@
 | --- | --- |
 | [ConversationTurnDispatcher](../../lib/domain/use_cases/conversation_turn_dispatcher.dart) | 保存用户消息，准备上下文，消费一次分流，提交回复或接受任务，查询状态 |
 | [输入、结果与重试契约](../../lib/domain/use_cases/conversation_turn_dispatch_contracts.dart) | 原始消息和 turn、准备结果、策略快照、展示事件、结果与指标 |
-| [TurnDisposition](../../lib/domain/models/turn_disposition.dart) | `DirectReply`、`BackgroundTaskPlan`、`TaskStatusRequest` 三个互斥领域结果 |
+| [TurnDisposition](../../lib/domain/models/turn_disposition.dart) | `DirectReply`、`BackgroundTaskRequest`、`TaskStatusRequest` 三个互斥领域结果 |
 | [ProviderConversationTurnRouter](../../lib/data/services/ai/provider_conversation_turn_router.dart) | 单次无工具的 Provider 传输、终态与超时检查、协议事件转换 |
-| [TurnRoutingProtocol](../../lib/data/services/ai/turn_routing_protocol.dart) | 路由协议、schema、长度、工具子集及重复字段校验 |
+| [TurnRoutingProtocol](../../lib/data/services/ai/turn_routing_protocol.dart) | 路由协议、schema、长度及重复字段校验 |
 | [TaskAcknowledgementPolicy](../../lib/domain/services/task_acknowledgement_policy.dart) | 保留模型回执措辞，检查文本边界和明显不合适的声明，异常时本地化兜底 |
-| [任务接受构造](../../lib/domain/use_cases/conversation_turn_acceptance.dart) | 冻结配置、上下文、白名单、验证和分段策略；建立任务与回执身份 |
+| [任务接受构造](../../lib/domain/use_cases/conversation_turn_acceptance.dart) | 冻结配置、上下文、验证和分段策略；建立任务与回执身份 |
 
-`PrepareTextGeneration` 和 `ComposeChatTurn` 继续负责上下文、压缩、Skill/MCP 准备、工具发现与
-preflight Token。dispatcher 将请求工具与验证工具在实际 registry 中解析，再把名称白名单交给
-router；工具可用不触发 Agent Loop。run-scoped 工具仍由准备结果携带，接受时记录其允许名称。
+前台通过 `foregroundOnly` 仅准备本地、有 Token 预算的上下文，不激活 Skill、不解析 MCP、
+不发现工具，也不等待远程模型目录或同步模型压缩。因此直接回复只需要一次主回复请求。
 
-Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalExemptToolNames`，只保留实际允许的
-工具名称。已启用 Skill 的免确认设置也适用于通过验证发现加入的同名读取工具，不要求本轮再次
-激活该 Skill；免确认名单本身不暴露工具，也不扩大任务白名单。执行和重启恢复使用同一份快照。
+后台任务创建成功后，由 runner 在执行租约保护下重新调用 `PrepareTextGeneration` 激活 Skill、
+发现工具。技能选择请求只带当前目录、已接受目标和原始用户输入，不复用历史助手的工具可用性
+描述。模型通过 `activate_skill` 激活所需技能，并用 `finish_skill_selection` 明确完成选择；
+返回的技能名称必须与实际激活结果一致。普通确认文案、无工具响应和激活错误不能提交准备快照，
+任务保留待准备状态并按现有退避策略有限重试。
+完成选择后，将支持后台执行的完整候选工具、上下文和免审批配置保存为 `TaskPreparationSnapshot`。
+所选技能的写入工具与读取工具一并保留，只读核验工具仅作为补充，不替代业务工具。
+随后独立规划请求选择需要的工具并拆分步骤；计划提交前不执行业务工具。恢复时使用已提交的
+准备快照和步骤检查点；旧任务仍受原接受范围约束。
 
 ## 单次分流协议
 
-协议 v1 使用逐行 JSON 对象，流式和缓冲传输共用同一个解析器。首帧只包含 `kind`，末帧只包含
-`done: true`。直接回复的中间帧包含 `text`，任务只允许一个完整计划帧，状态只允许一个 `taskId`
+协议 v2 使用逐行 JSON 对象，流式和缓冲传输共用同一个解析器。首帧只包含 `kind`，末帧只包含
+`done: true`。直接回复的中间帧包含 `text`，任务只允许一个任务信息帧，状态只允许一个 `taskId`
 帧。例如：
 
 ```jsonl
@@ -37,13 +42,13 @@ Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalEx
 {"done":true}
 ```
 
-计划字段和限制以解析器为准：标题 200 字符、目标 16000 字符、1–32 个唯一待执行步骤、步骤
-摘要 2000 字符、最多 256 个允许工具；整个响应有大小和帧数上限。未知类型、额外字段、错误
-类型、重复字段（含 Unicode 转义别名）、重复步骤、越权工具、缺少末帧和 Provider 截断均拒绝。
+任务信息包含 `title`（最多 200 字符）、`objective`（最多 16000 字符）和
+`acknowledgementDraft`，没有步骤与工具字段；整个响应有大小和帧数上限。未知类型、额外字段、
+错误类型、重复字段（含 Unicode 转义别名）、缺少末帧和 Provider 截断均拒绝。
 错误只返回固定的可恢复原因，不把原始 Provider 异常、JSON 或未校验草稿显示给用户。
 
 流式路径先发送 `TurnDispositionStarted`，只有 `directReply` 的完整文本帧可用于即时展示。
-任务计划与回执一直留在内部，直到全部校验成功并提交接受事务。缓冲路径须完成整次响应及
+任务信息与回执一直留在内部，直到全部校验成功并提交接受事务。缓冲路径须完成整次响应及
 协议校验后才发布领域事件。协议末帧不能替代 Provider 的成功终态。
 
 ### Provider 边界
@@ -69,7 +74,7 @@ Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalEx
 | 处置 | 持久化与返回行为 |
 | --- | --- |
 | 直接回复 | 只提交完整的 `turnId:assistant`，应用现有终态与 `AnswerTrustPolicy`；没有工具证据时不标为已验证 |
-| 接受任务 | 原子提交任务、初始计划、事件、进度投影及 `taskId:ack`，提交后调用 `enqueue` |
+| 接受任务 | 原子提交任务、待规划记录、事件、进度投影及 `taskId:ack`，提交后调用 `enqueue` |
 | 查询状态 | 返回持久化摘要；由 PresentConversationTaskProgress 结合用户原问题生成自然语言回复，再保存同一查询快照 |
 
 直接回复的 delta 仅供显示，不落 partial 消息；流中断或格式错误时返回失败，UI 应丢弃展示中的
@@ -97,7 +102,7 @@ Skill 绑定和 MCP 工具配置中的免确认设置一并冻结为 `approvalEx
 
 - 用户消息尚未保存：尝试恢复文本与附件草稿；即使草稿存储也失败，结果仍携带 UI 恢复材料。
 - 用户消息已保存：错误带有原始输入和不透明 `TurnDispatchRetry`；重试不新建用户消息或 turn。
-- 计划已校验但接受失败：重试保留准备结果、冻结策略、计划与回执，不再调用主回复模型。
+- 任务信息已校验但接受失败：重试保留轻量上下文、冻结策略、任务信息与回执，不再调用主回复模型。
 - 直接回复落库失败：重试保留完整文本；只重试同一助手消息的持久化。
 - 提交成功但响应丢失：重试先按原始 turn 对账，复用已经持久化的任务或直接回复。
 - 同一消息身份对应不同内容：返回身份冲突，不覆盖原消息；保存成功也不清除后来输入的新草稿。

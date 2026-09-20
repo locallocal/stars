@@ -18,6 +18,11 @@ extension ConversationTaskStoreWrites on ConversationTaskStore {
           plan.taskId != task.taskId ||
           plan.revision != 1 ||
           plan.steps.any((step) => step.status != TaskPlanStepStatus.pending) ||
+          plan.isPending != task.acceptance.deferredPreparation ||
+          plan.preparation != null ||
+          (task.acceptance.deferredPreparation &&
+              (task.acceptance.allowedToolNames.isNotEmpty ||
+                  task.acceptance.approvalExemptToolNames.isNotEmpty)) ||
           !task.acceptance.allowedToolNames.containsAll(
             plan.allowedToolNames,
           ) ||

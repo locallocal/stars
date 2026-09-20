@@ -12,16 +12,13 @@ final class TurnRoutingRequest {
     this.cancellation,
     this.requiresBackgroundTask = false,
     required List<ChatMessage> messages,
-    required Set<String> allowedToolNames,
-  }) : messages = List.unmodifiable(messages),
-       allowedToolNames = Set.unmodifiable(allowedToolNames);
+  }) : messages = List.unmodifiable(messages);
   final AgentCancellationToken? cancellation;
   final bool requiresBackgroundTask;
   final Bot bot;
   final Message userMessage;
   final String language;
   final List<ChatMessage> messages;
-  final Set<String> allowedToolNames;
 }
 
 abstract interface class ConversationTurnRouter {

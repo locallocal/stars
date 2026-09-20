@@ -65,11 +65,6 @@ ConversationTurnInput foregroundInput({
 Map<String, Object?> foregroundPlan({String draft = ''}) => {
   'title': '整理报告',
   'objective': '读取资料并整理报告',
-  'steps': [
-    {'stepId': 'read', 'summary': '读取资料'},
-    {'stepId': 'write', 'summary': '整理报告'},
-  ],
-  'allowedToolNames': ['read_file'],
   'acknowledgementDraft': draft,
 };
 

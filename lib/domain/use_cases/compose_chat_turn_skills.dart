@@ -28,7 +28,9 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     required bool injectApplicationPrompt,
     required String systemPromptLanguage,
     required bool includeUntrustedPartialOutput,
+    String? backgroundTaskObjective,
   }) async {
+    final explicitSelection = backgroundTaskObjective != null;
     final initialPrompt = _composeSystemPrompt(
       bot.systemPrompt,
       state.contents.values.toList(),
@@ -41,16 +43,36 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
     );
     final initialMessages = <ChatMessage>[
       if (initialPrompt.isNotEmpty)
-        ChatMessage(role: 'system', content: initialPrompt),
+        ChatMessage(
+          role: 'system',
+          content:
+              explicitSelection
+                  ? '$initialPrompt\n\n$_backgroundSkillSelectionInstruction'
+                  : initialPrompt,
+        ),
+      if (explicitSelection)
+        ChatMessage(
+          role: 'user',
+          content: jsonEncode({
+            'accepted_task_objective': backgroundTaskObjective,
+          }),
+        ),
       ..._composeHistory(
-        history: history,
+        // The accepted objective resolves references to earlier conversation.
+        // Old assistant claims about tool availability must not steer discovery.
+        // Full history remains available in the later execution context.
+        history: explicitSelection ? const [] : history,
         userMessage: userMessage,
         currentUserId: currentUserId,
         includeUntrustedPartialOutput: includeUntrustedPartialOutput,
       ),
     ];
     final session = provider.openSkillToolSession(
-      SkillToolSessionRequest(messages: initialMessages, catalog: catalog),
+      SkillToolSessionRequest(
+        messages: initialMessages,
+        catalog: catalog,
+        requireExplicitCompletion: explicitSelection,
+      ),
     );
     final candidatesByName = <String, SkillCatalogEntry>{
       for (final candidate in catalog) candidate.name: candidate,
@@ -59,7 +81,15 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
       SkillToolTurn turn = await session.start();
       state.preflightTokenUsage = state.preflightTokenUsage + turn.tokenUsage;
       var retryingWithoutProgress = false;
-      while (turn.calls.isNotEmpty && !turn.isComplete) {
+      while (true) {
+        if (explicitSelection) {
+          if (_skillSelectionFinished(turn, state)) return;
+          if (turn.calls.isEmpty || turn.isComplete) {
+            throw const SkillSelectionIncompleteException();
+          }
+        } else if (turn.calls.isEmpty || turn.isComplete) {
+          break;
+        }
         final previousSkillCount = state.contents.length;
         final previousResourceCount = state.resources.length;
         final results = <SkillToolResult>[];
@@ -78,7 +108,12 @@ extension _ComposeChatTurnSkills on ComposeChatTurn {
             state.resources.length > previousResourceCount;
         // Let the model correct an error or a redundant call once. New Skills
         // and references keep discovery running without a fixed selection cap.
-        if (!madeProgress && retryingWithoutProgress) break;
+        if (!madeProgress && retryingWithoutProgress) {
+          if (explicitSelection) {
+            throw const SkillSelectionIncompleteException();
+          }
+          break;
+        }
         retryingWithoutProgress = !madeProgress;
         turn = await session.continueWith(results);
         state.preflightTokenUsage = state.preflightTokenUsage + turn.tokenUsage;
