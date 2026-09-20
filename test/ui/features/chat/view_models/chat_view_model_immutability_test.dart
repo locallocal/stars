@@ -137,6 +137,8 @@ Future<PreparedChatTurn> _unusedComposeChatTurn({
   required Message userMessage,
   required String currentUserId,
   AiProvider? skillToolProvider,
+  bool foregroundOnly = false,
+  String? backgroundTaskObjective,
 }) {
   throw UnimplementedError();
 }

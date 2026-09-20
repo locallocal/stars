@@ -6,6 +6,7 @@ TaskAcceptanceSnapshot taskAcceptance({
   TaskSegmentLimits? limits,
   Set<String> allowedToolNames = const {'read_file'},
   Set<String> approvalExemptToolNames = const {},
+  bool deferredPreparation = false,
 }) => TaskAcceptanceSnapshot(
   providerId: 'provider-1',
   modelId: 'model-1',
@@ -14,6 +15,7 @@ TaskAcceptanceSnapshot taskAcceptance({
   context: [TaskContextMessage(role: TaskContextRole.user, content: '整理报告')],
   allowedToolNames: allowedToolNames,
   approvalExemptToolNames: approvalExemptToolNames,
+  deferredPreparation: deferredPreparation,
   verification: VerificationPolicySnapshot(
     reliabilityEnabled: true,
     strictGroundingEnabled: true,

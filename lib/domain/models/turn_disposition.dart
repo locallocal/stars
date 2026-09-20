@@ -1,7 +1,6 @@
-import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 
-enum TurnDispositionKind { directReply, backgroundTaskPlan, taskStatusRequest }
+enum TurnDispositionKind { directReply, backgroundTask, taskStatusRequest }
 
 /// A decision made by the main reply turn, never by a separate classifier.
 sealed class TurnDisposition {
@@ -20,39 +19,26 @@ final class DirectReply extends TurnDisposition {
   TurnDispositionKind get kind => TurnDispositionKind.directReply;
 }
 
-/// A proposal only. It becomes accepted work after the repository transaction.
-final class BackgroundTaskPlan extends TurnDisposition {
-  BackgroundTaskPlan({
+/// Task metadata only. Tool selection and planning happen after acceptance.
+final class BackgroundTaskRequest extends TurnDisposition {
+  BackgroundTaskRequest({
     required this.title,
     required this.objective,
-    required List<TaskPlanStep> steps,
-    required Set<String> allowedToolNames,
     required this.acknowledgementDraft,
-  }) : steps = List.unmodifiable(steps),
-       allowedToolNames = Set.unmodifiable(allowedToolNames) {
+  }) {
     if (title.trim().isEmpty ||
         title.length > 200 ||
         objective.trim().isEmpty ||
         objective.length > 16000 ||
-        steps.isEmpty ||
-        steps.length > 32 ||
-        steps.map((step) => step.stepId).toSet().length != steps.length ||
-        steps.any((step) => step.status != TaskPlanStepStatus.pending) ||
-        allowedToolNames.length > 256 ||
-        allowedToolNames.any(
-          (name) => name.trim().isEmpty || name.length > 256,
-        ) ||
         acknowledgementDraft.length > 2000) {
       throw ArgumentError('Invalid foreground task proposal.');
     }
   }
   final String title;
   final String objective;
-  final List<TaskPlanStep> steps;
-  final Set<String> allowedToolNames;
   final String acknowledgementDraft;
   @override
-  TurnDispositionKind get kind => TurnDispositionKind.backgroundTaskPlan;
+  TurnDispositionKind get kind => TurnDispositionKind.backgroundTask;
 }
 
 final class TaskStatusRequest extends TurnDisposition {

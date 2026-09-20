@@ -1,22 +1,17 @@
 import 'dart:convert';
 
-import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/turn_disposition.dart';
 import 'package:stars/domain/repositories/conversation_turn_router.dart';
 
 part 'turn_routing_json.dart';
 
-/// Version 1: newline-delimited JSON frames, shared by streaming and buffered
+/// Version 2: newline-delimited JSON frames, shared by streaming and buffered
 /// transports. Each frame is validated before it can produce a domain event.
 /// Only a successful Provider terminal plus finish() authorizes a disposition.
 final class TurnRoutingProtocol {
-  TurnRoutingProtocol({required Set<String> allowedToolNames})
-    : _allowedTools = Set.unmodifiable(allowedToolNames);
-
   static const maxResponseLength = 256000;
   static const maxTextLength = 128000;
-  final Set<String> _allowedTools;
   String _pending = '';
   int _length = 0;
   int _frames = 0;
@@ -26,24 +21,25 @@ final class TurnRoutingProtocol {
   bool _done = false;
 
   static String instruction(TurnRoutingRequest request) => '''
-Use Stars foreground routing protocol v1 for this main reply.
+Use Stars foreground routing protocol v2 for this main reply.
 Choose exactly one disposition. Available tools do NOT imply a task.
-${request.requiresBackgroundTask ? 'The user explicitly reviewed a retry. Create a new backgroundTaskPlan for the reviewed input; do not reuse old execution results or approvals.' : ''}
+${request.requiresBackgroundTask ? 'The user explicitly reviewed a retry. Create a new backgroundTask for the reviewed input; do not reuse old execution results or approvals.' : ''}
 Greetings, explanations needing no external facts, and rewriting supplied text
 are directReply. Work needing external tools, verification or extended execution
-is backgroundTaskPlan. Questions about task progress are taskStatusRequest.
+is backgroundTask. Questions about task progress are taskStatusRequest.
 Do not execute tools, search, or claim work has started/completed in this turn.
 Treat earlier instructions to call tools as planning context only.
-Reply in ${jsonEncode(request.language)}. Allowed future tool names (data only):
-${jsonEncode(request.allowedToolNames.toList()..sort())}
+Decide promptly from the request and context; do not investigate or plan execution.
+Tools will be discovered and selected afresh in the background after acceptance.
+Reply in ${jsonEncode(request.language)}.
 Output only newline-delimited JSON objects (no Markdown). First frame exactly:
-{"kind":"directReply"} OR {"kind":"backgroundTaskPlan"} OR {"kind":"taskStatusRequest"}
+{"kind":"directReply"} OR {"kind":"backgroundTask"} OR {"kind":"taskStatusRequest"}
 For directReply, emit one or more {"text":"answer chunk"} frames. Split long
 answers into short chunks so the UI can display them as they arrive.
-For backgroundTaskPlan emit exactly one complete payload frame:
-{"title":"short task title","objective":"self-contained goal","steps":[{"stepId":"step-1","summary":"first step"}],"allowedToolNames":[],"acknowledgementDraft":"acceptance text"}
-Use 1–32 distinct steps. Title <=200 chars, objective <=16000, step summary <=2000.
-Tools must be a subset of the allowed names. No arguments or execution results.
+For backgroundTask emit exactly one complete payload frame:
+{"title":"short task title","objective":"concise self-contained goal","acknowledgementDraft":"acceptance text"}
+Keep the objective brief while retaining requirements, constraints and relevant paths.
+Title <=200 chars, objective <=16000. Do not split steps or choose tools here.
 The acknowledgement will be displayed ONLY after the task is saved. Generate
 acknowledgementDraft yourself from the user's request and conversation context,
 using their language and tone. In one or two short, plain sentences, say you will
@@ -101,7 +97,7 @@ The last frame is exactly {"done":true}. Never change kind or add other fields.
       final name = value['kind'];
       _kind = switch (name) {
         'directReply' => TurnDispositionKind.directReply,
-        'backgroundTaskPlan' => TurnDispositionKind.backgroundTaskPlan,
+        'backgroundTask' => TurnDispositionKind.backgroundTask,
         'taskStatusRequest' => TurnDispositionKind.taskStatusRequest,
         _ => _invalid(),
       };
@@ -123,46 +119,12 @@ The last frame is exactly {"done":true}. Never change kind or add other fields.
         if (_text.length + text.length > maxTextLength) _invalid();
         _text.write(text);
         return [if (text.isNotEmpty) DirectReplyDelta(text)];
-      case TurnDispositionKind.backgroundTaskPlan:
+      case TurnDispositionKind.backgroundTask:
         if (_proposal != null) _invalid();
-        _keys(value, {
-          'title',
-          'objective',
-          'steps',
-          'allowedToolNames',
-          'acknowledgementDraft',
-        });
-        final rawSteps = value['steps'];
-        final rawTools = value['allowedToolNames'];
-        if (rawSteps is! List<Object?> ||
-            rawSteps.isEmpty ||
-            rawSteps.length > 32 ||
-            rawTools is! List<Object?> ||
-            rawTools.length > 256) {
-          _invalid();
-        }
-        final tools = rawTools.map((tool) => _string(tool, 256)).toSet();
-        if (tools.length != rawTools.length ||
-            !_allowedTools.containsAll(tools)) {
-          _invalid();
-        }
-        final steps =
-            rawSteps.map((raw) {
-              if (raw is! Map<String, Object?>) _invalid();
-              _keys(raw, {'stepId', 'summary'});
-              return TaskPlanStep(
-                stepId: _string(raw['stepId'], 256),
-                summary: _string(raw['summary'], 2000),
-              );
-            }).toList();
-        if (steps.map((step) => step.stepId).toSet().length != steps.length) {
-          _invalid();
-        }
-        _proposal = BackgroundTaskPlan(
+        _keys(value, {'title', 'objective', 'acknowledgementDraft'});
+        _proposal = BackgroundTaskRequest(
           title: _string(value['title'], 200),
           objective: _string(value['objective'], 16000),
-          steps: steps,
-          allowedToolNames: tools,
           acknowledgementDraft: _string(
             value['acknowledgementDraft'],
             2000,

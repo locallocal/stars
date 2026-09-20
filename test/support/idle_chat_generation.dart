@@ -1,4 +1,3 @@
-import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/repositories/conversation_turn_router.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
@@ -18,7 +17,6 @@ ChatGenerationRegistry idleChatGenerationRegistry({
 
 ConversationTurnDispatcher unusedForegroundDispatcher() =>
     ConversationTurnDispatcher(
-      supportsTaskTool: (_) => false,
       prepare: PrepareTextGeneration(
         aiProviderRepository: ForegroundProviders(
           (_) => throw StateError('Unexpected provider'),
@@ -30,6 +28,8 @@ ConversationTurnDispatcher unusedForegroundDispatcher() =>
               required userMessage,
               required currentUserId,
               skillToolProvider,
+              bool foregroundOnly = false,
+              String? backgroundTaskObjective,
             }) => throw StateError('Unexpected preparation'),
       ),
       router: _UnusedRouter(),
@@ -37,7 +37,6 @@ ConversationTurnDispatcher unusedForegroundDispatcher() =>
       drafts: ForegroundDrafts(),
       tasks: _UnusedTasks(),
       enqueuer: ForegroundEnqueuer(),
-      toolRegistry: StaticToolRegistry(const []),
     );
 PresentConversationTaskProgress unusedTaskProgress() =>
     PresentConversationTaskProgress(

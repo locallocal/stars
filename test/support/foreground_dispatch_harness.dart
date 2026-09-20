@@ -35,7 +35,7 @@ final class ForegroundDispatchHarness {
   bool preparationFails = false;
   bool preparedReliability = true;
   Set<String> approvalExemptToolNames = {'read_file'};
-  int preparations = 0;
+  int preparations = 0, foregroundPreparations = 0, backgroundPreparations = 0;
   List<Message>? preparedHistory;
   List<ChatMessage>? contextOverride;
   Future<void> Function(Message)? onPrepare;
@@ -67,7 +67,6 @@ final class ForegroundDispatchHarness {
     ConversationTurnRouter? router,
     ForegroundTurnGate? gate,
     Duration enqueueTimeout = const Duration(seconds: 1),
-    bool Function(ExecutableTool)? supportsTaskTool,
   }) {
     prepare = PrepareTextGeneration(
       aiProviderRepository: providers,
@@ -77,8 +76,18 @@ final class ForegroundDispatchHarness {
         required userMessage,
         required currentUserId,
         skillToolProvider,
+        bool foregroundOnly = false,
+        String? backgroundTaskObjective,
       }) async {
         preparations++;
+        if (foregroundOnly) {
+          foregroundPreparations++;
+          if (skillToolProvider != null) {
+            throw StateError('Foreground must not activate tools');
+          }
+        } else {
+          backgroundPreparations++;
+        }
         preparedHistory = history;
         await onPrepare?.call(userMessage);
         if (preparationFails) throw StateError('private provider error');
@@ -121,8 +130,6 @@ final class ForegroundDispatchHarness {
       drafts: drafts,
       tasks: tasks ?? storage.repository,
       enqueuer: enqueuer,
-      toolRegistry: StaticToolRegistry([tool]),
-      supportsTaskTool: supportsTaskTool ?? (_) => true,
       now: () => foregroundTime,
       gate: gate,
       enqueueTimeout: enqueueTimeout,
@@ -146,9 +153,7 @@ final class ForegroundDispatchHarness {
       (await storage.database.query(table)).length;
 
   void background({String draft = ''}) {
-    response = routeFrames('backgroundTaskPlan', [
-      foregroundPlan(draft: draft),
-    ]);
+    response = routeFrames('backgroundTask', [foregroundPlan(draft: draft)]);
   }
 }
 

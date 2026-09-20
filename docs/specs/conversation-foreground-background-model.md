@@ -47,7 +47,7 @@
 
 | 原运行边界 | 新模型边界 |
 | --- | --- |
-| 会话有可用工具时倾向进入 Agent Loop | 首个前台模型回合明确返回“直接回复”或“后台任务计划” |
+| 会话有可用工具时倾向进入 Agent Loop | 首个前台模型回合明确返回“直接回复”或“后台任务请求” |
 | 一个 `ChatGenerationViewModel` 管理会话内唯一阻塞 run | 前台回复与后台任务分别管理；后台任务不占用会话输入锁 |
 | Agent Loop 规划文本暂存，最终只形成一个助手消息 | 直接回复仍是一个消息；长任务先有受控回执，完成后再有一个整体结果消息 |
 | 总运行默认受 15 分钟 deadline 限制 | 后台任务不设置整体墙钟超时 |
@@ -68,21 +68,20 @@
 前台 ConversationTurnDispatcher
   |-- DirectReply ----------------------> 保存完整助手回复 -> 本轮结束
   |
-  |-- BackgroundTaskPlan
+  |-- BackgroundTaskRequest
   |      -> 原子保存任务 + 回执消息
   |      -> ConversationTaskScheduler.enqueue
   |      -> 立即释放输入框
   |             |
   |             v
   |        后台 ConversationTaskRunner
-  |          规划 -> 工具 -> 证据 -> 验证 -> 合成
+  |          重新激活 Skill / 工具 -> 拆分步骤并选择工具 -> 按步骤执行 -> 验证 -> 合成
   |             |
   |             `-----------------------> 一次性保存成功、失败或取消回复
   |
   `-- TaskStatusRequest
          -> 从 ConversationTaskRepository 读取事实
-         -> 立即生成确定性状态卡片
-         -> 模型基于同一摘要润色
+         -> 模型根据用户问题和持久化事实生成自然语言回复
          -> 校验后发送友好、客观的状态回复
 ```
 
@@ -99,21 +98,15 @@ final class DirectReply extends TurnDisposition {
   final String content;
 }
 
-final class BackgroundTaskPlan extends TurnDisposition {
-  const BackgroundTaskPlan({
+final class BackgroundTaskRequest extends TurnDisposition {
+  const BackgroundTaskRequest({
     required this.title,
     required this.objective,
-    required this.steps,
-    required this.allowedToolNames,
-    required this.requiresVerification,
     required this.acknowledgementDraft,
   });
 
   final String title;
   final String objective;
-  final List<TaskPlanStep> steps;
-  final Set<String> allowedToolNames;
-  final bool requiresVerification;
   final String acknowledgementDraft;
 }
 
@@ -124,21 +117,21 @@ final class TaskStatusRequest extends TurnDisposition {
 ```
 
 Provider 不支持结构化输出时，Data 层适配器仍必须把结果解析为相同的密封类型；解析失败应回退到
-普通直接回复或可恢复错误，不得凭不完整 JSON 启动工具任务。
+可恢复错误，不得凭不完整 JSON 启动工具任务。
 
 ## 4. 前台快速分流
 
 ### 4.1 一次调用同时分类与回答
 
 为了缩短首条可见响应的延迟，不增加一个“先分类、再回答”的模型往返。`PrepareTextGeneration`
-仍负责上下文、Token 预算、Skill、MCP 与工具白名单；随后由
-`ConversationTurnDispatcher` 发起一个受约束的模型回合：
+使用 `foregroundOnly` 准备本地上下文与 Token 预算，不激活 Skill、不解析 MCP、
+不等待远程模型目录或同步压缩；随后由 `ConversationTurnDispatcher` 发起一个受约束的模型回合：
 
 - 能直接回答时返回 `DirectReply.content`；
-- 确实需要工具、审批、等待外部系统或多阶段验证时返回 `BackgroundTaskPlan`；
-- `BackgroundTaskPlan` 在同一次调用中提供结合上下文和任务内容生成的 `acknowledgementDraft`；
+- 确实需要工具、审批、等待外部系统或多阶段验证时返回 `BackgroundTaskRequest`；
+- `BackgroundTaskRequest` 在同一次调用中提供结合上下文和任务内容生成的 `acknowledgementDraft`；
 - 用户询问已有任务时返回 `TaskStatusRequest`；
-- 返回的工具名必须是本轮准备结果中白名单的子集；
+- 后台请求只返回标题、目标和回执，不包含工具名或步骤；
 - 路由 JSON 必须经过 schema、长度和枚举校验；
 - 路由模型无权声称工具已经执行或任务已经完成。
 
@@ -146,7 +139,7 @@ Provider 不支持结构化输出时，Data 层适配器仍必须把结果解析
 不等于工具“需要调用”，因此不能再用“本轮工具列表非空”作为进入 Agent Loop 的充分条件。
 
 推荐让 Provider 适配器先发出 `TurnDispositionStarted(kind)` 结构事件：`directReply` 后的文本 delta
-可立即展示；`backgroundTask` 则继续收集并校验完整计划后再保存回执。UI 在收到 kind 前不展示模型
+可立即展示；`backgroundTask` 则继续收集并校验任务信息后保存任务和回执。UI 在收到 kind 前不展示模型
 草稿，避免先显示半段回答又改成后台任务。Provider 不支持这种结构化流时，适配器缓冲并校验完整
 响应；它仍然只进行一次模型调用，只是无法获得相同的首字符延迟。
 
@@ -164,7 +157,22 @@ Provider 不支持结构化输出时，Data 层适配器仍必须把结果解析
 直接回复不写 `conversation_tasks`，不创建回执消息，也不启动调度器。首个模型回合完成即为本轮
 终态。仍可向 UI 流式显示直接回复，但持久化语义保持一个助手消息。
 
-### 4.3 后台任务回执
+### 4.3 创建后再准备和规划
+
+新任务接受时保存 `deferredPreparation: true`，初始计划为 `isPending: true`，步骤、工具、
+免审批授权均为空。该状态可以持久化、取消并在重启后继续，UI 显示规划阶段，不显示 `0/0`。
+
+后台获得执行租约后，以已接受目标、原始用户消息和当前技能目录重新发起 Skill 激活请求。
+模型须明确完成技能选择，普通聊天回复不能作为选择完成；失败时退避重试，不冻结只读候选集。
+成功激活后发现 MCP 和核验工具，并过滤后台不支持的工具；所选技能的写入工具同样进入候选集。
+执行上下文仍使用原始消息之前的历史。准备结果 `TaskPreparationSnapshot` 保存新的模型上下文、
+候选工具与配置授权，随后模型通过独立规划回合选择所需工具并拆分有序步骤。
+
+准备结果先提交，步骤计划再提交，业务工具只能在步骤计划保存后调用。规划失败重试或应用重启
+复用已提交的准备结果；步骤按检查点中的 `nextStepId` 推进。新任务不依赖前台选择的工具。
+旧任务保留原有接受范围，新的准备快照不能用于扩大旧任务权限。
+
+### 4.4 后台任务回执
 
 首个前台模型回合应根据用户当前请求、会话语言、表达语气、任务标题和任务内容，同时生成自然、
 友好的回执草稿，不增加第二次模型调用。例如用户要求完成一份调研报告时，可以回复：
@@ -669,8 +677,8 @@ abstract interface class ConversationTaskRepository {
 - 等待用户或退避中的任务不占用执行槽；
 - 同一任务同一时刻只有持有有效 lease 的 runner 可以提交进展。
 
-后台任务使用接受时冻结的会话上下文、bot ID、配置摘要和计划。之后发送的普通消息不会隐式改变
-任务。如果未来支持“给任务补充信息”，必须作为带 revision 的显式命令设计。
+后台任务在接受时冻结 bot ID、配置摘要、目标和验证策略；工具与步骤在创建后另行准备。
+后台准备只使用原始输入及其之前的历史，并保存可恢复的准备快照和步骤计划。之后发送的普通消息不会隐式改变任务。如果未来支持“给任务补充信息”，必须作为带 revision 的显式命令设计。
 
 ### 10.2 恢复规则
 
@@ -774,7 +782,7 @@ provider session factory 和 tool executor。
 | [`chat_send_commands.dart`](../../lib/ui/features/chat/views/chat_send_commands.dart) | 发送入口改为调用前台 dispatcher；后台任务不再保持 `_isTyping` |
 | [`chat_generation_view_model.dart`](../../lib/ui/features/chat/view_models/chat_generation_view_model.dart) | 收缩为前台 run 生命周期；移出工具长任务、后台恢复和最终结果提交职责 |
 | [`chat_generation_registry.dart`](../../lib/ui/features/chat/view_models/chat_generation_registry.dart) | 只管理前台会话交互，不再代表后台任务注册表 |
-| [`prepare_text_generation.dart`](../../lib/domain/use_cases/prepare_text_generation.dart) 与 [`compose_chat_turn.dart`](../../lib/domain/use_cases/compose_chat_turn.dart) | 保留上下文和工具白名单准备，输出交给三路 dispatcher |
+| [`prepare_text_generation.dart`](../../lib/domain/use_cases/prepare_text_generation.dart) 与 [`compose_chat_turn.dart`](../../lib/domain/use_cases/compose_chat_turn.dart) | 前台准备轻量上下文，后台重新准备工具范围，输出交给三路 dispatcher |
 | [`conversation_task_runner.dart`](../../lib/domain/use_cases/conversation_task_runner.dart) | 从检查点推进有界分段，没有任务级 deadline |
 | [`recover_conversation_tasks.dart`](../../lib/domain/use_cases/recover_conversation_tasks.dart) | 持久化任务恢复，不把所有未完成任务直接转为安全失败 |
 | [`message.dart`](../../lib/domain/models/message.dart) | 增加任务关联与消息语义类型，区分回执、状态和最终结果 |

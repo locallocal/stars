@@ -23,6 +23,7 @@ part 'conversation_task_store_writes.dart';
 part 'conversation_task_store_commands.dart';
 part 'conversation_task_store_scheduling.dart';
 part 'conversation_task_store_facts.dart';
+part 'conversation_task_store_planning.dart';
 part 'conversation_task_store_projection.dart';
 part 'conversation_task_store_usage.dart';
 part 'conversation_task_store_validation.dart';

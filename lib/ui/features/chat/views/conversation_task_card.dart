@@ -74,7 +74,8 @@ final class ConversationTaskCard extends StatelessWidget {
               style: textStyle.copyWith(fontWeight: FontWeight.w600),
             ),
             row(w.statusLabel, w.status(s.status)),
-            row(w.steps, '${p.completedSteps}/${p.totalSteps}'),
+            if (p.totalSteps > 0)
+              row(w.steps, '${p.completedSteps}/${p.totalSteps}'),
             const SizedBox(height: 8),
             TaskTokenUsageMetrics(usage: p.tokenUsage),
           ],
@@ -256,7 +257,9 @@ final class _TaskSummaryHeader extends StatelessWidget {
                 label: words.status(summary.status),
               ),
               Text(
-                '${words.steps}: ${summary.progress.completedSteps}/${summary.progress.totalSteps}',
+                summary.progress.totalSteps == 0
+                    ? words.phase(summary.phase)
+                    : '${words.steps}: ${summary.progress.completedSteps}/${summary.progress.totalSteps}',
                 style: theme.textTheme.muted,
               ),
             ],

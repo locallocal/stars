@@ -10,12 +10,17 @@ import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
+import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/services/task_provider_configuration.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner.dart';
 import 'package:stars/domain/use_cases/conversation_task_scheduler.dart';
+import 'package:stars/domain/use_cases/prepare_text_generation.dart';
+
+part 'task_runtime_preparation.dart';
 
 /// Resolves current secure configuration at each segment; only the immutable
-/// acceptance determines provider/model/prompt/tool scope. No key is persisted.
+/// acceptance determines provider/model; background preparation owns tool scope.
+/// No key is persisted.
 final class TaskRuntimeFactory {
   const TaskRuntimeFactory({
     required this.tasks,
@@ -24,6 +29,8 @@ final class TaskRuntimeFactory {
     required this.registry,
     required this.policy,
     this.scopedTools,
+    this.prepare,
+    this.messages,
     this.adapters = const {},
     this.clock = const SystemTaskRunnerClock(),
   });
@@ -35,8 +42,10 @@ final class TaskRuntimeFactory {
   final Future<List<ExecutableTool>> Function(ConversationTask)? scopedTools;
   final Map<String, TaskToolAdapter> adapters;
   final TaskRunnerClock clock;
+  final PrepareTextGeneration? prepare;
+  final MessageRepository? messages;
 
-  /// Shared by foreground acceptance and execution; this never invokes a tool.
+  /// Checks adapter availability without invoking a tool.
   bool supportsTool(ExecutableTool tool) =>
       _adapter(tool.definition.name, tool) != null;
 
@@ -122,20 +131,21 @@ final class TaskRuntimeFactory {
         TaskReasonCode.invalidPlan,
       );
     }
-    // Acceptance freezes the candidate tool scope. Only the committed plan's
+    // Preparation persists the candidate tool scope. Only the committed plan's
     // selected tools are execution dependencies, including after a restart.
     final requiredTools = snapshot.plan.allowedToolNames;
+    final candidateTools = snapshot.toolScope;
     final available = {
-      for (final name in requiredTools)
+      for (final name in candidateTools)
         if (registry.find(name) case final tool?) name: tool,
       for (final tool in await scopedTools?.call(task) ?? <ExecutableTool>[])
         tool.definition.name: tool,
     };
     final resolved = <TaskToolAdapter>[];
-    for (final name in requiredTools) {
+    for (final name in candidateTools) {
       final adapter = _adapter(name, available[name]);
       if (adapter == null) {
-        if (cancelling) continue;
+        if (cancelling || !requiredTools.contains(name)) continue;
         throw TaskRuntimeUnavailable(
           TaskWaitingReason.requiredInput,
           TaskReasonCode.toolUnavailableFor(name),
@@ -154,6 +164,8 @@ final class TaskRuntimeFactory {
                 chatId: task.chatId,
               ).open,
       tools: resolved,
+      prepare:
+          bot == null ? null : (task, token) => _prepare(task, bot!, token),
       policy: policy,
       clock: clock,
     ).run;

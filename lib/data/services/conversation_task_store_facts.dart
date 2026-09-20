@@ -31,15 +31,16 @@ Future<void> _validateProgressFacts(
   if (event.kind == TaskEventKind.planRevised && plan == null) {
     throw ArgumentError('Missing revised plan.');
   }
-  final currentPlan =
-      plan ??
+  final previousPlan =
       ConversationTaskPlanRecord(
         (await tx.query(
           'conversation_task_plans',
           where: 'task_id = ? AND plan_revision = ?',
-          whereArgs: [task.taskId, task.planRevision],
+          whereArgs: [old.taskId, old.planRevision],
         )).single,
       ).toDomain();
+  if (plan != null) _validatePlanScope(old, previousPlan, plan);
+  final currentPlan = plan ?? previousPlan;
   final stepIds = currentPlan.steps.map((step) => step.stepId).toSet();
   if (event.stepId != null && !stepIds.contains(event.stepId)) {
     throw ArgumentError('Unknown plan step.');
@@ -195,11 +196,21 @@ Future<void> _writeTool(
   final event = update.event;
   final values = {...ToolExecutionDbRecord.fromDomain(tool).values};
   final attemptId = values['attempt_id'];
+  final plan =
+      update.plan ??
+      ConversationTaskPlanRecord(
+        (await tx.query(
+          'conversation_task_plans',
+          where: 'task_id = ? AND plan_revision = ?',
+          whereArgs: [old.taskId, old.planRevision],
+        )).single,
+      ).toDomain();
   if (event.attemptId != attemptId ||
       event.segmentId == null ||
       tool.callId.isEmpty ||
       tool.name.isEmpty ||
-      !old.acceptance.allowedToolNames.contains(tool.name) ||
+      plan.isPending ||
+      !plan.allowedToolNames.contains(tool.name) ||
       tool.updatedAt.isBefore(tool.startedAt) ||
       tool.updatedAt.isAfter(update.now) ||
       (tool.durationMs != null && tool.durationMs! < 0)) {

@@ -6,6 +6,7 @@ abstract final class TaskAcceptanceRecord {
     'modelId': value.modelId,
     'configurationDigest': value.configurationDigest,
     'language': value.language,
+    if (value.deferredPreparation) 'deferredPreparation': true,
     'context': value.context.map(_contextToJson).toList(),
     'allowedToolNames': value.allowedToolNames.toList(),
     // Preserve the original encoding for legacy tasks with no saved grants;
@@ -27,6 +28,7 @@ abstract final class TaskAcceptanceRecord {
       'modelId',
       'configurationDigest',
       'language',
+      if (values.containsKey('deferredPreparation')) 'deferredPreparation',
       'context',
       'allowedToolNames',
       if (values.containsKey('approvalExemptToolNames'))
@@ -45,6 +47,10 @@ abstract final class TaskAcceptanceRecord {
       modelId: row.text('modelId'),
       configurationDigest: row.text('configurationDigest'),
       language: row.text('language'),
+      deferredPreparation:
+          values.containsKey('deferredPreparation')
+              ? row.boolean('deferredPreparation')
+              : false,
       context: _contexts(row.require<List<Object?>>('context')),
       allowedToolNames: row.strings('allowedToolNames').toSet(),
       approvalExemptToolNames:
@@ -143,6 +149,9 @@ final class ConversationTaskPlanRecord {
         'plan_revision': value.revision,
         'created_at': value.createdAt.microsecondsSinceEpoch,
         'plan_json': jsonEncode({
+          if (value.isPending) 'pending': true,
+          if (value.preparation case final preparation?)
+            'preparation': TaskPreparationRecord.encode(preparation),
           'objective': value.objective,
           'allowedToolNames': value.allowedToolNames.toList(),
           'steps':
@@ -165,6 +174,12 @@ final class ConversationTaskPlanRecord {
       taskId: row.text('task_id'),
       revision: row.integer('plan_revision'),
       objective: plan.text('objective'),
+      isPending:
+          plan.values.containsKey('pending') ? plan.boolean('pending') : false,
+      preparation:
+          plan.values['preparation'] == null
+              ? null
+              : TaskPreparationRecord.decode(plan.object('preparation')),
       allowedToolNames: plan.strings('allowedToolNames').toSet(),
       createdAt: row.time('created_at'),
       steps:

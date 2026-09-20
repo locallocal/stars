@@ -6,6 +6,7 @@ import 'package:stars/domain/models/task_execution_state.dart';
 import 'package:stars/domain/models/tool.dart';
 
 part 'conversation_task_snapshot_record.dart';
+part 'task_preparation_record.dart';
 part 'conversation_task_fact_records.dart';
 part 'task_summary_record.dart';
 

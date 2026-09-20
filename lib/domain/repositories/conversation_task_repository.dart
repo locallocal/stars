@@ -217,9 +217,11 @@ final class ConversationTaskProgressUpdate {
     }
     if ((plan != null &&
             (plan!.revision != task.planRevision ||
-                !task.acceptance.allowedToolNames.containsAll(
-                  plan!.allowedToolNames,
-                ))) ||
+                !(task.acceptance.deferredPreparation
+                        ? plan!.preparation?.allowedToolNames ??
+                            const <String>{}
+                        : task.acceptance.allowedToolNames)
+                    .containsAll(plan!.allowedToolNames))) ||
         (checkpoint != null && checkpoint!.planRevision != task.planRevision) ||
         (toolExecution != null &&
             (toolExecution!.chatId != task.chatId ||

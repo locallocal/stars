@@ -507,7 +507,10 @@ final class AnthropicAgentModelSession implements AgentModelSession {
   }
 }
 
-List<Map<String, Object?>> _openAiSkillTools(List<SkillCatalogEntry> catalog) {
+List<Map<String, Object?>> _openAiSkillTools(
+  List<SkillCatalogEntry> catalog, {
+  bool requireExplicitCompletion = false,
+}) {
   final names = catalog.map((entry) => entry.name).toList(growable: false);
   final referenceNames = catalog
       .where((entry) => entry.hasReferences)
@@ -531,6 +534,30 @@ List<Map<String, Object?>> _openAiSkillTools(List<SkillCatalogEntry> catalog) {
         },
       },
     },
+    if (requireExplicitCompletion)
+      {
+        'type': 'function',
+        'function': {
+          'name': finishSkillSelectionToolName,
+          'description':
+              'Finish background Skill selection after all relevant Skills '
+              'have been activated. List exactly the activated Skill names. '
+              'Use an empty list only when no catalog Skill is relevant.',
+          'strict': true,
+          'parameters': {
+            'type': 'object',
+            'properties': {
+              'selectedSkills': {
+                'type': 'array',
+                'items': {'type': 'string', 'enum': names},
+              },
+              'reason': {'type': 'string'},
+            },
+            'required': ['selectedSkills', 'reason'],
+            'additionalProperties': false,
+          },
+        },
+      },
     if (referenceNames.isNotEmpty)
       {
         'type': 'function',
@@ -559,10 +586,14 @@ List<Map<String, Object?>> _openAiSkillTools(List<SkillCatalogEntry> catalog) {
 }
 
 List<Map<String, Object?>> _openAiResponsesSkillTools(
-  List<SkillCatalogEntry> catalog,
-) {
+  List<SkillCatalogEntry> catalog, {
+  bool requireExplicitCompletion = false,
+}) {
   return [
-    for (final tool in _openAiSkillTools(catalog))
+    for (final tool in _openAiSkillTools(
+      catalog,
+      requireExplicitCompletion: requireExplicitCompletion,
+    ))
       {'type': 'function', ..._objectMap(tool['function'])},
   ];
 }

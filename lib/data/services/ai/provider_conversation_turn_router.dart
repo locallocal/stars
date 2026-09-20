@@ -50,9 +50,7 @@ final class ProviderConversationTurnRouter implements ConversationTurnRouter {
           content: TurnRoutingProtocol.instruction(request),
         ),
       ];
-      final protocol = TurnRoutingProtocol(
-        allowedToolNames: request.allowedToolNames,
-      );
+      final protocol = TurnRoutingProtocol();
       final Stream<ModelEvent> events;
       if (mode == ForegroundRoutingTransport.modelSession) {
         session = provider.openModelSession(

@@ -20,77 +20,48 @@ void main() {
   });
 
   test(
-    'freezes only supported approval grants in the persisted task',
+    'acceptance defers tools, grants and steps until background preparation',
     () async {
-      h.approvalExemptToolNames.add('missing_tool');
-      h.background();
+      h.background(draft: '我会整理报告，完成后告诉你。');
       final accepted =
           await h.dispatcher.dispatch(foregroundInput()) as TurnTaskAccepted;
-      h.approvalExemptToolNames.clear();
-      final saved = (await h.storage.repository.getById(accepted.task.taskId))!;
-      expect(saved.acceptance.approvalExemptToolNames, {'read_file'});
-      expect(accepted.task.acceptance.approvalExemptToolNames, {'read_file'});
-    },
-  );
-
-  test(
-    'unsupported tools are hidden from routing and cannot create a task',
-    () async {
-      final dispatcher = h.createDispatcher(supportsTaskTool: (_) => false);
-      h.background();
-      final failed =
-          await dispatcher.dispatch(foregroundInput()) as TurnDispatchFailed;
-      expect(failed.context.acceptance!.allowedToolNames, isEmpty);
-      expect(failed.context.acceptance!.approvalExemptToolNames, isEmpty);
-      expect(failed.code, TurnDispatchFailureCode.routingFailed);
-      expect(await h.count('conversation_tasks'), 0);
-      expect(await h.count('messages'), 1);
-      expect(h.enqueuer.calls, isEmpty);
+      final saved =
+          (await h.storage.repository.getExecutionSnapshot(
+            accepted.task.taskId,
+          ))!;
+      expect(saved.task.acceptance.deferredPreparation, isTrue);
+      expect(saved.task.acceptance.allowedToolNames, isEmpty);
+      expect(saved.task.acceptance.approvalExemptToolNames, isEmpty);
+      expect(saved.plan.isPending, isTrue);
+      expect(saved.plan.steps, isEmpty);
+      expect(saved.plan.preparation, isNull);
+      expect(saved.plan.allowedToolNames, isEmpty);
+      expect(h.foregroundPreparations, 1);
+      expect(h.backgroundPreparations, 0);
+      expect(h.providers.creates, 1);
+      expect(h.mainCalls, 1);
       expect(h.tool.calls, 0);
     },
   );
 
   test(
-    'direct replies remain available when no background tools are supported',
+    'acceptance retry reuses metadata without selecting tools or rerouting',
     () async {
-      final dispatcher = h.createDispatcher(supportsTaskTool: (_) => false);
-      final result =
-          await dispatcher.dispatch(foregroundInput()) as TurnDirectReplySaved;
-      expect(result.context.acceptance!.allowedToolNames, isEmpty);
-      expect(result.message.content, '你好！');
-    },
-  );
-
-  test(
-    'acceptance retries recheck tool support before committing the saved plan',
-    () async {
-      var available = true;
-      final dispatcher = h.createDispatcher(supportsTaskTool: (_) => available);
       h.background();
       await h.storage.failWrite('conversation_task_events');
       final failed =
-          await dispatcher.dispatch(foregroundInput()) as TurnDispatchFailed;
+          await h.dispatcher.dispatch(foregroundInput()) as TurnDispatchFailed;
       await h.storage.clearFailure();
-      available = false;
-      final rejected =
-          await dispatcher.retry(failed.retry!) as TurnDispatchFailed;
-      expect(rejected.code, TurnDispatchFailureCode.routingFailed);
-      expect(await h.count('conversation_tasks'), 0);
-      expect(await h.count('messages'), 1);
-      expect(h.enqueuer.calls, isEmpty);
-      expect(h.mainCalls, 1);
-      h.response = routeFrames('backgroundTaskPlan', [
-        {...foregroundPlan(), 'allowedToolNames': <String>[]},
-      ]);
       final accepted =
-          await dispatcher.retry(rejected.retry!) as TurnTaskAccepted;
-      final snapshot =
+          await h.dispatcher.retry(failed.retry!) as TurnTaskAccepted;
+      final saved =
           (await h.storage.repository.getExecutionSnapshot(
             accepted.task.taskId,
           ))!;
-      expect(snapshot.task.acceptance.allowedToolNames, isEmpty);
-      expect(snapshot.plan.allowedToolNames, isEmpty);
-      expect(h.mainCalls, 2);
+      expect(saved.plan.isPending, isTrue);
+      expect(saved.plan.steps, isEmpty);
+      expect(h.mainCalls, 1);
+      expect(h.backgroundPreparations, 0);
     },
   );
 
@@ -105,7 +76,7 @@ void main() {
       expect(h.mainCalls, 1);
       expect(h.tool.calls, 0);
       expect(result.context.prepared, isNotNull);
-      expect(result.context.acceptance!.allowedToolNames, {'read_file'});
+      expect(result.context.acceptance!.allowedToolNames, isEmpty);
       expect(h.mainProviders.last.sessions.single.request.tools, isEmpty);
       expect(result.message.messageId, 'turn-1:assistant');
       expect(result.message.taskMessageKind, TaskMessageKind.directReply);
@@ -115,7 +86,7 @@ void main() {
       expect(result.message.reasoning, isEmpty);
       expect(result.message.grounding.trustLevel, AnswerTrustLevel.unverified);
       expect(result.message.grounding.reasonCode, 'no_tool_evidence');
-      expect(result.message.tokenUsage.effectiveTotalTokens, 17);
+      expect(result.message.tokenUsage.effectiveTotalTokens, 12);
       expect(await h.count('messages'), 2);
       expect(await h.count('conversation_tasks'), 0);
       expect(h.enqueuer.calls, isEmpty);
@@ -123,7 +94,7 @@ void main() {
       expect(updates.first.event, isA<TurnDispositionStarted>());
       expect(result.metrics.mainReplyCalls, 1);
       expect(result.metrics.preparationCalls, 1);
-      expect(result.metrics.preflightUsage.effectiveTotalTokens, 5);
+      expect(result.metrics.preflightUsage.effectiveTotalTokens, 0);
       expect(result.metrics.directFirstCharacterLatency, isNotNull);
       expect(
         result.metrics.directCompletionLatency,
@@ -138,7 +109,7 @@ void main() {
     () async {
       final input = foregroundInput();
       final first = await h.dispatcher.dispatch(input) as TurnDirectReplySaved;
-      h.response = routeFrames('backgroundTaskPlan', [foregroundPlan()]);
+      h.response = routeFrames('backgroundTask', [foregroundPlan()]);
       final second = await h.dispatcher.dispatch(input) as TurnDirectReplySaved;
       expect(second.reused, isTrue);
       expect(second.message.messageId, first.message.messageId);
@@ -191,7 +162,7 @@ void main() {
       expect(result.task.originTurnId, input.userMessage.turnId);
       expect(result.task.originUserMessageId, input.userMessage.messageId);
       expect(result.task.progress.modelTurns, 0);
-      expect(result.task.progress.totalSteps, 2);
+      expect(result.task.progress.totalSteps, 0);
       expect(result.task.acceptance.context.last.assetReferences, [
         'artifact:report',
       ]);
@@ -366,13 +337,13 @@ void main() {
 
   for (final malformed in [
     'not json',
-    routeFrames('backgroundTaskPlan', [
+    routeFrames('backgroundTask', [
       {
         ...foregroundPlan(),
         'allowedToolNames': ['shell'],
       },
     ]),
-    routeFrames('backgroundTaskPlan', [foregroundPlan()], done: false),
+    routeFrames('backgroundTask', [foregroundPlan()], done: false),
   ]) {
     test(
       'bad route creates no task or assistant and returns original retry',

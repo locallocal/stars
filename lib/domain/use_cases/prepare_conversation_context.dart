@@ -76,9 +76,13 @@ final class PrepareConversationContext {
     bool conversationHistorySkillEnabled = true,
     bool includeUntrustedPartialOutput = false,
     int skillTokens = 0,
+    bool localProfileOnly = false,
   }) async {
     final warnings = <String>[];
-    final resolution = await _resolveProfile(bot);
+    final resolution =
+        localProfileOnly
+            ? await _loadProfile(bot, localOnly: true)
+            : await _resolveProfile(bot);
     final profile = resolution.profile;
     warnings.addAll(resolution.warnings);
     final inputBudget = _budgeter.calculateInputBudget(profile);
@@ -341,11 +345,14 @@ final class PrepareConversationContext {
     return _profileCache.putIfAbsent(key, () => _loadProfile(bot));
   }
 
-  Future<_ProfileResolution> _loadProfile(Bot bot) async {
+  Future<_ProfileResolution> _loadProfile(
+    Bot bot, {
+    bool localOnly = false,
+  }) async {
     final warnings = <String>[];
     AiModelInfo? model;
     try {
-      model = await _aiProviderRepository.getModelInfo(bot);
+      if (!localOnly) model = await _aiProviderRepository.getModelInfo(bot);
     } on Object {
       warnings.add('model_context_catalog_unavailable');
     }

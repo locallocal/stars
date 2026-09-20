@@ -17,12 +17,16 @@ ConversationTaskProgressSummary cardSummary(
   String reasonCode = '',
   String approvalSummary = 'Save notes',
   ModelTokenUsage? tokenUsage,
+  bool pendingPlan = false,
 }) => ConversationTaskProgressSummary(
   taskId: 'task:abc12345678',
   chatId: 'chat-1',
   title: 'Report',
   status: status,
-  phase: ConversationTaskPhase.executing,
+  phase:
+      pendingPlan
+          ? ConversationTaskPhase.planning
+          : ConversationTaskPhase.executing,
   planRevision: 1,
   summaryRevision: 4,
   updatedAt: taskTime,
@@ -31,10 +35,10 @@ ConversationTaskProgressSummary cardSummary(
   progress: TaskProgress(
     tokenUsage: tokenUsage,
     reasonCode: reasonCode,
-    totalSteps: 5,
-    completedSteps: 3,
+    totalSteps: pendingPlan ? 0 : 5,
+    completedSteps: pendingPlan ? 0 : 3,
     lastMeaningfulProgressAt: taskTime,
-    currentStepSummary: 'Read notes',
+    currentStepSummary: pendingPlan ? '' : 'Read notes',
     recoveries: 2,
     pendingApprovalId:
         status == ConversationTaskStatus.waitingForUser &&
@@ -89,6 +93,27 @@ Widget host(
 }
 
 void main() {
+  testWidgets('pending tasks show planning without a fabricated step count', (
+    tester,
+  ) async {
+    final controller = ShadAccordionController<String>.multiple();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      host(
+        ConversationTaskCard(
+          summary: cardSummary(
+            ConversationTaskStatus.running,
+            pendingPlan: true,
+          ),
+          expansionController: controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0/0'), findsNothing);
+    expect(find.text('planning'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   for (final brightness in Brightness.values) {
     testWidgets(
       'collapsed token metrics update and fit narrow $brightness cards',

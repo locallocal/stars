@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
@@ -17,6 +19,8 @@ typedef ChatTurnComposer =
       required Message userMessage,
       required String currentUserId,
       AiProvider? skillToolProvider,
+      bool foregroundOnly,
+      String? backgroundTaskObjective,
     });
 
 final class PreparedChatGeneration {
@@ -101,15 +105,48 @@ final class PrepareTextGeneration {
     required List<Message> history,
     required Message userMessage,
     required String currentUserId,
-  }) => _composeChatTurn(
-    bot: bot,
-    history: history,
-    userMessage: userMessage,
-    currentUserId: currentUserId,
-    skillToolProvider: _aiProviderRepository
-        .forConversation(userMessage.chatId)
-        .create(bot),
-  );
+    bool foregroundOnly = false,
+    String? backgroundTaskObjective,
+    AgentCancellationToken? cancellation,
+  }) async {
+    cancellation?.throwIfCancelled();
+    final provider =
+        foregroundOnly
+            ? null
+            : _aiProviderRepository
+                .forConversation(userMessage.chatId)
+                .create(bot);
+    var active = true;
+    if (provider != null && cancellation != null) {
+      unawaited(
+        cancellation.whenCancelled.then((_) {
+          if (active) {
+            unawaited(
+              provider.cancelRequest().then<void>(
+                (_) {},
+                onError: (Object _) {},
+              ),
+            );
+          }
+        }),
+      );
+    }
+    try {
+      final prepared = await _composeChatTurn(
+        bot: bot,
+        history: history,
+        userMessage: userMessage,
+        currentUserId: currentUserId,
+        skillToolProvider: provider,
+        foregroundOnly: foregroundOnly,
+        backgroundTaskObjective: backgroundTaskObjective,
+      );
+      cancellation?.throwIfCancelled();
+      return prepared;
+    } finally {
+      active = false;
+    }
+  }
 
   Future<PreparedChatGeneration> call({
     required String chatId,
@@ -117,14 +154,35 @@ final class PrepareTextGeneration {
     required List<Message> history,
     required Message userMessage,
     required String currentUserId,
+    bool foregroundOnly = false,
+    String? backgroundTaskObjective,
+    AgentCancellationToken? cancellation,
   }) async {
     final preparedTurn = await prepareTurn(
       bot: bot,
       history: history,
       userMessage: userMessage,
       currentUserId: currentUserId,
+      foregroundOnly: foregroundOnly,
+      backgroundTaskObjective: backgroundTaskObjective,
+      cancellation: cancellation,
     );
     final historyRepository = _conversationHistoryRepository;
+    if (foregroundOnly) {
+      return PreparedChatGeneration(
+        userMessage: userMessage,
+        messages: preparedTurn.messages,
+        activatedSkills: const [],
+        activationAttempts: const [],
+        skillToolCalls: const [],
+        preflightTokenUsage: ModelTokenUsage.empty,
+        requestedToolNames: const {},
+        approvalExemptToolNames: const {},
+        runScopedTools: const [],
+        contextAssemblyReport: preparedTurn.contextAssemblyReport,
+        reliabilityPolicyEnabled: preparedTurn.reliabilityPolicyEnabled,
+      );
+    }
     final historyTools =
         preparedTurn.contextAssemblyReport.historyLookupAvailable &&
                 historyRepository != null
@@ -160,7 +218,7 @@ final class PrepareTextGeneration {
             ).createTools()
             : const <ExecutableTool>[];
     final verificationTools =
-        preparedTurn.reliabilityPolicyEnabled
+        !foregroundOnly && preparedTurn.reliabilityPolicyEnabled
             ? _verificationToolDiscovery.discover(
               registry: _toolRegistry,
               candidateToolNames: _verificationToolCandidateNames,

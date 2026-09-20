@@ -27,4 +27,14 @@ final class TaskExecutionSnapshot {
   final List<TaskApprovalRecord> approvals;
   final List<ToolEvidenceRecord> evidence;
   final List<ConversationTaskEvent> events;
+
+  List<TaskContextMessage> get context =>
+      plan.preparation?.context ?? task.acceptance.context;
+
+  Set<String> get toolScope =>
+      plan.preparation?.allowedToolNames ?? task.acceptance.allowedToolNames;
+
+  Set<String> get approvalExemptToolNames =>
+      plan.preparation?.approvalExemptToolNames ??
+      task.acceptance.approvalExemptToolNames;
 }

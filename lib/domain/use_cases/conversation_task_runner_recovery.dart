@@ -79,7 +79,7 @@ extension _TaskSegmentRecovery on _TaskSegment {
               )
               .firstOrNull;
       if (record == null) continue;
-      final adapter = runner.tools[pending.call.name];
+      final adapter = tools[pending.call.name];
       final job =
           jobs.where((j) => j.attemptId == record.attemptId).firstOrNull;
       if (record.status == ToolInvocationStatus.running) {

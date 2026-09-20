@@ -81,7 +81,10 @@ final class OpenAiSkillToolSession implements SkillToolSession {
             body: jsonEncode({
               'model': _bot.model,
               'messages': _messages,
-              'tools': _openAiSkillTools(_request.catalog),
+              'tools': _openAiSkillTools(
+                _request.catalog,
+                requireExplicitCompletion: _request.requireExplicitCompletion,
+              ),
               'tool_choice': 'auto',
               'parallel_tool_calls': false,
               ..._additionalBody,
@@ -202,7 +205,10 @@ final class OpenAiResponsesSkillToolSession implements SkillToolSession {
             body: jsonEncode({
               'model': _bot.model,
               'input': _input,
-              'tools': _openAiResponsesSkillTools(_request.catalog),
+              'tools': _openAiResponsesSkillTools(
+                _request.catalog,
+                requireExplicitCompletion: _request.requireExplicitCompletion,
+              ),
               'tool_choice': 'auto',
               'parallel_tool_calls': false,
             }),
@@ -315,7 +321,10 @@ final class AnthropicSkillToolSession implements SkillToolSession {
               'model': _bot.model,
               'messages': _messages,
               'system': _system,
-              'tools': _anthropicSkillTools(_request.catalog),
+              'tools': _anthropicSkillTools(
+                _request.catalog,
+                requireExplicitCompletion: _request.requireExplicitCompletion,
+              ),
               'tool_choice': {'type': 'auto'},
               'max_tokens': _maxTokens < 1024 ? _maxTokens : 1024,
               'stream': false,

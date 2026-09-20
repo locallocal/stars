@@ -2,7 +2,7 @@ part of 'conversation_task_runner.dart';
 
 extension _TaskSegmentTools on _TaskSegment {
   TaskPendingCall _prepare(ToolCallRequest call) {
-    final adapter = runner.tools[call.name];
+    final adapter = tools[call.name];
     if (adapter == null ||
         !snapshot.plan.allowedToolNames.contains(call.name) ||
         !adapter.checkpointArgumentNames.containsAll(call.arguments.keys) ||
@@ -64,7 +64,7 @@ extension _TaskSegmentTools on _TaskSegment {
 
   Future<TaskSegmentResult?> _tool() async {
     var pending = calls.first;
-    final adapter = runner.tools[pending.call.name];
+    final adapter = tools[pending.call.name];
     if (adapter == null ||
         adapter.definition.toolVersion != pending.toolVersion ||
         !adapter.checkpointArgumentNames.containsAll(
@@ -87,7 +87,7 @@ extension _TaskSegmentTools on _TaskSegment {
         chatId: task.chatId,
         botId: task.botId,
         requestedToolNames: snapshot.plan.allowedToolNames,
-        approvalExemptToolNames: task.acceptance.approvalExemptToolNames,
+        approvalExemptToolNames: snapshot.approvalExemptToolNames,
       ),
     );
     if (decision.outcome == ToolPolicyOutcome.deny) {

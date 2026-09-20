@@ -85,6 +85,8 @@ extension _TaskSegmentPersistence on _TaskSegment {
         objective: acceptedPlan.objective,
         steps: acceptedPlan.steps,
         allowedToolNames: acceptedPlan.allowedToolNames,
+        isPending: acceptedPlan.isPending,
+        preparation: acceptedPlan.preparation,
         createdAt: at,
       );
     }

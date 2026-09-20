@@ -50,10 +50,14 @@ String _stableToolNameHash(String value) {
 }
 
 List<Map<String, Object?>> _anthropicSkillTools(
-  List<SkillCatalogEntry> catalog,
-) {
+  List<SkillCatalogEntry> catalog, {
+  bool requireExplicitCompletion = false,
+}) {
   return [
-    for (final tool in _openAiSkillTools(catalog))
+    for (final tool in _openAiSkillTools(
+      catalog,
+      requireExplicitCompletion: requireExplicitCompletion,
+    ))
       {
         'name': _objectMap(tool['function'])['name'],
         'description': _objectMap(tool['function'])['description'],

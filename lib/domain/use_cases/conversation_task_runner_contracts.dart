@@ -4,6 +4,9 @@ import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
+import 'package:stars/domain/models/task_tool_protocol.dart';
+import 'package:stars/domain/models/tool.dart' show AgentCancellationToken;
+import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 
 /// Resolves the accepted provider/model configuration and current credentials.
 /// Implementations must reject an unavailable or mismatched configuration.
@@ -12,6 +15,24 @@ typedef TaskModelSessionFactory =
       TaskAcceptanceSnapshot acceptance,
       ModelRequest request,
     );
+
+typedef TaskExecutionPreparer =
+    Future<TaskExecutionPreparation> Function(
+      ConversationTask task,
+      AgentCancellationToken cancellation,
+    );
+
+final class TaskExecutionPreparation {
+  TaskExecutionPreparation({
+    required this.snapshot,
+    required List<TaskToolAdapter> tools,
+    this.tokenUsage = ModelTokenUsage.empty,
+  }) : tools = List.unmodifiable(tools);
+
+  final TaskPreparationSnapshot snapshot;
+  final List<TaskToolAdapter> tools;
+  final ModelTokenUsage tokenUsage;
+}
 
 abstract interface class TaskRunnerClock {
   DateTime now();

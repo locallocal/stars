@@ -48,6 +48,101 @@ void main() {
     );
   }
 
+  test(
+    'automatic Skill activation happens only after acceptance and ignores later messages',
+    () async {
+      final source = Directory('${h.directory.path}/background-reader');
+      await source.create();
+      await File('${source.path}/SKILL.md').writeAsString('''
+---
+name: background-reader
+description: Inspect report data.
+allowed-tools: inspect_report
+---
+Use inspect_report for the accepted report objective.
+''');
+      final skill = await h.skills.install(
+        SkillImportSource(kind: SkillImportKind.directory, path: source.path),
+      );
+      final bot = foregroundBot(
+        parameters: {Bot.parameterSupportsAutomaticSkillActivation: true},
+      );
+      await h.botRepository.updateBot(bot);
+      await h.bindings.save(
+        BotSkillBinding(
+          botId: bot.id,
+          skillId: skill.id,
+          requiresApproval: true,
+          createdAt: h.clock.now(),
+          updatedAt: h.clock.now(),
+        ),
+      );
+      await h.conversationTasks.setSuspended(true);
+      final accepted =
+          await h.conversationTasks.dispatcher.dispatch(
+                foregroundInput(bot: bot),
+              )
+              as TurnTaskAccepted;
+      expect(h.providers.mainReplies, 1);
+      expect(h.providers.skillRequests, isEmpty);
+      expect(accepted.task.progress.totalSteps, 0);
+      await h.messageRepository.upsertMessage(
+        foregroundInput(
+          turnId: 'later-question',
+          content: 'Unrelated later question',
+        ).userMessage,
+      );
+      var observedSavedTask = false;
+      h.providers.beforeSkillActivation = () async {
+        final snapshot =
+            (await h.conversationTasks.repository.getExecutionSnapshot(
+              accepted.task.taskId,
+            ))!;
+        expect(snapshot.plan.isPending, isTrue);
+        expect(snapshot.plan.steps, isEmpty);
+        expect(
+          (await h.messageRepository.getMessages(
+            'chat-1',
+          )).any((message) => message.messageId == accepted.task.ackMessageId),
+          isTrue,
+        );
+        observedSavedTask = true;
+      };
+      await h.conversationTasks.setSuspended(false);
+      await untilTask(h, ConversationTaskStatus.waitingForUser);
+      expect(observedSavedTask, isTrue);
+      expect(h.providers.skillRequests, hasLength(1));
+      expect(
+        h.providers.skillRequests.single.requireExplicitCompletion,
+        isTrue,
+      );
+      expect(
+        h.providers.skillRequests.single.messages
+            .map((m) => m.content)
+            .join('\n'),
+        contains(accepted.task.objective),
+      );
+      expect(
+        h.providers.skillRequests.single.messages
+            .map((message) => message.content)
+            .join('\n'),
+        isNot(contains('Unrelated later question')),
+      );
+      final snapshot =
+          (await h.conversationTasks.repository.getExecutionSnapshot(
+            accepted.task.taskId,
+          ))!;
+      expect(snapshot.plan.allowedToolNames, {'inspect_report'});
+      expect(
+        snapshot.context.map((message) => message.content).join('\n'),
+        contains('Use inspect_report for the accepted report objective.'),
+      );
+      expect(snapshot.task.progress.totalSteps, 2);
+      expect(snapshot.task.progress.tokenUsage!.effectiveTotalTokens, 5);
+      expect(h.job.read(), isEmpty);
+    },
+  );
+
   for (final requiresApproval in [false, true]) {
     test(
       'persisted Skill configuration requiresApproval=$requiresApproval reaches the background runtime after restart',
@@ -85,11 +180,8 @@ Use inspect_report to verify report counts.
                 )
                 as TurnTaskAccepted;
         expect(accepted.context.prepared!.activatedSkills, isEmpty);
-        expect(accepted.task.acceptance.allowedToolNames, {'inspect_report'});
-        expect(
-          accepted.task.acceptance.approvalExemptToolNames,
-          requiresApproval ? isEmpty : {'inspect_report'},
-        );
+        expect(accepted.task.acceptance.allowedToolNames, isEmpty);
+        expect(accepted.task.acceptance.approvalExemptToolNames, isEmpty);
         expect(h.job.read(), isEmpty);
 
         await h.restart();
@@ -103,6 +195,11 @@ Use inspect_report to verify report counts.
             (await h.conversationTasks.repository.getExecutionSnapshot(
               accepted.task.taskId,
             ))!;
+        expect(snapshot.plan.allowedToolNames, {'inspect_report'});
+        expect(
+          snapshot.approvalExemptToolNames,
+          requiresApproval ? isEmpty : {'inspect_report'},
+        );
         if (requiresApproval) {
           expect(snapshot.approvals, hasLength(1));
           expect(snapshot.task.waitingReason, TaskWaitingReason.approval);

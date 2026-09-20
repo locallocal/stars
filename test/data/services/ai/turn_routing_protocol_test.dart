@@ -8,8 +8,7 @@ import 'package:stars/domain/models/turn_disposition.dart';
 import '../../../support/foreground_turn_fixtures.dart';
 
 void main() {
-  TurnRoutingProtocol parser() =>
-      TurnRoutingProtocol(allowedToolNames: {'read_file'});
+  TurnRoutingProtocol parser() => TurnRoutingProtocol();
   List<TurnRoutingEvent> decode(String value) {
     final protocol = parser();
     return [...protocol.add(value), ...protocol.finish()];
@@ -39,14 +38,14 @@ void main() {
   test('background kind and complete payload do not publish an acceptance', () {
     final protocol = parser();
     final initial = protocol.add(
-      '${routeFrames('backgroundTaskPlan', [foregroundPlan()], done: false)}\n',
+      '${routeFrames('backgroundTask', [foregroundPlan()], done: false)}\n',
     );
     expect(initial, [isA<TurnDispositionStarted>()]);
     expect(protocol.add('{"done":true}\n'), isEmpty);
     final result = protocol.finish().single as TurnDispositionCompleted;
-    final plan = result.disposition as BackgroundTaskPlan;
-    expect(plan.steps.length, 2);
-    expect(plan.allowedToolNames, {'read_file'});
+    final plan = result.disposition as BackgroundTaskRequest;
+    expect(plan.title, '整理报告');
+    expect(plan.objective, '读取资料并整理报告');
   });
 
   test('empty direct response is a typed empty terminal, never a task', () {
@@ -75,10 +74,9 @@ void main() {
     'invalid JSON': 'not JSON',
     'unknown kind': '{"kind":"unknown"}\n{"text":"secret draft"}',
     'text before kind': '{"text":"secret draft"}\n{"kind":"directReply"}',
-    'switched kind': '{"kind":"directReply"}\n{"kind":"backgroundTaskPlan"}',
-    'duplicate kind': '{"kind":"directReply","kind":"backgroundTaskPlan"}',
-    'escaped duplicate':
-        r'{"kind":"directReply","ki\u006ed":"backgroundTaskPlan"}',
+    'switched kind': '{"kind":"directReply"}\n{"kind":"backgroundTask"}',
+    'duplicate kind': '{"kind":"directReply","kind":"backgroundTask"}',
+    'escaped duplicate': r'{"kind":"directReply","ki\u006ed":"backgroundTask"}',
     'duplicate text':
         '{"kind":"directReply"}\n{"text":"a","text":"b"}\n{"done":true}',
     'no done': routeFrames('directReply', [
@@ -94,12 +92,12 @@ void main() {
     'incorrect type': routeFrames('directReply', [
       {'text': 23},
     ]),
-    'no task payload': routeFrames('backgroundTaskPlan', []),
+    'no task payload': routeFrames('backgroundTask', []),
     'no status payload': routeFrames('taskStatusRequest', []),
     'empty task ID': routeFrames('taskStatusRequest', [
       {'taskId': ''},
     ]),
-    'repeated plan': routeFrames('backgroundTaskPlan', [
+    'repeated plan': routeFrames('backgroundTask', [
       foregroundPlan(),
       foregroundPlan(),
     ]),
@@ -157,7 +155,7 @@ void main() {
   for (final entry in badPlans.entries) {
     test('rejects task with ${entry.key}', () {
       expect(
-        () => decode(routeFrames('backgroundTaskPlan', [entry.value])),
+        () => decode(routeFrames('backgroundTask', [entry.value])),
         throwsFormatException,
       );
     });
@@ -186,7 +184,7 @@ void main() {
         foregroundPlan(),
       ).replaceFirst('"title":', '"title":"old","title":');
       expect(
-        () => decode('{"kind":"backgroundTaskPlan"}\n$plan\n{"done":true}'),
+        () => decode('{"kind":"backgroundTask"}\n$plan\n{"done":true}'),
         throwsFormatException,
       );
       final text = 'explain {"kind":"directReply","kind":"status"}';

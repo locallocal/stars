@@ -14,10 +14,10 @@ ChatPage._sendMessage
   -> CreateUserMessage / ChatGenerationViewModel.dispatchText
   -> ConversationTurnDispatcher：保存用户消息、准备上下文、单次无工具分流
        |-- DirectReply：流式展示 -> 完整 turnId:assistant 提交 -> 释放输入
-       |-- BackgroundTaskPlan：任务/计划/事件/taskId:ack 原子提交 -> 释放输入
-       |     -> 应用级 scheduler / runner：检查点、工具、审批、证据
+       |-- BackgroundTaskRequest：任务/待规划记录/事件/taskId:ack 原子提交 -> 释放输入
+       |     -> 应用级 scheduler / runner：重新激活工具 -> 规划步骤 -> 检查点、工具、审批、证据
        |     -> FinalizeConversationTask：冻结策略验证 -> 唯一 taskId:result
-       `-- TaskStatusRequest：持久摘要 -> 确定性卡片提交 -> 同版本有界润色
+       `-- TaskStatusRequest：持久摘要与用户问题 -> 模型生成自然语言回复 -> 保存查询快照
 ```
 
 回执提交后，用户可以继续聊天或查询状态。后台更新和终态通过提交后通知更新时间线，
@@ -26,21 +26,22 @@ ChatPage._sendMessage
 ## 身份、保存和失败边界
 
 [前台 dispatcher](conversation-turn-dispatch.md)保存用户消息后才执行主回复分流；首个模型回合
-同时决定直接回复、后台任务计划或状态查询。工具存在不意味着执行工具，前台禁止工具调用。
+同时决定直接回复、后台任务请求或状态查询。工具存在不意味着执行工具，前台禁止工具调用。
 直接回复仅完整正文落库，未完成流不会保存为 partial 助手消息。
 
-后台接受将原始 turn、上下文、允许工具和验证策略冻结，任务与回执同事务保存；提交成功后
+后台接受将原始 turn、轻量上下文和验证策略冻结；工具和步骤在后台另行准备，任务与回执同事务保存；提交成功后
 `enqueue` 唤醒扫描。重试按原始 turn 对账，不新增重复任务。已接受任务由持久队列恢复，
 不依赖内存通知或页面存活。详情见[任务持久化](conversation-task-persistence.md)。
 
-状态查询依据净化快照，显式引用验证会话归属。卡片与文本固定为同一 revision，润色只更新
-同一条状态消息；过期润色不能覆盖更新后的任务事实。详情见[会话交互](conversation-task-chat-ui.md)。
+状态查询依据净化快照，显式引用验证会话归属。模型结合原问题解释查询结果，回复与查询事实
+保存在同一条状态消息中；历史查询不会因后续任务推进被覆盖。详情见[会话交互](conversation-task-chat-ui.md)。
 
 ## 上下文与工具准备
 
 ### 组合本轮会话
 
-`ComposeChatTurn` 依次完成：
+前台使用 `foregroundOnly`，只构造本地上下文和 Token 预算，不调用技能模型或同步压缩。
+任务创建后，后台使用原始输入及其之前的历史，调用 `ComposeChatTurn` 依次完成：
 
 - 取得会话产物目录并构造 Stars 会话上下文；
 - 读取 Bot 绑定且可用的 Skill，加载内置 Skill，并在 Provider 支持时执行自动 Skill 激活；
@@ -48,14 +49,18 @@ ChatPage._sendMessage
 - 解析当前 Bot 已启用的 MCP 工具；
 - 调用 `PrepareConversationContext` 生成 Provider 无关的消息列表。
 
-Skill 激活失败会形成 `MessageToolCall`/activation attempt 投影，通常不会单独终止整轮准备。
+后台调用传入 `backgroundTaskObjective`，以当前技能目录、已接受目标和原始用户输入独立选择技能，
+不把历史助手关于工具能力的描述带入选择请求。原始输入之前的完整历史仍用于后续执行上下文。
+模型须调用 `finish_skill_selection` 明确结束选择，提交的技能名称必须与实际激活结果一致。
+普通文本、无工具响应、无进展或激活异常会使本次后台准备失败，由 runner 有限重试；失败时
+不保存只读核验工具作为准备结果。未传入后台目标的兼容调用保留原有降级行为。
 激活成功的 Skill 只把其显式请求的工具加入本轮候选集；MCP、历史查询工具和免审批设置也在
 这里形成明确集合。
 
 全部已启用且可用的 Skill 都进入模型候选目录，不按用户消息关键词预筛选，也不按优先级截取
 前几个。模型选择的技能没有固定激活数量上限；预处理也没有固定模型轮数或工具调用次数上限。
-每轮新增成功激活的 Skill 或加载的参考资料时继续发现，模型完成或不再请求工具时结束。
-连续两轮没有新增内容时结束预处理，其中第一轮的结果仍反馈给模型，允许纠正错误或重复调用。
+每轮新增成功激活的 Skill 或加载的参考资料时继续发现，后台以显式完成选择结束。
+连续两轮没有新增内容时停止预处理，后台将其视为未完成选择；第一轮结果仍反馈给模型，允许纠正错误或重复调用。
 技能正文与参考资料仍受上下文 Token 预算约束，信任校验、工具白名单和执行审批继续生效。
 
 ### 组装受 Token 约束的上下文

@@ -210,6 +210,7 @@ final class TaskRunnerHarness {
   List<TaskToolAdapter>? toolOverrides;
   int segment = 0;
   ConversationTaskRepository? repositoryOverride;
+  TaskExecutionPreparer? prepare;
   Future<void> open({
     TaskSegmentLimits? limits,
     int steps = 1,
@@ -226,10 +227,14 @@ final class TaskRunnerHarness {
           taskId: task.taskId,
           revision: 1,
           objective: task.objective,
-          steps: [
-            for (var i = 0; i < steps; i++)
-              TaskPlanStep(stepId: 'step-$i', summary: 'Step $i'),
-          ],
+          isPending: task.acceptance.deferredPreparation,
+          steps:
+              task.acceptance.deferredPreparation
+                  ? []
+                  : [
+                    for (var i = 0; i < steps; i++)
+                      TaskPlanStep(stepId: 'step-$i', summary: 'Step $i'),
+                  ],
           allowedToolNames: task.acceptance.allowedToolNames,
           createdAt: task.createdAt,
         ),
@@ -239,6 +244,7 @@ final class TaskRunnerHarness {
 
   Future<TaskSegmentResult> run({
     Duration leaseDuration = const Duration(days: 1),
+    AgentCancellationToken? interruption,
   }) async {
     final task = await db.task;
     segment++;
@@ -263,6 +269,7 @@ final class TaskRunnerHarness {
       input: input,
       lease: lease,
       segmentId: 'segment-$segment',
+      interruption: interruption,
     );
   }
 
@@ -271,6 +278,7 @@ final class TaskRunnerHarness {
     sessions: models.open,
     tools: toolOverrides ?? [tool],
     policy: policyOverride ?? policy,
+    prepare: prepare,
     clock: clock,
     jitter: () => 0.5,
   );

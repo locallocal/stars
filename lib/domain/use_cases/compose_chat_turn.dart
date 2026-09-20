@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
@@ -13,6 +14,7 @@ import 'package:stars/domain/use_cases/compact_conversation.dart';
 
 part 'compose_chat_turn_mcp.dart';
 part 'compose_chat_turn_skills.dart';
+part 'compose_chat_turn_skill_selection.dart';
 
 final class PreparedChatTurn {
   PreparedChatTurn({
@@ -124,6 +126,8 @@ final class ComposeChatTurn {
     required Message userMessage,
     required String currentUserId,
     AiProvider? skillToolProvider,
+    bool foregroundOnly = false,
+    String? backgroundTaskObjective,
     bool includeUntrustedPartialOutput = false,
   }) async {
     final conversationArtifactsDirectory =
@@ -133,6 +137,42 @@ final class ComposeChatTurn {
     }
     final injectApplicationPrompt = await _starsSystemPromptEnabledProvider();
     final systemPromptLanguage = await _starsSystemPromptLanguageProvider();
+    if (foregroundOnly) {
+      final prompt = _composeSystemPrompt(
+        bot.systemPrompt,
+        const [],
+        bot: bot,
+        conversationId: userMessage.chatId,
+        conversationArtifactsDirectory: conversationArtifactsDirectory,
+        injectApplicationPrompt: injectApplicationPrompt,
+        systemPromptLanguage: systemPromptLanguage,
+      );
+      final context = await _prepareConversationContext?.call(
+        bot: bot,
+        systemPrompt: prompt,
+        history: history,
+        userMessage: userMessage,
+        currentUserId: currentUserId,
+        providerSupportsHistoryLookup: false,
+        localProfileOnly: true,
+      );
+      return PreparedChatTurn(
+        messages:
+            context?.messages ??
+            [
+              ChatMessage(role: 'system', content: prompt),
+              ..._composeHistory(
+                history: history,
+                userMessage: userMessage,
+                currentUserId: currentUserId,
+                includeUntrustedPartialOutput: false,
+              ),
+            ],
+        activatedSkills: const [],
+        reliabilityPolicyEnabled: injectApplicationPrompt,
+        contextAssemblyReport: context?.report,
+      );
+    }
     final bundledContents = await _loadBundledSkills();
     final bindings = await _bindingRepository.getForBot(bot.id);
     final enabledBindings =
@@ -188,8 +228,10 @@ final class ComposeChatTurn {
           injectApplicationPrompt: injectApplicationPrompt,
           systemPromptLanguage: systemPromptLanguage,
           includeUntrustedPartialOutput: includeUntrustedPartialOutput,
+          backgroundTaskObjective: backgroundTaskObjective,
         );
       } on ProviderFailure catch (failure) {
+        if (backgroundTaskObjective != null) rethrow;
         final isTimeout = failure.kind == ProviderFailureKind.timeout;
         state.toolCalls.add(
           MessageToolCall(
@@ -201,6 +243,7 @@ final class ComposeChatTurn {
           ),
         );
       } on TimeoutException {
+        if (backgroundTaskObjective != null) rethrow;
         state.toolCalls.add(
           const MessageToolCall(
             name: 'activate_skill',
@@ -210,6 +253,7 @@ final class ComposeChatTurn {
           ),
         );
       } catch (_) {
+        if (backgroundTaskObjective != null) rethrow;
         state.toolCalls.add(
           const MessageToolCall(
             name: 'activate_skill',
