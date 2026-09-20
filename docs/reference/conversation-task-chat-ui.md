@@ -77,48 +77,47 @@ ViewModel 在展开时加载，依据已提交 revision 刷新，合并读取期
 输出详情最多保留 32,000 字符，超限输出带截断标记。步骤事件保存当时的步骤摘要，计划调整
 不会改写旧事件。此改动无需数据库迁移；旧记录展示已有状态与摘要，未保存的历史命令/输出无法补回。
 
-## 状态选择与确定性卡片
+## 状态查询与自然语言回复
 
 [SelectConversationTask / PresentConversationTaskProgress](../../lib/domain/use_cases/present_conversation_task_progress.dart)
-负责选择、保存状态消息和启动可选润色：
+负责选择任务事实，调用模型生成回复，再保存完整消息：
 
-| 输入 | 选择结果 |
+| 输入 | 交给模型的事实 |
 | --- | --- |
-| 显式任务 ID | 验证会话归属；只读该任务或显示未找到 |
-| 无 ID、一个活动任务 | 直接展示该任务 |
-| 无 ID、多个活动任务 | 展示短 ID、标题和状态，可通过任务页管理 |
-| 无活动任务 | 展示最近终态；没有任务则显示本地化说明 |
+| 显式任务 ID | 验证会话归属；只读该任务，未找到时传空结果和请求的 ID |
+| 无 ID、一个活动任务 | 该任务查询时的进度摘要 |
+| 无 ID、多个活动任务 | 所有候选的摘要，不替用户猜选某个任务 |
+| 无活动任务 | 最近终态；没有历史任务则传空结果 |
 
 结构化引用直接调用领域查询；自然语言问题由前台模型返回 `TaskStatusRequest`，随后读取
-相同的持久化事实，不启动工具循环。任务页展示当前快照，时间线卡片保留查询当时的版本。
-打开任务页、搜索、排序和刷新只读取摘要，不创建状态消息或调用模型。
+相同的持久化事实，不启动工具循环。查询结果与用户原问题一起发送给当前 Bot 的独立模型会话。
+模型用用户语言自行组织回答，说明与问题有关的实际进展、障碍或需要用户做的事；没有固定句式、
+文案候选表或字段拼接回退。多个任务或空结果也由模型结合原问题说明，不凭空选择或补全进度。
 
-[ConversationTaskCard](../../lib/ui/features/chat/views/conversation_task_card.dart)呈现状态、执行阶段、
-已完成/总步骤、当前步骤、最近工具、审批与时间、等待原因、恢复次数、验证状态和更新时间。
-步骤使用 `3/5`，不推断百分比、完成时间或剩余时间。桌面使用 shadcn 语义 token，动作可用键盘
-访问，状态带文字和屏幕阅读标签；窄屏工具栏与动作换行，任务列表使用独立滚动区域。
+聊天通过现有 `MessageList` 消息气泡呈现可选择的 Markdown 文本，沿用 shadcn 主题、复制和
+键盘操作，不再附加完整查询字段卡片。任务页的
+[ConversationTaskCard](../../lib/ui/features/chat/views/conversation_task_card.dart)继续展示结构化状态、
+步骤、审批、等待原因与时间。打开任务页、搜索、排序和刷新只读取摘要，不调用模型。
 
-## 同一 revision 的卡片与文字
-
-确定性状态消息先提交，再执行可选润色。消息保存 `taskId`、`summaryRevision`、完整净化摘要及
-最终文本；多任务选择消息保存各候选的摘要。序列化与读取由
-[TaskSummaryRecord](../../lib/data/models/task_summary_record.dart)负责，schema 版本以
-[DatabaseService](../../lib/data/services/database_service.dart)为准。新建 schema 不迁移旧数据库。
+## 查询快照与消息提交
 
 [NarrateConversationTaskProgress](../../lib/domain/use_cases/narrate_conversation_task_progress.dart)
-只发送净化摘要、语言和应用允许的表达。每次最多两秒；格式或事实不合格最多修复一次，供应商
-不可用、错误或超时直接回退。取消、关闭 Provider session 不影响正在执行的任务。
+只发送净化摘要、用户原问题、目标语言和可选任务引用；不发送完整对话、原始工具参数/输出、
+凭据或 reasoning。失败/取消摘要包含已记录的原因、已完成工作和副作用状态，帮助模型作具体说明。
+提示词要求区分工具成功与任务完成，不推断完成百分比或剩余时间，将记录中的文字视为数据。
 
-[TaskProgressNarrationPolicy](../../lib/domain/services/task_progress_narration_policy.dart)校验完整 JSON
-身份、revision 和全文语法；当前允许单行距/双行距的完整事实表达，模型只能选择这些表达。
-这种有界润色不会自由改写数字、工具、审批或终态。输入中没有完整对话、原始参数/工具输出、
-密钥或 reasoning；应用支持语言的词汇与确定性回退集中在
-[TaskProgressStrings](../../lib/domain/services/task_progress_strings.dart)。
+[TaskProgressNarrationPolicy](../../lib/domain/services/task_progress_narration_policy.dart)只检查回复是否
+为非空、有界的自然语言内容，拒绝 JSON 或整段代码围栏；它不以固定文案白名单判定答案，也不
+声称能证明自由文本中的事实。回复再经过敏感信息净化，状态消息不显示事实已验证标记。
+每次调用最多 15 秒；输出格式不合格最多修复一次，供应商失败或超时直接进入现有可重试错误状态。
+生成失败不保存查询结果、固定摘要或半段正文作为助手回答。
 
-润色通过[状态存储命令](../../lib/data/services/conversation_task_store_status.dart)更新原消息，
-事务检查原消息身份、卡片内容和当前任务 revision。任务已推进或消息已变化则丢弃迟到文字，
-保留原来的卡片/文本，不产生额外回复。提交通知使消息缓存失效，页面使用新的持久消息内容，
-并保留当前阅读位置。状态与回执属于操作消息，不显示模型事实已验证标记。
+生成期间沿用前台等待和取消状态，后台任务继续执行；取消回复不会取消后台任务。只有模型回复
+完整后才通过[状态存储命令](../../lib/data/services/conversation_task_store_status.dart)保存，消息携带
+查询时的净化摘要及 revision。生成期间任务可继续推进，历史回复仍与原查询快照对应，不冒充实时
+观测。同一 turn 的并发请求共用一次生成；数据库以原消息身份防止重复提交或覆盖已有回复。
+序列化与读取由[TaskSummaryRecord](../../lib/data/models/task_summary_record.dart)负责。
+提交通知使消息缓存失效，页面使用持久消息内容并保留当前阅读位置。
 
 ## 持久命令与安全重试
 
@@ -138,15 +137,15 @@ ViewModel 在展开时加载，依据已提交 revision 刷新，合并读取期
 
 ## 指标与验证
 
-`PresentConversationTaskProgress.narrate.metrics` 暴露卡片可用延迟（查询至确定性消息提交）、
-润色总延迟、请求数、模型调用数、修复数、回退数、迟到丢弃数与 `fallbackRatio`。
+`PresentConversationTaskProgress.narrate.metrics` 记录回复提交延迟、生成总延迟、请求数、
+模型调用数、格式修复数、失败数与 `failureRatio`；沿用的 `cards` / `cardLatency` 字段统计完整状态回复。
 这些是进程内累计值；首帧绘制及真实模型语言质量仍属于产品验收测量。
 
 - [生产组合根与聊天页面流程](../../test/ui/features/chat/views/chat_task_flow_test.dart)：后台继续聊天、
-  页面重建、同消息润色刷新、唯一终态及时间线顺序；实际 SQLite/dispatcher/runner/scheduler/finalizer，
+  页面重建、模型生成的进度回复、唯一终态及时间线顺序；实际 SQLite/dispatcher/runner/scheduler/finalizer，
   外部 Provider 与工具通过构造注入替代，不访问外部服务。
 - [前台生命周期](../../test/ui/features/chat/view_models/chat_foreground_dispatch_test.dart)：重复提交、
-  取消、接受后释放输入、原身份重试、状态保存恢复和非阻塞润色。
+  取消、接受后释放输入、原身份重试、状态保存恢复、生成失败重试和取消回复。
 - [任务 ViewModel](../../test/ui/features/chat/view_models/conversation_tasks_view_model_test.dart)：重入、
   全部历史任务、搜索排序、持久取消、过期命令、长时间审批及数据库重启、配置恢复和重试去重。
 - [任务页](../../test/ui/features/chat/views/conversation_tasks_page_test.dart)与
@@ -158,4 +157,6 @@ ViewModel 在展开时加载，依据已提交 revision 刷新，合并读取期
   [润色策略](../../test/domain/services/task_progress_narration_test.dart)、
   [Provider 边界](../../test/data/services/ai/task_progress_polisher_test.dart)、
   [任务重试](../../test/domain/use_cases/conversation_task_retry_test.dart)：选择、事务回滚、重启读取、
-  版本隔离、事实伪造、一次修复、超时/失败回退、多语言和禁止副作用重放。
+  查询快照绑定、自由措辞、一次格式修复、超时/失败处理、多语言和禁止副作用重放。
+- [进度消息展示](../../test/ui/features/chat/views/task_progress_message_test.dart)：明暗主题、桌面/窄屏、
+  可选择正文、隐藏查询字段和严格模式下的操作消息语义。

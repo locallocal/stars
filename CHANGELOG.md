@@ -20,6 +20,11 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Task progress questions now receive model-written, plain-language replies
+  grounded in the queried task snapshot and the user's question. Removed fixed
+  narration templates and raw status cards from chat; generation failures offer
+  retry without posting a canned reply, and task details remain on the task page.
+
 - Aligned model request log descriptions with other conversation detail fields
   and replaced the path buttons with an inline copy icon shown on hover or
   keyboard focus, with direct access on touch devices.

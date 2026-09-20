@@ -3,7 +3,7 @@ import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
-import 'package:stars/domain/services/task_progress_strings.dart';
+import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/use_cases/get_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 
@@ -50,8 +50,8 @@ final class SelectConversationTask {
   }
 }
 
-/// Saves the deterministic reply first. Optional narration updates that same
-/// message asynchronously, independent of foreground/page lifetime.
+/// Saves the model's completed reply with the exact facts it summarized.
+/// Query data is never substituted for the reply, including on model failure.
 final class PresentConversationTaskProgress {
   PresentConversationTaskProgress({
     required this.repository,
@@ -66,36 +66,90 @@ final class PresentConversationTaskProgress {
   final DateTime Function() now;
   final NarrateConversationTaskProgress narrate;
   final TaskProgressPolisher? Function(String botId)? polisher;
-  final Set<Future<void>> _pending = {};
-  Future<void> settle() => Future.wait(_pending.toList());
+  final Map<String, Future<Message>> _pending = {};
+
+  Future<void> settle() async {
+    await Future.wait(
+      _pending.values.map((future) async {
+        try {
+          await future;
+        } on Object {
+          // The caller owns presentation and retry of a failed status request.
+        }
+      }),
+    );
+  }
 
   Future<Message> call({
     required String chatId,
     required String botId,
     required String language,
+    String question = '',
     String? taskId,
     String? turnId,
     List<ConversationTaskProgressSummary>? summaries,
+    AgentCancellationToken? cancellation,
+  }) {
+    final identity = turnId ?? newId('status-turn');
+    final key = '$chatId:$identity';
+    return _pending.putIfAbsent(
+      key,
+      () => _present(
+        chatId: chatId,
+        botId: botId,
+        language: language,
+        question: question,
+        taskId: taskId,
+        turnId: identity,
+        summaries: summaries,
+        cancellation: cancellation,
+      ).whenComplete(() {
+        _pending.remove(key);
+      }),
+    );
+  }
+
+  Future<Message> _present({
+    required String chatId,
+    required String botId,
+    required String language,
+    required String question,
+    required String? taskId,
+    required String turnId,
+    required List<ConversationTaskProgressSummary>? summaries,
+    required AgentCancellationToken? cancellation,
   }) async {
     final elapsed = Stopwatch()..start();
-    final selection =
-        summaries ??
-        await SelectConversationTask(repository)(chatId, taskId: taskId);
+    cancellation?.throwIfCancelled();
+    final selection = List<ConversationTaskProgressSummary>.unmodifiable(
+      summaries ??
+          await SelectConversationTask(repository)(chatId, taskId: taskId),
+    );
+    if (selection.any(
+      (summary) =>
+          summary.chatId != chatId ||
+          taskId != null && summary.taskId != taskId,
+    )) {
+      throw ArgumentError(
+        'Task progress must belong to the requested conversation.',
+      );
+    }
     final selected = selection.length == 1 ? selection.single : null;
-    final words = TaskProgressStrings(language);
-    final text =
-        selected != null
-            ? narrate.policy.alternatives(selected, language).first
-            : selection.isNotEmpty
-            ? words.choose
-            : taskId == null
-            ? words.noTasks
-            : words.notFound;
-    final identity = turnId ?? newId('status-turn');
+    final queriedAt = now();
+    final text = await narrate(
+      chatId: chatId,
+      summaries: selection,
+      language: language,
+      question: question,
+      requestedTaskId: taskId,
+      polish: polisher?.call(botId),
+      cancellation: cancellation,
+    );
+    cancellation?.throwIfCancelled();
     final message = await repository.saveStatusMessage(
       Message(
-        messageId: '$identity:status',
-        turnId: identity,
+        messageId: '$turnId:status',
+        turnId: turnId,
         chatId: chatId,
         botId: botId,
         senderId: botId,
@@ -104,36 +158,11 @@ final class PresentConversationTaskProgress {
         taskId: selected?.taskId,
         summaryRevision: selected?.summaryRevision,
         taskStatusSummaries: selection,
-        timestamp: now(),
+        timestamp: queriedAt,
       ),
     );
     narrate.metrics.cards++;
     narrate.metrics.cardLatency += elapsed.elapsed;
-    if (message.taskStatusSummaries.length == 1) {
-      late Future<void> pending;
-      pending = _polish(
-        message,
-        language,
-      ).whenComplete(() => _pending.remove(pending));
-      _pending.add(pending);
-    }
     return message;
-  }
-
-  Future<void> _polish(Message message, String language) async {
-    try {
-      final text = await narrate(
-        summary: message.taskStatusSummaries.single,
-        language: language,
-        polish: polisher?.call(message.botId),
-      );
-      if (!await repository.updateStatusNarration(
-        message.copyWith(content: text),
-      )) {
-        narrate.metrics.stale++;
-      }
-    } on Object {
-      /* The already-committed deterministic card remains usable. */
-    }
   }
 }

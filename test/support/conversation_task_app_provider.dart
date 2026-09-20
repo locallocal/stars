@@ -56,18 +56,11 @@ final class _AcceptanceSession implements AgentModelSession {
           },
         ]),
       );
-    } else if (request.messages.first.content.startsWith('Return JSON')) {
-      final input =
-          jsonDecode(request.messages.last.content) as Map<String, dynamic>;
-      final summary = input['summary'] as Map<String, dynamic>;
+    } else if (request.messages.first.content.startsWith(
+      "Answer the user's question about task progress",
+    )) {
       yield TextDelta(
-        owner.failNarration || input['allowedNarrations'] == null
-            ? '{}'
-            : jsonEncode({
-              'taskId': summary['taskId'],
-              'summaryRevision': summary['summaryRevision'],
-              'content': (input['allowedNarrations'] as List).last,
-            }),
+        owner.failNarration ? '{}' : '报告读取已启动，目前在等外部处理返回结果，还没有完成核验。',
       );
     } else {
       owner.backgroundSessions++;

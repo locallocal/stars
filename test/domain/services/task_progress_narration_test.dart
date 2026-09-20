@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/services/task_progress_narration_policy.dart';
-import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 
 void main() {
@@ -37,174 +36,197 @@ void main() {
       ),
     ),
   );
-  String draft({String? id, int? revision, String? text}) => jsonEncode({
-    'taskId': id ?? summary.taskId,
-    'summaryRevision': revision ?? summary.summaryRevision,
-    'content': text ?? policy.alternatives(summary, 'en').first,
-  });
-  for (final language in [
-    'en',
-    'zh-CN',
-    'zh-TW',
-    'de-DE',
-    'es-ES',
-    'fr-FR',
-    'hi-IN',
-    'it-IT',
-    'ja-JP',
-    'ko-KR',
-    'pt-BR',
-    'ru-RU',
-  ]) {
-    test('localized facts and fallback remain valid in $language', () async {
-      final w = TaskProgressStrings(language);
-      final text = await NarrateConversationTaskProgress()(
-        summary: summary,
-        language: language,
-      );
-      expect(text, contains('${w.steps}: 3/5'));
-      expect(text, contains(w.status(ConversationTaskStatus.waitingForUser)));
-      expect(
-        policy.validate(
-          jsonEncode({
-            'taskId': summary.taskId,
-            'summaryRevision': summary.summaryRevision,
-            'content': text,
-          }),
-          summary,
-          language,
-        ),
-        text,
-      );
-      if (language != 'en') {
-        expect(w.noTasks, isNot(TaskProgressStrings('en').noTasks));
-        expect(w.choose, isNot(TaskProgressStrings('en').choose));
-        expect(
-          w.retryConfirmation,
-          isNot(TaskProgressStrings('en').retryConfirmation),
-        );
+  Future<String> narrate({
+    NarrateConversationTaskProgress? useCase,
+    TaskProgressPolisher? polish,
+    AgentCancellationToken? cancellation,
+    String language = 'zh-CN',
+  }) => (useCase ?? NarrateConversationTaskProgress())(
+    chatId: 'chat',
+    summaries: [summary],
+    question: '做到哪一步了，需要我做什么？',
+    language: language,
+    polish: polish,
+    cancellation: cancellation,
+  );
+
+  test(
+    'accepts model wording instead of a fixed list of allowed answers',
+    () async {
+      for (final reply in [
+        '笔记已经读完，目前完成了五步中的三步。保存笔记需要你先批准。',
+        'The notes have been read. Saving them is waiting for your approval.',
+        'メモの読み取りは終わりました。保存するには承認が必要です。',
+        'Die Notizen wurden gelesen. Das Speichern wartet auf deine Freigabe.',
+      ]) {
+        expect(await narrate(polish: (_, _) async => reply), reply);
       }
+    },
+  );
+
+  test('passes the question, language and redacted committed facts', () async {
+    TaskProgressNarrationRequest? captured;
+    await narrate(
+      polish: (request, _) async {
+        captured = request;
+        return '笔记已经读完，保存操作还在等待你批准。';
+      },
+    );
+    expect(captured!.question, '做到哪一步了，需要我做什么？');
+    expect(captured!.language, 'zh-CN');
+    expect(captured!.summaries.single['summaryRevision'], 8);
+    expect(captured!.summaries.single['completedSteps'], 3);
+    expect(captured!.summaries.single['status'], 'waitingForUser');
+    final serialized = jsonEncode(captured!.summaries);
+    expect(serialized, isNot(contains('private-key')));
+    expect(serialized, isNot(contains('password=secret')));
+    expect(() => captured!.summaries.clear(), throwsUnsupportedError);
+    expect(() => captured!.summaries.single.clear(), throwsUnsupportedError);
+    expect(captured!.timeout, const Duration(seconds: 15));
+  });
+
+  test('includes recorded failure details for a useful stopped-task reply', () {
+    final failed = ConversationTaskProgressSummary(
+      taskId: summary.taskId,
+      chatId: summary.chatId,
+      title: summary.title,
+      status: ConversationTaskStatus.failed,
+      phase: summary.phase,
+      planRevision: 1,
+      summaryRevision: 9,
+      updatedAt: time,
+      progress: summary.progress,
+      terminalSummary: TaskTerminalSummary(
+        status: ConversationTaskStatus.failed,
+        reasonCode: 'disk_full',
+        safeReason: 'The report could not be saved because the disk is full.',
+        completedWorkSummary: 'Read and organized the notes.',
+        sideEffectStatus: TaskSideEffectStatus.none,
+        canRetry: true,
+      ),
+    );
+    final facts = policy.facts(failed);
+    expect(
+      facts['terminal'],
+      containsPair('completedWork', 'Read and organized the notes.'),
+    );
+    expect(facts['terminal'], containsPair('reason', contains('disk is full')));
+  });
+
+  for (final draft in [
+    '',
+    '   ',
+    '{}',
+    '[{"status":"running"}]',
+    '```json\n{}\n```',
+  ]) {
+    test('rejects empty or serialized query output: $draft', () {
+      expect(policy.validate(draft), isNull);
     });
   }
-  test('accepts exact safe narration bound to a task revision', () {
-    final text = policy.validate(draft(), summary, 'en');
-    expect(text, contains('3/5'));
-    expect(text, isNot(contains('private-key')));
-    expect(text, isNot(contains('password=secret')));
-  });
-  for (final entry
-      in <String, String Function()>{
-        'task identity': () => draft(id: 'other'),
-        'revision': () => draft(revision: 9),
-        'numbers':
-            () => draft(
-              text: policy
-                  .alternatives(summary, 'en')
-                  .first
-                  .replaceAll('3/5', '5/5'),
-            ),
-        'tools':
-            () => draft(
-              text: policy
-                  .alternatives(summary, 'en')
-                  .first
-                  .replaceAll('read_file', 'write_file'),
-            ),
-        'approval':
-            () => draft(
-              text: policy
-                  .alternatives(summary, 'en')
-                  .first
-                  .replaceAll('Approval required', 'Approved'),
-            ),
-        'terminal claim':
-            () => draft(
-              text:
-                  '${policy.alternatives(summary, 'en').first}\nCompleted successfully.',
-            ),
-        'completion percent':
-            () => draft(
-              text: '${policy.alternatives(summary, 'en').first}\n60% complete',
-            ),
-        'extra fields':
-            () => jsonEncode({
-              'taskId': summary.taskId,
-              'summaryRevision': 8,
-              'content': '',
-              'secret': true,
-            }),
-      }.entries) {
-    test(
-      'rejects invented ${entry.key}',
-      () => expect(policy.validate(entry.value(), summary, 'en'), isNull),
+  test('rejects oversized output and redacts credentials in prose', () {
+    expect(policy.validate('x' * 12001), isNull);
+    expect(
+      policy.validate('Read notes with api_key=private-key.'),
+      isNot(contains('private-key')),
     );
-  }
+  });
   test(
-    'repairs once using the same safe facts without raw invalid prose',
+    'repairs malformed output once without feeding it back as context',
     () async {
       final requests = <TaskProgressNarrationRequest>[];
       final useCase = NarrateConversationTaskProgress();
-      final result = await useCase(
-        summary: summary,
-        language: 'en',
-        polish: (request, _) async {
-          requests.add(request);
-          return requests.length == 1 ? 'raw invalid provider output' : draft();
-        },
+      const reply = '笔记已经读完，保存操作还在等待你批准。';
+      expect(
+        await narrate(
+          useCase: useCase,
+          polish: (request, _) async {
+            requests.add(request);
+            return requests.length == 1 ? '{}' : reply;
+          },
+        ),
+        reply,
       );
-      expect(result, policy.alternatives(summary, 'en').first);
       expect(requests, hasLength(2));
       expect(requests.last.repair, isTrue);
-      expect(requests.first.summary, requests.last.summary);
-      expect(jsonEncode(requests.last.summary), isNot(contains('private-key')));
-      expect(useCase.metrics.fallbacks, 0);
+      expect(requests.first.summaries, requests.last.summaries);
+      expect(useCase.metrics.failures, 0);
     },
   );
-  test('two invalid attempts fall back to localized text', () async {
+  test('invalid replies fail without a hard-coded task summary', () async {
     final useCase = NarrateConversationTaskProgress();
-    final result = await useCase(
-      summary: summary,
-      language: 'zh-CN',
-      polish: (_, _) async => 'All done',
+    await expectLater(
+      narrate(useCase: useCase, polish: (_, _) async => '{}'),
+      throwsA(isA<TaskProgressNarrationException>()),
     );
-    expect(result, contains('步骤: 3/5'));
-    expect(result, contains('等待用户'));
     expect(useCase.metrics.modelCalls, 2);
     expect(useCase.metrics.repairs, 1);
-    expect(useCase.metrics.fallbackRatio, 1);
+    expect(useCase.metrics.failureRatio, 1);
   });
-  test('unavailable provider returns fallback without a repair call', () async {
+  test('provider failure is safe and does not request a repair', () async {
     final useCase = NarrateConversationTaskProgress();
-    final result = await useCase(
-      summary: summary,
-      language: 'en',
-      polish: (_, _) async => throw StateError('provider secret'),
+    await expectLater(
+      narrate(
+        useCase: useCase,
+        polish: (_, _) async => throw StateError('provider secret'),
+      ),
+      throwsA(isA<TaskProgressNarrationException>()),
     );
-    expect(result, isNot(contains('provider secret')));
     expect(useCase.metrics.modelCalls, 1);
     expect(useCase.metrics.repairs, 0);
   });
-  test('timeout cancels stalled session and falls back', () async {
-    final useCase = NarrateConversationTaskProgress(
-      timeout: const Duration(milliseconds: 5),
-    );
-    AgentCancellationToken? token;
-    final result = await useCase(
-      summary: summary,
-      language: 'en',
-      polish: (_, value) {
-        token = value;
-        return Completer<String>().future;
-      },
-    );
-    expect(token!.isCancelled, isTrue);
-    expect(result, contains('3/5'));
-    expect(useCase.metrics.fallbacks, 1);
-  });
-  test('missing provider makes no model call', () async {
+  test(
+    'timeout cancels the session without generating fallback prose',
+    () async {
+      final useCase = NarrateConversationTaskProgress(
+        timeout: const Duration(milliseconds: 5),
+      );
+      AgentCancellationToken? token;
+      await expectLater(
+        narrate(
+          useCase: useCase,
+          polish: (_, value) {
+            token = value;
+            return Completer<String>().future;
+          },
+        ),
+        throwsA(isA<TaskProgressNarrationException>()),
+      );
+      expect(token!.isCancelled, isTrue);
+      expect(useCase.metrics.failures, 1);
+    },
+  );
+  test(
+    'foreground cancellation promptly cancels a stalled narration',
+    () async {
+      final cancellation = AgentCancellationToken();
+      final started = Completer<void>();
+      AgentCancellationToken? token;
+      final result = narrate(
+        cancellation: cancellation,
+        polish: (_, value) {
+          token = value;
+          started.complete();
+          return Completer<String>().future;
+        },
+      );
+      final expectation = expectLater(
+        result,
+        throwsA(isA<AgentRunCancelledException>()),
+      );
+      await started.future;
+      cancellation.cancel();
+      await expectation;
+      expect(token!.isCancelled, isTrue);
+    },
+  );
+  test('missing provider fails without a model call or canned reply', () async {
     final useCase = NarrateConversationTaskProgress();
-    await useCase(summary: summary, language: 'en');
+    await expectLater(
+      narrate(useCase: useCase),
+      throwsA(isA<TaskProgressNarrationException>()),
+    );
     expect(useCase.metrics.modelCalls, 0);
-    expect(useCase.metrics.fallbacks, 1);
+    expect(useCase.metrics.failures, 1);
   });
 }

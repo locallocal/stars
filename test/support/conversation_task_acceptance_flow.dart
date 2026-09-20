@@ -215,7 +215,7 @@ void conversationTaskAcceptanceTests({
         expect(activeCard()!.summary.taskId, acceptedId);
         await toggleTasks();
         h.providers.route = 'taskStatusRequest';
-        h.providers.failNarration = true;
+        h.providers.failNarration = false;
         final statusFrame = Stopwatch()..start();
         await send('现在进展如何');
         await driveTaskUi(
@@ -235,10 +235,11 @@ void conversationTaskAcceptanceTests({
           (m) => m.taskMessageKind == TaskMessageKind.status,
         );
         expect(historical.taskStatusSummaries.single.taskId, acceptedId);
-        expect(historical.content, isNotEmpty);
+        expect(historical.content, '报告读取已启动，目前在等外部处理返回结果，还没有完成核验。');
+        expect(find.byType(ConversationTaskCard), findsNothing);
         expect(
-          h.conversationTasks.telemetry.snapshot()['progress.fallbackRatio'],
-          1,
+          h.conversationTasks.telemetry.snapshot()['progress.failureRatio'],
+          0,
         );
         expect(h.job.read()['starts'], 1);
         record?.call(h.conversationTasks.telemetry.snapshot());

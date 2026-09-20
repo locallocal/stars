@@ -26,7 +26,7 @@ repository、Provider、客户端、runner、scheduler 和前台 registry。只�
 
 [聊天页面验收](../../test/ui/features/chat/views/conversation_task_acceptance_test.dart)与
 [原生集成入口](../../integration_test/conversation_tasks_test.dart)运行同一交互场景：实际发送、
-审批按钮、普通聊天、状态卡片与润色回退、重建依赖、唯一 verified 结果、退出和重新进入页面。
+审批按钮、普通聊天、自然语言进度回复与历史快照恢复、重建依赖、唯一 verified 结果、退出和重新进入页面。
 历史回执与状态消息保持原快照，新终态独立出现，输入框不受后台生命周期阻塞。
 
 ## 行为与故障证据矩阵
@@ -43,7 +43,7 @@ repository、Provider、客户端、runner、scheduler 和前台 registry。只�
 | lease、并发、退避 | 同会话与 Provider 上限；过期接管；旧持有者不能写；重开后按到期时间运行 | [scheduler](../../test/domain/use_cases/conversation_task_scheduler_test.dart)、[恢复](../../test/domain/use_cases/conversation_task_scheduling_recovery_test.dart)、[保护](../../test/data/repositories/conversation_task_scheduling_guards_test.dart) |
 | 分段与无进展 | 超过旧总预算仍继续；单次超时有界恢复；无进展最终安全失败 | [runner](../../test/domain/use_cases/conversation_task_runner_test.dart)、[终态投递](../../test/data/repositories/conversation_task_terminal_delivery_test.dart) |
 | 验证与终态事务前后 | 同任务有效证据、写后验证、冻结策略；结果原子且唯一；失败不通知 | [finalizer](../../test/domain/use_cases/finalize_conversation_task_test.dart)、[终态事务](../../test/data/repositories/sqlite_conversation_task_terminal_test.dart)、[投递](../../test/data/repositories/conversation_task_terminal_delivery_test.dart) |
-| 状态查询与润色 | 多任务不猜测选择；先提交确定性卡片；最多一次修复；过期版本拒绝 | [状态请求](../../test/domain/use_cases/conversation_turn_status_test.dart)、[呈现](../../test/domain/use_cases/present_conversation_task_progress_test.dart)、[文案](../../test/domain/services/task_progress_narration_test.dart) |
+| 状态查询与润色 | 多任务不猜测选择；先生成自然语言再提交；最多一次格式修复；查询快照绑定；失败/取消不保存伪回复 | [状态请求](../../test/domain/use_cases/conversation_turn_status_test.dart)、[呈现](../../test/domain/use_cases/present_conversation_task_progress_test.dart)、[文案](../../test/domain/services/task_progress_narration_test.dart) |
 | 页面、键盘与无障碍 | 所有状态/等待/终态、宽度、键盘与语义；重入读取；命令错误可见 | [任务卡片](../../test/ui/features/chat/views/conversation_task_card_test.dart)、[ViewModel](../../test/ui/features/chat/view_models/conversation_tasks_view_model_test.dart)、[完整页面](../../test/ui/features/chat/views/conversation_task_acceptance_test.dart) |
 | 启动与生命周期 | 恢复先于就绪；挂起释放执行；恢复后扫描；关闭不能重启 | [启动](../../test/ui/features/app/view_models/conversation_task_startup_test.dart)、[页面切换](../../test/ui/features/chat/views/chat_task_flow_test.dart) |
 | 正式数据库与备份 | 只接受当前 schema；拒绝旧库/伪装版本；有效备份恢复 | [切换边界](../../test/data/services/database_cutover_test.dart)、[数据库服务](../../test/data/services/database_service_test.dart) |
@@ -61,10 +61,10 @@ repository、Provider、客户端、runner、scheduler 和前台 registry。只�
 | 指标组 | 含义与边界 |
 | --- | --- |
 | `foreground.*` | 分流次数、主回复调用次数、直接回复首字符/完整提交、回执提交耗时及回退次数。耗时从 dispatcher 接收输入开始，累计微秒；重试不代表新增任务。 |
-| `progress.*` | 卡片条数、确定性卡片落库耗时、润色耗时、回退比例及过期润色次数。`cardReadyUs` 表示可呈现数据已提交，不等于屏幕绘制完成。 |
+| `progress.*` | 完整进度回复条数、生成到落库耗时、生成耗时与失败比例。`cardReadyUs` 沿用历史名称，表示完整回复已提交，不等于屏幕绘制完成。 |
 | `scheduling.*` | 排队、分段执行、等待累计微秒；分段、恢复、重试、lease 过期、无进展分段、对账失败和调度异常计数。执行时间包含该分段内的异步请求，并非 CPU 时间。 |
 | `terminal.*` | 实际提交次数及成功/失败/取消分布；终态处理耗时、失败处理耗时、取消请求至提交耗时、接受至终态耗时、无进展终结、润色失败/回退、证据覆盖率与严格模式抑制数。 |
-| 原生测试 `ui.*` | 提交到审批卡片绘制、状态请求到卡片绘制的 Stopwatch 样本，写入 integration binding 的 `reportData`。这是受控服务验收样本，不是线上性能基准。 |
+| 原生测试 `ui.*` | 提交到审批卡片绘制、状态请求到回复绘制的 Stopwatch 样本，写入 integration binding 的 `reportData`。这是受控服务验收样本，不是线上性能基准。 |
 
 进程级累计值在重建应用后重置；单任务的分段、恢复、重试和等待事实仍可由持久事件查询。
 耗时值为累计和，比较平均延迟时需同时使用对应样本数；零耗时在可控时钟测试中合法。

@@ -3,7 +3,7 @@ import 'package:stars/domain/models/conversation_task.dart';
 part 'task_progress_translations.dart';
 part 'task_progress_copy.dart';
 
-/// Application-owned status vocabulary, shared by cards and narration.
+/// Application-owned status vocabulary for task controls and details.
 final class TaskProgressStrings {
   TaskProgressStrings(String language)
     : language = language.replaceAll('_', '-'),

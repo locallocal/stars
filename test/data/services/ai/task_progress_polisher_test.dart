@@ -38,25 +38,21 @@ void main() {
     factory = TaskProgressPolisherFactory(bots: bots, providers: providers);
   });
   test(
-    'isolated session sees only sanitized summary, language and grammar',
+    'isolated session requests free prose from sanitized facts and question',
     () async {
       final narrate = NarrateConversationTaskProgress();
-      final expected = narrate.policy.alternatives(summary, 'en').last;
+      const expected = 'The report is queued; work has not started yet.';
       provider.events =
           () => Stream.fromIterable([
-            TextDelta(
-              jsonEncode({
-                'taskId': summary.taskId,
-                'summaryRevision': 0,
-                'content': expected,
-              }),
-            ),
+            const TextDelta(expected),
             const ReasoningDelta('private reasoning'),
             const ModelTurnCompleted(),
           ]);
       expect(
         await narrate(
-          summary: summary,
+          chatId: 'chat-1',
+          summaries: [summary],
+          question: 'Has the report started?',
           language: 'en',
           polish: factory.forBot('bot-1'),
         ),
@@ -69,6 +65,20 @@ void main() {
       expect(session.request.options.webSearch, isFalse);
       expect(session.request.options.deepThinking, isFalse);
       expect(session.request.messages, hasLength(2));
+      expect(
+        session.request.options.requestTimeout,
+        const Duration(seconds: 15),
+      );
+      final prompt = session.request.messages.first.content;
+      expect(prompt, contains('plain, natural words'));
+      expect(prompt, contains('does not mean the whole task succeeded'));
+      expect(prompt, isNot(contains('allowedNarrations')));
+      final payload =
+          jsonDecode(session.request.messages.last.content)
+              as Map<String, dynamic>;
+      expect(payload['question'], 'Has the report started?');
+      expect(payload['tasks'], hasLength(1));
+      expect(payload.containsKey('allowedNarrations'), isFalse);
       expect(
         session.request.messages.map((m) => m.content).join(),
         isNot(contains(bots.bot!.apiKey)),
@@ -85,13 +95,17 @@ void main() {
             const ModelTurnCompleted(),
           ]);
       final narrate = NarrateConversationTaskProgress();
-      final text = await narrate(
-        summary: summary,
-        language: 'en',
-        polish: factory.forBot('bot-1'),
+      await expectLater(
+        narrate(
+          chatId: 'chat-1',
+          summaries: [summary],
+          question: 'Has the report started?',
+          language: 'en',
+          polish: factory.forBot('bot-1'),
+        ),
+        throwsA(isA<TaskProgressNarrationException>()),
       );
-      expect(text, contains('0/5'));
-      expect(narrate.metrics.fallbacks, 1);
+      expect(narrate.metrics.failures, 1);
       expect(provider.sessions.single.closed, isTrue);
     },
   );
@@ -104,26 +118,36 @@ void main() {
       final narrate = NarrateConversationTaskProgress(
         timeout: const Duration(milliseconds: 10),
       );
-      await narrate(
-        summary: summary,
-        language: 'en',
-        polish: factory.forBot('bot-1'),
+      await expectLater(
+        narrate(
+          chatId: 'chat-1',
+          summaries: [summary],
+          question: 'Has the report started?',
+          language: 'en',
+          polish: factory.forBot('bot-1'),
+        ),
+        throwsA(isA<TaskProgressNarrationException>()),
       );
       await Future<void>.delayed(Duration.zero);
       expect(provider.sessions.single.closed, isTrue);
       expect(provider.sessions.single.cancellations, 1);
     },
   );
-  test('missing bot yields fallback without opening a provider', () async {
+  test('missing bot fails without opening a provider', () async {
     bots.bot = null;
     final narrate = NarrateConversationTaskProgress();
-    await narrate(
-      summary: summary,
-      language: 'zh-CN',
-      polish: factory.forBot('bot-1'),
+    await expectLater(
+      narrate(
+        chatId: 'chat-1',
+        summaries: [summary],
+        question: 'Has the report started?',
+        language: 'zh-CN',
+        polish: factory.forBot('bot-1'),
+      ),
+      throwsA(isA<TaskProgressNarrationException>()),
     );
     expect(provider.sessions, isEmpty);
-    expect(narrate.metrics.fallbacks, 1);
+    expect(narrate.metrics.failures, 1);
   });
 }
 

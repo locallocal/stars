@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart';
+import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import '../../../../support/foreground_dispatch_harness.dart';
 import '../../../../support/task_scheduler_harness.dart' show until;
@@ -11,12 +12,23 @@ void main() {
   late ChatGenerationRegistry registry;
   late ChatGenerationViewModel vm;
   late PresentConversationTaskProgress progress;
+  final requests = <TaskProgressNarrationRequest>[];
+  var failNarration = false;
+  const narration = 'The report is still being checked.';
   setUp(() async {
+    requests.clear();
+    failNarration = false;
     h = ForegroundDispatchHarness();
     await h.open();
     progress = PresentConversationTaskProgress(
       repository: h.storage.repository,
       newId: h.messages.createId,
+      polisher:
+          (_) => (request, _) async {
+            requests.add(request);
+            if (failNarration) throw StateError('provider unavailable');
+            return narration;
+          },
     );
     registry = ChatGenerationRegistry(
       dispatcher: h.dispatcher,
@@ -148,7 +160,7 @@ void main() {
     },
   );
   test(
-    'status messages do not launch an agent loop or block on narration',
+    'status waits for model prose without displaying raw facts or launching tools',
     () async {
       h.background();
       await send();
@@ -156,7 +168,11 @@ void main() {
       final customProgress = PresentConversationTaskProgress(
         repository: h.storage.repository,
         newId: h.messages.createId,
-        polisher: (_) => (_, _) => pending.future,
+        polisher:
+            (_) => (request, _) {
+              requests.add(request);
+              return pending.future;
+            },
       );
       final statusVm = ChatGenerationViewModel(
         chatId: 'chat-1',
@@ -170,23 +186,101 @@ void main() {
         {'taskId': null},
       ]);
       final input = foregroundInput(turnId: 'status');
-      expect(
-        await statusVm.dispatchText(
-          userMessage: input.userMessage,
-          language: 'en',
-          verification: input.verification,
-        ),
-        isTrue,
+      final response = statusVm.dispatchText(
+        userMessage: input.userMessage,
+        language: 'en',
+        verification: input.verification,
       );
+      await until(() => requests.isNotEmpty);
+      expect(statusVm.hasBlockingRun, isTrue);
+      expect(requests.single.question, input.userMessage.content);
+      expect(statusVm.snapshot.terminalMessage, isNull);
+      pending.complete(narration);
+      expect(await response, isTrue);
       expect(statusVm.hasBlockingRun, isFalse);
-      expect(pending.isCompleted, isFalse);
+      expect(statusVm.snapshot.terminalMessage!.content, narration);
       expect(
         statusVm.snapshot.terminalMessage!.taskStatusSummaries,
         hasLength(1),
       );
-      pending.complete('invalid');
       await customProgress.settle();
       expect(h.tool.calls, 0);
+    },
+  );
+  test(
+    'narration failure is retried without repeating routing or user input',
+    () async {
+      h.response = routeFrames('taskStatusRequest', [
+        {'taskId': null},
+      ]);
+      failNarration = true;
+      expect(await send(), isFalse);
+      expect(vm.canRetryDispatch, isTrue);
+      expect(vm.snapshot.error, 'foreground_statusQueryFailed');
+      expect(
+        (await h.messages.getMessages(
+          'chat-1',
+        )).where((m) => m.taskMessageKind == TaskMessageKind.status),
+        isEmpty,
+      );
+      failNarration = false;
+      expect(await vm.retryDispatch(), isTrue);
+      expect(h.mainCalls, 1);
+      expect(vm.snapshot.terminalMessage!.content, narration);
+      expect(
+        (await h.messages.getMessages(
+          'chat-1',
+        )).where((m) => m.senderId == foregroundInput().userMessage.senderId),
+        hasLength(1),
+      );
+    },
+  );
+  test(
+    'cancel stops the status response without cancelling background work',
+    () async {
+      await h.storage.accept();
+      final started = Completer<void>();
+      final customProgress = PresentConversationTaskProgress(
+        repository: h.storage.repository,
+        newId: h.messages.createId,
+        polisher:
+            (_) => (_, _) {
+              started.complete();
+              return Completer<String>().future;
+            },
+      );
+      final statusVm = ChatGenerationViewModel(
+        chatId: 'chat-1',
+        bot: foregroundBot(),
+        dispatcher: h.dispatcher,
+        taskProgress: customProgress,
+        providerFactory: h.providers.create,
+      );
+      addTearDown(statusVm.dispose);
+      h.response = routeFrames('taskStatusRequest', [
+        {'taskId': null},
+      ]);
+      final input = foregroundInput(turnId: 'status');
+      final result = statusVm.dispatchText(
+        userMessage: input.userMessage,
+        language: 'en',
+        verification: input.verification,
+      );
+      await started.future;
+      expect(await statusVm.cancel(), ChatRunLifecycle.cancelled);
+      expect(await result, isFalse);
+      expect(statusVm.canRetryDispatch, isFalse);
+      expect(statusVm.snapshot.error, isNull);
+      expect(
+        (await h.storage.repository.getById('task-1'))!.cancelRequestedAt,
+        isNull,
+      );
+      expect(
+        (await h.messages.getMessages(
+          'chat-1',
+        )).where((m) => m.taskMessageKind == TaskMessageKind.status),
+        isEmpty,
+      );
     },
   );
 }

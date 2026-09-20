@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/ai_models.dart';
@@ -305,7 +304,8 @@ void main() {
                   .any(
                     (m) =>
                         m.taskMessageKind == TaskMessageKind.status &&
-                        m.content.contains('\n\n'),
+                        m.content ==
+                            'The report is waiting for your approval before it can continue.',
                   ),
         );
         final status = tester
@@ -317,7 +317,7 @@ void main() {
           status.summaryRevision,
         );
         expect(status.taskId, task.taskId);
-        expect(deps.conversationTasks.progress.narrate.metrics.fallbacks, 0);
+        expect(deps.conversationTasks.progress.narrate.metrics.failures, 0);
         h.response = routeFrames('directReply', [
           {'text': 'Hello while working'},
         ]);
@@ -440,19 +440,14 @@ class _FlowProvider extends AiProvider {
         ]),
       );
     }
-    if (request.messages.first.content.startsWith('Return JSON')) {
-      final payload =
-          jsonDecode(request.messages.last.content) as Map<String, dynamic>;
-      final summary = payload['summary'] as Map<String, dynamic>;
+    if (request.messages.first.content.startsWith(
+      "Answer the user's question about task progress",
+    )) {
       return ForegroundModelSession(
         request,
         () => Stream.fromIterable([
-          TextDelta(
-            jsonEncode({
-              'taskId': summary['taskId'],
-              'summaryRevision': summary['summaryRevision'],
-              'content': (payload['allowedNarrations'] as List).last,
-            }),
+          const TextDelta(
+            'The report is waiting for your approval before it can continue.',
           ),
           const ModelTurnCompleted(),
         ]),
