@@ -83,6 +83,9 @@ void main() {
     );
     models.turns.add(() async* {
       await backgroundGate.future;
+      yield const UsageReported(
+        ModelTokenUsage(inputTokens: 210, outputTokens: 32),
+      );
       yield const TextDelta('private draft');
       yield const ModelTurnCompleted();
     });
@@ -187,20 +190,22 @@ void main() {
       expect((await h.messages.getMessages('chat-1')).length, messages.length);
     },
   );
-  Widget page({String key = 'first'}) => AppScope(
-    dependencies: deps,
-    child: shadHarness(
-      brightness: Brightness.light,
-      homeBuilder:
-          (_) => Scaffold(
-            body: ChatPage(
-              key: ValueKey(key),
-              id: 'chat-1',
-              bot: foregroundBot(),
-            ),
-          ),
-    ),
-  );
+  Widget page({String key = 'first', bool showExecutionStatus = true}) =>
+      AppScope(
+        dependencies: deps,
+        child: shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (_) => Scaffold(
+                body: ChatPage(
+                  key: ValueKey(key),
+                  id: 'chat-1',
+                  bot: foregroundBot(),
+                  showExecutionStatus: showExecutionStatus,
+                ),
+              ),
+        ),
+      );
   testWidgets(
     'routing failure preserves history and reports generation failure',
     (tester) async {
@@ -363,7 +368,11 @@ void main() {
                   tester
                       .widget<MessageList>(find.byType(MessageList))
                       .messages
-                      .any((m) => m.taskMessageKind == TaskMessageKind.result),
+                      .any(
+                        (m) =>
+                            m.taskMessageKind == TaskMessageKind.result &&
+                            m.processInfo.hasData,
+                      ),
         );
         final displayed =
             tester.widget<MessageList>(find.byType(MessageList)).messages;
@@ -372,6 +381,65 @@ void main() {
           hasLength(1),
         );
         expect(displayed.last.content, 'Final report ready');
+        expect(displayed.last.processInfo.durationMs, isNotNull);
+        final resultRow = find.byKey(ValueKey(displayed.last.messageId));
+        final resultExecution = find.descendant(
+          of: resultRow,
+          matching: find.byType(ProcessInfoSection),
+        );
+        expect(resultExecution, findsOneWidget);
+        final taskUsage =
+            (await tester.runAsync(
+              () => deps.conversationTasks.repository.getById(task.taskId),
+            ))!.progress.tokenUsage!;
+        expect(taskUsage.inputTokens, greaterThanOrEqualTo(210));
+        expect(taskUsage.outputTokens, greaterThanOrEqualTo(32));
+        expect(
+          tester
+              .widget<ProcessInfoSection>(resultExecution)
+              .taskTokenUsage!
+              .inputTokens,
+          taskUsage.inputTokens,
+        );
+        expect(
+          find.descendant(
+            of: resultRow,
+            matching: find.text('输入 Token ${taskUsage.inputTokens}'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: resultRow,
+            matching: find.text('输出 Token ${taskUsage.outputTokens}'),
+          ),
+          findsOneWidget,
+        );
+        await tester.pumpWidget(
+          page(key: 'rebuilt', showExecutionStatus: false),
+        );
+        await _drive(tester);
+        expect(resultExecution, findsNothing);
+        expect(find.text('Final report ready'), findsOneWidget);
+        await tester.pumpWidget(page(key: 'cached-result'));
+        await _drive(
+          tester,
+          until:
+              () =>
+                  resultExecution.evaluate().isNotEmpty &&
+                  tester
+                          .widget<ProcessInfoSection>(resultExecution)
+                          .taskTokenUsage !=
+                      null,
+        );
+        expect(resultExecution, findsOneWidget);
+        expect(
+          tester
+              .widget<ProcessInfoSection>(resultExecution)
+              .taskTokenUsage!
+              .inputTokens,
+          taskUsage.inputTokens,
+        );
         expect(
           displayed.where((m) => m.taskMessageKind == TaskMessageKind.status),
           hasLength(1),

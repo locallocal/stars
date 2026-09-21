@@ -89,6 +89,8 @@ import 'package:stars/data/services/tools/system_shell_skill.dart';
 import 'package:stars/data/services/tools/system_skill_installer_skill.dart';
 import 'package:stars/data/services/tools/system_mcp_installer_skill.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/models/legal_document.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';

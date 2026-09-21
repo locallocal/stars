@@ -22,6 +22,7 @@ class ChatViewModel extends DisposableChangeNotifier {
       _interaction.generationViewModel;
 
   List<Message> _messages = const [];
+  Map<String, ModelTokenUsage?> _taskTokenUsage = const {};
   AppFailure? _historyError;
   bool _isLoading = false;
   bool _isLoadingEarlier = false;
@@ -30,6 +31,7 @@ class ChatViewModel extends DisposableChangeNotifier {
   int _historyLoadGeneration = 0;
 
   List<Message> get messages => _messages;
+  Map<String, ModelTokenUsage?> get taskTokenUsage => _taskTokenUsage;
   Stream<void> get taskMessageChanges => _workflow.taskMessageChanges;
   List<Message>? get cachedMessages {
     final history = _workflow.peekHistory();
@@ -53,6 +55,11 @@ class ChatViewModel extends DisposableChangeNotifier {
       final history = await _workflow.loadHistory();
       if (isDisposed || generation != _historyLoadGeneration) return;
       _messages = List<Message>.unmodifiable(history.messages);
+      // The view retains earlier pages when the latest window refreshes.
+      _taskTokenUsage = Map.unmodifiable({
+        ..._taskTokenUsage,
+        ...history.taskTokenUsage,
+      });
       _applyHistoryState(history);
     } catch (error) {
       if (isDisposed || generation != _historyLoadGeneration) return;
@@ -89,6 +96,10 @@ class ChatViewModel extends DisposableChangeNotifier {
       _messages = List<Message>.unmodifiable(
         byId.values.toList()..sort(_compareMessages),
       );
+      _taskTokenUsage = Map.unmodifiable({
+        ...history.taskTokenUsage,
+        ..._taskTokenUsage,
+      });
       _applyHistoryState(history);
       return _messages;
     } catch (error) {
@@ -132,7 +143,12 @@ class ChatViewModel extends DisposableChangeNotifier {
   Future<void> updateLastMessage(String content) =>
       _workflow.updateLastMessage(content);
 
-  Future<void> clearHistory() => _workflow.clearHistory();
+  Future<void> clearHistory() async {
+    await _workflow.clearHistory();
+    if (isDisposed) return;
+    _taskTokenUsage = const {};
+    notifyListeners();
+  }
 
   Future<PreparedChatTurn> prepareTextTurn({
     required List<Message> history,

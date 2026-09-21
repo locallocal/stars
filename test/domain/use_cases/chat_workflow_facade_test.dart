@@ -7,11 +7,14 @@ import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/repositories/conversation_draft_repository.dart';
+import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 
@@ -35,6 +38,9 @@ void main() {
         conversationDraftRepository: drafts,
         createUserMessage: CreateUserMessage(messageRepository: messages),
         persistConversationAssets: persistAssets,
+        getTaskMessageExecution: GetTaskMessageExecution(
+          () => GetConversationTaskExecution(_UnavailableTasks()),
+        ),
         generateMediaTurn: GenerateMediaTurn(
           messageRepository: messages,
           chatRepository: chats,
@@ -91,6 +97,24 @@ void main() {
       expect(await facade.readDraft(), same(draft));
       await facade.deleteDraft();
       expect(await facade.readDraft(), isNull);
+
+      final result = Message(
+        messageId: 'task-1:result',
+        taskId: 'task-1',
+        taskMessageKind: TaskMessageKind.result,
+        terminalOutcome: MessageTerminalOutcome.completed,
+        chatId: 'chat-1',
+        botId: 'bot-1',
+        senderId: 'bot-1',
+        content: 'Saved report',
+        timestamp: DateTime(2026),
+      );
+      messages.values = [result, _message('unrelated')];
+      final unavailable = await facade.loadHistory();
+      expect(unavailable.messages.first, same(result));
+      expect(unavailable.messages.last.content, 'unrelated');
+      expect(unavailable.hasMore, isTrue);
+      expect(unavailable.nextCursor, first.nextCursor);
     },
   );
 
@@ -197,6 +221,7 @@ Message _message(String id) => Message(
 );
 
 final class _PagedMessages implements PaginatedMessageRepository {
+  List<Message>? values;
   int _sequence = 0;
   final List<MessageCursor?> requestedCursors = [];
   final MessageCursor cursor = MessageCursor(
@@ -225,7 +250,7 @@ final class _PagedMessages implements PaginatedMessageRepository {
   }) async {
     requestedCursors.add(before);
     return MessagePage(
-      messages: [_message(before == null ? 'latest' : 'earlier')],
+      messages: values ?? [_message(before == null ? 'latest' : 'earlier')],
       hasMore: before == null,
       nextCursor: before == null ? cursor : null,
     );
@@ -236,6 +261,12 @@ final class _PagedMessages implements PaginatedMessageRepository {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+final class _UnavailableTasks implements ConversationTaskRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw StateError('Execution history temporarily unavailable');
 }
 
 final class _FakeChats implements ChatRepository {

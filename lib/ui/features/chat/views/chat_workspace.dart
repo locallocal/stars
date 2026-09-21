@@ -109,6 +109,7 @@ extension _ChatPageWorkspace on ChatPageState {
               children: [
                 MessageList(
                   messages: _messages,
+                  taskTokenUsage: _chatViewModel.taskTokenUsage,
                   messageRevision: _messageRevision,
                   scrollController: _scrollController,
                   isStreaming: _isStreaming,

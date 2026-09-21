@@ -45,7 +45,12 @@ final class GetConversationTaskExecution {
     };
     return ConversationTaskExecution(
       revision: snapshot.task.revision,
+      tokenUsage: snapshot.task.progress.tokenUsage,
       processInfo: MessageProcessInfo(
+        durationMs:
+            (snapshot.task.completedAt ?? snapshot.task.updatedAt)
+                .difference(snapshot.task.createdAt)
+                .inMilliseconds,
         toolCalls: List.unmodifiable([
           for (final attempt in attempts)
             MessageToolCall(

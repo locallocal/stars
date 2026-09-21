@@ -3,6 +3,8 @@ import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 
 import '../../support/conversation_task_repository_harness.dart';
 
@@ -69,6 +71,16 @@ void main() {
       expect(usage.effectiveTotalTokens, 166);
       final messages = SqliteMessageRepository(localDatabase: h.local);
       addTearDown(messages.dispose);
+      final result = (await messages.getMessages(task.chatId)).singleWhere(
+        (message) => message.taskMessageKind == TaskMessageKind.result,
+      );
+      final execution = await GetTaskMessageExecution(
+        () => GetConversationTaskExecution(h.repository),
+      )(result);
+      expect(execution.tokenUsage!.inputTokens, 140);
+      expect(execution.tokenUsage!.outputTokens, 26);
+      expect(result.tokenUsage.inputTokens, 30);
+      expect(result.tokenUsage.outputTokens, 4);
       final botUsage = await messages.getTokenUsageForBot(task.botId);
       expect(botUsage.inputTokens, usage.inputTokens);
       expect(botUsage.outputTokens, usage.outputTokens);
