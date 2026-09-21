@@ -88,7 +88,8 @@ extension _ChatPageWorkspace on ChatPageState {
     double? fontSize, {
     bool isDesktop = false,
   }) {
-    if (_isLoading) {
+    // Refreshes keep the mounted list, its scroll position and message state.
+    if (_isLoading && _messages.isEmpty) {
       return Center(
         child:
             isDesktop
@@ -205,7 +206,7 @@ extension _ChatPageWorkspace on ChatPageState {
       unawaited(_loadEarlierMessages());
       return;
     }
-    unawaited(_loadMessages());
+    unawaited(_loadMessages(preserveViewport: _messages.isNotEmpty));
   }
 
   void _dismissGenerationError() {

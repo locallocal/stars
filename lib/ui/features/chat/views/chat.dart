@@ -208,7 +208,7 @@ class ChatPageState extends State<ChatPage> {
     });
 
     if (isNewTerminal) {
-      unawaited(_loadMessages());
+      unawaited(_loadMessages(preserveViewport: true));
       _scheduleScrollToLatest(animate: true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _generationViewModel.snapshot.lifecycle.isTerminal) {
