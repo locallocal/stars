@@ -41,6 +41,9 @@ void main() {
                     status: toolStatus,
                     source: 'builtIn',
                     riskLevel: 'readOnly',
+                    argumentsSummary: '{"path":"/workspace/report.json"}',
+                    detail: 'Detailed tool execution log',
+                    resultSummary: 'Detailed tool output',
                   ),
                 ],
               ),
@@ -93,6 +96,14 @@ void main() {
               await tester.pumpAndSettle();
             }
             expect(find.text('read_file').hitTestable(), findsOneWidget);
+            expect(find.text('内置 · 只读').hitTestable(), findsOneWidget);
+            for (final detail in [
+              '/workspace/report.json',
+              'Detailed tool execution log',
+              'Detailed tool output',
+            ]) {
+              expect(find.textContaining(detail), findsNothing);
+            }
             expect(tester.takeException(), isNull);
 
             await tester.pumpWidget(page(false));
