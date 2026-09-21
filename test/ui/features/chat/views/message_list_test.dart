@@ -1144,7 +1144,14 @@ void main() => print('done');
       expect(find.textContaining('此回复没有可用的工具证据'), findsWidgets);
       await tester.tap(find.text('执行状态'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('permission denied'), findsOneWidget);
+      expect(find.textContaining('permission denied'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ProcessInfoSection),
+          matching: find.text('失败'),
+        ),
+        findsOneWidget,
+      );
 
       await tester.tap(
         find.byKey(const ValueKey<String>('message-trust-details-toggle')),

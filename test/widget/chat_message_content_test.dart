@@ -503,20 +503,24 @@ void main() {
       await tester.tap(executionStatus);
       await tester.pumpAndSettle();
 
-      expect(find.text('release-notes'), findsNWidgets(2));
-      expect(find.text('release-notes').hitTestable(), findsOneWidget);
+      expect(find.text('release-notes'), findsOneWidget);
       expect(find.text('activate_skill').hitTestable(), findsOneWidget);
       expect(find.text('文档服务 · 搜索文档').hitTestable(), findsOneWidget);
       expect(find.text('read_file').hitTestable(), findsOneWidget);
       expect(find.text('按消息启用 · abc123'), findsOneWidget);
       expect(find.text('MCP · 只读').hitTestable(), findsOneWidget);
-      expect(find.text('内置 · 写入 · 失败 · 已允许一次').hitTestable(), findsOneWidget);
+      expect(find.text('内置 · 写入 · 已允许一次').hitTestable(), findsOneWidget);
       expect(find.text('等待确认').hitTestable(), findsOneWidget);
       expect(find.textContaining('builtIn'), findsNothing);
       expect(find.textContaining('readOnly'), findsNothing);
       expect(find.textContaining('allowOnce'), findsNothing);
       expect(find.textContaining('tool_execution_failed'), findsNothing);
 
+      await tester.ensureVisible(find.text('release-notes'));
+      await tester.pumpAndSettle();
+      expect(find.text('release-notes').hitTestable(), findsOneWidget);
+      await tester.ensureVisible(executionStatus);
+      await tester.pumpAndSettle();
       await tester.tap(executionStatus);
       await tester.pumpAndSettle();
 

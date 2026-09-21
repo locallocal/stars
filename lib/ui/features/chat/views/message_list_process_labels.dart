@@ -93,10 +93,6 @@ String _toolCallSubtitle(S strings, MessageToolCall item) => _joinMeta([
       toolSourceLabel(strings, item.source),
       _toolRiskLabel(strings, item.riskLevel),
     ]),
-  if (item.argumentsSummary.isNotEmpty) item.argumentsSummary,
-  if (item.detail.isNotEmpty) _processDetailLabel(strings, item.detail),
-  if (item.resultSummary.isNotEmpty && item.errorCode.isEmpty)
-    _processDetailLabel(strings, item.resultSummary),
   if (item.approvalStatus.isNotEmpty)
     _toolApprovalLabel(strings, item.approvalStatus),
   if (item.durationMs != null)
