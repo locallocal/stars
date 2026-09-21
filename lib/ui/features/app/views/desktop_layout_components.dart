@@ -215,7 +215,10 @@ class _AccountButton extends StatelessWidget {
       selected: selected,
       minHeight: StarsDesktopThemeSpec.botFormFieldHeight,
       onTap: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: StarsDesktopThemeSpec.sidebarAccountHorizontalPadding,
+        vertical: 6,
+      ),
       child: Row(
         children: [
           const CircleAvatar(
@@ -230,7 +233,7 @@ class _AccountButton extends StatelessWidget {
           Expanded(child: Text(S.of(context).profile)),
           Icon(
             useLucideIcon ? LucideIcons.settings : LucideIcons.settings,
-            size: 17,
+            size: StarsDesktopThemeSpec.sidebarAccountIconSize,
           ),
         ],
       ),

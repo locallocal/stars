@@ -18,6 +18,7 @@ class StarsDesktopThemeSpec {
   static const double shellGap = 0;
   static const double controlHeight = 32;
   static const double iconButtonSize = 32;
+  static const double iconActionHitSize = 44;
   static const double listItemMinHeight = 44;
   static const double contentMaxWidth = 920;
   static const double messageBubbleMaxWidth = 552;
@@ -49,6 +50,19 @@ class StarsDesktopThemeSpec {
   static const EdgeInsetsDirectional settingsRowSeparatorMargin =
       EdgeInsetsDirectional.only(start: 40);
   static const EdgeInsets formPagePadding = EdgeInsets.fromLTRB(32, 28, 32, 48);
+  static const double sidebarHorizontalInset = 8;
+  static const double sidebarAccountHorizontalPadding = 9;
+  static const double sidebarAccountIconSize = 17;
+  // Center the header action on the account icon's trailing axis.
+  static const EdgeInsetsDirectional sidebarHeaderPadding =
+      EdgeInsetsDirectional.fromSTEB(
+        12,
+        10,
+        sidebarHorizontalInset +
+            sidebarAccountHorizontalPadding +
+            (sidebarAccountIconSize - iconActionHitSize) / 2,
+        8,
+      );
   static const double sidebarFooterBottomInset = 18;
   static const EdgeInsets profilePagePadding = EdgeInsets.fromLTRB(
     32,

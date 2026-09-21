@@ -10,7 +10,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 10, 8),
+            padding: StarsDesktopThemeSpec.sidebarHeaderPadding,
             child: Row(
               children: [
                 ClipRRect(
@@ -45,7 +45,9 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
           ),
           Padding(
             key: const ValueKey<String>('desktop-primary-navigation'),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: StarsDesktopThemeSpec.sidebarHorizontalInset,
+            ),
             child: Column(
               children: [
                 SizedBox(
@@ -98,9 +100,9 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
           const ShadSeparator.horizontal(),
           Padding(
             padding: const EdgeInsets.fromLTRB(
+              StarsDesktopThemeSpec.sidebarHorizontalInset,
               8,
-              8,
-              8,
+              StarsDesktopThemeSpec.sidebarHorizontalInset,
               StarsDesktopThemeSpec.sidebarFooterBottomInset,
             ),
             child: _AccountButton(
