@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/repositories/sqlite_chat_repository.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
+import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
@@ -29,7 +30,7 @@ import 'package:stars/ui/features/chat/views/message_list.dart';
 import '../../../../support/foreground_dispatch_harness.dart';
 import '../../../../support/task_runner_harness.dart' show RunnerModels;
 import '../../../../support/widget_test_support.dart'
-    show shadHarness, withDesktopPlatform;
+    show shadHarness, withDesktopPlatform, withMobilePlatform;
 
 void main() {
   late ForegroundDispatchHarness h;
@@ -206,6 +207,118 @@ void main() {
               ),
         ),
       );
+
+  for (final desktop in [true, false]) {
+    for (final failRefresh in [false, true]) {
+      testWidgets(
+        'reply refresh retains the message list and reading position ($desktop, $failRefresh)',
+        (tester) async {
+          final withPlatform =
+              desktop ? withDesktopPlatform : withMobilePlatform;
+          await withPlatform(() async {
+            tester.view.physicalSize = Size(desktop ? 1200 : 390, 850);
+            tester.view.devicePixelRatio = 1;
+            addTearDown(tester.view.reset);
+            final history = _ControlledHistoryRepository(h.storage.local);
+            deps.historyRepository = history;
+            addTearDown(history.dispose);
+            await tester.runAsync(
+              () => h.messages.upsertMessages([
+                for (var index = 0; index < 20; index++)
+                  Message(
+                    messageId: 'history-$index',
+                    chatId: 'chat-1',
+                    botId: foregroundBot().id,
+                    senderId: index.isEven ? 'me' : foregroundBot().id,
+                    content: 'Existing message $index',
+                    timestamp: DateTime(2025).add(Duration(seconds: index)),
+                  ),
+              ]),
+            );
+            h.response = routeFrames('directReply', [
+              {'text': 'New reply'},
+            ]);
+            final responseGate = Completer<void>();
+            h.onPrepare = (_) => responseGate.future;
+            addTearDown(() {
+              if (!responseGate.isCompleted) responseGate.complete();
+            });
+            await tester.pumpWidget(page());
+            final messageList = find.byType(MessageList);
+            await _drive(
+              tester,
+              until: () => messageList.evaluate().isNotEmpty,
+            );
+            final listState = tester.state(messageList);
+            final scroll =
+                tester.widget<MessageList>(messageList).scrollController;
+            final position = scroll.position;
+
+            final input = tester.widget<MessageInput>(
+              find.byType(MessageInput),
+            );
+            input.controller.text = 'Hello';
+            input.onSend();
+            await _drive(tester, until: () => h.foregroundPreparations > 0);
+            await _drive(tester);
+            expect(tester.state(messageList), same(listState));
+            scroll.jumpTo(240);
+            await tester.pump();
+            final offset = scroll.offset;
+
+            final refreshGate = Completer<void>();
+            history.beforeRead = refreshGate.future;
+            history.failReads = failRefresh;
+            addTearDown(() {
+              if (!refreshGate.isCompleted) refreshGate.complete();
+            });
+            final reads = history.reads;
+            responseGate.complete();
+            await _drive(tester, until: () => history.reads > reads);
+            expect(messageList, findsOneWidget);
+            expect(tester.state(messageList), same(listState));
+            expect(scroll.position, same(position));
+            expect(
+              tester
+                  .widget<MessageList>(messageList)
+                  .messages
+                  .where((message) => message.content == 'New reply'),
+              hasLength(1),
+            );
+            await _drive(tester);
+            expect(scroll.offset, closeTo(offset, 0.1));
+
+            refreshGate.complete();
+            await _drive(tester);
+            expect(tester.state(messageList), same(listState));
+            expect(scroll.position, same(position));
+            expect(scroll.offset, closeTo(offset, 0.1));
+            final historyError = find.byType(ChatHistoryErrorAlert);
+            if (failRefresh) {
+              expect(historyError, findsOneWidget);
+              history.failReads = false;
+              tester.widget<ChatHistoryErrorAlert>(historyError).onRetry();
+              await tester.pump();
+              expect(tester.state(messageList), same(listState));
+              await _drive(
+                tester,
+                until: () => historyError.evaluate().isEmpty,
+              );
+              expect(tester.state(messageList), same(listState));
+              expect(scroll.position, same(position));
+              expect(scroll.offset, closeTo(offset, 0.1));
+            } else {
+              expect(historyError, findsNothing);
+            }
+            expect(tester.takeException(), isNull);
+            await tester.pumpWidget(const SizedBox.shrink());
+            await _drive(tester);
+          });
+        },
+      );
+    }
+  }
+
   testWidgets(
     'routing failure preserves history and reports generation failure',
     (tester) async {
@@ -600,6 +713,7 @@ class _Dependencies implements AppDependencies {
     );
   }
   final ForegroundDispatchHarness h;
+  SqliteMessageRepository? historyRepository;
   @override
   final SqliteChatRepository chatRepository;
   @override
@@ -609,7 +723,8 @@ class _Dependencies implements AppDependencies {
   @override
   late final ChatGenerationRegistry generationRegistry;
   @override
-  SqliteMessageRepository get messageRepository => h.messages;
+  SqliteMessageRepository get messageRepository =>
+      historyRepository ?? h.messages;
   @override
   ForegroundDrafts get conversationDraftRepository => h.drafts;
   @override
@@ -637,6 +752,30 @@ class _Dependencies implements AppDependencies {
   PrepareTextGeneration get prepareTextGeneration => h.prepare;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _ControlledHistoryRepository extends SqliteMessageRepository {
+  _ControlledHistoryRepository(LocalDatabaseService localDatabase)
+    : super(localDatabase: localDatabase);
+
+  Future<void>? beforeRead;
+  bool failReads = false;
+  int reads = 0;
+
+  @override
+  MessagePage? peekMessagePage(String chatId) => null;
+
+  @override
+  Future<MessagePage> getMessagePage(
+    String chatId, {
+    MessageCursor? before,
+    int limit = 50,
+  }) async {
+    reads++;
+    await beforeRead;
+    if (failReads) throw StateError('History unavailable');
+    return super.getMessagePage(chatId, before: before, limit: limit);
+  }
 }
 
 Future<void> _until(Future<bool> Function() condition) async {
