@@ -9,12 +9,15 @@ import 'package:stars/utils/theme.dart';
 import 'package:stars/ui/features/chat/views/execution_status_card.dart';
 import 'package:stars/ui/features/chat/views/execution_metric.dart';
 import 'package:stars/ui/features/chat/views/task_status_colors.dart';
+import 'package:stars/ui/features/chat/views/task_token_usage_metrics.dart';
 
 part 'message_list_process_labels.dart';
 
 class ProcessInfoSection extends StatefulWidget {
   final MessageProcessInfo processInfo;
   final ModelTokenUsage tokenUsage;
+  final ModelTokenUsage? taskTokenUsage;
+  final bool showTaskTokenUsage;
   final bool isDesktop;
   final bool isStreaming;
   final bool hasReasoningContent;
@@ -24,6 +27,8 @@ class ProcessInfoSection extends StatefulWidget {
     super.key,
     required this.processInfo,
     this.tokenUsage = ModelTokenUsage.empty,
+    this.taskTokenUsage,
+    this.showTaskTokenUsage = false,
     this.isDesktop = false,
     this.isStreaming = false,
     this.hasReasoningContent = false,
@@ -87,7 +92,9 @@ class _ProcessInfoSectionState extends State<ProcessInfoSection> {
       );
     }
 
-    if (widget.tokenUsage.inputTokens > 0 ||
+    if (widget.showTaskTokenUsage) {
+      headerMetrics.add(TaskTokenUsageMetrics(usage: widget.taskTokenUsage));
+    } else if (widget.tokenUsage.inputTokens > 0 ||
         widget.tokenUsage.outputTokens > 0) {
       headerMetrics
         ..add(

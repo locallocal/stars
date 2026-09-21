@@ -12,6 +12,7 @@ import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -79,6 +80,31 @@ void main() {
     );
     expect(harness.viewModel.bot.mcpTools.single.remoteName, 'search');
   });
+
+  test(
+    'task totals stay immutable across pagination and refresh, then clear',
+    () async {
+      final latest = _taskProgressMessage('latest', 80);
+      final earlier = _taskProgressMessage('earlier', 40);
+      final repository = _MutableMessageRepository([latest])
+        ..earlierMessages = [earlier];
+      final harness = _createHarness(repository);
+      addTearDown(harness.dispose);
+      final vm = harness.viewModel;
+      await vm.loadMessages();
+      final snapshot = vm.taskTokenUsage;
+      expect(snapshot['latest']!.inputTokens, 80);
+      expect(() => snapshot.clear(), throwsUnsupportedError);
+      await vm.loadEarlierMessages();
+      expect(vm.taskTokenUsage['earlier']!.inputTokens, 40);
+      expect(snapshot.containsKey('earlier'), isFalse);
+      await vm.loadMessages();
+      expect(vm.taskTokenUsage['earlier']!.inputTokens, 40);
+      expect(vm.taskTokenUsage['latest']!.inputTokens, 80);
+      await vm.clearHistory();
+      expect(vm.taskTokenUsage, isEmpty);
+    },
+  );
 }
 
 _ChatHarness _createHarness(_MutableMessageRepository messages) {
@@ -96,6 +122,9 @@ _ChatHarness _createHarness(_MutableMessageRepository messages) {
     conversationDraftRepository: _StubConversationDraftRepository(),
     createUserMessage: CreateUserMessage(messageRepository: messages),
     persistConversationAssets: persistAssets,
+    getTaskMessageExecution: GetTaskMessageExecution(
+      () => throw StateError('Status replies use saved summaries'),
+    ),
     generateMediaTurn: GenerateMediaTurn(
       messageRepository: messages,
       chatRepository: chats,
@@ -162,6 +191,7 @@ final class _MutableMessageRepository implements PaginatedMessageRepository {
   _MutableMessageRepository(this.messages);
 
   final List<Message> messages;
+  List<Message> earlierMessages = const [];
 
   @override
   Stream<void> get changes => const Stream<void>.empty();
@@ -177,7 +207,14 @@ final class _MutableMessageRepository implements PaginatedMessageRepository {
     String chatId, {
     MessageCursor? before,
     int limit = 50,
-  }) async => MessagePage(messages: messages, hasMore: false);
+  }) async => MessagePage(
+    messages: before == null ? messages : earlierMessages,
+    hasMore: before == null && earlierMessages.isNotEmpty,
+    nextCursor:
+        before == null && earlierMessages.isNotEmpty
+            ? MessageCursor(timestamp: DateTime(2026), messageId: 'cursor')
+            : null,
+  );
 
   @override
   MessagePage? peekMessagePage(String chatId) =>
@@ -265,4 +302,31 @@ Message _message(String id) => Message(
   senderId: 'user-1',
   content: id,
   timestamp: DateTime(2026),
+);
+
+Message _taskProgressMessage(String id, int inputTokens) => Message(
+  messageId: id,
+  taskMessageKind: TaskMessageKind.status,
+  chatId: 'chat-1',
+  botId: 'bot-1',
+  senderId: 'bot-1',
+  content: 'Task progress',
+  timestamp: DateTime(2026),
+  taskStatusSummaries: [
+    ConversationTaskProgressSummary(
+      taskId: 'task-1',
+      chatId: 'chat-1',
+      title: 'Report',
+      status: ConversationTaskStatus.running,
+      phase: ConversationTaskPhase.executing,
+      planRevision: 1,
+      summaryRevision: 1,
+      updatedAt: DateTime(2026),
+      progress: TaskProgress(
+        totalSteps: 2,
+        lastMeaningfulProgressAt: DateTime(2026),
+        tokenUsage: ModelTokenUsage(inputTokens: inputTokens, outputTokens: 10),
+      ),
+    ),
+  ],
 );

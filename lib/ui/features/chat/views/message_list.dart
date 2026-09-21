@@ -47,6 +47,7 @@ part 'message_list_navigation.dart';
 
 class MessageList extends StatefulWidget {
   final List<Message> messages;
+  final Map<String, ModelTokenUsage?> taskTokenUsage;
   final ScrollController scrollController;
   final bool isStreaming;
   final String streamingResponse;
@@ -69,6 +70,7 @@ class MessageList extends StatefulWidget {
   const MessageList({
     super.key,
     required this.messages,
+    this.taskTokenUsage = const {},
     required this.scrollController,
     required this.isStreaming,
     required this.streamingResponse,
@@ -334,6 +336,7 @@ class _MessageListState extends State<MessageList>
                             : message.reasoning,
                     processInfo: _displayedProcessInfo[messageIndex],
                     tokenUsage: message.tokenUsage,
+                    taskTokenUsage: widget.taskTokenUsage[message.messageId],
                     showReasoning: showReasoning && !isMe,
                     showVerificationStatus:
                         message.showsVerificationStatus(

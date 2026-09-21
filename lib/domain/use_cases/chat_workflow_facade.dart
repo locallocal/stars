@@ -7,6 +7,7 @@ import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 
@@ -15,11 +16,16 @@ final class ChatHistoryBatch {
     required Iterable<Message> messages,
     this.hasMore = false,
     this.nextCursor,
-  }) : messages = List<Message>.unmodifiable(messages);
+    Map<String, ModelTokenUsage?> taskTokenUsage = const {},
+  }) : messages = List<Message>.unmodifiable(messages),
+       taskTokenUsage = Map.unmodifiable(taskTokenUsage);
 
   final List<Message> messages;
   final bool hasMore;
   final MessageCursor? nextCursor;
+
+  /// Display-only task totals keyed by message; never added to reply accounting.
+  final Map<String, ModelTokenUsage?> taskTokenUsage;
 }
 
 /// Conversation-scoped application facade used by the presentation layer.
@@ -39,6 +45,7 @@ final class ChatWorkflowFacade {
     required PersistConversationAssets persistConversationAssets,
     required GenerateMediaTurn generateMediaTurn,
     required PrepareTextGeneration prepareTextGeneration,
+    this.getTaskMessageExecution,
   }) : _bot = bot,
        _messages = messageRepository,
        _chats = chatRepository,
@@ -61,6 +68,7 @@ final class ChatWorkflowFacade {
   final PersistConversationAssets _persistConversationAssets;
   final GenerateMediaTurn _generateMediaTurn;
   final PrepareTextGeneration _prepareTextGeneration;
+  final GetTaskMessageExecution? getTaskMessageExecution;
 
   Bot get bot => _bot;
 
@@ -100,12 +108,48 @@ final class ChatWorkflowFacade {
   Future<ChatHistoryBatch> loadHistory({MessageCursor? before}) async {
     final messages = _messages;
     if (messages is PaginatedMessageRepository) {
-      return _historyBatch(
-        await messages.getMessagePage(chatId, before: before),
+      return _withTaskExecution(
+        _historyBatch(await messages.getMessagePage(chatId, before: before)),
       );
     }
     if (before != null) return ChatHistoryBatch(messages: const []);
-    return ChatHistoryBatch(messages: await messages.getMessages(chatId));
+    return _withTaskExecution(
+      ChatHistoryBatch(messages: await messages.getMessages(chatId)),
+    );
+  }
+
+  Future<ChatHistoryBatch> _withTaskExecution(ChatHistoryBatch history) async {
+    final getExecution = getTaskMessageExecution;
+    if (getExecution == null) return history;
+    final taskTokenUsage = <String, ModelTokenUsage?>{};
+    final messages = await Future.wait([
+      for (final message in history.messages)
+        () async {
+          if (message.chatId != chatId || message.botId != bot.id) {
+            return message;
+          }
+          try {
+            final execution = await getExecution(message);
+            if (message.taskMessageKind == TaskMessageKind.result ||
+                message.taskMessageKind == TaskMessageKind.status) {
+              taskTokenUsage[message.messageId] = execution.tokenUsage;
+            }
+            final processInfo = execution.processInfo;
+            return identical(processInfo, message.processInfo)
+                ? message
+                : message.copyWith(processInfo: processInfo);
+          } on Object {
+            // Optional audit details must not make the conversation unreadable.
+            return message;
+          }
+        }(),
+    ]);
+    return ChatHistoryBatch(
+      messages: messages,
+      taskTokenUsage: taskTokenUsage,
+      hasMore: history.hasMore,
+      nextCursor: history.nextCursor,
+    );
   }
 
   String createId(String prefix) => _messages.createId(prefix);

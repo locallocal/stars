@@ -9,6 +9,7 @@ class _MessageContent extends StatelessWidget {
   final String reasoning;
   final MessageProcessInfo processInfo;
   final ModelTokenUsage tokenUsage;
+  final ModelTokenUsage? taskTokenUsage;
   final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
@@ -35,6 +36,7 @@ class _MessageContent extends StatelessWidget {
     required this.reasoning,
     this.processInfo = const MessageProcessInfo(),
     this.tokenUsage = ModelTokenUsage.empty,
+    this.taskTokenUsage,
     this.showReasoning = true,
     this.showVerificationStatus = true,
     this.showExecutionStatus = true,
@@ -112,6 +114,8 @@ class _MessageContent extends StatelessWidget {
           key: const ValueKey<String>('message-execution'),
           processInfo: processInfo,
           tokenUsage: tokenUsage,
+          taskTokenUsage: taskTokenUsage,
+          showTaskTokenUsage: _showTaskTokenUsage,
           isDesktop: isDesktop,
           isStreaming: isStreaming,
           hasReasoningContent: _showReasoning,
@@ -262,9 +266,15 @@ class _MessageContent extends StatelessWidget {
 
   bool get _showProcessInfo =>
       showExecutionStatus &&
-      (processInfo.hasData ||
+      (_showTaskTokenUsage ||
+          processInfo.hasData ||
           tokenUsage.inputTokens > 0 ||
           tokenUsage.outputTokens > 0);
+
+  bool get _showTaskTokenUsage =>
+      !isCurrentUser &&
+      (sourceMessage?.taskMessageKind == TaskMessageKind.result ||
+          sourceMessage?.taskMessageKind == TaskMessageKind.status);
 
   bool get _showReasoning => showReasoning && reasoning.isNotEmpty;
 

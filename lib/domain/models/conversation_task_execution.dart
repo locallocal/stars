@@ -7,10 +7,14 @@ final class ConversationTaskExecution {
     required this.revision,
     required this.processInfo,
     required List<TaskExecutionActivity> activities,
+    this.tokenUsage,
   }) : activities = List.unmodifiable(activities);
 
   final int revision;
   final MessageProcessInfo processInfo;
+
+  /// Cumulative task usage; null means no usage report is available.
+  final ModelTokenUsage? tokenUsage;
   final List<TaskExecutionActivity> activities;
 }
 

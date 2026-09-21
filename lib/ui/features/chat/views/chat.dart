@@ -235,14 +235,20 @@ class ChatPageState extends State<ChatPage> {
           _followLatest = true;
         }
       });
-      return;
+      if (!cachedMessages.any(
+        (message) =>
+            message.taskMessageKind == TaskMessageKind.result ||
+            message.taskMessageKind == TaskMessageKind.status,
+      )) {
+        return;
+      }
+    } else {
+      setState(() {
+        if (!preserveViewport) _isLoading = true;
+        _historyError = null;
+        _historyRetryLoadsEarlier = false;
+      });
     }
-
-    setState(() {
-      if (!preserveViewport) _isLoading = true;
-      _historyError = null;
-      _historyRetryLoadsEarlier = false;
-    });
 
     try {
       await _chatViewModel.loadMessages();

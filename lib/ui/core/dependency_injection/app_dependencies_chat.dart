@@ -79,6 +79,9 @@ extension AppDependenciesChatFactories on AppDependencies {
       persistConversationAssets: persistConversationAssets,
       generateMediaTurn: generateMediaTurn,
       prepareTextGeneration: prepareTextGeneration,
+      getTaskMessageExecution: GetTaskMessageExecution(
+        () => GetConversationTaskExecution(conversationTasks.repository),
+      ),
     );
     return ChatViewModel(
       interaction: ChatInteractionFacade(
