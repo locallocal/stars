@@ -457,7 +457,7 @@ class _StarsDesktopIconActionState extends State<StarsDesktopIconAction> {
         child: Tooltip(
           message: widget.label,
           child: SizedBox.square(
-            dimension: 44,
+            dimension: StarsDesktopThemeSpec.iconActionHitSize,
             child: IconButton(
               focusNode: _focusNode,
               autofocus: widget.autofocus,
@@ -483,7 +483,7 @@ class _StarsDesktopIconActionState extends State<StarsDesktopIconAction> {
           focusNode: _focusNode,
           builder: (context) => Text(widget.label),
           child: SizedBox.square(
-            dimension: 44,
+            dimension: StarsDesktopThemeSpec.iconActionHitSize,
             child: Center(
               child: ShadIconButton.raw(
                 variant: widget.variant,
