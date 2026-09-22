@@ -58,6 +58,7 @@ extension LocalDatabaseConversations on LocalDatabaseService {
       await _deleteConversationMemory(transaction, id);
       await transaction.delete('chats', where: 'id = ?', whereArgs: [id]);
     });
+    conversationTasks.didDeleteTasksForChat(database, id);
     _advanceMessageRevision(id);
   }
 
@@ -136,6 +137,7 @@ extension LocalDatabaseConversations on LocalDatabaseService {
         whereArgs: [id],
       );
     });
+    conversationTasks.didDeleteTasksForChat(database, id);
     _advanceMessageRevision(id);
   }
 

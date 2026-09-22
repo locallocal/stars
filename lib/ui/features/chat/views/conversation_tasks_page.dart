@@ -262,7 +262,7 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                       ? ShadButton.outline(
                         key: const ValueKey('conversation-tasks-retry-load'),
                         size: ShadButtonSize.sm,
-                        onPressed: vm.start,
+                        onPressed: vm.refresh,
                         child: Text(S.of(context).retry),
                       )
                       : null,
@@ -270,6 +270,18 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
           ),
           const SizedBox(height: 12),
         ],
+        if (state.loading && state.summaries.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalInset,
+              0,
+              horizontalInset,
+              12,
+            ),
+            child: const ShadProgress(
+              key: ValueKey('conversation-tasks-refresh-progress'),
+            ),
+          ),
         Expanded(
           child:
               state.loading && state.summaries.isEmpty
@@ -352,7 +364,7 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                               summary.taskId,
                             ),
                             refreshing: state.loading,
-                            onRefresh: vm.start,
+                            onRefresh: vm.refresh,
                             onAction:
                                 (action) => widget.onAction(summary, action),
                           );

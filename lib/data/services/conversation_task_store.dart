@@ -19,6 +19,7 @@ import 'package:stars/domain/repositories/conversation_task_repository.dart';
 
 part 'conversation_task_store_execution.dart';
 part 'conversation_task_store_status.dart';
+part 'conversation_task_store_list_cache.dart';
 part 'conversation_task_store_writes.dart';
 part 'conversation_task_store_commands.dart';
 part 'conversation_task_store_scheduling.dart';
@@ -41,6 +42,15 @@ final class ConversationTaskStore {
   final metrics = TaskPersistenceMetrics();
   static final _buses =
       Expando<StreamController<ConversationTaskProgressSummary>>();
+  static final _listCaches = Expando<_ConversationTaskListCache>();
+
+  _ConversationTaskListCache _listCache(Database db) =>
+      _listCaches[db] ??= _ConversationTaskListCache();
+
+  /// Called only after the transaction deleting this chat's tasks commits.
+  void didDeleteTasksForChat(Database db, String chatId) {
+    _listCaches[db]?.clearChat(chatId);
+  }
 
   StreamController<ConversationTaskProgressSummary> _bus(Database db) =>
       _buses[db] ??=
@@ -79,6 +89,7 @@ final class ConversationTaskStore {
         if (acceptance) metrics.acceptances++;
         if (progress) metrics.progressUpdates++;
         if (summary != null) {
+          _listCaches[db]?.accept(summary!);
           if (message) _onMessageCommitted(summary!.chatId);
           _bus(db).add(summary!);
         }

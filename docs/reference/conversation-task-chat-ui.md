@@ -21,8 +21,11 @@ clock、身份生成器、Provider factory、工具 registry 和执行 adapter �
 页面保存附件期间也防止重复提交，已提交轮次的收尾保留用户后来输入的新草稿。
 
 [ConversationTasksViewModel](../../lib/ui/features/chat/view_models/conversation_tasks_view_model.dart)
-订阅已提交摘要，并暴露不可变状态和领域命令。Data 先订阅提交事件，再读取初始数据库快照，
-按每任务 revision 合并，避免初始加载漏掉接受或进度变化。页面销毁只释放订阅；重入读取持久事实。
+订阅已提交摘要，并暴露不可变状态和领域命令。Data 按数据库实例与会话缓存列表快照，首次加载
+合并并发读取，并按每任务 revision 合并读取期间的提交事件。页面销毁只释放订阅；重入复用缓存，
+包括空列表。页面关闭期间的任务提交也会增量更新缓存，不重新读取全部历史任务。
+缓存按最近访问保留至多 32 个会话，仍有订阅或加载中的会话不会被淘汰；数据库重新打开后重新加载。
+清空记录、删除会话或机器人在事务提交后清理对应缓存并通知页面，迟到的旧读取不能恢复已删除任务。
 
 ## 独立任务页面
 
@@ -33,10 +36,11 @@ clock、身份生成器、Provider factory、工具 registry 和执行 adapter �
 [ConversationTasksScreen](../../lib/ui/features/chat/views/conversation_tasks_screen.dart)负责页面订阅生命周期与
 审批、取消、恢复和重试的交互；[ConversationTasksPage](../../lib/ui/features/chat/views/conversation_tasks_page.dart)
 只展示 ViewModel 状态。列表包含当前会话的全部活动及历史任务，支持按标题、短 ID/完整 ID、当前
-步骤与工具名称搜索。默认按创建时间从早到晚排列，可切换为从晚到早；状态更新时间不会改变排序。
+步骤与工具名称搜索。默认按创建时间从晚到早排列，可切换为从早到晚；状态更新时间不会改变排序。
 搜索与排序在实时更新和刷新时保留，加载失败可刷新恢复。
 排序按钮与搜索框保持同高；顶部不放刷新按钮。刷新位于每张任务卡片的操作行，与取消、恢复或重试
-按钮使用相同尺寸及样式，重新读取当前会话的持久摘要；刷新期间禁用重复点击。首次加载失败时，
+按钮使用相同尺寸及样式，显式刷新才重新读取当前会话的持久摘要；刷新期间保留列表、筛选、排序及页码，
+显示 shadcn 进度条并禁用重复点击。刷新失败保留已有快照，下次可重试。首次加载失败时，
 错误提示内提供重试入口。
 
 等待卡片按持久化原因显示具体障碍：工具不可用时列出工具名，凭据、供应商配置、智能体缺失及
@@ -148,6 +152,8 @@ ViewModel 在展开时加载，依据已提交 revision 刷新，合并读取期
   取消、接受后释放输入、原身份重试、状态保存恢复、生成失败重试和取消回复。
 - [任务 ViewModel](../../test/ui/features/chat/view_models/conversation_tasks_view_model_test.dart)：重入、
   全部历史任务、搜索排序、持久取消、过期命令、长时间审批及数据库重启、配置恢复和重试去重。
+- [任务列表缓存](../../test/data/repositories/sqlite_conversation_task_list_cache_test.dart)：重复打开的读库次数、
+  空列表缓存、并发读取合并、后台增量更新、刷新失败恢复、删除期间的迟到读取、容量淘汰与数据库隔离。
 - [任务页](../../test/ui/features/chat/views/conversation_tasks_page_test.dart)与
   [页面导航](../../test/ui/features/chat/views/conversation_tasks_navigation_test.dart)：搜索、排序、刷新、
   明暗主题和窄屏布局、工具栏与会话列表入口、返回后草稿保留。

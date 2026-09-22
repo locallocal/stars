@@ -218,12 +218,19 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
   }
 
   StreamSubscription<List<ConversationTaskProgressSummary>>? _subscription;
+  bool _observing = false;
   int _observationGeneration = 0;
   ConversationTasksState _state = ConversationTasksState();
   ConversationTasksState get state => _state;
 
-  Future<void> start() async {
-    if (isDisposed) return;
+  Future<void> refresh() => start(refresh: true);
+
+  Future<void> start({bool refresh = false}) async {
+    if (isDisposed ||
+        (_observing && (state.loading || (!refresh && !state.error)))) {
+      return;
+    }
+    _observing = true;
     final generation = ++_observationGeneration;
     final previous = _subscription;
     _subscription = null;
@@ -234,19 +241,24 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
     notifyListeners();
     await previous?.cancel();
     if (isDisposed || generation != _observationGeneration) return;
-    _subscription = observe(chatId).listen((summaries) {
-      if (isDisposed || generation != _observationGeneration) return;
-      _state = ConversationTasksState(
-        summaries: summaries,
-        pendingCommands: state.pendingCommands,
-        loading: false,
-      );
-      _filterAndSort();
-      final ids = summaries.map((s) => s.taskId).toSet();
-      _execution.removeWhere((id, _) => !ids.contains(id));
-      notifyListeners();
-      _refreshExpandedExecutions();
-    }, onError: (Object _) => _error());
+    _subscription = observe(chatId, refresh: refresh).listen(
+      (summaries) {
+        if (isDisposed || generation != _observationGeneration) return;
+        _state = ConversationTasksState(
+          summaries: summaries,
+          pendingCommands: state.pendingCommands,
+          loading: false,
+        );
+        _filterAndSort();
+        final ids = summaries.map((s) => s.taskId).toSet();
+        _execution.removeWhere((id, _) => !ids.contains(id));
+        notifyListeners();
+        _refreshExpandedExecutions();
+      },
+      onError: (Object _) {
+        if (generation == _observationGeneration) _error();
+      },
+    );
   }
 
   Future<void> cancel(ConversationTaskProgressSummary s) =>

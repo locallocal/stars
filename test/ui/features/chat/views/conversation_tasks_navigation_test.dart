@@ -54,6 +54,13 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('当前会话没有任务。'), findsOneWidget);
+        final firstViewModel =
+            tester
+                .widget<ConversationTasksPage>(
+                  find.byType(ConversationTasksPage),
+                )
+                .viewModel;
+        expect(h.local.conversationTasks.metrics.taskListSnapshotReads, 1);
         await tester.tap(find.byType(BackButton));
         await driveTaskUi(
           tester,
@@ -67,6 +74,16 @@ void main() {
               .text,
           'Unsent draft',
         );
+        await tester.tap(tasks);
+        await driveTaskUi(tester);
+        expect(find.text('当前会话没有任务。'), findsOneWidget);
+        expect(
+          tester
+              .widget<ConversationTasksPage>(find.byType(ConversationTasksPage))
+              .viewModel,
+          isNot(same(firstViewModel)),
+        );
+        expect(h.local.conversationTasks.metrics.taskListSnapshotReads, 1);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
         await driveTaskUi(tester);

@@ -77,6 +77,27 @@ void main() {
   }
 
   test(
+    'repeated starts share a subscription and explicit refresh is deduplicated',
+    () async {
+      final repository = await watchSnapshots();
+      await Future.wait([vm.start(), vm.start()]);
+      expect(repository.refreshes, [false]);
+      repository.events.add([_pageSummary(0)]);
+      await until(() => !vm.state.loading);
+      await vm.start();
+      expect(repository.refreshes, [false]);
+      final initial = vm.state.summaries;
+      await Future.wait([vm.refresh(), vm.refresh()]);
+      expect(repository.refreshes, [false, true]);
+      expect(vm.state.loading, isTrue);
+      expect(vm.state.summaries, initial);
+      repository.events.add([_pageSummary(1)]);
+      await until(() => !vm.state.loading);
+      expect(vm.state.summaries.single.taskId, 'task-01');
+    },
+  );
+
+  test(
     'loads expanded tasks only and refreshes committed history after cancellation',
     () async {
       committed(await h.accept());
@@ -245,7 +266,7 @@ void main() {
       repository.events.add(List.generate(42, _pageSummary));
       await until(() => vm.filteredCount == 42);
       expect(vm.currentPage, 2);
-      await vm.start();
+      await vm.refresh();
       repository.events.add(List.generate(42, _pageSummary));
       await until(() => !vm.state.loading);
       expect(vm.currentPage, 2);
@@ -393,7 +414,7 @@ void main() {
       expect(ids(), ['task-z', 'task-a', 'task-b']);
       expect(vm.visibleSummaries.last.updatedAt, clock.time);
       vm.search('report');
-      await vm.start();
+      await vm.refresh();
       await until(() => !vm.state.loading);
       expect(vm.query, 'report');
       expect(vm.sort, ConversationTaskSort.oldestFirst);
@@ -406,6 +427,7 @@ void main() {
     () async {
       committed(await h.accept());
       await until(() => vm.state.summaries.isNotEmpty);
+      final reads = h.repository.metrics.taskListSnapshotReads;
       vm.dispose();
       expect((await h.task).cancelRequestedAt, isNull);
       expect(wakes, isEmpty);
@@ -413,6 +435,7 @@ void main() {
       await vm.start();
       await until(() => !vm.state.loading);
       expect(vm.state.summaries.single.taskId, 'task-1');
+      expect(h.repository.metrics.taskListSnapshotReads, reads);
       expect(() => vm.state.summaries.clear(), throwsUnsupportedError);
     },
   );
@@ -589,9 +612,16 @@ final class _SnapshotTasks implements ConversationTaskRepository {
 
   final events =
       StreamController<List<ConversationTaskProgressSummary>>.broadcast();
+  final refreshes = <bool>[];
   @override
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) =>
-      events.stream;
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+    String chatId, {
+    bool refresh = false,
+  }) {
+    refreshes.add(refresh);
+    return events.stream;
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
