@@ -20,9 +20,12 @@ abstract interface class ConversationTaskRepository {
   Future<ConversationTaskProgressSummary?> getProgressSummary(String taskId);
   Stream<ConversationTaskProgressSummary> watchProgress(String taskId);
 
-  /// Subscribes before reading an initial snapshot, including newly accepted tasks.
-  /// Includes all terminal tasks in this conversation for history browsing.
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId);
+  /// Reuses a cached snapshot and observes committed changes, including history.
+  /// Set [refresh] to explicitly reload the snapshot from persistence.
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+    String chatId, {
+    bool refresh = false,
+  });
 
   /// One immutable card snapshot per status message; repeat queries keep the
   /// original version. Narration updates only its text, with a revision fence.

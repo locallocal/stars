@@ -75,7 +75,7 @@ final class _ConversationTasksScreenState
     final vm = _viewModel!;
     switch (action) {
       case TaskCardAction.status:
-        await vm.start();
+        await vm.refresh();
       case TaskCardAction.approve:
         await vm.decide(summary, TaskApprovalDecision.approved);
       case TaskCardAction.deny:

@@ -15,13 +15,15 @@ final class ObserveConversationTasks {
   });
   final TaskRunnerClock clock;
   final ConversationTaskRepository repository;
-  Stream<List<ConversationTaskProgressSummary>> call(String chatId) =>
-      repository
-          .watchForChat(chatId)
-          .map(
-            (values) =>
-                List.unmodifiable(values.map((s) => s.observedAt(clock.now()))),
-          );
+  Stream<List<ConversationTaskProgressSummary>> call(
+    String chatId, {
+    bool refresh = false,
+  }) => repository
+      .watchForChat(chatId, refresh: refresh)
+      .map(
+        (values) =>
+            List.unmodifiable(values.map((s) => s.observedAt(clock.now()))),
+      );
 }
 
 final class SelectConversationTask {

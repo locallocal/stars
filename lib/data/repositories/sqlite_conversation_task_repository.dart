@@ -15,8 +15,10 @@ final class SqliteConversationTaskRepository
   }) : _store = localDatabase.conversationTasks;
 
   @override
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) =>
-      _store.watchForChat(chatId);
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+    String chatId, {
+    bool refresh = false,
+  }) => _store.watchForChat(chatId, refresh: refresh);
   @override
   Future<Message> saveStatusMessage(Message message) =>
       _store.saveStatusMessage(message);

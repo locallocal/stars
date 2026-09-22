@@ -86,6 +86,7 @@ class LocalDatabaseService {
       where: 'bot_id = ?',
       whereArgs: [id],
     );
+    final affectedChatIds = {for (final row in chatRows) row['id']! as String};
     await database.transaction((transaction) async {
       await _guardTaskDeletion(
         transaction,
@@ -93,6 +94,14 @@ class LocalDatabaseService {
         [id, id],
         'bot_has_active_tasks',
       );
+      final taskChats = await transaction.query(
+        'conversation_tasks',
+        columns: const ['chat_id'],
+        distinct: true,
+        where: 'bot_id = ?',
+        whereArgs: [id],
+      );
+      affectedChatIds.addAll(taskChats.map((row) => row['chat_id']! as String));
       await transaction.delete(
         'conversation_tasks',
         where:
@@ -142,8 +151,9 @@ class LocalDatabaseService {
       );
       await transaction.delete('bots', where: 'id = ?', whereArgs: [id]);
     });
-    for (final row in chatRows) {
-      _advanceMessageRevision(row['id']?.toString() ?? '');
+    for (final chatId in affectedChatIds) {
+      conversationTasks.didDeleteTasksForChat(database, chatId);
+      _advanceMessageRevision(chatId);
     }
   }
 

@@ -1,52 +1,58 @@
 part of 'conversation_task_store.dart';
 
 extension ConversationTaskStoreStatus on ConversationTaskStore {
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) {
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+    String chatId, {
+    bool refresh = false,
+  }) {
     late StreamController<List<ConversationTaskProgressSummary>> controller;
-    StreamSubscription<ConversationTaskProgressSummary>? subscription;
-    final values = <String, ConversationTaskProgressSummary>{};
+    StreamSubscription<void>? subscription;
+    _ConversationTaskListCache? cache;
+    _ConversationTaskListEntry? entry;
     var cancelled = false, ready = false;
-    void accept(ConversationTaskProgressSummary value) {
-      final old = values[value.taskId];
-      if (old == null || value.summaryRevision > old.summaryRevision) {
-        values[value.taskId] = value;
-      }
-    }
+    List<ConversationTaskProgressSummary>? lastEmitted;
 
     void emit() {
-      if (!cancelled) controller.add(List.unmodifiable(values.values));
+      final snapshot = entry?.snapshot;
+      if (!cancelled && snapshot != null && !identical(snapshot, lastEmitted)) {
+        lastEmitted = snapshot;
+        controller.add(snapshot);
+      }
     }
 
     Future<void> start() async {
       try {
         final db = await _databaseProvider();
         if (cancelled) return;
-        subscription = _bus(db).stream.where((s) => s.chatId == chatId).listen((
-          s,
-        ) {
-          accept(s);
+        cache = _listCache(db);
+        final current = entry = cache!.acquire(chatId);
+        subscription = current.changes.stream.listen((_) {
           if (ready) emit();
         });
-        final initial = await db.transaction((tx) async {
-          final rows = await tx.rawQuery(
-            '''
-            SELECT task_id FROM conversation_tasks WHERE chat_id = ?
-            ORDER BY created_at, task_id
-          ''',
-            [chatId],
-          );
-          return [
-            for (final row in rows)
-              (await _summary(tx, row['task_id']! as String))!,
-          ];
-        });
-        for (final summary in initial) {
-          accept(summary);
-        }
+        await current.load(() {
+          metrics.taskListSnapshotReads++;
+          return db.transaction((tx) async {
+            final rows = await tx.rawQuery(
+              '''
+              SELECT task_id FROM conversation_tasks WHERE chat_id = ?
+              ORDER BY created_at, task_id
+              ''',
+              [chatId],
+            );
+            return [
+              for (final row in rows)
+                (await _summary(tx, row['task_id']! as String))!,
+            ];
+          });
+        }, refresh: refresh);
         ready = true;
         emit();
       } on Object catch (error, stack) {
         if (!cancelled) controller.addError(error, stack);
+        await subscription?.cancel();
+        if (!cancelled) unawaited(controller.close());
+      } finally {
+        cache?.trim();
       }
     }
 
@@ -55,6 +61,7 @@ extension ConversationTaskStoreStatus on ConversationTaskStore {
       onCancel: () async {
         cancelled = true;
         await subscription?.cancel();
+        if (entry case final current?) cache!.release(current);
       },
     );
     return controller.stream;

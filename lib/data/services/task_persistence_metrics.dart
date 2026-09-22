@@ -9,6 +9,7 @@ final class TaskPersistenceMetrics {
   int reusedWrites = 0;
   int committedWriteMicroseconds = 0;
   int orphanAcknowledgements = 0;
+  int taskListSnapshotReads = 0;
   final Map<TaskWriteConflictReason, int> _conflicts = {};
 
   Map<TaskWriteConflictReason, int> get conflicts =>

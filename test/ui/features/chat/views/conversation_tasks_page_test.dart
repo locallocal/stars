@@ -428,6 +428,7 @@ void main() {
     await tester.pump();
     expect(repository.subscriptions, 2);
     expect(vm.state.error, isFalse);
+    expect(repository.refreshes, [false, true]);
     repository.events.add([]);
     await tester.pumpAndSettle();
     expect(
@@ -482,10 +483,15 @@ void main() {
       matching: find.byType(ShadButton),
     );
     expect(tester.widget<ShadButton>(button).enabled, isFalse);
+    expect(
+      find.byKey(const ValueKey('conversation-tasks-refresh-progress')),
+      findsOneWidget,
+    );
     // Subscription cancellation runs outside WidgetTester's fake clock.
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump();
     expect(repository.subscriptions, 2);
+    expect(repository.refreshes, [false, true]);
     await tester.tap(refresh);
     await tester.pump();
     expect(repository.subscriptions, 2);
@@ -496,6 +502,10 @@ void main() {
     expect(vm.sort, ConversationTaskSort.oldestFirst);
     expect(find.textContaining('Updated report'), findsOneWidget);
     expect(tester.widget<ShadButton>(button).enabled, isTrue);
+    expect(
+      find.byKey(const ValueKey('conversation-tasks-refresh-progress')),
+      findsNothing,
+    );
     expect(
       find.byKey(const ValueKey('conversation-tasks-error')),
       findsNothing,
@@ -543,9 +553,14 @@ final class _Tasks implements ConversationTaskRepository {
   final events =
       StreamController<List<ConversationTaskProgressSummary>>.broadcast();
   int subscriptions = 0;
+  final refreshes = <bool>[];
   @override
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(String chatId) {
+  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+    String chatId, {
+    bool refresh = false,
+  }) {
     subscriptions++;
+    refreshes.add(refresh);
     return events.stream;
   }
 
