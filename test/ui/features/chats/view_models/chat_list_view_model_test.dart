@@ -8,6 +8,33 @@ import 'package:stars/ui/features/chats/view_models/chat_list_view_model.dart';
 
 void main() {
   test(
+    'successful deletion invalidates its cache while failed deletion preserves it',
+    () async {
+      final deleted = <String>[];
+      final repository = _FakeChatRepository([]);
+      final model = ChatListViewModel(
+        chatRepository: repository,
+        botRepository: _FakeBotRepository([]),
+        onChatDeleted: deleted.add,
+      );
+      addTearDown(model.dispose);
+      await model.deleteChat('chat-1');
+      expect(deleted, ['chat-1']);
+      final failing = ChatListViewModel(
+        chatRepository: _FakeChatRepository(
+          [],
+          error: StateError('delete failed'),
+        ),
+        botRepository: _FakeBotRepository([]),
+        onChatDeleted: deleted.add,
+      );
+      addTearDown(failing.dispose);
+      await expectLater(failing.deleteChat('chat-2'), throwsStateError);
+      expect(deleted, ['chat-1']);
+    },
+  );
+
+  test(
     'ChatListViewModel loads immutable state and filters by bot or preview',
     () async {
       final chatRepository = _FakeChatRepository([
@@ -132,7 +159,9 @@ class _FakeChatRepository implements ChatRepository {
   Future<void> clearHistory(String id) async {}
 
   @override
-  Future<void> deleteChat(String id) async {}
+  Future<void> deleteChat(String id) async {
+    if (error case final error?) throw error;
+  }
 
   @override
   Future<void> deleteChatsForBot(String botId) async {}

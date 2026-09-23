@@ -128,8 +128,20 @@ void main() {
     viewModel.selectChat('chat-1', bot, chatName: ' Planning ');
     expect(viewModel.selectedChatName, 'Planning');
 
+    var notifications = 0;
+    viewModel.addListener(() => notifications++);
+    viewModel.selectChat('chat-1', bot, chatName: 'Planning');
+    expect(notifications, 0);
+    viewModel.selectPage(1);
+    viewModel.selectChat('chat-1', bot, chatName: 'Planning');
+    expect(viewModel.currentIndex, 0);
+    expect(notifications, 2);
+    viewModel.selectChat('chat-1', bot, chatName: 'Updated title');
+    expect(viewModel.selectedChatName, 'Updated title');
+    expect(notifications, 3);
+
     viewModel.applyChatNameUpdate('another-chat', 'Ignored');
-    expect(viewModel.selectedChatName, 'Planning');
+    expect(viewModel.selectedChatName, 'Updated title');
 
     viewModel.applyChatNameUpdate('chat-1', 'Release');
     expect(viewModel.selectedChatName, 'Release');

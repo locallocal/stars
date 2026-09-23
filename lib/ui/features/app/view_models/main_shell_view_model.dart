@@ -27,9 +27,16 @@ class MainShellViewModel extends DisposableChangeNotifier {
 
   void selectChat(String chatId, Bot bot, {String? chatName}) {
     final normalizedChatName = chatName?.trim();
-    _selectedChatId = chatId;
-    _selectedChatName =
+    final name =
         normalizedChatName?.isNotEmpty == true ? normalizedChatName : bot.name;
+    if (_currentIndex == 0 &&
+        _selectedChatId == chatId &&
+        _selectedChatName == name &&
+        _selectedChatBot == bot) {
+      return;
+    }
+    _selectedChatId = chatId;
+    _selectedChatName = name;
     _selectedChatBot = bot;
     _currentIndex = 0;
     notifyListeners();

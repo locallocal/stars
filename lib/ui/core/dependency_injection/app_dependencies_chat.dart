@@ -35,6 +35,8 @@ extension AppDependenciesChatFactories on AppDependencies {
       MessageActionViewModel(
         repository: messageActionRepository,
         evidenceRepository: toolEvidenceRepository,
+        localFiles:
+            chatId == null ? null : conversationMessageFiles.forChat(chatId),
         localFilesDirectoryProvider:
             chatId == null
                 ? null

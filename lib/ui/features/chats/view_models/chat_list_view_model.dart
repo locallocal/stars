@@ -11,9 +11,11 @@ class ChatListViewModel extends DisposableChangeNotifier {
     required ChatRepository chatRepository,
     required BotRepository botRepository,
     DeleteConversation? deleteConversation,
+    void Function(String chatId)? onChatDeleted,
   }) : _chatRepository = chatRepository,
        _botRepository = botRepository,
-       _deleteConversation = deleteConversation {
+       _deleteConversation = deleteConversation,
+       _onChatDeleted = onChatDeleted {
     _chatSubscription = _chatRepository.changes.listen((_) => load());
     _botSubscription = _botRepository.changes.listen((_) => load());
   }
@@ -21,6 +23,7 @@ class ChatListViewModel extends DisposableChangeNotifier {
   final ChatRepository _chatRepository;
   final BotRepository _botRepository;
   final DeleteConversation? _deleteConversation;
+  final void Function(String chatId)? _onChatDeleted;
   late final StreamSubscription<List<Chat>> _chatSubscription;
   late final StreamSubscription<List<Bot>> _botSubscription;
 
@@ -74,8 +77,10 @@ class ChatListViewModel extends DisposableChangeNotifier {
   Future<bool> hasActiveTasks(String id) async =>
       await _deleteConversation?.hasActiveTasks(id) ?? false;
 
-  Future<void> deleteChat(String id) =>
-      _deleteConversation?.call(id) ?? _chatRepository.deleteChat(id);
+  Future<void> deleteChat(String id) async {
+    await (_deleteConversation?.call(id) ?? _chatRepository.deleteChat(id));
+    _onChatDeleted?.call(id);
+  }
 
   Future<void> updateChatName(String id, String name) =>
       _chatRepository.updateChatName(id, name);
