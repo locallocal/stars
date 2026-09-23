@@ -145,6 +145,7 @@ class ChatViewModel extends DisposableChangeNotifier {
 
   Future<void> clearHistory() async {
     await _workflow.clearHistory();
+    messageActions.localFiles.clear();
     if (isDisposed) return;
     _taskTokenUsage = const {};
     notifyListeners();

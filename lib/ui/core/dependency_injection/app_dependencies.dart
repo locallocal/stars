@@ -122,6 +122,8 @@ import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/conversation_task_telemetry.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/chat_workflow_facade.dart';
+import 'package:stars/domain/use_cases/conversation_message_file_cache.dart';
+import 'package:stars/domain/use_cases/resolve_message_local_files.dart';
 import 'package:stars/domain/use_cases/create_chat.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
@@ -603,6 +605,16 @@ class AppDependencies {
   final ChatGenerationRegistry generationRegistry;
   final ConversationDraftRepository conversationDraftRepository;
   final MessageActionRepository messageActionRepository;
+  late final ConversationMessageFileCache conversationMessageFiles =
+      ConversationMessageFileCache(
+        createResolver:
+            (chatId) => ResolveMessageLocalFiles(
+              repository: messageActionRepository,
+              evidenceRepository: toolEvidenceRepository,
+              directoryProvider:
+                  () => conversationArtifactsDirectoryProvider(chatId),
+            ),
+      );
   final BotTransferRepository botTransferRepository;
   final SkillEcosystemRepository? skillEcosystemRepository;
   final SkillScriptCatalogService? skillScriptCatalogService;
@@ -624,6 +636,7 @@ class AppDependencies {
     deleteConversation: conversationTasks.deleteConversation,
     chatRepository: chatRepository,
     botRepository: botRepository,
+    onChatDeleted: conversationMessageFiles.remove,
   );
 
   BotListViewModel createBotListViewModel() => BotListViewModel(

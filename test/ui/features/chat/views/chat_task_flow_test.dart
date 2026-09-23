@@ -1,10 +1,14 @@
+import 'package:stars/domain/use_cases/conversation_message_file_cache.dart';
+import 'package:stars/domain/use_cases/resolve_message_local_files.dart';
 import 'dart:async';
 
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/data/repositories/sqlite_chat_repository.dart';
+import 'package:stars/data/models/local_records.dart';
 import 'package:stars/data/repositories/sqlite_message_repository.dart';
 import 'package:stars/data/repositories/sqlite_tool_evidence_repository.dart';
 import 'package:stars/data/services/local_database_service.dart';
@@ -27,6 +31,7 @@ import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.da
 import 'package:stars/ui/features/chat/views/chat.dart';
 import 'package:stars/ui/features/chat/views/message_input.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/ui/features/app/view_models/main_shell_view_model.dart';
 import '../../../../support/foreground_dispatch_harness.dart';
 import '../../../../support/task_runner_harness.dart' show RunnerModels;
 import '../../../../support/widget_test_support.dart'
@@ -207,6 +212,134 @@ void main() {
               ),
         ),
       );
+
+  testWidgets(
+    'clicking conversations reuses message files across real page lifetimes',
+    (tester) async {
+      await withDesktopPlatform(() async {
+        tester.view.physicalSize = const Size(1200, 850);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final bot = foregroundBot();
+        final shell = MainShellViewModel(botRepository: _Bots())
+          ..selectChat('chat-1', bot);
+        addTearDown(shell.dispose);
+        await tester.runAsync(() async {
+          await h.storage.local.insertChat(
+            ChatRecord.fromDomain(
+              Chat(
+                id: 'chat-2',
+                botId: bot.id,
+                lastMessageTimestamp: DateTime(2026),
+                createTimestamp: DateTime(2026),
+                modifyTimestamp: DateTime(2026),
+              ),
+            ).values,
+          );
+          await h.messages.upsertMessage(
+            Message(
+              messageId: 'cached-file-reply',
+              chatId: 'chat-1',
+              botId: bot.id,
+              senderId: bot.id,
+              content: '[Cached report](/report.md)',
+              timestamp: DateTime(2026),
+            ),
+          );
+          await h.messages.upsertMessage(
+            Message(
+              messageId: 'cached-missing-reply',
+              chatId: 'chat-1',
+              botId: bot.id,
+              senderId: bot.id,
+              content: '[Missing report](/missing.md)',
+              timestamp: DateTime(2026, 1, 1, 0, 0, 1),
+            ),
+          );
+          await h.messages.getMessagePage('chat-1');
+        });
+        deps.actions.onFileExists = (path) async => path == '/report.md';
+        await tester.pumpWidget(
+          AppScope(
+            dependencies: deps,
+            child: shadHarness(
+              brightness: Brightness.light,
+              homeBuilder:
+                  (_) => Scaffold(
+                    body: ListenableBuilder(
+                      listenable: shell,
+                      builder:
+                          (context, _) => Column(
+                            children: [
+                              Row(
+                                children: [
+                                  ShadButton(
+                                    onPressed:
+                                        () => shell.selectChat('chat-1', bot),
+                                    child: const Text('Conversation A'),
+                                  ),
+                                  ShadButton(
+                                    onPressed:
+                                        () => shell.selectChat('chat-2', bot),
+                                    child: const Text('Conversation B'),
+                                  ),
+                                ],
+                              ),
+                              Expanded(
+                                child: ChatPage(
+                                  key: ValueKey(shell.selectedChatId),
+                                  id: shell.selectedChatId!,
+                                  bot: bot,
+                                ),
+                              ),
+                            ],
+                          ),
+                    ),
+                  ),
+            ),
+          ),
+        );
+        final card = find.byKey(
+          const ValueKey<String>('message-local-file-/report.md'),
+        );
+        final placeholder = find.byKey(
+          const ValueKey<String>('message-content-placeholder'),
+        );
+        await _drive(
+          tester,
+          until:
+              () =>
+                  card.evaluate().isNotEmpty && placeholder.evaluate().isEmpty,
+        );
+        expect(
+          deps.actions.checkedPaths,
+          unorderedEquals(['/report.md', '/missing.md']),
+        );
+        final originalPage = tester.element(find.byType(ChatPage));
+        final originalCard = tester.element(card);
+        await tester.tap(find.text('Conversation A'));
+        await tester.pump();
+        expect(tester.element(find.byType(ChatPage)), same(originalPage));
+        expect(tester.element(card), same(originalCard));
+        expect(placeholder, findsNothing);
+
+        await tester.tap(find.text('Conversation B'));
+        await _drive(tester);
+        expect(card, findsNothing);
+        // An accidental second discovery would remain pending and show a skeleton.
+        deps.actions.onFileExists = (_) => Completer<bool>().future;
+        await tester.tap(find.text('Conversation A'));
+        await tester.pump();
+        expect(card, findsOneWidget);
+        expect(placeholder, findsNothing);
+        expect(find.byType(ShadProgress), findsNothing);
+        expect(deps.actions.checkedPaths, hasLength(2));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await _drive(tester);
+      });
+    },
+  );
 
   for (final desktop in [true, false]) {
     for (final failRefresh in [false, true]) {
@@ -689,17 +822,34 @@ class _Attachments implements ConversationAssetRepository {
 }
 
 class _Actions implements MessageActionRepository {
+  final checkedPaths = <String>[];
+  Future<bool> Function(String)? onFileExists;
   @override
   String? get localFileHomeDirectory => null;
 
   @override
-  Future<bool> localFileExists(String path) async => false;
+  Future<bool> localFileExists(String path) {
+    checkedPaths.add(path);
+    return onFileExists?.call(path) ?? Future.value(false);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _Dependencies implements AppDependencies {
+  @override
+  late final ConversationMessageFileCache conversationMessageFiles =
+      ConversationMessageFileCache(
+        createResolver:
+            (chatId) => ResolveMessageLocalFiles(
+              repository: messageActionRepository,
+              evidenceRepository: toolEvidenceRepository,
+              directoryProvider:
+                  () => conversationArtifactsDirectoryProvider(chatId),
+            ),
+      );
+
   _Dependencies(
     this.h,
     this.chatRepository,
@@ -729,8 +879,9 @@ class _Dependencies implements AppDependencies {
   ForegroundDrafts get conversationDraftRepository => h.drafts;
   @override
   AttachmentRepository get attachmentRepository => _Attachments();
+  final actions = _Actions();
   @override
-  MessageActionRepository get messageActionRepository => _Actions();
+  MessageActionRepository get messageActionRepository => actions;
   @override
   SqliteToolEvidenceRepository get toolEvidenceRepository =>
       SqliteToolEvidenceRepository(localDatabase: h.storage.local);

@@ -15,6 +15,174 @@ import '../../../../support/widget_test_support.dart';
 import '../../../../support/file_preview_test_support.dart';
 
 void main() {
+  testWidgets('reply and all file cards first appear in the same frame', (
+    tester,
+  ) async {
+    final first = Completer<bool>(), last = Completer<bool>();
+    final repository =
+        _FakeMessageActionRepository()
+          ..onFileExists =
+              (path) => path == '/first.md' ? first.future : last.future;
+    final actions = MessageActionViewModel(repository: repository);
+    const content = '报告已生成：[first](/first.md) [last](/last.md)';
+    final text = find.byWidgetPredicate(
+      (widget) => widget is MarkdownBody && widget.data == content,
+    );
+    final cards = find.byKey(const ValueKey<String>('message-file-results'));
+    await _pumpFileMessage(
+      tester,
+      files: [],
+      content: content,
+      actions: actions,
+    );
+    expect(repository.checkedPaths, ['/first.md', '/last.md']);
+    expect(text, findsNothing);
+    expect(cards, findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('message-content-placeholder')),
+      findsOneWidget,
+    );
+
+    first.complete(true);
+    await tester.pump();
+    expect(text, findsNothing);
+    expect(cards, findsNothing);
+    last.complete(true);
+    await _expectAppearTogether(tester, text, [
+      find.byKey(const ValueKey<String>('message-local-file-/first.md')),
+      find.byKey(const ValueKey<String>('message-local-file-/last.md')),
+    ]);
+    expect(text, findsOneWidget);
+    expect(cards, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-/first.md')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-/last.md')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('message-content-placeholder')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'a remounted reply shows cached text and files without checking again',
+    (tester) async {
+      final repository =
+          _FakeMessageActionRepository()..onFileExists = (_) async => true;
+      final actions = MessageActionViewModel(repository: repository);
+      const content = '[报告](/report.md)';
+      await _pumpFileMessage(
+        tester,
+        files: [],
+        content: content,
+        actions: actions,
+      );
+      expect(repository.checkedPaths, ['/report.md']);
+      await tester.pumpWidget(const SizedBox.shrink());
+      // Any accidental second check would leave the remounted reply pending.
+      repository.onFileExists = (_) => Completer<bool>().future;
+      await _pumpFileMessage(
+        tester,
+        files: [],
+        content: content,
+        actions: actions,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('message-content-placeholder')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('message-local-file-/report.md')),
+        findsOneWidget,
+      );
+      expect(repository.checkedPaths, ['/report.md']);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'metadata refresh does not recheck files or replace visible cards',
+    (tester) async {
+      final repository =
+          _FakeMessageActionRepository()..onFileExists = (_) async => true;
+      final actions = MessageActionViewModel(repository: repository);
+      const content = '[报告](/report.md)';
+      await _pumpFileMessage(
+        tester,
+        files: [],
+        content: content,
+        actions: actions,
+      );
+      final card = find.byKey(
+        const ValueKey<String>('message-local-file-/report.md'),
+      );
+      final original = tester.element(card);
+      await _pumpFileMessage(
+        tester,
+        files: [],
+        content: content,
+        actions: actions,
+        processInfo: const MessageProcessInfo(durationMs: 900),
+      );
+      expect(tester.element(card), same(original));
+      expect(repository.checkedPaths, ['/report.md']);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('streaming publishes new text only with its new file cards', (
+    tester,
+  ) async {
+    final second = Completer<bool>();
+    final repository =
+        _FakeMessageActionRepository()
+          ..onFileExists =
+              (path) =>
+                  path == '/second.md' ? second.future : Future.value(true);
+    final actions = MessageActionViewModel(repository: repository);
+    const first = '[first](/first.md)';
+    const latest = '$first [second](/second.md)';
+    Finder text(String content) => find.byWidgetPredicate(
+      (widget) => widget is MarkdownBody && widget.data == content,
+    );
+    await _pumpFileMessage(
+      tester,
+      files: [],
+      content: first,
+      actions: actions,
+      isStreaming: true,
+    );
+    await _pumpFileMessage(
+      tester,
+      files: [],
+      content: latest,
+      actions: actions,
+      isStreaming: true,
+    );
+    expect(text(first), findsOneWidget);
+    expect(text(latest), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-/second.md')),
+      findsNothing,
+    );
+    second.complete(true);
+    await _expectAppearTogether(tester, text(latest), [
+      find.byKey(const ValueKey<String>('message-local-file-/second.md')),
+    ]);
+    expect(text(latest), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('message-local-file-/second.md')),
+      findsOneWidget,
+    );
+    expect(repository.checkedPaths, ['/first.md', '/second.md']);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final desktop in [true, false]) {
     for (final brightness in Brightness.values) {
       testWidgets(
@@ -122,6 +290,10 @@ void main() {
     tester,
   ) async {
     const filePath = '/tmp/streamed-report.md';
+    // The action model, and therefore its cache, belongs to the conversation.
+    final actions = MessageActionViewModel(
+      repository: _FakeMessageActionRepository(),
+    );
     final results = find.byKey(const ValueKey<String>('message-file-results'));
     final bubble = find.byKey(const ValueKey<String>('message-bubble-surface'));
     await _pumpFileMessage(
@@ -129,6 +301,7 @@ void main() {
       files: const [filePath],
       content: '',
       isStreaming: true,
+      actions: actions,
     );
     expect(results, findsOneWidget);
     expect(bubble, findsNothing);
@@ -139,6 +312,7 @@ void main() {
       files: const [filePath],
       content: '报告已生成。',
       isStreaming: true,
+      actions: actions,
     );
     expect(results, findsOneWidget);
     expect(tester.element(results), same(original));
@@ -892,6 +1066,29 @@ $secondUrl.
   });
 }
 
+Future<void> _expectAppearTogether(
+  WidgetTester tester,
+  Finder text,
+  List<Finder> files,
+) async {
+  for (var frame = 0; frame < 10; frame++) {
+    // Discovery continuations may have started in runAsync during mounting.
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pump();
+    final visible = text.evaluate().isNotEmpty;
+    for (final file in files) {
+      expect(
+        file.evaluate().isNotEmpty,
+        visible,
+        reason:
+            'Text and every file card must become visible in the same frame',
+      );
+    }
+    if (visible) return;
+  }
+  fail('The complete message snapshot did not appear.');
+}
+
 Future<void> _pumpFileMessage(
   WidgetTester tester, {
   required List<String> files,
@@ -1036,11 +1233,17 @@ Future<void> _finishHtmlBackgroundWork(WidgetTester tester) async {
 }
 
 final class _FakeMessageActionRepository implements MessageActionRepository {
+  Future<bool> Function(String)? onFileExists;
+  final checkedPaths = <String>[];
+
   @override
   String? get localFileHomeDirectory => null;
 
   @override
-  Future<bool> localFileExists(String path) => File(path).exists();
+  Future<bool> localFileExists(String path) {
+    checkedPaths.add(path);
+    return onFileExists?.call(path) ?? File(path).exists();
+  }
 
   final List<String> openedFiles = [];
   final List<Uri> openedLinks = [];

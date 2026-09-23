@@ -1,3 +1,5 @@
+import 'package:stars/domain/use_cases/conversation_message_file_cache.dart';
+import 'package:stars/domain/use_cases/resolve_message_local_files.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -52,6 +54,18 @@ part 'conversation_task_app_job.dart';
 /// Real database, preparation, repositories and production task composition.
 /// Only the provider, external job service, key vault and clock are controlled.
 final class ConversationTaskAppHarness implements AppDependencies {
+  @override
+  late final ConversationMessageFileCache conversationMessageFiles =
+      ConversationMessageFileCache(
+        createResolver:
+            (chatId) => ResolveMessageLocalFiles(
+              repository: messageActionRepository,
+              evidenceRepository: toolEvidenceRepository,
+              directoryProvider:
+                  () => conversationArtifactsDirectoryProvider(chatId),
+            ),
+      );
+
   final clock = RunnerClock();
   late Directory directory;
   late Database database;
@@ -125,6 +139,7 @@ final class ConversationTaskAppHarness implements AppDependencies {
   }
 
   Future<void> _compose() async {
+    conversationMessageFiles.clear();
     database =
         await DatabaseService(
           applicationDocumentsDirectoryProvider: () async => directory,

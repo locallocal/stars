@@ -246,15 +246,13 @@ LocalFileReferenceParser _localFileParser({String? baseDirectory}) =>
           Platform.environment[Platform.isWindows ? 'USERPROFILE' : 'HOME'],
     );
 
-/// Resolves references once for both the bubble and its adjacent result cards.
-/// The builder receives the same immutable list throughout message rendering.
+/// Renders the bubble and adjacent file cards from the same prepared snapshot.
 class _MessageLocalFilesBuilder extends StatefulWidget {
   const _MessageLocalFilesBuilder({
     required this.content,
     required this.files,
     required this.sourceMessage,
     required this.isCurrentUser,
-    required this.isStreaming,
     required this.actions,
     required this.builder,
   });
@@ -263,78 +261,89 @@ class _MessageLocalFilesBuilder extends StatefulWidget {
   final List<String> files;
   final Message? sourceMessage;
   final bool isCurrentUser;
-  final bool isStreaming;
   final MessageActionViewModel? actions;
-  final Widget Function(BuildContext context, List<String> files) builder;
+  final Widget Function(BuildContext context, MessageFileSnapshot snapshot)
+  builder;
 
   @override
   State<_MessageLocalFilesBuilder> createState() => _MessageLocalFilesState();
 }
 
 class _MessageLocalFilesState extends State<_MessageLocalFilesBuilder> {
-  List<String> _files = const [];
-  int _generation = 0;
-  Timer? _debounce;
+  late MessageFilePresentationViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _refresh();
+    _viewModel = MessageFilePresentationViewModel(widget.actions?.localFiles);
+    _update();
   }
 
   @override
   void didUpdateWidget(covariant _MessageLocalFilesBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.content != widget.content ||
-        !listEquals(oldWidget.files, widget.files) ||
-        oldWidget.isStreaming != widget.isStreaming ||
-        oldWidget.isCurrentUser != widget.isCurrentUser ||
-        oldWidget.sourceMessage != widget.sourceMessage ||
-        oldWidget.actions != widget.actions) {
-      _refresh(
-        retainFiles:
-            oldWidget.isStreaming &&
-            widget.content.startsWith(oldWidget.content) &&
-            listEquals(oldWidget.files, widget.files) &&
-            oldWidget.isCurrentUser == widget.isCurrentUser &&
-            oldWidget.sourceMessage == widget.sourceMessage &&
-            oldWidget.actions == widget.actions,
-      );
+    if (oldWidget.actions != widget.actions) {
+      _viewModel.dispose();
+      _viewModel = MessageFilePresentationViewModel(widget.actions?.localFiles);
     }
+    _update();
   }
 
-  void _refresh({bool retainFiles = false}) {
-    final generation = ++_generation;
-    _debounce?.cancel();
-    if (!retainFiles) _files = List.unmodifiable(widget.files.toSet());
-    if (widget.isCurrentUser || widget.actions == null) return;
-    if (widget.isStreaming) {
-      _debounce = Timer(const Duration(milliseconds: 200), () {
-        unawaited(_resolveFiles(generation));
-      });
-    } else {
-      unawaited(_resolveFiles(generation));
-    }
-  }
-
-  Future<void> _resolveFiles(int generation) async {
-    final resolved = await widget.actions!.resolveLocalFiles(
-      content: widget.content,
-      files: List<String>.of(widget.files),
-      sourceMessage: widget.sourceMessage,
-    );
-    if (!mounted || generation != _generation) return;
-    if (!listEquals(_files, resolved)) setState(() => _files = resolved);
-  }
+  void _update() => _viewModel.update(
+    content: widget.content,
+    files: widget.files,
+    sourceMessage: widget.sourceMessage,
+    isCurrentUser: widget.isCurrentUser,
+  );
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _viewModel.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, _files);
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _viewModel,
+    builder: (context, _) {
+      final snapshot = _viewModel.snapshot;
+      return snapshot == null
+          ? const _MessageContentPlaceholder()
+          : widget.builder(context, snapshot);
+    },
+  );
+}
+
+/// A quiet placeholder reserves space until text and files are both ready.
+class _MessageContentPlaceholder extends StatelessWidget {
+  const _MessageContentPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    return ExcludeSemantics(
+      child: SizedBox(
+        key: const ValueKey<String>('message-content-placeholder'),
+        width: 200,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            for (final width in [200.0, 120.0])
+              Container(
+                width: width,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.muted,
+                  borderRadius: theme.radius,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MessageFileSection extends StatelessWidget {

@@ -63,12 +63,13 @@ class _MessageContent extends StatelessWidget {
     files: files,
     sourceMessage: sourceMessage,
     isCurrentUser: isCurrentUser,
-    isStreaming: isStreaming,
     actions: actionViewModel,
     builder: _buildContent,
   );
 
-  Widget _buildContent(BuildContext context, List<String> localFiles) {
+  Widget _buildContent(BuildContext context, MessageFileSnapshot snapshot) {
+    final content = snapshot.content;
+    final localFiles = snapshot.files;
     final metadata = <Widget>[
       if (!isCurrentUser && localFiles.isNotEmpty)
         _MessageFileSection(
@@ -140,7 +141,7 @@ class _MessageContent extends StatelessWidget {
           _MessageBubbleSurface(
             isCurrentUser: isCurrentUser,
             isDesktop: isDesktop,
-            child: _buildBody(context, localFiles),
+            child: _buildBody(context, content, localFiles),
           ),
         if (metadata.isNotEmpty)
           _MessageMetadata(
@@ -151,7 +152,11 @@ class _MessageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, List<String> localFiles) {
+  Widget _buildBody(
+    BuildContext context,
+    String content,
+    List<String> localFiles,
+  ) {
     final fontSize = Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14;
     final urlPreviews =
         isStreaming
@@ -213,7 +218,7 @@ class _MessageContent extends StatelessWidget {
           ),
         if (audio.isNotEmpty)
           Padding(
-            padding: EdgeInsets.only(top: _hasMediaAbove ? 12 : 0),
+            padding: EdgeInsets.only(top: _hasMediaAbove(content) ? 12 : 0),
             child: ExecutionStatusCard(
               isDesktop: isDesktop,
               icon:
@@ -226,7 +231,7 @@ class _MessageContent extends StatelessWidget {
         if (music.isNotEmpty)
           Padding(
             padding: EdgeInsets.only(
-              top: _hasMediaAbove || audio.isNotEmpty ? 12 : 0,
+              top: _hasMediaAbove(content) || audio.isNotEmpty ? 12 : 0,
             ),
             child: ExecutionStatusCard(
               isDesktop: isDesktop,
@@ -240,7 +245,9 @@ class _MessageContent extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(
               top:
-                  _hasMediaAbove || audio.isNotEmpty || music.isNotEmpty
+                  _hasMediaAbove(content) ||
+                          audio.isNotEmpty ||
+                          music.isNotEmpty
                       ? 12
                       : 0,
             ),
@@ -259,7 +266,7 @@ class _MessageContent extends StatelessWidget {
     );
   }
 
-  bool get _hasMediaAbove =>
+  bool _hasMediaAbove(String content) =>
       content.isNotEmpty ||
       images.isNotEmpty ||
       (isCurrentUser && files.isNotEmpty);
