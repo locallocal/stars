@@ -22,6 +22,8 @@ import 'package:stars/domain/repositories/message_action_repository.dart';
 import 'package:stars/domain/repositories/skill_inventory_repository.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/generated/l10n.dart';
@@ -667,18 +669,15 @@ void main() {
         await _drive(tester);
         expect(resultExecution, findsNothing);
         expect(find.text('Final report ready'), findsOneWidget);
+        final executionReads = deps.executionReads;
+        final processInfo = displayed.last.processInfo;
         await tester.pumpWidget(page(key: 'cached-result'));
-        await _drive(
-          tester,
-          until:
-              () =>
-                  resultExecution.evaluate().isNotEmpty &&
-                  tester
-                          .widget<ProcessInfoSection>(resultExecution)
-                          .taskTokenUsage !=
-                      null,
-        );
+        // Reopening restores all execution fields on the first frame.
         expect(resultExecution, findsOneWidget);
+        expect(
+          tester.widget<ProcessInfoSection>(resultExecution).processInfo,
+          same(processInfo),
+        );
         expect(
           tester
               .widget<ProcessInfoSection>(resultExecution)
@@ -686,6 +685,8 @@ void main() {
               .inputTokens,
           taskUsage.inputTokens,
         );
+        await _drive(tester);
+        expect(deps.executionReads, executionReads);
         expect(
           displayed.where((m) => m.taskMessageKind == TaskMessageKind.status),
           hasLength(1),
@@ -838,6 +839,14 @@ class _Actions implements MessageActionRepository {
 }
 
 class _Dependencies implements AppDependencies {
+  int executionReads = 0;
+  @override
+  late final GetTaskMessageExecution taskMessageExecution =
+      GetTaskMessageExecution(() {
+        executionReads++;
+        return GetConversationTaskExecution(conversationTasks.repository);
+      });
+
   @override
   late final ConversationMessageFileCache conversationMessageFiles =
       ConversationMessageFileCache(

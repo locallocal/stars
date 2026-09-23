@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/domain/repositories/attachment_repository.dart';
 import 'package:stars/domain/repositories/chat_repository.dart';
@@ -18,7 +19,81 @@ import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 
+import '../../support/conversation_task_fixtures.dart';
+
 void main() {
+  test(
+    'reopening history restores execution and totals without another read',
+    () async {
+      final task = taskFixture(
+        status: ConversationTaskStatus.succeeded,
+        progress: TaskProgress(
+          totalSteps: 2,
+          lastMeaningfulProgressAt: taskTime,
+          tokenUsage: const ModelTokenUsage(
+            inputTokens: 2400,
+            outputTokens: 360,
+          ),
+        ),
+      );
+      final tasks = _SavedTasks(
+        TaskExecutionSnapshot(
+          task: task,
+          plan: taskPlan(task),
+          lastSequence: 0,
+        ),
+      );
+      final execution = GetTaskMessageExecution(
+        () => GetConversationTaskExecution(tasks),
+      );
+      final result = Message(
+        messageId: task.resultMessageId!,
+        taskId: task.taskId,
+        taskMessageKind: TaskMessageKind.result,
+        terminalOutcome: MessageTerminalOutcome.completed,
+        chatId: task.chatId,
+        botId: task.botId,
+        senderId: task.botId,
+        content: 'Report ready',
+        timestamp: taskTime,
+      );
+      final messages = _PagedMessages()..values = [result];
+      final facade = _historyFacade(messages, execution);
+      final cold = facade.peekHistory()!;
+      expect(cold.hasPendingTaskExecution, isTrue);
+      expect(cold.messages.single.processInfo.durationMs, isNull);
+      final loaded = await facade.loadHistory();
+      expect(loaded.messages.single.processInfo.durationMs, 0);
+      expect(loaded.taskTokenUsage[result.messageId]!.inputTokens, 2400);
+      expect(tasks.reads, 1);
+
+      // A new page/facade uses the same application-scoped execution cache.
+      final reopened = _historyFacade(messages, execution);
+      final warm = reopened.peekHistory()!;
+      expect(warm.hasPendingTaskExecution, isFalse);
+      expect(
+        warm.messages.single.processInfo,
+        same(loaded.messages.single.processInfo),
+      );
+      expect(
+        warm.taskTokenUsage[result.messageId],
+        same(loaded.taskTokenUsage[result.messageId]),
+      );
+      expect(() => warm.taskTokenUsage.clear(), throwsUnsupportedError);
+      expect(messages.requestedCursors, hasLength(1));
+      expect(tasks.reads, 1);
+      await reopened.loadHistory();
+      expect(tasks.reads, 1);
+      expect(result.processInfo.durationMs, isNull);
+      expect(result.tokenUsage, ModelTokenUsage.empty);
+
+      await reopened.clearHistory();
+      expect(reopened.peekHistory()!.hasPendingTaskExecution, isTrue);
+      await reopened.loadHistory();
+      expect(tasks.reads, 2);
+    },
+  );
+
   test(
     'normalizes paginated history and delegates injected workflows',
     () async {
@@ -211,6 +286,49 @@ final _bot = Bot(
   modifyTimestamp: DateTime(2026),
 );
 
+ChatWorkflowFacade _historyFacade(
+  _PagedMessages messages,
+  GetTaskMessageExecution execution,
+) {
+  final chats = _FakeChats();
+  final assets = _FakeAssets();
+  final providers = _FakeProviders();
+  final persistAssets = PersistConversationAssets(repository: assets);
+  return ChatWorkflowFacade(
+    chatId: 'chat-1',
+    bot: _bot,
+    messageRepository: messages,
+    chatRepository: chats,
+    aiProviderRepository: providers,
+    attachmentRepository: assets,
+    conversationDraftRepository: _MemoryDrafts(),
+    createUserMessage: CreateUserMessage(messageRepository: messages),
+    persistConversationAssets: persistAssets,
+    getTaskMessageExecution: execution,
+    generateMediaTurn: GenerateMediaTurn(
+      messageRepository: messages,
+      chatRepository: chats,
+      providerRepository: providers,
+      attachmentRepository: assets,
+      persistConversationAssets: persistAssets,
+    ),
+    prepareTextGeneration: PrepareTextGeneration(
+      aiProviderRepository: providers,
+      composeChatTurn:
+          ({
+            required bot,
+            required history,
+            required userMessage,
+            required currentUserId,
+            skillToolProvider,
+            bool foregroundOnly = false,
+            String? backgroundTaskObjective,
+          }) async =>
+              PreparedChatTurn(messages: const [], activatedSkills: const []),
+    ),
+  );
+}
+
 Message _message(String id) => Message(
   messageId: id,
   chatId: 'chat-1',
@@ -237,7 +355,7 @@ final class _PagedMessages implements PaginatedMessageRepository {
 
   @override
   MessagePage? peekMessagePage(String chatId) => MessagePage(
-    messages: [_message('cached')],
+    messages: values ?? [_message('cached')],
     hasMore: true,
     nextCursor: cursor,
   );
@@ -263,6 +381,21 @@ final class _PagedMessages implements PaginatedMessageRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+final class _SavedTasks implements ConversationTaskRepository {
+  _SavedTasks(this.snapshot);
+  final TaskExecutionSnapshot snapshot;
+  int reads = 0;
+
+  @override
+  Future<TaskExecutionSnapshot?> getExecutionSnapshot(String taskId) async {
+    reads++;
+    return snapshot;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 final class _UnavailableTasks implements ConversationTaskRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
@@ -275,6 +408,9 @@ final class _FakeChats implements ChatRepository {
 
   @override
   Future<void> updateLastMessage(String id, String content) async {}
+
+  @override
+  Future<void> clearHistory(String id) async {}
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

@@ -27,6 +27,7 @@ class ChatViewModel extends DisposableChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingEarlier = false;
   bool _hasEarlierMessages = false;
+  bool _hasPendingTaskExecution = false;
   MessageCursor? _earlierCursor;
   int _historyLoadGeneration = 0;
 
@@ -36,6 +37,10 @@ class ChatViewModel extends DisposableChangeNotifier {
   List<Message>? get cachedMessages {
     final history = _workflow.peekHistory();
     if (history == null) return null;
+    _taskTokenUsage = Map.unmodifiable({
+      ..._taskTokenUsage,
+      ...history.taskTokenUsage,
+    });
     _applyHistoryState(history);
     return List<Message>.unmodifiable(history.messages);
   }
@@ -44,6 +49,7 @@ class ChatViewModel extends DisposableChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoadingEarlier => _isLoadingEarlier;
   bool get hasEarlierMessages => _hasEarlierMessages;
+  bool get hasPendingTaskExecution => _hasPendingTaskExecution;
 
   Future<void> loadMessages() async {
     if (isDisposed) return;
@@ -117,6 +123,7 @@ class ChatViewModel extends DisposableChangeNotifier {
   void _applyHistoryState(ChatHistoryBatch history) {
     _hasEarlierMessages = history.hasMore;
     _earlierCursor = history.nextCursor;
+    _hasPendingTaskExecution = history.hasPendingTaskExecution;
   }
 
   String createId(String prefix) => _workflow.createId(prefix);
