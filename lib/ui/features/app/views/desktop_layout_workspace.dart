@@ -413,6 +413,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                     children: [
                       ConversationMemoryPanel(
                         viewModel: _memoryViewModel!,
+                        conversationName: conversationName,
                         generationViewModel: _dependencies?.generationRegistry
                             .maybeViewModel(widget.selectedChatId),
                         showSectionHeader: false,

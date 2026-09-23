@@ -24,12 +24,14 @@ String _groundedAnswerSynthesisPrompt(GroundedAnswerSynthesisRequest request) {
     ],
   });
   return '''
-<stars_grounded_answer_protocol>
+## Grounded answer protocol
+
 Return exactly one JSON object and no Markdown or surrounding prose.
 Use exactly this schema:
 {"schema_version":1,"claims":[{"claim_id":"unique-id","text":"one user-visible segment","kind":"external_fact|current_fact|completed_action|execution_failure|user_assertion|non_factual","evidence_ids":["application-evidence-id"]}],"non_factual_text":"optional prose containing no factual assertion"}
 
-Rules:
+### Rules
+
 - Put every user-visible factual assertion in its own claims item.
 - Use only evidence_id values listed in available_evidence. Never output Provider call IDs.
 - Treat required_claims as application constraints. Preserve each claim_id and claim_kind, but do not invent a claim when matching evidence is absent.
@@ -48,9 +50,9 @@ Rules:
 - Put greetings, transitions, and other genuinely non-factual prose in non_factual_text.
 - Do not emit a legacy evidence footer; it is a deprecated input format.
 
-Application-authored synthesis input:
+### Application-authored synthesis input
+
 $envelope
-</stars_grounded_answer_protocol>
 '''.trim();
 }
 

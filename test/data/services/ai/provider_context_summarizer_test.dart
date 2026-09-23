@@ -40,7 +40,7 @@ void main() {
     expect(provider.messages.first.role, 'system');
     expect(
       provider.messages.first.content,
-      startsWith('<stars_application_context>'),
+      startsWith('## Application context'),
     );
     expect(
       provider.messages.first.content,
@@ -80,7 +80,7 @@ void main() {
 
       expect(
         provider.messages.first.content,
-        isNot(contains('<stars_application_context>')),
+        isNot(contains('## Application context')),
       );
       expect(
         provider.messages.first.content,

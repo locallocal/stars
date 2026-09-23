@@ -3,11 +3,45 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/repositories/chat_repository.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 
 import '../../support/compose_chat_fixtures.dart';
 
 void main() {
+  for (final foregroundOnly in [true, false]) {
+    test(
+      'uses the latest conversation name, foreground: $foregroundOnly',
+      () async {
+        final chats = _NamedChatRepository('Research & Review');
+        final compose = ComposeChatTurn(
+          skillRepository: FixtureFakeSkillRepository(const {}),
+          bindingRepository: FixtureFakeBindingRepository(const []),
+          chatRepository: chats,
+          conversationArtifactsDirectoryProvider:
+              fixtureTestConversationArtifactsDirectory,
+          starsSystemPromptProvider: fixtureTestStarsSystemPrompt,
+        );
+        for (final name in ['Research & Review', 'Renamed', '  ']) {
+          chats.name = name;
+          final result = await compose(
+            bot: fixtureBot(),
+            history: const [],
+            userMessage: fixtureMessage(senderId: 'user-1', content: 'Hello'),
+            currentUserId: 'user-1',
+            foregroundOnly: foregroundOnly,
+          );
+          final expected =
+              name.trim().isEmpty ? 'Assistant' : name.replaceAll('&', '&amp;');
+          expect(
+            result.messages.first.content,
+            contains('- Conversation name: $expected'),
+          );
+        }
+        expect(chats.requestedIds, ['chat-1', 'chat-1', 'chat-1']);
+      },
+    );
+  }
   test(
     'does not prefilter a large Skill catalog before model selection',
     () async {
@@ -97,6 +131,7 @@ void main() {
     final compose = ComposeChatTurn(
       skillRepository: skillRepository,
       bindingRepository: bindingRepository,
+      chatRepository: _NamedChatRepository('Research & Review'),
       conversationArtifactsDirectoryProvider: (conversationId) async {
         requestedArtifactsDirectories.add(conversationId);
         return '/data/Stars/chats/$conversationId';
@@ -130,14 +165,15 @@ void main() {
       'user',
     ]);
     final systemPrompt = result.messages.first.content;
-    expect(systemPrompt, startsWith('<stars_application_context>'));
+    expect(systemPrompt, startsWith('## Application context'));
     expect(systemPrompt, contains('Operating system type: TestOS'));
     expect(systemPrompt, contains('Operating system version: 1.2.3'));
-    expect(systemPrompt, contains('<stars_conversation_context>'));
+    expect(systemPrompt, contains('## Conversation context'));
     expect(systemPrompt, contains('Current time:'));
     expect(systemPrompt, contains('Agent ID: bot-1'));
     expect(systemPrompt, contains('Agent name: Assistant'));
     expect(systemPrompt, contains('Current conversation ID: chat-1'));
+    expect(systemPrompt, contains('Conversation name: Research &amp; Review'));
     expect(
       systemPrompt,
       contains('Conversation artifacts directory: /data/Stars/chats/chat-1'),
@@ -147,12 +183,9 @@ void main() {
       contains('Use this directory to store and access files'),
     );
     expect(requestedArtifactsDirectories, ['chat-1']);
+    expect('## Conversation context'.allMatches(systemPrompt), hasLength(1));
     expect(
-      '<stars_conversation_context>'.allMatches(systemPrompt),
-      hasLength(1),
-    );
-    expect(
-      systemPrompt.indexOf('</stars_conversation_context>'),
+      systemPrompt.indexOf('Use this directory to store and access files'),
       lessThan(systemPrompt.indexOf('You are a helpful assistant.')),
     );
     expect(systemPrompt, contains('You are a helpful assistant.'));
@@ -164,6 +197,8 @@ void main() {
       contains('A Skill is available only after model activation'),
     );
     expect(systemPrompt, contains('policy checks'));
+    expect(systemPrompt, contains('## Skill usage policy'));
+    expect(systemPrompt, isNot(contains(RegExp(r'</?stars_'))));
     expect(result.activatedSkills.map((skill) => skill.id), ['user:selected']);
     expect(result.activatedSkills.single.trigger, SkillActivationTrigger.model);
     expect(provider.session.request?.catalog.map((skill) => skill.id), [
@@ -173,11 +208,15 @@ void main() {
     ]);
     expect(
       provider.session.request?.messages.first.content,
-      startsWith('<stars_application_context>'),
+      startsWith('## Application context'),
     );
     expect(
       provider.session.request?.messages.first.content,
       contains('Current conversation ID: chat-1'),
+    );
+    expect(
+      provider.session.request?.messages.first.content,
+      contains('Conversation name: Research &amp; Review'),
     );
     expect(
       provider.session.request?.messages.first.content,
@@ -221,9 +260,9 @@ void main() {
       );
 
       final systemPrompt = result.messages.first.content;
-      expect(systemPrompt, isNot(contains('<stars_application_context>')));
-      expect(systemPrompt, isNot(contains('<stars_reliability_policy>')));
-      expect(systemPrompt, contains('<stars_conversation_context>'));
+      expect(systemPrompt, isNot(contains('## 应用上下文')));
+      expect(systemPrompt, isNot(contains('## 可靠性要求')));
+      expect(systemPrompt, startsWith('## 会话上下文'));
       expect(systemPrompt, contains('当前会话 ID：chat-1'));
       expect(systemPrompt, isNot(contains('Current conversation ID:')));
       expect(systemPrompt, contains('Bot-owned instructions.'));
@@ -649,10 +688,7 @@ void main() {
 
     expect(result.activatedSkills, isEmpty);
     expect(result.messages.map((message) => message.role), ['system', 'user']);
-    expect(
-      result.messages.first.content,
-      startsWith('<stars_application_context>'),
-    );
+    expect(result.messages.first.content, startsWith('## Application context'));
     expect(result.messages.last.content, 'Use auto');
   });
 
@@ -842,7 +878,7 @@ void main() {
         ]);
         expect(
           result.messages.first.content,
-          startsWith('<stars_application_context>'),
+          startsWith('## Application context'),
         );
       }
     },
@@ -1200,10 +1236,7 @@ void main() {
     expect(result.activatedSkills, isEmpty);
     expect(result.activationAttempts, isEmpty);
     expect(result.messages.map((message) => message.role), ['system', 'user']);
-    expect(
-      result.messages.first.content,
-      startsWith('<stars_application_context>'),
-    );
+    expect(result.messages.first.content, startsWith('## Application context'));
     expect(result.messages.last.content, 'Question');
   });
 
@@ -1441,4 +1474,27 @@ void main() {
       );
     },
   );
+}
+
+final class _NamedChatRepository implements ChatRepository {
+  _NamedChatRepository(this.name);
+
+  String name;
+  final requestedIds = <String>[];
+
+  @override
+  Future<Chat?> getChat(String id) async {
+    requestedIds.add(id);
+    return Chat(
+      id: id,
+      botId: 'bot-1',
+      name: name,
+      lastMessageTimestamp: DateTime(2026),
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

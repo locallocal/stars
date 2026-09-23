@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
@@ -285,9 +286,9 @@ void main() {
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
-    const prompt = '''<stars_application_context>
-Application: Stars
-</stars_application_context>''';
+    const prompt = '''## Application context
+
+- Application: Stars''';
     final semantics = tester.ensureSemantics();
     try {
       await tester.pumpWidget(
@@ -314,10 +315,23 @@ Application: Stars
       expect(find.text('系统提示词'), findsOneWidget);
       expect(find.text('只读'), findsNothing);
       expect(
-        find.descendant(
-          of: promptPanel,
-          matching: find.widgetWithText(SelectableText, prompt),
-        ),
+        find.descendant(of: promptPanel, matching: find.byType(MarkdownBody)),
+        findsOneWidget,
+      );
+      final markdown = tester.widget<MarkdownBody>(
+        find.descendant(of: promptPanel, matching: find.byType(MarkdownBody)),
+      );
+      expect(markdown.data, prompt);
+      expect(
+        find.text('Application context', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Application: Stars', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: promptPanel, matching: find.byType(SelectionArea)),
         findsOneWidget,
       );
       expect(
@@ -326,12 +340,7 @@ Application: Stars
       );
       expect(
         tester.getSemantics(promptValue),
-        matchesSemantics(
-          label: '系统提示词',
-          value: prompt,
-          isTextField: true,
-          isReadOnly: true,
-        ),
+        matchesSemantics(label: '系统提示词'),
       );
       expect(tester.takeException(), isNull);
     } finally {
@@ -369,7 +378,10 @@ Application: Stars
 
       expect(requestedLanguage, 'ja_JP');
       expect(
-        find.descendant(of: promptPanel, matching: find.text('prompt:ja_JP')),
+        find.descendant(
+          of: promptPanel,
+          matching: find.text('prompt:ja_JP', findRichText: true),
+        ),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);

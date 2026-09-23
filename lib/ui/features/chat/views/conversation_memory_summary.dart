@@ -4,11 +4,13 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
   const _ConversationSystemPromptBlock({
     required this.bot,
     required this.conversationId,
+    required this.conversationName,
     required this.artifactsDirectoryPath,
   });
 
   final Bot bot;
   final String conversationId;
+  final String conversationName;
   final String artifactsDirectoryPath;
 
   @override
@@ -19,6 +21,7 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
           agentId: bot.id,
           agentName: bot.name,
           conversationId: conversationId,
+          conversationName: conversationName,
           artifactsDirectoryPath: artifactsDirectoryPath,
           languageCode: Localizations.localeOf(context).toLanguageTag(),
         ).trim();
@@ -38,28 +41,10 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
           style: StarsDesktopThemeSpec.metaStyle(context),
         ),
         const SizedBox(height: 12),
-        Semantics(
+        PromptMarkdown(
           key: const ValueKey<String>('conversation-system-prompt-value'),
-          textField: true,
-          readOnly: true,
-          label: label,
-          value: prompt,
-          child: ExcludeSemantics(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: StarsDesktopThemeSpec.statusDecoration(context),
-              child: SelectableText(
-                prompt,
-                style: TextStyle(
-                  color: StarsDesktopThemeSpec.text(context),
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ),
+          semanticLabel: label,
+          data: prompt,
         ),
       ],
     );

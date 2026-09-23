@@ -336,37 +336,20 @@ extension _ProfileSettingsControls on _ProfilePageState {
           ),
         ),
         const SizedBox(height: 10),
-        Semantics(
+        PromptMarkdown(
           key: const ValueKey<String>('profile-application-prompt-value'),
-          textField: true,
-          readOnly: true,
-          label: S.of(context).applicationInjectedPrompt,
-          value: prompt,
-          child: ExcludeSemantics(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration:
-                  desktop
-                      ? StarsDesktopThemeSpec.statusDecoration(context)
-                      : BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: StarsDesktopThemeSpec.containerRadius,
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                        ),
-                      ),
-              child: SelectableText(
-                prompt,
-                style: TextStyle(
-                  color: StarsDesktopThemeSpec.text(context),
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ),
+          semanticLabel: S.of(context).applicationInjectedPrompt,
+          data: prompt,
+          decoration:
+              desktop
+                  ? null
+                  : BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: StarsDesktopThemeSpec.containerRadius,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
         ),
       ],
     );
