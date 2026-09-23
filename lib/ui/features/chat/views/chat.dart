@@ -235,11 +235,7 @@ class ChatPageState extends State<ChatPage> {
           _followLatest = true;
         }
       });
-      if (!cachedMessages.any(
-        (message) =>
-            message.taskMessageKind == TaskMessageKind.result ||
-            message.taskMessageKind == TaskMessageKind.status,
-      )) {
+      if (!_chatViewModel.hasPendingTaskExecution) {
         return;
       }
     } else {

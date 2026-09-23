@@ -16,6 +16,7 @@ final class ChatHistoryBatch {
     required Iterable<Message> messages,
     this.hasMore = false,
     this.nextCursor,
+    this.hasPendingTaskExecution = false,
     Map<String, ModelTokenUsage?> taskTokenUsage = const {},
   }) : messages = List<Message>.unmodifiable(messages),
        taskTokenUsage = Map.unmodifiable(taskTokenUsage);
@@ -23,6 +24,7 @@ final class ChatHistoryBatch {
   final List<Message> messages;
   final bool hasMore;
   final MessageCursor? nextCursor;
+  final bool hasPendingTaskExecution;
 
   /// Display-only task totals keyed by message; never added to reply accounting.
   final Map<String, ModelTokenUsage?> taskTokenUsage;
@@ -96,13 +98,51 @@ final class ChatWorkflowFacade {
     final messages = _messages;
     if (messages is PaginatedMessageRepository) {
       final page = messages.peekMessagePage(chatId);
-      return page == null ? null : _historyBatch(page);
+      return page == null
+          ? null
+          : _withCachedTaskExecution(_historyBatch(page));
     }
     if (messages is CachedMessageRepository) {
       final cached = messages.peekMessages(chatId);
-      return cached == null ? null : ChatHistoryBatch(messages: cached);
+      return cached == null
+          ? null
+          : _withCachedTaskExecution(ChatHistoryBatch(messages: cached));
     }
     return null;
+  }
+
+  ChatHistoryBatch _withCachedTaskExecution(ChatHistoryBatch history) {
+    final getExecution = getTaskMessageExecution;
+    if (getExecution == null) return history;
+    final taskTokenUsage = <String, ModelTokenUsage?>{};
+    var pending = false;
+    final messages = [
+      for (final message in history.messages)
+        () {
+          if (message.chatId != chatId || message.botId != bot.id) {
+            return message;
+          }
+          final execution = getExecution.peek(message);
+          if (execution == null) {
+            pending = true;
+            return message;
+          }
+          if (message.taskMessageKind == TaskMessageKind.result ||
+              message.taskMessageKind == TaskMessageKind.status) {
+            taskTokenUsage[message.messageId] = execution.tokenUsage;
+          }
+          return identical(execution.processInfo, message.processInfo)
+              ? message
+              : message.copyWith(processInfo: execution.processInfo);
+        }(),
+    ];
+    return ChatHistoryBatch(
+      messages: messages,
+      taskTokenUsage: taskTokenUsage,
+      hasMore: history.hasMore,
+      nextCursor: history.nextCursor,
+      hasPendingTaskExecution: pending,
+    );
   }
 
   Future<ChatHistoryBatch> loadHistory({MessageCursor? before}) async {
@@ -178,7 +218,10 @@ final class ChatWorkflowFacade {
   Future<void> updateLastMessage(String content) =>
       _chats.updateLastMessage(chatId, content);
 
-  Future<void> clearHistory() => _chats.clearHistory(chatId);
+  Future<void> clearHistory() async {
+    await _chats.clearHistory(chatId);
+    getTaskMessageExecution?.clearChat(chatId);
+  }
 
   void notifyChatListChanged() => _chats.invalidate();
 

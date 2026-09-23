@@ -37,6 +37,8 @@ import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/domain/use_cases/create_user_message.dart';
 import 'package:stars/domain/use_cases/generate_media_turn.dart';
+import 'package:stars/domain/use_cases/get_conversation_task_execution.dart';
+import 'package:stars/domain/use_cases/get_task_message_execution.dart';
 import 'package:stars/domain/use_cases/persist_conversation_assets.dart';
 import 'package:stars/domain/use_cases/prepare_conversation_context.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
@@ -54,6 +56,12 @@ part 'conversation_task_app_job.dart';
 /// Real database, preparation, repositories and production task composition.
 /// Only the provider, external job service, key vault and clock are controlled.
 final class ConversationTaskAppHarness implements AppDependencies {
+  @override
+  late final GetTaskMessageExecution taskMessageExecution =
+      GetTaskMessageExecution(
+        () => GetConversationTaskExecution(conversationTasks.repository),
+      );
+
   @override
   late final ConversationMessageFileCache conversationMessageFiles =
       ConversationMessageFileCache(
@@ -140,6 +148,7 @@ final class ConversationTaskAppHarness implements AppDependencies {
 
   Future<void> _compose() async {
     conversationMessageFiles.clear();
+    taskMessageExecution.clear();
     database =
         await DatabaseService(
           applicationDocumentsDirectoryProvider: () async => directory,

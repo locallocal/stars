@@ -606,6 +606,10 @@ class AppDependencies {
   final ChatGenerationRegistry generationRegistry;
   final ConversationDraftRepository conversationDraftRepository;
   final MessageActionRepository messageActionRepository;
+  late final GetTaskMessageExecution taskMessageExecution =
+      GetTaskMessageExecution(
+        () => GetConversationTaskExecution(conversationTasks.repository),
+      );
   late final ConversationMessageFileCache conversationMessageFiles =
       ConversationMessageFileCache(
         createResolver:
@@ -637,7 +641,10 @@ class AppDependencies {
     deleteConversation: conversationTasks.deleteConversation,
     chatRepository: chatRepository,
     botRepository: botRepository,
-    onChatDeleted: conversationMessageFiles.remove,
+    onChatDeleted: (chatId) {
+      conversationMessageFiles.remove(chatId);
+      taskMessageExecution.clearChat(chatId);
+    },
   );
 
   BotListViewModel createBotListViewModel() => BotListViewModel(

@@ -21,6 +21,30 @@ import 'package:stars/ui/features/chat/view_models/chat_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
 
 void main() {
+  test('cached messages restore execution and usage synchronously', () {
+    final repository = _MutableMessageRepository([
+      _taskProgressMessage('status', 80),
+    ]);
+    final harness = _createHarness(repository);
+    addTearDown(harness.dispose);
+    final vm = harness.viewModel;
+    final cached = vm.cachedMessages!;
+    final usage = vm.taskTokenUsage;
+    expect(cached.single.processInfo.durationMs, 0);
+    expect(usage['status']!.inputTokens, 80);
+    expect(vm.hasPendingTaskExecution, isFalse);
+    expect(() => usage.clear(), throwsUnsupportedError);
+    expect(
+      vm.cachedMessages!.single.processInfo,
+      same(cached.single.processInfo),
+    );
+
+    repository.messages[0] = _taskProgressMessage('status', 120);
+    expect(vm.cachedMessages!.single.messageId, 'status');
+    expect(vm.taskTokenUsage['status']!.inputTokens, 120);
+    expect(usage['status']!.inputTokens, 80);
+  });
+
   test('publishes immutable cached and loaded message snapshots', () async {
     final repository = _MutableMessageRepository([_message('message-1')]);
     final harness = _createHarness(repository);
@@ -321,6 +345,7 @@ Message _taskProgressMessage(String id, int inputTokens) => Message(
       phase: ConversationTaskPhase.executing,
       planRevision: 1,
       summaryRevision: 1,
+      createdAt: DateTime(2026),
       updatedAt: DateTime(2026),
       progress: TaskProgress(
         totalSteps: 2,
