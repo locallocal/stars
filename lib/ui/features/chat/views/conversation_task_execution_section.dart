@@ -24,7 +24,7 @@ final class ConversationTaskExecutionSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state.loading && state.data == null) const ShadProgress(),
+        if (state.loading) const ShadProgress(),
         if (state.error)
           ShadAlert.destructive(
             title: Text(words.executionLoadFailed),

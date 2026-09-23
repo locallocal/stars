@@ -3,6 +3,7 @@ import 'package:stars/data/services/local_database_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/models/local_records.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
@@ -277,7 +278,7 @@ void main() {
   test(
     'chat subscription discovers committed tasks and skips other chats',
     () async {
-      final updates = <List<ConversationTaskProgressSummary>>[];
+      final updates = <List<ConversationTaskListItem>>[];
       final sub = h.repository.watchForChat('chat-1').listen(updates.add);
       addTearDown(sub.cancel);
       await until(() => updates.isNotEmpty);

@@ -45,6 +45,21 @@ final class GetConversationTaskExecution {
     };
     return ConversationTaskExecution(
       revision: snapshot.task.revision,
+      summary: ConversationTaskProgressSummary(
+        taskId: snapshot.task.taskId,
+        chatId: snapshot.task.chatId,
+        title: taskSafeText(snapshot.task.title, maximum: 200),
+        status: snapshot.task.status,
+        phase: snapshot.task.phase,
+        planRevision: snapshot.task.planRevision,
+        summaryRevision: snapshot.task.revision,
+        progress: snapshot.task.progress,
+        createdAt: snapshot.task.createdAt,
+        updatedAt: snapshot.task.updatedAt,
+        waitingReason: snapshot.task.waitingReason,
+        terminalSummary: snapshot.task.terminalSummary,
+        leaseExpiresAt: snapshot.task.lease?.expiresAt,
+      ),
       tokenUsage: snapshot.task.progress.tokenUsage,
       processInfo: MessageProcessInfo(
         durationMs:

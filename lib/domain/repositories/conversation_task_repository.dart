@@ -1,4 +1,5 @@
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_scheduling.dart';
@@ -20,9 +21,10 @@ abstract interface class ConversationTaskRepository {
   Future<ConversationTaskProgressSummary?> getProgressSummary(String taskId);
   Stream<ConversationTaskProgressSummary> watchProgress(String taskId);
 
+  /// Lightweight list metadata only; never reads execution or approval payloads.
   /// Reuses a cached snapshot and observes committed changes, including history.
   /// Set [refresh] to explicitly reload the snapshot from persistence.
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+  Stream<List<ConversationTaskListItem>> watchForChat(
     String chatId, {
     bool refresh = false,
   });

@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
@@ -79,7 +81,7 @@ void main() {
         expect(tester.getRect(bar).right, width);
         expect(tester.getRect(bar).left, 0);
         final cardRect = tester.getRect(
-          find.byType(ConversationTaskCard).first,
+          find.byType(ConversationTaskListCard).first,
         );
         final searchRect = tester.getRect(
           find.byKey(const ValueKey('conversation-tasks-search')),
@@ -149,6 +151,63 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.detailReads, 1);
       expect(find.byType(ConversationTaskExecutionStatus), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'keyboard expansion loads approval details and retries failures locally',
+    (tester) async {
+      final pending = Completer<TaskExecutionSnapshot?>();
+      repository.onRead = (_) => pending.future;
+      await vm.start();
+      await tester.pumpWidget(
+        shadHarness(
+          brightness: Brightness.light,
+          homeBuilder:
+              (_) => Scaffold(
+                body: ConversationTasksPage(viewModel: vm, onAction: (_, _) {}),
+              ),
+        ),
+      );
+      final summary = _summary('task-1', 'Review report', 0);
+      repository.events.add([summary]);
+      await tester.pumpAndSettle();
+      expect(repository.detailReads, 0);
+      expect(find.text('批准'), findsNothing);
+      expect(find.byType(ConversationTaskCard), findsNothing);
+      final heading = find.byKey(const ValueKey('task-heading-task-1'));
+      final context = tester.element(heading);
+      Focus.of(context).requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(repository.detailReads, 1);
+      expect(tester.widget<Semantics>(heading).properties.expanded, isTrue);
+      expect(find.byType(ShadProgress), findsOneWidget);
+      expect(find.text('批准'), findsNothing);
+      pending.completeError(StateError('private detail read failure'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ShadAlert), findsOneWidget);
+      expect(find.textContaining('private detail read failure'), findsNothing);
+      expect(vm.state.error, isFalse);
+      repository.onRead = null;
+      final retry = find.descendant(
+        of: find.byType(ShadAlert),
+        matching: find.byType(ShadButton),
+      );
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(repository.detailReads, 2);
+      expect(find.text('批准'), findsOneWidget);
+      expect(find.byType(ShadAlert), findsNothing);
+      await _tapTaskHeading(tester, 'task-1');
+      await tester.pumpAndSettle();
+      expect(find.byType(ConversationTaskCard), findsNothing);
+      await _tapTaskHeading(tester, 'task-1');
+      await tester.pumpAndSettle();
+      expect(repository.detailReads, 2);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
@@ -237,11 +296,11 @@ void main() {
           expect(vm.sort, ConversationTaskSort.oldestFirst);
           expect(
             tester
-                .widgetList<ConversationTaskCard>(
-                  find.byType(ConversationTaskCard),
+                .widgetList<ConversationTaskListCard>(
+                  find.byType(ConversationTaskListCard),
                 )
                 .first
-                .summary
+                .item
                 .taskId,
             'old-task',
           );
@@ -328,7 +387,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.widget<Text>(indicator).data, '3 / 3');
       expect(tester.widget<StarsDesktopIconAction>(next).enabled, isFalse);
-      expect(find.byType(ConversationTaskCard), findsOneWidget);
+      expect(find.byType(ConversationTaskListCard), findsOneWidget);
       expect(find.byKey(const ValueKey('task-task-0')), findsOneWidget);
       await tester.tap(previous);
       await tester.pumpAndSettle();
@@ -543,11 +602,34 @@ ConversationTaskProgressSummary _summary(String id, String title, int minutes) {
 
 final class _Tasks implements ConversationTaskRepository {
   TaskExecutionSnapshot? snapshot;
+  Future<TaskExecutionSnapshot?> Function(String)? onRead;
   int detailReads = 0;
+  final _summaries = <String, ConversationTaskProgressSummary>{};
+  final _revisions = <String, int>{};
   @override
   Future<TaskExecutionSnapshot?> getExecutionSnapshot(String taskId) async {
     detailReads++;
-    return snapshot;
+    if (onRead case final read?) return read(taskId);
+    if (snapshot != null) return snapshot;
+    final summary = _summaries[taskId]!;
+    final task = changeTask(
+      taskFixture(
+        id: taskId,
+        status: summary.status,
+        progress: summary.progress,
+      ),
+      {
+        'revision': _revisions[taskId]!,
+        'title': summary.title,
+        'phase': summary.phase.name,
+        'waiting_reason': summary.waitingReason?.name,
+      },
+    );
+    return TaskExecutionSnapshot(
+      task: task,
+      plan: taskPlan(task),
+      lastSequence: 0,
+    );
   }
 
   final events =
@@ -555,13 +637,42 @@ final class _Tasks implements ConversationTaskRepository {
   int subscriptions = 0;
   final refreshes = <bool>[];
   @override
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+  Stream<List<ConversationTaskListItem>> watchForChat(
     String chatId, {
     bool refresh = false,
   }) {
     subscriptions++;
     refreshes.add(refresh);
-    return events.stream;
+    return events.stream.map(
+      (values) => [for (final summary in values) _item(summary)],
+    );
+  }
+
+  ConversationTaskListItem _item(ConversationTaskProgressSummary summary) {
+    final old = _summaries[summary.taskId];
+    final revision =
+        old != null && !identical(old, summary)
+            ? _revisions[summary.taskId]! + 1
+            : _revisions[summary.taskId] ?? summary.summaryRevision;
+    _summaries[summary.taskId] = summary;
+    _revisions[summary.taskId] = revision;
+    final source = ConversationTaskListItem.fromSummary(summary);
+    return ConversationTaskListItem(
+      taskId: source.taskId,
+      chatId: source.chatId,
+      title: source.title,
+      status: source.status,
+      phase: source.phase,
+      summaryRevision: revision,
+      createdAt: source.createdAt,
+      updatedAt: source.updatedAt,
+      completedSteps: source.completedSteps,
+      totalSteps: source.totalSteps,
+      currentStepSummary: source.currentStepSummary,
+      latestToolName: source.latestToolName,
+      tokenUsage: source.tokenUsage,
+      leaseExpiresAt: source.leaseExpiresAt,
+    );
   }
 
   @override

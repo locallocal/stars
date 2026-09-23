@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/conversation_task_execution.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/use_cases/conversation_task_commands.dart';
@@ -19,6 +20,13 @@ final class ConversationTaskExecutionState {
     this.error = false,
   }) : presentation = data == null ? null : TaskExecutionPresentation(data);
 
+  ConversationTaskExecutionState._withStatus(
+    ConversationTaskExecutionState? previous, {
+    this.loading = false,
+    this.error = false,
+  }) : data = previous?.data,
+       presentation = previous?.presentation;
+
   final ConversationTaskExecution? data;
   final TaskExecutionPresentation? presentation;
   final bool loading, error;
@@ -34,13 +42,13 @@ typedef TaskRetryDispatcher =
 
 final class ConversationTasksState {
   ConversationTasksState({
-    List<ConversationTaskProgressSummary> summaries = const [],
+    List<ConversationTaskListItem> summaries = const [],
     Set<String> pendingCommands = const {},
     this.loading = true,
     this.error = false,
   }) : summaries = List.unmodifiable(summaries),
        pendingCommands = Set.unmodifiable(pendingCommands);
-  final List<ConversationTaskProgressSummary> summaries;
+  final List<ConversationTaskListItem> summaries;
   final Set<String> pendingCommands;
   final bool loading, error;
 }
@@ -49,6 +57,7 @@ final class ConversationTasksState {
 /// to the app scheduler, and ordinary chat input never changes their objective.
 final class ConversationTasksViewModel extends DisposableChangeNotifier {
   static const pageSize = 20;
+  static const detailCacheCapacity = 40;
 
   ConversationTasksViewModel({
     required this.chatId,
@@ -74,6 +83,9 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
   ConversationTaskExecutionState executionFor(String taskId) =>
       _execution[taskId] ?? ConversationTaskExecutionState(loading: true);
 
+  ConversationTaskProgressSummary? detailsFor(String taskId) =>
+      _execution[taskId]?.data?.summary?.observedAt(observe.clock.now());
+
   /// Expansion is view state; loading and refresh ownership stay in the VM.
   void setExpandedTasks(Iterable<String> ids) {
     if (isDisposed) return;
@@ -87,7 +99,7 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
   }
 
   void _refreshExpandedExecutions() {
-    for (final summary in state.summaries) {
+    for (final summary in visibleSummaries) {
       if (_expandedTaskIds.contains(summary.taskId)) {
         unawaited(loadExecution(summary.taskId));
       }
@@ -99,16 +111,22 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
     final summary =
         state.summaries.where((s) => s.taskId == taskId).firstOrNull;
     if (summary == null) return;
-    final previous = _execution[taskId]?.data;
+    final previousState = _execution[taskId];
+    final previous = previousState?.data;
     if (!force &&
         previous != null &&
+        previousState?.error != true &&
         previous.revision >= summary.summaryRevision) {
+      // Touch the entry without recreating the cached presentation.
+      _execution[taskId] = _execution.remove(taskId)!;
       return;
     }
-    _execution[taskId] = ConversationTaskExecutionState(
-      data: previous,
+    final loading = ConversationTaskExecutionState._withStatus(
+      previousState,
       loading: true,
     );
+    _execution.remove(taskId);
+    _execution[taskId] = loading;
     notifyListeners();
     try {
       final data = await getExecution(
@@ -116,11 +134,15 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         chatId: chatId,
         botId: botId,
       );
-      if (isDisposed || !state.summaries.any((s) => s.taskId == taskId)) return;
-      _execution[taskId] = ConversationTaskExecutionState(
-        data: data ?? previous,
-        error: data == null,
-      );
+      if (isDisposed || !identical(_execution[taskId], loading)) return;
+      _execution[taskId] =
+          data == null
+              ? ConversationTaskExecutionState._withStatus(
+                previousState,
+                error: true,
+              )
+              : ConversationTaskExecutionState(data: data);
+      _trimExecutionCache();
       notifyListeners();
       // A live update can arrive while the database read is in flight.
       final latest =
@@ -129,22 +151,38 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
           latest != null &&
           latest.summaryRevision > summary.summaryRevision &&
           latest.summaryRevision > data.revision &&
-          _expandedTaskIds.contains(taskId)) {
+          _expandedTaskIds.contains(taskId) &&
+          visibleSummaries.any((s) => s.taskId == taskId)) {
         unawaited(loadExecution(taskId));
       }
     } on Object {
-      if (isDisposed || !state.summaries.any((s) => s.taskId == taskId)) return;
-      _execution[taskId] = ConversationTaskExecutionState(
-        data: previous,
+      if (isDisposed || !identical(_execution[taskId], loading)) return;
+      _execution[taskId] = ConversationTaskExecutionState._withStatus(
+        previousState,
         error: true,
       );
+      _trimExecutionCache();
       notifyListeners();
+    }
+  }
+
+  void _trimExecutionCache() {
+    final visibleExpanded =
+        visibleSummaries
+            .map((s) => s.taskId)
+            .where(_expandedTaskIds.contains)
+            .toSet();
+    for (final id in _execution.keys.toList()) {
+      if (_execution.length <= detailCacheCapacity) break;
+      if (!visibleExpanded.contains(id) && !_execution[id]!.loading) {
+        _execution.remove(id);
+      }
     }
   }
 
   String _query = '';
   ConversationTaskSort _sort = ConversationTaskSort.newestFirst;
-  List<ConversationTaskProgressSummary> _filteredSummaries = const [];
+  List<ConversationTaskListItem> _filteredSummaries = const [];
   int _pageIndex = 0;
   String get query => _query;
   ConversationTaskSort get sort => _sort;
@@ -160,7 +198,7 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
   int get lastVisibleItem =>
       ((_pageIndex + 1) * pageSize).clamp(0, filteredCount);
 
-  List<ConversationTaskProgressSummary> get visibleSummaries {
+  List<ConversationTaskListItem> get visibleSummaries {
     return List.unmodifiable(
       _filteredSummaries.skip(_pageIndex * pageSize).take(pageSize),
     );
@@ -172,8 +210,8 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         state.summaries.where((summary) {
           final text =
               '${summary.title} ${summary.taskId} '
-                      '${summary.progress.currentStepSummary} '
-                      '${summary.progress.latestTool?.name ?? ''}'
+                      '${summary.currentStepSummary} '
+                      '${summary.latestToolName}'
                   .toLowerCase();
           return terms.every(text.contains);
         }).toList();
@@ -190,12 +228,14 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
     if (isDisposed || !hasPreviousPage) return;
     _pageIndex--;
     notifyListeners();
+    _refreshExpandedExecutions();
   }
 
   void nextPage() {
     if (isDisposed || !hasNextPage) return;
     _pageIndex++;
     notifyListeners();
+    _refreshExpandedExecutions();
   }
 
   void search(String value) {
@@ -204,6 +244,7 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
     _pageIndex = 0;
     _filterAndSort();
     notifyListeners();
+    _refreshExpandedExecutions();
   }
 
   void toggleSort() {
@@ -215,9 +256,10 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
     _pageIndex = 0;
     _filterAndSort();
     notifyListeners();
+    _refreshExpandedExecutions();
   }
 
-  StreamSubscription<List<ConversationTaskProgressSummary>>? _subscription;
+  StreamSubscription<List<ConversationTaskListItem>>? _subscription;
   bool _observing = false;
   int _observationGeneration = 0;
   ConversationTasksState _state = ConversationTasksState();
@@ -252,6 +294,7 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         _filterAndSort();
         final ids = summaries.map((s) => s.taskId).toSet();
         _execution.removeWhere((id, _) => !ids.contains(id));
+        _expandedTaskIds.retainAll(ids);
         notifyListeners();
         _refreshExpandedExecutions();
       },

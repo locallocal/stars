@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stars/data/repositories/sqlite_conversation_task_repository.dart';
 import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 
 import '../../support/conversation_task_repository_harness.dart';
 
@@ -16,7 +18,7 @@ void main() {
   });
   tearDown(() => h.close());
 
-  Future<List<ConversationTaskProgressSummary>> read({
+  Future<List<ConversationTaskListItem>> read({
     String chatId = 'chat-1',
     bool refresh = false,
   }) => h.repository
@@ -30,6 +32,78 @@ void main() {
     h.repository = SqliteConversationTaskRepository(localDatabase: h.local);
     return database;
   }
+
+  test('list reads one metadata query without decoding task details', () async {
+    for (var i = 0; i < 25; i++) {
+      committed(await h.accept(task: taskFixture(id: 'task-$i')));
+    }
+    // A partial projection with large detail payloads must be readable without
+    // decoding TaskProgress or loading any per-task facts.
+    await h.database.update('conversation_task_progress', {
+      'progress_json': jsonEncode({
+        'completedSteps': 1,
+        'totalSteps': 2,
+        'currentStepSummary': 'Write report',
+        'latestTool': {'name': 'read_file', 'safeSummary': 'detail' * 10000},
+        'pendingApprovalSummary': 'approval' * 9000,
+        'tokenUsage': {'inputTokens': 12, 'outputTokens': 3, 'totalTokens': 15},
+      }),
+    });
+    final database = delayReads()..recordListQueries = true;
+    final items = await read();
+    expect(items, hasLength(25));
+    expect(items.first.completedSteps, 1);
+    expect(items.first.totalSteps, 2);
+    expect(items.first.currentStepSummary, 'Write report');
+    expect(items.first.latestToolName, 'read_file');
+    expect(items.first.tokenUsage!.effectiveTotalTokens, 15);
+    expect(database.listQueries, hasLength(1));
+    expect(database.listQueries.single, isNot(contains('SELECT *')));
+    expect(database.listQueries.single, isNot(contains('acceptance_json')));
+    expect(database.listQueries.single, isNot(contains('pendingApproval')));
+    expect(
+      database.listQueries.single,
+      isNot(contains('terminal_summary_json')),
+    );
+    expect(await read(), same(items));
+    expect(database.listQueries, hasLength(1));
+  });
+
+  test(
+    'missing or stale projections keep metadata without replaying facts',
+    () async {
+      committed(await h.accept());
+      committed(await h.accept(task: taskFixture(id: 'task-2')));
+      await h.database.delete(
+        'conversation_task_progress',
+        where: 'task_id = ?',
+        whereArgs: ['task-1'],
+      );
+      await h.database.update(
+        'conversation_task_progress',
+        {'summary_revision': 99, 'progress_json': '{"totalSteps":999}'},
+        where: 'task_id = ?',
+        whereArgs: ['task-2'],
+      );
+      final database = delayReads()..recordListQueries = true;
+      final items = await read();
+      expect(items, hasLength(2));
+      expect(items.every((item) => item.totalSteps == null), isTrue);
+      expect(
+        items.every((item) => item.status == ConversationTaskStatus.queued),
+        isTrue,
+      );
+      expect(database.listQueries, hasLength(1));
+      // A later detail read still reconstructs the correct facts.
+      database.recordListQueries = false;
+      expect(
+        (await h.repository.getExecutionSnapshot(
+          'task-1',
+        ))!.task.progress.totalSteps,
+        2,
+      );
+    },
+  );
 
   test(
     'reentry shares an immutable snapshot across repository instances',
@@ -265,6 +339,8 @@ final class _DelayedDatabase implements Database {
   final Database _database;
   _ReadGate? _next;
   bool failNextTransaction = false;
+  bool recordListQueries = false;
+  final listQueries = <String>[];
 
   _ReadGate holdNextTransaction() => _next = _ReadGate();
 
@@ -279,12 +355,36 @@ final class _DelayedDatabase implements Database {
     }
     final gate = _next;
     _next = null;
-    final result = await _database.transaction(action, exclusive: exclusive);
+    final result = await _database.transaction(
+      (tx) => action(
+        recordListQueries ? _ListReadTransaction(tx, listQueries) : tx,
+      ),
+      exclusive: exclusive,
+    );
     if (gate != null) {
       gate.captured.complete();
       await gate.release.future;
     }
     return result;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// A list read may use its metadata SELECT; any per-task query fails the test.
+final class _ListReadTransaction implements Transaction {
+  _ListReadTransaction(this.delegate, this.queries);
+  final Transaction delegate;
+  final List<String> queries;
+
+  @override
+  Future<List<Map<String, Object?>>> rawQuery(
+    String sql, [
+    List<Object?>? arguments,
+  ]) {
+    queries.add(sql);
+    return delegate.rawQuery(sql, arguments);
   }
 
   @override

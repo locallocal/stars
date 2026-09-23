@@ -4,11 +4,13 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:stars/data/models/conversation_task_record.dart';
+import 'package:stars/data/models/conversation_task_list_record.dart';
 import 'package:stars/data/models/local_records.dart';
 import 'package:stars/data/models/tool_evidence_record.dart';
 import 'package:stars/data/models/tool_execution_record.dart';
 import 'package:stars/data/services/task_persistence_metrics.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_scheduling.dart';
@@ -89,7 +91,9 @@ final class ConversationTaskStore {
         if (acceptance) metrics.acceptances++;
         if (progress) metrics.progressUpdates++;
         if (summary != null) {
-          _listCaches[db]?.accept(summary!);
+          _listCaches[db]?.accept(
+            ConversationTaskListItem.fromSummary(summary!),
+          );
           if (message) _onMessageCommitted(summary!.chatId);
           _bus(db).add(summary!);
         }
