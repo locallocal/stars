@@ -8,6 +8,7 @@ import 'package:stars/domain/use_cases/compact_conversation.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/widgets/prompt_markdown.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_memory_view_model.dart';
 import 'package:stars/utils/theme.dart';
@@ -23,11 +24,13 @@ final class ConversationMemoryPanel extends StatefulWidget {
     super.key,
     required this.viewModel,
     required this.generationViewModel,
+    this.conversationName = '',
     this.showSectionHeader = true,
   });
 
   final ConversationMemoryViewModel viewModel;
   final ChatGenerationViewModel? generationViewModel;
+  final String conversationName;
   final bool showSectionHeader;
 
   @override
@@ -173,6 +176,7 @@ final class _ConversationMemoryPanelState
           _ConversationSystemPromptBlock(
             bot: viewModel.bot,
             conversationId: viewModel.chatId,
+            conversationName: widget.conversationName,
             artifactsDirectoryPath: viewModel.artifactsDirectoryPath,
           ),
         ],

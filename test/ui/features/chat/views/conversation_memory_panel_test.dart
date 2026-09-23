@@ -644,7 +644,9 @@ void main() {
       );
       addTearDown(viewModel.dispose);
 
-      await tester.pumpWidget(_harness(viewModel));
+      await tester.pumpWidget(
+        _harness(viewModel, conversationName: 'Research *notes* & review'),
+      );
       await tester.pumpAndSettle();
 
       final memoryActions = find.byKey(
@@ -661,9 +663,9 @@ void main() {
       );
       final promptText = find.descendant(
         of: promptBlock,
-        matching: find.byType(SelectableText),
+        matching: find.byType(MarkdownBody),
       );
-      final prompt = tester.widget<SelectableText>(promptText).data!;
+      final prompt = tester.widget<MarkdownBody>(promptText).data;
 
       expect(promptBlock, findsOneWidget);
       expect(find.text('系统提示词'), findsOneWidget);
@@ -675,6 +677,12 @@ void main() {
         findsOneWidget,
       );
       expect(promptText, findsOneWidget);
+      expect(find.text('会话上下文', findRichText: true), findsOneWidget);
+      expect(find.text('智能体 ID：bot<1>', findRichText: true), findsOneWidget);
+      expect(
+        find.descendant(of: promptBlock, matching: find.byType(SelectionArea)),
+        findsOneWidget,
+      );
       expect(find.byType(ShadTextarea), findsNothing);
       expect(
         tester.getTopLeft(promptTitle).dy,
@@ -682,16 +690,16 @@ void main() {
       );
       expect(
         tester.getSemantics(promptValue),
-        matchesSemantics(
-          label: '系统提示词',
-          value: prompt,
-          isTextField: true,
-          isReadOnly: true,
-        ),
+        matchesSemantics(label: '系统提示词'),
       );
       expect(prompt, contains('智能体 ID：bot&lt;1&gt;'));
       expect(prompt, contains('智能体名称：Research &amp; Review'));
       expect(prompt, contains('当前会话 ID：chat&gt;2'));
+      expect(prompt, contains(r'会话名称：Research \*notes\* &amp; review'));
+      expect(
+        find.text('会话名称：Research *notes* & review', findRichText: true),
+        findsOneWidget,
+      );
       expect(
         prompt,
         matches(
@@ -711,6 +719,18 @@ void main() {
       expect(prompt, contains('请使用此目录存储和访问当前会话生成或所需的文件'));
       expect(prompt, isNot(contains('Current conversation ID:')));
       expect(prompt, isNot(contains(bot.systemPrompt)));
+      await tester.pumpWidget(
+        _harness(viewModel, conversationName: 'Renamed conversation'),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('会话名称：Renamed conversation', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.text('会话名称：Research *notes* & review', findRichText: true),
+        findsNothing,
+      );
       expect(tester.takeException(), isNull);
     } finally {
       semantics.dispose();
@@ -817,7 +837,10 @@ void _expectDesktopDialogCloseAligned(
   );
 }
 
-Widget _harness(ConversationMemoryViewModel viewModel) {
+Widget _harness(
+  ConversationMemoryViewModel viewModel, {
+  String conversationName = '',
+}) {
   final shadTheme = buildStarsShadTheme(
     brightness: Brightness.light,
     fontSize: 16,
@@ -850,6 +873,7 @@ Widget _harness(ConversationMemoryViewModel viewModel) {
                   builder:
                       (context, child) => ConversationMemoryPanel(
                         viewModel: viewModel,
+                        conversationName: conversationName,
                         generationViewModel: null,
                       ),
                 ),

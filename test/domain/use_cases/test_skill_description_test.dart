@@ -33,9 +33,8 @@ void main() {
     expect(provider.requests, hasLength(6));
     expect(
       provider.requests.every(
-        (request) => request.messages.first.content.startsWith(
-          '<stars_application_context>',
-        ),
+        (request) =>
+            request.messages.first.content.startsWith('## アプリケーションのコンテキスト'),
       ),
       isTrue,
     );

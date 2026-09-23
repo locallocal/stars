@@ -515,6 +515,14 @@ void main() {
           expect(requests.single, isNot(contains('tools')));
           expect(requests.single, isNot(contains('include')));
           expect(jsonEncode(requests.single), contains('required_claims'));
+          expect(
+            jsonEncode(requests.single),
+            contains('## Grounded answer protocol'),
+          );
+          expect(
+            jsonEncode(requests.single),
+            isNot(contains('<stars_grounded_answer_protocol>')),
+          );
           if (optional) {
             final body = jsonEncode(requests.single);
             expect(body, contains(r'\"required_claims\":[]'));

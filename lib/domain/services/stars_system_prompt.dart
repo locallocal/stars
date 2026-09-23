@@ -35,18 +35,19 @@ String buildStarsSystemPrompt({
     copy.unknownValue,
   );
   return '''
-<stars_application_context>
-${copy.applicationLabel}: Stars
-${copy.descriptionLabel}: ${copy.description}
-${copy.interfaceLanguageLabel}: ${copy.languageName}
-${copy.responseLanguageInstruction}
-${copy.operatingSystemTypeLabel}: ${_xmlText(normalizedOperatingSystem)}
-${copy.operatingSystemVersionLabel}: ${_xmlText(normalizedVersion)}
-</stars_application_context>
+## ${copy.applicationTitle}
 
-<stars_reliability_policy>
-${copy.reliabilityPolicy}
-</stars_reliability_policy>''';
+- ${copy.applicationLabel}: Stars
+- ${copy.descriptionLabel}: ${copy.description}
+- ${copy.interfaceLanguageLabel}: ${copy.languageName}
+- ${copy.operatingSystemTypeLabel}: ${_markdownText(normalizedOperatingSystem)}
+- ${copy.operatingSystemVersionLabel}: ${_markdownText(normalizedVersion)}
+
+${copy.responseLanguageInstruction}
+
+## ${copy.reliabilityTitle}
+
+${copy.reliabilityPolicy}''';
 }
 
 /// Builds the runtime time, identity, and storage context for one turn.
@@ -58,6 +59,7 @@ String buildStarsConversationContext({
   required String agentId,
   required String agentName,
   required String conversationId,
+  String conversationName = '',
   String artifactsDirectoryPath = '',
   DateTime? currentTime,
   String languageCode = defaultStarsSystemPromptLanguageCode,
@@ -70,17 +72,20 @@ String buildStarsConversationContext({
       normalizedArtifactsDirectory.isEmpty
           ? ''
           : '''
-${copy.artifactsDirectoryLabel}${copy.labelSeparator}${_xmlText(normalizedArtifactsDirectory)}
+- ${copy.artifactsDirectoryLabel}${copy.labelSeparator}${_markdownText(normalizedArtifactsDirectory)}
+
 ${copy.artifactsDirectoryInstruction}
 '''.trim();
   return '''
-<stars_conversation_context>
+## ${copy.title}
+
 ${copy.purpose}
-${copy.currentTimeLabel}${copy.labelSeparator}${_iso8601WithOffset(effectiveCurrentTime)}
-${copy.agentIdLabel}${copy.labelSeparator}${_xmlText(_valueOrFallback(agentId, unknownValue))}
-${copy.agentNameLabel}${copy.labelSeparator}${_xmlText(_valueOrFallback(agentName, unknownValue))}
-${copy.conversationIdLabel}${copy.labelSeparator}${_xmlText(_valueOrFallback(conversationId, unknownValue))}
-${artifactsContext.isEmpty ? '' : '$artifactsContext\n'}</stars_conversation_context>''';
+
+- ${copy.currentTimeLabel}${copy.labelSeparator}${_iso8601WithOffset(effectiveCurrentTime)}
+- ${copy.agentIdLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(agentId, unknownValue))}
+- ${copy.agentNameLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(agentName, unknownValue))}
+- ${copy.conversationIdLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(conversationId, unknownValue))}
+- ${copy.conversationNameLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(conversationName, unknownValue))}${artifactsContext.isEmpty ? '' : '\n$artifactsContext'}''';
 }
 
 String prependStarsSystemPrompt(
@@ -122,13 +127,18 @@ String _iso8601WithOffset(DateTime value) {
   return '$timestamp$sign$offsetHours:$offsetRemainder';
 }
 
-String _xmlText(String value) => value
+// Runtime values are literal list content, never Markdown structure.
+String _markdownText(String value) => value
+    .replaceAll(RegExp(r'[\r\n\u2028\u2029]+'), ' ')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+    .replaceAll('>', '&gt;')
+    .replaceAllMapped(RegExp(r'[\\`*_\[\]]'), (match) => '\\${match[0]}');
 
 typedef _StarsSystemPromptCopy =
     ({
+      String applicationTitle,
+      String reliabilityTitle,
       String applicationLabel,
       String descriptionLabel,
       String description,
@@ -143,12 +153,14 @@ typedef _StarsSystemPromptCopy =
 
 typedef _StarsConversationPromptCopy =
     ({
+      String title,
       String purpose,
       String labelSeparator,
       String currentTimeLabel,
       String agentIdLabel,
       String agentNameLabel,
       String conversationIdLabel,
+      String conversationNameLabel,
       String artifactsDirectoryLabel,
       String artifactsDirectoryInstruction,
     });
@@ -182,6 +194,8 @@ String _normalizeLanguageCode(String languageCode) {
 
 const Map<String, _StarsSystemPromptCopy> _systemPromptCopies = {
   'en_US': (
+    applicationTitle: 'Application context',
+    reliabilityTitle: 'Reliability policy',
     applicationLabel: 'Application',
     descriptionLabel: 'Description',
     description:
@@ -203,6 +217,8 @@ inferences, and unknowns; do not invent facts, citations, tool results, or
 completed actions.''',
   ),
   'zh_CN': (
+    applicationTitle: '应用上下文',
+    reliabilityTitle: '可靠性要求',
     applicationLabel: '应用',
     descriptionLabel: '说明',
     description: 'Stars 是一款跨平台 AI 聊天客户端，支持可配置智能体、技能、MCP 工具和本地存储的会话。',
@@ -216,6 +232,8 @@ completed actions.''',
         '''将会话记忆和滚动摘要视为可能过时的线索，而不是证据。对于精确的历史信息，请使用可用的历史记录工具。对于文件、外部状态、当前信息或已完成操作的陈述，只能依据本轮运行中成功返回的结果。错误、空结果或截断结果都不能证明操作成功。请明确区分已观察事实、推断和未知信息；不得编造事实、引用、工具结果或已完成的操作。''',
   ),
   'zh_TW': (
+    applicationTitle: '應用程式上下文',
+    reliabilityTitle: '可靠性要求',
     applicationLabel: '應用程式',
     descriptionLabel: '說明',
     description: 'Stars 是一款跨平台 AI 聊天用戶端，支援可設定的智慧助理、技能、MCP 工具及本機儲存的對話。',
@@ -229,6 +247,8 @@ completed actions.''',
         '''請將對話記憶與滾動摘要視為可能過時的線索，而非證據。若要確認精確的歷史資訊，請使用可用的歷史記錄工具。對於檔案、外部狀態、目前資訊或已完成操作的陳述，只能依據本輪執行中成功回傳的結果。錯誤、空白結果或遭截斷的結果都不能證明操作成功。請清楚區分已觀察的事實、推論與未知資訊；不得虛構事實、引用、工具結果或已完成的操作。''',
   ),
   'ja_JP': (
+    applicationTitle: 'アプリケーションのコンテキスト',
+    reliabilityTitle: '信頼性に関する方針',
     applicationLabel: 'アプリケーション',
     descriptionLabel: '説明',
     description:
@@ -244,6 +264,8 @@ completed actions.''',
         '''会話メモリと逐次要約は、証拠ではなく古くなっている可能性のある手掛かりとして扱ってください。正確な履歴上の主張には、利用可能な履歴ツールを使用してください。ファイル、外部状態、現在の情報、または完了した操作に関する主張は、現在の実行で成功した結果だけに基づけてください。エラー、空の結果、または切り詰められた結果は成功の証明になりません。観察された事実、推論、不明点を明確に区別し、事実、引用、ツール結果、完了した操作を捏造しないでください。''',
   ),
   'fr_FR': (
+    applicationTitle: 'Contexte de l’application',
+    reliabilityTitle: 'Règles de fiabilité',
     applicationLabel: 'Application',
     descriptionLabel: 'Description',
     description:
@@ -259,6 +281,8 @@ completed actions.''',
         '''Considérez la mémoire de conversation et les résumés successifs comme des indices potentiellement obsolètes, et non comme des preuves. Pour toute affirmation historique précise, utilisez les outils d’historique disponibles. Pour les affirmations concernant des fichiers, un état externe, des informations actuelles ou des actions terminées, appuyez-vous uniquement sur les résultats réussis de l’exécution en cours. Une erreur, un résultat vide ou tronqué ne prouve jamais la réussite. Distinguez clairement les faits observés, les déductions et les inconnues ; n’inventez ni faits, ni citations, ni résultats d’outils, ni actions terminées.''',
   ),
   'de_DE': (
+    applicationTitle: 'Anwendungskontext',
+    reliabilityTitle: 'Zuverlässigkeitsrichtlinien',
     applicationLabel: 'Anwendung',
     descriptionLabel: 'Beschreibung',
     description:
@@ -274,6 +298,8 @@ completed actions.''',
         '''Behandeln Sie den Gesprächsspeicher und fortlaufende Zusammenfassungen als möglicherweise veraltete Hinweise, nicht als Belege. Verwenden Sie für genaue historische Aussagen die verfügbaren Verlaufswerkzeuge. Stützen Sie Aussagen über Dateien, externe Zustände, aktuelle Informationen oder abgeschlossene Aktionen ausschließlich auf erfolgreiche Ergebnisse des aktuellen Durchlaufs. Ein Fehler, ein leeres oder ein abgeschnittenes Ergebnis beweist niemals einen Erfolg. Unterscheiden Sie klar zwischen beobachteten Tatsachen, Schlussfolgerungen und Unbekanntem; erfinden Sie keine Fakten, Quellenangaben, Werkzeugergebnisse oder abgeschlossenen Aktionen.''',
   ),
   'ko_KR': (
+    applicationTitle: '애플리케이션 컨텍스트',
+    reliabilityTitle: '신뢰성 정책',
     applicationLabel: '애플리케이션',
     descriptionLabel: '설명',
     description:
@@ -289,6 +315,8 @@ completed actions.''',
         '''대화 메모리와 누적 요약은 증거가 아니라 오래되었을 수 있는 단서로 취급하세요. 정확한 과거 사실을 확인하려면 사용 가능한 기록 도구를 사용하세요. 파일, 외부 상태, 현재 정보 또는 완료된 작업에 관한 주장은 현재 실행에서 성공한 결과만을 근거로 해야 합니다. 오류, 빈 결과 또는 잘린 결과는 성공을 입증하지 않습니다. 관찰된 사실, 추론 및 알 수 없는 정보를 명확히 구분하고 사실, 인용, 도구 결과 또는 완료된 작업을 지어내지 마세요.''',
   ),
   'ru_RU': (
+    applicationTitle: 'Контекст приложения',
+    reliabilityTitle: 'Правила достоверности',
     applicationLabel: 'Приложение',
     descriptionLabel: 'Описание',
     description:
@@ -304,6 +332,8 @@ completed actions.''',
         '''Считайте память диалога и текущие сводки потенциально устаревшими подсказками, а не доказательствами. Для точных утверждений о прошлом используйте доступные инструменты истории. Утверждения о файлах, внешнем состоянии, актуальной информации или выполненных действиях основывайте только на успешных результатах текущего запуска. Ошибка, пустой или усечённый результат никогда не доказывает успех. Чётко различайте наблюдаемые факты, выводы и неизвестное; не выдумывайте факты, цитаты, результаты инструментов или выполненные действия.''',
   ),
   'es_ES': (
+    applicationTitle: 'Contexto de la aplicación',
+    reliabilityTitle: 'Reglas de fiabilidad',
     applicationLabel: 'Aplicación',
     descriptionLabel: 'Descripción',
     description:
@@ -319,6 +349,8 @@ completed actions.''',
         '''Trate la memoria de la conversación y los resúmenes continuos como pistas posiblemente desactualizadas, no como pruebas. Para afirmaciones históricas exactas, use las herramientas de historial disponibles. Para afirmaciones sobre archivos, estado externo, información actual o acciones completadas, confíe únicamente en resultados correctos de la ejecución actual. Un error, un resultado vacío o truncado nunca demuestra el éxito. Distinga claramente los hechos observados, las inferencias y lo desconocido; no invente hechos, citas, resultados de herramientas ni acciones completadas.''',
   ),
   'hi_IN': (
+    applicationTitle: 'ऐप्लिकेशन का संदर्भ',
+    reliabilityTitle: 'विश्वसनीयता नीति',
     applicationLabel: 'एप्लिकेशन',
     descriptionLabel: 'विवरण',
     description:
@@ -334,6 +366,8 @@ completed actions.''',
         '''बातचीत की मेमोरी और क्रमिक सारांशों को प्रमाण नहीं, बल्कि संभावित रूप से पुराने संकेत मानें। सटीक ऐतिहासिक दावों के लिए उपलब्ध इतिहास टूल का उपयोग करें। फ़ाइलों, बाहरी स्थिति, वर्तमान जानकारी या पूरी की गई कार्रवाइयों के दावों के लिए केवल मौजूदा रन के सफल परिणामों पर भरोसा करें। त्रुटि, खाली परिणाम या काटा गया परिणाम कभी सफलता सिद्ध नहीं करता। देखे गए तथ्यों, अनुमानों और अज्ञात जानकारी के बीच स्पष्ट अंतर रखें; तथ्य, उद्धरण, टूल परिणाम या पूरी की गई कार्रवाइयाँ न गढ़ें।''',
   ),
   'pt_BR': (
+    applicationTitle: 'Contexto do aplicativo',
+    reliabilityTitle: 'Regras de confiabilidade',
     applicationLabel: 'Aplicativo',
     descriptionLabel: 'Descrição',
     description:
@@ -349,6 +383,8 @@ completed actions.''',
         '''Trate a memória da conversa e os resumos contínuos como pistas possivelmente desatualizadas, não como evidências. Para afirmações históricas exatas, use as ferramentas de histórico disponíveis. Para afirmações sobre arquivos, estado externo, informações atuais ou ações concluídas, baseie-se somente em resultados bem-sucedidos da execução atual. Um erro, resultado vazio ou truncado nunca comprova sucesso. Diferencie claramente fatos observados, inferências e informações desconhecidas; não invente fatos, citações, resultados de ferramentas ou ações concluídas.''',
   ),
   'it_IT': (
+    applicationTitle: 'Contesto dell’applicazione',
+    reliabilityTitle: 'Regole di affidabilità',
     applicationLabel: 'Applicazione',
     descriptionLabel: 'Descrizione',
     description:
@@ -367,6 +403,8 @@ completed actions.''',
 
 const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
   'en_US': (
+    conversationNameLabel: 'Conversation name',
+    title: 'Conversation context',
     purpose:
         'Purpose: Application-provided runtime identity for the current turn.',
     labelSeparator: ': ',
@@ -379,6 +417,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Use this directory to store and access files produced or needed by the current conversation.',
   ),
   'zh_CN': (
+    conversationNameLabel: '会话名称',
+    title: '会话上下文',
     purpose: '用途：当前轮次由应用提供的运行时身份信息。',
     labelSeparator: '：',
     currentTimeLabel: '当前时间',
@@ -389,6 +429,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
     artifactsDirectoryInstruction: '请使用此目录存储和访问当前会话生成或所需的文件。',
   ),
   'zh_TW': (
+    conversationNameLabel: '對話名稱',
+    title: '對話上下文',
     purpose: '用途：應用程式為目前輪次提供的執行階段身分資訊。',
     labelSeparator: '：',
     currentTimeLabel: '目前時間',
@@ -399,6 +441,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
     artifactsDirectoryInstruction: '請使用此目錄儲存及存取目前對話所產生或需要的檔案。',
   ),
   'ja_JP': (
+    conversationNameLabel: '会話名',
+    title: '会話のコンテキスト',
     purpose: '目的：現在のターンについてアプリケーションが提供する実行時 ID 情報。',
     labelSeparator: '：',
     currentTimeLabel: '現在時刻',
@@ -410,6 +454,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         '現在の会話で生成または必要となるファイルの保存とアクセスには、このディレクトリを使用してください。',
   ),
   'fr_FR': (
+    conversationNameLabel: 'Nom de la conversation',
+    title: 'Contexte de la conversation',
     purpose:
         'Objectif : identité d’exécution fournie par l’application pour le tour actuel.',
     labelSeparator: ' : ',
@@ -422,6 +468,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Utilisez ce répertoire pour stocker et consulter les fichiers produits ou nécessaires à la conversation actuelle.',
   ),
   'de_DE': (
+    conversationNameLabel: 'Unterhaltungsname',
+    title: 'Unterhaltungskontext',
     purpose:
         'Zweck: Von der Anwendung bereitgestellte Laufzeitidentität für den aktuellen Durchlauf.',
     labelSeparator: ': ',
@@ -434,6 +482,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Verwenden Sie dieses Verzeichnis, um Dateien zu speichern und abzurufen, die in der aktuellen Unterhaltung erstellt oder benötigt werden.',
   ),
   'ko_KR': (
+    conversationNameLabel: '대화 이름',
+    title: '대화 컨텍스트',
     purpose: '목적: 현재 턴에 대해 애플리케이션이 제공하는 런타임 ID 정보.',
     labelSeparator: ': ',
     currentTimeLabel: '현재 시간',
@@ -445,6 +495,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         '현재 대화에서 생성되거나 필요한 파일을 저장하고 액세스하려면 이 디렉터리를 사용하세요.',
   ),
   'ru_RU': (
+    conversationNameLabel: 'Название диалога',
+    title: 'Контекст диалога',
     purpose:
         'Назначение: данные времени выполнения, предоставленные приложением для текущего хода.',
     labelSeparator: ': ',
@@ -457,6 +509,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Используйте этот каталог для хранения и доступа к файлам, созданным или необходимым в текущем диалоге.',
   ),
   'es_ES': (
+    conversationNameLabel: 'Nombre de la conversación',
+    title: 'Contexto de la conversación',
     purpose:
         'Propósito: identidad de ejecución proporcionada por la aplicación para el turno actual.',
     labelSeparator: ': ',
@@ -469,6 +523,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Use este directorio para almacenar y acceder a los archivos producidos o necesarios para la conversación actual.',
   ),
   'hi_IN': (
+    conversationNameLabel: 'बातचीत का नाम',
+    title: 'बातचीत का संदर्भ',
     purpose:
         'उद्देश्य: वर्तमान चरण के लिए एप्लिकेशन द्वारा दी गई रनटाइम पहचान।',
     labelSeparator: ': ',
@@ -481,6 +537,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'वर्तमान बातचीत में बनाई गई या आवश्यक फ़ाइलों को संग्रहीत और एक्सेस करने के लिए इस डायरेक्टरी का उपयोग करें।',
   ),
   'pt_BR': (
+    conversationNameLabel: 'Nome da conversa',
+    title: 'Contexto da conversa',
     purpose:
         'Finalidade: identidade de execução fornecida pelo aplicativo para o turno atual.',
     labelSeparator: ': ',
@@ -493,6 +551,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Use este diretório para armazenar e acessar os arquivos produzidos ou necessários para a conversa atual.',
   ),
   'it_IT': (
+    conversationNameLabel: 'Nome della conversazione',
+    title: 'Contesto della conversazione',
     purpose:
         'Scopo: identità di runtime fornita dall’applicazione per il turno corrente.',
     labelSeparator: ': ',

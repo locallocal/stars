@@ -409,6 +409,7 @@ class AppDependencies {
     final composeChatTurn = ComposeChatTurn(
       skillRepository: skillRepository,
       bindingRepository: botSkillBindingRepository,
+      chatRepository: chatRepository,
       mcpServerRepository: mcpServerRepository,
       prepareConversationContext: PrepareConversationContext(
         memoryRepository: conversationMemoryRepository,

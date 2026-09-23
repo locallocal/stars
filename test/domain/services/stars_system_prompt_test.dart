@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:stars/domain/services/stars_system_prompt.dart';
 
 void main() {
@@ -8,7 +9,7 @@ void main() {
       operatingSystemVersion: '1.0 & newer',
     );
 
-    expect(prompt, startsWith('<stars_application_context>'));
+    expect(prompt, startsWith('## Application context'));
     expect(prompt, contains('Application: Stars'));
     expect(
       prompt,
@@ -19,10 +20,10 @@ void main() {
     );
     expect(prompt, contains('Operating system type: test&lt;os&gt;'));
     expect(prompt, contains('Operating system version: 1.0 &amp; newer'));
-    expect(prompt, contains('<stars_reliability_policy>'));
+    expect(prompt, contains('## Reliability policy'));
     expect(prompt, contains('An error, empty result,'));
     expect(prompt, isNot(contains('<stars_evidence')));
-    expect(prompt, endsWith('</stars_reliability_policy>'));
+    expect(prompt, isNot(contains(RegExp(r'</?stars_'))));
   });
 
   test('localizes the displayed and injected prompt language', () {
@@ -63,7 +64,15 @@ void main() {
         languageCode: entry.key,
       );
       expect(prompt, contains(entry.value), reason: entry.key);
-      expect(prompt, isNot(contains('<stars_evidence')), reason: entry.key);
+      expect(prompt, isNot(contains(RegExp(r'</?stars_'))), reason: entry.key);
+      expect(
+        md.Document()
+            .parseLines(prompt.split('\n'))
+            .whereType<md.Element>()
+            .map((element) => element.tag),
+        ['h2', 'ul', 'p', 'h2', 'p'],
+        reason: entry.key,
+      );
     }
 
     final fallback = buildStarsSystemPrompt(
@@ -80,9 +89,9 @@ void main() {
       starsSystemPromptProvider: _testStarsSystemPrompt,
     );
 
-    expect(prompt, startsWith('<stars_application_context>'));
+    expect(prompt, startsWith('## Application context'));
     expect(
-      prompt.indexOf('</stars_application_context>'),
+      prompt.indexOf('## Reliability policy'),
       lessThan(prompt.indexOf('Existing assistant instructions.')),
     );
     expect(prompt, endsWith('Existing assistant instructions.'));
@@ -93,11 +102,12 @@ void main() {
       agentId: 'agent<1>',
       agentName: 'Research & Review',
       conversationId: 'chat>2',
+      conversationName: '  Research & Review  ',
       artifactsDirectoryPath: '/data/Stars/chats/chat&2',
       currentTime: DateTime.utc(2026, 8, 27, 6, 30, 45),
     );
 
-    expect(prompt, startsWith('<stars_conversation_context>'));
+    expect(prompt, startsWith('## Conversation context'));
     expect(
       prompt,
       contains('Application-provided runtime identity for the current turn.'),
@@ -106,6 +116,7 @@ void main() {
     expect(prompt, contains('Agent ID: agent&lt;1&gt;'));
     expect(prompt, contains('Agent name: Research &amp; Review'));
     expect(prompt, contains('Current conversation ID: chat&gt;2'));
+    expect(prompt, contains('Conversation name: Research &amp; Review'));
     expect(
       prompt,
       contains(
@@ -113,7 +124,7 @@ void main() {
       ),
     );
     expect(prompt, contains('Use this directory to store and access files'));
-    expect(prompt, endsWith('</stars_conversation_context>'));
+    expect(prompt, isNot(contains(RegExp(r'</?stars_'))));
   });
 
   test('localizes conversation context for every selectable language', () {
@@ -131,17 +142,46 @@ void main() {
       'pt_BR': 'ID da conversa atual: chat-1',
       'it_IT': 'ID della conversazione corrente: chat-1',
     };
+    const localizedNameLabels = <String, String>{
+      'en_US': 'Conversation name: Research',
+      'zh_CN': '会话名称：Research',
+      'zh_TW': '對話名稱：Research',
+      'ja_JP': '会話名：Research',
+      'fr_FR': 'Nom de la conversation : Research',
+      'de_DE': 'Unterhaltungsname: Research',
+      'ko_KR': '대화 이름: Research',
+      'ru_RU': 'Название диалога: Research',
+      'es_ES': 'Nombre de la conversación: Research',
+      'hi_IN': 'बातचीत का नाम: Research',
+      'pt_BR': 'Nome da conversa: Research',
+      'it_IT': 'Nome della conversazione: Research',
+    };
 
     for (final entry in localizedConversationLabels.entries) {
       final prompt = buildStarsConversationContext(
         agentId: '',
         agentName: 'Assistant',
         conversationId: 'chat-1',
+        conversationName: 'Research',
         artifactsDirectoryPath: '/data/chat-1',
         currentTime: DateTime.utc(2026),
         languageCode: entry.key,
       );
       expect(prompt, contains(entry.value), reason: entry.key);
+      expect(
+        prompt,
+        contains(localizedNameLabels[entry.key]),
+        reason: entry.key,
+      );
+      expect(prompt, isNot(contains(RegExp(r'</?stars_'))), reason: entry.key);
+      expect(
+        md.Document()
+            .parseLines(prompt.split('\n'))
+            .whereType<md.Element>()
+            .map((element) => element.tag),
+        ['h2', 'p', 'ul', 'p'],
+        reason: entry.key,
+      );
     }
 
     final fallback = buildStarsConversationContext(
@@ -152,6 +192,45 @@ void main() {
       languageCode: 'unsupported',
     );
     expect(fallback, contains(localizedConversationLabels['en_US']));
+    expect(fallback, endsWith('- Conversation name: unknown'));
+    expect(fallback, isNot(contains('Conversation artifacts directory:')));
+  });
+
+  test('runtime values stay literal inside Markdown metadata lists', () {
+    const name = r'Research *draft* _v2_ [notes](https://example.com) `code`';
+    const path = r'C:\data\team_[draft]\a`b';
+    final prompt = buildStarsConversationContext(
+      agentId: 'agent<1>',
+      agentName: '$name\r\n## Extra heading\n- Extra item',
+      conversationId: 'chat&2',
+      conversationName: '$name\n## Renamed',
+      artifactsDirectoryPath: path,
+      currentTime: DateTime.utc(2026),
+    );
+    final nodes = md.Document(encodeHtml: false).parseLines(prompt.split('\n'));
+    expect(nodes.whereType<md.Element>().map((node) => node.tag), [
+      'h2',
+      'p',
+      'ul',
+      'p',
+    ]);
+    final metadata = nodes[2] as md.Element;
+    expect(metadata.children, hasLength(6));
+    expect(metadata.textContent, contains('Agent ID: agent<1>'));
+    expect(
+      metadata.textContent,
+      contains('$name ## Extra heading - Extra item'),
+    );
+    expect(metadata.textContent, contains('Current conversation ID: chat&2'));
+    expect(
+      metadata.textContent,
+      contains('Conversation name: $name ## Renamed'),
+    );
+    expect(metadata.textContent, contains(path));
+    final html = md.markdownToHtml(prompt);
+    for (final tag in ['<a ', '<img ', '<em>', '<strong>', '<code>']) {
+      expect(html, isNot(contains(tag)));
+    }
   });
 }
 
