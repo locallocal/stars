@@ -242,7 +242,8 @@ void main() {
       data: execution,
       loading: true,
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byType(ShadProgress), findsOneWidget);
     expect(find.text('调用参数'), findsOneWidget);
     expect(find.byKey(const ValueKey('task-event-19')), findsOneWidget);
     state.value = ConversationTaskExecutionState(

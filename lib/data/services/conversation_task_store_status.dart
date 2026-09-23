@@ -1,16 +1,16 @@
 part of 'conversation_task_store.dart';
 
 extension ConversationTaskStoreStatus on ConversationTaskStore {
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+  Stream<List<ConversationTaskListItem>> watchForChat(
     String chatId, {
     bool refresh = false,
   }) {
-    late StreamController<List<ConversationTaskProgressSummary>> controller;
+    late StreamController<List<ConversationTaskListItem>> controller;
     StreamSubscription<void>? subscription;
     _ConversationTaskListCache? cache;
     _ConversationTaskListEntry? entry;
     var cancelled = false, ready = false;
-    List<ConversationTaskProgressSummary>? lastEmitted;
+    List<ConversationTaskListItem>? lastEmitted;
 
     void emit() {
       final snapshot = entry?.snapshot;
@@ -33,16 +33,25 @@ extension ConversationTaskStoreStatus on ConversationTaskStore {
           metrics.taskListSnapshotReads++;
           return db.transaction((tx) async {
             final rows = await tx.rawQuery(
-              '''
-              SELECT task_id FROM conversation_tasks WHERE chat_id = ?
-              ORDER BY created_at, task_id
+              r'''
+              SELECT t.task_id, t.chat_id, t.title, t.status, t.phase,
+                t.revision, t.created_at, t.updated_at, t.lease_expires_at,
+                json_extract(p.progress_json, '$.completedSteps') AS completed_steps,
+                json_extract(p.progress_json, '$.totalSteps') AS total_steps,
+                json_extract(p.progress_json, '$.currentStepSummary') AS current_step_summary,
+                json_extract(p.progress_json, '$.latestTool.name') AS latest_tool_name,
+                json_extract(p.progress_json, '$.tokenUsage.inputTokens') AS input_tokens,
+                json_extract(p.progress_json, '$.tokenUsage.outputTokens') AS output_tokens,
+                json_extract(p.progress_json, '$.tokenUsage.totalTokens') AS total_tokens
+              FROM conversation_tasks t
+              LEFT JOIN conversation_task_progress p
+                ON p.task_id = t.task_id AND p.summary_revision = t.revision
+              WHERE t.chat_id = ?
+              ORDER BY t.created_at, t.task_id
               ''',
               [chatId],
             );
-            return [
-              for (final row in rows)
-                (await _summary(tx, row['task_id']! as String))!,
-            ];
+            return rows.map(ConversationTaskListRecord.decode).toList();
           });
         }, refresh: refresh);
         ready = true;

@@ -2,6 +2,7 @@ import 'package:stars/data/services/conversation_task_store.dart';
 import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/data/services/task_persistence_metrics.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_scheduling.dart';
@@ -15,7 +16,7 @@ final class SqliteConversationTaskRepository
   }) : _store = localDatabase.conversationTasks;
 
   @override
-  Stream<List<ConversationTaskProgressSummary>> watchForChat(
+  Stream<List<ConversationTaskListItem>> watchForChat(
     String chatId, {
     bool refresh = false,
   }) => _store.watchForChat(chatId, refresh: refresh);

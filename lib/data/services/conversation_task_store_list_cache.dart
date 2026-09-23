@@ -30,7 +30,7 @@ final class _ConversationTaskListCache {
     }
   }
 
-  void accept(ConversationTaskProgressSummary summary) {
+  void accept(ConversationTaskListItem summary) {
     _entries[summary.chatId]?.accept(summary);
   }
 
@@ -39,14 +39,14 @@ final class _ConversationTaskListCache {
 
 final class _ConversationTaskListEntry {
   final changes = StreamController<void>.broadcast();
-  final _values = <String, ConversationTaskProgressSummary>{};
-  Map<String, ConversationTaskProgressSummary>? _duringLoad;
-  List<ConversationTaskProgressSummary>? snapshot;
+  final _values = <String, ConversationTaskListItem>{};
+  Map<String, ConversationTaskListItem>? _duringLoad;
+  List<ConversationTaskListItem>? snapshot;
   Future<void>? loading;
   int listeners = 0;
   int _generation = 0;
 
-  void accept(ConversationTaskProgressSummary summary) {
+  void accept(ConversationTaskListItem summary) {
     final previous = _values[summary.taskId];
     if (previous != null &&
         previous.summaryRevision >= summary.summaryRevision) {
@@ -71,7 +71,7 @@ final class _ConversationTaskListEntry {
   }
 
   Future<void> load(
-    Future<List<ConversationTaskProgressSummary>> Function() read, {
+    Future<List<ConversationTaskListItem>> Function() read, {
     required bool refresh,
   }) {
     if (loading case final pending?) return pending;
@@ -80,7 +80,7 @@ final class _ConversationTaskListEntry {
   }
 
   Future<void> _load(
-    Future<List<ConversationTaskProgressSummary>> Function() read,
+    Future<List<ConversationTaskListItem>> Function() read,
   ) async {
     final generation = _generation;
     final updates = _duringLoad = {};

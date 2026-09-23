@@ -8,9 +8,13 @@ final class ConversationTaskExecution {
     required this.processInfo,
     required List<TaskExecutionActivity> activities,
     this.tokenUsage,
+    this.summary,
   }) : activities = List.unmodifiable(activities);
 
   final int revision;
+
+  /// Full card details from the same read as the execution history.
+  final ConversationTaskProgressSummary? summary;
   final MessageProcessInfo processInfo;
 
   /// Cumulative task usage; null means no usage report is available.

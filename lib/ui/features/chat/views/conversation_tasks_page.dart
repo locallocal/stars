@@ -339,34 +339,59 @@ final class _ConversationTasksPageState extends State<ConversationTasksPage> {
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final summary = summaries[index];
-                          return ConversationTaskCard(
+                          final details = vm.detailsFor(summary.taskId);
+                          final execution = vm.executionFor(summary.taskId);
+                          final expanded = _expansionController.value.contains(
+                            summary.taskId,
+                          );
+                          return ConversationTaskListCard(
                             key: ValueKey('task-${summary.taskId}'),
-                            summary: summary,
-                            expansionController: _expansionController,
-                            executionDetails:
-                                _expansionController.value.contains(
-                                      summary.taskId,
-                                    )
-                                    ? ConversationTaskExecutionSection(
-                                      key: ValueKey(
-                                        'task-execution-${summary.taskId}',
-                                      ),
-                                      state: vm.executionFor(summary.taskId),
-                                      onRetry:
-                                          () => vm.loadExecution(
-                                            summary.taskId,
-                                            force: true,
+                            item: summary,
+                            controller: _expansionController,
+                            child:
+                                expanded
+                                    ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (details != null)
+                                          ConversationTaskCard(
+                                            summary: details,
+                                            detailsOnly: true,
+                                            showStatusAction: false,
+                                            busy:
+                                                state.pendingCommands.contains(
+                                                  summary.taskId,
+                                                ) ||
+                                                execution.loading ||
+                                                execution.error ||
+                                                details.summaryRevision <
+                                                    summary.summaryRevision,
+                                            refreshing: state.loading,
+                                            onRefresh: vm.refresh,
+                                            onAction:
+                                                (action) => widget.onAction(
+                                                  details,
+                                                  action,
+                                                ),
                                           ),
+                                        if (details != null)
+                                          const SizedBox(height: 12),
+                                        ConversationTaskExecutionSection(
+                                          key: ValueKey(
+                                            'task-execution-${summary.taskId}',
+                                          ),
+                                          state: execution,
+                                          onRetry:
+                                              () => vm.loadExecution(
+                                                summary.taskId,
+                                                force: true,
+                                              ),
+                                        ),
+                                      ],
                                     )
                                     : null,
-                            showStatusAction: false,
-                            busy: state.pendingCommands.contains(
-                              summary.taskId,
-                            ),
-                            refreshing: state.loading,
-                            onRefresh: vm.refresh,
-                            onAction:
-                                (action) => widget.onAction(summary, action),
                           );
                         },
                       ),

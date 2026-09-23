@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/models/tool.dart';
@@ -15,7 +16,7 @@ final class ObserveConversationTasks {
   });
   final TaskRunnerClock clock;
   final ConversationTaskRepository repository;
-  Stream<List<ConversationTaskProgressSummary>> call(
+  Stream<List<ConversationTaskListItem>> call(
     String chatId, {
     bool refresh = false,
   }) => repository

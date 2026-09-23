@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/services/task_progress_strings.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
 import 'package:stars/utils/theme.dart';
@@ -22,11 +23,13 @@ final class ConversationTaskCard extends StatelessWidget {
     this.showStatusAction = true,
     this.expansionController,
     this.executionDetails,
+    this.detailsOnly = false,
   });
   final ConversationTaskProgressSummary summary;
   final ValueChanged<TaskCardAction>? onAction;
   final VoidCallback? onRefresh;
   final bool busy, historical;
+  final bool detailsOnly;
   final bool refreshing;
   final bool showStatusAction;
 
@@ -68,7 +71,7 @@ final class ConversationTaskCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!collapsible) ...[
+          if (!collapsible && !detailsOnly) ...[
             Text(
               '${taskSafeText(s.title, maximum: 200)} · ${taskShortId(s.taskId)}',
               style: textStyle.copyWith(fontWeight: FontWeight.w600),
@@ -99,7 +102,7 @@ final class ConversationTaskCard extends StatelessWidget {
             ),
           row(w.recoveries, '${p.recoveries}'),
           row(w.verification, w.verified(p.verificationStatus)),
-          if (!historical && !collapsible)
+          if (!historical && !collapsible && !detailsOnly)
             row(
               w.created,
               DateFormat.yMd().add_Hm().format(s.createdAt.toLocal()),
@@ -156,6 +159,7 @@ final class ConversationTaskCard extends StatelessWidget {
         ],
       ),
     );
+    if (detailsOnly) return content;
     return Semantics(
       container: true,
       liveRegion: !historical,
@@ -174,53 +178,80 @@ final class ConversationTaskCard extends StatelessWidget {
                 ),
                 child: content,
               )
+              : collapsible
+              ? ConversationTaskListCard(
+                item: ConversationTaskListItem.fromSummary(s),
+                controller: expansionController!,
+                child: content,
+              )
               : ShadCard(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: collapsible ? 0 : 12,
-                ),
+                padding: const EdgeInsets.all(12),
                 radius: StarsDesktopThemeSpec.statusRadius,
-                child:
-                    collapsible
-                        ? ShadAccordion<String>.multiple(
-                          controller: expansionController,
-                          children: [
-                            ShadAccordionItem<String>(
-                              key: ValueKey('task-toggle-${s.taskId}'),
-                              value: s.taskId,
-                              separator: const SizedBox.shrink(),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              underlineTitleOnHover: false,
-                              duration:
-                                  MediaQuery.disableAnimationsOf(context)
-                                      ? Duration.zero
-                                      : const Duration(milliseconds: 180),
-                              title: ListenableBuilder(
-                                listenable: expansionController!,
-                                builder:
-                                    (context, child) => Semantics(
-                                      key: ValueKey('task-heading-${s.taskId}'),
-                                      button: true,
-                                      expanded: expansionController!.value
-                                          .contains(s.taskId),
-                                      onTap:
-                                          () => expansionController!.toggle(
-                                            s.taskId,
-                                          ),
-                                      child: child,
-                                    ),
-                                child: _TaskSummaryHeader(summary: s, words: w),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: content,
-                              ),
-                            ),
-                          ],
-                        )
-                        : content,
+                child: content,
               ),
+    );
+  }
+}
+
+/// A lightweight accordion shell. The caller supplies details only when open.
+final class ConversationTaskListCard extends StatelessWidget {
+  const ConversationTaskListCard({
+    super.key,
+    required this.item,
+    required this.controller,
+    this.child,
+  });
+
+  final ConversationTaskListItem item;
+  final ShadAccordionController<String> controller;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final words = TaskProgressStrings(
+      Localizations.localeOf(context).toLanguageTag(),
+    );
+    return ShadCard(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      radius: StarsDesktopThemeSpec.statusRadius,
+      child: ShadAccordion<String>.multiple(
+        controller: controller,
+        children: [
+          ShadAccordionItem<String>(
+            key: ValueKey('task-toggle-${item.taskId}'),
+            value: item.taskId,
+            separator: const SizedBox.shrink(),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            underlineTitleOnHover: false,
+            duration:
+                MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 180),
+            title: ListenableBuilder(
+              listenable: controller,
+              builder:
+                  (context, child) => Semantics(
+                    key: ValueKey('task-heading-${item.taskId}'),
+                    button: true,
+                    liveRegion: true,
+                    expanded: controller.value.contains(item.taskId),
+                    onTap: () => controller.toggle(item.taskId),
+                    child: child,
+                  ),
+              child: _TaskSummaryHeader(summary: item, words: words),
+            ),
+            child:
+                child == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: child,
+                    ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -228,7 +259,7 @@ final class ConversationTaskCard extends StatelessWidget {
 final class _TaskSummaryHeader extends StatelessWidget {
   const _TaskSummaryHeader({required this.summary, required this.words});
 
-  final ConversationTaskProgressSummary summary;
+  final ConversationTaskListItem summary;
   final TaskProgressStrings words;
 
   @override
@@ -257,15 +288,15 @@ final class _TaskSummaryHeader extends StatelessWidget {
                 label: words.status(summary.status),
               ),
               Text(
-                summary.progress.totalSteps == 0
+                (summary.totalSteps ?? 0) == 0
                     ? words.phase(summary.phase)
-                    : '${words.steps}: ${summary.progress.completedSteps}/${summary.progress.totalSteps}',
+                    : '${words.steps}: ${summary.completedSteps}/${summary.totalSteps}',
                 style: theme.textTheme.muted,
               ),
             ],
           ),
           const SizedBox(height: 8),
-          TaskTokenUsageMetrics(usage: summary.progress.tokenUsage),
+          TaskTokenUsageMetrics(usage: summary.tokenUsage),
           const SizedBox(height: 6),
           Text(
             '${words.created}: ${DateFormat.yMd().add_Hm().format(summary.createdAt.toLocal())}',
