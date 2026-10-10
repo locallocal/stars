@@ -410,6 +410,8 @@ final class ComposeChatTurn {
       buildStarsConversationContext(
         agentId: bot.id,
         agentName: bot.name,
+        agentModel: bot.model,
+        agentProvider: bot.provider,
         conversationId: conversationId,
         conversationName: conversationName,
         artifactsDirectoryPath: conversationArtifactsDirectory,

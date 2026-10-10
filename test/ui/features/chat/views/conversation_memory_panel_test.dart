@@ -694,6 +694,10 @@ void main() {
       );
       expect(prompt, contains('智能体 ID：bot&lt;1&gt;'));
       expect(prompt, contains('智能体名称：Research &amp; Review'));
+      expect(prompt, contains('- 模型：model'));
+      expect(prompt, contains('- 模型提供商：Test'));
+      expect(find.text('模型：model', findRichText: true), findsOneWidget);
+      expect(find.text('模型提供商：Test', findRichText: true), findsOneWidget);
       expect(prompt, contains('当前会话 ID：chat&gt;2'));
       expect(prompt, contains(r'会话名称：Research \*notes\* &amp; review'));
       expect(

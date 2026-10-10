@@ -50,7 +50,7 @@ ${copy.responseLanguageInstruction}
 ${copy.reliabilityPolicy}''';
 }
 
-/// Builds the runtime time, identity, and storage context for one turn.
+/// Builds the runtime time, identity, model, and storage context for one turn.
 ///
 /// Keeping identifiers and the application-owned artifacts directory in a
 /// dedicated section prevents them from being confused with editable agent
@@ -58,6 +58,8 @@ ${copy.reliabilityPolicy}''';
 String buildStarsConversationContext({
   required String agentId,
   required String agentName,
+  required String agentModel,
+  required String agentProvider,
   required String conversationId,
   String conversationName = '',
   String artifactsDirectoryPath = '',
@@ -84,6 +86,8 @@ ${copy.purpose}
 - ${copy.currentTimeLabel}${copy.labelSeparator}${_iso8601WithOffset(effectiveCurrentTime)}
 - ${copy.agentIdLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(agentId, unknownValue))}
 - ${copy.agentNameLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(agentName, unknownValue))}
+- ${copy.modelLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(agentModel, unknownValue))}
+- ${copy.modelProviderLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(agentProvider, unknownValue))}
 - ${copy.conversationIdLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(conversationId, unknownValue))}
 - ${copy.conversationNameLabel}${copy.labelSeparator}${_markdownText(_valueOrFallback(conversationName, unknownValue))}${artifactsContext.isEmpty ? '' : '\n$artifactsContext'}''';
 }
@@ -159,6 +163,8 @@ typedef _StarsConversationPromptCopy =
       String currentTimeLabel,
       String agentIdLabel,
       String agentNameLabel,
+      String modelLabel,
+      String modelProviderLabel,
       String conversationIdLabel,
       String conversationNameLabel,
       String artifactsDirectoryLabel,
@@ -403,6 +409,8 @@ completed actions.''',
 
 const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
   'en_US': (
+    modelLabel: 'Model',
+    modelProviderLabel: 'Model provider',
     conversationNameLabel: 'Conversation name',
     title: 'Conversation context',
     purpose:
@@ -417,6 +425,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Use this directory to store and access files produced or needed by the current conversation.',
   ),
   'zh_CN': (
+    modelLabel: '模型',
+    modelProviderLabel: '模型提供商',
     conversationNameLabel: '会话名称',
     title: '会话上下文',
     purpose: '用途：当前轮次由应用提供的运行时身份信息。',
@@ -429,6 +439,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
     artifactsDirectoryInstruction: '请使用此目录存储和访问当前会话生成或所需的文件。',
   ),
   'zh_TW': (
+    modelLabel: '模型',
+    modelProviderLabel: '模型提供者',
     conversationNameLabel: '對話名稱',
     title: '對話上下文',
     purpose: '用途：應用程式為目前輪次提供的執行階段身分資訊。',
@@ -441,6 +453,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
     artifactsDirectoryInstruction: '請使用此目錄儲存及存取目前對話所產生或需要的檔案。',
   ),
   'ja_JP': (
+    modelLabel: 'モデル',
+    modelProviderLabel: 'モデルプロバイダー',
     conversationNameLabel: '会話名',
     title: '会話のコンテキスト',
     purpose: '目的：現在のターンについてアプリケーションが提供する実行時 ID 情報。',
@@ -454,6 +468,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         '現在の会話で生成または必要となるファイルの保存とアクセスには、このディレクトリを使用してください。',
   ),
   'fr_FR': (
+    modelLabel: 'Modèle',
+    modelProviderLabel: 'Fournisseur du modèle',
     conversationNameLabel: 'Nom de la conversation',
     title: 'Contexte de la conversation',
     purpose:
@@ -468,6 +484,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Utilisez ce répertoire pour stocker et consulter les fichiers produits ou nécessaires à la conversation actuelle.',
   ),
   'de_DE': (
+    modelLabel: 'Modell',
+    modelProviderLabel: 'Modellanbieter',
     conversationNameLabel: 'Unterhaltungsname',
     title: 'Unterhaltungskontext',
     purpose:
@@ -482,6 +500,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Verwenden Sie dieses Verzeichnis, um Dateien zu speichern und abzurufen, die in der aktuellen Unterhaltung erstellt oder benötigt werden.',
   ),
   'ko_KR': (
+    modelLabel: '모델',
+    modelProviderLabel: '모델 제공업체',
     conversationNameLabel: '대화 이름',
     title: '대화 컨텍스트',
     purpose: '목적: 현재 턴에 대해 애플리케이션이 제공하는 런타임 ID 정보.',
@@ -495,6 +515,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         '현재 대화에서 생성되거나 필요한 파일을 저장하고 액세스하려면 이 디렉터리를 사용하세요.',
   ),
   'ru_RU': (
+    modelLabel: 'Модель',
+    modelProviderLabel: 'Поставщик модели',
     conversationNameLabel: 'Название диалога',
     title: 'Контекст диалога',
     purpose:
@@ -509,6 +531,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Используйте этот каталог для хранения и доступа к файлам, созданным или необходимым в текущем диалоге.',
   ),
   'es_ES': (
+    modelLabel: 'Modelo',
+    modelProviderLabel: 'Proveedor del modelo',
     conversationNameLabel: 'Nombre de la conversación',
     title: 'Contexto de la conversación',
     purpose:
@@ -523,6 +547,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Use este directorio para almacenar y acceder a los archivos producidos o necesarios para la conversación actual.',
   ),
   'hi_IN': (
+    modelLabel: 'मॉडल',
+    modelProviderLabel: 'मॉडल प्रदाता',
     conversationNameLabel: 'बातचीत का नाम',
     title: 'बातचीत का संदर्भ',
     purpose:
@@ -537,6 +563,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'वर्तमान बातचीत में बनाई गई या आवश्यक फ़ाइलों को संग्रहीत और एक्सेस करने के लिए इस डायरेक्टरी का उपयोग करें।',
   ),
   'pt_BR': (
+    modelLabel: 'Modelo',
+    modelProviderLabel: 'Provedor do modelo',
     conversationNameLabel: 'Nome da conversa',
     title: 'Contexto da conversa',
     purpose:
@@ -551,6 +579,8 @@ const Map<String, _StarsConversationPromptCopy> _conversationPromptCopies = {
         'Use este diretório para armazenar e acessar os arquivos produzidos ou necessários para a conversa atual.',
   ),
   'it_IT': (
+    modelLabel: 'Modello',
+    modelProviderLabel: 'Fornitore del modello',
     conversationNameLabel: 'Nome della conversazione',
     title: 'Contesto della conversazione',
     purpose:
