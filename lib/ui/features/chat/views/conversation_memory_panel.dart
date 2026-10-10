@@ -256,15 +256,6 @@ final class _ConversationMemoryPanelState
                 onPressed: () => Navigator.pop(dialogContext),
               ),
               closeIconPosition: starsDesktopDialogClosePosition(dialogContext),
-              actions: [
-                ShadButton.outline(
-                  key: const ValueKey<String>('conversation-summary-close'),
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: Text(
-                    MaterialLocalizations.of(dialogContext).closeButtonLabel,
-                  ),
-                ),
-              ],
               child: Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: SizedBox(

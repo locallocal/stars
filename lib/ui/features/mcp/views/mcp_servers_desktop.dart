@@ -379,12 +379,6 @@ class _McpServerDetailsDialogState extends State<_McpServerDetailsDialog> {
         overflow: TextOverflow.ellipsis,
       ),
       constraints: const BoxConstraints(maxWidth: 720),
-      actions: [
-        ShadButton.outline(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
       child: SizedBox(
         height: 520,
         child: SingleChildScrollView(

@@ -227,11 +227,6 @@ class _LocalFilePreviewDialogState extends State<_LocalFilePreviewDialog> {
             onPressed: _openWithSystem,
             child: Text(strings.openWithSystem),
           ),
-        ShadButton.outline(
-          key: const ValueKey<String>('message-local-file-close'),
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
       ],
       child: Padding(
         padding: const EdgeInsets.only(top: 8),

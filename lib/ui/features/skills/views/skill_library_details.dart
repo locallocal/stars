@@ -51,12 +51,6 @@ class _SkillDetailsDialogState extends State<_SkillDetailsDialog> {
       ),
       description: Text(skill.description),
       constraints: const BoxConstraints(maxWidth: 720),
-      actions: [
-        ShadButton.outline(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
       child: SizedBox(
         height: 520,
         child: SingleChildScrollView(

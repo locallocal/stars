@@ -792,7 +792,9 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('关闭').last);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('bot-mcp-tools-close-server-1')),
+    );
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(

@@ -369,14 +369,6 @@ class _BotMcpToolPickerState extends State<BotMcpToolPicker> {
               ),
               description: Text(description),
               constraints: const BoxConstraints(maxWidth: 680),
-              actions: [
-                ShadButton.outline(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(
-                    MaterialLocalizations.of(context).closeButtonLabel,
-                  ),
-                ),
-              ],
               child: _BotMcpToolListViewport(
                 serverId: serverId,
                 tools: tools,
