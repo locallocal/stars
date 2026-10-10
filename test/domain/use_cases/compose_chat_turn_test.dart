@@ -11,6 +11,42 @@ import '../../support/compose_chat_fixtures.dart';
 void main() {
   for (final foregroundOnly in [true, false]) {
     test(
+      'injects the current model on each turn, foreground: $foregroundOnly',
+      () async {
+        final compose = ComposeChatTurn(
+          skillRepository: FixtureFakeSkillRepository(const {}),
+          bindingRepository: FixtureFakeBindingRepository(const []),
+          conversationArtifactsDirectoryProvider:
+              fixtureTestConversationArtifactsDirectory,
+          starsSystemPromptProvider: fixtureTestStarsSystemPrompt,
+        );
+        for (final (model, provider) in [
+          ('first-model', 'First Provider'),
+          ('second-model', 'Second Provider'),
+        ]) {
+          final bot = fixtureBot(model: model, provider: provider);
+          final result = await compose(
+            bot: bot,
+            history: const [],
+            userMessage: fixtureMessage(senderId: 'user-1', content: 'Hello'),
+            currentUserId: 'user-1',
+            foregroundOnly: foregroundOnly,
+          );
+          final systemPrompt = result.messages.first;
+          expect(systemPrompt.role, 'system');
+          expect(systemPrompt.content, contains('## Conversation context'));
+          expect(systemPrompt.content, contains('- Model: $model\n'));
+          expect(
+            systemPrompt.content,
+            contains('- Model provider: $provider\n'),
+          );
+          expect('- Model: '.allMatches(systemPrompt.content), hasLength(1));
+          expect(systemPrompt.content, isNot(contains(bot.apiKey)));
+          expect(systemPrompt.content, isNot(contains(bot.baseURL)));
+        }
+      },
+    );
+    test(
       'uses the latest conversation name, foreground: $foregroundOnly',
       () async {
         final chats = _NamedChatRepository('Research & Review');
@@ -172,6 +208,8 @@ void main() {
     expect(systemPrompt, contains('Current time:'));
     expect(systemPrompt, contains('Agent ID: bot-1'));
     expect(systemPrompt, contains('Agent name: Assistant'));
+    expect(systemPrompt, contains('- Model: model'));
+    expect(systemPrompt, contains('- Model provider: OpenAI'));
     expect(systemPrompt, contains('Current conversation ID: chat-1'));
     expect(systemPrompt, contains('Conversation name: Research &amp; Review'));
     expect(
@@ -220,6 +258,14 @@ void main() {
     );
     expect(
       provider.session.request?.messages.first.content,
+      contains('- Model: model'),
+    );
+    expect(
+      provider.session.request?.messages.first.content,
+      contains('- Model provider: OpenAI'),
+    );
+    expect(
+      provider.session.request?.messages.first.content,
       contains('Conversation artifacts directory: /data/Stars/chats/chat-1'),
     );
     expect(result.requestedToolNames, {'calculate'});
@@ -263,6 +309,8 @@ void main() {
       expect(systemPrompt, isNot(contains('## 应用上下文')));
       expect(systemPrompt, isNot(contains('## 可靠性要求')));
       expect(systemPrompt, startsWith('## 会话上下文'));
+      expect(systemPrompt, contains('- 模型：model'));
+      expect(systemPrompt, contains('- 模型提供商：OpenAI'));
       expect(systemPrompt, contains('当前会话 ID：chat-1'));
       expect(systemPrompt, isNot(contains('Current conversation ID:')));
       expect(systemPrompt, contains('Bot-owned instructions.'));

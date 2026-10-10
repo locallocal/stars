@@ -19,6 +19,8 @@ void main() {
       final prompt = buildStarsConversationContext(
         agentId: 'agent-1',
         agentName: 'Research *draft* [notes]',
+        agentModel: 'vendor/long-model-name_v2-preview-2026-10-10',
+        agentProvider: 'Research *provider* [gateway]',
         conversationId: 'conversation-with-a-long-identifier',
         artifactsDirectoryPath:
             r'C:\Users\research_team\Documents\Stars\conversations\long_directory_name',
@@ -68,6 +70,20 @@ void main() {
       );
       expect(
         find.text('Agent name: Research *draft* [notes]', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Model: vendor/long-model-name_v2-preview-2026-10-10',
+          findRichText: true,
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Model provider: Research *provider* [gateway]',
+          findRichText: true,
+        ),
         findsOneWidget,
       );
       expect(find.byType(SelectionArea), findsOneWidget);

@@ -226,21 +226,25 @@ BotSkillBinding fixtureBinding(
   );
 }
 
-Bot fixtureBot({String systemPrompt = '', Map<String, dynamic>? parameters}) =>
-    Bot(
-      id: 'bot-1',
-      name: 'Assistant',
-      avatar: '',
-      provider: 'OpenAI',
-      baseURL: 'https://example.test',
-      apiKey: 'secret',
-      apiType: Bot.apiTypeOpenAI,
-      model: 'model',
-      systemPrompt: systemPrompt,
-      parameters: parameters ?? const {},
-      createTimestamp: DateTime(2026),
-      modifyTimestamp: DateTime(2026),
-    );
+Bot fixtureBot({
+  String systemPrompt = '',
+  String model = 'model',
+  String provider = 'OpenAI',
+  Map<String, dynamic>? parameters,
+}) => Bot(
+  id: 'bot-1',
+  name: 'Assistant',
+  avatar: '',
+  provider: provider,
+  baseURL: 'https://example.test',
+  apiKey: 'secret',
+  apiType: Bot.apiTypeOpenAI,
+  model: model,
+  systemPrompt: systemPrompt,
+  parameters: parameters ?? const {},
+  createTimestamp: DateTime(2026),
+  modifyTimestamp: DateTime(2026),
+);
 
 Message fixtureMessage({
   required String senderId,

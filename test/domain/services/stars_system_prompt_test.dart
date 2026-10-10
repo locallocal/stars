@@ -101,6 +101,8 @@ void main() {
     final prompt = buildStarsConversationContext(
       agentId: 'agent<1>',
       agentName: 'Research & Review',
+      agentModel: '  vendor/model-v2  ',
+      agentProvider: '  Example Provider  ',
       conversationId: 'chat>2',
       conversationName: '  Research & Review  ',
       artifactsDirectoryPath: '/data/Stars/chats/chat&2',
@@ -115,6 +117,8 @@ void main() {
     expect(prompt, contains('Current time: 2026-08-27T06:30:45Z'));
     expect(prompt, contains('Agent ID: agent&lt;1&gt;'));
     expect(prompt, contains('Agent name: Research &amp; Review'));
+    expect(prompt, contains('- Model: vendor/model-v2'));
+    expect(prompt, contains('- Model provider: Example Provider'));
     expect(prompt, contains('Current conversation ID: chat&gt;2'));
     expect(prompt, contains('Conversation name: Research &amp; Review'));
     expect(
@@ -156,11 +160,27 @@ void main() {
       'pt_BR': 'Nome da conversa: Research',
       'it_IT': 'Nome della conversazione: Research',
     };
+    const localizedModelLabels = <String, (String, String)>{
+      'en_US': ('Model: ', 'Model provider: '),
+      'zh_CN': ('模型：', '模型提供商：'),
+      'zh_TW': ('模型：', '模型提供者：'),
+      'ja_JP': ('モデル：', 'モデルプロバイダー：'),
+      'fr_FR': ('Modèle : ', 'Fournisseur du modèle : '),
+      'de_DE': ('Modell: ', 'Modellanbieter: '),
+      'ko_KR': ('모델: ', '모델 제공업체: '),
+      'ru_RU': ('Модель: ', 'Поставщик модели: '),
+      'es_ES': ('Modelo: ', 'Proveedor del modelo: '),
+      'hi_IN': ('मॉडल: ', 'मॉडल प्रदाता: '),
+      'pt_BR': ('Modelo: ', 'Provedor do modelo: '),
+      'it_IT': ('Modello: ', 'Fornitore del modello: '),
+    };
 
     for (final entry in localizedConversationLabels.entries) {
       final prompt = buildStarsConversationContext(
         agentId: '',
         agentName: 'Assistant',
+        agentModel: 'test-model',
+        agentProvider: 'Test Provider',
         conversationId: 'chat-1',
         conversationName: 'Research',
         artifactsDirectoryPath: '/data/chat-1',
@@ -168,6 +188,13 @@ void main() {
         languageCode: entry.key,
       );
       expect(prompt, contains(entry.value), reason: entry.key);
+      final (modelLabel, providerLabel) = localizedModelLabels[entry.key]!;
+      expect(prompt, contains('- ${modelLabel}test-model'), reason: entry.key);
+      expect(
+        prompt,
+        contains('- ${providerLabel}Test Provider'),
+        reason: entry.key,
+      );
       expect(
         prompt,
         contains(localizedNameLabels[entry.key]),
@@ -187,11 +214,15 @@ void main() {
     final fallback = buildStarsConversationContext(
       agentId: 'agent-1',
       agentName: 'Assistant',
+      agentModel: ' ',
+      agentProvider: '',
       conversationId: 'chat-1',
       currentTime: DateTime.utc(2026),
       languageCode: 'unsupported',
     );
     expect(fallback, contains(localizedConversationLabels['en_US']));
+    expect(fallback, contains('- Model: unknown'));
+    expect(fallback, contains('- Model provider: unknown'));
     expect(fallback, endsWith('- Conversation name: unknown'));
     expect(fallback, isNot(contains('Conversation artifacts directory:')));
   });
@@ -202,6 +233,8 @@ void main() {
     final prompt = buildStarsConversationContext(
       agentId: 'agent<1>',
       agentName: '$name\r\n## Extra heading\n- Extra item',
+      agentModel: '$name\n## Model heading',
+      agentProvider: '$name\r\n- Provider item',
       conversationId: 'chat&2',
       conversationName: '$name\n## Renamed',
       artifactsDirectoryPath: path,
@@ -215,13 +248,18 @@ void main() {
       'p',
     ]);
     final metadata = nodes[2] as md.Element;
-    expect(metadata.children, hasLength(6));
+    expect(metadata.children, hasLength(8));
     expect(metadata.textContent, contains('Agent ID: agent<1>'));
     expect(
       metadata.textContent,
       contains('$name ## Extra heading - Extra item'),
     );
     expect(metadata.textContent, contains('Current conversation ID: chat&2'));
+    expect(metadata.textContent, contains('Model: $name ## Model heading'));
+    expect(
+      metadata.textContent,
+      contains('Model provider: $name - Provider item'),
+    );
     expect(
       metadata.textContent,
       contains('Conversation name: $name ## Renamed'),

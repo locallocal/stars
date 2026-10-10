@@ -20,6 +20,8 @@ final class _ConversationSystemPromptBlock extends StatelessWidget {
         buildStarsConversationContext(
           agentId: bot.id,
           agentName: bot.name,
+          agentModel: bot.model,
+          agentProvider: bot.provider,
           conversationId: conversationId,
           conversationName: conversationName,
           artifactsDirectoryPath: artifactsDirectoryPath,
