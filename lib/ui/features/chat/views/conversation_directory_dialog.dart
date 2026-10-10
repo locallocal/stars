@@ -61,13 +61,6 @@ final class ConversationDirectoryDialog extends StatelessWidget {
         label: MaterialLocalizations.of(context).closeButtonTooltip,
         onPressed: () => Navigator.pop(context),
       ),
-      actions: [
-        ShadButton.outline(
-          key: const ValueKey<String>('conversation-directory-close'),
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
       child: Padding(
         padding: const EdgeInsets.only(top: 16),
         child: SizedBox(

@@ -258,13 +258,6 @@ class _BotSkillSettingsDialogState extends State<_BotSkillSettingsDialog> {
       ),
       description: Text(strings.skillDetails),
       constraints: const BoxConstraints(maxWidth: 680),
-      actions: [
-        ShadButton.outline(
-          enabled: !_isUpdating,
-          onPressed: _close,
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
-      ],
       child: _buildBody(context),
     );
   }

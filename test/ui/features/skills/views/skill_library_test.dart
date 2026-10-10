@@ -718,7 +718,10 @@ void main() {
       expect(find.byType(ShadDialog), findsOneWidget);
       expect(find.text('Instructions for Release Notes'), findsOneWidget);
 
-      await tester.tap(find.text('关闭'), kind: PointerDeviceKind.mouse);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('skill-details-close')),
+        kind: PointerDeviceKind.mouse,
+      );
       await tester.pumpAndSettle();
 
       expect(actionMenu, findsNothing);

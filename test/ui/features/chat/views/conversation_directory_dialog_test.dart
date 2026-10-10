@@ -325,7 +325,7 @@ void main() {
       expect(find.byIcon(LucideIcons.minimize2), findsOneWidget);
 
       await tester.tap(
-        find.byKey(const ValueKey<String>('message-local-file-close')),
+        find.byKey(const ValueKey<String>('message-local-file-close-icon')),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -340,7 +340,9 @@ void main() {
       );
 
       await tester.tap(
-        find.byKey(const ValueKey<String>('conversation-directory-close')),
+        find.byKey(
+          const ValueKey<String>('conversation-directory-header-close'),
+        ),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
@@ -496,7 +498,7 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('conversation-directory-close')),
+      find.byKey(const ValueKey<String>('conversation-directory-header-close')),
     );
     await tester.pumpAndSettle();
   });

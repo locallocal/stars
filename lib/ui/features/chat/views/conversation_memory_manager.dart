@@ -140,10 +140,6 @@ final class _MemoryManagerDialogState extends State<_MemoryManagerDialog> {
                   : const Icon(LucideIcons.refreshCw, size: 16),
           child: Text(S.of(context).rebuildMemory),
         ),
-        ShadButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).closeButtonLabel),
-        ),
       ],
       child: SizedBox(
         height: 520,

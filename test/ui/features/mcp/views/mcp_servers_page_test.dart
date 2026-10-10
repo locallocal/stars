@@ -446,7 +446,12 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.text('关闭'), kind: PointerDeviceKind.mouse);
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('desktop-mcp-server-details-close-github'),
+        ),
+        kind: PointerDeviceKind.mouse,
+      );
       await tester.pumpAndSettle();
       expect(
         find.byKey(
@@ -554,7 +559,12 @@ void main() {
         findsNothing,
       );
 
-      await tester.tap(find.text('关闭'), kind: PointerDeviceKind.mouse);
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('desktop-mcp-server-details-close-github'),
+        ),
+        kind: PointerDeviceKind.mouse,
+      );
       await tester.pumpAndSettle();
       expect(
         find.byKey(
@@ -622,7 +632,12 @@ void main() {
         isNot(filesystemDetailsTitle.style?.color),
       );
 
-      await tester.tap(find.text('关闭'), kind: PointerDeviceKind.mouse);
+      await tester.tap(
+        find.byKey(
+          const ValueKey<String>('desktop-mcp-server-details-close-filesystem'),
+        ),
+        kind: PointerDeviceKind.mouse,
+      );
       await tester.pumpAndSettle();
 
       final searchInput = find.descendant(

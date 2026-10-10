@@ -404,7 +404,7 @@ cat "${file.path}"
     await _pumpDialog(tester);
     expect(find.text('SpaceX 调研简报'), findsOneWidget);
     await tester.tap(
-      find.byKey(const ValueKey<String>('message-local-file-close')),
+      find.byKey(const ValueKey<String>('message-local-file-close-icon')),
     );
     await _pumpDialog(tester);
 
@@ -777,7 +777,7 @@ cat "${file.path}"
     expect(restoredConstraints.maxHeight, closeTo(774, 0.001));
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('message-local-file-close')),
+      find.byKey(const ValueKey<String>('message-local-file-close-icon')),
     );
     await _pumpDialog(tester);
 
@@ -913,7 +913,7 @@ cat "${file.path}"
     expect(repository.openedFiles, [pdf.path]);
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('message-local-file-close')),
+      find.byKey(const ValueKey<String>('message-local-file-close-icon')),
     );
     await _pumpDialog(tester);
     await tester.tap(
