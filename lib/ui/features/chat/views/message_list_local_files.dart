@@ -45,7 +45,7 @@ final class _LocalFileDescriptor {
   final String? syntaxLanguage;
 
   String get typeLabel => switch (kind) {
-    _LocalFileKind.image => 'IMAGE',
+    _LocalFileKind.image => extension == '.svg' ? 'SVG' : 'IMAGE',
     _LocalFileKind.markdown => 'MARKDOWN',
     _LocalFileKind.html => 'HTML',
     _LocalFileKind.code => _codeTypeLabel(fileName, extension, syntaxLanguage!),
@@ -60,7 +60,7 @@ final class _LocalFileDescriptor {
   };
 
   IconData get icon => switch (kind) {
-    _LocalFileKind.image => Icons.image_outlined,
+    _LocalFileKind.image => LucideIcons.image,
     _LocalFileKind.markdown ||
     _LocalFileKind.text => Icons.text_snippet_outlined,
     _LocalFileKind.html || _LocalFileKind.code => LucideIcons.fileCode2,
@@ -81,6 +81,7 @@ _LocalFileKind _kindForExtension(String extension, String? syntaxLanguage) {
     '.gif',
     '.bmp',
     '.webp',
+    '.svg',
   }.contains(extension)) {
     return _LocalFileKind.image;
   }

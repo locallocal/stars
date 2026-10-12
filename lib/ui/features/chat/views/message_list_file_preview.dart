@@ -274,7 +274,7 @@ class _LocalFilePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final file = File(descriptor.path);
-    if (!file.existsSync()) {
+    if (descriptor.kind != _LocalFileKind.image && !file.existsSync()) {
       return _LocalFilePreviewPlaceholder(
         icon: Icons.file_present_outlined,
         message: S.of(context).fileMissing,
@@ -282,21 +282,10 @@ class _LocalFilePreview extends StatelessWidget {
     }
 
     return switch (descriptor.kind) {
-      _LocalFileKind.image => ClipRRect(
+      _LocalFileKind.image => LocalImagePreview(
         key: const ValueKey<String>('message-local-file-image-preview'),
-        borderRadius: StarsDesktopThemeSpec.containerRadius,
-        child: ColoredBox(
-          color: Colors.black,
-          child: Image.file(
-            file,
-            fit: BoxFit.contain,
-            errorBuilder:
-                (context, error, stackTrace) => _LocalFilePreviewPlaceholder(
-                  icon: Icons.broken_image_outlined,
-                  message: S.of(context).filePreviewUnavailable,
-                ),
-          ),
-        ),
+        filePath: descriptor.path,
+        interactive: true,
       ),
       _LocalFileKind.markdown => _LocalTextFilePreview(
         key: const ValueKey<String>('message-local-file-markdown-preview'),
