@@ -15,7 +15,8 @@ final class BotTransferFileService {
       allowedExtensions: const ['json'],
     );
     if (file == null) return null;
-    if (file.size > maxDocumentBytes) {
+    final size = await file.length();
+    if (size != null && size > maxDocumentBytes) {
       throw const FormatException('Bot export exceeds the size limit.');
     }
     return file.readAsBytes();
