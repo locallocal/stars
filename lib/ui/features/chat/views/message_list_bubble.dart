@@ -349,10 +349,12 @@ class _MessageContent extends StatelessWidget {
         isDesktop
             ? StarsDesktopThemeSpec.containerRadius
             : BorderRadius.circular(12);
-    return GestureDetector(
+    return ShadButton.ghost(
       key: ValueKey<String>('message-image-preview-$imagePath'),
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
+      width: previewSize,
+      height: previewSize,
+      padding: EdgeInsets.zero,
+      onPressed: () {
         _showImageDialog(
           context,
           imagePath,
@@ -368,21 +370,7 @@ class _MessageContent extends StatelessWidget {
           borderRadius: radius,
           border: Border.all(color: StarsDesktopTokens.of(context).separator),
         ),
-        child: Image.file(
-          File(imagePath),
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return ColoredBox(
-              color: StarsDesktopTokens.of(context).controlFill,
-              child: Center(
-                child: Icon(
-                  isDesktop ? LucideIcons.imageOff : Icons.broken_image,
-                  color: StarsDesktopTokens.of(context).secondaryText,
-                ),
-              ),
-            );
-          },
-        ),
+        child: LocalImagePreview(filePath: imagePath, compact: true),
       ),
     );
   }

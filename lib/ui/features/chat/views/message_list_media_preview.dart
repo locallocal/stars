@@ -6,6 +6,14 @@ void _showImageDialog(
   MessageActionViewModel? actions, {
   String trustAnnotation = '',
 }) {
+  if (LocalImagePreview.isSvg(imagePath)) {
+    showLocalFilePreviewDialog(
+      context: context,
+      filePath: imagePath,
+      actions: actions,
+    );
+    return;
+  }
   final isDesktop = isDesktopPlatform(context);
 
   Future<void> saveImage(BuildContext dialogContext) async {
