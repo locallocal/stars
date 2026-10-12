@@ -1026,5 +1026,18 @@
     "modelLogSaveFailed": "설정을 저장할 수 없습니다. 이전 설정을 유지합니다.",
     "modelLogWriteFailed": "로그를 쓸 수 없습니다. 폴더 권한과 여유 공간을 확인하세요. 모델 요청에는 영향이 없습니다.",
     "modelLogOpenFailed": "폴더를 열 수 없습니다. 경로를 복사해 직접 열어주세요.",
-    "modelLogCopyFailed": "경로를 복사할 수 없습니다. 선택하여 직접 복사해주세요."
+    "modelLogCopyFailed": "경로를 복사할 수 없습니다. 선택하여 직접 복사해주세요.",
+    "renameFile": "파일 이름 변경",
+    "renameFolder": "폴더 이름 변경",
+    "entryName": "이름",
+    "entryNameInvalid": "경로 구분 기호나 예약 문자가 없는 올바른 이름을 입력하세요.",
+    "entryAlreadyExists": "같은 이름의 파일 또는 폴더가 이미 있습니다.",
+    "entryMissing": "이 파일 또는 폴더가 더 이상 존재하지 않습니다.",
+    "entryRenameFailed": "이름을 변경할 수 없습니다. 권한을 확인하고 다시 시도하세요.",
+    "entryDeleteFailed": "삭제할 수 없습니다. 권한을 확인하고 다시 시도하세요.",
+    "deleteFile": "파일 삭제",
+    "deleteFolder": "폴더 삭제",
+    "confirmDeleteFile": "“{name}”을(를) 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+    "confirmDeleteFolder": "“{name}”과(와) 그 안의 모든 내용을 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+    "entryOperationUnavailable": "이 항목을 변경할 수 없습니다. 디렉터리를 다시 열고 시도하세요."
 }

@@ -1026,5 +1026,18 @@
     "modelLogSaveFailed": "No se pudo guardar. Se conserva el ajuste anterior.",
     "modelLogWriteFailed": "No se pudo escribir el registro. Revisa los permisos y el espacio libre. Las solicitudes no se ven afectadas.",
     "modelLogOpenFailed": "No se pudo abrir la carpeta. Copia la ruta para abrirla manualmente.",
-    "modelLogCopyFailed": "No se pudo copiar la ruta. Selecciónala y cópiala manualmente."
+    "modelLogCopyFailed": "No se pudo copiar la ruta. Selecciónala y cópiala manualmente.",
+    "renameFile": "Cambiar nombre del archivo",
+    "renameFolder": "Cambiar nombre de la carpeta",
+    "entryName": "Nombre",
+    "entryNameInvalid": "Introduce un nombre válido sin separadores de ruta ni caracteres reservados.",
+    "entryAlreadyExists": "Ya existe un archivo o una carpeta con este nombre.",
+    "entryMissing": "Este archivo o carpeta ya no existe.",
+    "entryRenameFailed": "No se pudo cambiar el nombre. Comprueba los permisos e inténtalo de nuevo.",
+    "entryDeleteFailed": "No se pudo eliminar este elemento. Comprueba los permisos e inténtalo de nuevo.",
+    "deleteFile": "Eliminar archivo",
+    "deleteFolder": "Eliminar carpeta",
+    "confirmDeleteFile": "¿Eliminar “{name}” permanentemente? Esta acción no se puede deshacer.",
+    "confirmDeleteFolder": "¿Eliminar “{name}” y todo su contenido permanentemente? Esta acción no se puede deshacer.",
+    "entryOperationUnavailable": "No se puede modificar este elemento. Vuelve a abrir el directorio e inténtalo de nuevo."
 }

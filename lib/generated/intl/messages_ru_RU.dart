@@ -47,71 +47,77 @@ class MessageLookup extends MessageLookupByLibrary {
       "Удаление чата приведет к стиранию всей истории переписки. Вы уверены, что хотите удалить чат с ${botName}?";
 
   static String m11(name) =>
-      "Delete ${name}? Its cached Tool catalog and secure credential will also be removed.";
+      "Удалить «${name}» безвозвратно? Это действие нельзя отменить.";
 
   static String m12(name) =>
+      "Удалить «${name}» и всё его содержимое безвозвратно? Это действие нельзя отменить.";
+
+  static String m13(name) =>
+      "Delete ${name}? Its cached Tool catalog and secure credential will also be removed.";
+
+  static String m14(name) =>
       "Удалить ${name}? Привязки к ботам также будут удалены.";
 
-  static String m13(year) => "© ${year} Команда Stars";
+  static String m15(year) => "© ${year} Команда Stars";
 
-  static String m14(error) => "Could not create the chat: ${error}";
+  static String m16(error) => "Could not create the chat: ${error}";
 
-  static String m15(error) => "Could not delete the chat: ${error}";
+  static String m17(error) => "Could not delete the chat: ${error}";
 
-  static String m16(milliseconds) => "${milliseconds} мс";
+  static String m18(milliseconds) => "${milliseconds} мс";
 
-  static String m17(seconds) => "${seconds} с";
+  static String m19(seconds) => "${seconds} с";
 
-  static String m18(name) =>
+  static String m20(name) =>
       "Разрешить ${name} зарегистрировать объявленные скрипты как инструменты. Каждый вызов потребует подтверждения.";
 
-  static String m19(count) => "${count} files";
+  static String m21(count) => "${count} files";
 
-  static String m20(error) => "Generate image failed: ${error}";
+  static String m22(error) => "Generate image failed: ${error}";
 
-  static String m21(error) => "Could not generate music: ${error}";
+  static String m23(error) => "Could not generate music: ${error}";
 
-  static String m22(error) => "Could not generate speech: ${error}";
+  static String m24(error) => "Could not generate speech: ${error}";
 
-  static String m23(error) => "Could not generate video: ${error}";
+  static String m25(error) => "Could not generate video: ${error}";
 
-  static String m24(count) => "${count} items";
+  static String m26(count) => "${count} items";
 
-  static String m25(index, summary) =>
+  static String m27(index, summary) =>
       "Перейти к сообщению пользователя ${index}: ${summary}";
 
-  static String m26(language) => "Язык изменен на ${language}";
+  static String m28(language) => "Язык изменен на ${language}";
 
-  static String m27(error) => "MCP connection failed: ${error}";
+  static String m29(error) => "MCP connection failed: ${error}";
 
-  static String m28(count) => "${count} configured (values hidden)";
+  static String m30(count) => "${count} configured (values hidden)";
 
-  static String m29(minutes) => "${minutes} минут назад";
+  static String m31(minutes) => "${minutes} минут назад";
 
-  static String m30(count) => "Успешно получено ${count} моделей";
+  static String m32(count) => "Успешно получено ${count} моделей";
 
-  static String m31(count) => "${count} запусков команд";
+  static String m33(count) => "${count} запусков команд";
 
-  static String m32(duration) => "Длительность ${duration}";
+  static String m34(duration) => "Длительность ${duration}";
 
-  static String m33(count) => "${count} изменений файлов";
+  static String m35(count) => "${count} изменений файлов";
 
-  static String m34(count) => "${count} вызовов инструментов";
+  static String m36(count) => "${count} вызовов инструментов";
 
-  static String m35(error) => "Ошибка получения ответа: ${error}";
+  static String m37(error) => "Ошибка получения ответа: ${error}";
 
-  static String m36(error) => "Could not save image: ${error}";
+  static String m38(error) => "Could not save image: ${error}";
 
-  static String m37(error) => "Could not share image: ${error}";
+  static String m39(error) => "Could not share image: ${error}";
 
-  static String m38(error) => "Не удалось импортировать навык: ${error}";
+  static String m40(error) => "Не удалось импортировать навык: ${error}";
 
-  static String m39(question, reason) =>
+  static String m41(question, reason) =>
       "Я не могу дать надёжный фактический ответ на вопрос «${question}», поэтому не буду гадать.\n\nСтатус проверки: ${reason}\n\nВы можете просмотреть сведения о доказательствах, предоставить надёжный источник или попросить меня повторить проверку.";
 
-  static String m40(duration) => "Размышление завершено · ${duration}";
+  static String m42(duration) => "Размышление завершено · ${duration}";
 
-  static String m41(error) => "Ошибка воспроизведения видео: ${error}";
+  static String m43(error) => "Ошибка воспроизведения видео: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -365,8 +371,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "confirmDeleteBot": m9,
     "confirmDeleteChat": m10,
-    "confirmDeleteMcpServer": m11,
-    "confirmUninstallSkill": m12,
+    "confirmDeleteFile": m11,
+    "confirmDeleteFolder": m12,
+    "confirmDeleteMcpServer": m13,
+    "confirmUninstallSkill": m14,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage(
       "Контактная информация (необязательно)",
     ),
@@ -430,8 +438,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
-    "copyright": m13,
-    "createChatFailed": m14,
+    "copyright": m15,
+    "createChatFailed": m16,
     "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
     "creationTime": MessageLookupByLibrary.simpleMessage("Время создания"),
     "customProvider": MessageLookupByLibrary.simpleMessage(
@@ -457,7 +465,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("Удалить"),
     "deleteBot": MessageLookupByLibrary.simpleMessage("Удалить бота"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("Удалить чат"),
-    "deleteChatFailed": m15,
+    "deleteChatFailed": m17,
+    "deleteFile": MessageLookupByLibrary.simpleMessage("Удалить файл"),
+    "deleteFolder": MessageLookupByLibrary.simpleMessage("Удалить папку"),
     "deleteMcpServer": MessageLookupByLibrary.simpleMessage(
       "Delete MCP Server",
     ),
@@ -498,8 +508,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "disableSkillScripts": MessageLookupByLibrary.simpleMessage(
       "Отключить скрипты",
     ),
-    "durationMilliseconds": m16,
-    "durationSeconds": m17,
+    "durationMilliseconds": m18,
+    "durationSeconds": m19,
     "edit": MessageLookupByLibrary.simpleMessage("Редактировать"),
     "editBot": MessageLookupByLibrary.simpleMessage("Редактировать бота"),
     "editMcpServer": MessageLookupByLibrary.simpleMessage("Edit MCP Server"),
@@ -517,7 +527,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "enableSkillScripts": MessageLookupByLibrary.simpleMessage(
       "Включить скрипты",
     ),
-    "enableSkillScriptsDescription": m18,
+    "enableSkillScriptsDescription": m20,
     "enableSkillScriptsTitle": MessageLookupByLibrary.simpleMessage(
       "Включить изолированные скрипты?",
     ),
@@ -537,6 +547,25 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "enterSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Введите системный промпт...",
+    ),
+    "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "Файл или папка с таким именем уже существует.",
+    ),
+    "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось удалить элемент. Проверьте права доступа и повторите попытку.",
+    ),
+    "entryMissing": MessageLookupByLibrary.simpleMessage(
+      "Этот файл или папка больше не существует.",
+    ),
+    "entryName": MessageLookupByLibrary.simpleMessage("Имя"),
+    "entryNameInvalid": MessageLookupByLibrary.simpleMessage(
+      "Введите допустимое имя без разделителей пути и зарезервированных символов.",
+    ),
+    "entryOperationUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Этот элемент нельзя изменить. Откройте каталог заново и повторите попытку.",
+    ),
+    "entryRenameFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось переименовать элемент. Проверьте права доступа и повторите попытку.",
     ),
     "errorLoadingContent": MessageLookupByLibrary.simpleMessage(
       "Ошибка при загрузке содержимого, пожалуйста, повторите попытку позже.",
@@ -577,7 +606,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Сначала получите список моделей",
     ),
     "fileAttachment": MessageLookupByLibrary.simpleMessage("File attachment"),
-    "fileCount": m19,
+    "fileCount": m21,
     "fileMissing": MessageLookupByLibrary.simpleMessage(
       "This file no longer exists.",
     ),
@@ -601,10 +630,10 @@ class MessageLookup extends MessageLookupByLibrary {
       "Размер шрифта обновлен",
     ),
     "forgetMemory": MessageLookupByLibrary.simpleMessage("Забыть"),
-    "generateImageFailed": m20,
-    "generateMusicFailed": m21,
-    "generateSpeechFailed": m22,
-    "generateVideoFailed": m23,
+    "generateImageFailed": m22,
+    "generateMusicFailed": m23,
+    "generateSpeechFailed": m24,
+    "generateVideoFailed": m25,
     "generatedImage": MessageLookupByLibrary.simpleMessage("Image generated"),
     "generating": MessageLookupByLibrary.simpleMessage("Generating…"),
     "generatingImage": MessageLookupByLibrary.simpleMessage(
@@ -661,11 +690,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "Созданная сводка не прошла проверку",
     ),
-    "itemCount": m24,
+    "itemCount": m26,
     "jumpToLatest": MessageLookupByLibrary.simpleMessage("Jump to Latest"),
-    "jumpToUserMessage": m25,
+    "jumpToUserMessage": m27,
     "justNow": MessageLookupByLibrary.simpleMessage("Только что"),
-    "languageChanged": m26,
+    "languageChanged": m28,
     "languageSettings": MessageLookupByLibrary.simpleMessage("Настройки языка"),
     "lightMode": MessageLookupByLibrary.simpleMessage("Светлая тема"),
     "linkOpenFailed": MessageLookupByLibrary.simpleMessage(
@@ -715,7 +744,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpConnectionError": MessageLookupByLibrary.simpleMessage(
       "Connection error",
     ),
-    "mcpConnectionFailed": m27,
+    "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
@@ -727,7 +756,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
     ),
-    "mcpHiddenEnvironmentVariableCount": m28,
+    "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
       "Remote MCP endpoints must use HTTPS.",
     ),
@@ -817,7 +846,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "messageHint": MessageLookupByLibrary.simpleMessage("Введите сообщение..."),
     "messageSkills": MessageLookupByLibrary.simpleMessage("Навыки"),
-    "minutesAgo": m29,
+    "minutesAgo": m31,
     "modalityAudio": MessageLookupByLibrary.simpleMessage("Аудио"),
     "modalityFile": MessageLookupByLibrary.simpleMessage("Файл"),
     "modalityImage": MessageLookupByLibrary.simpleMessage("Изображение"),
@@ -877,7 +906,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "Модель достигла лимита шагов обработки. Упростите запрос и повторите попытку.",
     ),
-    "modelsRetrievedSuccess": m30,
+    "modelsRetrievedSuccess": m32,
     "modificationTime": MessageLookupByLibrary.simpleMessage("Время изменения"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
     "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
@@ -995,13 +1024,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "privacyPolicy": MessageLookupByLibrary.simpleMessage(
       "Политика конфиденциальности",
     ),
-    "processCommandCount": m31,
-    "processDuration": m32,
-    "processFileCount": m33,
+    "processCommandCount": m33,
+    "processDuration": m34,
+    "processFileCount": m35,
     "processInformation": MessageLookupByLibrary.simpleMessage(
       "Информация о процессе",
     ),
-    "processToolCount": m34,
+    "processToolCount": m36,
     "profile": MessageLookupByLibrary.simpleMessage("Профиль"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage(
       "Поделитесь своими предложениями и отзывами",
@@ -1044,6 +1073,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "Выберите понятное название, чтобы быстрее находить эту беседу.",
     ),
+    "renameFile": MessageLookupByLibrary.simpleMessage("Переименовать файл"),
+    "renameFolder": MessageLookupByLibrary.simpleMessage("Переименовать папку"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Ответ отменен"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "Остановлено · Частичный ответ сохранён",
@@ -1051,7 +1082,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "resetToDefault": MessageLookupByLibrary.simpleMessage(
       "Восстановить значения по умолчанию",
     ),
-    "responseError": m35,
+    "responseError": m37,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("Восстановить"),
     "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage(
@@ -1068,7 +1099,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveAndConnect": MessageLookupByLibrary.simpleMessage("Save and connect"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("Сохранить изменения"),
     "saveImage": MessageLookupByLibrary.simpleMessage("Save image"),
-    "saveImageFailed": m36,
+    "saveImageFailed": m38,
     "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage(
       "Could not save to gallery",
     ),
@@ -1094,7 +1125,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "send": MessageLookupByLibrary.simpleMessage("Отправить"),
     "settings": MessageLookupByLibrary.simpleMessage("Настройки"),
     "shareImage": MessageLookupByLibrary.simpleMessage("Share image"),
-    "shareImageFailed": m37,
+    "shareImageFailed": m39,
     "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
       "Image from Stars",
     ),
@@ -1130,7 +1161,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "skillDisabled": MessageLookupByLibrary.simpleMessage("Выключен"),
     "skillEnabled": MessageLookupByLibrary.simpleMessage("Включён"),
     "skillFiles": MessageLookupByLibrary.simpleMessage("Файлы"),
-    "skillImportFailed": m38,
+    "skillImportFailed": m40,
     "skillImportSucceeded": MessageLookupByLibrary.simpleMessage(
       "Навык импортирован",
     ),
@@ -1258,7 +1289,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
       "У меня недостаточно надёжных доказательств для фактического ответа, поэтому я не буду гадать. Просмотрите сведения о доказательствах, предоставьте надёжный источник или попросите меня повторить проверку.",
     ),
-    "strictGroundingUnableToVerifyForQuestion": m39,
+    "strictGroundingUnableToVerifyForQuestion": m41,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "Структурированная информация о процессе",
     ),
@@ -1291,7 +1322,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage(
       "Размышление завершено",
     ),
-    "thinkingCompletedWithDuration": m40,
+    "thinkingCompletedWithDuration": m42,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("Размышление…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("Использование токенов"),
     "tokens": MessageLookupByLibrary.simpleMessage("токенов"),
@@ -1370,7 +1401,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage(
       "Не удалось загрузить видео",
     ),
-    "videoPlaybackError": m41,
+    "videoPlaybackError": m43,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("Открыть сводку"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(

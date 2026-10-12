@@ -9,6 +9,7 @@ import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_directory_view_model.dart';
 import 'package:stars/ui/features/chat/view_models/message_action_view_model.dart';
 import 'package:stars/ui/features/chat/views/message_list.dart';
+import 'package:stars/ui/features/chat/views/conversation_directory_actions.dart';
 import 'package:stars/utils/theme.dart';
 
 Future<void> showConversationDirectoryDialog({
@@ -150,7 +151,7 @@ final class _ConversationDirectoryBrowserState
         _DirectoryToolbar(
           path: widget.viewModel.directoryPath,
           canNavigateUp: widget.viewModel.canNavigateUp,
-          loading: widget.viewModel.loading,
+          loading: widget.viewModel.busy,
           onNavigateUp: () => unawaited(widget.viewModel.navigateUp()),
           searchController: _searchController,
           searchFocusNode: _searchFocusNode,
@@ -205,8 +206,9 @@ final class _ConversationDirectoryBrowserState
             ),
             child: _DirectoryEntryRow(
               entry: entry,
+              viewModel: viewModel,
               onOpen:
-                  viewModel.loading
+                  viewModel.busy
                       ? null
                       : entry.isDirectory
                       ? () => unawaited(viewModel.openDirectory(entry))
@@ -427,9 +429,14 @@ final class _DirectoryPathState extends State<_DirectoryPath> {
 }
 
 final class _DirectoryEntryRow extends StatelessWidget {
-  const _DirectoryEntryRow({required this.entry, this.onOpen});
+  const _DirectoryEntryRow({
+    required this.entry,
+    required this.viewModel,
+    this.onOpen,
+  });
 
   final ConversationDirectoryEntry entry;
+  final ConversationDirectoryViewModel viewModel;
   final VoidCallback? onOpen;
 
   @override
@@ -440,68 +447,89 @@ final class _DirectoryEntryRow extends StatelessWidget {
       if (entry.sizeBytes case final size?) _formatBytes(size, locale),
       DateFormat.yMd(locale).add_Hm().format(entry.modifiedAt.toLocal()),
     ];
-    return Semantics(
-      label: entry.name,
-      hint: entry.isDirectory ? null : S.of(context).preview,
-      button: onOpen != null,
-      onTap: onOpen,
-      child: ExcludeSemantics(
-        child: ShadButton.ghost(
-          key: ValueKey<String>('conversation-directory-${entry.relativePath}'),
-          width: double.infinity,
-          height: 0,
-          expands: true,
-          enabled: onOpen != null,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-          mainAxisAlignment: MainAxisAlignment.start,
-          onPressed: onOpen,
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: tokens.controlFill,
-                  borderRadius: StarsDesktopThemeSpec.itemRadius,
+    return Row(
+      children: [
+        Expanded(
+          child: Semantics(
+            label: entry.name,
+            hint: entry.isDirectory ? null : S.of(context).preview,
+            button: onOpen != null,
+            onTap: onOpen,
+            child: ExcludeSemantics(
+              child: ShadButton.ghost(
+                key: ValueKey<String>(
+                  'conversation-directory-${entry.relativePath}',
                 ),
-                alignment: Alignment.center,
-                child: Icon(
-                  entry.isDirectory ? LucideIcons.folder : LucideIcons.fileText,
-                  size: 17,
-                  color: tokens.secondaryText,
+                width: double.infinity,
+                height: 0,
+                expands: true,
+                enabled: onOpen != null,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 10,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                onPressed: onOpen,
+                child: Row(
                   children: [
-                    Text(
-                      entry.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: StarsDesktopThemeSpec.bodyStyle(context),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: tokens.controlFill,
+                        borderRadius: StarsDesktopThemeSpec.itemRadius,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        entry.isDirectory
+                            ? LucideIcons.folder
+                            : LucideIcons.fileText,
+                        size: 17,
+                        color: tokens.secondaryText,
+                      ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      metadata.join(' · '),
-                      style: StarsDesktopThemeSpec.metaStyle(context),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: StarsDesktopThemeSpec.bodyStyle(context),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            metadata.join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: StarsDesktopThemeSpec.metaStyle(context),
+                          ),
+                        ],
+                      ),
                     ),
+                    if (entry.isDirectory && onOpen != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        LucideIcons.chevronRight,
+                        size: 17,
+                        color: tokens.secondaryText,
+                      ),
+                    ],
                   ],
                 ),
               ),
-              if (entry.isDirectory && onOpen != null) ...[
-                const SizedBox(width: 8),
-                Icon(
-                  LucideIcons.chevronRight,
-                  size: 17,
-                  color: tokens.secondaryText,
-                ),
-              ],
-            ],
+            ),
           ),
         ),
-      ),
+        const SizedBox(width: 8),
+        ConversationDirectoryEntryMenu(
+          key: ValueKey(entry.relativePath),
+          entry: entry,
+          viewModel: viewModel,
+        ),
+      ],
     );
   }
 }

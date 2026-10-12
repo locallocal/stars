@@ -18,6 +18,8 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
   AppFailure? _error;
   int _loadGeneration = 0;
   String _requestedRelativePath = '';
+  bool _mutating = false;
+  AppFailure? _mutationError;
 
   ConversationDirectorySnapshot? get snapshot => _snapshot;
   String get directoryPath => _snapshot?.path ?? '';
@@ -25,6 +27,9 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
   String get query => _query;
   bool get loading => _loading;
   AppFailure? get error => _error;
+  bool get mutating => _mutating;
+  bool get busy => _loading || _mutating;
+  AppFailure? get mutationError => _mutationError;
 
   List<ConversationDirectoryEntry> get visibleEntries {
     final entries = _snapshot?.entries ?? const <ConversationDirectoryEntry>[];
@@ -46,24 +51,30 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
     return path.isWithin(normalizedDirectory, filePath) ? filePath : null;
   }
 
-  Future<void> load() => _loadDirectory(_requestedRelativePath);
+  Future<void> load() async {
+    if (_mutating) return;
+    await _loadDirectory(_requestedRelativePath);
+  }
 
   Future<void> openDirectory(ConversationDirectoryEntry entry) async {
-    if (!entry.isDirectory || isDisposed) return;
+    if (!entry.isDirectory || isDisposed || _mutating) return;
     await _loadDirectory(entry.relativePath);
   }
 
   Future<void> navigateUp() async {
-    if (!canNavigateUp || isDisposed) return;
+    if (!canNavigateUp || isDisposed || _mutating) return;
     final parentPath = path.dirname(_requestedRelativePath);
     await _loadDirectory(parentPath == '.' ? '' : parentPath);
   }
 
-  Future<void> _loadDirectory(String relativePath) async {
+  Future<void> _loadDirectory(
+    String relativePath, {
+    bool clearSearch = true,
+  }) async {
     if (isDisposed) return;
     final generation = ++_loadGeneration;
     _requestedRelativePath = relativePath;
-    _query = '';
+    if (clearSearch) _query = '';
     _loading = true;
     _error = null;
     notifyListeners();
@@ -90,6 +101,66 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
     } finally {
       if (!isDisposed && generation == _loadGeneration) {
         _loading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void clearMutationError() {
+    if (isDisposed || _mutationError == null || _mutating) return;
+    _mutationError = null;
+    notifyListeners();
+  }
+
+  Future<bool> renameEntry(ConversationDirectoryEntry entry, String newName) =>
+      _mutate(entry, () async {
+        if (!isValidConversationEntryName(newName)) {
+          throw const AppFailure.validation('conversation_entry_name_invalid');
+        }
+        await _repository.rename(
+          chatId,
+          relativePath: entry.relativePath,
+          newName: newName,
+        );
+      }, 'conversation_entry_rename_failed');
+
+  Future<bool> deleteEntry(ConversationDirectoryEntry entry) => _mutate(
+    entry,
+    () => _repository.delete(chatId, relativePath: entry.relativePath),
+    'conversation_entry_delete_failed',
+  );
+
+  Future<bool> _mutate(
+    ConversationDirectoryEntry entry,
+    Future<void> Function() operation,
+    String failureCode,
+  ) async {
+    if (isDisposed || busy) return false;
+    if (!(_snapshot?.entries.contains(entry) ?? false)) {
+      _mutationError = const AppFailure.validation(
+        'conversation_entry_missing',
+      );
+      notifyListeners();
+      return false;
+    }
+    _mutating = true;
+    _mutationError = null;
+    notifyListeners();
+    try {
+      await operation();
+      if (isDisposed) return false;
+      await _loadDirectory(_requestedRelativePath, clearSearch: false);
+      // A refresh failure is shown by the browser. The mutation still succeeded
+      // and must not be offered for submission a second time.
+      return !isDisposed;
+    } on Object catch (error) {
+      if (!isDisposed) {
+        _mutationError = AppFailure.from(error, code: failureCode);
+      }
+      return false;
+    } finally {
+      if (!isDisposed) {
+        _mutating = false;
         notifyListeners();
       }
     }

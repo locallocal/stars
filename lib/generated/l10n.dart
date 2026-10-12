@@ -5764,6 +5764,121 @@ class S {
       args: [],
     );
   }
+
+  /// `Rename file`
+  String get renameFile {
+    return Intl.message('Rename file', name: 'renameFile', desc: '', args: []);
+  }
+
+  /// `Rename folder`
+  String get renameFolder {
+    return Intl.message(
+      'Rename folder',
+      name: 'renameFolder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name`
+  String get entryName {
+    return Intl.message('Name', name: 'entryName', desc: '', args: []);
+  }
+
+  /// `Enter a valid name without path separators or reserved characters.`
+  String get entryNameInvalid {
+    return Intl.message(
+      'Enter a valid name without path separators or reserved characters.',
+      name: 'entryNameInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `A file or folder with this name already exists.`
+  String get entryAlreadyExists {
+    return Intl.message(
+      'A file or folder with this name already exists.',
+      name: 'entryAlreadyExists',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This file or folder no longer exists.`
+  String get entryMissing {
+    return Intl.message(
+      'This file or folder no longer exists.',
+      name: 'entryMissing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not rename this item. Check permissions and try again.`
+  String get entryRenameFailed {
+    return Intl.message(
+      'Could not rename this item. Check permissions and try again.',
+      name: 'entryRenameFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not delete this item. Check permissions and try again.`
+  String get entryDeleteFailed {
+    return Intl.message(
+      'Could not delete this item. Check permissions and try again.',
+      name: 'entryDeleteFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Delete file`
+  String get deleteFile {
+    return Intl.message('Delete file', name: 'deleteFile', desc: '', args: []);
+  }
+
+  /// `Delete folder`
+  String get deleteFolder {
+    return Intl.message(
+      'Delete folder',
+      name: 'deleteFolder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Permanently delete “{name}”? This cannot be undone.`
+  String confirmDeleteFile(String name) {
+    return Intl.message(
+      'Permanently delete “$name”? This cannot be undone.',
+      name: 'confirmDeleteFile',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `Permanently delete “{name}” and all of its contents? This cannot be undone.`
+  String confirmDeleteFolder(String name) {
+    return Intl.message(
+      'Permanently delete “$name” and all of its contents? This cannot be undone.',
+      name: 'confirmDeleteFolder',
+      desc: '',
+      args: [name],
+    );
+  }
+
+  /// `This item cannot be changed. Reopen the directory and try again.`
+  String get entryOperationUnavailable {
+    return Intl.message(
+      'This item cannot be changed. Reopen the directory and try again.',
+      name: 'entryOperationUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

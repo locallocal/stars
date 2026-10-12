@@ -46,70 +46,75 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m10(botName) =>
       "채팅을 삭제하면 모든 채팅 기록이 삭제됩니다. ${botName}와(과)의 채팅을 정말로 삭제하시겠습니까?";
 
-  static String m11(name) =>
+  static String m11(name) => "“${name}”을(를) 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.";
+
+  static String m12(name) =>
+      "“${name}”과(와) 그 안의 모든 내용을 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.";
+
+  static String m13(name) =>
       "Delete ${name}? Its cached Tool catalog and secure credential will also be removed.";
 
-  static String m12(name) => "${name} 스킬을 제거할까요? 봇 연결도 함께 삭제됩니다.";
+  static String m14(name) => "${name} 스킬을 제거할까요? 봇 연결도 함께 삭제됩니다.";
 
-  static String m13(year) => "© ${year} Stars 팀";
+  static String m15(year) => "© ${year} Stars 팀";
 
-  static String m14(error) => "Could not create the chat: ${error}";
+  static String m16(error) => "Could not create the chat: ${error}";
 
-  static String m15(error) => "Could not delete the chat: ${error}";
+  static String m17(error) => "Could not delete the chat: ${error}";
 
-  static String m16(milliseconds) => "${milliseconds}밀리초";
+  static String m18(milliseconds) => "${milliseconds}밀리초";
 
-  static String m17(seconds) => "${seconds}초";
+  static String m19(seconds) => "${seconds}초";
 
-  static String m18(name) =>
+  static String m20(name) =>
       "${name}에서 선언된 스크립트를 도구로 등록하도록 허용합니다. 각 호출에는 계속 승인이 필요합니다.";
 
-  static String m19(count) => "${count} files";
+  static String m21(count) => "${count} files";
 
-  static String m20(error) => "Generate image failed: ${error}";
+  static String m22(error) => "Generate image failed: ${error}";
 
-  static String m21(error) => "Could not generate music: ${error}";
+  static String m23(error) => "Could not generate music: ${error}";
 
-  static String m22(error) => "Could not generate speech: ${error}";
+  static String m24(error) => "Could not generate speech: ${error}";
 
-  static String m23(error) => "Could not generate video: ${error}";
+  static String m25(error) => "Could not generate video: ${error}";
 
-  static String m24(count) => "${count} items";
+  static String m26(count) => "${count} items";
 
-  static String m25(index, summary) => "사용자 메시지 ${index}(으)로 이동: ${summary}";
+  static String m27(index, summary) => "사용자 메시지 ${index}(으)로 이동: ${summary}";
 
-  static String m26(language) => "언어가 ${language}(으)로 설정되었습니다";
+  static String m28(language) => "언어가 ${language}(으)로 설정되었습니다";
 
-  static String m27(error) => "MCP connection failed: ${error}";
+  static String m29(error) => "MCP connection failed: ${error}";
 
-  static String m28(count) => "${count} configured (values hidden)";
+  static String m30(count) => "${count} configured (values hidden)";
 
-  static String m29(minutes) => "${minutes}분 전";
+  static String m31(minutes) => "${minutes}분 전";
 
-  static String m30(count) => "${count}개의 모델을 성공적으로 검색했습니다";
+  static String m32(count) => "${count}개의 모델을 성공적으로 검색했습니다";
 
-  static String m31(count) => "명령 실행 ${count}회";
+  static String m33(count) => "명령 실행 ${count}회";
 
-  static String m32(duration) => "소요 시간 ${duration}";
+  static String m34(duration) => "소요 시간 ${duration}";
 
-  static String m33(count) => "파일 변경 ${count}건";
+  static String m35(count) => "파일 변경 ${count}건";
 
-  static String m34(count) => "도구 호출 ${count}회";
+  static String m36(count) => "도구 호출 ${count}회";
 
-  static String m35(error) => "응답을 가져오지 못했습니다: ${error}";
+  static String m37(error) => "응답을 가져오지 못했습니다: ${error}";
 
-  static String m36(error) => "Could not save image: ${error}";
+  static String m38(error) => "Could not save image: ${error}";
 
-  static String m37(error) => "Could not share image: ${error}";
+  static String m39(error) => "Could not share image: ${error}";
 
-  static String m38(error) => "스킬을 가져올 수 없습니다: ${error}";
+  static String m40(error) => "스킬을 가져올 수 없습니다: ${error}";
 
-  static String m39(question, reason) =>
+  static String m41(question, reason) =>
       "“${question}”에 대해 신뢰할 수 있는 사실 답변을 제공할 수 없어 추측으로 답하지 않겠습니다.\n\n검증 상태: ${reason}\n\n증거 세부 정보를 확인하거나 신뢰할 수 있는 출처를 제공하거나 다시 검증해 달라고 요청할 수 있습니다.";
 
-  static String m40(duration) => "생각 완료 · ${duration}";
+  static String m42(duration) => "생각 완료 · ${duration}";
 
-  static String m41(error) => "동영상 재생 오류: ${error}";
+  static String m43(error) => "동영상 재생 오류: ${error}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -309,8 +314,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmDelete": MessageLookupByLibrary.simpleMessage("삭제 확인"),
     "confirmDeleteBot": m9,
     "confirmDeleteChat": m10,
-    "confirmDeleteMcpServer": m11,
-    "confirmUninstallSkill": m12,
+    "confirmDeleteFile": m11,
+    "confirmDeleteFolder": m12,
+    "confirmDeleteMcpServer": m13,
+    "confirmUninstallSkill": m14,
     "contactInfoHint": MessageLookupByLibrary.simpleMessage("연락처 정보(선택 사항)"),
     "contextAndMemory": MessageLookupByLibrary.simpleMessage("컨텍스트와 메모리"),
     "contextCompacted": MessageLookupByLibrary.simpleMessage("컨텍스트가 압축되었습니다"),
@@ -362,8 +369,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
-    "copyright": m13,
-    "createChatFailed": m14,
+    "copyright": m15,
+    "createChatFailed": m16,
     "creatingChat": MessageLookupByLibrary.simpleMessage("Creating…"),
     "creationTime": MessageLookupByLibrary.simpleMessage("생성 시간"),
     "customProvider": MessageLookupByLibrary.simpleMessage("사용자 정의 제공업체..."),
@@ -385,7 +392,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "delete": MessageLookupByLibrary.simpleMessage("삭제"),
     "deleteBot": MessageLookupByLibrary.simpleMessage("봇 삭제"),
     "deleteChat": MessageLookupByLibrary.simpleMessage("채팅 삭제"),
-    "deleteChatFailed": m15,
+    "deleteChatFailed": m17,
+    "deleteFile": MessageLookupByLibrary.simpleMessage("파일 삭제"),
+    "deleteFolder": MessageLookupByLibrary.simpleMessage("폴더 삭제"),
     "deleteMcpServer": MessageLookupByLibrary.simpleMessage(
       "Delete MCP Server",
     ),
@@ -416,8 +425,8 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "disableAllMcpTools": MessageLookupByLibrary.simpleMessage("모든 도구 끄기"),
     "disableSkillScripts": MessageLookupByLibrary.simpleMessage("스크립트 비활성화"),
-    "durationMilliseconds": m16,
-    "durationSeconds": m17,
+    "durationMilliseconds": m18,
+    "durationSeconds": m19,
     "edit": MessageLookupByLibrary.simpleMessage("편집"),
     "editBot": MessageLookupByLibrary.simpleMessage("봇 편집"),
     "editMcpServer": MessageLookupByLibrary.simpleMessage("Edit MCP Server"),
@@ -431,7 +440,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "enableAllMcpTools": MessageLookupByLibrary.simpleMessage("모든 도구 켜기"),
     "enableSkillScripts": MessageLookupByLibrary.simpleMessage("스크립트 활성화"),
-    "enableSkillScriptsDescription": m18,
+    "enableSkillScriptsDescription": m20,
     "enableSkillScriptsTitle": MessageLookupByLibrary.simpleMessage(
       "격리된 스킬 스크립트를 활성화할까요?",
     ),
@@ -442,6 +451,25 @@ class MessageLookup extends MessageLookupByLibrary {
     "enterNewName": MessageLookupByLibrary.simpleMessage("새 이름을 입력하세요"),
     "enterProviderName": MessageLookupByLibrary.simpleMessage("제공업체 이름 입력..."),
     "enterSystemPrompt": MessageLookupByLibrary.simpleMessage("시스템 프롬프트 입력..."),
+    "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "같은 이름의 파일 또는 폴더가 이미 있습니다.",
+    ),
+    "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
+      "삭제할 수 없습니다. 권한을 확인하고 다시 시도하세요.",
+    ),
+    "entryMissing": MessageLookupByLibrary.simpleMessage(
+      "이 파일 또는 폴더가 더 이상 존재하지 않습니다.",
+    ),
+    "entryName": MessageLookupByLibrary.simpleMessage("이름"),
+    "entryNameInvalid": MessageLookupByLibrary.simpleMessage(
+      "경로 구분 기호나 예약 문자가 없는 올바른 이름을 입력하세요.",
+    ),
+    "entryOperationUnavailable": MessageLookupByLibrary.simpleMessage(
+      "이 항목을 변경할 수 없습니다. 디렉터리를 다시 열고 시도하세요.",
+    ),
+    "entryRenameFailed": MessageLookupByLibrary.simpleMessage(
+      "이름을 변경할 수 없습니다. 권한을 확인하고 다시 시도하세요.",
+    ),
     "errorLoadingContent": MessageLookupByLibrary.simpleMessage(
       "콘텐츠를 로드하는 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
     ),
@@ -471,7 +499,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "먼저 모델 목록을 가져오세요",
     ),
     "fileAttachment": MessageLookupByLibrary.simpleMessage("File attachment"),
-    "fileCount": m19,
+    "fileCount": m21,
     "fileMissing": MessageLookupByLibrary.simpleMessage(
       "This file no longer exists.",
     ),
@@ -493,10 +521,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "fontSizeSettings": MessageLookupByLibrary.simpleMessage("글꼴 크기"),
     "fontSizeUpdated": MessageLookupByLibrary.simpleMessage("글꼴 크기가 업데이트되었습니다"),
     "forgetMemory": MessageLookupByLibrary.simpleMessage("잊기"),
-    "generateImageFailed": m20,
-    "generateMusicFailed": m21,
-    "generateSpeechFailed": m22,
-    "generateVideoFailed": m23,
+    "generateImageFailed": m22,
+    "generateMusicFailed": m23,
+    "generateSpeechFailed": m24,
+    "generateVideoFailed": m25,
     "generatedImage": MessageLookupByLibrary.simpleMessage("Image generated"),
     "generating": MessageLookupByLibrary.simpleMessage("Generating…"),
     "generatingImage": MessageLookupByLibrary.simpleMessage(
@@ -541,11 +569,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "invalidSummary": MessageLookupByLibrary.simpleMessage(
       "생성된 요약이 검증을 통과하지 못했습니다",
     ),
-    "itemCount": m24,
+    "itemCount": m26,
     "jumpToLatest": MessageLookupByLibrary.simpleMessage("Jump to Latest"),
-    "jumpToUserMessage": m25,
+    "jumpToUserMessage": m27,
     "justNow": MessageLookupByLibrary.simpleMessage("방금"),
-    "languageChanged": m26,
+    "languageChanged": m28,
     "languageSettings": MessageLookupByLibrary.simpleMessage("언어 설정"),
     "lightMode": MessageLookupByLibrary.simpleMessage("라이트 모드"),
     "linkOpenFailed": MessageLookupByLibrary.simpleMessage(
@@ -595,7 +623,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpConnectionError": MessageLookupByLibrary.simpleMessage(
       "Connection error",
     ),
-    "mcpConnectionFailed": m27,
+    "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
@@ -607,7 +635,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
     ),
-    "mcpHiddenEnvironmentVariableCount": m28,
+    "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
       "Remote MCP endpoints must use HTTPS.",
     ),
@@ -693,7 +721,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "messageHint": MessageLookupByLibrary.simpleMessage("메시지 입력..."),
     "messageSkills": MessageLookupByLibrary.simpleMessage("스킬"),
-    "minutesAgo": m29,
+    "minutesAgo": m31,
     "modalityAudio": MessageLookupByLibrary.simpleMessage("오디오"),
     "modalityFile": MessageLookupByLibrary.simpleMessage("파일"),
     "modalityImage": MessageLookupByLibrary.simpleMessage("이미지"),
@@ -743,7 +771,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "modelTurnLimitReached": MessageLookupByLibrary.simpleMessage(
       "모델이 처리 턴 한도에 도달했습니다. 요청을 단순화한 후 다시 시도하세요.",
     ),
-    "modelsRetrievedSuccess": m30,
+    "modelsRetrievedSuccess": m32,
     "modificationTime": MessageLookupByLibrary.simpleMessage("수정 시간"),
     "musicGenerated": MessageLookupByLibrary.simpleMessage("Music generated"),
     "musicResult": MessageLookupByLibrary.simpleMessage("Music result"),
@@ -843,11 +871,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "preview": MessageLookupByLibrary.simpleMessage("미리보기"),
     "previewText": MessageLookupByLibrary.simpleMessage("텍스트 효과 미리보기"),
     "privacyPolicy": MessageLookupByLibrary.simpleMessage("개인정보 처리방침"),
-    "processCommandCount": m31,
-    "processDuration": m32,
-    "processFileCount": m33,
+    "processCommandCount": m33,
+    "processDuration": m34,
+    "processFileCount": m35,
     "processInformation": MessageLookupByLibrary.simpleMessage("프로세스 정보"),
-    "processToolCount": m34,
+    "processToolCount": m36,
     "profile": MessageLookupByLibrary.simpleMessage("프로필"),
     "provideFeedback": MessageLookupByLibrary.simpleMessage("의견과 제안을 제공해 주세요"),
     "provider": MessageLookupByLibrary.simpleMessage("제공자"),
@@ -876,12 +904,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "이 대화를 쉽게 찾을 수 있도록 명확한 이름을 지정하세요.",
     ),
+    "renameFile": MessageLookupByLibrary.simpleMessage("파일 이름 변경"),
+    "renameFolder": MessageLookupByLibrary.simpleMessage("폴더 이름 변경"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("응답이 취소되었습니다"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "중지됨 · 부분 응답 유지",
     ),
     "resetToDefault": MessageLookupByLibrary.simpleMessage("기본값으로 재설정"),
-    "responseError": m35,
+    "responseError": m37,
     "restoreMemory": MessageLookupByLibrary.simpleMessage("복원"),
     "restorePreview": MessageLookupByLibrary.simpleMessage("Restore preview"),
     "retainedRecentTurns": MessageLookupByLibrary.simpleMessage("유지된 최근 턴"),
@@ -894,7 +924,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "saveAndConnect": MessageLookupByLibrary.simpleMessage("Save and connect"),
     "saveChanges": MessageLookupByLibrary.simpleMessage("변경사항 저장"),
     "saveImage": MessageLookupByLibrary.simpleMessage("Save image"),
-    "saveImageFailed": m36,
+    "saveImageFailed": m38,
     "saveToGalleryFailed": MessageLookupByLibrary.simpleMessage(
       "Could not save to gallery",
     ),
@@ -918,7 +948,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "send": MessageLookupByLibrary.simpleMessage("보내기"),
     "settings": MessageLookupByLibrary.simpleMessage("설정"),
     "shareImage": MessageLookupByLibrary.simpleMessage("Share image"),
-    "shareImageFailed": m37,
+    "shareImageFailed": m39,
     "sharedImageFromStars": MessageLookupByLibrary.simpleMessage(
       "Image from Stars",
     ),
@@ -952,7 +982,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "skillDisabled": MessageLookupByLibrary.simpleMessage("꺼짐"),
     "skillEnabled": MessageLookupByLibrary.simpleMessage("켜짐"),
     "skillFiles": MessageLookupByLibrary.simpleMessage("파일"),
-    "skillImportFailed": m38,
+    "skillImportFailed": m40,
     "skillImportSucceeded": MessageLookupByLibrary.simpleMessage("스킬을 가져왔습니다"),
     "skillLibrary": MessageLookupByLibrary.simpleMessage("스킬"),
     "skillLibraryDescription": MessageLookupByLibrary.simpleMessage(
@@ -1058,7 +1088,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "strictGroundingUnableToVerify": MessageLookupByLibrary.simpleMessage(
       "신뢰할 수 있는 사실 답변을 제공할 충분한 증거가 없어 추측으로 답하지 않겠습니다. 증거 세부 정보를 확인하거나 신뢰할 수 있는 출처를 제공하거나 다시 검증해 달라고 요청해 주세요.",
     ),
-    "strictGroundingUnableToVerifyForQuestion": m39,
+    "strictGroundingUnableToVerifyForQuestion": m41,
     "structuredProcessInfo": MessageLookupByLibrary.simpleMessage(
       "구조화된 프로세스 정보",
     ),
@@ -1085,7 +1115,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "themeSettings": MessageLookupByLibrary.simpleMessage("테마 설정"),
     "thinkingCompleted": MessageLookupByLibrary.simpleMessage("생각 완료"),
-    "thinkingCompletedWithDuration": m40,
+    "thinkingCompletedWithDuration": m42,
     "thinkingInProgress": MessageLookupByLibrary.simpleMessage("생각 중…"),
     "tokenUsage": MessageLookupByLibrary.simpleMessage("토큰 사용량"),
     "tokens": MessageLookupByLibrary.simpleMessage("토큰"),
@@ -1142,7 +1172,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "version": MessageLookupByLibrary.simpleMessage("버전 1.0.0"),
     "videoGenerated": MessageLookupByLibrary.simpleMessage("Video generated"),
     "videoLoadFailed": MessageLookupByLibrary.simpleMessage("동영상을 불러올 수 없습니다"),
-    "videoPlaybackError": m41,
+    "videoPlaybackError": m43,
     "videoResult": MessageLookupByLibrary.simpleMessage("Video result"),
     "viewSummary": MessageLookupByLibrary.simpleMessage("요약 보기"),
     "waitForGenerationBeforeLeaving": MessageLookupByLibrary.simpleMessage(
