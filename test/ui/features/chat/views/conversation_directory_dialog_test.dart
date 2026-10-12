@@ -518,6 +518,17 @@ final class _DirectoryRepository implements ConversationDirectoryRepository {
   final Map<String, ConversationDirectorySnapshot> snapshots;
 
   @override
+  Future<void> rename(
+    String chatId, {
+    required String relativePath,
+    required String newName,
+  }) async => throw UnsupportedError('Read-only fixture');
+
+  @override
+  Future<void> delete(String chatId, {required String relativePath}) async =>
+      throw UnsupportedError('Read-only fixture');
+
+  @override
   Future<ConversationDirectorySnapshot> read(
     String chatId, {
     String relativePath = '',

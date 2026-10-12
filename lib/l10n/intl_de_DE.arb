@@ -1026,5 +1026,18 @@
     "modelLogSaveFailed": "Speichern fehlgeschlagen. Die bisherige Einstellung bleibt aktiv.",
     "modelLogWriteFailed": "Schreiben fehlgeschlagen. Berechtigungen und freien Speicher prüfen. Modellanfragen sind nicht betroffen.",
     "modelLogOpenFailed": "Ordner konnte nicht geöffnet werden. Pfad kopieren und manuell öffnen.",
-    "modelLogCopyFailed": "Kopieren fehlgeschlagen. Pfad auswählen und manuell kopieren."
+    "modelLogCopyFailed": "Kopieren fehlgeschlagen. Pfad auswählen und manuell kopieren.",
+    "renameFile": "Datei umbenennen",
+    "renameFolder": "Ordner umbenennen",
+    "entryName": "Name",
+    "entryNameInvalid": "Geben Sie einen gültigen Namen ohne Pfadtrennzeichen oder reservierte Zeichen ein.",
+    "entryAlreadyExists": "Eine Datei oder ein Ordner mit diesem Namen ist bereits vorhanden.",
+    "entryMissing": "Diese Datei oder dieser Ordner ist nicht mehr vorhanden.",
+    "entryRenameFailed": "Umbenennen fehlgeschlagen. Prüfen Sie die Berechtigungen und versuchen Sie es erneut.",
+    "entryDeleteFailed": "Löschen fehlgeschlagen. Prüfen Sie die Berechtigungen und versuchen Sie es erneut.",
+    "deleteFile": "Datei löschen",
+    "deleteFolder": "Ordner löschen",
+    "confirmDeleteFile": "„{name}“ dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
+    "confirmDeleteFolder": "„{name}“ und den gesamten Inhalt dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
+    "entryOperationUnavailable": "Dieses Element kann nicht geändert werden. Öffnen Sie das Verzeichnis erneut und versuchen Sie es noch einmal."
 }

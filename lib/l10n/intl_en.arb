@@ -1256,5 +1256,32 @@
     "modelLogSaveFailed": "Could not save the setting. The previous value is still in use.",
     "modelLogWriteFailed": "Could not write logs. Check folder permissions and free space. Model requests are unaffected.",
     "modelLogOpenFailed": "Could not open the folder. Copy the path to open it manually.",
-    "modelLogCopyFailed": "Could not copy the path. Select and copy it manually."
+    "modelLogCopyFailed": "Could not copy the path. Select and copy it manually.",
+    "renameFile": "Rename file",
+    "renameFolder": "Rename folder",
+    "entryName": "Name",
+    "entryNameInvalid": "Enter a valid name without path separators or reserved characters.",
+    "entryAlreadyExists": "A file or folder with this name already exists.",
+    "entryMissing": "This file or folder no longer exists.",
+    "entryRenameFailed": "Could not rename this item. Check permissions and try again.",
+    "entryDeleteFailed": "Could not delete this item. Check permissions and try again.",
+    "deleteFile": "Delete file",
+    "deleteFolder": "Delete folder",
+    "confirmDeleteFile": "Permanently delete “{name}”? This cannot be undone.",
+    "confirmDeleteFolder": "Permanently delete “{name}” and all of its contents? This cannot be undone.",
+    "entryOperationUnavailable": "This item cannot be changed. Reopen the directory and try again.",
+    "@confirmDeleteFile": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "@confirmDeleteFolder": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    }
 }

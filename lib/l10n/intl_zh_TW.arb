@@ -1046,5 +1046,18 @@
     "modelLogSaveFailed": "無法儲存設定，仍使用原來的開關狀態。",
     "modelLogWriteFailed": "日誌寫入失敗，請檢查目錄權限和剩餘空間。模型呼叫不受影響。",
     "modelLogOpenFailed": "無法開啟目錄，可複製路徑後手動開啟。",
-    "modelLogCopyFailed": "無法複製路徑，可選取路徑後手動複製。"
+    "modelLogCopyFailed": "無法複製路徑，可選取路徑後手動複製。",
+    "renameFile": "重新命名檔案",
+    "renameFolder": "重新命名資料夾",
+    "entryName": "名稱",
+    "entryNameInvalid": "請輸入有效名稱，不要包含路徑分隔符號或保留字元。",
+    "entryAlreadyExists": "已存在同名檔案或資料夾。",
+    "entryMissing": "此檔案或資料夾已不存在。",
+    "entryRenameFailed": "無法重新命名，請檢查權限後重試。",
+    "entryDeleteFailed": "無法刪除，請檢查權限後重試。",
+    "deleteFile": "刪除檔案",
+    "deleteFolder": "刪除資料夾",
+    "confirmDeleteFile": "確定永久刪除「{name}」嗎？此操作無法復原。",
+    "confirmDeleteFolder": "確定永久刪除「{name}」及其全部內容嗎？此操作無法復原。",
+    "entryOperationUnavailable": "無法修改此項目，請重新開啟目錄後重試。"
 }

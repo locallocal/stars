@@ -1187,5 +1187,18 @@
     "modelLogSaveFailed": "无法保存设置，仍使用原来的开关状态。",
     "modelLogWriteFailed": "日志写入失败，请检查目录权限和剩余空间。模型调用不受影响。",
     "modelLogOpenFailed": "无法打开目录，可复制路径后手动打开。",
-    "modelLogCopyFailed": "无法复制路径，可选中路径后手动复制。"
+    "modelLogCopyFailed": "无法复制路径，可选中路径后手动复制。",
+    "renameFile": "重命名文件",
+    "renameFolder": "重命名文件夹",
+    "entryName": "名称",
+    "entryNameInvalid": "请输入有效名称，不要包含路径分隔符或保留字符。",
+    "entryAlreadyExists": "已存在同名文件或文件夹。",
+    "entryMissing": "此文件或文件夹已不存在。",
+    "entryRenameFailed": "无法重命名，请检查权限后重试。",
+    "entryDeleteFailed": "无法删除，请检查权限后重试。",
+    "deleteFile": "删除文件",
+    "deleteFolder": "删除文件夹",
+    "confirmDeleteFile": "确定永久删除“{name}”吗？此操作无法撤销。",
+    "confirmDeleteFolder": "确定永久删除“{name}”及其全部内容吗？此操作无法撤销。",
+    "entryOperationUnavailable": "无法修改此项，请重新打开目录后重试。"
 }

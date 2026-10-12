@@ -1026,5 +1026,18 @@
     "modelLogSaveFailed": "設定を保存できません。以前の状態を維持します。",
     "modelLogWriteFailed": "ログを書き込めません。権限と空き容量を確認してください。モデルの呼び出しには影響しません。",
     "modelLogOpenFailed": "フォルダーを開けません。パスをコピーして手動で開いてください。",
-    "modelLogCopyFailed": "パスをコピーできません。選択して手動でコピーしてください。"
+    "modelLogCopyFailed": "パスをコピーできません。選択して手動でコピーしてください。",
+    "renameFile": "ファイル名を変更",
+    "renameFolder": "フォルダー名を変更",
+    "entryName": "名前",
+    "entryNameInvalid": "パス区切り文字や予約文字を含まない有効な名前を入力してください。",
+    "entryAlreadyExists": "同じ名前のファイルまたはフォルダーが既に存在します。",
+    "entryMissing": "このファイルまたはフォルダーは既に存在しません。",
+    "entryRenameFailed": "名前を変更できませんでした。権限を確認して再試行してください。",
+    "entryDeleteFailed": "削除できませんでした。権限を確認して再試行してください。",
+    "deleteFile": "ファイルを削除",
+    "deleteFolder": "フォルダーを削除",
+    "confirmDeleteFile": "「{name}」を完全に削除しますか？この操作は取り消せません。",
+    "confirmDeleteFolder": "「{name}」とその内容をすべて完全に削除しますか？この操作は取り消せません。",
+    "entryOperationUnavailable": "この項目は変更できません。ディレクトリを開き直して再試行してください。"
 }

@@ -32,3 +32,13 @@ final class ConversationDirectoryEntry {
   final DateTime modifiedAt;
   final int? sizeBytes;
 }
+
+/// Accepts a single portable filename, never a path or a reserved device name.
+bool isValidConversationEntryName(String name) {
+  if (name.isEmpty || name != name.trim() || name.endsWith('.')) return false;
+  if (RegExp(r'[<>:"/\\|?*\x00-\x1f]').hasMatch(name)) return false;
+  return !RegExp(
+    r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)',
+    caseSensitive: false,
+  ).hasMatch(name);
+}

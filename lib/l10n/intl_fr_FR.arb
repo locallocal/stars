@@ -1026,5 +1026,18 @@
     "modelLogSaveFailed": "Impossible de sauvegarder. Le réglage précédent est conservé.",
     "modelLogWriteFailed": "Écriture impossible. Vérifiez les autorisations et l’espace libre. Les requêtes ne sont pas affectées.",
     "modelLogOpenFailed": "Impossible d’ouvrir le dossier. Copiez le chemin pour l’ouvrir manuellement.",
-    "modelLogCopyFailed": "Copie impossible. Sélectionnez le chemin et copiez-le manuellement."
+    "modelLogCopyFailed": "Copie impossible. Sélectionnez le chemin et copiez-le manuellement.",
+    "renameFile": "Renommer le fichier",
+    "renameFolder": "Renommer le dossier",
+    "entryName": "Nom",
+    "entryNameInvalid": "Saisissez un nom valide sans séparateur de chemin ni caractère réservé.",
+    "entryAlreadyExists": "Un fichier ou dossier portant ce nom existe déjà.",
+    "entryMissing": "Ce fichier ou dossier n’existe plus.",
+    "entryRenameFailed": "Impossible de renommer cet élément. Vérifiez les autorisations et réessayez.",
+    "entryDeleteFailed": "Impossible de supprimer cet élément. Vérifiez les autorisations et réessayez.",
+    "deleteFile": "Supprimer le fichier",
+    "deleteFolder": "Supprimer le dossier",
+    "confirmDeleteFile": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
+    "confirmDeleteFolder": "Supprimer définitivement « {name} » et tout son contenu ? Cette action est irréversible.",
+    "entryOperationUnavailable": "Cet élément ne peut pas être modifié. Rouvrez le répertoire et réessayez."
 }

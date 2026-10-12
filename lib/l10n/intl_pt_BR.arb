@@ -1026,5 +1026,18 @@
     "modelLogSaveFailed": "Não foi possível salvar. A configuração anterior foi mantida.",
     "modelLogWriteFailed": "Não foi possível gravar logs. Verifique permissões e espaço livre. As solicitações não são afetadas.",
     "modelLogOpenFailed": "Não foi possível abrir a pasta. Copie o caminho para abrir manualmente.",
-    "modelLogCopyFailed": "Não foi possível copiar o caminho. Selecione e copie manualmente."
+    "modelLogCopyFailed": "Não foi possível copiar o caminho. Selecione e copie manualmente.",
+    "renameFile": "Renomear arquivo",
+    "renameFolder": "Renomear pasta",
+    "entryName": "Nome",
+    "entryNameInvalid": "Digite um nome válido sem separadores de caminho ou caracteres reservados.",
+    "entryAlreadyExists": "Já existe um arquivo ou uma pasta com esse nome.",
+    "entryMissing": "Este arquivo ou pasta não existe mais.",
+    "entryRenameFailed": "Não foi possível renomear este item. Verifique as permissões e tente novamente.",
+    "entryDeleteFailed": "Não foi possível excluir este item. Verifique as permissões e tente novamente.",
+    "deleteFile": "Excluir arquivo",
+    "deleteFolder": "Excluir pasta",
+    "confirmDeleteFile": "Excluir “{name}” permanentemente? Esta ação não pode ser desfeita.",
+    "confirmDeleteFolder": "Excluir “{name}” e todo o seu conteúdo permanentemente? Esta ação não pode ser desfeita.",
+    "entryOperationUnavailable": "Este item não pode ser alterado. Reabra o diretório e tente novamente."
 }
