@@ -112,6 +112,7 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
         focusNode: _focusNode,
         enabled: !widget.viewModel.busy,
         onPressed: _toggleMenu,
+        hoverBackgroundColor: Colors.transparent,
       ),
     );
   }

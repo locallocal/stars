@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show PointerDeviceKind;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,6 +32,95 @@ void main() {
   tearDown(() {
     model.dispose();
     root.deleteSync(recursive: true);
+  });
+
+  testWidgets('inline entry menus do not open files or navigate folders', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await _pumpPage(tester, model);
+
+      for (final name in ['report.md', 'notes']) {
+        final row = find.byKey(ValueKey('conversation-directory-$name'));
+        final menu = find.byKey(ValueKey('conversation-entry-menu-$name'));
+        final rowBounds = tester.getRect(row);
+        final menuBounds = tester.getRect(menu);
+        expect(rowBounds.contains(menuBounds.topLeft), isTrue);
+        expect(rowBounds.contains(menuBounds.bottomRight), isTrue);
+        expect(menuBounds.center.dy, closeTo(rowBounds.center.dy, 0.01));
+        expect(menuBounds.size, const Size.square(44));
+        expect(
+          tester.getSemantics(menu),
+          matchesSemantics(
+            label: '显示菜单: $name',
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true,
+          ),
+        );
+
+        await tester.tap(menu, kind: PointerDeviceKind.mouse);
+        await tester.pumpAndSettle();
+
+        expect(model.directoryPath, root.path);
+        expect(
+          find.byKey(const ValueKey('message-local-file-dialog')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey('conversation-entry-rename')),
+          findsOneWidget,
+        );
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+      }
+
+      await tester.tap(find.text('notes'));
+      await _settle(tester, model);
+      expect(model.directoryPath, '${root.path}/notes');
+      expect(find.text('nested'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('entry rows and inline menus are inactive while reloading', (
+    tester,
+  ) async {
+    await _pumpPage(tester, model);
+    final reload = model.load();
+    await tester.pump();
+    expect(model.busy, isTrue);
+
+    await tester.tap(find.text('report.md'), warnIfMissed: false);
+    await tester.tap(find.text('notes'), warnIfMissed: false);
+    await tester.tap(
+      find.byKey(const ValueKey('conversation-entry-menu-report.md')),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+
+    expect(model.directoryPath, root.path);
+    expect(
+      find.byKey(const ValueKey('message-local-file-dialog')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('conversation-entry-rename')),
+      findsNothing,
+    );
+
+    await _settle(tester, model);
+    await reload;
+    await _openAction(tester, 'report.md', rename: true);
+    expect(
+      find.byKey(const ValueKey('conversation-entry-rename-dialog')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

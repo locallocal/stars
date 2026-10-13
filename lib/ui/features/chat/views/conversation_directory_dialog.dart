@@ -201,6 +201,7 @@ final class _ConversationDirectoryBrowserState
           final entry = entries[index];
           final filePath = viewModel.filePathFor(entry);
           return Padding(
+            key: ValueKey(entry.relativePath),
             padding: EdgeInsets.only(
               bottom: index == entries.length - 1 ? 0 : 4,
             ),
@@ -447,89 +448,66 @@ final class _DirectoryEntryRow extends StatelessWidget {
       if (entry.sizeBytes case final size?) _formatBytes(size, locale),
       DateFormat.yMd(locale).add_Hm().format(entry.modifiedAt.toLocal()),
     ];
-    return Row(
-      children: [
-        Expanded(
-          child: Semantics(
-            label: entry.name,
-            hint: entry.isDirectory ? null : S.of(context).preview,
-            button: onOpen != null,
-            onTap: onOpen,
-            child: ExcludeSemantics(
-              child: ShadButton.ghost(
-                key: ValueKey<String>(
-                  'conversation-directory-${entry.relativePath}',
-                ),
-                width: double.infinity,
-                height: 0,
-                expands: true,
-                enabled: onOpen != null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 10,
-                ),
-                mainAxisAlignment: MainAxisAlignment.start,
-                onPressed: onOpen,
-                child: Row(
+    return Semantics(
+      label: entry.name,
+      hint: entry.isDirectory ? null : S.of(context).preview,
+      child: DesktopInteractiveListItem(
+        key: ValueKey<String>('conversation-directory-${entry.relativePath}'),
+        selected: false,
+        onTap: onOpen,
+        padding: const EdgeInsetsDirectional.fromSTEB(8, 10, 8, 10),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: tokens.controlFill,
+                borderRadius: StarsDesktopThemeSpec.itemRadius,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                entry.isDirectory ? LucideIcons.folder : LucideIcons.fileText,
+                size: 17,
+                color: tokens.secondaryText,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ExcludeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: tokens.controlFill,
-                        borderRadius: StarsDesktopThemeSpec.itemRadius,
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        entry.isDirectory
-                            ? LucideIcons.folder
-                            : LucideIcons.fileText,
-                        size: 17,
-                        color: tokens.secondaryText,
-                      ),
+                    Text(
+                      entry.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: StarsDesktopThemeSpec.bodyStyle(context),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            entry.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: StarsDesktopThemeSpec.bodyStyle(context),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            metadata.join(' · '),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: StarsDesktopThemeSpec.metaStyle(context),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      metadata.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: StarsDesktopThemeSpec.metaStyle(context),
                     ),
-                    if (entry.isDirectory && onOpen != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        LucideIcons.chevronRight,
-                        size: 17,
-                        color: tokens.secondaryText,
-                      ),
-                    ],
                   ],
                 ),
               ),
             ),
-          ),
+            if (entry.isDirectory && onOpen != null) ...[
+              const SizedBox(width: 8),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 17,
+                color: tokens.secondaryText,
+              ),
+            ],
+            const SizedBox(width: 6),
+            ConversationDirectoryEntryMenu(entry: entry, viewModel: viewModel),
+          ],
         ),
-        const SizedBox(width: 8),
-        ConversationDirectoryEntryMenu(
-          key: ValueKey(entry.relativePath),
-          entry: entry,
-          viewModel: viewModel,
-        ),
-      ],
+      ),
     );
   }
 }

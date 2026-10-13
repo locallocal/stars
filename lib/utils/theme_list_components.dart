@@ -103,7 +103,7 @@ class DesktopListPanel extends StatelessWidget {
 class DesktopInteractiveListItem extends StatefulWidget {
   final bool selected;
   final bool suppressHoverBackground;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Widget child;
   final EdgeInsetsGeometry padding;
   final double minHeight;
@@ -158,6 +158,7 @@ class _DesktopInteractiveListItemState
       return Semantics(
         button: true,
         selected: widget.selected,
+        enabled: widget.onTap != null,
         child: AnimatedContainer(
           duration:
               disableAnimations
@@ -180,6 +181,7 @@ class _DesktopInteractiveListItemState
                       : ShadButtonVariant.ghost,
               expands: true,
               height: 0,
+              enabled: widget.onTap != null,
               backgroundColor: widget.selected ? selectedBackground : null,
               hoverBackgroundColor:
                   widget.selected
@@ -216,6 +218,7 @@ class _DesktopInteractiveListItemState
     return Semantics(
       button: true,
       selected: widget.selected,
+      enabled: widget.onTap != null,
       child: AnimatedContainer(
         duration:
             disableAnimations
@@ -231,7 +234,11 @@ class _DesktopInteractiveListItemState
           focused: _focused,
         ),
         child: FocusableActionDetector(
-          mouseCursor: SystemMouseCursors.click,
+          enabled: widget.onTap != null,
+          mouseCursor:
+              widget.onTap != null
+                  ? SystemMouseCursors.click
+                  : SystemMouseCursors.basic,
           shortcuts: const <ShortcutActivator, Intent>{
             SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
             SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
@@ -239,7 +246,7 @@ class _DesktopInteractiveListItemState
           actions: <Type, Action<Intent>>{
             ActivateIntent: CallbackAction<ActivateIntent>(
               onInvoke: (intent) {
-                widget.onTap();
+                widget.onTap?.call();
                 return null;
               },
             ),
