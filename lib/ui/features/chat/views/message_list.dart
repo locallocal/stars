@@ -59,7 +59,6 @@ class MessageList extends StatefulWidget {
   final String currentUserId;
   final Profile? currentUserProfile;
   final Bot? bot;
-  final bool? deepThinking;
   final String? reasoningResponse;
   final bool isDesktop;
   final bool showReasoning;
@@ -82,7 +81,6 @@ class MessageList extends StatefulWidget {
     required this.currentUserId,
     this.currentUserProfile,
     this.bot,
-    this.deepThinking = false,
     this.reasoningResponse = '',
     this.isDesktop = false,
     this.showReasoning = true,
@@ -122,7 +120,6 @@ class _MessageListState extends State<MessageList>
   MessageProcessInfo get streamingProcessInfo => widget.streamingProcessInfo;
   ModelTokenUsage get streamingTokenUsage => widget.streamingTokenUsage;
   String get currentUserId => widget.currentUserId;
-  bool? get deepThinking => widget.deepThinking;
   String? get reasoningResponse => widget.reasoningResponse;
   bool get isDesktop => widget.isDesktop;
   bool get showReasoning => widget.showReasoning;
@@ -277,9 +274,7 @@ class _MessageListState extends State<MessageList>
                           reasoning:
                               widget.strictGroundingMode
                                   ? ''
-                                  : deepThinking == true
-                                  ? reasoningResponse ?? ''
-                                  : '',
+                                  : reasoningResponse ?? '',
                           processInfo: _replaceSkillActivations(
                             _replaceToolCalls(
                               streamingProcessInfo,

@@ -456,9 +456,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Проверка целостности базы данных завершилась ошибкой, восстановить её из резервной копии этой версии не удалось.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Глубокое мышление"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "Разрешает модели глубже рассуждать перед ответом.",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Вы полезный ИИ-ассистент. Пожалуйста, отвечайте на русском языке.",
     ),
@@ -1409,10 +1406,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "Разрешает модели искать актуальную информацию в Интернете.",
     ),
   };
 }

@@ -44,11 +44,7 @@ abstract class AiProvider {
 
   void setWebSearch(bool enabled) => webSearch = enabled;
 
-  bool getWebSearch() => webSearch;
-
   void setDeepThinking(bool enabled) => deepThinking = enabled;
-
-  bool getDeepThinking() => deepThinking;
 
   void setCallbacks({
     required StreamResponseCallback onResponse,

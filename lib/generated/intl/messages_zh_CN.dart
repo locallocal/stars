@@ -355,9 +355,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "数据库完整性检查失败，且无法从当前版本备份恢复。",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("深度思考"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "允许模型在回复前进行更深入的推理。",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "你是一个有用的AI助手，请用中文回答问题。",
     ),
@@ -1032,10 +1029,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "请等待生成完成。",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("联网搜索"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "允许模型搜索互联网以获取最新信息。",
     ),
   };
 }

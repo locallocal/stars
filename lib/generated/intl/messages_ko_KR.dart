@@ -383,9 +383,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "데이터베이스 무결성 검사에 실패했으며 현재 버전의 백업에서도 복구하지 못했습니다.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("심층 사고"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "응답하기 전에 모델이 더 깊이 추론하도록 허용합니다.",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "당신은 도움이 되는 AI 어시스턴트입니다. 한국어로 대답해 주세요.",
     ),
@@ -1180,10 +1177,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "모델이 최신 정보를 웹에서 검색하도록 허용합니다.",
     ),
   };
 }

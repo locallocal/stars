@@ -386,9 +386,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "データベースの整合性チェックに失敗し、このバージョンのバックアップからも復元できませんでした。",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("深い思考"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "返信前にモデルがより深く推論できるようにします。",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "あなたは役立つAIアシスタントです。日本語で回答してください。",
     ),
@@ -1181,10 +1178,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "モデルが最新情報を Web で検索できるようにします。",
     ),
   };
 }

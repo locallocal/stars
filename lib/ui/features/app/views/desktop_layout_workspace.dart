@@ -369,7 +369,7 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
                           S.of(context).modelOutputModalitiesDescription,
                     ),
                     if (generationViewModel != null)
-                      _buildConversationModelControls(generationViewModel),
+                      _buildConversationModelControls(),
                     if (_modelLogViewModel case final viewModel?)
                       ModelLogSettingsView(
                         key: ValueKey(
@@ -429,13 +429,10 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
     );
   }
 
-  Widget _buildConversationModelControls(
-    ChatGenerationViewModel generationViewModel,
-  ) {
+  Widget _buildConversationModelControls() {
     final memoryViewModel = _memoryViewModel;
     if (memoryViewModel == null) {
       return ConversationModelControls(
-        provider: generationViewModel.capabilityProvider,
         showReasoning: widget.showReasoning,
         showVerificationStatus: widget.showVerificationStatus,
         showExecutionStatus: widget.showExecutionStatus,
@@ -451,7 +448,6 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
       listenable: memoryViewModel,
       builder:
           (context, child) => ConversationModelControls(
-            provider: generationViewModel.capabilityProvider,
             showReasoning: widget.showReasoning,
             showVerificationStatus: widget.showVerificationStatus,
             showExecutionStatus: widget.showExecutionStatus,

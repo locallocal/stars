@@ -451,9 +451,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "A verificação de integridade do banco de dados falhou e não foi possível recuperá-lo pelo backup desta versão.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Raciocínio profundo"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "Permite que o modelo raciocine mais profundamente antes de responder.",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Você é um assistente de IA útil. Por favor, responda em português.",
     ),
@@ -1414,10 +1411,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "Permite que o modelo pesquise informações atualizadas na Web.",
     ),
   };
 }

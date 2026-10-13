@@ -2,22 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:stars/domain/models/ai_models.dart';
-import 'package:stars/domain/models/models.dart';
-import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/chat/views/conversation_model_controls.dart';
 import 'package:stars/utils/theme.dart';
 
 void main() {
-  testWidgets('shows settings-aligned switches and toggles provider options', (
+  testWidgets('shows settings-aligned conversation preferences', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(420, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final provider = _CapabilityProvider();
     var savedMaxModelTurns = 15;
     var showReasoning = true;
     var showVerificationStatus = true;
@@ -26,7 +22,6 @@ void main() {
 
     await tester.pumpWidget(
       _harness(
-        provider,
         showReasoning: showReasoning,
         showVerificationStatus: showVerificationStatus,
         showExecutionStatus: showExecutionStatus,
@@ -92,20 +87,22 @@ void main() {
     final maxModelTurnsButton = find.byKey(
       const ValueKey<String>('max-model-turns-edit'),
     );
-    expect(webRow, findsOneWidget);
-    expect(thinkingRow, findsOneWidget);
+    expect(webRow, findsNothing);
+    expect(thinkingRow, findsNothing);
+    expect(webSwitch, findsNothing);
+    expect(thinkingSwitch, findsNothing);
     expect(reasoningRow, findsOneWidget);
     expect(verificationStatusRow, findsOneWidget);
     expect(executionStatusRow, findsOneWidget);
     expect(strictGroundingRow, findsOneWidget);
     expect(maxModelTurnsRow, findsOneWidget);
-    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(7));
-    expect(find.byType(ShadSwitch), findsNWidgets(6));
+    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(5));
+    expect(find.byType(ShadSwitch), findsNWidgets(4));
     expect(find.byType(ShadButton), findsOneWidget);
-    expect(find.text('联网搜索'), findsOneWidget);
-    expect(find.text('允许模型搜索互联网以获取最新信息。'), findsOneWidget);
-    expect(find.text('深度思考'), findsOneWidget);
-    expect(find.text('允许模型在回复前进行更深入的推理。'), findsOneWidget);
+    expect(find.text('联网搜索'), findsNothing);
+    expect(find.text('允许模型搜索互联网以获取最新信息。'), findsNothing);
+    expect(find.text('深度思考'), findsNothing);
+    expect(find.text('允许模型在回复前进行更深入的推理。'), findsNothing);
     expect(find.text('思考过程'), findsOneWidget);
     expect(find.text('在智能体会话消息中显示思考过程。'), findsOneWidget);
     expect(find.text('核验检查'), findsOneWidget);
@@ -118,19 +115,11 @@ void main() {
     expect(find.text('单次回复中允许模型请求工具的最大回合数。此设置仅应用于当前会话。'), findsOneWidget);
     expect(find.text('15'), findsOneWidget);
     final inspectorRows = find.byType(StarsInspectorInfoRow);
-    for (var index = 0; index < 7; index++) {
+    for (var index = 0; index < 5; index++) {
       final row = tester.widget<StarsInspectorInfoRow>(inspectorRows.at(index));
       expect(row.layout, StarsInspectorInfoRowLayout.settings);
       expect(row.description, isNotEmpty);
     }
-    expect(
-      tester.getRect(find.text('联网搜索')).left,
-      closeTo(tester.getRect(find.text('深度思考')).left, 0.01),
-    );
-    expect(
-      tester.getRect(find.text('深度思考')).left,
-      closeTo(tester.getRect(find.text('思考过程')).left, 0.01),
-    );
     expect(
       tester.getRect(find.text('思考过程')).left,
       closeTo(tester.getRect(find.text('核验检查')).left, 0.01),
@@ -140,16 +129,8 @@ void main() {
       closeTo(tester.getRect(find.text('会话执行状态')).left, 0.01),
     );
     expect(
-      tester.getRect(find.text('深度思考')).left,
+      tester.getRect(find.text('思考过程')).left,
       closeTo(tester.getRect(find.text('严格验证模式')).left, 0.01),
-    );
-    expect(
-      tester.getRect(webRow).right - tester.getRect(webSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right,
-    );
-    expect(
-      tester.getRect(thinkingRow).right - tester.getRect(thinkingSwitch).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     expect(
       tester.getRect(reasoningRow).right -
@@ -170,10 +151,6 @@ void main() {
       tester.getRect(strictGroundingRow).right -
           tester.getRect(strictGroundingSwitch).right,
       StarsDesktopThemeSpec.settingsRowPadding.right,
-    );
-    expect(
-      tester.getTopLeft(reasoningRow).dy,
-      greaterThan(tester.getTopLeft(thinkingRow).dy),
     );
     expect(
       tester.getTopLeft(verificationStatusRow).dy,
@@ -197,40 +174,22 @@ void main() {
       StarsDesktopThemeSpec.settingsRowPadding.right,
     );
     final separators = find.byType(ShadSeparator);
-    expect(separators, findsNWidgets(6));
+    expect(separators, findsNWidgets(4));
     for (final separator in separators.evaluate()) {
       expect(
         (separator.widget as ShadSeparator).margin,
         StarsDesktopThemeSpec.settingsRowSeparatorMargin,
       );
     }
-    expect(tester.getSize(webSwitch).width, 44);
-    expect(tester.getSize(thinkingSwitch).width, 44);
     expect(tester.getSize(reasoningSwitch).width, 44);
     expect(tester.getSize(verificationStatusSwitch).width, 44);
     expect(tester.getSize(executionStatusSwitch).width, 44);
     expect(tester.getSize(strictGroundingSwitch).width, 44);
     expect(tester.getSize(maxModelTurnsButton).width, 72);
-    expect(tester.widget<ShadSwitch>(webSwitch).value, isFalse);
-    expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isFalse);
     expect(tester.widget<ShadSwitch>(reasoningSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(verificationStatusSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(executionStatusSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(strictGroundingSwitch).value, isFalse);
-
-    await tester.tap(webSwitch);
-    await tester.pump();
-
-    expect(provider.getWebSearch(), isTrue);
-    expect(provider.getDeepThinking(), isFalse);
-    expect(tester.widget<ShadSwitch>(webSwitch).value, isTrue);
-    expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isFalse);
-
-    await tester.tap(thinkingSwitch);
-    await tester.pump();
-
-    expect(provider.getDeepThinking(), isTrue);
-    expect(tester.widget<ShadSwitch>(thinkingSwitch).value, isTrue);
 
     await tester.tap(reasoningSwitch);
     await tester.pumpAndSettle();
@@ -246,7 +205,6 @@ void main() {
 
     await tester.pumpWidget(
       _harness(
-        provider,
         showReasoning: showReasoning,
         showVerificationStatus: showVerificationStatus,
         showExecutionStatus: showExecutionStatus,
@@ -279,7 +237,6 @@ void main() {
 
     await tester.pumpWidget(
       _harness(
-        provider,
         showReasoning: showReasoning,
         showVerificationStatus: showVerificationStatus,
         showExecutionStatus: showExecutionStatus,
@@ -340,8 +297,7 @@ void main() {
   });
 }
 
-Widget _harness(
-  AiProvider provider, {
+Widget _harness({
   bool showReasoning = true,
   bool showVerificationStatus = true,
   bool showExecutionStatus = true,
@@ -381,7 +337,6 @@ Widget _harness(
               child: SizedBox(
                 width: 320,
                 child: ConversationModelControls(
-                  provider: provider,
                   showReasoning: showReasoning,
                   showVerificationStatus: showVerificationStatus,
                   showExecutionStatus: showExecutionStatus,
@@ -399,30 +354,3 @@ Widget _harness(
         ),
   );
 }
-
-final class _CapabilityProvider extends AiProvider {
-  _CapabilityProvider() : super(_bot);
-
-  @override
-  bool supportWebSearch() => true;
-
-  @override
-  bool supportDeepThinking() => true;
-
-  @override
-  Future<void> generateText(List<ChatMessage> messages) async {}
-}
-
-final _bot = Bot(
-  id: 'bot-1',
-  name: 'Bot',
-  avatar: '',
-  provider: 'test',
-  baseURL: '',
-  apiKey: '',
-  apiType: Bot.apiTypeOpenAI,
-  model: 'test-model',
-  systemPrompt: '',
-  createTimestamp: DateTime(2026),
-  modifyTimestamp: DateTime(2026),
-);

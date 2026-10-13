@@ -440,9 +440,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "The database integrity check failed, and recovery from this version\'s backup was unsuccessful.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Deep Thinking"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "Allow the model to reason more deeply before responding.",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "You are a helpful AI assistant.",
     ),
@@ -1357,10 +1354,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "Allow the model to search the web for up-to-date information.",
     ),
   };
 }
