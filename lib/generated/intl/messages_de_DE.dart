@@ -454,9 +454,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Die Integritätsprüfung der Datenbank ist fehlgeschlagen, und die Wiederherstellung aus der Sicherung dieser Version war nicht möglich.",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("Tiefes Denken"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "Erlaubt dem Modell, vor der Antwort ausführlicher nachzudenken.",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Du bist ein hilfreicher KI-Assistent. Bitte antworte auf Deutsch.",
     ),
@@ -1441,10 +1438,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "Erlaubt dem Modell, im Web nach aktuellen Informationen zu suchen.",
     ),
   };
 }

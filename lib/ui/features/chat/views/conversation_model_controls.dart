@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
-import 'package:stars/domain/repositories/ai_provider_repository.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
@@ -17,10 +16,9 @@ typedef MaxModelTurnsChanged = Future<void> Function(int maxModelTurns);
 typedef ConversationPreferenceChanged = Future<void> Function(bool value);
 
 /// Model and presentation controls shown in the conversation inspector.
-final class ConversationModelControls extends StatefulWidget {
+final class ConversationModelControls extends StatelessWidget {
   const ConversationModelControls({
     super.key,
-    required this.provider,
     required this.showReasoning,
     required this.showVerificationStatus,
     required this.showExecutionStatus,
@@ -34,7 +32,6 @@ final class ConversationModelControls extends StatefulWidget {
     this.onMaxModelTurnsChanged,
   });
 
-  final AiProvider provider;
   final bool showReasoning;
   final bool showVerificationStatus;
   final bool showExecutionStatus;
@@ -48,62 +45,20 @@ final class ConversationModelControls extends StatefulWidget {
   final MaxModelTurnsChanged? onMaxModelTurnsChanged;
 
   @override
-  State<ConversationModelControls> createState() =>
-      _ConversationModelControlsState();
-}
-
-final class _ConversationModelControlsState
-    extends State<ConversationModelControls> {
-  @override
   Widget build(BuildContext context) {
-    final provider = widget.provider;
     final rows = <Widget>[
-      if (provider.supportWebSearch())
-        _ModelControlRow(
-          key: const ValueKey<String>('conversation-web-search-row'),
-          switchKey: const ValueKey<String>('conversation-web-search-toggle'),
-          icon: LucideIcons.globe,
-          label: S.of(context).webSearch,
-          description: S.of(context).webSearchDescription,
-          value: provider.getWebSearch(),
-          onChanged: (value) {
-            setState(() {
-              provider.setWebSearch(value);
-            });
-          },
-        ),
-      if (provider.supportDeepThinking())
-        _ModelControlRow(
-          key: const ValueKey<String>('conversation-deep-thinking-row'),
-          switchKey: const ValueKey<String>(
-            'conversation-deep-thinking-toggle',
-          ),
-          icon: LucideIcons.brain,
-          label: S.of(context).deepThinking,
-          description: S.of(context).deepThinkingDescription,
-          value: provider.getDeepThinking(),
-          onChanged: (value) {
-            setState(() {
-              provider.setDeepThinking(value);
-            });
-          },
-        ),
       _ModelControlRow(
         key: const ValueKey<String>('conversation-reasoning-row'),
         switchKey: const ValueKey<String>('conversation-reasoning-toggle'),
         icon: LucideIcons.brain,
         label: S.of(context).chatReasoning,
         description: S.of(context).showReasoningDescription,
-        value: widget.showReasoning,
+        value: showReasoning,
         onChanged:
-            widget.onShowReasoningChanged == null
+            onShowReasoningChanged == null
                 ? null
                 : (value) => unawaited(
-                  _updatePreference(
-                    context,
-                    widget.onShowReasoningChanged!,
-                    value,
-                  ),
+                  _updatePreference(context, onShowReasoningChanged!, value),
                 ),
       ),
       _ModelControlRow(
@@ -114,14 +69,14 @@ final class _ConversationModelControlsState
         icon: LucideIcons.badgeCheck,
         label: S.of(context).chatVerificationStatus,
         description: S.of(context).showVerificationStatusDescription,
-        value: widget.showVerificationStatus,
+        value: showVerificationStatus,
         onChanged:
-            widget.onShowVerificationStatusChanged == null
+            onShowVerificationStatusChanged == null
                 ? null
                 : (value) => unawaited(
                   _updatePreference(
                     context,
-                    widget.onShowVerificationStatusChanged!,
+                    onShowVerificationStatusChanged!,
                     value,
                   ),
                 ),
@@ -134,14 +89,14 @@ final class _ConversationModelControlsState
         icon: LucideIcons.activity,
         label: S.of(context).chatExecutionStatus,
         description: S.of(context).showExecutionStatusDescription,
-        value: widget.showExecutionStatus,
+        value: showExecutionStatus,
         onChanged:
-            widget.onShowExecutionStatusChanged == null
+            onShowExecutionStatusChanged == null
                 ? null
                 : (value) => unawaited(
                   _updatePreference(
                     context,
-                    widget.onShowExecutionStatusChanged!,
+                    onShowExecutionStatusChanged!,
                     value,
                   ),
                 ),
@@ -154,23 +109,21 @@ final class _ConversationModelControlsState
         icon: LucideIcons.shieldCheck,
         label: S.of(context).strictGroundingMode,
         description: S.of(context).strictGroundingModeDescription,
-        value: widget.strictGroundingMode,
+        value: strictGroundingMode,
         onChanged:
-            widget.onStrictGroundingModeChanged == null
+            onStrictGroundingModeChanged == null
                 ? null
                 : (value) => unawaited(
                   _updatePreference(
                     context,
-                    widget.onStrictGroundingModeChanged!,
+                    onStrictGroundingModeChanged!,
                     value,
                   ),
                 ),
       ),
       _MaxModelTurnsRow(
-        enabled:
-            widget.maxModelTurnsEnabled &&
-            widget.onMaxModelTurnsChanged != null,
-        value: widget.maxModelTurns,
+        enabled: maxModelTurnsEnabled && onMaxModelTurnsChanged != null,
+        value: maxModelTurns,
         onPressed: () => unawaited(_editMaxModelTurns(context)),
       ),
     ];
@@ -207,13 +160,12 @@ final class _ConversationModelControlsState
   }
 
   Future<void> _editMaxModelTurns(BuildContext context) async {
-    final onChanged = widget.onMaxModelTurnsChanged;
+    final onChanged = onMaxModelTurnsChanged;
     if (onChanged == null) return;
     final value = await showChatShadDialog<int>(
       context: context,
       builder:
-          (dialogContext) =>
-              _MaxModelTurnsDialog(initialValue: widget.maxModelTurns),
+          (dialogContext) => _MaxModelTurnsDialog(initialValue: maxModelTurns),
     );
     if (value == null || !context.mounted) return;
     try {

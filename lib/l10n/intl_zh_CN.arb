@@ -530,10 +530,6 @@
     "@messageCopied": {
         "description": "消息复制成功的提示"
     },
-    "webSearch": "联网搜索",
-    "@webSearch": {
-        "description": "网络搜索按钮文本"
-    },
     "deepThinking": "深度思考",
     "@deepThinking": {
         "description": "深度思考按钮文本"
@@ -657,8 +653,6 @@
     "conversationModelDescription": "当前会话用于生成回复的模型。",
     "modelInputModalitiesDescription": "此模型可以处理的内容类型。",
     "modelOutputModalitiesDescription": "此模型可以生成的内容类型。",
-    "webSearchDescription": "允许模型搜索互联网以获取最新信息。",
-    "deepThinkingDescription": "允许模型在回复前进行更深入的推理。",
     "totalTokensDescription": "所选时间范围内使用的输入与输出 Token 总数。",
     "inputTokensDescription": "发送给模型的 Token，包括会话上下文和指令。",
     "outputTokensDescription": "模型在回复中生成的 Token。",

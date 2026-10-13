@@ -1224,16 +1224,6 @@ class S {
     );
   }
 
-  /// `Web Search`
-  String get webSearch {
-    return Intl.message(
-      'Web Search',
-      name: 'webSearch',
-      desc: 'Button text for web search feature',
-      args: [],
-    );
-  }
-
   /// `Deep Thinking`
   String get deepThinking {
     return Intl.message(
@@ -1811,26 +1801,6 @@ class S {
     return Intl.message(
       'The content types this model can generate.',
       name: 'modelOutputModalitiesDescription',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Allow the model to search the web for up-to-date information.`
-  String get webSearchDescription {
-    return Intl.message(
-      'Allow the model to search the web for up-to-date information.',
-      name: 'webSearchDescription',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Allow the model to reason more deeply before responding.`
-  String get deepThinkingDescription {
-    return Intl.message(
-      'Allow the model to reason more deeply before responding.',
-      name: 'deepThinkingDescription',
       desc: '',
       args: [],
     );

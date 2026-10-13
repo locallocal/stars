@@ -148,7 +148,6 @@ void main() {
             streamingResponse: response,
             currentUserId: 'me',
             isDesktop: desktop,
-            deepThinking: true,
             reasoningResponse: 'Streaming reasoning.',
             streamingProcessInfo: const MessageProcessInfo(durationMs: 1000),
           );
@@ -1199,7 +1198,6 @@ void main() => print('done');
           isStreaming: true,
           streamingResponse: 'Unverified streaming fact.',
           reasoningResponse: 'Unverified streaming reasoning.',
-          deepThinking: true,
           currentUserId: 'me',
           strictGroundingMode: true,
         ),

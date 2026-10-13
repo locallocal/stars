@@ -456,9 +456,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "deepThinking": MessageLookupByLibrary.simpleMessage(
       "Razonamiento profundo",
     ),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "Permite que el modelo razone con mayor profundidad antes de responder.",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "Eres un asistente de IA útil. Por favor, responde en español.",
     ),
@@ -1433,10 +1430,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "Permite que el modelo busque información actualizada en la web.",
     ),
   };
 }

@@ -363,9 +363,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "資料庫完整性檢查失敗，且無法從目前版本的備份還原。",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("深度思考"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "允許模型在回覆前進行更深入的推理。",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "你是一個有用的AI助手，請用繁體中文回答問題。",
     ),
@@ -1084,10 +1081,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "允許模型搜尋網際網路以取得最新資訊。",
     ),
   };
 }

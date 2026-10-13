@@ -438,9 +438,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "डेटाबेस अखंडता जाँच विफल रही और इस संस्करण के बैकअप से पुनर्प्राप्ति नहीं हो सकी।",
     ),
     "deepThinking": MessageLookupByLibrary.simpleMessage("गहन चिंतन"),
-    "deepThinkingDescription": MessageLookupByLibrary.simpleMessage(
-      "उत्तर देने से पहले मॉडल को अधिक गहराई से तर्क करने दें।",
-    ),
     "defaultSystemPrompt": MessageLookupByLibrary.simpleMessage(
       "आप एक सहायक AI हैं। कृपया हिंदी में उत्तर दें।",
     ),
@@ -1379,10 +1376,6 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "waitForGenerationToFinish": MessageLookupByLibrary.simpleMessage(
       "Wait for generation to finish.",
-    ),
-    "webSearch": MessageLookupByLibrary.simpleMessage("Web Search"),
-    "webSearchDescription": MessageLookupByLibrary.simpleMessage(
-      "मॉडल को नवीनतम जानकारी के लिए वेब खोजने दें।",
     ),
   };
 }
