@@ -73,7 +73,7 @@ class _SkillLibraryPageState extends State<SkillLibraryPage> {
       color: StarsDesktopThemeSpec.workspaceSurface(context),
       child: SingleChildScrollView(
         key: ValueKey<String>('skill-library-page-${viewModel.currentPage}'),
-        padding: StarsDesktopThemeSpec.formPagePadding,
+        padding: StarsDesktopThemeSpec.profilePagePadding,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
