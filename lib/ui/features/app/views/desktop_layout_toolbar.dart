@@ -98,6 +98,10 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
                     size: const Size.square(
                       StarsDesktopThemeSpec.toolbarAvatarSize,
                     ),
+                    backgroundColor: getFrostedProviderColor(
+                      activeBot.provider,
+                      Theme.of(context).colorScheme.primary,
+                    ),
                     fit: BoxFit.cover,
                     placeholder: SizedBox.square(
                       key: const ValueKey<String>(
