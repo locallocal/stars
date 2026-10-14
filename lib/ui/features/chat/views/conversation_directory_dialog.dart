@@ -495,14 +495,6 @@ final class _DirectoryEntryRow extends StatelessWidget {
                 ),
               ),
             ),
-            if (entry.isDirectory && onOpen != null) ...[
-              const SizedBox(width: 8),
-              Icon(
-                LucideIcons.chevronRight,
-                size: 17,
-                color: tokens.secondaryText,
-              ),
-            ],
             const SizedBox(width: 6),
             ConversationDirectoryEntryMenu(entry: entry, viewModel: viewModel),
           ],
