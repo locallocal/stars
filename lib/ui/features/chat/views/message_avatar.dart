@@ -17,7 +17,7 @@ class MessageAvatar extends StatelessWidget {
 
   static const double size = 32;
 
-  /// The shared fill for an avatar and its assistant message bubble.
+  /// The neutral fill for user avatars and assistant message bubbles.
   static Color backgroundColorOf(BuildContext context) {
     final theme = ShadTheme.maybeOf(context);
     return theme?.avatarTheme.backgroundColor ??
@@ -33,7 +33,13 @@ class MessageAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shadTheme = ShadTheme.maybeOf(context);
-    final backgroundColor = backgroundColorOf(context);
+    final backgroundColor =
+        isCurrentUser
+            ? backgroundColorOf(context)
+            : getFrostedProviderColor(
+              provider,
+              Theme.of(context).colorScheme.primary,
+            );
     final label =
         name.trim().isNotEmpty
             ? name.trim()
