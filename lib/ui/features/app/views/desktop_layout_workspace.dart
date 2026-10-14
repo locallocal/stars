@@ -429,40 +429,14 @@ extension _DesktopLayoutWorkspace on _DesktopLayoutState {
     );
   }
 
-  Widget _buildConversationModelControls() {
-    final memoryViewModel = _memoryViewModel;
-    if (memoryViewModel == null) {
-      return ConversationModelControls(
-        showReasoning: widget.showReasoning,
-        showVerificationStatus: widget.showVerificationStatus,
-        showExecutionStatus: widget.showExecutionStatus,
-        strictGroundingMode: widget.strictGroundingMode,
-        onShowReasoningChanged: widget.onShowReasoningChanged,
-        onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
-        onShowVerificationStatusChanged: widget.onShowVerificationStatusChanged,
-        onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
-        maxModelTurnsEnabled: false,
-      );
-    }
-    return ListenableBuilder(
-      listenable: memoryViewModel,
-      builder:
-          (context, child) => ConversationModelControls(
-            showReasoning: widget.showReasoning,
-            showVerificationStatus: widget.showVerificationStatus,
-            showExecutionStatus: widget.showExecutionStatus,
-            strictGroundingMode: widget.strictGroundingMode,
-            onShowReasoningChanged: widget.onShowReasoningChanged,
-            onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
-            onShowVerificationStatusChanged:
-                widget.onShowVerificationStatusChanged,
-            onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
-            maxModelTurns:
-                memoryViewModel.state?.maxModelTurns ??
-                ConversationMemoryState.defaultMaxModelTurns,
-            maxModelTurnsEnabled: !memoryViewModel.loading,
-            onMaxModelTurnsChanged: memoryViewModel.setMaxModelTurns,
-          ),
-    );
-  }
+  Widget _buildConversationModelControls() => ConversationModelControls(
+    showReasoning: widget.showReasoning,
+    showVerificationStatus: widget.showVerificationStatus,
+    showExecutionStatus: widget.showExecutionStatus,
+    strictGroundingMode: widget.strictGroundingMode,
+    onShowReasoningChanged: widget.onShowReasoningChanged,
+    onShowExecutionStatusChanged: widget.onShowExecutionStatusChanged,
+    onShowVerificationStatusChanged: widget.onShowVerificationStatusChanged,
+    onStrictGroundingModeChanged: widget.onStrictGroundingModeChanged,
+  );
 }

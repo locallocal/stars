@@ -330,10 +330,9 @@ extension LocalDatabaseConversations on LocalDatabaseService {
             stateRows.isEmpty
                 ? 1
                 : _readCount(stateRows.first['auto_memory_enabled']),
-        'max_model_turns':
-            stateRows.isEmpty
-                ? ConversationMemoryState.defaultMaxModelTurns
-                : _readCount(stateRows.first['max_model_turns']),
+        // Preserve the unused legacy column when replacing an existing row.
+        if (stateRows.isNotEmpty)
+          'max_model_turns': stateRows.first['max_model_turns'],
         'compaction_status': 'idle',
         'last_error': '',
         'last_compacted_at': now,
@@ -387,25 +386,6 @@ extension LocalDatabaseConversations on LocalDatabaseService {
         updated_at = excluded.updated_at
       ''',
       [chatId, enabled ? 1 : 0, now],
-    );
-  }
-
-  Future<void> setConversationMaxModelTurns(
-    String chatId,
-    int maxModelTurns,
-  ) async {
-    final database = await _databaseProvider();
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await database.rawInsert(
-      '''
-      INSERT INTO conversation_memory_state (
-        chat_id, max_model_turns, updated_at
-      ) VALUES (?, ?, ?)
-      ON CONFLICT(chat_id) DO UPDATE SET
-        max_model_turns = excluded.max_model_turns,
-        updated_at = excluded.updated_at
-      ''',
-      [chatId, maxModelTurns, now],
     );
   }
 

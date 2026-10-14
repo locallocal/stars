@@ -14,7 +14,6 @@ void main() {
     tester.view.physicalSize = const Size(420, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    var savedMaxModelTurns = 15;
     var showReasoning = true;
     var showVerificationStatus = true;
     var showExecutionStatus = true;
@@ -37,9 +36,6 @@ void main() {
         },
         onStrictGroundingModeChanged: (value) async {
           strictGroundingMode = value;
-        },
-        onMaxModelTurnsChanged: (value) async {
-          savedMaxModelTurns = value;
         },
       ),
     );
@@ -95,10 +91,11 @@ void main() {
     expect(verificationStatusRow, findsOneWidget);
     expect(executionStatusRow, findsOneWidget);
     expect(strictGroundingRow, findsOneWidget);
-    expect(maxModelTurnsRow, findsOneWidget);
-    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(5));
+    expect(maxModelTurnsRow, findsNothing);
+    expect(maxModelTurnsButton, findsNothing);
+    expect(find.byType(StarsInspectorInfoRow), findsNWidgets(4));
     expect(find.byType(ShadSwitch), findsNWidgets(4));
-    expect(find.byType(ShadButton), findsOneWidget);
+    expect(find.byType(ShadButton), findsNothing);
     expect(find.text('联网搜索'), findsNothing);
     expect(find.text('允许模型搜索互联网以获取最新信息。'), findsNothing);
     expect(find.text('深度思考'), findsNothing);
@@ -111,11 +108,10 @@ void main() {
     expect(find.text('严格验证模式'), findsOneWidget);
     expect(find.text('在会话内容中显示执行状态。'), findsOneWidget);
     expect(find.text('隐藏未验证的事实回答，同时保留验证详情和工具失败原因。'), findsOneWidget);
-    expect(find.text('工具请求回合上限'), findsOneWidget);
-    expect(find.text('单次回复中允许模型请求工具的最大回合数。此设置仅应用于当前会话。'), findsOneWidget);
-    expect(find.text('15'), findsOneWidget);
+    expect(find.text('工具请求回合上限'), findsNothing);
+    expect(find.text('单次回复中允许模型请求工具的最大回合数。此设置仅应用于当前会话。'), findsNothing);
     final inspectorRows = find.byType(StarsInspectorInfoRow);
-    for (var index = 0; index < 5; index++) {
+    for (var index = 0; index < 4; index++) {
       final row = tester.widget<StarsInspectorInfoRow>(inspectorRows.at(index));
       expect(row.layout, StarsInspectorInfoRowLayout.settings);
       expect(row.description, isNotEmpty);
@@ -164,17 +160,8 @@ void main() {
       tester.getTopLeft(strictGroundingRow).dy,
       greaterThan(tester.getTopLeft(executionStatusRow).dy),
     );
-    expect(
-      tester.getTopLeft(maxModelTurnsRow).dy,
-      greaterThan(tester.getTopLeft(strictGroundingRow).dy),
-    );
-    expect(
-      tester.getRect(maxModelTurnsRow).right -
-          tester.getRect(maxModelTurnsButton).right,
-      StarsDesktopThemeSpec.settingsRowPadding.right,
-    );
     final separators = find.byType(ShadSeparator);
-    expect(separators, findsNWidgets(4));
+    expect(separators, findsNWidgets(3));
     for (final separator in separators.evaluate()) {
       expect(
         (separator.widget as ShadSeparator).margin,
@@ -185,7 +172,6 @@ void main() {
     expect(tester.getSize(verificationStatusSwitch).width, 44);
     expect(tester.getSize(executionStatusSwitch).width, 44);
     expect(tester.getSize(strictGroundingSwitch).width, 44);
-    expect(tester.getSize(maxModelTurnsButton).width, 72);
     expect(tester.widget<ShadSwitch>(reasoningSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(verificationStatusSwitch).value, isTrue);
     expect(tester.widget<ShadSwitch>(executionStatusSwitch).value, isTrue);
@@ -221,9 +207,6 @@ void main() {
         onStrictGroundingModeChanged: (value) async {
           strictGroundingMode = value;
         },
-        onMaxModelTurnsChanged: (value) async {
-          savedMaxModelTurns = value;
-        },
       ),
     );
     await tester.pumpAndSettle();
@@ -253,47 +236,12 @@ void main() {
         onStrictGroundingModeChanged: (value) async {
           strictGroundingMode = value;
         },
-        onMaxModelTurnsChanged: (value) async {
-          savedMaxModelTurns = value;
-        },
       ),
     );
     await tester.pumpAndSettle();
     expect(tester.widget<ShadSwitch>(strictGroundingSwitch).value, isTrue);
 
-    await tester.tap(maxModelTurnsButton);
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey<String>('max-model-turns-dialog')),
-      findsOneWidget,
-    );
-    expect(find.byType(ShadInputFormField), findsOneWidget);
-    final input = find.descendant(
-      of: find.byKey(const ValueKey<String>('max-model-turns-input')),
-      matching: find.byType(EditableText),
-    );
-    await tester.enterText(input, '0');
-    await tester.tap(
-      find.byKey(const ValueKey<String>('max-model-turns-save')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('请输入 1 至 50 之间的整数。'), findsOneWidget);
-    expect(savedMaxModelTurns, 15);
-
-    await tester.enterText(input, '27');
-    await tester.tap(
-      find.byKey(const ValueKey<String>('max-model-turns-save')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(savedMaxModelTurns, 27);
-    expect(
-      find.byKey(const ValueKey<String>('max-model-turns-dialog')),
-      findsNothing,
-    );
-    expect(find.text('工具请求回合上限已更新。'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -306,7 +254,6 @@ Widget _harness({
   ConversationPreferenceChanged? onShowVerificationStatusChanged,
   ConversationPreferenceChanged? onShowExecutionStatusChanged,
   ConversationPreferenceChanged? onStrictGroundingModeChanged,
-  MaxModelTurnsChanged? onMaxModelTurnsChanged,
 }) {
   final shadTheme = buildStarsShadTheme(
     brightness: Brightness.light,
@@ -346,7 +293,6 @@ Widget _harness({
                       onShowVerificationStatusChanged,
                   onShowExecutionStatusChanged: onShowExecutionStatusChanged,
                   onStrictGroundingModeChanged: onStrictGroundingModeChanged,
-                  onMaxModelTurnsChanged: onMaxModelTurnsChanged,
                 ),
               ),
             ),

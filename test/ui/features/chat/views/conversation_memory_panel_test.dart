@@ -910,9 +910,7 @@ final class _MemoryRepository implements ConversationMemoryRepository {
     bool hasSummary = true,
     this.failMutations = false,
     int itemCount = 1,
-    int maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
   }) : _hasSummary = hasSummary,
-       _maxModelTurns = maxModelTurns,
        items = [
          for (var index = 1; index <= itemCount; index += 1)
            ConversationMemoryItem(
@@ -927,13 +925,11 @@ final class _MemoryRepository implements ConversationMemoryRepository {
        ];
 
   bool _hasSummary;
-  int _maxModelTurns;
   final bool failMutations;
   final List<ConversationMemoryItem> items;
   final StreamController<String> controller = StreamController.broadcast();
 
   bool get hasSummary => _hasSummary;
-  int get maxModelTurns => _maxModelTurns;
 
   @override
   Stream<String> get changes => controller.stream;
@@ -967,11 +963,7 @@ final class _MemoryRepository implements ConversationMemoryRepository {
 
   @override
   Future<ConversationMemoryState> getState(String chatId) async =>
-      ConversationMemoryState(
-        chatId: chatId,
-        maxModelTurns: _maxModelTurns,
-        updatedAt: DateTime(2026, 8, 8),
-      );
+      ConversationMemoryState(chatId: chatId, updatedAt: DateTime(2026, 8, 8));
 
   @override
   Future<void> saveUserItem(ConversationMemoryItem item) async {
@@ -1000,12 +992,6 @@ final class _MemoryRepository implements ConversationMemoryRepository {
   @override
   Future<void> setAutoMemoryEnabled(String chatId, bool enabled) async {
     _failMutation();
-  }
-
-  @override
-  Future<void> setMaxModelTurns(String chatId, int maxModelTurns) async {
-    _failMutation();
-    _maxModelTurns = maxModelTurns;
   }
 
   @override

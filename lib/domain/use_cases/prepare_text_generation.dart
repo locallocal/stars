@@ -36,7 +36,6 @@ final class PreparedChatGeneration {
     required Set<String> approvalExemptToolNames,
     required List<ExecutableTool> runScopedTools,
     required this.contextAssemblyReport,
-    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
     this.reliabilityPolicyEnabled = true,
     this.verificationUnavailableReason = '',
   }) : messages = List<ChatMessage>.unmodifiable(messages),
@@ -63,7 +62,6 @@ final class PreparedChatGeneration {
   final Set<String> approvalExemptToolNames;
   final List<ExecutableTool> runScopedTools;
   final ContextAssemblyReport contextAssemblyReport;
-  final int maxModelTurns;
   final bool reliabilityPolicyEnabled;
   final String verificationUnavailableReason;
 }
@@ -241,7 +239,6 @@ final class PrepareTextGeneration {
         ...skillInventoryTools,
         ...mcpInventoryTools,
       ],
-      maxModelTurns: preparedTurn.maxModelTurns,
       contextAssemblyReport: preparedTurn.contextAssemblyReport,
       reliabilityPolicyEnabled: preparedTurn.reliabilityPolicyEnabled,
       verificationUnavailableReason: verificationTools.unavailableReason,
