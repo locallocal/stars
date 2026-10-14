@@ -604,6 +604,7 @@ class DatabaseService {
         active_summary_id TEXT NOT NULL DEFAULT '',
         covered_through_message_id TEXT NOT NULL DEFAULT '',
         auto_memory_enabled INTEGER NOT NULL DEFAULT 1,
+        -- Retained for compatibility with existing conversation memory rows.
         max_model_turns INTEGER NOT NULL DEFAULT 15
           CHECK (max_model_turns BETWEEN 1 AND 50),
         compaction_status TEXT NOT NULL DEFAULT 'idle',

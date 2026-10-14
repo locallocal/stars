@@ -18,14 +18,12 @@ final class PreparedConversationContext {
     required List<ChatMessage> messages,
     required this.report,
     Set<String> summaryReferences = const {},
-    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
   }) : messages = List.unmodifiable(messages),
        summaryReferences = Set.unmodifiable(summaryReferences);
 
   final List<ChatMessage> messages;
   final ContextAssemblyReport report;
   final Set<String> summaryReferences;
-  final int maxModelTurns;
 }
 
 /// Assembles a provider-neutral, token-bounded conversation context.
@@ -308,7 +306,6 @@ final class PrepareConversationContext {
     ];
     return PreparedConversationContext(
       messages: output,
-      maxModelTurns: state.maxModelTurns,
       report: ContextAssemblyReport(
         contextWindowTokens: profile.contextWindowTokens,
         inputBudgetTokens: inputBudget,

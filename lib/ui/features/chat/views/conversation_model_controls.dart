@@ -1,18 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:stars/domain/models/models.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/utils/theme.dart';
 
 const double _modelControlWidth = 44;
-const double _modelTurnLimitControlWidth = 72;
 
-typedef MaxModelTurnsChanged = Future<void> Function(int maxModelTurns);
 typedef ConversationPreferenceChanged = Future<void> Function(bool value);
 
 /// Model and presentation controls shown in the conversation inspector.
@@ -27,9 +23,6 @@ final class ConversationModelControls extends StatelessWidget {
     this.onShowVerificationStatusChanged,
     this.onShowExecutionStatusChanged,
     this.onStrictGroundingModeChanged,
-    this.maxModelTurns = ConversationMemoryState.defaultMaxModelTurns,
-    this.maxModelTurnsEnabled = true,
-    this.onMaxModelTurnsChanged,
   });
 
   final bool showReasoning;
@@ -40,9 +33,6 @@ final class ConversationModelControls extends StatelessWidget {
   final ConversationPreferenceChanged? onShowVerificationStatusChanged;
   final ConversationPreferenceChanged? onShowExecutionStatusChanged;
   final ConversationPreferenceChanged? onStrictGroundingModeChanged;
-  final int maxModelTurns;
-  final bool maxModelTurnsEnabled;
-  final MaxModelTurnsChanged? onMaxModelTurnsChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -121,11 +111,6 @@ final class ConversationModelControls extends StatelessWidget {
                   ),
                 ),
       ),
-      _MaxModelTurnsRow(
-        enabled: maxModelTurnsEnabled && onMaxModelTurnsChanged != null,
-        value: maxModelTurns,
-        onPressed: () => unawaited(_editMaxModelTurns(context)),
-      ),
     ];
     return Column(
       key: const ValueKey<String>('conversation-model-controls'),
@@ -148,31 +133,6 @@ final class ConversationModelControls extends StatelessWidget {
   ) async {
     try {
       await onChanged(value);
-    } on Object catch (error) {
-      if (context.mounted) {
-        showStarsNotice(
-          context,
-          safeFailureMessage(context, error),
-          tone: StarsNoticeTone.error,
-        );
-      }
-    }
-  }
-
-  Future<void> _editMaxModelTurns(BuildContext context) async {
-    final onChanged = onMaxModelTurnsChanged;
-    if (onChanged == null) return;
-    final value = await showChatShadDialog<int>(
-      context: context,
-      builder:
-          (dialogContext) => _MaxModelTurnsDialog(initialValue: maxModelTurns),
-    );
-    if (value == null || !context.mounted) return;
-    try {
-      await onChanged(value);
-      if (context.mounted) {
-        showStarsNotice(context, S.of(context).maxToolRequestRoundsSaved);
-      }
     } on Object catch (error) {
       if (context.mounted) {
         showStarsNotice(
@@ -223,116 +183,5 @@ final class _ModelControlRow extends StatelessWidget {
         trailing: toggle,
       ),
     );
-  }
-}
-
-final class _MaxModelTurnsRow extends StatelessWidget {
-  const _MaxModelTurnsRow({
-    required this.enabled,
-    required this.value,
-    required this.onPressed,
-  });
-
-  final bool enabled;
-  final int value;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => StarsInspectorInfoRow(
-    key: const ValueKey<String>('max-model-turns-row'),
-    icon: LucideIcons.rotateCcw,
-    label: S.of(context).maxToolRequestRounds,
-    description: S.of(context).maxToolRequestRoundsDescription,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    trailingWidth: _modelTurnLimitControlWidth,
-    layout: StarsInspectorInfoRowLayout.settings,
-    trailing: ShadButton.outline(
-      key: const ValueKey<String>('max-model-turns-edit'),
-      size: ShadButtonSize.sm,
-      width: _modelTurnLimitControlWidth,
-      onPressed: enabled ? onPressed : null,
-      child: Text('$value'),
-    ),
-  );
-}
-
-final class _MaxModelTurnsDialog extends StatefulWidget {
-  const _MaxModelTurnsDialog({required this.initialValue});
-
-  final int initialValue;
-
-  @override
-  State<_MaxModelTurnsDialog> createState() => _MaxModelTurnsDialogState();
-}
-
-final class _MaxModelTurnsDialogState extends State<_MaxModelTurnsDialog> {
-  final _formKey = GlobalKey<ShadFormState>();
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: '${widget.initialValue}');
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => ShadDialog(
-    key: const ValueKey<String>('max-model-turns-dialog'),
-    title: Text(
-      S.of(context).maxToolRequestRounds,
-      style: StarsDesktopThemeSpec.pageTitleStyle(context),
-    ),
-    description: Text(S.of(context).maxToolRequestRoundsDescription),
-    constraints: const BoxConstraints(maxWidth: 480),
-    actions: [
-      ShadButton.outline(
-        key: const ValueKey<String>('max-model-turns-cancel'),
-        onPressed: () => Navigator.pop(context),
-        child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-      ),
-      ShadButton(
-        key: const ValueKey<String>('max-model-turns-save'),
-        onPressed: _save,
-        child: Text(S.of(context).save),
-      ),
-    ],
-    child: Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: ShadForm(
-        key: _formKey,
-        autovalidateMode: ShadAutovalidateMode.alwaysAfterFirstValidation,
-        child: ShadInputFormField(
-          key: const ValueKey<String>('max-model-turns-input'),
-          id: 'maxModelTurns',
-          controller: _controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onSubmitted: (_) => _save(),
-          validator: _validate,
-        ),
-      ),
-    ),
-  );
-
-  String? _validate(String value) {
-    final parsed = int.tryParse(value.trim());
-    if (parsed != null &&
-        ConversationMemoryState.isValidMaxModelTurns(parsed)) {
-      return null;
-    }
-    return S.of(context).maxToolRequestRoundsRange;
-  }
-
-  void _save() {
-    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
-    Navigator.pop(context, int.parse(_controller.text.trim()));
   }
 }
