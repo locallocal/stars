@@ -12,6 +12,7 @@ class StarsDesktopThemeSpec {
   static const double profileRailWidth = 300;
   static const double detailMinWidth = 560;
   static const double toolbarHeight = 50;
+  static const EdgeInsets toolbarPadding = EdgeInsets.symmetric(horizontal: 8);
   static const double toolbarAvatarSize = 28;
   static const double toolbarLogoSize = 14;
   static const double menuBarHeight = toolbarHeight;
@@ -123,6 +124,11 @@ class StarsDesktopThemeSpec {
 
   static Color toolbarSurface(BuildContext context) =>
       tokens(context).raisedSurface;
+
+  static BoxDecoration toolbarDecoration(BuildContext context) => BoxDecoration(
+    color: toolbarSurface(context),
+    border: Border(bottom: BorderSide(width: 0, color: divider(context))),
+  );
 
   static Color controlFill(BuildContext context) => tokens(context).controlFill;
 
