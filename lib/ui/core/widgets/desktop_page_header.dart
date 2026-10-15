@@ -3,12 +3,17 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/utils/theme.dart';
 
-/// A full-width legal document header using the desktop conversation toolbar's
-/// layout and theme tokens.
-class LegalDocumentHeader extends StatelessWidget {
-  const LegalDocumentHeader({super.key, required this.title});
+/// A full-width page header using the desktop conversation toolbar's layout
+/// and theme tokens.
+class StarsDesktopPageHeader extends StatelessWidget {
+  const StarsDesktopPageHeader({
+    super.key,
+    required this.title,
+    this.showBackButton = true,
+  });
 
   final String title;
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +24,14 @@ class LegalDocumentHeader extends StatelessWidget {
       decoration: StarsDesktopThemeSpec.toolbarDecoration(context),
       child: Row(
         children: [
-          StarsDesktopIconAction(
-            icon: LucideIcons.arrowLeft,
-            label: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          const SizedBox(width: 8),
+          if (showBackButton) ...[
+            StarsDesktopIconAction(
+              icon: LucideIcons.arrowLeft,
+              label: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            const SizedBox(width: 8),
+          ],
           Expanded(
             child: Text(
               title,

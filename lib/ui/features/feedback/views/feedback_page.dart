@@ -3,7 +3,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/common.dart';
-import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
+import 'package:stars/ui/core/widgets/desktop_page_header.dart';
 import 'package:stars/ui/features/feedback/view_models/feedback_view_model.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
@@ -85,37 +85,16 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
   Widget _buildDesktopPage(BuildContext context) {
     final shadTheme = ShadTheme.of(context);
-    final backTooltip = MaterialLocalizations.of(context).backButtonTooltip;
 
     return Scaffold(
       backgroundColor: shadTheme.colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(
-              height: 52,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    if (Navigator.of(context).canPop()) ...[
-                      StarsDesktopIconAction(
-                        icon: LucideIcons.arrowLeft,
-                        label: backTooltip,
-                        iconSize: 18,
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      S.of(context).helpAndFeedback,
-                      style: shadTheme.textTheme.h4,
-                    ),
-                  ],
-                ),
-              ),
+            StarsDesktopPageHeader(
+              title: S.of(context).helpAndFeedback,
+              showBackButton: Navigator.of(context).canPop(),
             ),
-            const ShadSeparator.horizontal(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(32),

@@ -6,8 +6,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/legal_document.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
+import 'package:stars/ui/core/widgets/desktop_page_header.dart';
 import 'package:stars/ui/features/profile/view_models/legal_document_view_model.dart';
-import 'package:stars/ui/features/profile/views/legal_document_header.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 
@@ -118,7 +118,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       body: SafeArea(
         child: Column(
           children: [
-            LegalDocumentHeader(title: S.of(context).privacyPolicy),
+            StarsDesktopPageHeader(title: S.of(context).privacyPolicy),
             Expanded(
               child:
                   _isLoading
