@@ -60,16 +60,8 @@ class _UnifiedDesktopToolbar extends StatelessWidget {
     return Container(
       key: const ValueKey<String>('desktop-unified-toolbar'),
       height: StarsDesktopThemeSpec.toolbarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: StarsDesktopThemeSpec.toolbarSurface(context),
-        border: Border(
-          bottom: BorderSide(
-            width: 0,
-            color: StarsDesktopThemeSpec.divider(context),
-          ),
-        ),
-      ),
+      padding: StarsDesktopThemeSpec.toolbarPadding,
+      decoration: StarsDesktopThemeSpec.toolbarDecoration(context),
       child: Stack(
         alignment: Alignment.center,
         children: [

@@ -6,8 +6,8 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/legal_document.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
-import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/profile/view_models/legal_document_view_model.dart';
+import 'package:stars/ui/features/profile/views/legal_document_header.dart';
 import 'package:stars/utils/theme.dart';
 import 'package:stars/utils/utils.dart';
 
@@ -112,35 +112,13 @@ class _UserAgreementPageState extends State<UserAgreementPage> {
 
   Widget _buildDesktopPage(BuildContext context) {
     final shadTheme = ShadTheme.of(context);
-    final backTooltip = MaterialLocalizations.of(context).backButtonTooltip;
 
     return Scaffold(
       backgroundColor: shadTheme.colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(
-              height: 52,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    StarsDesktopIconAction(
-                      icon: LucideIcons.arrowLeft,
-                      label: backTooltip,
-                      iconSize: 18,
-                      onPressed: () => Navigator.of(context).maybePop(),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      S.of(context).userAgreement,
-                      style: shadTheme.textTheme.h4,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const ShadSeparator.horizontal(),
+            LegalDocumentHeader(title: S.of(context).userAgreement),
             Expanded(
               child:
                   _isLoading
