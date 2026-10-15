@@ -89,6 +89,29 @@ Review the change.
   });
 
   test(
+    'accepts top-level ecosystem versions and prefers metadata.version',
+    () async {
+      for (final metadata in ['', 'metadata:\n  version: "3.0.0"\n']) {
+        final root = await _createSkill(
+          temporaryDirectory,
+          name: 'standard-skill',
+          body: '''
+---
+name: standard-skill
+description: Standard third-party Skill.
+version: 2.0.0
+$metadata---
+Use standard resources.
+''',
+        );
+        final parsed = await const SkillParser().parse(root);
+        expect(parsed.version, metadata.isEmpty ? '2.0.0' : '3.0.0');
+        expect(parsed.validationStatus, SkillValidationStatus.valid);
+      }
+    },
+  );
+
+  test(
     'marks an invalid package instead of accepting mismatched identity',
     () async {
       final root = await _createSkill(

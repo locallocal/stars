@@ -74,6 +74,8 @@ import 'package:stars/data/services/skills/linux_bubblewrap_skill_sandbox.dart';
 import 'package:stars/data/services/skills/skill_catalog_endpoint_policy.dart';
 import 'package:stars/data/services/skills/skill_catalog_service.dart';
 import 'package:stars/data/services/skills/skill_installation_service.dart';
+import 'package:stars/data/services/skills/skill_source_resolver.dart';
+import 'package:stars/data/services/tools/resolve_skill_source_tool.dart';
 import 'package:stars/data/services/skills/skill_organization_policy_bundle_service.dart';
 import 'package:stars/data/services/skills/skill_script_catalog_service.dart';
 import 'package:stars/data/services/skills/skill_script_manifest_parser.dart';
@@ -377,6 +379,11 @@ class AppDependencies {
         endpointPolicy: SkillCatalogEndpointPolicy(),
       ),
     );
+    final resolveSkillSourceTool = ResolveSkillSourceTool(
+      resolver: SkillSourceResolver(
+        endpointPolicy: SkillCatalogEndpointPolicy(),
+      ),
+    );
     const skillPickerRepository = SkillPickerRepositoryImpl(
       service: SkillPickerService(),
     );
@@ -432,6 +439,7 @@ class AppDependencies {
       ...builtInTools,
       if (shellCommandTool != null) shellCommandTool,
       skillInstallerTool,
+      resolveSkillSourceTool,
     ]);
     final prepareTextGeneration = PrepareTextGeneration(
       composeChatTurn: composeChatTurn.call,

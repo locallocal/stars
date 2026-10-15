@@ -111,11 +111,20 @@ final class FileSkillRepository implements SkillRepository {
     final staged = await _storageService.stage(source);
     var committed = false;
     try {
+      // Repository ZIPs wrap a root Skill in a generated repository/ref folder
+      // (e.g. ModelScope's skills-owner.name-master-<commit>). Its name is
+      // transport metadata, while nested/local Skill directories retain the
+      // standard directory-name check. SKILL.md identity validation still runs.
+      final archiveWrapper =
+          source.kind == SkillImportKind.zipArchive &&
+          path.normalize(staged.skillRoot.parent.path) ==
+              path.normalize(staged.stagingDirectory.path);
       final parsed = await _parser.parse(
         staged.skillRoot,
         validateDirectoryName:
+            !archiveWrapper &&
             path.normalize(staged.skillRoot.path) !=
-            path.normalize(staged.stagingDirectory.path),
+                path.normalize(staged.stagingDirectory.path),
       );
       if (parsed.validationStatus == SkillValidationStatus.invalid) {
         final errors = parsed.diagnostics

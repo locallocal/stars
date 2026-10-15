@@ -11,7 +11,7 @@ void main() {
     final content = await skill.loadContent();
 
     expect(skill.isValid, isTrue);
-    expect(skill.promptVersion, 3);
+    expect(skill.promptVersion, 4);
     expect(skill.contentDigest, hasLength(64));
     expect(content.descriptor.id, skillInstallerSkillId);
     expect(content.descriptor.scope, SkillScope.bundled);
