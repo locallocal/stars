@@ -227,6 +227,32 @@ Do not install.
       isEmpty,
     );
   });
+
+  test(
+    'nested Skill folders still require matching frontmatter identities',
+    () async {
+      final zipFile = File('${temporaryDirectory.path}/mismatch.zip');
+      final archive =
+          Archive()..addFile(
+            ArchiveFile.string(
+              'repository-main/skills/expected/SKILL.md',
+              '---\nname: unexpected\ndescription: Mismatched nested Skill.\n---\nInstructions.',
+            ),
+          );
+      await zipFile.writeAsBytes(ZipEncoder().encodeBytes(archive));
+      await expectLater(
+        repository.install(
+          SkillImportSource(
+            kind: SkillImportKind.zipArchive,
+            path: zipFile.path,
+            subdirectory: 'skills/expected',
+          ),
+        ),
+        throwsA(isA<SkillInstallException>()),
+      );
+      expect(await database.query('skills'), isEmpty);
+    },
+  );
 }
 
 Map<String, Object?> _botRow(String id) => <String, Object?>{

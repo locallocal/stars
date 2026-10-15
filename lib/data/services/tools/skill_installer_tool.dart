@@ -13,7 +13,9 @@ final class SkillInstallerTool implements ExecutableTool {
     title: 'Install Skill',
     description:
         'Install one Stars Skill from GitHub, an HTTPS ZIP URL, a local ZIP, '
-        'or a local directory through the validated Skill installation pipeline.',
+        'or a local directory through the validated Skill installation pipeline. '
+        'For ModelScope links, collections, or installer commands, first use '
+        'resolve_skill_source and pass one returned installation source here.',
     inputSchema: const {
       'type': 'object',
       'properties': {

@@ -11,8 +11,9 @@ final class SystemSkillInstallerSkill extends BundledSystemSkill {
         skillId: skillInstallerSkillId,
         name: 'skill-installer',
         description:
-            'Install Stars Skills and inspect installed or current-conversation '
-            'Skill state from SQLite.',
+            'Install standard Skills into Stars from ModelScope links or '
+            'collections, npx skills add or ModelScope curl installer commands, '
+            'GitHub, ZIPs, and local folders; inspect Skill state from SQLite.',
         compatibility: 'Stars desktop',
         requestedToolNames: skillInstallerToolNames,
         integrityError: 'Built-in Skill installer failed integrity validation.',

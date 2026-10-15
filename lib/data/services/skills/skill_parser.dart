@@ -99,7 +99,12 @@ final class SkillParser {
     final compatibility = _stringValue(yaml['compatibility']);
     final license = _stringValue(yaml['license']);
     final metadata = yaml['metadata'];
-    final version = metadata is Map ? _stringValue(metadata['version']) : '';
+    final metadataVersion =
+        metadata is Map ? _stringValue(metadata['version']) : '';
+    final version =
+        metadataVersion.isNotEmpty
+            ? metadataVersion
+            : _stringValue(yaml['version']);
     final allowedTools = yaml['allowed-tools'];
     final requestedToolNames =
         allowedTools is String
