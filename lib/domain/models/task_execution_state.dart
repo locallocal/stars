@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/task_file_read_observation.dart';
 import 'package:stars/domain/models/tool.dart';
+import 'package:stars/domain/models/task_tool_observation.dart';
 
 /// Portable continuation data. Tool arguments must be credential-free; adapters
 /// resolve credentials through their own configuration, never through this JSON.
@@ -97,18 +98,27 @@ final class TaskExecutionState {
   TaskExecutionState({
     List<TaskPendingCall> calls = const [],
     List<TaskFileReadObservation> fileReads = const [],
+    List<TaskToolObservation> toolResults = const [],
     this.stepStarted = false,
     this.replanRequired = false,
     this.consecutiveFailures = 0,
+    this.consecutiveDuplicateCalls = 0,
     this.backoffCount = 0,
     this.candidate,
     this.finalizationReason,
     this.sideEffectsUnknown = false,
     this.segmentStartDigest = '',
   }) : calls = List.unmodifiable(calls),
-       fileReads = List.unmodifiable(fileReads) {
-    if (calls.length > 4096 ||
+       fileReads = List.unmodifiable(fileReads),
+       toolResults = List.unmodifiable(toolResults) {
+    if (toolResults.length > TaskToolObservation.maxRetainedResults ||
+        toolResults.fold(0, (sum, item) => sum + item.characters) >
+            TaskToolObservation.maxRetainedCharacters ||
+        toolResults.map((item) => item.attemptId).toSet().length !=
+            toolResults.length ||
+        calls.length > 4096 ||
         consecutiveFailures < 0 ||
+        consecutiveDuplicateCalls < 0 ||
         backoffCount < 0 ||
         calls.any((call) => call.retryCount < 0) ||
         fileReads.length > TaskFileReadObservation.maxRetainedPages ||
@@ -122,9 +132,11 @@ final class TaskExecutionState {
 
   final List<TaskPendingCall> calls;
   final List<TaskFileReadObservation> fileReads;
+  final List<TaskToolObservation> toolResults;
   final bool stepStarted;
   final bool replanRequired;
   final int consecutiveFailures;
+  final int consecutiveDuplicateCalls;
   final int backoffCount;
   final GroundedAnswerCandidate? candidate;
   final String? finalizationReason;
@@ -133,11 +145,14 @@ final class TaskExecutionState {
 
   Map<String, Object?> toJson() => {
     'calls': calls.map((call) => call.toJson()).toList(),
+    if (toolResults.isNotEmpty)
+      'toolResults': toolResults.map((item) => item.toJson()).toList(),
     if (fileReads.isNotEmpty)
       'fileReads': fileReads.map((page) => page.toJson()).toList(),
     'stepStarted': stepStarted,
     'replanRequired': replanRequired,
     'consecutiveFailures': consecutiveFailures,
+    'consecutiveDuplicateCalls': consecutiveDuplicateCalls,
     'backoffCount': backoffCount,
     'candidate': candidate?.toJson(),
     'finalizationReason': finalizationReason,
@@ -149,9 +164,12 @@ final class TaskExecutionState {
     _only(json, {
       'calls',
       if (json.containsKey('fileReads')) 'fileReads',
+      if (json.containsKey('toolResults')) 'toolResults',
       'stepStarted',
       'replanRequired',
       'consecutiveFailures',
+      if (json.containsKey('consecutiveDuplicateCalls'))
+        'consecutiveDuplicateCalls',
       'backoffCount',
       'candidate',
       'finalizationReason',
@@ -162,6 +180,10 @@ final class TaskExecutionState {
     final candidateMap =
         candidate == null ? null : Map<String, Object?>.from(candidate as Map);
     return TaskExecutionState(
+      toolResults: [
+        for (final item in json['toolResults'] as List? ?? const [])
+          TaskToolObservation.fromJson(Map<String, Object?>.from(item as Map)),
+      ],
       fileReads: [
         for (final page in json['fileReads'] as List? ?? const [])
           TaskFileReadObservation.fromJson(
@@ -179,6 +201,7 @@ final class TaskExecutionState {
       stepStarted: json['stepStarted']! as bool,
       replanRequired: json['replanRequired']! as bool,
       consecutiveFailures: json['consecutiveFailures']! as int,
+      consecutiveDuplicateCalls: json['consecutiveDuplicateCalls'] as int? ?? 0,
       backoffCount: json['backoffCount']! as int,
       candidate:
           candidateMap == null

@@ -136,6 +136,37 @@ Do something.
     },
   );
 
+  test('accepts SKILL.md larger than the former byte limits', () async {
+    final body = 'instructions\n' * 250000;
+    final root = await _createSkill(
+      temporaryDirectory,
+      name: 'large',
+      body: '''
+---
+name: large
+description: Large instructions.
+---
+$body
+''',
+    );
+
+    final parsed = await const SkillParser().parse(root);
+
+    expect(parsed.instructions, body.trim());
+    expect(parsed.validationStatus, SkillValidationStatus.validWithWarnings);
+    expect(parsed.diagnostics.single.code, 'large_skill_file');
+  });
+
+  test('reports invalid UTF-8 as a package rejection', () async {
+    final root = await Directory('${temporaryDirectory.path}/invalid').create();
+    await File('${root.path}/SKILL.md').writeAsBytes([0xff, 0xfe, 0x80]);
+
+    await expectLater(
+      const SkillParser().parse(root),
+      throwsA(isA<SkillInstallException>()),
+    );
+  });
+
   test('rejects SKILL.md without YAML frontmatter', () async {
     final root = await _createSkill(
       temporaryDirectory,

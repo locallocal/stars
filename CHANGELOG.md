@@ -62,6 +62,14 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Fixed
 
+- Skill installation tasks retain resolved sources across turns and restarts,
+  stop on invalid packages or incomplete resolution, and verify every requested
+  installation before reporting success. Collection parsing no longer imposes
+  fixed entry or page counts.
+- Removed package, archive, individual-file, and `SKILL.md` installation byte
+  limits. Downloads and hashing stream through files; background isolates handle
+  extraction and parsing, with archive integrity checks and failed-import cleanup.
+
 - Treat absent Bot parameters and persisted empty parameters as the same task
   configuration, so background work can resume after repository reloads.
 

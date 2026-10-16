@@ -3,14 +3,17 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart';
+import 'package:path/path.dart' as path;
 import 'package:stars/data/services/skills/skill_catalog_endpoint_policy.dart';
+import 'package:stars/data/services/skills/skill_package_downloader.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/catalog_controller.dart';
 import 'package:stars/domain/repositories/skill_ecosystem_repository.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
 
 typedef SkillCatalogHttpClientFactory = HttpClient Function();
-typedef SkillCatalogFetcher = Future<List<int>> Function(Uri uri, int maxBytes);
+typedef SkillCatalogFetcher =
+    Future<List<int>> Function(Uri uri, int? maxBytes);
 
 final class SkillCatalogService implements SkillCatalogController {
   SkillCatalogService({
@@ -22,17 +25,19 @@ final class SkillCatalogService implements SkillCatalogController {
   }) : _ecosystemRepository = ecosystemRepository,
        _skillRepository = skillRepository,
        _endpointPolicy = endpointPolicy,
-       _httpClientFactory = httpClientFactory ?? HttpClient.new,
-       _fetcher = fetcher;
+       _downloader = SkillPackageDownloader(
+         endpointPolicy: endpointPolicy,
+         httpClientFactory: httpClientFactory,
+         fetcher:
+             fetcher == null ? null : (uri, limit, _) => fetcher(uri, limit),
+       );
 
   static const int maxIndexBytes = 2 * 1024 * 1024;
-  static const int maxArchiveBytes = 20 * 1024 * 1024;
 
   final SkillEcosystemRepository _ecosystemRepository;
   final SkillRepository _skillRepository;
   final SkillCatalogEndpointPolicy _endpointPolicy;
-  final SkillCatalogHttpClientFactory _httpClientFactory;
-  final SkillCatalogFetcher? _fetcher;
+  final SkillPackageDownloader _downloader;
   final Map<String, List<OnlineSkillCatalogEntry>> _entries = {};
 
   List<OnlineSkillCatalogEntry> entriesFor(String catalogId) =>
@@ -67,7 +72,11 @@ final class SkillCatalogService implements SkillCatalogController {
   ) async {
     await _endpointPolicy.validate(source.indexUri);
     try {
-      final bytes = await _fetch(source.indexUri, maxIndexBytes);
+      final bytes = await _downloader.fetch(
+        source.indexUri,
+        maxIndexBytes,
+        AgentCancellationToken(),
+      );
       final document = jsonDecode(utf8.decode(bytes));
       if (document is! Map || document['schemaVersion'] != 1) {
         throw const SkillInstallException('Skill 在线目录格式或版本无效。');
@@ -141,16 +150,20 @@ final class SkillCatalogService implements SkillCatalogController {
   @override
   Future<SkillDescriptor> install(OnlineSkillCatalogEntry entry) async {
     await _endpointPolicy.validate(entry.archiveUri);
-    final bytes = await _fetch(entry.archiveUri, maxArchiveBytes);
-    if (sha256.convert(bytes).toString() != entry.archiveDigest) {
-      throw const SkillInstallException('Skill 下载包摘要不匹配。');
-    }
     final temporary = await Directory.systemTemp.createTemp(
       'stars-skill-download-',
     );
-    final archive = File('${temporary.path}/skill.zip');
+    final archive = File(path.join(temporary.path, 'skill.zip'));
     try {
-      await archive.writeAsBytes(bytes, flush: true);
+      await _downloader.downloadToFile(
+        entry.archiveUri,
+        archive,
+        AgentCancellationToken(),
+      );
+      final digest = await sha256.bind(archive.openRead()).first;
+      if (digest.toString() != entry.archiveDigest) {
+        throw const SkillInstallException('Skill 下载包摘要不匹配。');
+      }
       final installed = await _skillRepository.install(
         SkillImportSource(
           kind: SkillImportKind.zipArchive,
@@ -175,7 +188,11 @@ final class SkillCatalogService implements SkillCatalogController {
       );
       return installed;
     } finally {
-      if (await temporary.exists()) await temporary.delete(recursive: true);
+      try {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      } on FileSystemException {
+        // Temporary-file cleanup must not replace the durable install result.
+      }
     }
   }
 
@@ -275,40 +292,6 @@ final class SkillCatalogService implements SkillCatalogController {
     if (!verified) {
       throw const SkillInstallException('Skill 在线目录签名无效。');
     }
-  }
-
-  Future<List<int>> _get(Uri uri, int limit) async {
-    final client = _httpClientFactory();
-    client.connectionTimeout = const Duration(seconds: 10);
-    try {
-      final request = await client
-          .getUrl(uri)
-          .timeout(const Duration(seconds: 10));
-      request.followRedirects = false;
-      final response = await request.close().timeout(
-        const Duration(seconds: 10),
-      );
-      if (response.isRedirect || response.statusCode != HttpStatus.ok) {
-        throw SkillInstallException(
-          'Skill 在线请求失败（HTTP ${response.statusCode}）。',
-        );
-      }
-      final bytes = <int>[];
-      await for (final chunk in response.timeout(const Duration(seconds: 10))) {
-        if (bytes.length + chunk.length > limit) {
-          throw const SkillInstallException('Skill 在线响应超过大小限制。');
-        }
-        bytes.addAll(chunk);
-      }
-      return bytes;
-    } finally {
-      client.close(force: true);
-    }
-  }
-
-  Future<List<int>> _fetch(Uri uri, int limit) {
-    final fetcher = _fetcher;
-    return fetcher == null ? _get(uri, limit) : fetcher(uri, limit);
   }
 
   String _requiredText(Map<String, Object?> value, String key) {

@@ -1,6 +1,16 @@
 part of 'conversation_task_runner.dart';
 
 extension _TaskSegmentTools on _TaskSegment {
+  Future<TaskSegmentResult?> _skipDuplicate() async {
+    duplicateCalls++;
+    await _save(TaskEventKind.segmentCheckpoint);
+    if (duplicateCalls >= limits.maxSameCallRetries) {
+      calls.clear();
+      return _finishFinalization(TaskReasonCode.noProgress);
+    }
+    return null;
+  }
+
   TaskPendingCall _prepare(ToolCallRequest call) {
     final adapter = tools[call.name];
     if (adapter == null ||
@@ -55,6 +65,49 @@ extension _TaskSegmentTools on _TaskSegment {
         key = '$base:read:${_hash(previous.attemptId)}';
       }
     }
+    if (!fileRead && adapter.definition.riskLevel == ToolRiskLevel.readOnly) {
+      final base = key;
+      final ids =
+          snapshot.attemptLinks
+              .where(
+                (link) =>
+                    link.idempotencyKey == base ||
+                    link.idempotencyKey.startsWith('$base:observation:'),
+              )
+              .map((link) => link.attemptId)
+              .toSet();
+      final successes = snapshot.events.where(
+        (event) =>
+            event.kind == TaskEventKind.toolSucceeded &&
+            ids.contains(event.attemptId),
+      );
+      final previous = successes.lastOrNull;
+      if (previous != null) {
+        final retained = toolResults.any(
+          (item) => item.attemptId == previous.attemptId,
+        );
+        final changedSinceRead = snapshot.events.any(
+          (event) =>
+              event.kind == TaskEventKind.toolSucceeded &&
+              event.sequence > previous.sequence &&
+              snapshot.attempts.any(
+                (attempt) =>
+                    attempt.attemptId == event.attemptId &&
+                    attempt.riskLevel != ToolRiskLevel.readOnly,
+              ),
+        );
+        // Old checkpoints and evicted observations may be read again. Writes
+        // never take this path, even when their result is no longer retained.
+        if (!retained || changedSinceRead) {
+          key = '$base:observation:${_hash(previous.attemptId)}';
+        } else {
+          key =
+              snapshot.attemptLinks
+                  .singleWhere((link) => link.attemptId == previous.attemptId)
+                  .idempotencyKey;
+        }
+      }
+    }
     return TaskPendingCall(
       call: call,
       toolVersion: adapter.definition.toolVersion,
@@ -107,10 +160,10 @@ extension _TaskSegmentTools on _TaskSegment {
           (page) => taskFileReadCovers(page, pending.call, nextStep),
         )) {
       calls.removeAt(0);
-      await _save(TaskEventKind.segmentCheckpoint);
-      return null;
+      return _skipDuplicate();
     }
-    if (pending.attemptId == null && retainsTaskFileRead(adapter.definition)) {
+    if (pending.attemptId == null &&
+        adapter.definition.riskLevel == ToolRiskLevel.readOnly) {
       // Earlier calls in the same model batch may have invalidated or evicted
       // this page since the pending call was prepared.
       pending = _prepare(pending.call);
@@ -133,8 +186,7 @@ extension _TaskSegmentTools on _TaskSegment {
       );
       if (success.isNotEmpty) {
         calls.removeAt(0);
-        await _save(TaskEventKind.segmentCheckpoint);
-        return null;
+        return _skipDuplicate();
       }
       // A checkpoint must never detach from a possibly running side effect.
       if (links.isNotEmpty &&
@@ -408,6 +460,27 @@ extension _TaskSegmentTools on _TaskSegment {
         if (validated.result.isError) {
           return _failure(pending, adapter, record, validated.result);
         }
+        if (adapter.definition.name == resolveSkillSourceToolName &&
+            !usableTaskSkillSources(
+              prepareTaskToolObservation(
+                attemptId: record.attemptId,
+                result: validated.result,
+              ),
+            )) {
+          return _failure(
+            pending,
+            adapter,
+            record,
+            ToolResult(
+              callId: pending.call.callId,
+              name: pending.call.name,
+              content:
+                  'Skill source resolution returned no complete usable list.',
+              isError: true,
+              errorCode: 'skill_source_resolution_failed',
+            ),
+          );
+        }
         failures = 0;
         backoffs = 0;
         await _end(
@@ -429,7 +502,10 @@ extension _TaskSegmentTools on _TaskSegment {
     ToolInvocationStatus status = ToolInvocationStatus.failed,
     bool reconciled = false,
   }) async {
-    final permanent = _permanentToolReason(result.errorCode);
+    final permanent =
+        adapter.definition.name == resolveSkillSourceToolName
+            ? TaskReasonCode.skillSourceFailed
+            : _permanentToolReason(result.errorCode);
     final canRetry =
         adapter.definition.riskLevel == ToolRiskLevel.readOnly ||
         adapter.guaranteesIdempotency ||
@@ -525,6 +601,20 @@ extension _TaskSegmentTools on _TaskSegment {
       }
     }
     if (status == ToolInvocationStatus.succeeded) {
+      duplicateCalls = 0;
+      if (!retainsTaskFileRead(adapter.definition)) {
+        final observation = prepareTaskToolObservation(
+          attemptId: record.attemptId,
+          result: result,
+        );
+        final retained = TaskToolObservation.retain([
+          ...toolResults.where((item) => item.attemptId != record.attemptId),
+          observation,
+        ]);
+        toolResults
+          ..clear()
+          ..addAll(retained);
+      }
       if (retainsTaskFileRead(adapter.definition)) {
         final page = prepareTaskFileRead(
           call: pending.call,
@@ -638,6 +728,8 @@ String? _permanentToolReason(String code) => switch (code) {
   'tool_denied' => TaskReasonCode.permissionDenied,
   'invalid_arguments' ||
   'invalid_tool_arguments' ||
+  'invalid_skill_source' ||
   'invalid_input' => TaskReasonCode.invalidPlan,
+  'skill_install_rejected' => TaskReasonCode.skillInstallRejected,
   _ => null,
 };

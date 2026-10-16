@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:path/path.dart' as path;
 import 'package:stars/domain/models/models.dart';
@@ -48,22 +50,33 @@ final class ParsedSkillPackage {
 final class SkillParser {
   const SkillParser();
 
-  static const int maxSkillFileBytes = 1024 * 1024;
-
   Future<ParsedSkillPackage> parse(
     Directory root, {
     bool validateDirectoryName = true,
+  }) {
+    final rootPath = root.path;
+    return Isolate.run(
+      () => const SkillParser()._parse(
+        Directory(rootPath),
+        validateDirectoryName: validateDirectoryName,
+      ),
+    );
+  }
+
+  Future<ParsedSkillPackage> _parse(
+    Directory root, {
+    required bool validateDirectoryName,
   }) async {
     final skillFile = File(path.join(root.path, 'SKILL.md'));
     if (!await skillFile.exists()) {
       throw const SkillInstallException('Skill 包缺少 SKILL.md。');
     }
-    final length = await skillFile.length();
-    if (length > maxSkillFileBytes) {
-      throw const SkillInstallException('SKILL.md 超过 1 MB 限制。');
+    String source;
+    try {
+      source = await utf8.decoder.bind(skillFile.openRead()).join();
+    } on FormatException {
+      throw const SkillInstallException('SKILL.md 必须是有效的 UTF-8 文本。');
     }
-
-    var source = await skillFile.readAsString();
     if (source.startsWith('\ufeff')) source = source.substring(1);
     source = source.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
     final lines = source.split('\n');

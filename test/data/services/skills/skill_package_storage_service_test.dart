@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/services/skills/skill_package_storage_service.dart';
 import 'package:stars/domain/models/models.dart';
@@ -79,6 +82,171 @@ Keep the summary concise.
       );
     },
   );
+
+  for (final compressed in [false, true]) {
+    test(
+      'installs a ZIP exceeding former byte limits (compressed: $compressed)',
+      () async {
+        final payload = Uint8List(21 * 1024 * 1024 + 1)..last = 42;
+        final archive =
+            Archive()
+              ..addFile(ArchiveFile.string('large/SKILL.md', 'Large package.'))
+              ..addFile(
+                compressed
+                    ? ArchiveFile(
+                      'large/data/catalog.json',
+                      payload.length,
+                      payload,
+                    )
+                    : ArchiveFile.noCompress(
+                      'large/data/catalog.json',
+                      payload.length,
+                      payload,
+                    ),
+              );
+        final bytes = ZipEncoder().encodeBytes(archive);
+        if (!compressed) expect(bytes.length, greaterThan(20 * 1024 * 1024));
+        final zip = await File(
+          '${temporaryDirectory.path}/large.zip',
+        ).writeAsBytes(bytes);
+
+        final staged = await service.stage(
+          SkillImportSource(
+            kind: SkillImportKind.zipArchive,
+            path: zip.path,
+            expectedArchiveDigest: sha256.convert(bytes).toString(),
+          ),
+        );
+        final stored = await service.commit(
+          staged,
+          scope: 'user',
+          skillName: 'large',
+        );
+        final installed = File('${stored.rootPath}/data/catalog.json');
+
+        expect(await installed.length(), payload.length);
+        expect(
+          await sha256.bind(installed.openRead()).first,
+          sha256.convert(payload),
+        );
+        await service.verifyImmutableInstallation(
+          stored.rootPath,
+          stored.contentDigest,
+        );
+        expect(await staged.stagingDirectory.exists(), isFalse);
+      },
+    );
+  }
+
+  test(
+    'copies a local package exceeding the former single and total limits',
+    () async {
+      final source =
+          await Directory('${temporaryDirectory.path}/large').create();
+      await File(
+        '${source.path}/SKILL.md',
+      ).writeAsString('Large local package.');
+      final payload = File('${source.path}/payload.bin');
+      final handle = await payload.open(mode: FileMode.write);
+      try {
+        await handle.truncate(21 * 1024 * 1024 + 1);
+      } finally {
+        await handle.close();
+      }
+      final expectedDigest = await service.computeContentDigest(source);
+
+      final staged = await service.stage(
+        SkillImportSource(kind: SkillImportKind.directory, path: source.path),
+      );
+      final stored = await service.commit(
+        staged,
+        scope: 'user',
+        skillName: 'large',
+      );
+
+      expect(
+        await File('${stored.rootPath}/payload.bin').length(),
+        await payload.length(),
+      );
+      expect(stored.contentDigest, expectedDigest);
+    },
+  );
+
+  test('streaming digest preserves the signed payload encoding', () async {
+    final source =
+        await Directory('${temporaryDirectory.path}/digest').create();
+    await File('${source.path}/b.txt').writeAsBytes([0, 255, 42]);
+    await File('${source.path}/a.txt').writeAsString('你好');
+    final expected = sha256.convert([
+      ...utf8.encode('a.txt'),
+      0,
+      ...utf8.encode('你好'),
+      0,
+      ...utf8.encode('b.txt'),
+      0,
+      0,
+      255,
+      42,
+      0,
+    ]);
+
+    expect(await service.computeContentDigest(source), expected.toString());
+  });
+
+  test(
+    'rejects corrupt ZIP payloads and removes partially staged files',
+    () async {
+      final payload = utf8.encode('unique-payload-to-corrupt');
+      final archive =
+          Archive()
+            ..addFile(ArchiveFile.string('safe/SKILL.md', 'Instructions.'))
+            ..addFile(
+              ArchiveFile.noCompress('safe/data.bin', payload.length, payload),
+            );
+      final bytes = ZipEncoder().encodeBytes(archive);
+      final offset = latin1.decode(bytes).indexOf('unique-payload-to-corrupt');
+      expect(offset, greaterThan(0));
+      bytes[offset] ^= 1;
+      final zip = await File(
+        '${temporaryDirectory.path}/corrupt.zip',
+      ).writeAsBytes(bytes);
+
+      await expectLater(
+        service.stage(
+          SkillImportSource(kind: SkillImportKind.zipArchive, path: zip.path),
+        ),
+        throwsA(isA<SkillInstallException>()),
+      );
+
+      expect(
+        await Directory(
+          '${supportDirectory.path}/skills/staging',
+        ).list().toList(),
+        isEmpty,
+      );
+    },
+  );
+
+  test('rejects ZIP symlinks without extracting their targets', () async {
+    final archive =
+        Archive()
+          ..addFile(ArchiveFile.string('safe/SKILL.md', 'Instructions.'))
+          ..addFile(
+            ArchiveFile.string('safe/link', '../../outside')
+              ..mode = 0xa1ff
+              ..symbolicLink = '../../outside',
+          );
+    final zip = await File(
+      '${temporaryDirectory.path}/link.zip',
+    ).writeAsBytes(ZipEncoder().encodeBytes(archive));
+
+    await expectLater(
+      service.stage(
+        SkillImportSource(kind: SkillImportKind.zipArchive, path: zip.path),
+      ),
+      throwsA(isA<SkillInstallException>()),
+    );
+  });
 
   test('rejects ZIP path traversal before writing outside staging', () async {
     final zipFile = File('${temporaryDirectory.path}/malicious.zip');

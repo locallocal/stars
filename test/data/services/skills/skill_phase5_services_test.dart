@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/services/skills/linux_bubblewrap_skill_sandbox.dart';
@@ -287,6 +289,55 @@ void main() {
     );
   });
 
+  for (final validDigest in [true, false]) {
+    test(
+      'catalog downloads over 20 MB still verify integrity (valid: $validDigest)',
+      () async {
+        final payload = Uint8List(21 * 1024 * 1024);
+        final repository = _FakeSkillRepository(_skill('/tmp/example'));
+        final service = SkillCatalogService(
+          ecosystemRepository: _MemoryEcosystemRepository(),
+          skillRepository: repository,
+          endpointPolicy: SkillCatalogEndpointPolicy(
+            dnsLookup: (_) async => [InternetAddress('8.8.8.8')],
+          ),
+          fetcher: (_, limit) async {
+            expect(limit, isNull);
+            return payload;
+          },
+        );
+        final entry = OnlineSkillCatalogEntry(
+          id: 'example',
+          catalogId: 'catalog-1',
+          name: 'example',
+          description: 'Example',
+          version: '2.0.0',
+          publisherId: 'publisher-1',
+          archiveUri: Uri.parse('https://cdn.example/example.zip'),
+          archiveDigest:
+              validDigest
+                  ? crypto.sha256.convert(payload).toString()
+                  : '0' * 64,
+          contentDigest: 'b' * 64,
+        );
+
+        if (validDigest) {
+          await service.install(entry);
+          expect(repository.archiveBytes, payload.length);
+          expect(repository.source?.expectedArchiveDigest, entry.archiveDigest);
+          expect(repository.source?.expectedContentDigest, entry.contentDigest);
+          expect(await File(repository.source!.path).parent.exists(), isFalse);
+        } else {
+          await expectLater(
+            service.install(entry),
+            throwsA(isA<SkillInstallException>()),
+          );
+          expect(repository.source, isNull);
+        }
+      },
+    );
+  }
+
   test(
     'explicit digest grant registers and executes a sandboxed script tool',
     () async {
@@ -482,9 +533,11 @@ final class _MemoryEcosystemRepository implements SkillEcosystemRepository {
 }
 
 final class _FakeSkillRepository implements SkillRepository {
-  const _FakeSkillRepository(this.skill);
+  _FakeSkillRepository(this.skill);
 
   final SkillDescriptor skill;
+  SkillImportSource? source;
+  int? archiveBytes;
 
   @override
   Stream<List<SkillDescriptor>> get changes => const Stream.empty();
@@ -499,8 +552,11 @@ final class _FakeSkillRepository implements SkillRepository {
   }) async => [skill];
 
   @override
-  Future<SkillDescriptor> install(SkillImportSource source) =>
-      throw UnimplementedError();
+  Future<SkillDescriptor> install(SkillImportSource source) async {
+    this.source = source;
+    archiveBytes = await File(source.path).length();
+    return skill;
+  }
 
   @override
   Future<SkillContent> load(String skillId, {String? contentDigest}) =>

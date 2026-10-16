@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:isolate';
+import 'dart:math' as math;
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive.dart' hide ZLibDecoder;
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -41,9 +42,6 @@ final class SkillPackageStorageService {
 
   static const int maxFileCount = 256;
   static const int maxDirectoryCount = 512;
-  static const int maxSingleFileBytes = 2 * 1024 * 1024;
-  static const int maxPackageBytes = 20 * 1024 * 1024;
-  static const int maxArchiveBytes = 20 * 1024 * 1024;
   static const int maxPathDepth = 12;
   static const int maxReferenceBytes = 256 * 1024;
 
@@ -64,16 +62,13 @@ final class SkillPackageStorageService {
             if (!await archive.exists()) {
               throw const SkillInstallException('选择的 ZIP 文件不存在。');
             }
-            if (await archive.length() > maxArchiveBytes) {
-              throw const SkillInstallException('ZIP 文件超过 20 MB 限制。');
-            }
             final actual =
-                sha256.convert(await archive.readAsBytes()).toString();
+                (await sha256.bind(archive.openRead()).first).toString();
             if (actual != source.expectedArchiveDigest.toLowerCase()) {
               throw const SkillInstallException('Skill 下载包摘要不匹配。');
             }
           }
-          await _extractZip(File(source.path), staging);
+          await _extractZip(source.path, staging.path);
           break;
       }
       final skillRoot = await _locateSkillRoot(
@@ -127,18 +122,19 @@ final class SkillPackageStorageService {
       }
     }
     files.sort((left, right) => left.path.compareTo(right.path));
-    final builder = BytesBuilder(copy: false);
+    return (await sha256.bind(_contentChunks(root, files)).first).toString();
+  }
+
+  Stream<List<int>> _contentChunks(Directory root, List<File> files) async* {
     for (final file in files) {
       final relative = path.posix.joinAll(
         path.relative(file.path, from: root.path).split(path.separator),
       );
-      builder
-        ..add(utf8.encode(relative))
-        ..addByte(0)
-        ..add(await file.readAsBytes())
-        ..addByte(0);
+      yield utf8.encode(relative);
+      yield const [0];
+      yield* file.openRead();
+      yield const [0];
     }
-    return sha256.convert(builder.takeBytes()).toString();
   }
 
   Future<void> verifyImmutableInstallation(
@@ -271,7 +267,6 @@ final class SkillPackageStorageService {
     }
     var fileCount = 0;
     var directoryCount = 0;
-    var totalBytes = 0;
     final destinationRoot = Directory(
       path.join(target.path, path.basename(path.normalize(source.path))),
     );
@@ -298,64 +293,123 @@ final class SkillPackageStorageService {
         if (fileCount > maxFileCount) {
           throw const SkillInstallException('Skill 文件数量超过限制。');
         }
-        final length = await File(entity.path).length();
-        _validateFileSize(length);
-        totalBytes += length;
-        if (totalBytes > maxPackageBytes) {
-          throw const SkillInstallException('Skill 总大小超过 20 MB 限制。');
-        }
         await File(destination).parent.create(recursive: true);
         await File(entity.path).copy(destination);
       }
     }
   }
 
-  Future<void> _extractZip(File archiveFile, Directory target) async {
-    if (!await archiveFile.exists()) {
+  static Future<void> _extractZip(String archivePath, String targetPath) async {
+    // Archive metadata and decompression use synchronous file APIs. Keep that
+    // work off Flutter's UI isolate and send only paths to the worker.
+    try {
+      await Isolate.run(() => _extractZipSync(archivePath, targetPath));
+    } on ArchiveException {
+      throw const SkillInstallException('ZIP 文件已损坏或无法解析。');
+    } on FormatException {
+      throw const SkillInstallException('ZIP 文件已损坏或无法解析。');
+    } on RangeError {
+      throw const SkillInstallException('ZIP 中的文件内容不完整。');
+    }
+  }
+
+  static void _extractZipSync(String archivePath, String targetPath) {
+    if (!File(archivePath).existsSync()) {
       throw const SkillInstallException('选择的 ZIP 文件不存在。');
     }
-    if (await archiveFile.length() > maxArchiveBytes) {
-      throw const SkillInstallException('ZIP 文件超过 20 MB 限制。');
-    }
-    final archive = ZipDecoder().decodeBytes(
-      await archiveFile.readAsBytes(),
-      verify: true,
-    );
-    var fileCount = 0;
-    var directoryCount = 0;
-    var totalBytes = 0;
-    for (final entry in archive) {
-      final relative = entry.name.replaceAll('\\', '/');
-      _validateRelativePath(relative);
-      if (entry.isSymbolicLink) {
-        throw const SkillInstallException('ZIP 不能包含符号链接。');
+    final input = InputFileStream(archivePath);
+    try {
+      // Read headers without eagerly decoding symbolic-link targets or payloads.
+      final directory = ZipDirectory()..read(input);
+      if (directory.fileHeaders.length !=
+          directory.totalCentralDirectoryEntries) {
+        throw const SkillInstallException('ZIP 中的文件列表不完整。');
       }
-      if (entry.isDirectory) {
-        directoryCount += 1;
-        if (directoryCount > maxDirectoryCount) {
-          throw const SkillInstallException('Skill 目录数量超过限制。');
+      var fileCount = 0;
+      var directoryCount = 0;
+      final destinations = <String>{};
+      for (final header in directory.fileHeaders) {
+        final entry = header.file;
+        if (entry == null || entry.filename != header.filename) {
+          throw const SkillInstallException('ZIP 中的文件元数据无效。');
         }
-        await Directory(
-          path.joinAll([target.path, ...relative.split('/')]),
-        ).create(recursive: true);
-        continue;
+        final relative = entry.filename.replaceAll('\\', '/');
+        _validateRelativePath(relative);
+        final fileType = (header.externalFileAttributes >> 16) & 0xf000;
+        if (fileType == 0xa000) {
+          throw const SkillInstallException('ZIP 不能包含符号链接。');
+        }
+        if (fileType != 0 && fileType != 0x8000 && fileType != 0x4000) {
+          throw const SkillInstallException('ZIP 不能包含特殊文件。');
+        }
+        if ((entry.flags & 1) != 0) {
+          throw const SkillInstallException('Skill ZIP 不能包含加密文件。');
+        }
+        final destination = path.joinAll([targetPath, ...relative.split('/')]);
+        if (!destinations.add(path.normalize(destination))) {
+          throw const SkillInstallException('ZIP 中存在重复的文件路径。');
+        }
+        if (relative.endsWith('/')) {
+          directoryCount += 1;
+          if (directoryCount > maxDirectoryCount) {
+            throw const SkillInstallException('Skill 目录数量超过限制。');
+          }
+          Directory(destination).createSync(recursive: true);
+          continue;
+        }
+        fileCount += 1;
+        if (fileCount > maxFileCount) {
+          throw const SkillInstallException('Skill 文件数量超过限制。');
+        }
+        File(destination).parent.createSync(recursive: true);
+        final output = OutputFileStream(destination);
+        try {
+          if (entry.compressionMethod == CompressionType.deflate) {
+            // archive's platform ZLibDecoder collects all decoded chunks before
+            // writing them. Dart's chunked converter writes each chunk directly.
+            final decoder = ZLibDecoder(
+              raw: true,
+            ).startChunkedConversion(_ZipOutputSink(output));
+            final compressed = entry.getStream(decompress: false);
+            while (!compressed.isEOS) {
+              decoder.add(
+                compressed
+                    .readBytes(math.min(64 * 1024, compressed.length))
+                    .toUint8List(),
+              );
+            }
+            decoder.close();
+          } else {
+            entry.decompress(output);
+          }
+          if (output.length != header.uncompressedSize) {
+            throw const SkillInstallException('ZIP 中的文件内容不完整。');
+          }
+        } finally {
+          output.closeSync();
+        }
+        // ZipDecoder's verify flag currently does not verify CRCs. Validate the
+        // actual extracted bytes in bounded chunks, including stored entries.
+        final extracted = InputFileStream(destination);
+        try {
+          var crc = 0;
+          while (!extracted.isEOS) {
+            crc = getCrc32(
+              extracted
+                  .readBytes(math.min(64 * 1024, extracted.length))
+                  .toUint8List(),
+              crc,
+            );
+          }
+          if (crc != header.crc32) {
+            throw const SkillInstallException('ZIP 中的文件校验失败，内容已损坏。');
+          }
+        } finally {
+          extracted.closeSync();
+        }
       }
-      fileCount += 1;
-      if (fileCount > maxFileCount) {
-        throw const SkillInstallException('Skill 文件数量超过限制。');
-      }
-      _validateFileSize(entry.size);
-      totalBytes += entry.size;
-      if (totalBytes > maxPackageBytes) {
-        throw const SkillInstallException('Skill 解压后总大小超过 20 MB 限制。');
-      }
-      final bytes = entry.readBytes();
-      if (bytes == null || bytes.length != entry.size) {
-        throw const SkillInstallException('ZIP 中的文件内容不完整。');
-      }
-      final output = File(path.joinAll([target.path, ...relative.split('/')]));
-      await output.parent.create(recursive: true);
-      await output.writeAsBytes(bytes, flush: true);
+    } finally {
+      input.closeSync();
     }
   }
 
@@ -447,7 +501,7 @@ final class SkillPackageStorageService {
     return root;
   }
 
-  void _validateRelativePath(String value) {
+  static void _validateRelativePath(String value) {
     final normalized = path.posix.normalize(value.replaceAll('\\', '/'));
     final segments = normalized.split('/');
     if (value.contains('\u0000') ||
@@ -463,12 +517,6 @@ final class SkillPackageStorageService {
     }
   }
 
-  void _validateFileSize(int length) {
-    if (length < 0 || length > maxSingleFileBytes) {
-      throw const SkillInstallException('Skill 中存在超过 2 MB 的单个文件。');
-    }
-  }
-
   bool _isWithin(String parent, String child) {
     final normalizedParent = path.normalize(path.absolute(parent));
     final normalizedChild = path.normalize(path.absolute(child));
@@ -477,14 +525,16 @@ final class SkillPackageStorageService {
 
   Future<Directory> _stagingBase() async {
     final support = await _applicationSupportDirectoryProvider();
-    return Directory(path.join(support.path, 'skills', 'staging'))
-      ..createSync(recursive: true);
+    return Directory(
+      path.join(support.path, 'skills', 'staging'),
+    ).create(recursive: true);
   }
 
   Future<Directory> _bundlesBase() async {
     final support = await _applicationSupportDirectoryProvider();
-    return Directory(path.join(support.path, 'skills', 'bundles'))
-      ..createSync(recursive: true);
+    return Directory(
+      path.join(support.path, 'skills', 'bundles'),
+    ).create(recursive: true);
   }
 
   Future<void> _deleteIfExists(Directory directory) async {
@@ -492,4 +542,18 @@ final class SkillPackageStorageService {
       await directory.delete(recursive: true);
     }
   }
+}
+
+/// Bridges the native chunked decoder to a buffered file without collecting
+/// the decompressed payload in memory. The extraction scope owns the file.
+final class _ZipOutputSink implements Sink<List<int>> {
+  const _ZipOutputSink(this.output);
+
+  final OutputFileStream output;
+
+  @override
+  void add(List<int> data) => output.writeBytes(data);
+
+  @override
+  void close() => output.flush();
 }

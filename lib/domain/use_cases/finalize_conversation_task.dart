@@ -14,6 +14,7 @@ import 'package:stars/domain/services/strict_grounding_policy.dart';
 import 'package:stars/domain/services/task_evidence_scope.dart';
 import 'package:stars/domain/services/task_terminal_summary_policy.dart';
 import 'package:stars/domain/services/task_terminal_context.dart';
+import 'package:stars/domain/services/task_skill_completion_policy.dart';
 import 'package:stars/domain/services/task_verification_preparation.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_terminal.dart';
@@ -114,9 +115,13 @@ final class FinalizeConversationTask {
         snapshot,
         acceptedTools,
       );
+      final finalizationReason =
+          state.finalizationReason ??
+          (taskSkillInstallationIncomplete(snapshot)
+              ? TaskReasonCode.verificationFailed
+              : null);
       final failure =
-          state.finalizationReason != null ||
-          snapshot.task.cancelRequestedAt != null;
+          finalizationReason != null || snapshot.task.cancelRequestedAt != null;
       final candidate =
           failure
               ? taskPartialCandidate(snapshot, acceptedTools)
@@ -193,7 +198,7 @@ final class FinalizeConversationTask {
           reasonCode:
               strictFailure
                   ? TaskReasonCode.verificationFailed
-                  : state.finalizationReason ?? TaskReasonCode.cancelled,
+                  : finalizationReason ?? TaskReasonCode.cancelled,
           validation: validation,
         );
         status = summary.status;

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:stars/data/services/skills/skill_catalog_endpoint_policy.dart';
 import 'package:stars/data/services/skills/skill_package_downloader.dart';
-import 'package:stars/data/services/skills/skill_package_storage_service.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/skill_repository.dart';
 
@@ -182,16 +181,11 @@ final class SkillInstallationService implements SkillInstallationGateway {
     required String archiveSha256,
     required AgentCancellationToken cancellationToken,
   }) async {
-    final bytes = await _downloader.fetch(
-      archiveUri,
-      SkillPackageStorageService.maxArchiveBytes,
-      cancellationToken,
-    );
     cancellationToken.throwIfCancelled();
     final temporary = await _temporaryDirectoryProvider();
     final archive = File(path.join(temporary.path, 'skill.zip'));
     try {
-      await archive.writeAsBytes(bytes, flush: true);
+      await _downloader.downloadToFile(archiveUri, archive, cancellationToken);
       cancellationToken.throwIfCancelled();
       return await _skillRepository.install(
         SkillImportSource(

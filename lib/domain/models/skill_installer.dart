@@ -1,7 +1,7 @@
 const skillInstallerSkillId = 'system:skill-installer';
-const skillInstallerSkillPromptVersion = 4;
+const skillInstallerSkillPromptVersion = 7;
 const skillInstallerSkillContentDigest =
-    '8cc3c2456eeaaac3f023cf70af95d705b61bab5d05c4cb88e0911c9bd39d15b2';
+    '9e13ab03194d980a1f0dcbae406c5ee627374164b139c343004b6ff345b3f515';
 const installSkillToolName = 'install_skill';
 const resolveSkillSourceToolName = 'resolve_skill_source';
 const listInstalledSkillsToolName = 'list_installed_skills';

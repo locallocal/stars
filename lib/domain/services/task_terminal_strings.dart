@@ -32,6 +32,8 @@ final class TaskTerminalStrings {
       return switch (code) {
         TaskReasonCode.cancelled => '已按取消請求停止後續執行並核對執行狀態。',
         TaskReasonCode.noProgress => '多次嘗試後仍未取得新的可用進展。',
+        TaskReasonCode.skillSourceFailed => '無法取得完整可用的技能安裝來源，已停止本次任務。',
+        TaskReasonCode.skillInstallRejected => '技能包未通過安裝校驗，已停止後續安裝。',
         TaskReasonCode.permissionDenied => '所需操作未獲批准。',
         TaskReasonCode.verificationFailed => '無法驗證完成任務所需的全部關鍵聲明。',
         TaskReasonCode.invalidPlan => '目前的執行方案無法繼續。',
@@ -53,6 +55,14 @@ final class TaskTerminalStrings {
         zh
             ? '多次尝试后仍未取得新的可用进展。'
             : 'Repeated attempts produced no further usable progress.',
+      TaskReasonCode.skillSourceFailed =>
+        zh
+            ? '无法取得完整可用的技能安装来源，已停止本次任务。'
+            : 'Complete, usable Skill installation sources could not be resolved. The task stopped.',
+      TaskReasonCode.skillInstallRejected =>
+        zh
+            ? '技能包未通过安装校验，已停止后续安装。'
+            : 'A Skill package was rejected by installation validation. Further installation stopped.',
       TaskReasonCode.permissionDenied =>
         zh ? '所需操作未获批准。' : 'A required action was not approved.',
       TaskReasonCode.verificationFailed =>

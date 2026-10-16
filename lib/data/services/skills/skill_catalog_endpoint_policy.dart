@@ -24,7 +24,9 @@ final class SkillCatalogEndpointPolicy {
     }
     List<InternetAddress> addresses;
     try {
-      addresses = await _dnsLookup(uri.host);
+      addresses = await _dnsLookup(
+        uri.host,
+      ).timeout(const Duration(seconds: 10));
     } on Object {
       throw const SkillInstallException('无法解析 Skill 在线目录主机。');
     }

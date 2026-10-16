@@ -33,7 +33,7 @@ void main() {
     fetcher: (uri, maxBytes, cancellationToken) async {
       cancellationToken.throwIfCancelled();
       fetchedUris.add(uri);
-      expect(maxBytes, 20 * 1024 * 1024);
+      expect(maxBytes, isNull);
       return const [1, 2, 3];
     },
     temporaryDirectoryProvider: () async {
@@ -100,6 +100,37 @@ void main() {
       'https://downloads.example.com/reviewer.zip',
     );
   });
+
+  test(
+    'cleans temporary downloads on failure without invoking the repository',
+    () async {
+      final download = Directory('${temporaryDirectory.path}/failed-download');
+      final service = SkillInstallationService(
+        skillRepository: repository,
+        endpointPolicy: SkillCatalogEndpointPolicy(
+          dnsLookup: (_) async => [InternetAddress('8.8.8.8')],
+        ),
+        fetcher:
+            (_, _, _) async =>
+                throw const SkillInstallException('Download failed.'),
+        temporaryDirectoryProvider: () => download.create(),
+      );
+
+      await expectLater(
+        service.install(
+          const SkillInstallationRequest(
+            sourceType: SkillInstallSourceType.zipUrl,
+            source: 'https://skills.example/failed.zip',
+          ),
+          AgentCancellationToken(),
+        ),
+        throwsA(isA<SkillInstallException>()),
+      );
+
+      expect(await download.exists(), isFalse);
+      expect(repository.source, isNull);
+    },
+  );
 
   test('uses absolute local paths without bypassing SkillRepository', () async {
     final source = Directory('${temporaryDirectory.path}/local-skill');

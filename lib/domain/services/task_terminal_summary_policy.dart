@@ -97,6 +97,8 @@ final class TaskTerminalSummaryPolicy {
             TaskReasonCode.providerUnavailable,
             TaskReasonCode.botUnavailable,
             TaskReasonCode.verificationFailed,
+            TaskReasonCode.skillSourceFailed,
+            TaskReasonCode.skillInstallRejected,
           }.contains(code)
           ? code
           : 'task_execution_failed';
