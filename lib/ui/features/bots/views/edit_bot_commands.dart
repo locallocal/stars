@@ -26,7 +26,7 @@ extension _EditBotCommands on _EditAIBotPageState {
         provider:
             widget.embedded ? widget.bot.provider : providerController.text,
         baseUrl: widget.embedded ? widget.bot.baseURL : baseURLController.text,
-        apiKey: widget.embedded ? widget.bot.apiKey : apiKeyController.text,
+        apiKey: apiKeyController.text,
         apiType: widget.embedded ? widget.bot.apiType : apiTypeController.text,
         model:
             widget.embedded ? widget.bot.model : selectedModelController.text,
@@ -359,6 +359,7 @@ extension _EditBotCommands on _EditAIBotPageState {
     Widget? trailing,
     String? placeholder,
     bool obscureText = false,
+    bool isSensitive = false,
     bool readOnly = false,
     ValueChanged<String>? onChanged,
   }) {
@@ -382,6 +383,10 @@ extension _EditBotCommands on _EditAIBotPageState {
             ),
             trailing: trailing,
             obscureText: obscureText,
+            keyboardType: isSensitive ? TextInputType.visiblePassword : null,
+            autocorrect: !isSensitive,
+            enableSuggestions: !isSensitive,
+            enableIMEPersonalizedLearning: !isSensitive,
             readOnly: readOnly,
             alignment: Alignment.centerLeft,
             placeholderAlignment: Alignment.centerLeft,
