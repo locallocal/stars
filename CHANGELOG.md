@@ -20,6 +20,9 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Removed the bottom Cancel action from Add Skill dialogs when creating or
+  editing a Bot, keeping the existing dialog dismissal controls.
+
 - Task progress questions now receive model-written, plain-language replies
   grounded in the queried task snapshot and the user's question. Removed fixed
   narration templates and raw status cards from chat; generation failures offer

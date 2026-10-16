@@ -235,12 +235,6 @@ class _AddBotSkillsState extends State<AddBotSkills> {
                     title: Text(S.of(context).addSkill),
                     description: Text(S.of(context).botSkillsDescription),
                     constraints: const BoxConstraints(maxWidth: 620),
-                    actions: [
-                      ShadButton.outline(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: Text(S.of(context).cancel),
-                      ),
-                    ],
                     child: _buildAvailableSkills(
                       dialogContext,
                       refresh: refresh,
