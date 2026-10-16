@@ -98,6 +98,78 @@ void main() {
     expect(results.map((entry) => entry.name), ['alpha', 'beta']);
   });
 
+  for (final (count, perPage) in [(25, 10), (235, 10), (205, 1)]) {
+    test(
+      'resolves $count entries across pages of $perPage without a count cap',
+      () async {
+        final pages = <int>[];
+        final resolver = SkillSourceResolver(
+          endpointPolicy: _publicPolicy(),
+          fetcher: (uri, _, cancellation) async {
+            final page = int.parse(uri.queryParameters['PageNumber']!);
+            pages.add(page);
+            return _page(
+              total: count,
+              entries: [
+                for (
+                  var i = (page - 1) * perPage;
+                  i < page * perPage && i < count;
+                  i++
+                )
+                  _entry('skill-$i'),
+              ],
+            );
+          },
+        );
+
+        final results = await resolver.resolve(
+          _collectionUrl,
+          AgentCancellationToken(),
+        );
+
+        expect(results.map((entry) => entry.name), [
+          for (var i = 0; i < count; i++) 'skill-$i',
+        ]);
+        expect(pages, [for (var i = 1; i <= (count / perPage).ceil(); i++) i]);
+      },
+    );
+  }
+
+  test('cancels a large collection without returning a partial list', () async {
+    final token = AgentCancellationToken();
+    var fetches = 0;
+    final resolver = SkillSourceResolver(
+      endpointPolicy: _publicPolicy(),
+      fetcher: (_, _, _) async {
+        fetches++;
+        if (fetches == 3) token.cancel();
+        return _page(total: 1000, entries: [_entry('skill-$fetches')]);
+      },
+    );
+
+    await expectLater(
+      resolver.resolve(_collectionUrl, token),
+      throwsA(isA<AgentRunCancelledException>()),
+    );
+    expect(fetches, 3);
+  });
+
+  test(
+    'rejects disagreement between collection and pagination totals',
+    () async {
+      final document =
+          jsonDecode(utf8.decode(_page(total: 1, entries: [_entry('alpha')])))
+              as Map;
+      (document['Data'] as Map)['ElementCount'] = 25;
+      await expectLater(
+        _resolverWithPages([
+          utf8.encode(jsonEncode(document)),
+        ]).resolve(_collectionUrl, AgentCancellationToken()),
+        throwsA(isA<SkillInstallException>()),
+      );
+    },
+  );
+
   test(
     'multiple script IDs resolve once each without executing the script',
     () async {
@@ -210,7 +282,7 @@ void main() {
     () async {
       for (final page in [
         utf8.encode('<html>Sign in</html>'),
-        _page(total: 201, entries: [_entry('alpha')]),
+        _page(total: -1, entries: [_entry('alpha')]),
         _page(total: 0, entries: []),
         _page(total: 1, entries: [_entry('../escape')]),
         List<int>.filled(SkillSourceResolver.maxMetadataBytes + 1, 32),

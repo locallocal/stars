@@ -4,6 +4,12 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/models/local_records.dart';
+import 'package:stars/data/services/skills/skill_catalog_endpoint_policy.dart';
+import 'package:stars/data/services/skills/skill_installation_service.dart';
+import 'package:stars/data/services/skills/skill_source_resolver.dart';
+import 'package:stars/data/services/tools/resolve_skill_source_tool.dart';
+import 'package:stars/data/services/tools/skill_installer_tool.dart';
+import 'package:stars/domain/models/skill.dart';
 import 'package:stars/data/services/task_runtime_factory.dart';
 import 'package:stars/data/services/task_tool_adapters.dart';
 import 'package:stars/data/services/tools/built_in_tools.dart';
@@ -50,6 +56,8 @@ void main() {
   );
   TaskRuntimeFactory runtime({
     Map<String, TaskToolAdapter> adapters = const {},
+    List<ExecutableTool> extraTools = const [],
+    ToolPolicy? policy,
     List<Bot>? seen,
     RunnerModels? models,
     TaskRunnerClock clock = const SystemTaskRunnerClock(),
@@ -62,13 +70,127 @@ void main() {
       return ForegroundProvider(bot, events: () => const Stream.empty());
     }),
     registry: StaticToolRegistry([
+      ...extraTools,
       ...createBuiltInTools(now: clock.now),
       ShellCommandTool(platform: NativeShellPlatform.linux),
     ]),
-    policy: RunnerPolicy(),
+    policy: policy ?? RunnerPolicy(),
     adapters: adapters,
     clock: clock,
   );
+
+  test('Skill tools execute through approval and database restart', () async {
+    final gateway = _InstallationGateway();
+    final tools = <ExecutableTool>[
+      ResolveSkillSourceTool(
+        resolver: SkillSourceResolver(
+          endpointPolicy: SkillCatalogEndpointPolicy(),
+        ),
+      ),
+      SkillInstallerTool(installation: gateway),
+    ];
+    final accepted = task(tools: {'resolve_skill_source', 'install_skill'});
+    committed(await h.accept(task: accepted));
+    final models =
+        RunnerModels()
+          ..tool(
+            name: 'resolve_skill_source',
+            arguments: {
+              'source': 'https://github.com/acme/skills/tree/v1/reviewer',
+            },
+          )
+          ..tool(
+            id: 'install-call',
+            name: 'install_skill',
+            arguments: {
+              'source_type': 'github',
+              'source': 'https://github.com/acme/skills',
+              'ref': 'v1',
+              'subdirectory': 'reviewer',
+              'archive_sha256': 'a' * 64,
+            },
+          );
+    final clock = RunnerClock();
+    var segment = 0;
+    Future<TaskSegmentResult> run() async {
+      final current = await h.task;
+      final lease = TaskLease(
+        taskId: accepted.taskId,
+        ownerId: 'skill-worker',
+        token: 'skill-${++segment}',
+        acquiredAt: clock.now(),
+        expiresAt: clock.now().add(const Duration(minutes: 1)),
+      );
+      committed(
+        await h.repository.tryAcquireLease(
+          taskId: accepted.taskId,
+          expectedRevision: current.revision,
+          lease: lease,
+          now: clock.now(),
+        ),
+      );
+      final factory = runtime(
+        models: models,
+        clock: clock,
+        extraTools: tools,
+        policy: const DefaultToolPolicy(
+          allowNetwork: true,
+          allowExternalRead: true,
+          allowDestructiveWithApproval: true,
+        ),
+      );
+      for (final tool in tools) {
+        expect(factory.supportsTool(tool), isTrue);
+      }
+      final execute = await factory.resolve(current);
+      return execute(
+        input: (await h.repository.getExecutionSnapshot(accepted.taskId))!,
+        lease: lease,
+        segmentId: 'skill-segment-$segment',
+      );
+    }
+
+    final first = await run() as TaskApprovalWait;
+    expect(gateway.requests, isEmpty);
+    expect(first.snapshot.attempts.first.name, 'resolve_skill_source');
+    expect(
+      first.snapshot.attempts.first.status,
+      ToolInvocationStatus.succeeded,
+    );
+    expect(
+      models.requests.first.tools.map((tool) => tool.name),
+      containsAll(['resolve_skill_source', 'install_skill']),
+    );
+    await h.reopen();
+    final current = await h.task;
+    committed(
+      await h.repository.decideApproval(
+        taskId: accepted.taskId,
+        approvalId: first.approvalId,
+        expectedRevision: current.revision,
+        decision: TaskApprovalDecision.approved,
+        actorId: 'user',
+        decidedAt: clock.now(),
+      ),
+    );
+    models
+      ..completeStep()
+      ..completeStep()
+      ..candidate();
+    final result = await run();
+    expect(result, isA<TaskCompletionCandidate>());
+    expect(gateway.requests, hasLength(1));
+    final request = gateway.requests.single;
+    expect(request.sourceType, SkillInstallSourceType.github);
+    expect(request.source, 'https://github.com/acme/skills');
+    expect(request.ref, 'v1');
+    expect(request.subdirectory, 'reviewer');
+    expect(request.archiveSha256, 'a' * 64);
+    expect(
+      result.snapshot.attempts.last.status,
+      ToolInvocationStatus.succeeded,
+    );
+  });
 
   test(
     'each segment resolves fresh credentials without copying keys into durable acceptance',
@@ -594,5 +716,33 @@ final class _JobClient implements TaskJobClient {
   ) async {
     cancels++;
     return const ToolOutcomeUnknown();
+  }
+}
+
+final class _InstallationGateway implements SkillInstallationGateway {
+  final requests = <SkillInstallationRequest>[];
+
+  @override
+  Future<SkillDescriptor> install(
+    SkillInstallationRequest request,
+    AgentCancellationToken cancellationToken,
+  ) async {
+    requests.add(request);
+    final now = DateTime.utc(2026);
+    return SkillDescriptor(
+      id: 'user:reviewer',
+      name: 'reviewer',
+      description: 'Review code.',
+      version: '1',
+      scope: SkillScope.user,
+      sourceUri: request.source,
+      rootPath: '/skills/reviewer',
+      contentDigest: 'c' * 64,
+      trustState: SkillTrustState.userReviewed,
+      validationStatus: SkillValidationStatus.valid,
+      compatibility: 'Stars',
+      installedAt: now,
+      updatedAt: now,
+    );
   }
 }

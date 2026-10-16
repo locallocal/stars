@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:stars/data/services/skills/skill_catalog_endpoint_policy.dart';
 import 'package:stars/domain/models/models.dart';
@@ -8,11 +9,14 @@ typedef SkillPackageHttpClientFactory = HttpClient Function();
 typedef SkillPackageFetcher =
     Future<List<int>> Function(
       Uri uri,
-      int maxBytes,
+      int? maxBytes,
       AgentCancellationToken cancellationToken,
     );
 
-/// Bounded HTTPS reads shared by source discovery and package installation.
+/// HTTPS metadata reads and streamed package downloads.
+///
+/// Metadata reads are bounded; package downloads have no byte limit. Injected
+/// fetchers receive a null limit for packages.
 final class SkillPackageDownloader {
   SkillPackageDownloader({
     required SkillCatalogEndpointPolicy endpointPolicy,
@@ -36,7 +40,17 @@ final class SkillPackageDownloader {
   ) async {
     cancellationToken.throwIfCancelled();
     await _endpointPolicy.validate(uri);
-    final bytes = await (_fetcher ?? _fetch)(uri, maxBytes, cancellationToken);
+    final fetcher = _fetcher;
+    final List<int> bytes;
+    if (fetcher != null) {
+      bytes = await fetcher(uri, maxBytes, cancellationToken);
+    } else {
+      final builder = BytesBuilder(copy: false);
+      await for (final chunk in _read(uri, maxBytes, cancellationToken)) {
+        builder.add(chunk);
+      }
+      bytes = builder.takeBytes();
+    }
     cancellationToken.throwIfCancelled();
     if (bytes.length > maxBytes) {
       throw const SkillInstallException('Skill 下载内容超过大小限制。');
@@ -44,11 +58,39 @@ final class SkillPackageDownloader {
     return bytes;
   }
 
-  Future<List<int>> _fetch(
-    Uri initialUri,
-    int maxBytes,
+  /// Writes a package directly to disk with stream backpressure.
+  /// The caller owns the temporary file and its cleanup on failure.
+  Future<void> downloadToFile(
+    Uri uri,
+    File destination,
     AgentCancellationToken cancellationToken,
   ) async {
+    cancellationToken.throwIfCancelled();
+    await _endpointPolicy.validate(uri);
+    final fetcher = _fetcher;
+    if (fetcher != null) {
+      final bytes = await fetcher(uri, null, cancellationToken);
+      cancellationToken.throwIfCancelled();
+      await destination.writeAsBytes(bytes, flush: true);
+    } else {
+      final output = await destination.open(mode: FileMode.write);
+      try {
+        await for (final chunk in _read(uri, null, cancellationToken)) {
+          await output.writeFrom(chunk);
+        }
+        await output.flush();
+      } finally {
+        await output.close();
+      }
+    }
+    cancellationToken.throwIfCancelled();
+  }
+
+  Stream<List<int>> _read(
+    Uri initialUri,
+    int? maxBytes,
+    AgentCancellationToken cancellationToken,
+  ) async* {
     final client = _httpClientFactory();
     client.connectionTimeout = _timeout;
     var uri = initialUri;
@@ -73,18 +115,19 @@ final class SkillPackageDownloader {
             'Skill 下载失败（HTTP ${response.statusCode}）。',
           );
         }
-        if (response.contentLength > maxBytes) {
+        if (maxBytes != null && response.contentLength > maxBytes) {
           throw const SkillInstallException('Skill 下载内容超过大小限制。');
         }
-        final bytes = <int>[];
+        var receivedBytes = 0;
         await for (final chunk in response.timeout(_timeout)) {
           cancellationToken.throwIfCancelled();
-          if (bytes.length + chunk.length > maxBytes) {
+          receivedBytes += chunk.length;
+          if (maxBytes != null && receivedBytes > maxBytes) {
             throw const SkillInstallException('Skill 下载内容超过大小限制。');
           }
-          bytes.addAll(chunk);
+          yield chunk;
         }
-        return bytes;
+        return;
       }
     } on TimeoutException {
       throw const SkillInstallException('Skill 下载超时。');

@@ -116,6 +116,8 @@ abstract final class TaskReasonCode {
   static const botUnavailable = 'task_bot_unavailable';
   static const reconciliationRequired = 'task_reconciliation_required';
   static const verificationFailed = 'task_verification_failed';
+  static const skillSourceFailed = 'task_skill_source_failed';
+  static const skillInstallRejected = 'task_skill_install_rejected';
   static const cancelled = 'task_cancelled';
 }
 

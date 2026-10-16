@@ -20,6 +20,13 @@ final class ResolveSkillSourceTool implements ExecutableTool {
       'type': 'object',
       'properties': {
         'source': {'type': 'string', 'minLength': 1, 'maxLength': 4096},
+        'skill_names': {
+          'type': 'array',
+          'minItems': 1,
+          'items': {'type': 'string', 'minLength': 1},
+          'description':
+              'Only when the user requests specific Skills. Omit to resolve the entire collection.',
+        },
       },
       'required': ['source'],
       'additionalProperties': false,
@@ -31,9 +38,10 @@ final class ResolveSkillSourceTool implements ExecutableTool {
           'type': 'string',
           'enum': ['stars'],
         },
-        'count': {'type': 'integer'},
+        'count': {'type': 'integer', 'minimum': 1},
         'skills': {
           'type': 'array',
+          'minItems': 1,
           'items': {
             'type': 'object',
             'properties': {
@@ -45,7 +53,7 @@ final class ResolveSkillSourceTool implements ExecutableTool {
                 'type': 'string',
                 'enum': ['github', 'zip_url', 'local_zip', 'local_directory'],
               },
-              'source': {'type': 'string'},
+              'source': {'type': 'string', 'minLength': 1},
               'ref': {'type': 'string'},
               'subdirectory': {'type': 'string'},
             },
@@ -69,12 +77,52 @@ final class ResolveSkillSourceTool implements ExecutableTool {
   ) async {
     cancellationToken.throwIfCancelled();
     final source = call.arguments['source'];
+    final selection = call.arguments['skill_names'];
     if (source is! String ||
-        call.arguments.keys.any((key) => key != 'source')) {
+        call.arguments.keys.any(
+          (key) => !{'source', 'skill_names'}.contains(key),
+        ) ||
+        (call.arguments.containsKey('skill_names') &&
+            (selection is! List<Object?> ||
+                selection.isEmpty ||
+                selection.any(
+                  (name) => name is! String || name.trim().isEmpty,
+                )))) {
       return _error(call, 'Skill 来源参数无效。', 'invalid_skill_source');
     }
     try {
-      final skills = await _resolver.resolve(source, cancellationToken);
+      final resolved = await _resolver.resolve(source, cancellationToken);
+      final selectedNames =
+          selection == null
+              ? null
+              : (selection as List<Object?>)
+                  .cast<String>()
+                  .map((name) => name.trim())
+                  .toSet();
+      if (selectedNames != null &&
+          !resolved
+              .map((skill) => skill.name)
+              .toSet()
+              .containsAll(selectedNames)) {
+        return _error(
+          call,
+          '指定的 Skill 未全部出现在完整来源列表中。',
+          'skill_source_rejected',
+        );
+      }
+      final skills =
+          selectedNames == null
+              ? resolved
+              : resolved
+                  .where((skill) => selectedNames.contains(skill.name))
+                  .toList();
+      if (skills.isEmpty) {
+        return _error(
+          call,
+          '未解析到可安装的 Skill。',
+          'skill_source_resolution_failed',
+        );
+      }
       return ToolResult(
         callId: call.callId,
         name: call.name,

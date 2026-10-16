@@ -147,9 +147,11 @@ extension _TaskSegmentPersistence on _TaskSegment {
       execution: TaskExecutionState(
         calls: calls,
         fileReads: fileReads,
+        toolResults: toolResults,
         stepStarted: stepStarted,
         replanRequired: replan,
         consecutiveFailures: failures,
+        consecutiveDuplicateCalls: duplicateCalls,
         backoffCount: backoffs,
         candidate: candidate,
         finalizationReason: finalizationReason,
@@ -315,8 +317,10 @@ extension _TaskSegmentPersistence on _TaskSegment {
     'completed': completed.toList()..sort(),
     'actions':
         {
-            ...calls.map((call) => call.idempotencyKey),
             ...snapshot.attemptLinks.map((link) => link.idempotencyKey),
+            // A new queued call counts once. Repeated calls use the same key
+            // and cannot turn a full segment of cache hits into progress.
+            ...calls.map((call) => call.idempotencyKey),
           }.toList()
           ..sort(),
     'successes':

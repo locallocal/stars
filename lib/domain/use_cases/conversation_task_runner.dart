@@ -8,9 +8,14 @@ import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
 import 'package:stars/domain/models/message.dart' show ModelTokenUsage;
 import 'package:stars/domain/models/provider_failure.dart';
+import 'package:stars/domain/models/skill_installer.dart';
 import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_execution_state.dart';
 import 'package:stars/domain/models/task_file_read_observation.dart';
+import 'package:stars/domain/models/task_tool_observation.dart';
+import 'package:stars/domain/services/task_tool_observation_policy.dart';
+import 'package:stars/domain/services/task_skill_source_policy.dart';
+import 'package:stars/domain/services/task_skill_completion_policy.dart';
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
@@ -92,10 +97,12 @@ final class _TaskSegment {
   final completed = <String>{};
   final calls = <TaskPendingCall>[];
   final fileReads = <TaskFileReadObservation>[];
+  final toolResults = <TaskToolObservation>[];
   final jobs = <TaskExternalJob>[];
   String? nextStep;
   bool stepStarted = false, replan = false, unknownEffects = false;
   int failures = 0,
+      duplicateCalls = 0,
       backoffs = 0,
       modelTurns = 0,
       toolCalls = 0,
@@ -165,6 +172,9 @@ final class _TaskSegment {
           continue;
         }
         if (nextStep == null && !replan) {
+          if (taskSkillInstallationIncomplete(snapshot)) {
+            return await _finishFinalization(TaskReasonCode.verificationFailed);
+          }
           phase = ConversationTaskPhase.verifying;
           if (task.progress.verificationStatus ==
               TaskVerificationStatus.notStarted) {
@@ -354,10 +364,12 @@ final class _TaskSegment {
     nextStep = checkpoint?.nextStepId ?? _nextStep();
     calls.addAll(state?.calls ?? []);
     fileReads.addAll(state?.fileReads ?? []);
+    toolResults.addAll(state?.toolResults ?? []);
     jobs.addAll(checkpoint?.externalJobs ?? []);
     stepStarted = state?.stepStarted ?? false;
     replan = snapshot.plan.isPending || (state?.replanRequired ?? false);
     failures = state?.consecutiveFailures ?? 0;
+    duplicateCalls = state?.consecutiveDuplicateCalls ?? 0;
     backoffs = state?.backoffCount ?? 0;
     candidate = state?.candidate;
     finalizationReason = state?.finalizationReason;

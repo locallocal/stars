@@ -44,7 +44,6 @@ final class SkillSourceResolver {
          httpClientFactory: httpClientFactory,
        );
 
-  static const maxCollectionEntries = 200;
   static const maxMetadataBytes = 2 * 1024 * 1024;
   static const _pageSize = 10;
 
@@ -62,9 +61,6 @@ final class SkillSourceResolver {
       final entries = await _resolveSource(source, cancellationToken);
       for (final entry in entries) {
         resolved['${entry.source}|${entry.ref}|${entry.subdirectory}'] = entry;
-      }
-      if (resolved.length > maxCollectionEntries) {
-        throw const SkillInstallException('一次最多解析 200 个 Skill。');
       }
     }
     return List.unmodifiable(resolved.values);
@@ -173,7 +169,8 @@ final class SkillSourceResolver {
     final seenEntries = <String>{};
     int? total;
     var received = 0;
-    for (var page = 1; page <= maxCollectionEntries; page++) {
+    for (var page = 1; ; page++) {
+      cancellationToken.throwIfCancelled();
       final uri = Uri.https('www.modelscope.cn', '/api/v1/collections', {
         'Fid': '$owner/$name',
         'PageNumber': '$page',
@@ -203,18 +200,21 @@ final class SkillSourceResolver {
               ? elements['CollectionElementVoList']
               : null;
       final count = elements is Map<String, dynamic> ? elements['Total'] : null;
+      final declaredCount =
+          data is Map<String, dynamic> ? data['ElementCount'] : null;
       if (entries is! List ||
           count is! int ||
           count < 0 ||
-          count > maxCollectionEntries ||
+          (declaredCount != null &&
+              (declaredCount is! int || declaredCount != count)) ||
           (total != null && total != count)) {
-        throw const SkillInstallException('ModelScope 合集列表无效、发生变化或超过 200 项限制。');
+        throw const SkillInstallException('ModelScope 合集列表无效或总数发生变化。');
       }
       total = count;
       if (entries.isEmpty && received < total) {
         throw const SkillInstallException('ModelScope 合集分页不完整，请稍后重试。');
       }
-      final previousEntries = Set<String>.of(seenEntries);
+      final pageEntries = <String>{};
       for (final entry in entries) {
         if (entry is! Map<String, dynamic> || entry['ElementType'] is! String) {
           throw const SkillInstallException('ModelScope 合集条目格式无效。');
@@ -222,10 +222,10 @@ final class SkillSourceResolver {
         final entryOwner = entry['ElementPath'];
         final entryName = entry['ElementName'];
         final identity = '${entry['ElementType']}/$entryOwner/$entryName';
-        if (previousEntries.contains(identity)) {
+        if (seenEntries.contains(identity)) {
           throw const SkillInstallException('ModelScope 合集分页重复，无法确认完整列表。');
         }
-        seenEntries.add(identity);
+        pageEntries.add(identity);
         if (entry['ElementType'] != 'skill') continue;
         if (entryOwner is! String || entryName is! String) {
           throw const SkillInstallException('ModelScope 合集 Skill 标识无效。');
@@ -235,6 +235,7 @@ final class SkillSourceResolver {
         final skill = _modelScopeSkill(entryOwner, entryName);
         skills[skill.source] = skill;
       }
+      seenEntries.addAll(pageEntries);
       received += entries.length;
       if (received > total) {
         throw const SkillInstallException('ModelScope 合集数量与分页内容不符。');
@@ -246,7 +247,6 @@ final class SkillSourceResolver {
         return List.unmodifiable(skills.values);
       }
     }
-    throw const SkillInstallException('ModelScope 合集分页超过限制。');
   }
 
   ResolvedSkillSource _modelScopeSkill(String owner, String name) =>

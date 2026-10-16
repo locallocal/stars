@@ -424,6 +424,25 @@ Future<void> _writeCheckpoint(
       _safeObject(jsonDecode(values['checkpoint_json']! as String))!
           as Map<String, Object?>;
   if (checkpoint.execution case final execution?) {
+    if (execution.toolResults.isNotEmpty) {
+      final attempts = await tx.rawQuery(
+        'SELECT execution.attempt_id, execution.tool_name '
+        'FROM conversation_task_tool_attempts link '
+        'JOIN tool_execution_records execution ON execution.attempt_id = link.attempt_id '
+        "WHERE link.task_id = ? AND execution.status = 'succeeded'",
+        [checkpoint.taskId],
+      );
+      final names = {
+        for (final row in attempts) row['attempt_id']: row['tool_name'],
+      };
+      if (execution.toolResults.any(
+        (item) => names[item.attemptId] != item.tool,
+      )) {
+        throw ArgumentError(
+          'Tool observations require a successful task attempt.',
+        );
+      }
+    }
     if (execution.fileReads.isNotEmpty) {
       final attempts = await tx.rawQuery(
         'SELECT execution.attempt_id FROM conversation_task_tool_attempts link '
