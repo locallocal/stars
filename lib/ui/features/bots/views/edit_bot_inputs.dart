@@ -256,16 +256,17 @@ extension _EditBotInputs on _EditAIBotPageState {
       return _buildDesktopInput(
         key: const ValueKey<String>('desktop-bot-api-key'),
         label: S.of(context).apiKey,
-        icon: Icons.key_outlined,
+        icon: LucideIcons.keyRound,
         controller: apiKeyController,
         obscureText: !_isPasswordVisible,
-        readOnly: true,
+        isSensitive: true,
+        onChanged: _markUnsaved,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             _desktopInputAction(
               tooltip: S.of(context).copyApiKey,
-              icon: Icons.copy_outlined,
+              icon: LucideIcons.copy,
               onPressed:
                   apiKeyController.text.isEmpty
                       ? null
@@ -278,10 +279,7 @@ extension _EditBotInputs on _EditAIBotPageState {
                   _isPasswordVisible
                       ? S.of(context).hideApiKey
                       : S.of(context).showApiKey,
-              icon:
-                  _isPasswordVisible
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
+              icon: _isPasswordVisible ? LucideIcons.eyeOff : LucideIcons.eye,
               onPressed: () {
                 setState(() {
                   _isPasswordVisible = !_isPasswordVisible;
@@ -295,7 +293,12 @@ extension _EditBotInputs on _EditAIBotPageState {
     return TextField(
       controller: apiKeyController,
       obscureText: !_isPasswordVisible,
+      keyboardType: TextInputType.visiblePassword,
+      autocorrect: false,
+      enableSuggestions: false,
+      enableIMEPersonalizedLearning: false,
       readOnly: widget.readOnly,
+      onChanged: _markUnsaved,
       decoration: _fieldDecoration(
         label: S.of(context).apiKey,
         icon: Icons.key_outlined,

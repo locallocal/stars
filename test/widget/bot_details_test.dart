@@ -448,7 +448,7 @@ void main() {
     expect(find.byIcon(Icons.vertical_split_outlined), findsNothing);
   });
 
-  testWidgets('desktop bot provider settings are read-only and preserved', (
+  testWidgets('desktop bot edits API key while preserving provider settings', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -503,7 +503,6 @@ void main() {
       'desktop-bot-provider',
       'desktop-bot-api-type',
       'desktop-bot-base-url',
-      'desktop-bot-api-key',
       'desktop-bot-model',
     ];
     for (final key in readOnlyFieldKeys) {
@@ -546,19 +545,59 @@ void main() {
     expect(systemPromptWidget.alignment, isNull);
     expect(tester.getSize(systemPrompt).width, expectedFieldWidth);
 
+    final apiKeyInput = find.byKey(
+      const ValueKey<String>('desktop-bot-api-key'),
+    );
+    await tester.ensureVisible(apiKeyInput);
+    final apiKeyWidget = tester.widget<ShadInput>(apiKeyInput);
+    expect(apiKeyWidget.readOnly, isFalse);
+    expect(apiKeyWidget.obscureText, isTrue);
+    expect(apiKeyWidget.controller!.text, bot.apiKey);
+    expect(tester.getSize(apiKeyInput).width, expectedFieldWidth);
+    expect(
+      tester.getSize(apiKeyInput).height,
+      StarsDesktopThemeSpec.botFormFieldHeight,
+    );
+    final apiKeyField = find.descendant(
+      of: apiKeyInput,
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(apiKeyField, '  replacement-secret  ');
+    await tester.pump();
+    await tester.tap(
+      find.descendant(of: apiKeyInput, matching: find.byIcon(LucideIcons.eye)),
+    );
+    await tester.pumpAndSettle();
+    final revealedInput = tester.widget<EditableText>(apiKeyField);
+    expect(revealedInput.obscureText, isFalse);
+    expect(revealedInput.autocorrect, isFalse);
+    expect(revealedInput.enableSuggestions, isFalse);
+    expect(revealedInput.enableIMEPersonalizedLearning, isFalse);
+    expect(revealedInput.controller.text, '  replacement-secret  ');
+
     await tester.tap(find.byKey(const ValueKey<String>('desktop-bot-save')));
     await tester.pumpAndSettle();
 
     expect(updatedBot?.provider, bot.provider);
     expect(updatedBot?.apiType, bot.apiType);
     expect(updatedBot?.baseURL, bot.baseURL);
-    expect(updatedBot?.apiKey, bot.apiKey);
+    expect(updatedBot?.apiKey, 'replacement-secret');
     expect(updatedBot?.model, bot.model);
     expect(updatedBot?.configuredInputModalities, [
       InputModality.text,
       InputModality.image,
     ]);
     expect(updatedBot?.configuredOutputModalities, [OutputModality.text]);
+
+    await tester.tap(
+      find.descendant(
+        of: apiKeyInput,
+        matching: find.byIcon(LucideIcons.eyeOff),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.widget<ShadInput>(apiKeyInput).obscureText, isTrue);
+    expect(find.text('已保存'), findsOneWidget);
   });
 
   testWidgets('desktop bot save button shows saving and saved states', (
@@ -612,15 +651,97 @@ void main() {
     expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
     expect(tester.widget<ShadButton>(saveButtonFinder).enabled, isFalse);
 
-    final nameField = find.descendant(
-      of: find.byKey(const ValueKey<String>('desktop-bot-name')),
+    final apiKeyField = find.descendant(
+      of: find.byKey(const ValueKey<String>('desktop-bot-api-key')),
       matching: find.byType(EditableText),
     );
-    await tester.enterText(nameField, 'Updated Researcher');
+    await tester.ensureVisible(apiKeyField);
+    await tester.enterText(apiKeyField, 'replacement-secret');
     await tester.pump();
 
     expect(find.text('保存修改'), findsOneWidget);
     expect(tester.widget<ShadButton>(saveButtonFinder).enabled, isTrue);
+  });
+
+  testWidgets('API key edits during a save remain pending and can be retried', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+    final firstSave = Completer<void>();
+    final secondSave = Completer<void>();
+    final savedKeys = <String>[];
+    final bot = Bot(
+      id: 'bot-key-save',
+      name: 'Researcher',
+      avatar: '',
+      provider: 'OpenAI',
+      baseURL: 'https://example.invalid',
+      apiKey: 'original-secret',
+      apiType: Bot.apiTypeOpenAI,
+      model: 'gpt-test',
+      systemPrompt: 'Be helpful',
+      createTimestamp: DateTime(2026),
+      modifyTimestamp: DateTime(2026),
+    );
+
+    await tester.pumpWidget(
+      shadHarness(
+        brightness: Brightness.light,
+        homeBuilder:
+            (context) => Scaffold(
+              body: EditBotPage(
+                bot: bot,
+                embedded: true,
+                onBotUpdated: (updated) async {
+                  savedKeys.add(updated.apiKey);
+                  if (savedKeys.length == 1) await firstSave.future;
+                  if (savedKeys.length == 2) await secondSave.future;
+                },
+                onBotDeleted: () async {},
+              ),
+            ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final apiKeyField = find.descendant(
+      of: find.byKey(const ValueKey<String>('desktop-bot-api-key')),
+      matching: find.byType(EditableText),
+    );
+    final saveButton = find.byKey(const ValueKey<String>('desktop-bot-save'));
+    await tester.ensureVisible(apiKeyField);
+    await tester.enterText(apiKeyField, 'first-secret');
+    await tester.tap(saveButton);
+    await tester.pump();
+    expect(savedKeys, ['first-secret']);
+
+    await tester.enterText(apiKeyField, 'newer-secret');
+    await tester.pump();
+    expect(tester.widget<ShadButton>(saveButton).enabled, isFalse);
+    firstSave.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('已保存'), findsNothing);
+    expect(tester.widget<ShadButton>(saveButton).enabled, isTrue);
+
+    await tester.tap(saveButton);
+    await tester.pump();
+    secondSave.completeError(StateError('Save failed'));
+    await tester.pumpAndSettle();
+    expect(savedKeys, ['first-secret', 'newer-secret']);
+    expect(
+      tester.widget<EditableText>(apiKeyField).controller.text,
+      'newer-secret',
+    );
+    expect(find.text('已保存'), findsNothing);
+    expect(tester.widget<ShadButton>(saveButton).enabled, isTrue);
+
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+    expect(savedKeys, ['first-secret', 'newer-secret', 'newer-secret']);
+    expect(find.text('已保存'), findsOneWidget);
+    expect(tester.widget<ShadButton>(saveButton).enabled, isFalse);
   });
 
   testWidgets('desktop command shortcuts share the shell actions', (

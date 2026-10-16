@@ -20,6 +20,9 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Bot edit pages now allow updating API keys, with masked input, visibility
+  controls, unsaved-change tracking, and the existing encrypted storage flow.
+
 - Removed the bottom Cancel action from Add Skill dialogs when creating or
   editing a Bot, keeping the existing dialog dismissal controls.
 
