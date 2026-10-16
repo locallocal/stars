@@ -20,6 +20,9 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Changed
 
+- Matched the empty conversation avatar background to the Bot's provider color
+  used by Bot cards and message avatars.
+
 - Bot edit pages now allow updating API keys, with masked input, visibility
   controls, unsaved-change tracking, and the existing encrypted storage flow.
 
