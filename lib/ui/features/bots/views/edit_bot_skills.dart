@@ -308,12 +308,6 @@ extension _EditBotSkills on _EditAIBotPageState {
                       title: Text(S.of(context).addSkill),
                       description: Text(S.of(context).botSkillsDescription),
                       constraints: const BoxConstraints(maxWidth: 620),
-                      actions: [
-                        ShadButton.outline(
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          child: Text(S.of(context).cancel),
-                        ),
-                      ],
                       child: _buildAvailableSkillPicker(
                         dialogContext,
                         viewModel,
@@ -345,12 +339,6 @@ extension _EditBotSkills on _EditAIBotPageState {
                         refresh: setDialogState,
                       ),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: Text(S.of(context).cancel),
-                      ),
-                    ],
                   ),
             ),
       );
