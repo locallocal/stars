@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon/app_icon_readme.png" alt="Stars app logo" width="112" height="112">
+  <img src="assets/icon/app_icon_readme.svg" alt="Stars app logo" width="112" height="112">
 </p>
 
 # Stars

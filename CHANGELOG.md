@@ -84,6 +84,9 @@ based on Keep a Changelog, and the project uses semantic versioning.
 
 ### Documentation
 
+- Rendered the README logo with vector rounded corners and the original opaque
+  artwork to avoid jagged, translucent edges when scaled.
+
 - Consolidated conversation task plans into maintained implementation references,
   reproducible recovery and native UI acceptance tests, and telemetry definitions.
 
