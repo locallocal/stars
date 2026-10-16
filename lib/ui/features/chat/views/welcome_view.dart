@@ -23,6 +23,10 @@ class WelcomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveFontSize = fontSize ?? 16;
     final shadTheme = ShadTheme.maybeOf(context);
+    final avatarBackgroundColor = getFrostedProviderColor(
+      bot.provider,
+      Theme.of(context).colorScheme.primary,
+    );
     return Center(
       child: SingleChildScrollView(
         child: Padding(
@@ -34,13 +38,17 @@ class WelcomeView extends StatelessWidget {
                 ShadAvatar(
                   bot.avatar.isEmpty ? null : File(bot.avatar),
                   size: const Size.square(64),
+                  backgroundColor: avatarBackgroundColor,
                   placeholder: buildProviderLogo(context, '', bot.provider, 30),
                 )
               else
                 Container(
                   width: 128,
                   height: 128,
-                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: avatarBackgroundColor,
+                  ),
                   child:
                       bot.avatar.isEmpty
                           ? buildProviderLogo(context, '', bot.provider, 96)
