@@ -132,7 +132,6 @@ class _AddBotPageState extends State<AddBotPage> {
 
   bool _isLoadingModels = false;
   bool _isSubmitting = false;
-  String? _errorMessage;
   bool _isCustomProvider = false;
   bool _isSyncingProviderFields = false;
   bool _isPasswordVisible = false;
@@ -153,7 +152,6 @@ class _AddBotPageState extends State<AddBotPage> {
       if (imagePath != null && mounted) {
         setState(() {
           avatarImage = File(imagePath);
-          _errorMessage = null;
         });
       }
     } on Object catch (error) {
@@ -163,12 +161,7 @@ class _AddBotPageState extends State<AddBotPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    setState(() => _errorMessage = message.trim());
-  }
-
-  void _dismissError() {
-    if (_errorMessage == null) return;
-    setState(() => _errorMessage = null);
+    showStarsNotice(context, message.trim(), tone: StarsNoticeTone.error);
   }
 
   // 添加获取模型列表的方法
@@ -183,7 +176,6 @@ class _AddBotPageState extends State<AddBotPage> {
     }
     setState(() {
       _isLoadingModels = true;
-      _errorMessage = null;
     });
 
     try {
@@ -220,7 +212,6 @@ class _AddBotPageState extends State<AddBotPage> {
         setState(() {
           providerModels = models;
           selectedModelController.text = models.first.modelId;
-          _errorMessage = null;
         });
       } else if (mounted) {
         _showError(S.of(context).noModelsRetrieved);
@@ -391,10 +382,6 @@ class _AddBotPageState extends State<AddBotPage> {
   Future<void> _submitBot() async {
     if (_isSubmitting) return;
 
-    if (_errorMessage != null) {
-      setState(() => _errorMessage = null);
-    }
-
     final desktopFormValid =
         !widget.embedded ||
         (_desktopFormKey.currentState?.saveAndValidate() ?? false);
@@ -563,50 +550,33 @@ class _AddBotPageState extends State<AddBotPage> {
         ),
       ),
 
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_errorMessage case final error?)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: StarsInlineErrorAlert(
-                error: error,
-                isDesktop: false,
-                onDismiss: _dismissError,
-                alertKey: const ValueKey<String>('add-bot-error-alert'),
-                messageKey: const ValueKey<String>('add-bot-error-message'),
-                dismissKey: const ValueKey<String>('dismiss-add-bot-error'),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onSurface,
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24.0),
-                  side: BorderSide.none,
-                ),
-              ),
-              onPressed: _isSubmitting ? null : _submitBot,
-              child:
-                  _isSubmitting
-                      ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : Text(
-                        S.of(context).addBot,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: fontSize,
-                          color: Theme.of(context).colorScheme.surface,
-                        ),
-                      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.onSurface,
+            minimumSize: const Size.fromHeight(50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.0),
+              side: BorderSide.none,
             ),
           ),
-        ],
+          onPressed: _isSubmitting ? null : _submitBot,
+          child:
+              _isSubmitting
+                  ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : Text(
+                    S.of(context).addBot,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSize,
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                  ),
+        ),
       ),
     );
   }
