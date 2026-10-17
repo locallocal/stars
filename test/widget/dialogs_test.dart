@@ -5,6 +5,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/ui/core/widgets/desktop_chat_primitives.dart';
 import 'package:stars/ui/features/bots/view_models/bot_skill_view_model.dart';
+import 'package:stars/ui/features/bots/views/add_bot.dart';
 import 'package:stars/utils/theme.dart';
 
 import '../support/widget_test_support.dart';
@@ -635,7 +636,7 @@ void main() {
     });
   });
 
-  testWidgets('add bot failures use the dismissible chat error alert', (
+  testWidgets('add bot errors expire without resizing the dialog', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -644,12 +645,32 @@ void main() {
 
     await withDesktopPlatform(() async {
       await tester.pumpWidget(
-        addBotDialogHarness(
+        shadHarness(
           brightness: Brightness.light,
-          modelLoader: (_) async => throw StateError('模型服务不可用'),
-          onBotAdded: (_, _) async => throw StateError('保存失败'),
+          homeBuilder:
+              (context) => Scaffold(
+                body: ShadButton(
+                  onPressed: () {
+                    unawaited(
+                      showShadDialog<void>(
+                        context: context,
+                        builder:
+                            (_) => AddBotDialog(
+                              modelLoader:
+                                  (_) async => throw StateError('模型服务不可用'),
+                              onBotAdded:
+                                  (_, _) async => throw StateError('保存失败'),
+                            ),
+                      ),
+                    );
+                  },
+                  child: const Text('Open add bot'),
+                ),
+              ),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open add bot'));
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -666,70 +687,44 @@ void main() {
       final footerSurface = find.byKey(
         const ValueKey<String>('add-bot-footer-surface'),
       );
+      final formViewport =
+          find
+              .descendant(
+                of: find.byType(AddBotPage),
+                matching: find.byType(SingleChildScrollView),
+              )
+              .first;
       final submitRectBeforeError = tester.getRect(submit);
       final actionsRectBeforeError = tester.getRect(actions);
       final footerRectBeforeError = tester.getRect(footerSurface);
+      final formRectBeforeError = tester.getRect(formViewport);
       final fetchModels = find.byIcon(LucideIcons.refreshCw);
       await tester.ensureVisible(fetchModels);
       await tester.tap(fetchModels);
       await tester.pumpAndSettle();
 
-      final alert = find.byKey(const ValueKey<String>('add-bot-error-alert'));
-      final errorRegion = find.byKey(
-        const ValueKey<String>('add-bot-error-region'),
+      final toast = find.byType(ShadToast);
+      expect(toast.hitTestable(), findsOneWidget);
+      expect(
+        tester.widget<ShadToast>(toast).variant,
+        ShadToastVariant.destructive,
       );
-      final message = find.byKey(
-        const ValueKey<String>('add-bot-error-message'),
-      );
-      final dismiss = find.byKey(
-        const ValueKey<String>('dismiss-add-bot-error'),
-      );
-      expect(alert, findsOneWidget);
-      expect(errorRegion, findsOneWidget);
       expect(find.text('加载内容时出错，请稍后再试。'), findsOneWidget);
       expect(find.textContaining('模型服务不可用'), findsNothing);
       expect(find.byType(SnackBar), findsNothing);
-      expect(
-        find.ancestor(of: alert, matching: find.byType(StarsInlineErrorAlert)),
-        findsOneWidget,
-      );
-      expect(tester.getSize(alert).height, lessThanOrEqualTo(58));
-      expect(
-        tester.getCenter(message).dy,
-        closeTo(tester.getCenter(alert).dy, 1),
-      );
-      expect(
-        tester.getCenter(message).dx,
-        closeTo(tester.getCenter(alert).dx, 1),
-      );
-      expect(
-        tester.widget<ShadAlert>(alert).crossAxisAlignment,
-        CrossAxisAlignment.center,
-      );
-      expect(
-        tester.getRect(alert).bottom,
-        lessThan(tester.getRect(submit).top),
-      );
-      final expectedErrorWidth =
-          StarsDesktopThemeSpec.addBotFormFieldWidth +
-          (StarsDesktopThemeSpec.botFormSectionPadding +
-                  StarsDesktopThemeSpec.botFormSectionBorderWidth) *
-              2;
-      expect(tester.getSize(errorRegion).width, expectedErrorWidth);
-      expect(tester.getSize(alert).width, expectedErrorWidth);
+      expect(find.byType(StarsInlineErrorAlert), findsNothing);
+      expect(tester.getRect(formViewport), formRectBeforeError);
       expect(tester.getRect(actions), actionsRectBeforeError);
       expect(tester.getRect(submit), submitRectBeforeError);
       expect(tester.getRect(footerSurface), footerRectBeforeError);
-      expect(tester.getSize(actions).width, expectedErrorWidth);
-      expect(find.descendant(of: footerSurface, matching: alert), findsNothing);
-      expect(
-        tester.getRect(errorRegion).bottom,
-        lessThan(tester.getRect(footerSurface).top),
-      );
 
-      await tester.tap(dismiss);
-      await tester.pump();
-      expect(alert, findsNothing);
+      await tester.pump(const Duration(seconds: 4));
+      expect(toast, findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(toast, findsNothing);
+      expect(find.text('加载内容时出错，请稍后再试。'), findsNothing);
+      expect(tester.getRect(formViewport), formRectBeforeError);
 
       await tester.enterText(
         find.descendant(
@@ -741,11 +736,18 @@ void main() {
       await tester.tap(submit);
       await tester.pumpAndSettle();
 
-      expect(alert, findsOneWidget);
+      expect(toast.hitTestable(), findsOneWidget);
       expect(find.text('加载内容时出错，请稍后再试。'), findsOneWidget);
       expect(find.textContaining('保存失败'), findsNothing);
       expect(find.byType(SnackBar), findsNothing);
       expect(find.byIcon(LucideIcons.plus), findsOneWidget);
+      expect(find.byType(AddBotDialog), findsOneWidget);
+      expect(tester.getRect(formViewport), formRectBeforeError);
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(toast, findsNothing);
+      expect(find.byType(AddBotDialog), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

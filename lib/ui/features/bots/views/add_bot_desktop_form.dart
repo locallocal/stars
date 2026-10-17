@@ -254,30 +254,6 @@ extension _AddBotDesktopForm on _AddBotPageState {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_errorMessage case final error?)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 10),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: _AddBotPageState._desktopFormWidth,
-                ),
-                child: SizedBox(
-                  key: const ValueKey<String>('add-bot-error-region'),
-                  width: double.infinity,
-                  child: StarsInlineErrorAlert(
-                    error: error,
-                    isDesktop: true,
-                    onDismiss: _dismissError,
-                    alertKey: const ValueKey<String>('add-bot-error-alert'),
-                    messageKey: const ValueKey<String>('add-bot-error-message'),
-                    dismissKey: const ValueKey<String>('dismiss-add-bot-error'),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ),
-          ),
         const ShadSeparator.horizontal(),
         ColoredBox(
           key: const ValueKey<String>('add-bot-footer-surface'),
