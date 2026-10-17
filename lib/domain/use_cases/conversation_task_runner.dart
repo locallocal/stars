@@ -16,6 +16,7 @@ import 'package:stars/domain/models/task_tool_observation.dart';
 import 'package:stars/domain/services/task_tool_observation_policy.dart';
 import 'package:stars/domain/services/task_skill_source_policy.dart';
 import 'package:stars/domain/services/task_skill_completion_policy.dart';
+import 'package:stars/domain/services/task_mcp_completion_policy.dart';
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
@@ -172,7 +173,8 @@ final class _TaskSegment {
           continue;
         }
         if (nextStep == null && !replan) {
-          if (taskSkillInstallationIncomplete(snapshot)) {
+          if (taskSkillInstallationIncomplete(snapshot) ||
+              taskMcpInstallationIncomplete(snapshot)) {
             return await _finishFinalization(TaskReasonCode.verificationFailed);
           }
           phase = ConversationTaskPhase.verifying;

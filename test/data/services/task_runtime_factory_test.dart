@@ -4,6 +4,15 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/data/models/local_records.dart';
+import 'package:stars/data/repositories/sqlite_mcp_server_repository.dart';
+import 'package:stars/data/services/tools/add_mcp_server_tool.dart';
+import 'package:stars/domain/models/mcp.dart';
+import 'package:stars/domain/models/mcp_installer.dart';
+import 'package:stars/domain/models/message.dart';
+import 'package:stars/domain/repositories/mcp_credential_store.dart';
+import 'package:stars/domain/repositories/message_repository.dart';
+import 'package:stars/domain/use_cases/compose_chat_turn.dart';
+import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/data/services/skills/skill_catalog_endpoint_policy.dart';
 import 'package:stars/data/services/skills/skill_installation_service.dart';
 import 'package:stars/data/services/skills/skill_source_resolver.dart';
@@ -42,6 +51,7 @@ void main() {
   ConversationTask task({
     Set<String> tools = const {'calculate'},
     TaskSegmentLimits? limits,
+    bool deferredPreparation = false,
   }) => taskFixture(
     acceptance: TaskAcceptanceSnapshot(
       providerId: bots.bot!.apiType,
@@ -50,6 +60,7 @@ void main() {
       language: 'zh-CN',
       context: taskAcceptance().context,
       allowedToolNames: tools,
+      deferredPreparation: deferredPreparation,
       verification: taskAcceptance().verification,
       segmentLimits: limits ?? TaskSegmentLimits(),
     ),
@@ -61,6 +72,8 @@ void main() {
     List<Bot>? seen,
     RunnerModels? models,
     TaskRunnerClock clock = const SystemTaskRunnerClock(),
+    MessageRepository? messages,
+    PrepareTextGeneration? prepare,
   }) => TaskRuntimeFactory(
     tasks: h.repository,
     bots: bots,
@@ -77,6 +90,201 @@ void main() {
     policy: policy ?? RunnerPolicy(),
     adapters: adapters,
     clock: clock,
+    messages: messages,
+    prepare: prepare,
+  );
+
+  test(
+    'MCP preparation exposes safe configuration references and resumes installation after approval',
+    () async {
+      final servers = SqliteMcpServerRepository(localDatabase: h.local);
+      addTearDown(servers.dispose);
+      final credentials = _McpCredentials();
+      var connects = 0, preparations = 0;
+      final installer = AddMcpServerTool(
+        repository: servers,
+        credentialStore: credentials,
+        connector: (id, _) async {
+          connects++;
+          final server = (await servers.getServer(id))!;
+          final connected = server.copyWith(
+            status: McpConnectionStatus.connected,
+          );
+          await servers.replaceCatalog(connected, []);
+          return connected;
+        },
+      );
+      final accepted = task(tools: {}, deferredPreparation: true);
+      committed(
+        await h.accept(
+          task: accepted,
+          plan: ConversationTaskPlan(
+            taskId: accepted.taskId,
+            revision: 1,
+            objective: accepted.objective,
+            steps: [],
+            allowedToolNames: {},
+            isPending: true,
+            createdAt: accepted.createdAt,
+          ),
+        ),
+      );
+      Message input(String id, String token) => Message(
+        messageId: id,
+        turnId: accepted.originTurnId,
+        chatId: accepted.chatId,
+        botId: accepted.botId,
+        senderId: 'user',
+        timestamp: taskTime,
+        content:
+            '安装 ${jsonEncode({
+              'mcpServers': {
+                'Remote': {
+                  'type': 'streamable-http',
+                  'url': 'https://example.com/mcp',
+                  'headers': {'Authorization': 'Bearer $token'},
+                },
+              },
+            })}',
+      );
+      final messages = _McpMessages([
+        input(accepted.originUserMessageId, 'accepted-private-key'),
+        input('later-message', 'later-private-key'),
+      ]);
+      final models = RunnerModels();
+      final providers = ForegroundProviders(
+        (bot) => _RuntimeProvider(bot, models),
+      );
+      final prepare = PrepareTextGeneration(
+        aiProviderRepository: providers,
+        composeChatTurn: ({
+          required bot,
+          required history,
+          required userMessage,
+          required currentUserId,
+          skillToolProvider,
+          bool foregroundOnly = false,
+          String? backgroundTaskObjective,
+        }) async {
+          preparations++;
+          expect(userMessage.messageId, accepted.originUserMessageId);
+          expect(history, isEmpty);
+          return PreparedChatTurn(
+            messages: [ChatMessage(role: 'user', content: userMessage.content)],
+            activatedSkills: [],
+            requestedToolNames: {addMcpServerToolName},
+          );
+        },
+      );
+      final clock = RunnerClock();
+      var segment = 0;
+      Future<TaskSegmentResult> run() async {
+        final current = await h.task;
+        final lease = TaskLease(
+          taskId: accepted.taskId,
+          ownerId: 'mcp-worker',
+          token: 'mcp-${++segment}',
+          acquiredAt: clock.now(),
+          expiresAt: clock.now().add(const Duration(minutes: 1)),
+        );
+        committed(
+          await h.repository.tryAcquireLease(
+            taskId: accepted.taskId,
+            expectedRevision: current.revision,
+            lease: lease,
+            now: clock.now(),
+          ),
+        );
+        final factory = runtime(
+          extraTools: [installer],
+          models: models,
+          messages: messages,
+          prepare: prepare,
+          clock: clock,
+          policy: const DefaultToolPolicy(allowProcessExecution: true),
+        );
+        expect(factory.supportsTool(installer), isTrue);
+        final execute = await factory.resolve(current);
+        return execute(
+          input: (await h.repository.getExecutionSnapshot(accepted.taskId))!,
+          lease: lease,
+          segmentId: 'mcp-segment-$segment',
+        );
+      }
+
+      models.tool(
+        name: 'stars_revise_task_plan',
+        arguments: {
+          'steps': [
+            {'id': 'install', 'summary': 'Install the requested server'},
+          ],
+          'allowedToolNames': [addMcpServerToolName],
+        },
+      );
+      models.turns.add(() {
+        final request = models.requests.last;
+        final referenceContext = request.messages.singleWhere(
+          (message) => message.content.startsWith(
+            'MCP configurations from user messages',
+          ),
+        );
+        final arguments =
+            (jsonDecode(referenceContext.content.split('\n').last) as List)
+                    .single
+                as Map<String, Object?>;
+        final prompt = request.messages.map((m) => m.content).join('\n');
+        expect(prompt, isNot(contains('accepted-private-key')));
+        expect(prompt, isNot(contains('later-private-key')));
+        final properties =
+            request.tools
+                    .singleWhere((tool) => tool.name == addMcpServerToolName)
+                    .inputSchema['properties']
+                as Map;
+        expect(properties.containsKey('access_token'), isFalse);
+        expect(properties.containsKey('environment'), isFalse);
+        return Stream.fromIterable([
+          ToolCallRequested(
+            callId: 'install-mcp',
+            name: addMcpServerToolName,
+            arguments: arguments,
+          ),
+          const ModelTurnCompleted(stopReason: 'tool_calls'),
+        ]);
+      });
+      final waiting = await run() as TaskApprovalWait;
+      expect(await servers.getServers(), isEmpty);
+      expect(credentials.values, isEmpty);
+      expect(
+        jsonEncode(await h.facts()),
+        isNot(contains('accepted-private-key')),
+      );
+      await h.reopen();
+      committed(
+        await h.repository.decideApproval(
+          taskId: accepted.taskId,
+          approvalId: waiting.approvalId,
+          expectedRevision: (await h.task).revision,
+          decision: TaskApprovalDecision.approved,
+          actorId: 'user',
+          decidedAt: clock.now(),
+        ),
+      );
+      models
+        ..completeStep()
+        ..candidate();
+      expect(await run(), isA<TaskCompletionCandidate>());
+      expect(preparations, 1);
+      expect(connects, 1);
+      expect(
+        credentials.values.values.single.accessToken,
+        'accepted-private-key',
+      );
+      expect(await servers.getServers(), hasLength(1));
+      expect(
+        jsonEncode(await h.facts()),
+        isNot(contains('accepted-private-key')),
+      );
+    },
   );
 
   test('Skill tools execute through approval and database restart', () async {
@@ -627,6 +835,30 @@ void main() {
       expect(client.cancels, 1);
     },
   );
+}
+
+class _McpMessages implements MessageRepository {
+  _McpMessages(this.messages);
+  final List<Message> messages;
+  @override
+  Future<List<Message>> getMessages(String chatId) async => messages;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _McpCredentials implements McpCredentialStore {
+  final values = <String, McpCredential>{};
+  @override
+  Future<McpCredential?> read(String id) async => values[id];
+  @override
+  Future<void> write(String id, McpCredential value) async {
+    values[id] = value;
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    values.remove(id);
+  }
 }
 
 final class _RuntimeProvider extends AiProvider {

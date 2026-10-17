@@ -11,7 +11,7 @@ void main() {
     final content = await skill.loadContent();
 
     expect(skill.isValid, isTrue);
-    expect(skill.promptVersion, 2);
+    expect(skill.promptVersion, 3);
     expect(skill.contentDigest, hasLength(64));
     expect(content.descriptor.id, mcpInstallerSkillId);
     expect(content.descriptor.name, 'mcp-installer');
@@ -19,6 +19,8 @@ void main() {
     expect(content.descriptor.trustState, SkillTrustState.bundledTrusted);
     expect(content.descriptor.requestedToolNames, mcpInstallerToolNames);
     expect(content.instructions, contains('list_installed_mcp_servers'));
+    expect(content.instructions, contains('configuration_ref'));
+    expect(content.instructions, contains('Never use placeholders'));
     expect(content.instructions, contains('list_current_conversation_mcp'));
     expect(content.instructions, contains('SQLite'));
     expect(content.instructions, contains('streamable_http'));

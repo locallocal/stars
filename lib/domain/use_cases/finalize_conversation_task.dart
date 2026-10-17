@@ -15,6 +15,7 @@ import 'package:stars/domain/services/task_evidence_scope.dart';
 import 'package:stars/domain/services/task_terminal_summary_policy.dart';
 import 'package:stars/domain/services/task_terminal_context.dart';
 import 'package:stars/domain/services/task_skill_completion_policy.dart';
+import 'package:stars/domain/services/task_mcp_completion_policy.dart';
 import 'package:stars/domain/services/task_verification_preparation.dart';
 import 'package:stars/domain/use_cases/conversation_task_runner_contracts.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_terminal.dart';
@@ -117,7 +118,9 @@ final class FinalizeConversationTask {
       );
       final finalizationReason =
           state.finalizationReason ??
-          (taskSkillInstallationIncomplete(snapshot)
+          (taskSkillInstallationIncomplete(snapshot) ||
+                  taskMcpInstallationIncomplete(snapshot) ||
+                  _reportsOnlyFailure(state.candidate)
               ? TaskReasonCode.verificationFailed
               : null);
       final failure =
@@ -428,6 +431,17 @@ final class FinalizeConversationTask {
       }
     }
   }
+}
+
+bool _reportsOnlyFailure(GroundedAnswerCandidate? candidate) {
+  final outcomes = candidate?.claims.where(
+    (claim) =>
+        claim.kind != ClaimKind.nonFactual &&
+        claim.kind != ClaimKind.userAssertion,
+  );
+  return outcomes != null &&
+      outcomes.isNotEmpty &&
+      outcomes.every((claim) => claim.kind == ClaimKind.executionFailure);
 }
 
 bool _ready(TaskExecutionSnapshot snapshot) =>
