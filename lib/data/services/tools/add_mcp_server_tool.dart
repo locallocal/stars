@@ -134,6 +134,7 @@ final class AddMcpServerTool implements ExecutableTool {
           ),
       };
       final credential = _credential(call.arguments, transport);
+      final shouldConnect = _optionalBool(call.arguments['connect']) ?? true;
       final timestamp = _now();
       final id = _uniqueId(existing, timestamp);
       final server = McpServer(
@@ -179,7 +180,6 @@ final class AddMcpServerTool implements ExecutableTool {
         );
       }
 
-      final shouldConnect = _optionalBool(call.arguments['connect']) ?? true;
       if (!shouldConnect) {
         return _success(
           call,
@@ -289,10 +289,12 @@ final class AddMcpServerTool implements ExecutableTool {
         'access_token requires auth_type oauth_access_token.',
       );
     }
-    if (authType == McpAuthType.oauthAccessToken && accessToken.isEmpty) {
+    if (authType == McpAuthType.oauthAccessToken &&
+        (accessToken.isEmpty || _isPlaceholder(accessToken))) {
       throw const _AddMcpServerException(
         'mcp_access_token_required',
-        'auth_type oauth_access_token requires access_token.',
+        'A real MCP access token is required. Replace the placeholder in your '
+            'configuration and send a new installation request.',
       );
     }
     if (accessToken.contains('\r') || accessToken.contains('\n')) {
@@ -401,6 +403,12 @@ final class AddMcpServerTool implements ExecutableTool {
         );
       }
       environment[key] = item;
+      if (_isPlaceholder(item)) {
+        throw const _AddMcpServerException(
+          'mcp_environment_value_required',
+          'Replace placeholder environment values before installing this MCP server.',
+        );
+      }
     }
     return Map<String, String>.unmodifiable(environment);
   }
@@ -521,6 +529,11 @@ final class AddMcpServerTool implements ExecutableTool {
         errorCode: code,
       );
 }
+
+bool _isPlaceholder(String value) => RegExp(
+  r'^(?:<(?:YOUR[_ -])?(?:API[_ -]?KEY|ACCESS[_ -]?TOKEN|TOKEN|SECRET|PASSWORD)(?:[_ -]HERE)?>|\$\{[^}]+\}|\[(?:redacted|your[^\]]*)\]|YOUR[_ -](?:API[_ -]?KEY|ACCESS[_ -]?TOKEN|TOKEN)(?:[_ -]HERE)?|REPLACE[_ -]?ME|CHANGEME)$',
+  caseSensitive: false,
+).hasMatch(value.trim());
 
 final class _AddMcpServerException implements Exception {
   const _AddMcpServerException(this.code, this.message);

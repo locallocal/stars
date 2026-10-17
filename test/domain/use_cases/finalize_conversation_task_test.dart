@@ -18,6 +18,32 @@ void main() {
   tearDown(() => h.close());
 
   test(
+    'a failure-only answer cannot mark an unfulfilled task successful in standard mode',
+    () async {
+      await h.open(strict: false);
+      h.runner.models
+        ..completeStep()
+        ..candidate(
+          GroundedAnswerCandidate(
+            claims: [
+              AnswerClaim(
+                claimId: 'install-not-completed',
+                text: '未能完成 MCP 安装与连接验证。',
+                kind: ClaimKind.executionFailure,
+              ),
+            ],
+            nonFactualText: '请检查 MCP 安装入口。',
+          ),
+        );
+      await h.runner.run();
+      await h.runner.db.reopen();
+      await h.finalizer()('task-1');
+      expect((await h.runner.db.task).status, ConversationTaskStatus.failed);
+      expect((await h.result()).terminalOutcome, MessageTerminalOutcome.failed);
+    },
+  );
+
+  test(
     'failure reply uses execution context and keeps natural verified partial results after restart',
     () async {
       await h.open();

@@ -722,6 +722,8 @@ String _safeToolCode(String code) =>
 String? _permanentToolReason(String code) => switch (code) {
   'authentication_failed' ||
   'missing_credentials' ||
+  'mcp_access_token_required' ||
+  'mcp_environment_value_required' ||
   'unauthorized' => TaskReasonCode.missingCredentials,
   'permission_denied' ||
   'forbidden' ||
@@ -729,6 +731,23 @@ String? _permanentToolReason(String code) => switch (code) {
   'invalid_arguments' ||
   'invalid_tool_arguments' ||
   'invalid_skill_source' ||
+  'invalid_mcp_server' ||
+  'invalid_mcp_transport' ||
+  'invalid_mcp_server_name' ||
+  'invalid_mcp_connect_option' ||
+  'mcp_configuration_unavailable' ||
+  'mcp_configuration_mismatch' ||
+  'mcp_unsupported_configuration' ||
+  'mcp_unsupported_headers' ||
+  'mcp_server_already_exists' ||
+  'mcp_invalid_endpoint' ||
+  'mcp_invalid_auth_type' ||
+  'mcp_invalid_credential' ||
+  'mcp_unexpected_credential' ||
+  'mcp_transport_field_mismatch' ||
+  'mcp_invalid_stdio_command' ||
+  'mcp_invalid_stdio_arguments' ||
+  'mcp_invalid_stdio_environment' ||
   'invalid_input' => TaskReasonCode.invalidPlan,
   'skill_install_rejected' => TaskReasonCode.skillInstallRejected,
   _ => null,

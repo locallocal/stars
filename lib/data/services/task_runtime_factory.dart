@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:stars/data/services/ai/task_model_session_factory.dart';
+import 'package:stars/data/services/mcp/mcp_task_configuration.dart';
+import 'package:stars/data/services/mcp_task_tool_adapter.dart';
 import 'package:stars/data/services/shell_task_tool_adapter.dart';
 import 'package:stars/data/services/task_tool_adapters.dart';
 import 'package:stars/data/services/tools/shell_command_tool.dart';
+import 'package:stars/data/services/tools/add_mcp_server_tool.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/mcp_installer.dart';
+import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/task_scheduling.dart';
 import 'package:stars/domain/models/task_tool_protocol.dart';
 import 'package:stars/domain/models/tool.dart';
@@ -49,7 +56,11 @@ final class TaskRuntimeFactory {
   bool supportsTool(ExecutableTool tool) =>
       _adapter(tool.definition.name, tool) != null;
 
-  TaskToolAdapter? _adapter(String name, ExecutableTool? tool) {
+  TaskToolAdapter? _adapter(
+    String name,
+    ExecutableTool? tool, {
+    List<McpTaskConfiguration> mcpConfigurations = const [],
+  }) {
     final supplied = adapters[name];
     if (supplied != null) {
       if (supplied.definition.name != name ||
@@ -66,6 +77,9 @@ final class TaskRuntimeFactory {
       return null;
     }
     if (tool is ShellCommandTool) return ShellTaskToolAdapter(tool);
+    if (tool is AddMcpServerTool) {
+      return McpTaskToolAdapter(tool, configurations: mcpConfigurations);
+    }
     final arguments = taskCheckpointArguments[name];
     return arguments == null
         ? null
@@ -135,6 +149,12 @@ final class TaskRuntimeFactory {
     // selected tools are execution dependencies, including after a restart.
     final requiredTools = snapshot.plan.allowedToolNames;
     final candidateTools = snapshot.toolScope;
+    final mcpConfigurations =
+        !cancelling &&
+                candidateTools.contains(addMcpServerToolName) &&
+                messages != null
+            ? _mcpConfigurations(task, await messages!.getMessages(task.chatId))
+            : const <McpTaskConfiguration>[];
     final available = {
       for (final name in candidateTools)
         if (registry.find(name) case final tool?) name: tool,
@@ -143,7 +163,11 @@ final class TaskRuntimeFactory {
     };
     final resolved = <TaskToolAdapter>[];
     for (final name in candidateTools) {
-      final adapter = _adapter(name, available[name]);
+      final adapter = _adapter(
+        name,
+        available[name],
+        mcpConfigurations: mcpConfigurations,
+      );
       if (adapter == null) {
         if (cancelling || !requiredTools.contains(name)) continue;
         throw TaskRuntimeUnavailable(

@@ -1,7 +1,7 @@
 const mcpInstallerSkillId = 'system:mcp-installer';
-const mcpInstallerSkillPromptVersion = 2;
+const mcpInstallerSkillPromptVersion = 3;
 const mcpInstallerSkillContentDigest =
-    '35d088762112a59883021f5b8035ef1ac228411e32b08214753a43e58d88e82e';
+    '28b918c3cc609b1491c11749814be4c41a6dae687de6a01f7044db70da0c285b';
 const addMcpServerToolName = 'add_mcp_server';
 const addMcpServerToolNames = {addMcpServerToolName};
 const listInstalledMcpServersToolName = 'list_installed_mcp_servers';
