@@ -290,10 +290,12 @@ class _MessageContent extends StatelessWidget {
     return grounding != null;
   }
 
-  bool get _showTerminalStatus =>
-      terminalOutcome != null &&
-      (terminalOutcome != MessageTerminalOutcome.completed ||
-          hasPartialContent);
+  bool get _showTerminalStatus => switch (terminalOutcome) {
+    null || MessageTerminalOutcome.cancelled => false,
+    MessageTerminalOutcome.completed => hasPartialContent,
+    MessageTerminalOutcome.failed ||
+    MessageTerminalOutcome.emptyResponse => true,
+  };
 
   bool get _hasStructuredMedia =>
       images.isNotEmpty ||
