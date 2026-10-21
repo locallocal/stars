@@ -1,6 +1,11 @@
 import 'package:stars/domain/models/message.dart';
 
-enum TurnDispositionKind { directReply, backgroundTask, taskStatusRequest }
+enum TurnDispositionKind {
+  directReply,
+  backgroundTask,
+  taskStatusRequest,
+  taskCancellationRequest,
+}
 
 /// A decision made by the main reply turn, never by a separate classifier.
 sealed class TurnDisposition {
@@ -46,6 +51,23 @@ final class TaskStatusRequest extends TurnDisposition {
   final String? taskId;
   @override
   TurnDispositionKind get kind => TurnDispositionKind.taskStatusRequest;
+}
+
+/// Cancels an identified task, the sole active task, or an explicit all request.
+final class TaskCancellationRequest extends TurnDisposition {
+  TaskCancellationRequest({this.taskId, this.all = false}) {
+    if (taskId != null &&
+        (all ||
+            taskId!.trim().isEmpty ||
+            taskId != taskId!.trim() ||
+            taskId!.length > 256)) {
+      throw ArgumentError('Invalid task cancellation selection.');
+    }
+  }
+  final String? taskId;
+  final bool all;
+  @override
+  TurnDispositionKind get kind => TurnDispositionKind.taskCancellationRequest;
 }
 
 sealed class TurnRoutingEvent {

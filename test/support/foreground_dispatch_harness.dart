@@ -8,6 +8,7 @@ import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/repositories/conversation_turn_router.dart';
 import 'package:stars/domain/use_cases/compose_chat_turn.dart';
 import 'package:stars/domain/use_cases/conversation_turn_dispatcher.dart';
+import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 
 import 'conversation_task_repository_harness.dart';
@@ -129,6 +130,10 @@ final class ForegroundDispatchHarness {
       messages: messages,
       drafts: drafts,
       tasks: tasks ?? storage.repository,
+      taskCommands: ConversationTaskCommands(
+        repository: tasks ?? storage.repository,
+        wake: enqueuer.enqueue,
+      ),
       enqueuer: enqueuer,
       now: () => foregroundTime,
       gate: gate,
@@ -166,6 +171,9 @@ final class AmbiguousAcceptanceRepository
   @override
   Future<ConversationTask?> getByOriginTurnId(String id) =>
       delegate.getByOriginTurnId(id);
+  @override
+  Future<List<ConversationTask>> listActiveForChat(String chatId) =>
+      delegate.listActiveForChat(chatId);
   @override
   Future<TaskWriteResult<ConversationTask>> createWithAcknowledgement({
     required ConversationTask task,

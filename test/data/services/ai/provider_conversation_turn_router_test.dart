@@ -366,6 +366,9 @@ void main() {
             TurnDispositionKind.taskStatusRequest => [
               {'taskId': null},
             ],
+            TurnDispositionKind.taskCancellationRequest => [
+              {'taskId': null, 'all': false},
+            ],
           });
           final requests = <Map<String, dynamic>>[];
           final client = MockClient((request) async {

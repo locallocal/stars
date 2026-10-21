@@ -5,6 +5,7 @@ import 'package:stars/data/services/ai/task_progress_polisher.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_task.dart';
+import 'package:stars/domain/models/task_cancellation_result.dart';
 import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 import '../../../support/foreground_turn_fixtures.dart';
@@ -107,6 +108,42 @@ void main() {
       );
       expect(narrate.metrics.failures, 1);
       expect(provider.sessions.single.closed, isTrue);
+    },
+  );
+  test(
+    'cancellation reply receives committed outcomes separately from progress',
+    () async {
+      provider.events =
+          () => Stream.fromIterable([
+            const TextDelta(
+              'Cancellation was requested; the task is still stopping.',
+            ),
+            const ModelTurnCompleted(),
+          ]);
+      final cancellation = TaskCancellationResult(
+        outcomes: {'task-1': TaskCancellationOutcome.requested},
+        summaries: [summary],
+      );
+      await NarrateConversationTaskProgress()(
+        chatId: 'chat-1',
+        summaries: cancellation.summaries,
+        taskCancellation: cancellation,
+        question: 'Cancel the report task',
+        language: 'en',
+        polish: factory.forBot('bot-1'),
+      );
+      final request = provider.sessions.single.request;
+      final payload =
+          jsonDecode(request.messages.last.content) as Map<String, dynamic>;
+      expect(payload['cancellation'], {
+        'needsSelection': false,
+        'outcomes': {'task-1': 'requested'},
+      });
+      expect(
+        request.messages.first.content,
+        contains('Only a recorded cancelled terminal status'),
+      );
+      expect(request.tools, isEmpty);
     },
   );
   test(

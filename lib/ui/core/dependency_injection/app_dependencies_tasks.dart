@@ -151,6 +151,7 @@ AppConversationTasks createAppConversationTasks({
       messages: messages,
       drafts: drafts,
       tasks: repository,
+      taskCommands: commands,
       enqueuer: scheduler,
       now: clock.now,
     ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/tool.dart';
+import 'package:stars/domain/models/task_cancellation_result.dart';
 import 'package:stars/domain/services/task_progress_narration_policy.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
 
@@ -20,6 +21,7 @@ final class TaskProgressNarrationRequest {
     required this.repair,
     required this.timeout,
     this.requestedTaskId,
+    this.taskCancellation,
   }) : summaries = List.unmodifiable(
          summaries.map(Map<String, Object?>.unmodifiable),
        );
@@ -29,6 +31,7 @@ final class TaskProgressNarrationRequest {
   final String question;
   final String language;
   final String? requestedTaskId;
+  final TaskCancellationResult? taskCancellation;
   final bool repair;
   final Duration timeout;
 }
@@ -60,6 +63,7 @@ final class NarrateConversationTaskProgress {
     required String language,
     String question = '',
     String? requestedTaskId,
+    TaskCancellationResult? taskCancellation,
     TaskProgressPolisher? polish,
     AgentCancellationToken? cancellation,
   }) async {
@@ -86,6 +90,7 @@ final class NarrateConversationTaskProgress {
                   ),
                   language: language,
                   requestedTaskId: requestedTaskId,
+                  taskCancellation: taskCancellation,
                   repair: attempt > 0,
                   timeout: timeout,
                 ),

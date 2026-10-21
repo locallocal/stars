@@ -367,20 +367,19 @@ Use inspect_report to verify report counts.
   );
 
   test(
-    'durable cancellation survives stopped scheduler and creates one result after reconciliation',
+    'agent cancellation survives stopped scheduler and creates one result after reconciliation',
     () async {
       await accept();
       await approve();
       await untilTask(h, ConversationTaskStatus.paused);
       await h.conversationTasks.setSuspended(true);
-      final waiting = await h.task();
-      expect(
-        await h.conversationTasks.commands.cancel(
-          taskId: waiting.taskId,
-          expectedRevision: waiting.revision,
-        ),
-        isA<TaskWriteCommitted<ConversationTask>>(),
+      h.providers.route = 'taskCancellationRequest';
+      final cancellation = await h.conversationTasks.dispatcher.dispatch(
+        foregroundInput(turnId: 'cancel-turn', content: '取消这个后台任务'),
       );
+      expect(cancellation, isA<TurnTaskStatusRead>());
+      expect((cancellation as TurnTaskStatusRead).cancellation, isNotNull);
+      expect(h.providers.mainReplies, 2);
       expect((await h.task()).status, ConversationTaskStatus.cancelRequested);
       expect(
         (await h.messageRepository.getMessages(

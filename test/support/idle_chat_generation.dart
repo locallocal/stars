@@ -2,6 +2,7 @@ import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/repositories/conversation_turn_router.dart';
 import 'package:stars/domain/repositories/message_repository.dart';
 import 'package:stars/domain/use_cases/conversation_turn_dispatcher.dart';
+import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -36,6 +37,10 @@ ConversationTurnDispatcher unusedForegroundDispatcher() =>
       messages: _UnusedMessages(),
       drafts: ForegroundDrafts(),
       tasks: _UnusedTasks(),
+      taskCommands: ConversationTaskCommands(
+        repository: _UnusedTasks(),
+        wake: (_) => throw StateError('Unexpected cancellation'),
+      ),
       enqueuer: ForegroundEnqueuer(),
     );
 PresentConversationTaskProgress unusedTaskProgress() =>

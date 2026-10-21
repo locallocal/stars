@@ -3,6 +3,7 @@ import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/models/turn_disposition.dart';
+import 'package:stars/domain/models/conversation_task.dart';
 
 final class TurnRoutingRequest {
   TurnRoutingRequest({
@@ -12,13 +13,16 @@ final class TurnRoutingRequest {
     this.cancellation,
     this.requiresBackgroundTask = false,
     required List<ChatMessage> messages,
-  }) : messages = List.unmodifiable(messages);
+    List<ConversationTask> activeTasks = const [],
+  }) : messages = List.unmodifiable(messages),
+       activeTasks = List.unmodifiable(activeTasks);
   final AgentCancellationToken? cancellation;
   final bool requiresBackgroundTask;
   final Bot bot;
   final Message userMessage;
   final String language;
   final List<ChatMessage> messages;
+  final List<ConversationTask> activeTasks;
 }
 
 abstract interface class ConversationTurnRouter {
