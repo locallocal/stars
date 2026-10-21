@@ -6,7 +6,9 @@ import 'package:stars/domain/models/bot.dart';
 import 'package:stars/domain/models/conversation_draft.dart';
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
-import 'package:stars/domain/models/tool.dart' show AgentCancellationToken;
+import 'package:stars/domain/models/task_cancellation_result.dart';
+import 'package:stars/domain/models/tool.dart'
+    show AgentCancellationToken, AgentRunCancelledException;
 import 'package:stars/domain/models/turn_disposition.dart';
 import 'package:stars/domain/repositories/conversation_draft_repository.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
@@ -16,6 +18,8 @@ import 'package:stars/domain/services/answer_trust_policy.dart';
 import 'package:stars/domain/services/task_acknowledgement_policy.dart';
 import 'package:stars/domain/services/task_provider_configuration.dart';
 import 'package:stars/domain/use_cases/get_conversation_task_progress.dart';
+import 'package:stars/domain/use_cases/cancel_conversation_tasks.dart';
+import 'package:stars/domain/use_cases/conversation_task_commands.dart';
 import 'package:stars/domain/use_cases/prepare_text_generation.dart';
 
 part 'conversation_turn_dispatch_contracts.dart';
@@ -30,6 +34,7 @@ final class ConversationTurnDispatcher {
     required MessageRepository messages,
     required ConversationDraftRepository drafts,
     required ConversationTaskRepository tasks,
+    required ConversationTaskCommands taskCommands,
     required ConversationTaskEnqueuer enqueuer,
     ForegroundTurnGate? gate,
     DateTime Function()? now,
@@ -40,6 +45,7 @@ final class ConversationTurnDispatcher {
        _messages = messages,
        _drafts = drafts,
        _tasks = tasks,
+       _cancelTasks = CancelConversationTasks(commands: taskCommands),
        _enqueuer = enqueuer,
        _gate = gate ?? ForegroundTurnGate(),
        _now = now ?? DateTime.now;
@@ -49,6 +55,7 @@ final class ConversationTurnDispatcher {
   final MessageRepository _messages;
   final ConversationDraftRepository _drafts;
   final ConversationTaskRepository _tasks;
+  final CancelConversationTasks _cancelTasks;
   final ConversationTaskEnqueuer _enqueuer;
   final ForegroundTurnGate _gate;
   final DateTime Function() _now;
@@ -123,6 +130,26 @@ final class ConversationTurnDispatcher {
             reply.turnId != user.turnId ||
             reply.taskMessageKind != TaskMessageKind.directReply ||
             reply.hasPartialContent) {
+          throw const _DispatchProblem(
+            TurnDispatchFailureCode.identityConflict,
+          );
+        }
+        return TurnDirectReplySaved(
+          pending.context,
+          metrics.snapshot(user),
+          reply,
+          reused: true,
+        );
+      }
+      final statusReplies = history.where(
+        (message) => message.messageId == '${user.turnId}:status',
+      );
+      if (statusReplies.isNotEmpty) {
+        final reply = statusReplies.single;
+        if (reply.botId != user.botId ||
+            reply.senderId != user.botId ||
+            reply.turnId != user.turnId ||
+            reply.taskMessageKind != TaskMessageKind.status) {
           throw const _DispatchProblem(
             TurnDispatchFailureCode.identityConflict,
           );
@@ -224,6 +251,23 @@ final class ConversationTurnDispatcher {
           }
         case TaskStatusRequest():
           return await _status(pending, disposition, metrics);
+        case TaskCancellationRequest():
+          final result = await _cancelTasks(
+            chatId: user.chatId,
+            request: disposition,
+            activeTaskIds: [
+              for (final task in pending.activeTasks!) task.taskId,
+            ],
+            requestedAt: user.timestamp,
+            cancellation: pending.cancellation,
+          );
+          return TurnTaskStatusRead(
+            pending.context,
+            metrics.snapshot(user),
+            summaries: result.summaries,
+            explicitTaskId: disposition.taskId,
+            cancellation: result,
+          );
       }
     } on Object catch (error) {
       var restored = false;
@@ -238,12 +282,16 @@ final class ConversationTurnDispatcher {
       final problem = error is _DispatchProblem ? error : null;
       final code =
           problem?.code ??
-          (!pending.userPersisted
+          (error is AgentRunCancelledException
+              ? TurnDispatchFailureCode.cancelled
+              : !pending.userPersisted
               ? TurnDispatchFailureCode.userPersistenceFailed
               : pending.acceptanceWrite != null
               ? TurnDispatchFailureCode.taskCreationFailed
               : pending.disposition is DirectReply
               ? TurnDispatchFailureCode.replyPersistenceFailed
+              : pending.disposition is TaskCancellationRequest
+              ? TurnDispatchFailureCode.taskCancellationFailed
               : input.explicitTaskId != null ||
                   pending.disposition is TaskStatusRequest
               ? TurnDispatchFailureCode.statusQueryFailed
@@ -276,6 +324,11 @@ final class ConversationTurnDispatcher {
     TurnDispositionKind? kind;
     TurnDisposition? completed;
     final displayed = StringBuffer();
+    pending.activeTasks ??= List.unmodifiable(
+      (await _tasks.listActiveForChat(pending.input.userMessage.chatId)).where(
+        (task) => !task.createdAt.isAfter(pending.input.userMessage.timestamp),
+      ),
+    );
     final request = TurnRoutingRequest(
       bot: pending.input.bot,
       userMessage: pending.input.userMessage,
@@ -283,6 +336,7 @@ final class ConversationTurnDispatcher {
       cancellation: pending.cancellation,
       requiresBackgroundTask: pending.input.retryOfTaskId != null,
       messages: pending.prepared!.messages,
+      activeTasks: pending.activeTasks!,
     );
     void invalid() =>
         throw const _DispatchProblem(

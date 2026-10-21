@@ -5,6 +5,7 @@ import 'package:stars/domain/models/conversation_task_list_item.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 import 'package:stars/domain/models/tool.dart';
+import 'package:stars/domain/models/task_cancellation_result.dart';
 import 'package:stars/domain/use_cases/get_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 
@@ -91,6 +92,7 @@ final class PresentConversationTaskProgress {
     String? taskId,
     String? turnId,
     List<ConversationTaskProgressSummary>? summaries,
+    TaskCancellationResult? taskCancellation,
     AgentCancellationToken? cancellation,
   }) {
     final identity = turnId ?? newId('status-turn');
@@ -105,6 +107,7 @@ final class PresentConversationTaskProgress {
         taskId: taskId,
         turnId: identity,
         summaries: summaries,
+        taskCancellation: taskCancellation,
         cancellation: cancellation,
       ).whenComplete(() {
         _pending.remove(key);
@@ -120,6 +123,7 @@ final class PresentConversationTaskProgress {
     required String? taskId,
     required String turnId,
     required List<ConversationTaskProgressSummary>? summaries,
+    required TaskCancellationResult? taskCancellation,
     required AgentCancellationToken? cancellation,
   }) async {
     final elapsed = Stopwatch()..start();
@@ -145,6 +149,7 @@ final class PresentConversationTaskProgress {
       language: language,
       question: question,
       requestedTaskId: taskId,
+      taskCancellation: taskCancellation,
       polish: polisher?.call(botId),
       cancellation: cancellation,
     );

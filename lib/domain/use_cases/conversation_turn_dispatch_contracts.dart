@@ -125,10 +125,13 @@ final class TurnTaskStatusRead extends TurnDispatchResult {
     super.metrics, {
     required List<ConversationTaskProgressSummary> summaries,
     this.explicitTaskId,
+    this.cancellation,
   }) : summaries = List.unmodifiable(summaries);
   final List<ConversationTaskProgressSummary> summaries;
   final String? explicitTaskId;
-  bool get needsSelection => summaries.length > 1;
+  final TaskCancellationResult? cancellation;
+  bool get needsSelection =>
+      cancellation?.needsSelection ?? summaries.length > 1;
 }
 
 enum TurnDispatchFailureCode {
@@ -139,6 +142,7 @@ enum TurnDispatchFailureCode {
   taskCreationFailed,
   replyPersistenceFailed,
   statusQueryFailed,
+  taskCancellationFailed,
   identityConflict,
 }
 
@@ -236,6 +240,7 @@ final class _PendingTurn {
   PreparedChatGeneration? prepared;
   TaskAcceptanceSnapshot? acceptance;
   TurnDisposition? disposition;
+  List<ConversationTask>? activeTasks;
   _AcceptanceWrite? acceptanceWrite;
   ModelTokenUsage usage = ModelTokenUsage.empty;
   TurnDispatchContext get context => TurnDispatchContext(

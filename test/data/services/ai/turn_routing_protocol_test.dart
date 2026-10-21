@@ -71,6 +71,23 @@ void main() {
   });
 
   final malformed = <String, String>{
+    'no cancellation payload': routeFrames('taskCancellationRequest', []),
+    'cancellation with empty ID': routeFrames('taskCancellationRequest', [
+      {'taskId': '', 'all': false},
+    ]),
+    'cancellation with nonboolean all': routeFrames('taskCancellationRequest', [
+      {'taskId': null, 'all': 'true'},
+    ]),
+    'cancellation with both scopes': routeFrames('taskCancellationRequest', [
+      {'taskId': 'task-1', 'all': true},
+    ]),
+    'cancellation with omitted scope': routeFrames('taskCancellationRequest', [
+      {'taskId': null},
+    ]),
+    'repeated cancellation': routeFrames('taskCancellationRequest', [
+      {'taskId': null, 'all': false},
+      {'taskId': null, 'all': true},
+    ]),
     'invalid JSON': 'not JSON',
     'unknown kind': '{"kind":"unknown"}\n{"text":"secret draft"}',
     'text before kind': '{"text":"secret draft"}\n{"kind":"directReply"}',
@@ -103,6 +120,30 @@ void main() {
     ]),
     'nested depth': '{"kind":${'[' * 9}0${']' * 9}}',
   };
+
+  test(
+    'cancellation preserves selection and waits for a complete response',
+    () {
+      for (final (id, all) in [
+        (null, false),
+        ('task-1', false),
+        (null, true),
+      ]) {
+        final protocol = parser();
+        final events = protocol.add(
+          '${routeFrames('taskCancellationRequest', [
+            {'taskId': id, 'all': all},
+          ])}\n',
+        );
+        expect(events, [isA<TurnDispositionStarted>()]);
+        final result =
+            (protocol.finish().single as TurnDispositionCompleted).disposition
+                as TaskCancellationRequest;
+        expect(result.taskId, id);
+        expect(result.all, all);
+      }
+    },
+  );
   for (final entry in malformed.entries) {
     test('rejects ${entry.key}', () {
       expect(() => decode(entry.value), throwsFormatException);

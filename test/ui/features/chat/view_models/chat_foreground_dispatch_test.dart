@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/models/task_cancellation_result.dart';
 import 'package:stars/domain/use_cases/present_conversation_task_progress.dart';
 import 'package:stars/domain/use_cases/narrate_conversation_task_progress.dart';
 import 'package:stars/ui/features/chat/view_models/chat_generation_view_model.dart';
@@ -281,6 +282,46 @@ void main() {
         )).where((m) => m.taskMessageKind == TaskMessageKind.status),
         isEmpty,
       );
+    },
+  );
+  test(
+    'agent cancellation updates facts and retries only its failed reply',
+    () async {
+      await h.storage.accept();
+      h.response = routeFrames('taskCancellationRequest', [
+        {'taskId': null, 'all': false},
+      ]);
+      failNarration = true;
+      expect(await send('cancel-turn'), isFalse);
+      expect(vm.canRetryDispatch, isTrue);
+      final cancelled = await h.storage.task;
+      expect(cancelled.status, ConversationTaskStatus.cancelRequested);
+      expect(requests.single.taskCancellation!.outcomes, {
+        'task-1': TaskCancellationOutcome.requested,
+      });
+      await h.storage.accept(task: taskFixture(id: 'new-task'));
+      failNarration = false;
+      expect(await vm.retryDispatch(), isTrue);
+      expect(h.mainCalls, 1);
+      expect(h.enqueuer.calls, ['task-1']);
+      expect((await h.storage.task).revision, cancelled.revision);
+      expect(
+        (await h.storage.repository.getById('new-task'))!.cancelRequestedAt,
+        isNull,
+      );
+      final saved = vm.snapshot.terminalMessage!;
+      expect(saved.content, narration);
+      expect(saved.taskMessageKind, TaskMessageKind.status);
+      expect(
+        saved.taskStatusSummaries.single.status,
+        ConversationTaskStatus.cancelRequested,
+      );
+
+      // A durable reply also makes resubmission of the same user turn idempotent.
+      expect(await send('cancel-turn'), isTrue);
+      expect(h.mainCalls, 1);
+      expect(h.enqueuer.calls, ['task-1']);
+      expect(vm.snapshot.terminalMessage!.messageId, saved.messageId);
     },
   );
 }

@@ -92,6 +92,7 @@ extension ChatForegroundDispatch on ChatGenerationViewModel {
           turnId: input.userMessage.turnId,
           taskId: result.explicitTaskId,
           summaries: result.summaries,
+          taskCancellation: result.cancellation,
           cancellation: token,
         );
       } on Object {

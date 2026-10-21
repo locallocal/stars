@@ -91,6 +91,10 @@ final class _AcceptanceSession implements AgentModelSession {
           switch (owner.route) {
             'directReply' => {'text': 'Hello while the report is running'},
             'taskStatusRequest' => <String, Object?>{'taskId': null},
+            'taskCancellationRequest' => <String, Object?>{
+              'taskId': null,
+              'all': false,
+            },
             _ => {
               'title': '读取报告',
               'objective': '读取报告并核验报告条目数',
