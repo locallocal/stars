@@ -905,7 +905,12 @@ cat "${file.path}"
       find.byKey(ValueKey<String>('message-local-file-${pdf.path}')),
     );
     await _pumpDialog(tester);
-    expect(find.text('使用系统应用打开'), findsOneWidget);
+    final semantics = tester.ensureSemantics();
+    try {
+      expect(find.bySemanticsLabel('使用系统应用打开'), findsOneWidget);
+    } finally {
+      semantics.dispose();
+    }
     await tester.tap(
       find.byKey(const ValueKey<String>('message-local-file-open-external')),
     );
