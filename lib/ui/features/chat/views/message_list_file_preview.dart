@@ -163,6 +163,14 @@ class _LocalFilePreviewDialogState extends State<_LocalFilePreviewDialog> {
       closeIcon: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.actions != null)
+            StarsDesktopIconAction(
+              key: const ValueKey<String>('message-local-file-open-external'),
+              icon: LucideIcons.externalLink,
+              iconSize: 18,
+              label: strings.openWithSystem,
+              onPressed: _openWithSystem,
+            ),
           StarsDesktopIconAction(
             key: const ValueKey<String>('message-local-file-maximize'),
             icon: _maximized ? LucideIcons.minimize2 : LucideIcons.maximize2,
@@ -187,7 +195,12 @@ class _LocalFilePreviewDialogState extends State<_LocalFilePreviewDialog> {
         textDirection: Directionality.of(context),
       ),
       title: Padding(
-        padding: const EdgeInsetsDirectional.only(end: 96),
+        padding: EdgeInsetsDirectional.only(
+          end:
+              StarsDesktopThemeSpec.iconActionHitSize *
+                  (widget.actions == null ? 2 : 3) +
+              8,
+        ),
         child: Text(
           widget.descriptor.fileName,
           key: const ValueKey<String>('message-local-file-title'),
@@ -219,15 +232,6 @@ class _LocalFilePreviewDialogState extends State<_LocalFilePreviewDialog> {
           ],
         ),
       ),
-      actions: [
-        if (widget.actions != null)
-          ShadButton(
-            key: const ValueKey<String>('message-local-file-open-external'),
-            leading: const Icon(Icons.open_in_new_rounded, size: 17),
-            onPressed: _openWithSystem,
-            child: Text(strings.openWithSystem),
-          ),
-      ],
       child: Padding(
         padding: const EdgeInsets.only(top: 8),
         child: SizedBox.expand(
