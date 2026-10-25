@@ -1032,5 +1032,9 @@
     "deleteFolder": "Удалить папку",
     "confirmDeleteFile": "Удалить «{name}» безвозвратно? Это действие нельзя отменить.",
     "confirmDeleteFolder": "Удалить «{name}» и всё его содержимое безвозвратно? Это действие нельзя отменить.",
-    "entryOperationUnavailable": "Этот элемент нельзя изменить. Откройте каталог заново и повторите попытку."
+    "entryOperationUnavailable": "Этот элемент нельзя изменить. Откройте каталог заново и повторите попытку.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

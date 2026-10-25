@@ -309,6 +309,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "सत्यापन स्थिति",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("चैट्स"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("मिटाएं"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -421,6 +424,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "वार्तालाप के अनुसार टोकन हिस्सेदारी",
     ),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API कुंजी कॉपी करें"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -533,6 +539,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "इस नाम की फ़ाइल या फ़ोल्डर पहले से मौजूद है।",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "यह आइटम हटाया नहीं जा सका। अनुमतियाँ जाँचें और फिर से प्रयास करें।",

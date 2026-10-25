@@ -318,6 +318,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Prüfstatus",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Chats"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Löschen"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -435,6 +438,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "copyApiKey": MessageLookupByLibrary.simpleMessage(
       "API-Schlüssel kopieren",
     ),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -549,6 +555,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "Eine Datei oder ein Ordner mit diesem Namen ist bereits vorhanden.",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "Löschen fehlgeschlagen. Prüfen Sie die Berechtigungen und versuchen Sie es erneut.",

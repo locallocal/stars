@@ -1032,5 +1032,9 @@
     "deleteFolder": "Eliminar carpeta",
     "confirmDeleteFile": "¿Eliminar “{name}” permanentemente? Esta acción no se puede deshacer.",
     "confirmDeleteFolder": "¿Eliminar “{name}” y todo su contenido permanentemente? Esta acción no se puede deshacer.",
-    "entryOperationUnavailable": "No se puede modificar este elemento. Vuelve a abrir el directorio e inténtalo de nuevo."
+    "entryOperationUnavailable": "No se puede modificar este elemento. Vuelve a abrir el directorio e inténtalo de nuevo.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

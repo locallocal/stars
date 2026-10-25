@@ -42,6 +42,9 @@ String safeFailureMessage(BuildContext context, Object error) {
     'conversation_entry_exists' => S.of(context).entryAlreadyExists,
     'conversation_entry_missing' => S.of(context).entryMissing,
     'conversation_entry_rename_failed' => S.of(context).entryRenameFailed,
+    'conversation_entry_copy_failed' => S.of(context).entryCopyFailed,
+    'conversation_copy_destination_invalid' =>
+      S.of(context).copyDestinationInvalid,
     'conversation_entry_delete_failed' => S.of(context).entryDeleteFailed,
     'conversation_directory_path_invalid' =>
       S.of(context).entryOperationUnavailable,

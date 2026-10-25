@@ -280,6 +280,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("검증 상태"),
     "chats": MessageLookupByLibrary.simpleMessage("채팅"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("지우기"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -366,6 +369,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationSummary": MessageLookupByLibrary.simpleMessage("대화 요약"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("대화별 토큰 비율"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API 키 복사"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -450,6 +456,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "enterSystemPrompt": MessageLookupByLibrary.simpleMessage("시스템 프롬프트 입력..."),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "같은 이름의 파일 또는 폴더가 이미 있습니다.",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "삭제할 수 없습니다. 권한을 확인하고 다시 시도하세요.",

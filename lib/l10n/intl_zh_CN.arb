@@ -1190,5 +1190,9 @@
     "deleteFolder": "删除文件夹",
     "confirmDeleteFile": "确定永久删除“{name}”吗？此操作无法撤销。",
     "confirmDeleteFolder": "确定永久删除“{name}”及其全部内容吗？此操作无法撤销。",
-    "entryOperationUnavailable": "无法修改此项，请重新打开目录后重试。"
+    "entryOperationUnavailable": "无法修改此项，请重新打开目录后重试。",
+    "chooseCopyDestination": "选择目录",
+    "entryCopyFailed": "复制失败，请检查目标目录和可用空间。",
+    "copyDestinationInvalid": "请选择源文件夹以外的目录。",
+    "entryCopySucceeded": "复制完成。"
 }

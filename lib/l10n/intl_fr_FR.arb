@@ -1032,5 +1032,9 @@
     "deleteFolder": "Supprimer le dossier",
     "confirmDeleteFile": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
     "confirmDeleteFolder": "Supprimer définitivement « {name} » et tout son contenu ? Cette action est irréversible.",
-    "entryOperationUnavailable": "Cet élément ne peut pas être modifié. Rouvrez le répertoire et réessayez."
+    "entryOperationUnavailable": "Cet élément ne peut pas être modifié. Rouvrez le répertoire et réessayez.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

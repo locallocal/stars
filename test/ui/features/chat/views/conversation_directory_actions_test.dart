@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' show PointerDeviceKind;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,8 +15,13 @@ import '../../../../support/widget_test_support.dart';
 void main() {
   late Directory root;
   late ConversationDirectoryViewModel model;
+  late FilePickerPlatform previousPicker;
+  late _DirectoryPicker picker;
 
   setUp(() {
+    previousPicker = FilePickerPlatform.instance;
+    picker = _DirectoryPicker();
+    FilePickerPlatform.instance = picker;
     root = Directory.systemTemp.createTempSync('stars-directory-actions-');
     File('${root.path}/report.md').writeAsStringSync('original content');
     Directory('${root.path}/notes/nested').createSync(recursive: true);
@@ -30,9 +36,62 @@ void main() {
     );
   });
   tearDown(() {
+    FilePickerPlatform.instance = previousPicker;
     model.dispose();
     root.deleteSync(recursive: true);
   });
+
+  testWidgets('copies files and folders to a chosen destination path', (
+    tester,
+  ) async {
+    final destination = Directory.systemTemp.createTempSync(
+      'stars-copy-export-',
+    );
+    addTearDown(() => destination.deleteSync(recursive: true));
+    picker.destination = destination.path;
+    await _pumpPage(tester, model);
+    for (final name in ['report.md', 'notes']) {
+      await tester.tap(find.byKey(ValueKey('conversation-entry-menu-$name')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('conversation-entry-copy')));
+      await _settle(tester, model);
+      expect(
+        find.byKey(const ValueKey('conversation-entry-copy-dialog')),
+        findsNothing,
+      );
+    }
+    expect(
+      File('${destination.path}/report.md').readAsStringSync(),
+      'original content',
+    );
+    expect(
+      File('${destination.path}/notes/nested/data.txt').readAsStringSync(),
+      'folder content',
+    );
+    expect(File('${root.path}/report.md').existsSync(), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'cancelling the directory picker does not copy or open a dialog',
+    (tester) async {
+      await _pumpPage(tester, model);
+      await tester.tap(
+        find.byKey(const ValueKey('conversation-entry-menu-report.md')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('conversation-entry-copy')));
+      await tester.pumpAndSettle();
+      expect(picker.calls, 1);
+      expect(find.byType(ShadDialog), findsNothing);
+      expect(model.mutating, isFalse);
+      expect(model.mutationError, isNull);
+      expect(
+        File('${root.path}/report.md').readAsStringSync(),
+        'original content',
+      );
+    },
+  );
 
   testWidgets('inline entry menus do not open files or navigate folders', (
     tester,
@@ -426,4 +485,22 @@ Future<void> _settle(
   }
   expect(model.busy, isFalse);
   await tester.pumpAndSettle();
+}
+
+final class _DirectoryPicker extends FilePickerPlatform {
+  String? destination;
+  int calls = 0;
+
+  @override
+  Future<String?> getDirectoryPath({
+    String? dialogTitle,
+    String? initialDirectory,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    calls++;
+    return destination;
+  }
 }

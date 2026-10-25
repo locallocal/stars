@@ -5809,6 +5809,46 @@ class S {
       args: [],
     );
   }
+
+  /// `Choose directory`
+  String get chooseCopyDestination {
+    return Intl.message(
+      'Choose directory',
+      name: 'chooseCopyDestination',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Could not copy. Check the destination and available space.`
+  String get entryCopyFailed {
+    return Intl.message(
+      'Could not copy. Check the destination and available space.',
+      name: 'entryCopyFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Choose a directory outside the source folder.`
+  String get copyDestinationInvalid {
+    return Intl.message(
+      'Choose a directory outside the source folder.',
+      name: 'copyDestinationInvalid',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copied successfully.`
+  String get entryCopySucceeded {
+    return Intl.message(
+      'Copied successfully.',
+      name: 'entryCopySucceeded',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

@@ -148,6 +148,13 @@ final class _DirectoryRepository implements ConversationDirectoryRepository {
   final List<String> requestedPaths = [];
 
   @override
+  Future<void> copy(
+    String chatId, {
+    required String relativePath,
+    required String destinationDirectory,
+  }) async {}
+
+  @override
   Future<void> rename(
     String chatId, {
     required String relativePath,

@@ -19,6 +19,82 @@ void main() {
   });
   tearDown(() async => workspace.delete(recursive: true));
 
+  test('copies files and nested folders while preserving sources', () async {
+    final destination =
+        await Directory(path.join(workspace.path, 'export')).create();
+    final nested = await Directory(
+      path.join(root.path, 'notes', 'nested'),
+    ).create(recursive: true);
+    await Directory(path.join(root.path, 'notes', 'empty')).create();
+    final source = await File(
+      path.join(nested.path, '报告.txt'),
+    ).writeAsString('content');
+    await repository.copy(
+      'chat',
+      relativePath: 'notes',
+      destinationDirectory: destination.path,
+    );
+    await repository.copy(
+      'chat',
+      relativePath: path.join('notes', 'nested', '报告.txt'),
+      destinationDirectory: destination.path,
+    );
+    expect(
+      await File(
+        path.join(destination.path, 'notes', 'nested', '报告.txt'),
+      ).readAsString(),
+      'content',
+    );
+    expect(
+      await Directory(path.join(destination.path, 'notes', 'empty')).exists(),
+      isTrue,
+    );
+    expect(
+      await File(path.join(destination.path, '报告.txt')).readAsString(),
+      'content',
+    );
+    expect(await source.readAsString(), 'content');
+    await expectLater(
+      repository.copy(
+        'chat',
+        relativePath: 'notes',
+        destinationDirectory: destination.path,
+      ),
+      _failure('conversation_entry_exists'),
+    );
+    for (final target in [path.join(root.path, 'notes'), nested.path]) {
+      await expectLater(
+        repository.copy(
+          'chat',
+          relativePath: 'notes',
+          destinationDirectory: target,
+        ),
+        _failure('conversation_copy_destination_invalid'),
+      );
+    }
+  });
+
+  test(
+    'failed folder copy leaves no partial output or followed links',
+    () async {
+      final destination =
+          await Directory(path.join(workspace.path, 'export')).create();
+      final folder = await Directory(path.join(root.path, 'notes')).create();
+      await File(path.join(folder.path, 'first.txt')).writeAsString('first');
+      await Link(path.join(folder.path, 'external')).create(workspace.path);
+      await expectLater(
+        repository.copy(
+          'chat',
+          relativePath: 'notes',
+          destinationDirectory: destination.path,
+        ),
+        _failure('conversation_directory_path_invalid'),
+      );
+      expect(await destination.list().toList(), isEmpty);
+    },
+    skip: Platform.isWindows,
+  );
+
   test(
     'renames files and populated folders in their existing parent',
     () async {

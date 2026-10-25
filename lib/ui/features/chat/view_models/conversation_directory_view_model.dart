@@ -124,6 +124,19 @@ final class ConversationDirectoryViewModel extends DisposableChangeNotifier {
         );
       }, 'conversation_entry_rename_failed');
 
+  Future<bool> copyEntry(
+    ConversationDirectoryEntry entry,
+    String destinationDirectory,
+  ) => _mutate(
+    entry,
+    () => _repository.copy(
+      chatId,
+      relativePath: entry.relativePath,
+      destinationDirectory: destinationDirectory,
+    ),
+    'conversation_entry_copy_failed',
+  );
+
   Future<bool> deleteEntry(ConversationDirectoryEntry entry) => _mutate(
     entry,
     () => _repository.delete(chatId, relativePath: entry.relativePath),

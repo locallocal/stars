@@ -283,6 +283,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("検証ステータス"),
     "chats": MessageLookupByLibrary.simpleMessage("チャット"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("クリア"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -369,6 +372,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "conversationSummary": MessageLookupByLibrary.simpleMessage("会話の要約"),
     "conversationTokenShare": MessageLookupByLibrary.simpleMessage("会話別トークン比率"),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("API キーをコピー"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -455,6 +461,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "同じ名前のファイルまたはフォルダーが既に存在します。",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "削除できませんでした。権限を確認して再試行してください。",

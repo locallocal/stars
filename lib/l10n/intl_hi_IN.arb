@@ -1032,5 +1032,9 @@
     "deleteFolder": "फ़ोल्डर हटाएँ",
     "confirmDeleteFile": "क्या “{name}” को स्थायी रूप से हटाना है? यह कार्रवाई वापस नहीं की जा सकती।",
     "confirmDeleteFolder": "क्या “{name}” और उसकी सारी सामग्री को स्थायी रूप से हटाना है? यह कार्रवाई वापस नहीं की जा सकती।",
-    "entryOperationUnavailable": "यह आइटम बदला नहीं जा सकता। निर्देशिका दोबारा खोलें और फिर से प्रयास करें।"
+    "entryOperationUnavailable": "यह आइटम बदला नहीं जा सकता। निर्देशिका दोबारा खोलें और फिर से प्रयास करें।",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

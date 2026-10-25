@@ -315,6 +315,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Estado de verificación",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Chats"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Borrar"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -435,6 +438,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Distribución de tokens por conversación",
     ),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("Copiar clave de API"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -551,6 +557,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "Ya existe un archivo o una carpeta con este nombre.",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "No se pudo eliminar este elemento. Comprueba los permisos e inténtalo de nuevo.",
