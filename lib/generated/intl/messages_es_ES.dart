@@ -1007,6 +1007,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "pauseGeneration": MessageLookupByLibrary.simpleMessage(
       "Pausar generación",
     ),
+    "pdfZoomIn": MessageLookupByLibrary.simpleMessage("Zoom in"),
+    "pdfZoomOut": MessageLookupByLibrary.simpleMessage("Zoom out"),
     "pinMemory": MessageLookupByLibrary.simpleMessage("Fijar"),
     "pinSelectedSkills": MessageLookupByLibrary.simpleMessage(
       "Fijar selección en esta conversación",

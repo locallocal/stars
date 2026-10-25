@@ -5849,6 +5849,16 @@ class S {
       args: [],
     );
   }
+
+  /// `Zoom in`
+  String get pdfZoomIn {
+    return Intl.message('Zoom in', name: 'pdfZoomIn', desc: '', args: []);
+  }
+
+  /// `Zoom out`
+  String get pdfZoomOut {
+    return Intl.message('Zoom out', name: 'pdfZoomOut', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

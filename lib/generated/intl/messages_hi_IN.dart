@@ -979,6 +979,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "partialResponse": MessageLookupByLibrary.simpleMessage("आंशिक उत्तर"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("ऑडियो रोकें"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("उत्पादन रोकें"),
+    "pdfZoomIn": MessageLookupByLibrary.simpleMessage("Zoom in"),
+    "pdfZoomOut": MessageLookupByLibrary.simpleMessage("Zoom out"),
     "pinMemory": MessageLookupByLibrary.simpleMessage("पिन करें"),
     "pinSelectedSkills": MessageLookupByLibrary.simpleMessage(
       "इस बातचीत के लिए चयनित कौशल पिन करें",

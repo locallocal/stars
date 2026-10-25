@@ -748,6 +748,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "partialResponse": MessageLookupByLibrary.simpleMessage("部分回复"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("暂停播放"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("暂停生成"),
+    "pdfZoomIn": MessageLookupByLibrary.simpleMessage("放大"),
+    "pdfZoomOut": MessageLookupByLibrary.simpleMessage("缩小"),
     "pinMemory": MessageLookupByLibrary.simpleMessage("固定"),
     "pinSelectedSkills": MessageLookupByLibrary.simpleMessage("在当前会话中固定已选技能"),
     "pinnedSkill": MessageLookupByLibrary.simpleMessage("已固定"),

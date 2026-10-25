@@ -851,6 +851,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "partialResponse": MessageLookupByLibrary.simpleMessage("部分回答"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("音声を一時停止"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("生成を一時停止"),
+    "pdfZoomIn": MessageLookupByLibrary.simpleMessage("Zoom in"),
+    "pdfZoomOut": MessageLookupByLibrary.simpleMessage("Zoom out"),
     "pinMemory": MessageLookupByLibrary.simpleMessage("固定"),
     "pinSelectedSkills": MessageLookupByLibrary.simpleMessage(
       "選択したスキルをこの会話に固定",
