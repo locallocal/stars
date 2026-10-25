@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/conversation_directory.dart';
@@ -27,6 +29,7 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
   final _controller = ShadPopoverController();
   final _focusNode = FocusNode(debugLabel: 'conversation-entry-actions');
   bool _restoreTriggerFocus = false;
+  bool _choosingDestination = false;
 
   void _toggleMenu() {
     if (!_controller.isOpen) {
@@ -41,6 +44,49 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _copyEntry() async {
+    _controller.hide();
+    if (widget.viewModel.busy || _choosingDestination) return;
+    final viewModel = widget.viewModel;
+    final entry = widget.entry;
+    final strings = S.of(context);
+    setState(() => _choosingDestination = true);
+    try {
+      final destination = await FilePicker.getDirectoryPath(
+        dialogTitle: strings.chooseCopyDestination,
+      );
+      if (!mounted || destination == null || destination.isEmpty) return;
+      final succeeded = await viewModel.copyEntry(entry, destination);
+      if (!mounted) return;
+      if (succeeded) {
+        showStarsNotice(
+          context,
+          strings.entryCopySucceeded,
+          tone: StarsNoticeTone.success,
+        );
+      } else if (viewModel.mutationError case final error?) {
+        showStarsNotice(
+          context,
+          safeFailureMessage(context, error),
+          tone: StarsNoticeTone.error,
+        );
+      }
+    } on Object {
+      if (mounted) {
+        showStarsNotice(
+          context,
+          strings.entryCopyFailed,
+          tone: StarsNoticeTone.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _choosingDestination = false);
+        if (_restoreTriggerFocus) _focusNode.requestFocus();
+      }
+    }
   }
 
   Future<void> _showAction({required bool rename}) async {
@@ -88,14 +134,21 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
               children: [
                 _EntryMenuItem(
                   key: const ValueKey('conversation-entry-rename'),
-                  enabled: !widget.viewModel.busy,
+                  enabled: !widget.viewModel.busy && !_choosingDestination,
                   icon: LucideIcons.pencil,
                   label: renameLabel,
                   onPressed: () => unawaited(_showAction(rename: true)),
                 ),
                 _EntryMenuItem(
+                  key: const ValueKey('conversation-entry-copy'),
+                  enabled: !widget.viewModel.busy && !_choosingDestination,
+                  icon: LucideIcons.copy,
+                  label: MaterialLocalizations.of(context).copyButtonLabel,
+                  onPressed: () => unawaited(_copyEntry()),
+                ),
+                _EntryMenuItem(
                   key: const ValueKey('conversation-entry-delete'),
-                  enabled: !widget.viewModel.busy,
+                  enabled: !widget.viewModel.busy && !_choosingDestination,
                   icon: LucideIcons.trash2,
                   label: strings.delete,
                   destructive: true,
@@ -110,7 +163,7 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
         label:
             '${MaterialLocalizations.of(context).showMenuTooltip}: ${widget.entry.name}',
         focusNode: _focusNode,
-        enabled: !widget.viewModel.busy,
+        enabled: !widget.viewModel.busy && !_choosingDestination,
         onPressed: _toggleMenu,
         hoverBackgroundColor: Colors.transparent,
       ),
@@ -210,7 +263,9 @@ class _EntryActionDialogState extends State<_EntryActionDialog> {
 
   Future<void> _submit() async {
     if (widget.viewModel.busy) return;
-    if (widget.rename && !_formKey.currentState!.validate()) return;
+    if (widget.rename && !_formKey.currentState!.validate()) {
+      return;
+    }
     final succeeded =
         widget.rename
             ? await widget.viewModel.renameEntry(

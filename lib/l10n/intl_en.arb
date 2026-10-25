@@ -1273,5 +1273,9 @@
                 "type": "String"
             }
         }
-    }
+    },
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

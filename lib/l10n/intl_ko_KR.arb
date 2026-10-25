@@ -1032,5 +1032,9 @@
     "deleteFolder": "폴더 삭제",
     "confirmDeleteFile": "“{name}”을(를) 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
     "confirmDeleteFolder": "“{name}”과(와) 그 안의 모든 내용을 영구적으로 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
-    "entryOperationUnavailable": "이 항목을 변경할 수 없습니다. 디렉터리를 다시 열고 시도하세요."
+    "entryOperationUnavailable": "이 항목을 변경할 수 없습니다. 디렉터리를 다시 열고 시도하세요.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

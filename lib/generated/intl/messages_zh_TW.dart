@@ -266,6 +266,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("核驗檢查"),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage("選擇目錄"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("清空"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -346,6 +347,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "各對話 Token 占比",
     ),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("複製 API 金鑰"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "請選擇來源資料夾以外的目錄。",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -425,6 +429,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "enterProviderName": MessageLookupByLibrary.simpleMessage("輸入供應商名稱..."),
     "enterSystemPrompt": MessageLookupByLibrary.simpleMessage("輸入系統提示詞..."),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage("已存在同名檔案或資料夾。"),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "複製失敗，請檢查目標目錄和可用空間。",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage("複製完成。"),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage("無法刪除，請檢查權限後重試。"),
     "entryMissing": MessageLookupByLibrary.simpleMessage("此檔案或資料夾已不存在。"),
     "entryName": MessageLookupByLibrary.simpleMessage("名稱"),

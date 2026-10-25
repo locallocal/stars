@@ -1032,5 +1032,9 @@
     "deleteFolder": "フォルダーを削除",
     "confirmDeleteFile": "「{name}」を完全に削除しますか？この操作は取り消せません。",
     "confirmDeleteFolder": "「{name}」とその内容をすべて完全に削除しますか？この操作は取り消せません。",
-    "entryOperationUnavailable": "この項目は変更できません。ディレクトリを開き直して再試行してください。"
+    "entryOperationUnavailable": "この項目は変更できません。ディレクトリを開き直して再試行してください。",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

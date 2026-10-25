@@ -1032,5 +1032,9 @@
     "deleteFolder": "Elimina cartella",
     "confirmDeleteFile": "Eliminare definitivamente “{name}”? Questa azione non può essere annullata.",
     "confirmDeleteFolder": "Eliminare definitivamente “{name}” e tutto il suo contenuto? Questa azione non può essere annullata.",
-    "entryOperationUnavailable": "Questo elemento non può essere modificato. Riapri la directory e riprova."
+    "entryOperationUnavailable": "Questo elemento non può essere modificato. Riapri la directory e riprova.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

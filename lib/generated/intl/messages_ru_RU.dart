@@ -321,6 +321,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Статус проверки",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Чаты"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Очистить"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -435,6 +438,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Доля токенов по диалогам",
     ),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("Копировать ключ API"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -547,6 +553,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "Файл или папка с таким именем уже существует.",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "Не удалось удалить элемент. Проверьте права доступа и повторите попытку.",

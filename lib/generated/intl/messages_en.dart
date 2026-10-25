@@ -307,6 +307,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Verification status",
     ),
     "chats": MessageLookupByLibrary.simpleMessage("Chats"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage(
+      "Choose directory",
+    ),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("Gallery"),
     "clear": MessageLookupByLibrary.simpleMessage("Clear"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage(
@@ -421,6 +424,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Token share by conversation",
     ),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("Copy API Key"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "Choose a directory outside the source folder.",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage(
       "Copy installation location",
     ),
@@ -531,6 +537,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage(
       "A file or folder with this name already exists.",
+    ),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "Could not copy. Check the destination and available space.",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage(
+      "Copied successfully.",
     ),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage(
       "Could not delete this item. Check permissions and try again.",

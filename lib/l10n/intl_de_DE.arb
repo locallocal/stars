@@ -1032,5 +1032,9 @@
     "deleteFolder": "Ordner löschen",
     "confirmDeleteFile": "„{name}“ dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
     "confirmDeleteFolder": "„{name}“ und den gesamten Inhalt dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
-    "entryOperationUnavailable": "Dieses Element kann nicht geändert werden. Öffnen Sie das Verzeichnis erneut und versuchen Sie es noch einmal."
+    "entryOperationUnavailable": "Dieses Element kann nicht geändert werden. Öffnen Sie das Verzeichnis erneut und versuchen Sie es noch einmal.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

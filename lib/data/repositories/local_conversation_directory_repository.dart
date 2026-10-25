@@ -100,6 +100,76 @@ final class LocalConversationDirectoryRepository
   }
 
   @override
+  Future<void> copy(
+    String chatId, {
+    required String relativePath,
+    required String destinationDirectory,
+  }) async {
+    try {
+      final source = await _resolveEntry(chatId, relativePath);
+      if (!path.isAbsolute(destinationDirectory)) {
+        throw const AppFailure.validation(
+          'conversation_directory_path_invalid',
+        );
+      }
+      final parent =
+          await Directory(destinationDirectory).resolveSymbolicLinks();
+      final destination = path.join(parent, path.basename(source.path));
+      if (source is Directory &&
+          (path.equals(source.path, parent) ||
+              path.isWithin(source.path, parent))) {
+        throw const AppFailure.validation(
+          'conversation_copy_destination_invalid',
+        );
+      }
+      if (await FileSystemEntity.type(destination, followLinks: false) !=
+          FileSystemEntityType.notFound) {
+        throw const AppFailure.validation('conversation_entry_exists');
+      }
+      final staging = await Directory(parent).createTemp('.stars-copy-');
+      try {
+        final stagedPath = path.join(staging.path, path.basename(source.path));
+        await _copyEntry(source, stagedPath);
+        if (await FileSystemEntity.type(destination, followLinks: false) !=
+            FileSystemEntityType.notFound) {
+          throw const AppFailure.validation('conversation_entry_exists');
+        }
+        if (source is Directory) {
+          await Directory(stagedPath).rename(destination);
+        } else {
+          await File(stagedPath).rename(destination);
+        }
+      } finally {
+        await staging.delete(recursive: true);
+      }
+    } on AppFailure {
+      rethrow;
+    } on Object catch (error) {
+      throw AppFailure.storage('conversation_entry_copy_failed', cause: error);
+    }
+  }
+
+  Future<void> _copyEntry(FileSystemEntity source, String destination) async {
+    if (source is File) {
+      await source.copy(destination);
+    } else if (source is Directory) {
+      await Directory(destination).create();
+      await for (final child in source.list(followLinks: false)) {
+        // Never dereference links to data outside the selected source tree.
+        if (child is! File && child is! Directory) {
+          throw const AppFailure.validation(
+            'conversation_directory_path_invalid',
+          );
+        }
+        await _copyEntry(
+          child,
+          path.join(destination, path.basename(child.path)),
+        );
+      }
+    }
+  }
+
+  @override
   Future<void> delete(String chatId, {required String relativePath}) async {
     try {
       final entry = await _resolveEntry(chatId, relativePath);

@@ -1032,5 +1032,9 @@
     "deleteFolder": "Excluir pasta",
     "confirmDeleteFile": "Excluir “{name}” permanentemente? Esta ação não pode ser desfeita.",
     "confirmDeleteFolder": "Excluir “{name}” e todo o seu conteúdo permanentemente? Esta ação não pode ser desfeita.",
-    "entryOperationUnavailable": "Este item não pode ser alterado. Reabra o diretório e tente novamente."
+    "entryOperationUnavailable": "Este item não pode ser alterado. Reabra o diretório e tente novamente.",
+    "chooseCopyDestination": "Choose directory",
+    "entryCopyFailed": "Could not copy. Check the destination and available space.",
+    "copyDestinationInvalid": "Choose a directory outside the source folder.",
+    "entryCopySucceeded": "Copied successfully."
 }

@@ -262,6 +262,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "chatVerificationStatus": MessageLookupByLibrary.simpleMessage("核验检查"),
     "chats": MessageLookupByLibrary.simpleMessage("聊天"),
+    "chooseCopyDestination": MessageLookupByLibrary.simpleMessage("选择目录"),
     "chooseFromGallery": MessageLookupByLibrary.simpleMessage("相册"),
     "clear": MessageLookupByLibrary.simpleMessage("清理"),
     "clearAttachments": MessageLookupByLibrary.simpleMessage("清空附件"),
@@ -340,6 +341,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "会话 Token 占比",
     ),
     "copyApiKey": MessageLookupByLibrary.simpleMessage("复制 API 密钥"),
+    "copyDestinationInvalid": MessageLookupByLibrary.simpleMessage(
+      "请选择源文件夹以外的目录。",
+    ),
     "copySkillStorageLocation": MessageLookupByLibrary.simpleMessage("复制安装位置"),
     "copyright": m15,
     "createChatFailed": m16,
@@ -417,6 +421,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "enterProviderName": MessageLookupByLibrary.simpleMessage("输入供应商名称..."),
     "enterSystemPrompt": MessageLookupByLibrary.simpleMessage("输入系统提示词..."),
     "entryAlreadyExists": MessageLookupByLibrary.simpleMessage("已存在同名文件或文件夹。"),
+    "entryCopyFailed": MessageLookupByLibrary.simpleMessage(
+      "复制失败，请检查目标目录和可用空间。",
+    ),
+    "entryCopySucceeded": MessageLookupByLibrary.simpleMessage("复制完成。"),
     "entryDeleteFailed": MessageLookupByLibrary.simpleMessage("无法删除，请检查权限后重试。"),
     "entryMissing": MessageLookupByLibrary.simpleMessage("此文件或文件夹已不存在。"),
     "entryName": MessageLookupByLibrary.simpleMessage("名称"),
