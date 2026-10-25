@@ -844,6 +844,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "partialResponse": MessageLookupByLibrary.simpleMessage("부분 응답"),
     "pauseAudio": MessageLookupByLibrary.simpleMessage("오디오 일시정지"),
     "pauseGeneration": MessageLookupByLibrary.simpleMessage("생성 일시 중지"),
+    "pdfZoomIn": MessageLookupByLibrary.simpleMessage("Zoom in"),
+    "pdfZoomOut": MessageLookupByLibrary.simpleMessage("Zoom out"),
     "pinMemory": MessageLookupByLibrary.simpleMessage("고정"),
     "pinSelectedSkills": MessageLookupByLibrary.simpleMessage(
       "선택한 스킬을 이 대화에 고정",

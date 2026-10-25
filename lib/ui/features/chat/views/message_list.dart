@@ -30,6 +30,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 import 'package:stars/ui/features/chat/views/local_html_file_preview.dart';
 import 'package:stars/ui/features/chat/views/local_image_preview.dart';
+import 'package:stars/ui/features/chat/views/local_pdf_file_preview.dart';
 
 import 'package:stars/ui/features/chat/views/execution_status_card.dart';
 import 'package:stars/ui/features/chat/views/message_list_process.dart';

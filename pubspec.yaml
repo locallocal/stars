@@ -64,6 +64,7 @@ dependencies:
   cryptography: ^2.7.0
   highlight: ^0.7.0
   super_sliver_list: ^0.4.1
+  pdfrx: ^2.4.8
 
 dev_dependencies:
   flutter_test:

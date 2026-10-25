@@ -319,7 +319,10 @@ class _LocalFilePreview extends StatelessWidget {
         key: const ValueKey<String>('message-local-file-video-preview'),
         child: VideoPlayerWidget(videoFilePath: descriptor.path),
       ),
-      _LocalFileKind.pdf ||
+      _LocalFileKind.pdf => LocalPdfFilePreview(
+        key: const ValueKey<String>('message-local-file-pdf-preview'),
+        filePath: descriptor.path,
+      ),
       _LocalFileKind.word ||
       _LocalFileKind.document ||
       _LocalFileKind.other => _LocalFilePreviewPlaceholder(

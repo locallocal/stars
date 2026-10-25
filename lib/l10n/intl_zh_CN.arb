@@ -1194,5 +1194,7 @@
     "chooseCopyDestination": "选择目录",
     "entryCopyFailed": "复制失败，请检查目标目录和可用空间。",
     "copyDestinationInvalid": "请选择源文件夹以外的目录。",
-    "entryCopySucceeded": "复制完成。"
+    "entryCopySucceeded": "复制完成。",
+    "pdfZoomIn": "放大",
+    "pdfZoomOut": "缩小"
 }

@@ -1056,5 +1056,7 @@
     "chooseCopyDestination": "選擇目錄",
     "entryCopyFailed": "複製失敗，請檢查目標目錄和可用空間。",
     "copyDestinationInvalid": "請選擇來源資料夾以外的目錄。",
-    "entryCopySucceeded": "複製完成。"
+    "entryCopySucceeded": "複製完成。",
+    "pdfZoomIn": "放大",
+    "pdfZoomOut": "縮小"
 }
