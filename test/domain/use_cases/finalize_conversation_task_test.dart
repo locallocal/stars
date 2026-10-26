@@ -18,6 +18,87 @@ void main() {
   tearDown(() => h.close());
 
   test(
+    'heartbeat loss cancels terminal narration and never commits its draft',
+    () async {
+      await h.open();
+      await h.fail();
+      final entered = Completer<void>();
+      AgentCancellationToken? operation;
+      final finalizer = h.finalizer(
+        leaseDuration: const Duration(milliseconds: 300),
+        polish: (request, cancellation) {
+          operation = cancellation;
+          entered.complete();
+          return Completer<GroundedAnswerCandidate>().future;
+        },
+      );
+      final pending = finalizer('task-1');
+      await entered.future;
+      final current = await h.runner.db.task;
+      committed(
+        await h.runner.db.repository.requestCancellation(
+          taskId: current.taskId,
+          expectedRevision: current.revision,
+          source: TaskCancellationSource.user,
+          requestedAt: h.runner.clock.now(),
+        ),
+      );
+      await pending.timeout(const Duration(seconds: 2));
+      expect(operation!.isCancelled, isTrue);
+      expect((await h.runner.db.task).cancelRequestedAt, isNotNull);
+      expect(
+        (await h.messages()).where(
+          (m) => m.taskMessageKind == TaskMessageKind.result,
+        ),
+        isEmpty,
+      );
+      await h.runner.run();
+      await h.finalizer()('task-1');
+      expect(
+        (await h.result()).terminalOutcome,
+        MessageTerminalOutcome.cancelled,
+      );
+    },
+  );
+
+  test(
+    'slow terminal validation renews across multiple lease durations',
+    () async {
+      await h.open();
+      await h.observe();
+      await h.candidate();
+      final entered = Completer<void>(), release = Completer<void>();
+      final finalizer = h.finalizer(
+        ledger: _DelayedEvidence(h.evidence, entered, release),
+        leaseDuration: const Duration(milliseconds: 600),
+      );
+      final pending = finalizer('task-1');
+      await entered.future;
+      final original = (await h.runner.db.task).lease!;
+      final timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        h.runner.clock.advance(const Duration(milliseconds: 100));
+      });
+      try {
+        await Future<void>.delayed(const Duration(milliseconds: 1400));
+        final current = await h.runner.db.task;
+        expect(current.lease!.token, original.token);
+        expect(current.lease!.expiresAt.isAfter(original.expiresAt), isTrue);
+        expect(current.lease!.isValidAt(h.runner.clock.now()), isTrue);
+      } finally {
+        timer.cancel();
+        release.complete();
+      }
+      expect((await pending)!.status, ConversationTaskStatus.succeeded);
+      expect(
+        (await h.messages()).where(
+          (m) => m.taskMessageKind == TaskMessageKind.result,
+        ),
+        hasLength(1),
+      );
+    },
+  );
+
+  test(
     'a failure-only answer cannot mark an unfulfilled task successful in standard mode',
     () async {
       await h.open(strict: false);

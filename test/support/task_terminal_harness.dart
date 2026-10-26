@@ -179,10 +179,12 @@ final class TaskTerminalHarness {
   FinalizeConversationTask finalizer({
     TaskTerminalPolisher? polish,
     ToolEvidenceRepository? ledger,
+    Duration leaseDuration = const Duration(seconds: 30),
   }) => FinalizeConversationTask(
     repository: runner.db.repository,
     evidenceRepository: ledger ?? evidence,
     ownerId: 'terminal-worker',
+    leaseDuration: leaseDuration,
     newId: () => 'terminal-lease-${identities++}',
     clock: runner.clock,
     tools: [runner.tool.definition],

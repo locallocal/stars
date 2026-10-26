@@ -37,6 +37,13 @@ final class TaskProgressStrings {
             });
   }
 
+  String get closeUnresolved => pick('Close unresolved task', '结束待核对任务');
+  String get unresolvedWarning => pick(
+    'The operation may still be running or have taken effect. Closing this task does not stop or roll back the external operation. Its outcome will remain unknown and retry will be disabled. Review the external state and record your findings before closing.',
+    '外部操作可能仍在运行或已产生影响。结束任务不会停止或回滚外部操作，结果将保留为未知，且禁止重试。请先核对外部状态并填写核对说明。',
+  );
+  String get reviewNote =>
+      pick('Review note (do not include credentials)', '核对说明（请勿填写密钥等敏感信息）');
   String get tasks => pick('Tasks', '任务');
   String get pageDescription => pick(
     'View progress and manage tasks in this conversation.',

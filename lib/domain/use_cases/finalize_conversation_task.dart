@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/ai_models.dart';
 import 'package:stars/domain/models/grounded_answer.dart';
@@ -60,6 +62,7 @@ final class FinalizeConversationTask {
   Future<ConversationTask?> call(String taskId) async {
     if (!_active.add(taskId)) return null;
     TaskLease? lease;
+    _TerminalLeaseHeartbeat? heartbeat;
     final started = clock.now();
     try {
       var snapshot = await repository.getExecutionSnapshot(taskId);
@@ -100,6 +103,13 @@ final class FinalizeConversationTask {
         );
         return null;
       }
+      heartbeat = _TerminalLeaseHeartbeat(
+        repository: repository,
+        clock: clock,
+        lease: lease,
+        revision: snapshot.task.revision,
+        duration: leaseDuration,
+      )..start();
       final state = snapshot.checkpoint!.execution!;
       final policy = snapshot.task.verificationPolicy;
       final validator = GroundedAnswerValidator(
@@ -256,7 +266,7 @@ final class FinalizeConversationTask {
                       evidence.terminalStatus != ToolInvocationStatus.succeeded,
                 ),
           ],
-          polish: polisher?.call(snapshot.task),
+          polish: heartbeat.protect(polisher?.call(snapshot.task)),
           validate: (draft) async {
             narratedValidation = await validateNarration(draft);
             return narratedValidation!.claims.every(
@@ -318,9 +328,11 @@ final class FinalizeConversationTask {
       }
       // Narrative I/O may race cancellation or ownership. Re-read, then fence
       // both the verification event and terminal commit using this exact revision.
+      await heartbeat.stop();
       final latest = await repository.getExecutionSnapshot(taskId);
       if (latest == null ||
-          latest.task.revision != snapshot.task.revision ||
+          heartbeat.lost ||
+          latest.task.revision != heartbeat.revision ||
           latest.task.lease?.token != lease.token ||
           !_ready(latest)) {
         metrics.conflicts++;
@@ -414,6 +426,7 @@ final class FinalizeConversationTask {
       metrics.conflicts++;
       return await repository.getById(taskId);
     } finally {
+      await heartbeat?.stop();
       try {
         if (lease != null) {
           final task = await repository.getById(taskId);
@@ -476,3 +489,82 @@ ConversationTask _verificationTask(ConversationTask old, DateTime at) =>
       cancellationSource: old.cancellationSource,
       cancelRequestedAt: old.cancelRequestedAt,
     );
+
+/// Renews only the revision owned by this finalizer. User commands or recovery
+/// invalidate it; the final commit uses the last successfully renewed revision.
+final class _TerminalLeaseHeartbeat {
+  _TerminalLeaseHeartbeat({
+    required this.repository,
+    required this.clock,
+    required this.lease,
+    required this.revision,
+    required this.duration,
+  });
+  final ConversationTaskRepository repository;
+  final TaskRunnerClock clock;
+  final TaskLease lease;
+  final Duration duration;
+  int revision;
+  bool lost = false;
+  Timer? _timer;
+  Future<void>? _pending;
+  final _lost = Completer<void>();
+
+  TaskTerminalPolisher? protect(TaskTerminalPolisher? polish) {
+    if (polish == null) return null;
+    return (request, cancellation) async {
+      if (lost) throw const AgentRunCancelledException();
+      var finished = false;
+      unawaited(
+        _lost.future.then((_) {
+          if (!finished) cancellation.cancel();
+        }),
+      );
+      try {
+        return await Future.any([
+          polish(request, cancellation),
+          _lost.future.then<GroundedAnswerCandidate>(
+            (_) => throw const AgentRunCancelledException(),
+          ),
+        ]);
+      } finally {
+        finished = true;
+      }
+    };
+  }
+
+  void start() {
+    _timer = Timer.periodic(duration ~/ 3, (_) {
+      if (_pending != null || lost) return;
+      _pending = _renew().whenComplete(() => _pending = null);
+    });
+  }
+
+  Future<void> _renew() async {
+    try {
+      final at = clock.now();
+      final result = await repository.renewLease(
+        lease: lease,
+        expiresAt: at.add(duration),
+        expectedRevision: revision,
+        now: at,
+      );
+      if (result is TaskWriteCommitted<TaskLease>) {
+        revision = result.revision;
+      } else {
+        lost = true;
+      }
+    } on Object {
+      lost = true;
+    }
+    if (lost) {
+      _timer?.cancel();
+      if (!_lost.isCompleted) _lost.complete();
+    }
+  }
+
+  Future<void> stop() async {
+    _timer?.cancel();
+    await _pending;
+  }
+}

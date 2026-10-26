@@ -1,6 +1,59 @@
 part of 'conversation_task_store.dart';
 
 extension ConversationTaskStoreCommands on ConversationTaskStore {
+  Future<TaskWriteResult<ConversationTask>> closeUnresolvedTask({
+    required String taskId,
+    required int expectedRevision,
+    required String actorId,
+    required String note,
+    required DateTime now,
+  }) => _write(
+    taskId,
+    (tx) async {
+      final old = await _current(tx, taskId, expectedRevision);
+      if (old.status != ConversationTaskStatus.waitingForUser ||
+          old.waitingReason != TaskWaitingReason.reconciliation ||
+          old.lease != null) {
+        throw _TaskConflict(
+          TaskWriteConflictReason.leaseUnavailable,
+          old.revision,
+        );
+      }
+      final closure = const TaskUnresolvedClosurePolicy().build(
+        task: old,
+        actorId: actorId,
+        note: note,
+        now: now,
+      );
+      final terminal = old.transitionTo(
+        ConversationTaskStatus.failed,
+        at: now,
+        phase: ConversationTaskPhase.committing,
+        terminalSummary: closure.summary,
+      );
+      final event = ConversationTaskEvent(
+        taskId: taskId,
+        sequence: await _nextSequence(tx, taskId),
+        kind: TaskEventKind.terminal,
+        planRevision: old.planRevision,
+        occurredAt: now,
+        reasonCode: TaskUnresolvedClosurePolicy.reasonCode,
+        safeSummary: closure.audit,
+      );
+      _validateNext(old, terminal, event, now);
+      await _event(tx, event);
+      await _insertMessage(
+        tx,
+        _messageValues(terminal, closure.message, terminal: true),
+        terminal: true,
+      );
+      final saved = await _saveTask(tx, _taskValues(terminal));
+      return TaskWriteCommitted(saved, revision: saved.revision);
+    },
+    message: true,
+    progress: true,
+  );
+
   Future<TaskWriteResult<TaskLease>> tryAcquireLease({
     required String taskId,
     required int expectedRevision,
