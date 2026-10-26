@@ -16,6 +16,7 @@ import 'package:stars/domain/models/task_execution_snapshot.dart';
 import 'package:stars/domain/models/task_scheduling.dart';
 import 'package:stars/domain/models/tool.dart';
 import 'package:stars/domain/services/task_safe_data.dart';
+import 'package:stars/domain/services/task_unresolved_closure_policy.dart';
 import 'package:stars/domain/services/task_execution_details.dart';
 import 'package:stars/domain/repositories/conversation_task_repository.dart';
 

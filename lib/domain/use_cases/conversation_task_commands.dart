@@ -55,6 +55,19 @@ final class ConversationTaskCommands {
     return result;
   }
 
+  Future<TaskWriteResult<ConversationTask>> closeUnresolved({
+    required String taskId,
+    required int expectedRevision,
+    required String actorId,
+    required String note,
+  }) => repository.closeUnresolvedTask(
+    taskId: taskId,
+    expectedRevision: expectedRevision,
+    actorId: actorId,
+    note: note,
+    now: clock.now(),
+  );
+
   Future<TaskWriteResult<ConversationTask>> resume({
     required String taskId,
     required int expectedRevision,

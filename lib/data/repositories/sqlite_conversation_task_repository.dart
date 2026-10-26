@@ -71,6 +71,21 @@ final class SqliteConversationTaskRepository
     int limit = 100,
   }) => _store.listRecoverable(afterTaskId: afterTaskId, limit: limit);
   @override
+  Future<TaskWriteResult<ConversationTask>> closeUnresolvedTask({
+    required String taskId,
+    required int expectedRevision,
+    required String actorId,
+    required String note,
+    required DateTime now,
+  }) => _store.closeUnresolvedTask(
+    taskId: taskId,
+    expectedRevision: expectedRevision,
+    actorId: actorId,
+    note: note,
+    now: now,
+  );
+
+  @override
   Future<TaskWriteResult<ConversationTask>> createWithAcknowledgement({
     required ConversationTask task,
     required ConversationTaskPlan plan,

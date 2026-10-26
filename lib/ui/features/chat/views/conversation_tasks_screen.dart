@@ -9,6 +9,7 @@ import 'package:stars/ui/core/widgets/common.dart';
 import 'package:stars/ui/features/chat/view_models/conversation_tasks_view_model.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_retry_dialog.dart';
+import 'package:stars/ui/features/chat/views/conversation_task_closure_dialog.dart';
 import 'package:stars/ui/features/chat/views/conversation_tasks_page.dart';
 
 /// Owns the page subscription; background execution belongs to the app runtime.
@@ -84,6 +85,16 @@ final class _ConversationTasksScreenState
         await vm.cancel(summary);
       case TaskCardAction.resume:
         await vm.resume(summary);
+      case TaskCardAction.closeUnresolved:
+        if (_reviewing) return;
+        _reviewing = true;
+        try {
+          final note = await showConversationTaskClosureDialog(context);
+          if (note == null || !mounted || vm != _viewModel) return;
+          await vm.closeUnresolved(summary, note);
+        } finally {
+          _reviewing = false;
+        }
       case TaskCardAction.retry:
         if (_reviewing || !vm.canRetry) return;
         _reviewing = true;

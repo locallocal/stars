@@ -9,7 +9,15 @@ import 'package:stars/ui/features/chat/views/task_action_button.dart';
 import 'package:stars/ui/features/chat/views/task_status_colors.dart';
 import 'package:stars/ui/features/chat/views/task_token_usage_metrics.dart';
 
-enum TaskCardAction { status, approve, deny, cancel, resume, retry }
+enum TaskCardAction {
+  status,
+  approve,
+  deny,
+  cancel,
+  resume,
+  retry,
+  closeUnresolved,
+}
 
 final class ConversationTaskCard extends StatelessWidget {
   const ConversationTaskCard({
@@ -132,6 +140,9 @@ final class ConversationTaskCard extends StatelessWidget {
                   if (s.status == ConversationTaskStatus.waitingForUser &&
                       s.waitingReason != TaskWaitingReason.approval)
                     action(TaskCardAction.resume, w.resume),
+                  if (s.status == ConversationTaskStatus.waitingForUser &&
+                      s.waitingReason == TaskWaitingReason.reconciliation)
+                    action(TaskCardAction.closeUnresolved, w.closeUnresolved),
                 ],
                 if (!historical &&
                     s.status.isTerminal &&

@@ -329,6 +329,20 @@ final class ConversationTasksViewModel extends DisposableChangeNotifier {
         )
         is TaskWriteCommitted<TaskApprovalRecord>;
   });
+  Future<void> closeUnresolved(
+    ConversationTaskProgressSummary s,
+    String note,
+  ) => _command(s.taskId, () async {
+    _scope(s);
+    return await commands.closeUnresolved(
+          taskId: s.taskId,
+          expectedRevision: s.summaryRevision,
+          actorId: 'me',
+          note: note,
+        )
+        is TaskWriteCommitted<ConversationTask>;
+  });
+
   Future<void> resume(ConversationTaskProgressSummary s) =>
       _command(s.taskId, () async {
         _scope(s);

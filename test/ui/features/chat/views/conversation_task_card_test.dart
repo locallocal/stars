@@ -7,6 +7,7 @@ import 'package:stars/domain/models/conversation_task.dart';
 import 'package:stars/domain/models/message.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_card.dart';
 import 'package:stars/ui/features/chat/views/conversation_task_retry_dialog.dart';
+import 'package:stars/ui/features/chat/views/conversation_task_closure_dialog.dart';
 import 'package:stars/ui/features/chat/views/task_action_button.dart';
 import 'package:stars/utils/theme.dart';
 import '../../../../support/conversation_task_fixtures.dart';
@@ -93,6 +94,82 @@ Widget host(
 }
 
 void main() {
+  for (final desktop in [true, false]) {
+    testWidgets(
+      'unresolved closure requires review and explains external effects ($desktop)',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        String? submitted;
+        await tester.pumpWidget(
+          host(
+            Builder(
+              builder:
+                  (context) => TextButton(
+                    onPressed:
+                        () async =>
+                            submitted = await showConversationTaskClosureDialog(
+                              context,
+                            ),
+                    child: const Text('open'),
+                  ),
+            ),
+            desktop: desktop,
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('does not stop or roll back'),
+          findsOneWidget,
+        );
+        final submit = find.text('Close unresolved task').last;
+        await tester.tap(submit);
+        await tester.pumpAndSettle();
+        expect(submitted, isNull);
+        await tester.enterText(
+          find.byType(EditableText),
+          '  Checked target; outcome unknown.  ',
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(submit);
+        await tester.tap(submit);
+        await tester.pumpAndSettle();
+        expect(submitted, 'Checked target; outcome unknown.');
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('only reconciliation waits expose manual closure', (
+    tester,
+  ) async {
+    TaskCardAction? action;
+    await tester.pumpWidget(
+      host(
+        ConversationTaskCard(
+          summary: cardSummary(
+            ConversationTaskStatus.waitingForUser,
+            waitingReason: TaskWaitingReason.reconciliation,
+          ),
+          onAction: (value) => action = value,
+        ),
+      ),
+    );
+    await tester.tap(find.text('Close unresolved task'));
+    expect(action, TaskCardAction.closeUnresolved);
+    await tester.pumpWidget(
+      host(
+        ConversationTaskCard(
+          summary: cardSummary(ConversationTaskStatus.waitingForUser),
+          onAction: (_) {},
+        ),
+      ),
+    );
+    expect(find.text('Close unresolved task'), findsNothing);
+  });
+
   testWidgets('pending tasks show planning without a fabricated step count', (
     tester,
   ) async {

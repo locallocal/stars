@@ -100,6 +100,17 @@ abstract interface class ConversationTaskRepository {
     required int expectedRevision,
     required DateTime now,
   });
+
+  /// User closes an unresolved operation without asserting rollback or success.
+  /// Audit note, failed terminal state and unique result are committed together.
+  Future<TaskWriteResult<ConversationTask>> closeUnresolvedTask({
+    required String taskId,
+    required int expectedRevision,
+    required String actorId,
+    required String note,
+    required DateTime now,
+  });
+
   Future<TaskWriteResult<TaskLease>> renewLease({
     required TaskLease lease,
     required DateTime expiresAt,
