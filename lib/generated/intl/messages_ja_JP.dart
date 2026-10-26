@@ -906,12 +906,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("スキルを削除"),
+    "rename": MessageLookupByLibrary.simpleMessage("名前を変更"),
     "renameConversation": MessageLookupByLibrary.simpleMessage("会話名を変更"),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "この会話を見つけやすくするため、分かりやすい名前を設定します。",
     ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("ファイル名を変更"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage("フォルダー名を変更"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("応答がキャンセルされました"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "停止済み · 部分回答を保持",

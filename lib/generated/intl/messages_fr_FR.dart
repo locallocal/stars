@@ -1091,14 +1091,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "removeSkill": MessageLookupByLibrary.simpleMessage(
       "Retirer la compétence",
     ),
+    "rename": MessageLookupByLibrary.simpleMessage("Renommer"),
     "renameConversation": MessageLookupByLibrary.simpleMessage(
       "Renommer la conversation",
     ),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "Choisissez un nom clair pour retrouver cette conversation plus facilement.",
     ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("Renommer le fichier"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage("Renommer le dossier"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Réponse annulée"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "Arrêté · Réponse partielle conservée",

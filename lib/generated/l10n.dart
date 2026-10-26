@@ -5695,19 +5695,9 @@ class S {
     );
   }
 
-  /// `Rename file`
-  String get renameFile {
-    return Intl.message('Rename file', name: 'renameFile', desc: '', args: []);
-  }
-
-  /// `Rename folder`
-  String get renameFolder {
-    return Intl.message(
-      'Rename folder',
-      name: 'renameFolder',
-      desc: '',
-      args: [],
-    );
+  /// `Rename`
+  String get rename {
+    return Intl.message('Rename', name: 'rename', desc: '', args: []);
   }
 
   /// `Name`

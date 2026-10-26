@@ -290,7 +290,7 @@ void main() {
       find.byKey(const ValueKey('conversation-entry-rename')),
       findsOneWidget,
     );
-    expect(find.text('重命名文件夹'), findsOneWidget);
+    expect(find.text('重命名'), findsOneWidget);
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(
@@ -327,7 +327,7 @@ void main() {
     (tester) async {
       await _pumpPage(tester, model);
       await _openAction(tester, 'notes', rename: true);
-      expect(find.text('重命名文件夹'), findsOneWidget);
+      expect(find.text('重命名'), findsOneWidget);
       await tester.enterText(_nameInput(), 'archive');
       await tester.tap(
         find.byKey(const ValueKey('conversation-entry-confirm')),

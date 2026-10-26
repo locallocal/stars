@@ -1042,15 +1042,12 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("कौशल हटाएँ"),
+    "rename": MessageLookupByLibrary.simpleMessage("नाम बदलें"),
     "renameConversation": MessageLookupByLibrary.simpleMessage(
       "बातचीत का नाम बदलें",
     ),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "इस बातचीत को आसानी से खोजने के लिए एक स्पष्ट नाम चुनें।",
-    ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("फ़ाइल का नाम बदलें"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage(
-      "फ़ोल्डर का नाम बदलें",
     ),
     "replyCancelled": MessageLookupByLibrary.simpleMessage(
       "उत्तर रद्द किया गया",

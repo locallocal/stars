@@ -110,8 +110,6 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
   @override
   Widget build(BuildContext context) {
     final strings = S.of(context);
-    final renameLabel =
-        widget.entry.isDirectory ? strings.renameFolder : strings.renameFile;
     return ShadPopover(
       controller: _controller,
       anchor: const ShadAnchorAuto(
@@ -136,7 +134,7 @@ class _EntryMenuState extends State<ConversationDirectoryEntryMenu> {
                   key: const ValueKey('conversation-entry-rename'),
                   enabled: !widget.viewModel.busy && !_choosingDestination,
                   icon: LucideIcons.pencil,
-                  label: renameLabel,
+                  label: strings.rename,
                   onPressed: () => unawaited(_showAction(rename: true)),
                 ),
                 _EntryMenuItem(
@@ -284,9 +282,7 @@ class _EntryActionDialogState extends State<_EntryActionDialog> {
       final busy = widget.viewModel.busy;
       final title =
           widget.rename
-              ? widget.entry.isDirectory
-                  ? strings.renameFolder
-                  : strings.renameFile
+              ? strings.rename
               : widget.entry.isDirectory
               ? strings.deleteFolder
               : strings.deleteFile;
