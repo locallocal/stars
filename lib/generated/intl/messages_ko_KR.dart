@@ -899,12 +899,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("스킬 제거"),
+    "rename": MessageLookupByLibrary.simpleMessage("이름 변경"),
     "renameConversation": MessageLookupByLibrary.simpleMessage("대화 이름 변경"),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "이 대화를 쉽게 찾을 수 있도록 명확한 이름을 지정하세요.",
     ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("파일 이름 변경"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage("폴더 이름 변경"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("응답이 취소되었습니다"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "중지됨 · 부분 응답 유지",

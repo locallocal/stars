@@ -793,12 +793,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "removeImageAttachment": MessageLookupByLibrary.simpleMessage("移除图片"),
     "removeMcpServer": MessageLookupByLibrary.simpleMessage("移除 MCP 服务器"),
     "removeSkill": MessageLookupByLibrary.simpleMessage("移除技能"),
+    "rename": MessageLookupByLibrary.simpleMessage("重命名"),
     "renameConversation": MessageLookupByLibrary.simpleMessage("修改会话名称"),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "使用清晰的名称，以便更快找到此会话。",
     ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("重命名文件"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage("重命名文件夹"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("已取消回复"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage("已停止 · 保留部分回复"),
     "resetToDefault": MessageLookupByLibrary.simpleMessage("恢复默认"),

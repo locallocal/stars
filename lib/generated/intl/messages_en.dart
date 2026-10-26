@@ -1034,14 +1034,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("Remove Skill"),
+    "rename": MessageLookupByLibrary.simpleMessage("Rename"),
     "renameConversation": MessageLookupByLibrary.simpleMessage(
       "Rename conversation",
     ),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "Choose a clear name to make this conversation easier to find.",
     ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("Rename file"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage("Rename folder"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("Reply cancelled"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage(
       "Stopped · Partial response kept",

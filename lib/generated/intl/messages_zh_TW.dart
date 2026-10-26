@@ -829,12 +829,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Remove MCP Server",
     ),
     "removeSkill": MessageLookupByLibrary.simpleMessage("移除技能"),
+    "rename": MessageLookupByLibrary.simpleMessage("重新命名"),
     "renameConversation": MessageLookupByLibrary.simpleMessage("修改會話名稱"),
     "renameConversationDescription": MessageLookupByLibrary.simpleMessage(
       "使用清楚的名稱，以便更快找到此會話。",
     ),
-    "renameFile": MessageLookupByLibrary.simpleMessage("重新命名檔案"),
-    "renameFolder": MessageLookupByLibrary.simpleMessage("重新命名資料夾"),
     "replyCancelled": MessageLookupByLibrary.simpleMessage("回覆已取消"),
     "replyStoppedPartial": MessageLookupByLibrary.simpleMessage("已停止 · 保留部分回覆"),
     "resetToDefault": MessageLookupByLibrary.simpleMessage("恢復預設值"),
