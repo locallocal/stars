@@ -749,6 +749,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
+    "mcpCredentialsInConfiguration": MessageLookupByLibrary.simpleMessage(
+      "Inserisci le credenziali nei campi sicuri del token o delle variabili di ambiente, non in URL, comandi o argomenti.",
+    ),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
       "Streamable HTTP endpoint",
@@ -758,6 +761,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
+    ),
+    "mcpEnvironmentIsolationDescription": MessageLookupByLibrary.simpleMessage(
+      "Vengono ereditate solo le variabili essenziali. Aggiungi qui le variabili specifiche del server.",
     ),
     "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
@@ -792,6 +798,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpSecureEnvironmentVariables": MessageLookupByLibrary.simpleMessage(
       "Secure environment variables",
+    ),
+    "mcpServerAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "Esiste già un server MCP con questo nome.",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("Server details"),
     "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(

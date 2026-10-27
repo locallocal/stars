@@ -74,6 +74,32 @@ extension LocalDatabaseMcpSkills on LocalDatabaseService {
     );
   }
 
+  Future<void> insertMcpServer(
+    Map<String, Object?> values, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    final database = await _databaseProvider();
+    await database.transaction((transaction) async {
+      await _checkMcpName(transaction, values);
+      final existing = await transaction.query(
+        'mcp_servers',
+        columns: ['id'],
+        where: 'id = ?',
+        whereArgs: [values['id']],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) {
+        throw const McpException('mcp_server_id_conflict');
+      }
+      await transaction.insert(
+        'mcp_servers',
+        values,
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+      await beforeCommit?.call();
+    });
+  }
+
   Future<void> upsertMcpServer(
     Map<String, Object?> values, {
     bool clearTools = false,
@@ -135,6 +161,7 @@ extension LocalDatabaseMcpSkills on LocalDatabaseService {
     DatabaseExecutor database,
     Map<String, Object?> values,
   ) async {
+    await _checkMcpName(database, values);
     final updated = await database.update(
       'mcp_servers',
       values,
@@ -148,6 +175,28 @@ extension LocalDatabaseMcpSkills on LocalDatabaseService {
         values,
         conflictAlgorithm: ConflictAlgorithm.abort,
       );
+    }
+  }
+
+  Future<void> _checkMcpName(
+    DatabaseExecutor database,
+    Map<String, Object?> values,
+  ) async {
+    final name = (values['name']! as String).trim().toLowerCase();
+    final rows = await database.query('mcp_servers', columns: ['id', 'name']);
+    // Existing duplicate names from older versions can still refresh their
+    // catalogs. New inserts and renames must not introduce another duplicate.
+    if (rows.any(
+      (row) => row['id'] == values['id'] && row['name'] == values['name'],
+    )) {
+      return;
+    }
+    if (rows.any(
+      (row) =>
+          row['id'] != values['id'] &&
+          (row['name']! as String).trim().toLowerCase() == name,
+    )) {
+      throw const McpException('mcp_server_already_exists');
     }
   }
 

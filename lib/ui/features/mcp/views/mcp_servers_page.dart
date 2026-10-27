@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/services/mcp_configuration_policy.dart';
 import 'package:stars/generated/l10n.dart';
 import 'package:stars/ui/core/dependency_injection/app_scope.dart';
 import 'package:stars/ui/core/widgets/common.dart';
@@ -447,6 +448,9 @@ class _McpServersPageState extends State<McpServersPage> {
         'mcp_request_timeout' => S.of(context).mcpRequestTimedOut,
         'mcp_unsupported_protocol' => S.of(context).mcpUnsupportedProtocol,
         'mcp_stdio_start_failed' => S.of(context).mcpStdioStartFailed,
+        'mcp_credentials_in_configuration' =>
+          S.of(context).mcpCredentialsInConfiguration,
+        'mcp_server_already_exists' => S.of(context).mcpServerAlreadyExists,
         'mcp_invalid_stdio_environment' =>
           S.of(context).mcpInvalidStdioEnvironment,
         'mcp_invalid_endpoint' => S.of(context).mcpHttpsRequired,
@@ -463,6 +467,9 @@ class _McpServersPageState extends State<McpServersPage> {
         'mcp_request_timeout' => S.of(context).mcpRequestTimedOut,
         'mcp_unsupported_protocol' => S.of(context).mcpUnsupportedProtocol,
         'mcp_stdio_start_failed' => S.of(context).mcpStdioStartFailed,
+        'mcp_credentials_in_configuration' =>
+          S.of(context).mcpCredentialsInConfiguration,
+        'mcp_server_already_exists' => S.of(context).mcpServerAlreadyExists,
         'mcp_invalid_stdio_environment' =>
           S.of(context).mcpInvalidStdioEnvironment,
         _ => S.of(context).mcpConnectionFailed(code),

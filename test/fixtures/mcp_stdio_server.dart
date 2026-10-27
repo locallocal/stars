@@ -39,6 +39,8 @@ Future<void> main(List<String> arguments) async {
         final toolArguments =
             params['arguments'] as Map<String, dynamic>? ?? const {};
         result = {
+          if (toolArguments['inspect_environment'] == true)
+            'structuredContent': {'environment': Platform.environment},
           'content': [
             {
               'type': 'text',

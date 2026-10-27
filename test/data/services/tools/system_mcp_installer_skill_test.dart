@@ -11,7 +11,7 @@ void main() {
     final content = await skill.loadContent();
 
     expect(skill.isValid, isTrue);
-    expect(skill.promptVersion, 3);
+    expect(skill.promptVersion, 4);
     expect(skill.contentDigest, hasLength(64));
     expect(content.descriptor.id, mcpInstallerSkillId);
     expect(content.descriptor.name, 'mcp-installer');
@@ -26,6 +26,8 @@ void main() {
     expect(content.instructions, contains('streamable_http'));
     expect(content.instructions, contains('stdio'));
     expect(content.instructions, contains('never overwrites'));
+    expect(content.instructions, contains('essential runtime environment'));
+    expect(content.instructions, contains('command arguments are rejected'));
     expect(content.files, ['SKILL.md']);
   });
 }

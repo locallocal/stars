@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:stars/data/services/conversation_task_store.dart';
 import 'package:stars/domain/models/app_failure.dart';
+import 'package:stars/domain/models/mcp.dart';
 
 part 'local_database_mcp_skills.dart';
 part 'local_database_conversations.dart';

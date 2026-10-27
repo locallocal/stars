@@ -1,6 +1,8 @@
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/mcp_credential_store.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
+import 'package:stars/domain/services/mcp_configuration_policy.dart';
+import 'package:stars/domain/services/mcp_server_identity.dart';
 
 typedef McpServerConnector =
     Future<McpServer> Function(
@@ -19,10 +21,7 @@ final class AddMcpServerTool implements ExecutableTool {
        _credentialStore = credentialStore,
        _connector = connector,
        _now = now ?? DateTime.now,
-       _idFactory =
-           idFactory ??
-           ((timestamp) =>
-               'mcp-${timestamp.microsecondsSinceEpoch.toRadixString(36)}');
+       _idFactory = idFactory ?? ((_) => newMcpServerId());
 
   final McpServerRepository _repository;
   final McpCredentialStore _credentialStore;
@@ -133,6 +132,7 @@ final class AddMcpServerTool implements ExecutableTool {
             'MCP transport_type must be streamable_http or stdio.',
           ),
       };
+      McpConfigurationPolicy.validateTransport(transport);
       final credential = _credential(call.arguments, transport);
       final shouldConnect = _optionalBool(call.arguments['connect']) ?? true;
       final timestamp = _now();
@@ -144,40 +144,35 @@ final class AddMcpServerTool implements ExecutableTool {
         createdAt: timestamp,
         updatedAt: timestamp,
       );
-      if (credential != null) {
-        try {
-          cancellationToken.throwIfCancelled();
-          await _credentialStore.write(id, credential);
-        } on AgentRunCancelledException {
-          rethrow;
-        } on Object {
-          return _error(
-            call,
-            'The MCP credential could not be stored securely.',
-            'mcp_credential_store_failed',
-          );
-        }
-      }
-
+      var credentialAttempted = false;
       try {
         cancellationToken.throwIfCancelled();
-        await _repository.saveServer(server);
-      } on AgentRunCancelledException {
-        await _rollbackCredential(id, credential);
-        rethrow;
+        await _repository.createServer(
+          server,
+          beforeCommit: () async {
+            cancellationToken.throwIfCancelled();
+            if (credential != null) {
+              credentialAttempted = true;
+              try {
+                await _credentialStore.write(id, credential);
+              } on Object {
+                throw const _AddMcpServerException(
+                  'mcp_credential_store_failed',
+                  'The MCP credential could not be stored securely.',
+                );
+              }
+            }
+            cancellationToken.throwIfCancelled();
+          },
+        );
       } on Object {
-        if (!await _rollbackCredential(id, credential)) {
-          return _error(
-            call,
-            'The MCP credential rollback failed.',
+        if (credentialAttempted && !await _rollbackCredential(id, credential)) {
+          throw const _AddMcpServerException(
             'mcp_credential_rollback_failed',
+            'The MCP credential rollback failed.',
           );
         }
-        return _error(
-          call,
-          'The MCP server could not be added.',
-          'mcp_server_add_failed',
-        );
+        rethrow;
       }
 
       if (!shouldConnect) {
@@ -221,6 +216,16 @@ final class AddMcpServerTool implements ExecutableTool {
       rethrow;
     } on _AddMcpServerException catch (error) {
       return _error(call, error.message, error.code);
+    } on McpException catch (error) {
+      return _error(call, switch (error.code) {
+        'mcp_server_already_exists' =>
+          'An MCP server with this name already exists.',
+        'mcp_server_id_conflict' =>
+          'The new MCP server identity conflicts with an existing server. Retry the request.',
+        'mcp_credentials_in_configuration' =>
+          'Use secure access_token or environment fields for credentials, not URLs, commands, or arguments.',
+        _ => 'The MCP server could not be added.',
+      }, error.code);
     } on ArgumentError catch (error) {
       return _error(call, error.message.toString(), 'invalid_mcp_server');
     } on Object {

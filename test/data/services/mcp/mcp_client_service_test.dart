@@ -357,6 +357,11 @@ void main() {
       final stdioTransport = McpStdioTransport(
         requestTimeout: const Duration(seconds: 10),
         now: () => processStartedAt,
+        parentEnvironment: {
+          ...Platform.environment,
+          'OPENAI_API_KEY': 'must-not-be-inherited',
+          'STARS_MCP_TEST_VALUE': 'must-be-overridden',
+        },
       );
       final client = McpClientService(
         transports: [
@@ -389,12 +394,25 @@ void main() {
       final result = await client.callTool(
         server: server,
         remoteName: 'echo',
-        arguments: const {'message': 'hello'},
+        arguments: const {'message': 'hello', 'inspect_environment': true},
         cancellationToken: AgentCancellationToken(),
       );
 
       expect(tools.single.remoteName, 'echo');
       expect(result.content, 'hello|secure-environment|fixture-argument');
+      final environment =
+          (result.structuredContent!['environment']! as Map)
+              .cast<String, Object?>();
+      expect(environment, isNot(contains('OPENAI_API_KEY')));
+      expect(environment['STARS_MCP_TEST_VALUE'], 'secure-environment');
+      for (final key in [
+        'AWS_SECRET_ACCESS_KEY',
+        'GITHUB_TOKEN',
+        'NODE_OPTIONS',
+        'LD_PRELOAD',
+      ]) {
+        expect(environment, isNot(contains(key)));
+      }
       final processInfo = stdioTransport.getProcessInfo(server.id);
       expect(processInfo, isNotNull);
       expect(processInfo!.processId, greaterThan(0));

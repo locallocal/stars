@@ -4,6 +4,7 @@ import 'package:stars/data/models/mcp_records.dart';
 import 'package:stars/data/services/local_database_service.dart';
 import 'package:stars/domain/models/models.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
+import 'package:stars/domain/services/mcp_configuration_policy.dart';
 
 final class SqliteMcpServerRepository implements McpServerRepository {
   SqliteMcpServerRepository({required LocalDatabaseService localDatabase})
@@ -31,7 +32,21 @@ final class SqliteMcpServerRepository implements McpServerRepository {
   }
 
   @override
+  Future<void> createServer(
+    McpServer server, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    McpConfigurationPolicy.validateTransport(server.transport);
+    await _localDatabase.insertMcpServer(
+      McpServerRecord.fromDomain(server).values,
+      beforeCommit: beforeCommit,
+    );
+    await _emitServers();
+  }
+
+  @override
   Future<void> saveServer(McpServer server) async {
+    McpConfigurationPolicy.validateTransport(server.transport);
     final existing = await getServer(server.id);
     await _localDatabase.upsertMcpServer(
       McpServerRecord.fromDomain(server).values,
@@ -59,6 +74,7 @@ final class SqliteMcpServerRepository implements McpServerRepository {
     McpServer server,
     List<McpToolDescriptor> tools,
   ) async {
+    McpConfigurationPolicy.validateTransport(server.transport);
     final records = await _catalogRecords(server, tools);
     await _localDatabase.replaceMcpCatalog(
       McpServerRecord.fromDomain(server).values,
@@ -85,7 +101,14 @@ final class SqliteMcpServerRepository implements McpServerRepository {
   }
 
   Future<void> _emitServers() async {
-    if (!_changes.isClosed) _changes.add(await getServers());
+    // A notification failure must not turn a committed write into a failure
+    // and cause its secure credentials to be rolled back by the caller.
+    try {
+      final servers = await getServers();
+      if (!_changes.isClosed) _changes.add(servers);
+    } on Object {
+      // Consumers can reload; the database commit remains authoritative.
+    }
   }
 
   Future<void> dispose() => _changes.close();

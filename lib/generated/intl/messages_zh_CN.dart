@@ -552,11 +552,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpConnectionError": MessageLookupByLibrary.simpleMessage("连接错误"),
     "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("连接配置"),
+    "mcpCredentialsInConfiguration": MessageLookupByLibrary.simpleMessage(
+      "请在安全访问令牌或环境变量字段中填写凭据，不要将凭据放入 URL、命令或参数。",
+    ),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("未连接"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage("Streamable HTTP 端点"),
     "mcpEnvironment": MessageLookupByLibrary.simpleMessage("环境变量"),
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "每行填写一个 KEY=VALUE。内容保存在操作系统安全凭据存储中；编辑时留空可保留现有值。",
+    ),
+    "mcpEnvironmentIsolationDescription": MessageLookupByLibrary.simpleMessage(
+      "仅继承运行所需的基础环境变量。服务器需要的其他变量请在此填写。",
     ),
     "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
@@ -587,6 +593,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpRequestTimedOut": MessageLookupByLibrary.simpleMessage("MCP 请求超时。"),
     "mcpSecureEnvironmentVariables": MessageLookupByLibrary.simpleMessage(
       "安全环境变量",
+    ),
+    "mcpServerAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "已存在同名 MCP 服务器。",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("服务器详情"),
     "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(

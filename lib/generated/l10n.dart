@@ -4471,6 +4471,36 @@ class S {
     );
   }
 
+  /// `Use the secure access token or environment fields for credentials. Do not put credentials in URLs, commands, or arguments.`
+  String get mcpCredentialsInConfiguration {
+    return Intl.message(
+      'Use the secure access token or environment fields for credentials. Do not put credentials in URLs, commands, or arguments.',
+      name: 'mcpCredentialsInConfiguration',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `An MCP server with this name already exists.`
+  String get mcpServerAlreadyExists {
+    return Intl.message(
+      'An MCP server with this name already exists.',
+      name: 'mcpServerAlreadyExists',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only essential runtime environment variables are inherited. Add server-specific variables here.`
+  String get mcpEnvironmentIsolationDescription {
+    return Intl.message(
+      'Only essential runtime environment variables are inherited. Add server-specific variables here.',
+      name: 'mcpEnvironmentIsolationDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Enter one KEY=VALUE per line. Values are stored in the operating system's secure credential store; leave blank while editing to keep existing values.`
   String get mcpEnvironmentDescription {
     return Intl.message(

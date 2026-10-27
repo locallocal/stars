@@ -77,6 +77,27 @@ void main() {
       expect(repository.servers, hasLength(1));
     });
 
+    test('rejects credentials in URL and arguments before mutation', () async {
+      for (final draft in [
+        const McpServerDraft(
+          name: 'Unsafe',
+          endpoint: 'https://example.com/mcp?token=secret',
+        ),
+        const McpServerDraft(
+          name: 'Unsafe',
+          transportType: McpTransportType.stdio,
+          command: 'npx',
+          arguments: '--api-key\nsecret',
+        ),
+      ]) {
+        final result = await saveAndConnect(draft);
+        expect(result.failure?.code, 'mcp_credentials_in_configuration');
+        expect(repository.servers, isEmpty);
+        expect(credentials.values, isEmpty);
+        expect(catalog.refreshCount, 0);
+      }
+    });
+
     test('rejects malformed environment without changing resources', () async {
       final result = await saveAndConnect(
         const McpServerDraft(
@@ -246,6 +267,30 @@ final class _MemoryMcpServerRepository implements McpServerRepository {
   ) async {
     servers[server.id] = server;
     this.tools[server.id] = List<McpToolDescriptor>.unmodifiable(tools);
+  }
+
+  @override
+  Future<void> createServer(
+    McpServer server, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    if (servers.containsKey(server.id)) {
+      throw const McpException('mcp_server_id_conflict');
+    }
+    if (servers.values.any(
+      (item) =>
+          item.name.trim().toLowerCase() == server.name.trim().toLowerCase(),
+    )) {
+      throw const McpException('mcp_server_already_exists');
+    }
+    servers[server.id] = server;
+    try {
+      await beforeCommit?.call();
+      await saveServer(server);
+    } on Object {
+      servers.remove(server.id);
+      rethrow;
+    }
   }
 
   @override
