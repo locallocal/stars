@@ -627,6 +627,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
+    "mcpCredentialsInConfiguration": MessageLookupByLibrary.simpleMessage(
+      "認証情報は安全なアクセストークンまたは環境変数の欄に入力してください。URL、コマンド、引数には含めないでください。",
+    ),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
       "Streamable HTTP endpoint",
@@ -636,6 +639,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
+    ),
+    "mcpEnvironmentIsolationDescription": MessageLookupByLibrary.simpleMessage(
+      "実行に必要な基本環境変数のみ継承します。サーバー固有の変数はここに追加してください。",
     ),
     "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
@@ -668,6 +674,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpSecureEnvironmentVariables": MessageLookupByLibrary.simpleMessage(
       "Secure environment variables",
+    ),
+    "mcpServerAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "同じ名前の MCP サーバーが既に存在します。",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("Server details"),
     "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(

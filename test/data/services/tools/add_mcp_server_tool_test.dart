@@ -39,6 +39,68 @@ void main() {
         idFactory: (_) => 'mcp-generated',
       );
 
+  test(
+    'concurrent same-ID installs cannot overwrite secure credentials',
+    () async {
+      final tool = createTool();
+      final results = await Future.wait([
+        for (final name in ['First', 'Second'])
+          tool.execute(
+            ToolCallRequest(
+              callId: name,
+              name: addMcpServerToolName,
+              arguments: {
+                'name': name,
+                'transport_type': 'streamable_http',
+                'endpoint': 'https://example.com/mcp',
+                'auth_type': 'oauth_access_token',
+                'access_token': '$name-token',
+                'connect': false,
+              },
+            ),
+            AgentCancellationToken(),
+          ),
+      ]);
+      expect(results.where((r) => !r.isError), hasLength(1));
+      expect(
+        results.where((r) => r.isError).single.errorCode,
+        'mcp_server_id_conflict',
+      );
+      expect(repository.servers.values.single.name, 'First');
+      expect(credentials.values['mcp-generated']?.accessToken, 'First-token');
+    },
+  );
+
+  test(
+    'rejects endpoint and argument credentials before touching storage',
+    () async {
+      for (final fields in [
+        {
+          'transport_type': 'streamable_http',
+          'endpoint': 'https://example.com/mcp?api_key=secret',
+        },
+        {
+          'transport_type': 'stdio',
+          'command': 'npx',
+          'arguments': ['--token', 'secret'],
+        },
+      ]) {
+        final result = await createTool().execute(
+          ToolCallRequest(
+            callId: 'unsafe',
+            name: addMcpServerToolName,
+            arguments: {'name': 'Unsafe', ...fields},
+          ),
+          AgentCancellationToken(),
+        );
+        expect(result.errorCode, 'mcp_credentials_in_configuration');
+        expect(repository.servers, isEmpty);
+        expect(credentials.values, isEmpty);
+        expect(result.content, isNot(contains('=secret')));
+      }
+    },
+  );
+
   test('requires approval and exposes both transport contracts', () {
     final tool = createTool();
     final definition = tool.definition;
@@ -434,6 +496,30 @@ final class _MemoryMcpServerRepository implements McpServerRepository {
   ) async {
     servers[server.id] = server;
     this.tools[server.id] = List<McpToolDescriptor>.of(tools);
+  }
+
+  @override
+  Future<void> createServer(
+    McpServer server, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    if (servers.containsKey(server.id)) {
+      throw const McpException('mcp_server_id_conflict');
+    }
+    if (servers.values.any(
+      (item) =>
+          item.name.trim().toLowerCase() == server.name.trim().toLowerCase(),
+    )) {
+      throw const McpException('mcp_server_already_exists');
+    }
+    servers[server.id] = server;
+    try {
+      await beforeCommit?.call();
+      await saveServer(server);
+    } on Object {
+      servers.remove(server.id);
+      rethrow;
+    }
   }
 
   @override

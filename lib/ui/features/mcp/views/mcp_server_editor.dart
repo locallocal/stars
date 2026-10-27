@@ -284,7 +284,8 @@ class _McpServerEditorDialogState extends State<_McpServerEditorDialog> {
                   maxLines: 4,
                   decoration: InputDecoration(
                     labelText: S.of(context).mcpEnvironment,
-                    helperText: S.of(context).mcpEnvironmentDescription,
+                    helperText:
+                        '${S.of(context).mcpEnvironmentDescription}\n${S.of(context).mcpEnvironmentIsolationDescription}',
                   ),
                 ),
               ],
@@ -503,9 +504,7 @@ class _McpServerEditorDialogState extends State<_McpServerEditorDialog> {
       placeholder: const Text('https://example.com/mcp'),
       leading: _desktopInputLeading(LucideIcons.link),
       constraints: _desktopInputConstraints,
-      validator:
-          (value) =>
-              value.trim().isEmpty ? S.of(context).fillRequiredFields : null,
+      validator: (value) => _validateEndpoint(value),
     );
   }
 
@@ -522,9 +521,7 @@ class _McpServerEditorDialogState extends State<_McpServerEditorDialog> {
       placeholder: const Text('npx'),
       leading: _desktopInputLeading(LucideIcons.terminal),
       constraints: _desktopInputConstraints,
-      validator:
-          (value) =>
-              value.trim().isEmpty ? S.of(context).fillRequiredFields : null,
+      validator: (value) => _validateCommand(value),
     );
   }
 
@@ -532,6 +529,7 @@ class _McpServerEditorDialogState extends State<_McpServerEditorDialog> {
     return ShadInputFormField(
       key: const ValueKey<String>('mcp-server-arguments'),
       id: 'arguments',
+      validator: _validateArguments,
       controller: _argumentsController,
       autocorrect: false,
       keyboardType: TextInputType.multiline,
@@ -556,7 +554,9 @@ class _McpServerEditorDialogState extends State<_McpServerEditorDialog> {
       textInputAction: TextInputAction.newline,
       maxLines: 4,
       label: Text(S.of(context).mcpEnvironment),
-      description: Text(S.of(context).mcpEnvironmentDescription),
+      description: Text(
+        '${S.of(context).mcpEnvironmentDescription}\n${S.of(context).mcpEnvironmentIsolationDescription}',
+      ),
       placeholder: const Text('API_KEY=secret'),
       leading: _desktopInputLeading(LucideIcons.keyRound),
       constraints: const BoxConstraints(minHeight: 104),
@@ -666,6 +666,36 @@ class _McpServerEditorDialogState extends State<_McpServerEditorDialog> {
     McpTransportType.streamableHttp => S.of(context).mcpTransportStreamableHttp,
     McpTransportType.stdio => S.of(context).mcpTransportStdio,
   };
+
+  String? _validateEndpoint(String value) {
+    if (value.trim().isEmpty) return S.of(context).fillRequiredFields;
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+      return S.of(context).mcpHttpsRequired;
+    }
+    return McpConfigurationPolicy.endpointContainsCredentials(uri)
+        ? S.of(context).mcpCredentialsInConfiguration
+        : null;
+  }
+
+  String? _validateCommand(String value) {
+    if (value.trim().isEmpty) return S.of(context).fillRequiredFields;
+    try {
+      McpConfigurationPolicy.validateTransport(
+        McpStdioServerTransport(command: value),
+      );
+      return null;
+    } on McpException {
+      return S.of(context).mcpCredentialsInConfiguration;
+    }
+  }
+
+  String? _validateArguments(String value) =>
+      McpConfigurationPolicy.argumentsContainCredentials(
+            value.split(RegExp(r'\r?\n')),
+          )
+          ? S.of(context).mcpCredentialsInConfiguration
+          : null;
 
   void _save() {
     if (widget.desktop &&

@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:stars/data/services/mcp/mcp_transport.dart';
+import 'package:stars/data/services/mcp/mcp_stdio_environment.dart';
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/services/mcp_configuration_policy.dart';
 
 /// Runs a local MCP server without invoking a shell and exchanges one JSON-RPC
 /// message per line over stdin/stdout.
@@ -13,12 +15,17 @@ final class McpStdioTransport
     this.requestTimeout = const Duration(seconds: 30),
     this.maxMessageCharacters = 4 * 1024 * 1024,
     DateTime Function()? now,
+    Map<String, String>? parentEnvironment,
   }) : _now = now ?? DateTime.now,
+       _parentEnvironment = Map.unmodifiable(
+         parentEnvironment ?? Platform.environment,
+       ),
        assert(maxMessageCharacters > 0);
 
   final Duration requestTimeout;
   final int maxMessageCharacters;
   final DateTime Function() _now;
+  final Map<String, String> _parentEnvironment;
   final Map<String, _McpStdioSession> _sessions = {};
 
   @override
@@ -128,11 +135,16 @@ final class McpStdioTransport
     final Process process;
     try {
       final configuration = server.transport as McpStdioServerTransport;
+      McpConfigurationPolicy.validateTransport(configuration);
       process = await Process.start(
         configuration.command.trim(),
         configuration.arguments,
-        environment: environment,
-        includeParentEnvironment: true,
+        environment: mcpStdioEnvironment(
+          _parentEnvironment,
+          environment,
+          caseInsensitive: Platform.isWindows,
+        ),
+        includeParentEnvironment: false,
         runInShell: false,
       );
     } on ProcessException catch (error, stackTrace) {

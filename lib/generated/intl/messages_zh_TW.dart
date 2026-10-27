@@ -574,11 +574,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpConnectionError": MessageLookupByLibrary.simpleMessage("連線錯誤"),
     "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("連線設定"),
+    "mcpCredentialsInConfiguration": MessageLookupByLibrary.simpleMessage(
+      "請在安全存取權杖或環境變數欄位中填寫憑證，勿將憑證放入 URL、命令或參數。",
+    ),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("未連線"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage("Streamable HTTP 端點"),
     "mcpEnvironment": MessageLookupByLibrary.simpleMessage("環境變數"),
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "每行填寫一個 KEY=VALUE。內容會儲存在作業系統安全憑證儲存區；編輯時留空可保留現有值。",
+    ),
+    "mcpEnvironmentIsolationDescription": MessageLookupByLibrary.simpleMessage(
+      "僅繼承執行所需的基本環境變數。伺服器需要的其他變數請在此填寫。",
     ),
     "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
@@ -609,6 +615,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "mcpRequestTimedOut": MessageLookupByLibrary.simpleMessage("MCP 請求逾時。"),
     "mcpSecureEnvironmentVariables": MessageLookupByLibrary.simpleMessage(
       "Secure environment variables",
+    ),
+    "mcpServerAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "已存在同名 MCP 伺服器。",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("伺服器詳情"),
     "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(

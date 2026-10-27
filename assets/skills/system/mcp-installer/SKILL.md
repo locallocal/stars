@@ -4,7 +4,7 @@ description: Install Stars MCP servers and query installed servers or the curren
 allowed-tools: add_mcp_server list_installed_mcp_servers list_current_conversation_mcp
 metadata:
   scope: system
-  prompt-version: 3
+  prompt-version: 4
 ---
 
 # Manage MCP servers
@@ -93,3 +93,10 @@ The Tool refuses duplicate server names and never overwrites an existing
 server. Credentials are written to secure credential storage and are never
 returned. Never place credentials in the server name, endpoint URL, command,
 arguments, or final response.
+
+
+stdio servers inherit only essential runtime environment variables. Supply all
+server-specific variables explicitly in the secure environment field. This
+limits inherited credentials; it does not sandbox the server process.
+Credential-bearing URL parameters and command arguments are rejected. Request
+an environment-based or Bearer-token configuration instead.

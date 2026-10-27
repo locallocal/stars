@@ -122,6 +122,15 @@ final class _FakeMcpServerRepository implements McpServerRepository {
   ) async {}
 
   @override
+  Future<void> createServer(
+    McpServer server, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    await beforeCommit?.call();
+    await saveServer(server);
+  }
+
+  @override
   Future<void> saveServer(McpServer server) async {}
 }
 
@@ -201,6 +210,15 @@ final class _SavingMcpServerRepository implements McpServerRepository {
   ) async {
     _servers[server.id] = server;
     _tools[server.id] = List<McpToolDescriptor>.unmodifiable(tools);
+  }
+
+  @override
+  Future<void> createServer(
+    McpServer server, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    await beforeCommit?.call();
+    await saveServer(server);
   }
 
   @override

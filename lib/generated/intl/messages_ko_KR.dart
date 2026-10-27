@@ -622,6 +622,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
+    "mcpCredentialsInConfiguration": MessageLookupByLibrary.simpleMessage(
+      "인증 정보는 보안 액세스 토큰 또는 환경 변수 필드에 입력하세요. URL, 명령 또는 인수에 포함하지 마세요.",
+    ),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
       "Streamable HTTP endpoint",
@@ -631,6 +634,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
+    ),
+    "mcpEnvironmentIsolationDescription": MessageLookupByLibrary.simpleMessage(
+      "실행에 필요한 기본 환경 변수만 상속합니다. 서버별 변수는 여기에 추가하세요.",
     ),
     "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
@@ -663,6 +669,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpSecureEnvironmentVariables": MessageLookupByLibrary.simpleMessage(
       "Secure environment variables",
+    ),
+    "mcpServerAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "이 이름의 MCP 서버가 이미 있습니다.",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("Server details"),
     "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(

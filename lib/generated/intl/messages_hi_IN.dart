@@ -731,6 +731,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpConnectionFailed": m29,
     "mcpConnectionSettings": MessageLookupByLibrary.simpleMessage("Connection"),
+    "mcpCredentialsInConfiguration": MessageLookupByLibrary.simpleMessage(
+      "क्रेडेंशियल सुरक्षित एक्सेस टोकन या पर्यावरण चर फ़ील्ड में दर्ज करें, URL, कमांड या आर्ग्युमेंट में नहीं।",
+    ),
     "mcpDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
     "mcpEndpoint": MessageLookupByLibrary.simpleMessage(
       "Streamable HTTP endpoint",
@@ -740,6 +743,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpEnvironmentDescription": MessageLookupByLibrary.simpleMessage(
       "Enter one KEY=VALUE per line. Values are stored in the operating system\'s secure credential store; leave blank while editing to keep existing values.",
+    ),
+    "mcpEnvironmentIsolationDescription": MessageLookupByLibrary.simpleMessage(
+      "केवल आवश्यक रनटाइम पर्यावरण चर लिए जाते हैं। सर्वर के अन्य चर यहाँ जोड़ें।",
     ),
     "mcpHiddenEnvironmentVariableCount": m30,
     "mcpHttpsRequired": MessageLookupByLibrary.simpleMessage(
@@ -774,6 +780,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "mcpSecureEnvironmentVariables": MessageLookupByLibrary.simpleMessage(
       "Secure environment variables",
+    ),
+    "mcpServerAlreadyExists": MessageLookupByLibrary.simpleMessage(
+      "इस नाम का MCP सर्वर पहले से मौजूद है।",
     ),
     "mcpServerDetails": MessageLookupByLibrary.simpleMessage("Server details"),
     "mcpServerInUseByBot": MessageLookupByLibrary.simpleMessage(

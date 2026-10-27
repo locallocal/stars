@@ -420,6 +420,15 @@ final class FixtureFakeMcpServerRepository implements McpServerRepository {
   ) => throw UnimplementedError();
 
   @override
+  Future<void> createServer(
+    McpServer server, {
+    Future<void> Function()? beforeCommit,
+  }) async {
+    await beforeCommit?.call();
+    await saveServer(server);
+  }
+
+  @override
   Future<void> saveServer(McpServer server) => throw UnimplementedError();
 }
 

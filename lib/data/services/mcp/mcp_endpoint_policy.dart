@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:stars/domain/models/models.dart';
+import 'package:stars/domain/services/mcp_configuration_policy.dart';
 
 typedef McpHostResolver = Future<List<InternetAddress>> Function(String host);
 
@@ -26,6 +27,9 @@ final class McpEndpointPolicy {
       );
     }
 
+    if (McpConfigurationPolicy.endpointContainsCredentials(endpoint)) {
+      throw const McpException('mcp_credentials_in_configuration');
+    }
     final host = endpoint.host.toLowerCase();
     if (host == 'localhost' ||
         host.endsWith('.localhost') ||

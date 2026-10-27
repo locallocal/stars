@@ -3,6 +3,8 @@ import 'package:stars/domain/repositories/bot_repository.dart';
 import 'package:stars/domain/repositories/catalog_controller.dart';
 import 'package:stars/domain/repositories/mcp_credential_store.dart';
 import 'package:stars/domain/repositories/mcp_server_repository.dart';
+import 'package:stars/domain/services/mcp_configuration_policy.dart';
+import 'package:stars/domain/services/mcp_server_identity.dart';
 
 enum McpServerMutationOutcome { committed, warning, failure }
 
@@ -76,14 +78,17 @@ final class SaveAndConnectMcpServer {
       );
     }
 
-    final id =
-        existing?.id ??
-        'mcp-${timestamp.microsecondsSinceEpoch.toRadixString(36)}';
+    final id = existing?.id ?? newMcpServerId();
     final transportResult = _buildTransport(draft);
     if (transportResult case final AppFailure failure) {
       return McpServerMutationResult.failed(failure);
     }
     final transport = transportResult as McpServerTransport;
+    try {
+      McpConfigurationPolicy.validateTransport(transport);
+    } on McpException catch (error) {
+      return McpServerMutationResult.failed(AppFailure.validation(error.code));
+    }
     final environment = _parseEnvironment(draft.environment);
     if (environment == null) {
       return const McpServerMutationResult.failed(
@@ -114,14 +119,22 @@ final class SaveAndConnectMcpServer {
         createdAt: existing?.createdAt ?? timestamp,
         updatedAt: timestamp,
       );
-      credentialChanged = true;
-      await _saveCredential(
-        id: id,
-        existing: existing,
-        draft: draft,
-        environment: environment,
-      );
-      await _repository.saveServer(server);
+      Future<void> saveCredential() async {
+        credentialChanged = true;
+        await _saveCredential(
+          id: id,
+          existing: existing,
+          draft: draft,
+          environment: environment,
+        );
+      }
+
+      if (existing == null) {
+        await _repository.createServer(server, beforeCommit: saveCredential);
+      } else {
+        await saveCredential();
+        await _repository.saveServer(server);
+      }
     } on Object catch (error) {
       if (credentialChanged) {
         try {

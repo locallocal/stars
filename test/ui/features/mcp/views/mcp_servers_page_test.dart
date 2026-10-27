@@ -25,6 +25,65 @@ part 'mcp_servers_page_fixtures.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets(
+    'Shadcn editor keeps credential-bearing URLs in the form with an inline error',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      tester.view.physicalSize = const Size(1400, 1000);
+      tester.view.devicePixelRatio = 1;
+      try {
+        const repository = _FakeMcpServerRepository();
+        final viewModel = _createMcpServersViewModel(
+          repository: repository,
+          credentialStore: const _UnusedCredentialStore(),
+          catalogService: McpCatalogService(
+            repository: repository,
+            client: const _UnusedMcpClient(),
+            toolRegistry: DynamicToolRegistry(const []),
+          ),
+        );
+        addTearDown(viewModel.dispose);
+        await tester.pumpWidget(_harness(viewModel));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('add-mcp-server-desktop')),
+        );
+        await tester.pumpAndSettle();
+        for (final entry
+            in {
+              'mcp-server-name': 'Unsafe MCP',
+              'mcp-server-endpoint': 'https://example.com/mcp?api_key=secret',
+            }.entries) {
+          await tester.enterText(
+            find.descendant(
+              of: find.byKey(ValueKey<String>(entry.key)),
+              matching: find.byType(EditableText),
+            ),
+            entry.value,
+          );
+        }
+        await tester.tap(
+          find.ancestor(
+            of: find.text('保存并连接'),
+            matching: find.byType(ShadButton),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text(S.current.mcpCredentialsInConfiguration),
+          findsOneWidget,
+        );
+        expect(find.byType(ShadDialog), findsOneWidget);
+        expect(viewModel.servers, isEmpty);
+        expect(tester.takeException(), isNull);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      }
+    },
+  );
+
   testWidgets('desktop MCP page matches the Skill page content alignment', (
     tester,
   ) async {
